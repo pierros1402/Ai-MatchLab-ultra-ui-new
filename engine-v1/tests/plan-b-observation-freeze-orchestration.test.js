@@ -97,7 +97,8 @@ function frozenParityInputs({
   candidateIds = ["cid_one", "cid_two"],
   candidateHash = "current-hash",
   frozenHash = "frozen-hash",
-  bHash = frozenHash
+  bHash = frozenHash,
+  publishedPickId = "cid_one"
 } = {}) {
   const frozenUniverse =
     fixtureUniverse(
@@ -120,7 +121,7 @@ function frozenParityInputs({
       picks: [
         {
           matchId:
-            "cid_one"
+            publishedPickId
         }
       ]
     },
@@ -202,19 +203,54 @@ test(
 );
 
 test(
-  "frozen Value cohort still fails closed when canonical membership changes",
+  "frozen Value cohort records late canonical membership drift without rewriting observations",
+  () => {
+    const result =
+      evaluateValueRefreshUniverseParity(
+        frozenParityInputs({
+          candidateIds: [
+            "cid_one",
+            "cid_three",
+            "cid_four"
+          ]
+        })
+      );
+
+    assert.equal(
+      result.currentVsFrozenMembership.ok,
+      true
+    );
+    assert.equal(
+      result.currentVsFrozenMembership.exactMembership,
+      false
+    );
+    assert.deepEqual(
+      result.currentVsFrozenMembership.currentOnlyIds,
+      ["cid_three", "cid_four"]
+    );
+    assert.deepEqual(
+      result.currentVsFrozenMembership.frozenOnlyIds,
+      ["cid_two"]
+    );
+  }
+);
+
+test(
+  "frozen Value cohort fails closed when a published Plan A pick leaves the current universe",
   () => {
     assert.throws(
       () =>
         evaluateValueRefreshUniverseParity(
           frozenParityInputs({
             candidateIds: [
-              "cid_one",
+              "cid_two",
               "cid_three"
-            ]
+            ],
+            publishedPickId:
+              "cid_one"
           })
         ),
-      /VALUE_PLAN_UNIVERSE_MEMBERSHIP_PARITY_FAILED/
+      /FROZEN_PLAN_A_OUTSIDE_VALUE_UNIVERSE/
     );
   }
 );

@@ -172,12 +172,113 @@ jobs:
           }
           NODE
 
+      - name: Rebuild Day29 A and B from the immutable adjusted cohort checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          DAY="2026-08-29"
+          SOURCE_REF="3f4bcb309b3035422983de5ed48a3f94e3bdca7b"
+          WORKTREE="/tmp/aiml-day29-adjusted-cohort-replay"
+          PLAN_A="/tmp/aiml-day29-plan-a-candidate.json"
+          PLAN_A_AUDIT="/tmp/aiml-day29-plan-a-candidate-audit.json"
+          PLAN_B="/tmp/aiml-day29-plan-b-candidate.json"
+          PLAN_B_AUDIT="/tmp/aiml-day29-plan-b-candidate-audit.json"
+
+          git merge-base --is-ancestor "$SOURCE_REF" origin/main
+          test "$(git show -s --format=%s "$SOURCE_REF")" = \
+            "P0: Seed Day29 adjusted observations from current foundations"
+
+          if [ -e "$WORKTREE" ]; then
+            git worktree remove --force "$WORKTREE"
+          fi
+          rm -f "$PLAN_A" "$PLAN_A_AUDIT" "$PLAN_B" "$PLAN_B_AUDIT"
+          git worktree add --detach "$WORKTREE" "$SOURCE_REF"
+
+          pushd "$WORKTREE" >/dev/null
+          DAY_KEY="$DAY" PLAN_A_PATH="$PLAN_A" PLAN_A_AUDIT_PATH="$PLAN_A_AUDIT" \
+            node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { buildValueDay } from "./engine-v1/core/build-value-day.js";
+
+          const result = await buildValueDay(process.env.DAY_KEY, {
+            rebuild: true,
+            outputPath: process.env.PLAN_A_PATH,
+            auditPath: process.env.PLAN_A_AUDIT_PATH
+          });
+          const plan = JSON.parse(fs.readFileSync(process.env.PLAN_A_PATH, "utf8"));
+          const audit = JSON.parse(fs.readFileSync(process.env.PLAN_A_AUDIT_PATH, "utf8"));
+          console.log(JSON.stringify({
+            ok: result?.ok !== false,
+            plan: "A",
+            count: plan?.count,
+            fixtureUniverse: audit?.fixtureUniverse
+          }, null, 2));
+          if (result?.ok === false || plan?.date !== process.env.DAY_KEY) process.exit(1);
+          NODE
+
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { deriveValueFromOdds } from "./engine-v1/jobs/derive-value-from-odds.js";
+
+          const day = "2026-08-29";
+          const plan = deriveValueFromOdds(day, {
+            freeze: false,
+            outputMode: "plan-b-observation"
+          });
+          const audit = JSON.parse(
+            fs.readFileSync(`data/value-plans/${day}/plan-b-audit.json`, "utf8")
+          );
+          fs.copyFileSync(`data/value-plans/${day}/plan-b.json`, "/tmp/aiml-day29-plan-b-candidate.json");
+          fs.copyFileSync(`data/value-plans/${day}/plan-b-audit.json`, "/tmp/aiml-day29-plan-b-candidate-audit.json");
+          console.log(JSON.stringify({
+            ok: plan?.ok === true,
+            plan: "B",
+            count: plan?.count,
+            fixtureUniverse: audit?.membership?.fixtureUniverse
+          }, null, 2));
+          if (plan?.ok !== true || plan?.date !== day) process.exit(1);
+          NODE
+          popd >/dev/null
+          git worktree remove --force "$WORKTREE"
+
+          PLAN_A_PATH="$PLAN_A" PLAN_A_AUDIT_PATH="$PLAN_A_AUDIT" \
+          PLAN_B_PATH="$PLAN_B" PLAN_B_AUDIT_PATH="$PLAN_B_AUDIT" \
+            node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { assertValueFixtureUniverseParity } from "./engine-v1/core/value-fixture-universe.js";
+
+          const read = file => JSON.parse(fs.readFileSync(file, "utf8"));
+          const aAudit = read(process.env.PLAN_A_AUDIT_PATH);
+          const b = read(process.env.PLAN_B_PATH);
+          const bAudit = read(process.env.PLAN_B_AUDIT_PATH);
+          const a2Audit = read("data/value-plans/2026-08-29/plan-a2-audit.json");
+          const b2Audit = read("data/value-plans/2026-08-29/plan-b2-audit.json");
+          const cohort = aAudit.fixtureUniverse;
+
+          assertValueFixtureUniverseParity(cohort, a2Audit.fixtureUniverse);
+          assertValueFixtureUniverseParity(cohort, b.sourceContract?.fixtureUniverse);
+          assertValueFixtureUniverseParity(cohort, bAudit.membership?.fixtureUniverse);
+          assertValueFixtureUniverseParity(cohort, b2Audit.membership?.fixtureUniverse);
+          console.log(JSON.stringify({
+            ok: true,
+            count: cohort.count,
+            hash: cohort.hash,
+            sourceRef: "3f4bcb309b3035422983de5ed48a3f94e3bdca7b"
+          }, null, 2));
+          NODE
+
       - name: Bootstrap missing Day29 immutable Plan A observation exactly once
         shell: bash
         run: |
           set -euo pipefail
           node ./engine-v1/jobs/bootstrap-historical-plan-a-observation-day.js \
-            --date=2026-08-29
+            --date=2026-08-29 \
+            --plan-a-candidate=/tmp/aiml-day29-plan-a-candidate.json \
+            --plan-a-audit=/tmp/aiml-day29-plan-a-candidate-audit.json \
+            --plan-b-candidate=/tmp/aiml-day29-plan-b-candidate.json \
+            --plan-b-audit=/tmp/aiml-day29-plan-b-candidate-audit.json \
+            --source-ref=3f4bcb309b3035422983de5ed48a3f94e3bdca7b
 
       - name: Stage source-bound Day29 seed and truth foundations
         shell: bash
@@ -198,6 +299,8 @@ jobs:
           test -f data/deploy-snapshots/2026-08-29/odds.json && git add data/deploy-snapshots/2026-08-29/odds.json
           test -f data/value-plans/2026-08-29/plan-a.json && git add data/value-plans/2026-08-29/plan-a.json
           test -f data/value-plans/2026-08-29/plan-a-audit.json && git add data/value-plans/2026-08-29/plan-a-audit.json
+          test -f data/value-plans/2026-08-29/plan-b.json && git add data/value-plans/2026-08-29/plan-b.json
+          test -f data/value-plans/2026-08-29/plan-b-audit.json && git add data/value-plans/2026-08-29/plan-b-audit.json
           test -f data/value-plans/2026-08-29/plan-a2.json && git add data/value-plans/2026-08-29/plan-a2.json
           test -f data/value-plans/2026-08-29/plan-a2-audit.json && git add data/value-plans/2026-08-29/plan-a2-audit.json
           test -f data/value-plans/2026-08-29/plan-b2.json && git add data/value-plans/2026-08-29/plan-b2.json
@@ -210,7 +313,7 @@ jobs:
           STAGED="$(git diff --cached --name-only || true)"
           printf '%s\n' "$STAGED"
 
-          BAD="$(printf '%s\n' "$STAGED" | grep -Ev '^(data/canonical-fixtures/|data/history/|data/history-index/|data/h2h/|data/h2h-foundation/current\.json$|data/model-priors/|data/standings/|data/coverage-readiness/2026-08-29\.json$|data/competition-discovery/2026-08-29\.json$|data/provider-competition-registry/flashscore\.json$|data/deploy-snapshots/2026-08-29/odds\.json$|data/value-plans/2026-08-29/(plan-a|plan-a-audit|plan-a2|plan-a2-audit|plan-b2|plan-b2-audit)\.json$|data/final-results/|data/final-result-conflicts/|data/value-comparison/|data/system-health/)' || true)"
+          BAD="$(printf '%s\n' "$STAGED" | grep -Ev '^(data/canonical-fixtures/|data/history/|data/history-index/|data/h2h/|data/h2h-foundation/current\.json$|data/model-priors/|data/standings/|data/coverage-readiness/2026-08-29\.json$|data/competition-discovery/2026-08-29\.json$|data/provider-competition-registry/flashscore\.json$|data/deploy-snapshots/2026-08-29/odds\.json$|data/value-plans/2026-08-29/(plan-a|plan-a-audit|plan-a2|plan-a2-audit|plan-b|plan-b-audit|plan-b2|plan-b2-audit)\.json$|data/final-results/|data/final-result-conflicts/|data/value-comparison/|data/system-health/)' || true)"
           if [ -n "$BAD" ]; then
             echo "ERROR: unexpected Day29 seed paths"
             echo "$BAD"

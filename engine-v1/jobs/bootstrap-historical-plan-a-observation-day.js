@@ -28,7 +28,8 @@ import {
 import {
   evaluateValueRefreshSnapshotCoverage,
   updateManifestValueMetadata,
-  updateSnapshotValueArtifacts
+  updateSnapshotValueArtifacts,
+  validateValuePlanPicksAgainstPublishedSnapshot
 } from "./refresh-value-artifacts-day.js";
 
 function isDayKey(value) {
@@ -37,6 +38,11 @@ function isDayKey(value) {
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
+}
+
+function writeJsonStable(filePath, payload) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
 }
 
 function stableValue(value) {
@@ -113,6 +119,134 @@ function failure(reason, details = {}) {
     mode: "historical_plan_a_observation_bootstrap",
     reason,
     ...details
+  };
+}
+
+function valueUniverseOf(plan, audit) {
+  return (
+    plan?.fixtureUniverse ||
+    plan?.sourceContract?.fixtureUniverse ||
+    audit?.fixtureUniverse ||
+    audit?.membership?.fixtureUniverse ||
+    null
+  );
+}
+
+function validPlanBObservation(dayKey, plan, audit) {
+  return Boolean(
+    plan?.ok === true &&
+    String(plan?.date || "") === dayKey &&
+    String(plan?.planId || "") === "plan-b" &&
+    String(plan?.outputMode || "") === "plan-b-observation" &&
+    Array.isArray(plan?.picks) &&
+    Number(plan?.count) === plan.picks.length &&
+    audit?.ok === true &&
+    String(audit?.date || "") === dayKey &&
+    valueUniverseOf(plan, audit)
+  );
+}
+
+function ensureHistoricalPlanBObservation({
+  dayKey,
+  snapshotIds,
+  cohortUniverse,
+  candidate,
+  candidateAudit,
+  sourceRef
+}) {
+  const planFile = resolveDataPath("value-plans", dayKey, "plan-b.json");
+  const auditFile = resolveDataPath("value-plans", dayKey, "plan-b-audit.json");
+  const planExists = fs.existsSync(planFile);
+  const auditExists = fs.existsSync(auditFile);
+
+  if (planExists !== auditExists) {
+    return failure("partial_historical_plan_b_observation_state_refused", {
+      date: dayKey,
+      planExists,
+      auditExists
+    });
+  }
+
+  if (planExists) {
+    const existingPlan = readJson(planFile);
+    const existingAudit = readJson(auditFile);
+    if (!validPlanBObservation(dayKey, existingPlan, existingAudit)) {
+      return failure("invalid_existing_historical_plan_b_observation", {
+        date: dayKey
+      });
+    }
+
+    assertValueFixtureUniverseParity(
+      valueUniverseOf(existingPlan, existingAudit),
+      cohortUniverse
+    );
+
+    return {
+      ok: true,
+      created: false,
+      preservedExisting: true,
+      count: Number(existingPlan.count || 0),
+      planFile,
+      auditFile
+    };
+  }
+
+  if (!validPlanBObservation(dayKey, candidate, candidateAudit)) {
+    return failure("missing_or_invalid_historical_plan_b_candidate", {
+      date: dayKey
+    });
+  }
+
+  const candidateUniverse = valueUniverseOf(candidate, candidateAudit);
+  assertValueFixtureUniverseParity(candidateUniverse, cohortUniverse);
+  assertValueFixtureUniverseParity(
+    candidateUniverse,
+    valueUniverseOf(null, candidateAudit)
+  );
+
+  const publicationGuard = validateValuePlanPicksAgainstPublishedSnapshot(
+    snapshotIds,
+    { B: candidate }
+  );
+  if (!publicationGuard.ok) {
+    return failure("historical_plan_b_candidate_outside_current_snapshot", {
+      date: dayKey,
+      publicationGuard
+    });
+  }
+
+  const recoveryProvenance = {
+    kind: "historical_adjusted_cohort_replay_recovery",
+    sourceRef: sourceRef || null,
+    immutableCohortParityVerified: true,
+    currentSnapshotPickMembershipVerified: true
+  };
+
+  writeJsonStable(planFile, {
+    ...candidate,
+    recoveryProvenance
+  });
+  writeJsonStable(auditFile, {
+    ...candidateAudit,
+    recoveryProvenance
+  });
+
+  const verifiedPlan = readJson(planFile);
+  const verifiedAudit = readJson(auditFile);
+  if (!validPlanBObservation(dayKey, verifiedPlan, verifiedAudit)) {
+    return failure("historical_plan_b_observation_postwrite_invalid", {
+      date: dayKey
+    });
+  }
+
+  return {
+    ok: true,
+    created: true,
+    preservedExisting: false,
+    count: Number(verifiedPlan.count || 0),
+    planFile,
+    auditFile,
+    publicationGuard
   };
 }
 
@@ -194,7 +328,22 @@ export async function bootstrapHistoricalPlanAObservationDay(dayKey, options = {
   const buildValue = typeof options.buildValue === "function"
     ? options.buildValue
     : buildValueDay;
-  const candidate = await buildValue(date, { rebuild: true });
+  const candidateAudit = options.planAAudit || null;
+  const builtCandidate = options.planACandidate ||
+    await buildValue(date, { rebuild: true });
+  const candidate = candidateAudit
+    ? {
+        ...builtCandidate,
+        fixtureUniverse:
+          builtCandidate?.fixtureUniverse ||
+          candidateAudit?.fixtureUniverse ||
+          null,
+        sourceContract:
+          builtCandidate?.sourceContract ||
+          candidateAudit?.sourceContract ||
+          null
+      }
+    : builtCandidate;
   if (candidate?.ok === false) {
     return failure("historical_plan_a_candidate_build_failed", {
       date,
@@ -202,11 +351,42 @@ export async function bootstrapHistoricalPlanAObservationDay(dayKey, options = {
     });
   }
 
+  const candidateUniverse = valueUniverseOf(candidate, candidateAudit);
+  const a2Audit = readJson(a2AuditPath);
+  const b2Audit = readJson(b2AuditPath);
+  assertValueFixtureUniverseParity(
+    candidateUniverse,
+    valueUniverseOf(null, a2Audit)
+  );
+  assertValueFixtureUniverseParity(
+    candidateUniverse,
+    valueUniverseOf(null, b2Audit)
+  );
+
+  const currentSnapshotPickGuard =
+    validateValuePlanPicksAgainstPublishedSnapshot(
+      snapshotIds,
+      { A: candidate }
+    );
+  if (!currentSnapshotPickGuard.ok) {
+    return failure("historical_plan_a_candidate_outside_current_snapshot", {
+      date,
+      currentSnapshotPickGuard
+    });
+  }
+
   // The previous recovery compared a candidate built after Details refresh with
   // a snapshot copied from an earlier Value build. Publish the final candidate
   // into the snapshot first so the comparison and immutable freeze share one
   // exact source payload.
-  const snapshotValue = updateSnapshotValueArtifacts(date, candidate);
+  const snapshotValue = updateSnapshotValueArtifacts(
+    date,
+    candidate,
+    {
+      preferPlanAResult: true,
+      valueAudit: candidateAudit
+    }
+  );
   const manifestUpdate = updateManifestValueMetadata(
     date,
     snapshotValue.valueOut,
@@ -234,12 +414,6 @@ export async function bootstrapHistoricalPlanAObservationDay(dayKey, options = {
     });
   }
 
-  const candidateUniverse = candidate?.fixtureUniverse || candidate?.sourceContract?.fixtureUniverse || null;
-  const a2Audit = readJson(a2AuditPath);
-  const b2Audit = readJson(b2AuditPath);
-  assertValueFixtureUniverseParity(candidateUniverse, a2Audit?.fixtureUniverse || null);
-  assertValueFixtureUniverseParity(candidateUniverse, b2Audit?.fixtureUniverse || null);
-
   const freeze = ensurePlanAObservationDay(date, persistedSnapshot, {
     sourcePath: `data/deploy-snapshots/${date}/value.json`,
     provenance: {
@@ -248,6 +422,10 @@ export async function bootstrapHistoricalPlanAObservationDay(dayKey, options = {
       fullCanonicalSnapshotParity: true,
       finalValueSnapshotIdentityVerified: true,
       adjustedUniverseParityVerified: true,
+      sourceRef: options.sourceRef || null,
+      sourceCohortCount: Number(candidateUniverse?.count || 0),
+      sourceCohortHash: candidateUniverse?.hash || null,
+      currentSnapshotPickMembershipVerified: true,
       canonicalFixtureCount: coverage.canonicalFixtures,
       snapshotFixtureCount: coverage.snapshotFixtures
     }
@@ -274,6 +452,18 @@ export async function bootstrapHistoricalPlanAObservationDay(dayKey, options = {
     });
   }
 
+  const planBObservation = ensureHistoricalPlanBObservation({
+    dayKey: date,
+    snapshotIds,
+    cohortUniverse: candidateUniverse,
+    candidate: options.planBCandidate || null,
+    candidateAudit: options.planBAudit || null,
+    sourceRef: options.sourceRef || null
+  });
+  if (planBObservation?.ok !== true) {
+    return planBObservation;
+  }
+
   return {
     ok: true,
     mode: "historical_plan_a_observation_bootstrap",
@@ -285,12 +475,22 @@ export async function bootstrapHistoricalPlanAObservationDay(dayKey, options = {
     observationSignature: freeze.observationSignature,
     coverage,
     signatureCheck,
+    currentSnapshotPickGuard,
+    planBObservation,
     manifestHash: manifestUpdate.hash
   };
 }
 
 function parseArgs(argv = process.argv.slice(2)) {
-  const out = { date: null, help: false };
+  const out = {
+    date: null,
+    planACandidate: null,
+    planAAudit: null,
+    planBCandidate: null,
+    planBAudit: null,
+    sourceRef: null,
+    help: false
+  };
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = String(argv[index] || "").trim();
@@ -304,6 +504,23 @@ function parseArgs(argv = process.argv.slice(2)) {
     }
     if (isDayKey(arg) && !out.date) {
       out.date = arg;
+      continue;
+    }
+    let matchedOption = false;
+    for (const [prefix, key] of [
+      ["--plan-a-candidate=", "planACandidate"],
+      ["--plan-a-audit=", "planAAudit"],
+      ["--plan-b-candidate=", "planBCandidate"],
+      ["--plan-b-audit=", "planBAudit"],
+      ["--source-ref=", "sourceRef"]
+    ]) {
+      if (arg.startsWith(prefix)) {
+        out[key] = arg.slice(prefix.length);
+        matchedOption = true;
+        break;
+      }
+    }
+    if (matchedOption) {
       continue;
     }
     if (arg === "--help" || arg === "-h") {
@@ -330,12 +547,35 @@ if (isCli) {
       const args = parseArgs();
       if (args.help) {
         console.log(
-          "Usage: node engine-v1/jobs/bootstrap-historical-plan-a-observation-day.js --date=YYYY-MM-DD"
+          [
+            "Usage:",
+            "  node engine-v1/jobs/bootstrap-historical-plan-a-observation-day.js --date=YYYY-MM-DD",
+            "    [--plan-a-candidate=FILE --plan-a-audit=FILE]",
+            "    [--plan-b-candidate=FILE --plan-b-audit=FILE]",
+            "    [--source-ref=GIT_REF]"
+          ].join("\n")
         );
         return;
       }
 
-      const result = await bootstrapHistoricalPlanAObservationDay(args.date);
+      const result = await bootstrapHistoricalPlanAObservationDay(
+        args.date,
+        {
+          planACandidate: args.planACandidate
+            ? readJson(path.resolve(args.planACandidate))
+            : null,
+          planAAudit: args.planAAudit
+            ? readJson(path.resolve(args.planAAudit))
+            : null,
+          planBCandidate: args.planBCandidate
+            ? readJson(path.resolve(args.planBCandidate))
+            : null,
+          planBAudit: args.planBAudit
+            ? readJson(path.resolve(args.planBAudit))
+            : null,
+          sourceRef: args.sourceRef || null
+        }
+      );
       console.log(JSON.stringify(result, null, 2));
       if (!result.ok) process.exitCode = 1;
     } catch (error) {

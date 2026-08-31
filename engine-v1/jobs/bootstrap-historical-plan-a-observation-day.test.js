@@ -82,7 +82,15 @@ test("Day29 recovery uses the reusable source-bound bootstrap after Details stab
   assert.ok(stageIndex > bootstrapIndex);
   assert.match(
     workflow.slice(bootstrapIndex, stageIndex),
-    /--date=2026-08-29/
+    /--date=2026-08-29[\s\S]*--plan-a-candidate=[\s\S]*--plan-b-candidate=[\s\S]*--source-ref=3f4bcb309b3035422983de5ed48a3f94e3bdca7b/
+  );
+  assert.match(
+    workflow,
+    /Rebuild Day29 A and B from the immutable adjusted cohort checkpoint/
+  );
+  assert.match(
+    workflow,
+    /data\/value-plans\/2026-08-29\/plan-b-audit\.json/
   );
   assert.doesNotMatch(
     workflow,
@@ -95,7 +103,7 @@ test("historical bootstrap refreshes the snapshot before comparison and freezes 
     'coverage.mode !== "full_canonical"'
   );
   const snapshotRefreshIndex = bootstrapSource.indexOf(
-    "updateSnapshotValueArtifacts(date, candidate)"
+    "const snapshotValue = updateSnapshotValueArtifacts("
   );
   const signatureCheckIndex = bootstrapSource.indexOf(
     "const signatureCheck = describePlanAObservationDifference("

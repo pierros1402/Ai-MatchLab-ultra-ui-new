@@ -48,7 +48,7 @@ test(
 
     requireToken(
       source,
-      'import { buildValueA2B2Day } from "./build-value-a2-b2-day.js";'
+      "buildValueA2B2Day,"
     );
 
     const buildIndex = tokenIndex(
@@ -119,18 +119,16 @@ test(
 
     /*
      * Non-frozen Value remains descriptor-strict.
-     * Frozen Value allows current canonical descriptor drift only when
-     * canonical membership is identical, while the frozen cohort itself
-     * remains descriptor-strict.
+     * Frozen Value records current canonical drift while the immutable cohort
+     * itself remains descriptor-strict and publication picks stay current.
      */
     for (const token of [
       "export function evaluateValueRefreshUniverseParity({",
-      "assertValueFixtureUniverseMembershipParity",
       '"strict_current_cohort"',
       "A_B:",
       "A_A2:",
       "A_B2:",
-      "const currentMembership =",
+      "const currentMembership = {",
       "candidateUniverse",
       "frozenReferenceUniverse",
       '"frozen_observation_cohort"',
@@ -139,6 +137,7 @@ test(
       "A2_B:",
       "A2_B2:",
       "B_B2:",
+      '"publication_authority_plan_a"',
       '"FROZEN_PLAN_A_OUTSIDE_VALUE_UNIVERSE"'
     ]) {
       requireToken(source, token);
@@ -217,8 +216,8 @@ test(
 
     requireToken(
       source,
-      "assertValueFixtureUniverseMembershipParity(",
-      "shared exact-membership parity primitive"
+      "validateValuePlanPicksAgainstPublishedSnapshot(",
+      "current publication pick-membership primitive"
     );
 
     requireToken(
@@ -292,9 +291,7 @@ test(
       "ok: planA2?.ok === true && planB2?.ok === true"
     );
 
-    requireToken(
-      source,
-      "plans: { A2: planA2, B2: planB2 }"
-    );
+    requireToken(source, "A2: planA2,");
+    requireToken(source, "B2: planB2");
   }
 );
