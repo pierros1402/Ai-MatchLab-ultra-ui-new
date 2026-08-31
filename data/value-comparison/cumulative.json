@@ -1,7 +1,7 @@
 {
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison-cumulative.v1",
-  "generatedAt": "2026-08-31T15:05:28.209Z",
+  "generatedAt": "2026-08-31T16:28:30.888Z",
   "note": "Rolled-up immutable Plan A vs Plan B observations for the full trial window. Historical minimum-sample exclusions are applied only to derived statistics; frozen observations remain immutable. Snapshot-integrity warnings remain diagnostics.",
   "historicalStatisticsCorrection": {
     "active": true,
@@ -39,9 +39,9 @@
     "correctedStatisticalPopulation": 401
   },
   "trialStartDay": "2026-07-05",
-  "dayCount": 50,
+  "dayCount": 51,
   "firstDay": "2026-07-05",
-  "lastDay": "2026-08-28",
+  "lastDay": "2026-08-29",
   "requireIntegrityClean": false,
   "requireImmutablePlanA": true,
   "daysIncluded": [
@@ -94,7 +94,8 @@
     "2026-08-25",
     "2026-08-26",
     "2026-08-27",
-    "2026-08-28"
+    "2026-08-28",
+    "2026-08-29"
   ],
   "daysExcluded": [
     {
@@ -709,38 +710,53 @@
           "snapshot_stale"
         ]
       }
+    },
+    {
+      "dayKey": "2026-08-29",
+      "reason": "build_report_not_clean",
+      "details": {
+        "ok": false,
+        "reason": "build_report_not_clean",
+        "hardFailures": [
+          "manifest_missing",
+          "foundation_publication_not_ready",
+          "snapshot_stale",
+          "value_plan_comparison_missing",
+          "live_status_stale_open_exact_provider_ids:cid_mex1_atlante_leon_20260829,cid_mex2_doradossinaloa_atleticomorelia_20260829"
+        ]
+      }
     }
   ],
-  "integrityWarningDayCount": 44,
+  "integrityWarningDayCount": 45,
   "plans": {
     "A": {
       "id": "plan-a",
       "label": "Plan A - frozen production observation",
       "totals": {
-        "picks": 154,
-        "uniqueMatches": 143,
-        "settled": 151,
-        "wins": 105,
-        "losses": 46,
+        "picks": 184,
+        "uniqueMatches": 172,
+        "settled": 181,
+        "wins": 125,
+        "losses": 56,
         "voids": 2,
         "unresolved": 1,
         "unsupported": 0,
-        "oddsAvailable": 80,
-        "totalStake": 80,
-        "totalReturn": 85.45,
-        "profit": 5.45,
-        "hitRate": 0.6954,
-        "roi": 0.0681
+        "oddsAvailable": 81,
+        "totalStake": 81,
+        "totalReturn": 87.12,
+        "profit": 6.12,
+        "hitRate": 0.6906,
+        "roi": 0.0756
       }
     },
     "B": {
       "id": "plan-b",
       "label": "Plan B - strict value-policy-v2.3 observation",
       "totals": {
-        "picks": 174,
-        "uniqueMatches": 99,
-        "settled": 174,
-        "wins": 121,
+        "picks": 177,
+        "uniqueMatches": 102,
+        "settled": 177,
+        "wins": 124,
         "losses": 53,
         "voids": 0,
         "unresolved": 0,
@@ -749,17 +765,17 @@
         "totalStake": 67,
         "totalReturn": 95.37,
         "profit": 28.37,
-        "hitRate": 0.6954,
+        "hitRate": 0.7006,
         "roi": 0.4234
       }
     }
   },
   "comparison": {
-    "picksDeltaPlanBMinusPlanA": 20,
-    "settledDeltaPlanBMinusPlanA": 23,
-    "winsDeltaPlanBMinusPlanA": 16,
-    "lossesDeltaPlanBMinusPlanA": 7,
-    "hitRateDeltaPlanBMinusPlanA": 0,
-    "roiDeltaPlanBMinusPlanA": 0.3553
+    "picksDeltaPlanBMinusPlanA": -7,
+    "settledDeltaPlanBMinusPlanA": -4,
+    "winsDeltaPlanBMinusPlanA": -1,
+    "lossesDeltaPlanBMinusPlanA": -3,
+    "hitRateDeltaPlanBMinusPlanA": 0.01,
+    "roiDeltaPlanBMinusPlanA": 0.3478
   }
 }
