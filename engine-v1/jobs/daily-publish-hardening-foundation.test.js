@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  buildDetailsPublicationValueSummary,
   selectDetailsValuePicksForPublication
 } from "./build-details-day.js";
 
@@ -99,6 +100,44 @@ test(
     assert.deepEqual(
       actual,
       [currentPick]
+    );
+  }
+);
+
+test(
+  "Details publication summary stays empty without Plan A publication picks",
+  () => {
+    assert.equal(
+      buildDetailsPublicationValueSummary([]),
+      null
+    );
+  }
+);
+
+test(
+  "Details publication summary is derived only from Plan A publication picks",
+  () => {
+    const summary =
+      buildDetailsPublicationValueSummary([
+        {
+          canonicalId: "cid_test",
+          market: "1X2",
+          pick: "HOME",
+          score: 0.8,
+          confidence: 0.7
+        }
+      ]);
+
+    assert.deepEqual(
+      summary,
+      {
+        count: 1,
+        topMarket: "1X2",
+        topPick: "HOME",
+        topScore: 0.8,
+        avgConfidence: 0.7,
+        confidence: 0.75
+      }
     );
   }
 );

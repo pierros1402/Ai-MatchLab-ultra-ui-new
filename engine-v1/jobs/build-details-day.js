@@ -201,7 +201,7 @@ function buildValuePicksByMatch(dayKey) {
   return map;
 }
 
-function buildValueSummaryFromPicks(valuePicks = []) {
+export function buildDetailsPublicationValueSummary(valuePicks = []) {
   const picks = Array.isArray(valuePicks) ? valuePicks : [];
 
   if (!picks.length) {
@@ -1801,11 +1801,11 @@ export async function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
       maxDepth: 6
     }),
     aiSummary: aiBlocks?.aiContext?.summary || null,
+    // This public field is a mirror of the selected Plan A publication
+    // authority. Model/research context can retain its own candidate signals,
+    // but it must never make a non-publication fixture appear to have Value.
     valueSummary:
-      buildValueSummaryFromPicks(valuePicks) ||
-      aiBlocks?.aiContext?.valueSummary ||
-      aiBlocks?.researchedFacts?.valueContext ||
-      null,
+      buildDetailsPublicationValueSummary(valuePicks),
     sourceAudit: compactForDetails(aiBlocks.sourceAudit, {
       maxArrayItems: 12,
       maxStringLength: 500,
@@ -1906,11 +1906,10 @@ async function buildOneDetail(match, { dayKey, valuePicksByMatch, allRows, rebui
       maxDepth: 6
     }),
     aiSummary: aiBlocks?.aiContext?.summary || null,
+    // Keep the one-match builder on the same publication-only contract as the
+    // whole-day builder.
     valueSummary:
-      buildValueSummaryFromPicks(valuePicks) ||
-      aiBlocks?.aiContext?.valueSummary ||
-      aiBlocks?.researchedFacts?.valueContext ||
-      null,
+      buildDetailsPublicationValueSummary(valuePicks),
     sourceAudit: compactForDetails(aiBlocks.sourceAudit, {
       maxArrayItems: 12,
       maxStringLength: 500,
