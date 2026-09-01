@@ -3,12 +3,12 @@
   "verifiedFinalTruth": true,
   "date": "2026-08-30",
   "dayKey": "2026-08-30",
-  "matchId": "cid_portacaportugal_florgrade_saojoaover_20260830",
+  "matchId": "cid_portacaportugal_sportingcovilha_mortagua_20260830",
   "leagueSlug": "por.taca.portugal",
   "leagueName": "Taça de Portugal",
   "country": "",
-  "homeTeam": "Florgrade",
-  "awayTeam": "São João de Ver",
+  "homeTeam": "Sporting da Covilhã",
+  "awayTeam": "Mortágua",
   "homeScore": 0,
   "awayScore": 0,
   "scoreHome": 0,
@@ -24,24 +24,34 @@
   "kickoffUtc": "2026-08-30T16:00Z",
   "finalTruthVerdict": "verified_final_result",
   "verdict": "verified_final_result",
-  "sourceCount": 1,
-  "independentSourceCount": 1,
+  "sourceCount": 2,
+  "independentSourceCount": 2,
   "source": "canonical_espn_final_pen_score_correction",
   "sources": [
     {
       "provider": "espn",
-      "providerMatchId": "401909818",
-      "canonicalId": "cid_portacaportugal_florgrade_saojoaover_20260830",
+      "providerMatchId": "401906016",
+      "canonicalId": "cid_portacaportugal_sportingcovilha_mortagua_20260830",
       "leagueName": "Taça de Portugal",
-      "home": "Florgrade",
-      "away": "São João de Ver",
+      "home": "Sporting da Covilhã",
+      "away": "Mortágua",
       "scoreHome": 0,
       "scoreAway": 0,
       "kickoffUtc": "2026-08-30T16:00Z",
       "rawStatus": "STATUS_FINAL_PEN",
       "statusType": "STATUS_FINAL",
-      "terminalObservedAt": "2026-09-01T14:40:46.121Z",
+      "terminalObservedAt": "2026-09-01T14:40:46.131Z",
       "scoreKey": "0-0"
+    },
+    {
+      "provider": "flashscore",
+      "providerMatchId": "46JCF6Fd",
+      "home": "Covilha",
+      "away": "Mortagua",
+      "scoreHome": 0,
+      "scoreAway": 1,
+      "scoreKey": "0-1",
+      "scoreSemantics": "penalty_shootout_winner_marker_included"
     }
   ],
   "verification": {
@@ -50,8 +60,8 @@
     "state": "verified_final_result",
     "method": "canonical_espn_final_pen_score_correction",
     "authority": "canonical_fixture_store",
-    "sourceCount": 1,
-    "independentSourceCount": 1,
+    "sourceCount": 2,
+    "independentSourceCount": 2,
     "checks": {
       "canonicalIdExact": true,
       "provider": "espn",
@@ -64,21 +74,22 @@
       "flashscoreFinishedMatchAbsent": true,
       "explicitFinalPenaltyStatus": true,
       "canonicalTiedScore": true,
-      "existingExactFlashscoreArtifact": true,
-      "singlePenaltyWinnerMarkerRemoved": true
+      "flashscoreSinglePenaltyWinnerMarker": true,
+      "playedScoreNormalizedExcludingPenaltyShootout": true
     },
-    "generatedAt": "2026-09-01T14:44:20.051Z",
-    "replacedArtifact": {
-      "source": "flashscore_same_day_exact_team_match",
-      "provider": "flashscore",
-      "providerMatchId": "rZkrEEek",
-      "scoreKey": "1-0"
+    "generatedAt": "2026-09-01T14:44:23.151Z",
+    "observedConflict": {
+      "flashscoreScoreKey": "0-1",
+      "canonicalScoreKey": "0-0",
+      "winnerMarkerSide": "away"
     }
   },
   "settlement": {
     "finalTruthVerdict": "verified_final_result",
     "state": "verified_final_result",
-    "scoreSemantics": "played_score_excluding_penalty_shootout"
+    "scoreSemantics": "played_score_excluding_penalty_shootout",
+    "convergenceRequired": true,
+    "convergenceState": "penalty_winner_marker_normalized"
   },
-  "generatedAt": "2026-09-01T14:44:20.051Z"
+  "generatedAt": "2026-09-01T14:44:23.151Z"
 }
