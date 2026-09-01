@@ -4,6 +4,9 @@ import { currentSeason } from "../core/season.js";
 import {
   overlayProductionEvidenceDocumentReadView,
 } from "../core/production-evidence-identity-overlay.js";
+import {
+  resolvePlanAPublicationPayload,
+} from "../value/plan-a-publication-authority.js";
 
 // P0-C P5 READ BOUNDARY: model-prior and value-pick evidence views.
 
@@ -25,6 +28,39 @@ function readJsonSafe(file, fallback = null) {
   }
 }
 
+export function selectIntelligenceValuePicksForPublication(
+  dayKey,
+  matchId,
+  valuePicks = [],
+  {
+    publicationResolver = resolvePlanAPublicationPayload,
+  } = {},
+) {
+  const currentPicks = Array.isArray(valuePicks) ? valuePicks : [];
+  const publication = publicationResolver(
+    dayKey,
+    {
+      ok: true,
+      date: String(dayKey || ""),
+      count: currentPicks.length,
+      picks: currentPicks,
+    },
+  );
+
+  const publicationPicks = Array.isArray(publication?.payload?.picks)
+    ? publication.payload.picks
+    : currentPicks;
+  const id = String(matchId || "");
+
+  if (!id) return [];
+
+  return publicationPicks.filter(
+    pick =>
+      String(pick?.matchId || "") === id ||
+      String(pick?.canonicalId || "") === id,
+  );
+}
+
 export function loadIntelligenceSupport(dayKey, matchId, valuePicks = []) {
   const priors = readJsonSafe(
     resolveDataPath("model-priors", `${currentSeason()}.json`),
@@ -39,8 +75,14 @@ export function loadIntelligenceSupport(dayKey, matchId, valuePicks = []) {
       Object.keys(priors?.matchupPriors || {}).length > 0
     );
 
+  const publicationValue = selectIntelligenceValuePicksForPublication(
+    dayKey,
+    matchId,
+    valuePicks,
+  );
+
   const normalizedValue = overlayProductionEvidenceDocumentReadView(
-    Array.isArray(valuePicks) ? valuePicks : [],
+    publicationValue,
   );
 
   const sortedValue = normalizedValue
