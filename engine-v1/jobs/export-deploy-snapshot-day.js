@@ -14,7 +14,8 @@ import {
   synchronizeDetailStatusState
 } from "../core/detail-status-sync.js";
 import {
-  evaluateFrozenValueFixtureBinding
+  evaluateFrozenValueFixtureBinding,
+  isFrozenPlanAPublication
 } from "../core/frozen-value-release-contract.js";
 import {
   resolvePlanAPublicationPayload
@@ -1265,6 +1266,10 @@ const valueFreshAgainstCanonical = (latestCanonicalAt === null || valueArtifactA
 // canonical fixture universe with zero orphan or missing-id picks.
 const frozenValueBinding = evaluateFrozenValueFixtureBinding({
   preserveSnapshotValueBytes,
+  frozenPublicationAuthority:
+    isFrozenPlanAPublication(
+      persistedValueOut
+    ),
   dayKey,
   valueArtifact: persistedValueOut,
   fixtures

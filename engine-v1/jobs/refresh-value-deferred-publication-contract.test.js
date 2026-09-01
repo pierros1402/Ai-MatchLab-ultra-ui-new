@@ -155,4 +155,15 @@ test("Value refresh preserves existing frozen valueGate metadata", () => {
       "...(manifest.valueGate || {}),"
     )
   );
+
+  assert.ok(
+    source.includes(
+      "evaluateFrozenValueFixtureBinding"
+    )
+  );
+
+  assert.match(
+    source,
+    /valueFreshAgainstCanonical\s*\|\|\s*frozenValueBinding[\s\S]*?\.releaseSafe === true/u
+  );
 });

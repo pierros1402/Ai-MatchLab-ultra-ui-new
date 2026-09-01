@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   evaluateFrozenValueFixtureBinding,
+  isFrozenPlanAPublication,
   isFrozenValueGateReleaseSafe
 } from "../core/frozen-value-release-contract.js";
 
@@ -46,6 +47,92 @@ test("orphan frozen pick fails closed", () => {
   });
   assert.equal(binding.releaseSafe, false);
   assert.deepEqual(binding.orphanPickIds, ["cid_orphan_20990817"]);
+});
+
+test("full export recognizes immutable Plan A publication authority", () => {
+  const valueArtifact = {
+    date: "2099-08-17",
+    source: "canonical_fixtures",
+    planId: "plan-a",
+    outputMode:
+      "plan-a-observation",
+    immutable: true,
+    publicationAuthority:
+      "frozen_plan_a_observation",
+    count: 1,
+    picks: [
+      {
+        matchId:
+          "cid_test_home_away_20990817"
+      }
+    ]
+  };
+
+  assert.equal(
+    isFrozenPlanAPublication(
+      valueArtifact
+    ),
+    true
+  );
+
+  const binding =
+    evaluateFrozenValueFixtureBinding({
+      preserveSnapshotValueBytes:
+        false,
+      frozenPublicationAuthority:
+        isFrozenPlanAPublication(
+          valueArtifact
+        ),
+      dayKey:
+        "2099-08-17",
+      valueArtifact,
+      fixtures
+    });
+
+  assert.equal(
+    binding.mode,
+    "frozen_snapshot"
+  );
+
+  assert.equal(
+    binding.releaseSafe,
+    true
+  );
+});
+
+test("mutable Plan A cannot claim full-export frozen authority", () => {
+  const valueArtifact = {
+    date: "2099-08-17",
+    source: "canonical_fixtures",
+    planId: "plan-a",
+    outputMode: "production",
+    count: 0,
+    picks: []
+  };
+
+  assert.equal(
+    isFrozenPlanAPublication(
+      valueArtifact
+    ),
+    false
+  );
+
+  const binding =
+    evaluateFrozenValueFixtureBinding({
+      frozenPublicationAuthority:
+        isFrozenPlanAPublication(
+          valueArtifact
+        ),
+      dayKey:
+        "2099-08-17",
+      valueArtifact,
+      fixtures
+    });
+
+  assert.equal(
+    binding.releaseSafe,
+    false
+  );
 });
 
 test("wrong-day, missing-id, or non-canonical frozen artifacts fail closed", () => {

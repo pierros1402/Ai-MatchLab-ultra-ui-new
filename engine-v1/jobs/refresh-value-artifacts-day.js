@@ -51,6 +51,10 @@ import {
 import {
   resolvePlanAPublicationPayload
 } from "../value/plan-a-publication-authority.js";
+import {
+  evaluateFrozenValueFixtureBinding,
+  isFrozenPlanAPublication
+} from "../core/frozen-value-release-contract.js";
 
 function isDayKey(value) {
   return /^\d{4}-\d{2}-\d{2}$/u.test(String(value || ""));
@@ -846,6 +850,24 @@ export function updateManifestValueMetadata(dayKey, valueOut, valueAuditPresent,
   const generatedAt = new Date().toISOString();
   const fixturesFile = path.join(snapshotRoot, "fixtures.json");
   const valueFile = path.join(snapshotRoot, "value.json");
+  const snapshotFixturesPayload =
+    readJsonSafe(
+      fixturesFile,
+      null
+    );
+
+  const snapshotFixtures =
+    Array.isArray(
+      snapshotFixturesPayload
+    )
+      ? snapshotFixturesPayload
+      : Array.isArray(
+          snapshotFixturesPayload
+            ?.fixtures
+        )
+        ? snapshotFixturesPayload
+            .fixtures
+        : [];
 
   manifest.generatedAt = generatedAt;
   manifest.files = {
@@ -873,6 +895,19 @@ export function updateManifestValueMetadata(dayKey, valueOut, valueAuditPresent,
     valueArtifactAt < latestCanonicalUpdatedAt
   );
 
+  const frozenValueBinding =
+    evaluateFrozenValueFixtureBinding({
+      frozenPublicationAuthority:
+        isFrozenPlanAPublication(
+          valueOut
+        ),
+      dayKey,
+      valueArtifact:
+        valueOut,
+      fixtures:
+        snapshotFixtures
+    });
+
   manifest.valueGate = {
     ...(manifest.valueGate || {}),
     fixtures: Number(manifest.counts?.fixtures || 0),
@@ -881,7 +916,42 @@ export function updateManifestValueMetadata(dayKey, valueOut, valueAuditPresent,
     latestCanonicalUpdatedAt: isoOrNull(latestCanonicalUpdatedAt),
     valueArtifactAt: isoOrNull(valueArtifactAt),
     valueFreshAgainstCanonical,
-    ok: !missingValueWithFixtures && valueFreshAgainstCanonical
+    mode:
+      frozenValueBinding.mode,
+    frozenIdentityBound:
+      frozenValueBinding
+        .frozenIdentityBound,
+    frozenReleaseSafe:
+      frozenValueBinding
+        .releaseSafe,
+    frozenPickCount:
+      frozenValueBinding
+        .frozenPickCount,
+    orphanPickCount:
+      frozenValueBinding
+        .orphanPickCount,
+    orphanPickIds:
+      frozenValueBinding
+        .orphanPickIds,
+    missingMatchIdPickCount:
+      frozenValueBinding
+        .missingMatchIdPickCount,
+    missingMatchIdPickIndexes:
+      frozenValueBinding
+        .missingMatchIdPickIndexes,
+    dayBound:
+      frozenValueBinding
+        .dayBound,
+    canonicalSourceBound:
+      frozenValueBinding
+        .canonicalSourceBound,
+    ok:
+      !missingValueWithFixtures &&
+      (
+        valueFreshAgainstCanonical ||
+        frozenValueBinding
+          .releaseSafe === true
+      )
   };
   manifest.sizes = {
     ...(manifest.sizes || {}),

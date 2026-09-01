@@ -20,13 +20,43 @@ function fixtureIdentitySet(fixtures) {
   return ids;
 }
 
+export function isFrozenPlanAPublication(
+  valueArtifact
+) {
+  return Boolean(
+    valueArtifact &&
+    typeof valueArtifact ===
+      "object" &&
+    valueArtifact?.immutable ===
+      true &&
+    clean(
+      valueArtifact?.planId
+    ) === "plan-a" &&
+    clean(
+      valueArtifact?.outputMode
+    ) ===
+      "plan-a-observation" &&
+    clean(
+      valueArtifact
+        ?.publicationAuthority
+    ) ===
+      "frozen_plan_a_observation"
+  );
+}
+
 export function evaluateFrozenValueFixtureBinding({
   preserveSnapshotValueBytes = false,
+  frozenPublicationAuthority = false,
   dayKey = "",
   valueArtifact = null,
   fixtures = []
 } = {}) {
-  if (preserveSnapshotValueBytes !== true) {
+  if (
+    preserveSnapshotValueBytes !==
+      true &&
+    frozenPublicationAuthority !==
+      true
+  ) {
     return Object.freeze({
       mode: "current_value",
       frozenIdentityBound: false,
