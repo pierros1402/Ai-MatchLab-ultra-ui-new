@@ -1,0 +1,129 @@
+name: P0 Day29 Details Value summary recovery validator
+
+on:
+  push:
+    branches:
+      - work/day29-details-value-summary-fix-20260901
+    paths:
+      - .github/workflows/tmp-p0-day29-details-value-summary-fix-20260901.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-and-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout pinned recovery branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Apply exact Details valueSummary wiring patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("engine-v1/jobs/build-details-day.js")
+          text = path.read_text(encoding="utf-8")
+          old = """    h2h: richBlocks.h2h,\n    value: Array.isArray(valuePicks) ? valuePicks : [],\n    analysis,"""
+          new = """    h2h: richBlocks.h2h,\n    value: Array.isArray(valuePicks) ? valuePicks : [],\n    valueSummary: buildDetailsPublicationValueSummary(valuePicks),\n    analysis,"""
+
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f"expected exactly one Details value wiring anchor, found {count}")
+
+          path.write_text(text.replace(old, new, 1), encoding="utf-8")
+          PY
+
+      - name: Add focused regression test
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > engine-v1/jobs/build-details-value-summary-wiring.test.js <<'EOF'
+          import test from "node:test";
+          import assert from "node:assert/strict";
+          import fs from "node:fs";
+          import path from "node:path";
+          import { fileURLToPath } from "node:url";
+
+          const here = path.dirname(fileURLToPath(import.meta.url));
+          const source = fs.readFileSync(path.join(here, "build-details-day.js"), "utf8");
+
+          test("Details payload mirrors authoritative Value count into valueSummary", () => {
+            assert.match(
+              source,
+              /value:\s*Array\.isArray\(valuePicks\)\s*\?\s*valuePicks\s*:\s*\[\],\s*valueSummary:\s*buildDetailsPublicationValueSummary\(valuePicks\),\s*analysis,/u
+            );
+          });
+          EOF
+
+      - name: Static validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/jobs/build-details-day.js
+          node --check engine-v1/jobs/build-details-value-summary-wiring.test.js
+          node --test engine-v1/jobs/build-details-value-summary-wiring.test.js
+          git diff --check -- engine-v1/jobs/build-details-day.js engine-v1/jobs/build-details-value-summary-wiring.test.js
+
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Replay exact Day29 Details publication mirror boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          DAY=2026-08-29
+
+          node ./engine-v1/jobs/sync-canonical-fixtures-to-json-db-day.js "$DAY"
+          node ./engine-v1/jobs/build-details-day.js "$DAY" --rebuild
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY" \
+            --no-update-latest \
+            --replace-details \
+            --no-build-missing-details \
+            --fail-on-missing-details
+          node ./engine-v1/jobs/verify-details-value-mirror-day.js --date="$DAY" --gate
+
+      - name: Stage only code and regression test
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore --staged . || true
+          git add engine-v1/jobs/build-details-day.js
+          git add engine-v1/jobs/build-details-value-summary-wiring.test.js
+
+          ACTUAL="$(git diff --cached --name-only | sort)"
+          EXPECTED="$(printf '%s\n' \
+            engine-v1/jobs/build-details-day.js \
+            engine-v1/jobs/build-details-value-summary-wiring.test.js | sort)"
+
+          printf '=== STAGED ===\n%s\n' "$ACTUAL"
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "ERROR: staged recovery boundary mismatch"
+            exit 1
+          fi
+
+          git diff --cached --check
+
+      - name: Commit recovery patch on branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Fix Details Value summary mirror wiring"
+          git push origin HEAD:work/day29-details-value-summary-fix-20260901
