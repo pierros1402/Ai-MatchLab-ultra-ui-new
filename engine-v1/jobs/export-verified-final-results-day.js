@@ -1025,6 +1025,61 @@ export function resolveTerminalScoreConvergence({
     canonical.scoreKey !==
     flashscoreScoreKey
   ) {
+    const canonicalFinalPenalty =
+      hasExactFinalPenaltyStatus(
+        target?.canonicalFixture
+      );
+
+    const canonicalTiedScore =
+      canonical.homeScore ===
+      canonical.awayScore;
+
+    const flashscoreHomeWinnerMarker =
+      flashscoreHome ===
+        canonical.homeScore + 1 &&
+      flashscoreAway ===
+        canonical.awayScore;
+
+    const flashscoreAwayWinnerMarker =
+      flashscoreHome ===
+        canonical.homeScore &&
+      flashscoreAway ===
+        canonical.awayScore + 1;
+
+    // Some Flashscore cup results encode the shootout winner by adding one
+    // goal to an otherwise tied played score. ESPN exposes the played score
+    // and penalties separately. This exact, explicit FINAL_PEN shape is a
+    // semantic normalization, not an unresolved score conflict.
+    if (
+      canonicalFinalPenalty &&
+      canonicalTiedScore &&
+      (
+        flashscoreHomeWinnerMarker ||
+        flashscoreAwayWinnerMarker
+      )
+    ) {
+      return {
+        state:
+          "penalty_winner_marker_normalized",
+        reason:
+          "flashscore_penalty_winner_marker_normalized",
+        flashscoreHome,
+        flashscoreAway,
+        flashscoreScoreKey,
+        canonicalHome:
+          canonical.homeScore,
+        canonicalAway:
+          canonical.awayScore,
+        canonicalScoreKey:
+          canonical.scoreKey,
+        canonical,
+        winnerMarkerSide:
+          flashscoreHomeWinnerMarker
+            ? "home"
+            : "away"
+      };
+    }
+
     return {
       state:
         "pending_recheck",
@@ -1161,6 +1216,112 @@ export function buildConvergedVerifiedFinalResult(
 
     convergenceState:
       "converged"
+  };
+
+  return payload;
+}
+
+export function buildPenaltyWinnerMarkerNormalizedFinalResult(
+  dayKey,
+  target,
+  flashscoreRow,
+  convergence
+) {
+  const payload =
+    buildCanonicalEspnVerifiedFinalResult(
+      dayKey,
+      target,
+      convergence.canonical
+    );
+
+  payload.source =
+    "canonical_espn_final_pen_score_correction";
+
+  payload.sourceCount =
+    2;
+
+  payload.independentSourceCount =
+    2;
+
+  payload.sources = [
+    ...payload.sources,
+    {
+      provider:
+        "flashscore",
+      providerMatchId:
+        clean(
+          flashscoreRow?.matchId
+        ),
+      home:
+        clean(
+          flashscoreRow?.home
+        ),
+      away:
+        clean(
+          flashscoreRow?.away
+        ),
+      scoreHome:
+        convergence.flashscoreHome,
+      scoreAway:
+        convergence.flashscoreAway,
+      scoreKey:
+        convergence.flashscoreScoreKey,
+      scoreSemantics:
+        "penalty_shootout_winner_marker_included"
+    }
+  ];
+
+  payload.verification = {
+    ...payload.verification,
+
+    method:
+      "canonical_espn_final_pen_score_correction",
+
+    sourceCount:
+      2,
+
+    independentSourceCount:
+      2,
+
+    checks: {
+      ...payload.verification?.checks,
+
+      explicitFinalPenaltyStatus:
+        true,
+
+      canonicalTiedScore:
+        true,
+
+      flashscoreSinglePenaltyWinnerMarker:
+        true,
+
+      playedScoreNormalizedExcludingPenaltyShootout:
+        true
+    },
+
+    observedConflict: {
+      flashscoreScoreKey:
+        convergence.flashscoreScoreKey,
+
+      canonicalScoreKey:
+        convergence.canonicalScoreKey,
+
+      winnerMarkerSide:
+        convergence.winnerMarkerSide
+    }
+  };
+
+  payload.settlement = {
+    ...payload.settlement,
+
+    scoreSemantics:
+      "played_score_excluding_penalty_shootout",
+
+    convergenceRequired:
+      true,
+
+    convergenceState:
+      "penalty_winner_marker_normalized"
   };
 
   return payload;
@@ -2166,6 +2327,20 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
 
         resolutionMethod =
           "terminal_score_sources_converged";
+      } else if (
+        convergence.state ===
+        "penalty_winner_marker_normalized"
+      ) {
+        payload =
+          buildPenaltyWinnerMarkerNormalizedFinalResult(
+            safeDayKey,
+            target,
+            found.row,
+            convergence
+          );
+
+        resolutionMethod =
+          "canonical_espn_final_pen_score_correction";
       } else {
         payload =
           buildVerifiedFinalResult(
