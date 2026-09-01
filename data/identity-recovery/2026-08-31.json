@@ -6,7 +6,7 @@
     "daysBack": 1,
     "daysForward": 14
   },
-  "sourceLatestUpdatedAt": "2026-09-01T20:13:49.121Z",
+  "sourceLatestUpdatedAt": "2026-09-01T22:39:02.301Z",
   "resolver": {
     "schema": "ai-matchlab.production-identity-resolver-runtime.v2",
     "extensionLedgerSha256": "5dd8f72ff4f14809d0359aa26447d302e0b10d670ad5ae6ed1e02857c22af24e",
@@ -25,13 +25,15 @@
   },
   "summary": {
     "scannedDays": 16,
-    "scannedLeagueFiles": 559,
-    "inputRows": 2002,
+    "scannedLeagueFiles": 621,
+    "inputRows": 2137,
     "autoPromotable": 0,
-    "pendingIndependentConfirmation": 0,
-    "ambiguous": 4,
+    "pendingIndependentConfirmation": 1,
+    "ambiguous": 5,
     "conflictRejected": 2,
-    "alreadyManagedPairs": 1
+    "alreadyManagedPairs": 1,
+    "independentConfirmed": 0,
+    "independentConfirmationRetryPending": 1
   },
   "targetDays": [
     {
@@ -374,12 +376,99 @@
     },
     {
       "dayKey": "2026-09-04",
-      "leagueFiles": 28,
-      "recoveryLeagueReports": []
+      "leagueFiles": 89,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "caf.confed",
+          "inputRows": 26,
+          "temporalCrossProviderPairs": 3,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [
+            {
+              "leagueSlug": "caf.confed",
+              "kickoffUtc": "2026-09-04T17:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "M7aVAI8F",
+                "canonicalId": "cid_cafconfed_hilalalsahilsud_welwaloadigrateth_20260904",
+                "kickoffUtc": "2026-09-04T17:00:00.000Z",
+                "homeTeam": "Hilal Alsahil (Sud)",
+                "awayTeam": "Welwalo Adigrat (Eth)"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401909434",
+                "canonicalId": "cid_cafconfed_alhilalportsudan_welwaloadigrat_20260904",
+                "kickoffUtc": "2026-09-04T17:00Z",
+                "homeTeam": "Al Hilal Port Sudan",
+                "awayTeam": "Welwalo Adigrat"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "away": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "stableSides": 0,
+                "conflict": false
+              },
+              "recoveryStatus": "PENDING_INDEPENDENT_CONFIRMATION",
+              "promotionAuthorized": false,
+              "requiresIndependentConfirmation": true,
+              "independentConfirmation": {
+                "status": "PENDING_RETRY",
+                "source": "api_football",
+                "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
+                "oddsUsed": false,
+                "attempts": 1,
+                "lastAttemptAt": "2026-09-01T22:39:02.660Z",
+                "retryable": true,
+                "providerStatus": "MISSING_API_KEY",
+                "evaluationStatus": null,
+                "thirdSourceKickoffRows": 0
+              }
+            }
+          ],
+          "ambiguous": [
+            {
+              "leagueSlug": "caf.confed",
+              "kickoffUtc": "2026-09-04T15:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_cafconfed_aspl2000_jwanenggalaxy_20260904",
+                "cid_cafconfed_panthere_rayonsport_20260904",
+                "cid_cafconfed_portlouismus_jwanenggalaxybot_20260904"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 1,
+            "ambiguous": 1,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
     },
     {
       "dayKey": "2026-09-05",
-      "leagueFiles": 40,
+      "leagueFiles": 41,
       "recoveryLeagueReports": []
     },
     {
@@ -427,5 +516,22 @@
       "leagueFiles": 17,
       "recoveryLeagueReports": []
     }
-  ]
+  ],
+  "independentConfirmation": {
+    "source": "api_football",
+    "evidenceEndpoint": "fixtures",
+    "oddsAllowed": false,
+    "fuzzyMatchingAllowed": false,
+    "runAt": "2026-09-01T22:39:02.661Z",
+    "attempts": [
+      {
+        "dayKey": "2026-09-04",
+        "leagueSlug": "caf.confed",
+        "key": "cid_cafconfed_alhilalportsudan_welwaloadigrat_20260904|cid_cafconfed_hilalalsahilsud_welwaloadigrateth_20260904",
+        "status": "PENDING_RETRY",
+        "providerStatus": "MISSING_API_KEY",
+        "evaluationStatus": null
+      }
+    ]
+  }
 }
