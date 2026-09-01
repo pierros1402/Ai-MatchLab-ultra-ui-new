@@ -1,7 +1,7 @@
 {
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison-cumulative.v1",
-  "generatedAt": "2026-09-01T21:35:09.292Z",
+  "generatedAt": "2026-09-01T22:44:44.858Z",
   "note": "Rolled-up immutable Plan A vs Plan B observations for the full trial window. Historical minimum-sample exclusions are applied only to derived statistics; frozen observations remain immutable. Snapshot-integrity warnings remain diagnostics.",
   "historicalStatisticsCorrection": {
     "active": true,
@@ -39,9 +39,9 @@
     "correctedStatisticalPopulation": 401
   },
   "trialStartDay": "2026-07-05",
-  "dayCount": 52,
+  "dayCount": 53,
   "firstDay": "2026-07-05",
-  "lastDay": "2026-08-30",
+  "lastDay": "2026-08-31",
   "requireIntegrityClean": false,
   "requireImmutablePlanA": true,
   "daysIncluded": [
@@ -96,7 +96,8 @@
     "2026-08-27",
     "2026-08-28",
     "2026-08-29",
-    "2026-08-30"
+    "2026-08-30",
+    "2026-08-31"
   ],
   "daysExcluded": [
     {
@@ -731,19 +732,33 @@
         "checkedAt": "2026-09-01T10:20:46.283Z",
         "manifestGeneratedAt": "2026-09-01T18:31:13.645Z"
       }
+    },
+    {
+      "dayKey": "2026-08-31",
+      "reason": "build_report_not_clean",
+      "details": {
+        "ok": false,
+        "reason": "build_report_not_clean",
+        "hardFailures": [
+          "manifest_missing",
+          "foundation_publication_not_ready",
+          "snapshot_stale",
+          "value_plan_comparison_missing"
+        ]
+      }
     }
   ],
-  "integrityWarningDayCount": 46,
+  "integrityWarningDayCount": 47,
   "plans": {
     "A": {
       "id": "plan-a",
       "label": "Plan A - frozen production observation",
       "totals": {
-        "picks": 207,
-        "uniqueMatches": 195,
-        "settled": 204,
-        "wins": 143,
-        "losses": 61,
+        "picks": 216,
+        "uniqueMatches": 204,
+        "settled": 213,
+        "wins": 148,
+        "losses": 65,
         "voids": 2,
         "unresolved": 1,
         "unsupported": 0,
@@ -751,7 +766,7 @@
         "totalStake": 87,
         "totalReturn": 94.39,
         "profit": 7.390000000000001,
-        "hitRate": 0.701,
+        "hitRate": 0.6948,
         "roi": 0.0849
       }
     },
@@ -777,11 +792,11 @@
     }
   },
   "comparison": {
-    "picksDeltaPlanBMinusPlanA": -26,
-    "settledDeltaPlanBMinusPlanA": -23,
-    "winsDeltaPlanBMinusPlanA": -15,
-    "lossesDeltaPlanBMinusPlanA": -8,
-    "hitRateDeltaPlanBMinusPlanA": 0.0062,
+    "picksDeltaPlanBMinusPlanA": -35,
+    "settledDeltaPlanBMinusPlanA": -32,
+    "winsDeltaPlanBMinusPlanA": -20,
+    "lossesDeltaPlanBMinusPlanA": -12,
+    "hitRateDeltaPlanBMinusPlanA": 0.0124,
     "roiDeltaPlanBMinusPlanA": 0.3385
   }
 }
