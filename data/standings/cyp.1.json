@@ -2,14 +2,14 @@
   "schema": "ai-matchlab.history-backed-standings.v1",
   "league": "cyp.1",
   "seasonReference": "2025-2026",
-  "updatedAt": "2026-09-01T09:45:09.564Z",
+  "updatedAt": "2026-09-01T16:37:57.882Z",
   "confidence": 0,
   "completeness": 0,
   "sourceAudit": [
     {
       "type": "history_foundation",
       "label": "history-2026-2027",
-      "ok": false
+      "ok": true
     },
     {
       "type": "competition_contract",
@@ -29,14 +29,12 @@
     "status": "GATED",
     "usable": false,
     "reasonCodes": [
-      "NO_STRICT_HISTORY_ROWS",
-      "TABLE_EMPTY",
       "TEAM_COUNT_AUTHORITY_MISSING"
     ],
-    "builtAt": "2026-09-01T09:45:09.564Z",
+    "builtAt": "2026-09-01T16:37:57.882Z",
     "historySeason": "2026-2027",
-    "historyLeagueRows": 0,
-    "historyLeagueSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "historyLeagueRows": 2,
+    "historyLeagueSha256": "2d7b7f3daf5a5a5a17beaf9f78946745a5f6610a9a7fefd5d8944405a47c9f5f",
     "competitionFormatRegistrySha256": "db9a8320f7b3f1e7ef5e898d95c0c7efe6c0fe69f27ac8ae4043691fc0528cd1",
     "teamAliasesSha256": "MISSING",
     "teamIdentityMode": "LEAGUE_SCOPED_CANONICAL_ALIAS_ID_V1",
@@ -45,7 +43,7 @@
     "contractAuthorityScopes": [],
     "contractValidation": {
       "schema": "ai-matchlab.standings-contract-validation.v1",
-      "status": "FAIL",
+      "status": "UNVERIFIED",
       "ok": false,
       "publicationDecision": "NOT_APPLIED_READ_ONLY",
       "leagueSlug": "cyp.1",
@@ -63,9 +61,9 @@
       },
       "summary": {
         "primaryUniverseSource": "TABLE",
-        "primaryRowCount": 0,
-        "primaryUniqueTeamCount": 0,
-        "primaryCanonicalIdCount": 0,
+        "primaryRowCount": 4,
+        "primaryUniqueTeamCount": 4,
+        "primaryCanonicalIdCount": 4,
         "primaryFallbackIdentityCount": 0,
         "primaryCanonicalIdentityComplete": true,
         "phaseTableCount": 0,
@@ -73,18 +71,12 @@
           "evaluated": false,
           "pass": null,
           "expected": null,
-          "observed": 0
+          "observed": 4
         },
-        "errorCount": 1,
+        "errorCount": 0,
         "warningCount": 1
       },
       "issues": [
-        {
-          "code": "TABLE_EMPTY",
-          "severity": "error",
-          "scope": "primary",
-          "message": "Standings table is empty."
-        },
         {
           "code": "TEAM_COUNT_CONTRACT_UNVERIFIED",
           "severity": "warning",
@@ -98,8 +90,81 @@
         "mutations": []
       }
     },
-    "observedRowCount": 0,
-    "observedTable": [],
+    "observedRowCount": 4,
+    "observedTable": [
+      {
+        "position": 1,
+        "rank": 1,
+        "canonicalTeamId": "stid_d36433074216ee7386dd9a1b",
+        "team": "Omonia 29th May",
+        "teamName": "Omonia 29th May",
+        "name": "Omonia 29th May",
+        "played": 1,
+        "wins": 1,
+        "draws": 0,
+        "losses": 0,
+        "goalsFor": 3,
+        "goalsAgainst": 0,
+        "goalDiff": 3,
+        "goalDifference": 3,
+        "points": 3,
+        "confidence": 1
+      },
+      {
+        "position": 2,
+        "rank": 2,
+        "canonicalTeamId": "stid_026442fd4c5d8351b46873a2",
+        "team": "Nea Salamis",
+        "teamName": "Nea Salamis",
+        "name": "Nea Salamis",
+        "played": 1,
+        "wins": 0,
+        "draws": 1,
+        "losses": 0,
+        "goalsFor": 3,
+        "goalsAgainst": 3,
+        "goalDiff": 0,
+        "goalDifference": 0,
+        "points": 1,
+        "confidence": 1
+      },
+      {
+        "position": 3,
+        "rank": 3,
+        "canonicalTeamId": "stid_ad1fb9c4869048953d09a703",
+        "team": "Ol. Nicosia",
+        "teamName": "Ol. Nicosia",
+        "name": "Ol. Nicosia",
+        "played": 1,
+        "wins": 0,
+        "draws": 1,
+        "losses": 0,
+        "goalsFor": 3,
+        "goalsAgainst": 3,
+        "goalDiff": 0,
+        "goalDifference": 0,
+        "points": 1,
+        "confidence": 1
+      },
+      {
+        "position": 4,
+        "rank": 4,
+        "canonicalTeamId": "stid_b708192ce25fb4325ee12b51",
+        "team": "Krasava",
+        "teamName": "Krasava",
+        "name": "Krasava",
+        "played": 1,
+        "wins": 0,
+        "draws": 0,
+        "losses": 1,
+        "goalsFor": 0,
+        "goalsAgainst": 3,
+        "goalDiff": -3,
+        "goalDifference": -3,
+        "points": 0,
+        "confidence": 1
+      }
+    ],
     "consumerTableRows": 0,
     "staleOnSourceChange": true
   }
