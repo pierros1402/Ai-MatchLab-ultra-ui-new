@@ -1,0 +1,68 @@
+name: P0 Sep1 Sep2 pre-event identity diagnostic
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/tmp-p0-pre-event-identity-diagnostic-20260902.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Print unresolved pre-event canonical identities
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          diagnose_day() {
+            local DAY="$1"
+            local SOURCE_REF="$2"
+            local WORKTREE="/tmp/aiml-id-diag-${DAY}"
+            rm -rf "$WORKTREE"
+            git worktree add --detach "$WORKTREE" "$SOURCE_REF"
+            pushd "$WORKTREE" >/dev/null
+            DAY_KEY="$DAY" node --input-type=module <<'NODE'
+          import { canonicalFixturesForDay } from "./engine-v1/core/day-fixture-universe.js";
+          const day = process.env.DAY_KEY;
+          const rows = canonicalFixturesForDay(day);
+          const clean = v => String(v ?? "").trim();
+          const missing = rows.filter(r => !clean(r?.canonicalId)).map((r, index) => ({
+            index,
+            leagueSlug: clean(r?.leagueSlug),
+            leagueName: clean(r?.leagueName),
+            homeTeam: clean(r?.homeTeam || r?.home),
+            awayTeam: clean(r?.awayTeam || r?.away),
+            kickoffUtc: clean(r?.kickoffUtc),
+            provider: clean(r?.provider || r?.source),
+            providerMatchId: clean(r?.providerMatchId),
+            sourceFixtureId: clean(r?.sourceFixtureId),
+            sourceFixtureIds: Array.isArray(r?.sourceFixtureIds) ? r.sourceFixtureIds : [],
+            id: clean(r?.id),
+            matchId: clean(r?.matchId),
+            canonicalAliases: Array.isArray(r?.canonicalAliases) ? r.canonicalAliases : []
+          }));
+          console.log(JSON.stringify({ day, fixtureCount: rows.length, missingCanonicalIdCount: missing.length, missing }, null, 2));
+          NODE
+            popd >/dev/null
+            git worktree remove --force "$WORKTREE"
+          }
+
+          diagnose_day "2026-09-01" "26e893e753a5dff383088213aae948a4b3ed5f45"
+          diagnose_day "2026-09-02" "030b9b1aa54a03e8fc0ceaa08d76b0e4cd3e113b"
