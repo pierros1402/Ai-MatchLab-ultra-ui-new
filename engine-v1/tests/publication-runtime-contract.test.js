@@ -56,6 +56,7 @@ test("deploy workflows verify sustained public runtime rather than hook acceptan
   const wait = read("tools/wait-for-render-engine-release.sh");
   const stability = read("tools/verify-public-engine-runtime.mjs");
   const ui = read(".github/workflows/ui-only-render-deploy.yml");
+  const uiVerifier = read("tools/verify-public-ui-release.sh");
 
   assert.match(engine, /actions\/checkout@v\d+/);
   assert.match(engine, /ref:\s*\$\{\{\s*github\.sha\s*\}\}/);
@@ -68,6 +69,7 @@ test("deploy workflows verify sustained public runtime rather than hook acceptan
   assert.match(ui, /actions\/checkout@v\d+/);
   assert.match(ui, /ref:\s*\$\{\{\s*github\.sha\s*\}\}/);
   assert.match(ui, /verify-public-ui-release\.sh/);
+  assert.match(uiVerifier, /data\/deploy-snapshots\/latest\.json/);
 });
 
 

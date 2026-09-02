@@ -13,6 +13,7 @@ fi
 UI_BASE="${UI_BASE%/}"
 FILES=(
   index.html
+  data/deploy-snapshots/latest.json
   assets/js/ui/app.js
   assets/js/live/operational-day.js
   assets/js/live/date-nav-loader.js

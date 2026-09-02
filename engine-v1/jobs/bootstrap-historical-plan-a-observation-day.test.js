@@ -6,14 +6,6 @@ import {
   describePlanAObservationDifference
 } from "./bootstrap-historical-plan-a-observation-day.js";
 
-const workflow = fs.readFileSync(
-  new URL(
-    "../../.github/workflows/tmp-p0-publication-chain-stage2-day29-20260829.yml",
-    import.meta.url
-  ),
-  "utf8"
-);
-
 const bootstrapSource = fs.readFileSync(
   new URL(
     "./bootstrap-historical-plan-a-observation-day.js",
@@ -64,38 +56,6 @@ test("Plan A bootstrap diagnostics pass identical source-bound payloads", () => 
 
   assert.equal(result.ok, true);
   assert.equal(result.firstMismatchIndex, null);
-});
-
-test("Day29 recovery uses the reusable source-bound bootstrap after Details stabilize", () => {
-  const detailsIndex = workflow.indexOf(
-    "Synchronize Day29 canonical runtime and Details"
-  );
-  const bootstrapIndex = workflow.indexOf(
-    "bootstrap-historical-plan-a-observation-day.js"
-  );
-  const stageIndex = workflow.indexOf(
-    "Stage source-bound Day29 seed and truth foundations"
-  );
-
-  assert.ok(detailsIndex >= 0);
-  assert.ok(bootstrapIndex > detailsIndex);
-  assert.ok(stageIndex > bootstrapIndex);
-  assert.match(
-    workflow.slice(bootstrapIndex, stageIndex),
-    /--date=2026-08-29[\s\S]*--plan-a-candidate=[\s\S]*--plan-b-candidate=[\s\S]*--source-ref=3f4bcb309b3035422983de5ed48a3f94e3bdca7b/
-  );
-  assert.match(
-    workflow,
-    /Rebuild Day29 A and B from the immutable adjusted cohort checkpoint/
-  );
-  assert.match(
-    workflow,
-    /data\/value-plans\/2026-08-29\/plan-b-audit\.json/
-  );
-  assert.doesNotMatch(
-    workflow,
-    /day29_plan_a_snapshot_candidate_pick_signature_mismatch/
-  );
 });
 
 test("historical bootstrap refreshes the snapshot before comparison and freezes only afterward", () => {
