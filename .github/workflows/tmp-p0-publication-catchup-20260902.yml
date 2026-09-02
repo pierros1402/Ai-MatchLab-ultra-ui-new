@@ -1,0 +1,309 @@
+name: P0 final publication catch-up Sep1 Sep2
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/tmp-p0-publication-catchup-20260902.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  recover-pre-event-plan-a:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    concurrency:
+      group: ai-matchlab-data-writer
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Sync latest main after writer lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --prune origin main
+          git checkout -B main origin/main
+          test -z "$(git status --porcelain)"
+          LATEST_DAY="$(node -e 'const x=require("./data/deploy-snapshots/latest.json");process.stdout.write(String(x.date||""))')"
+          echo "LATEST_BEFORE_RECOVERY=$LATEST_DAY"
+          test "$LATEST_DAY" = "2026-08-31"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Recover Sep1 and Sep2 Plan A strictly from pre-event Git states
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          recover_day() {
+            local DAY="$1"
+            local SOURCE_REF="$2"
+            local BOUNDARY_UTC="$3"
+            local WORKTREE="/tmp/aiml-pre-event-${DAY}"
+            local OUT="/tmp/${DAY}-plan-a-candidate.json"
+            local AUDIT="/tmp/${DAY}-plan-a-candidate-audit.json"
+
+            if [ -f "data/value-plans/${DAY}/plan-a.json" ]; then
+              echo "PLAN_A_ALREADY_PRESENT day=${DAY}"
+              node --input-type=module - "$DAY" <<'NODE'
+          import { readPlanAObservationDay } from "./engine-v1/value/plan-a-observation.js";
+          const day = process.argv[2];
+          const read = readPlanAObservationDay(day);
+          console.log(JSON.stringify({ day, ok: read.ok, count: read?.payload?.count ?? null, signature: read?.payload?.observationSignature ?? null }, null, 2));
+          if (!read.ok) process.exit(1);
+          NODE
+              return 0
+            fi
+
+            git merge-base --is-ancestor "$SOURCE_REF" origin/main
+            local SOURCE_AT
+            SOURCE_AT="$(git show -s --format=%cI "$SOURCE_REF")"
+            node - "$SOURCE_AT" "$BOUNDARY_UTC" <<'NODE'
+          const sourceAt = Date.parse(process.argv[2]);
+          const boundary = Date.parse(process.argv[3]);
+          if (!Number.isFinite(sourceAt) || !Number.isFinite(boundary) || !(sourceAt < boundary)) {
+            console.error(JSON.stringify({ sourceAt: process.argv[2], boundaryUtc: process.argv[3], preEvent: false }, null, 2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({ sourceAt: process.argv[2], boundaryUtc: process.argv[3], preEvent: true }, null, 2));
+          NODE
+
+            rm -rf "$WORKTREE" "$OUT" "$AUDIT"
+            git worktree add --detach "$WORKTREE" "$SOURCE_REF"
+
+            pushd "$WORKTREE" >/dev/null
+            npm ci --no-audit --no-fund
+            npm ci --no-audit --no-fund --prefix engine-v1
+
+            DAY_KEY="$DAY" OUT_PATH="$OUT" AUDIT_PATH="$AUDIT" node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { buildValueDay } from "./engine-v1/core/build-value-day.js";
+
+          const day = process.env.DAY_KEY;
+          const result = await buildValueDay(day, {
+            rebuild: true,
+            outputPath: process.env.OUT_PATH,
+            auditPath: process.env.AUDIT_PATH
+          });
+          const payload = JSON.parse(fs.readFileSync(process.env.OUT_PATH, "utf8"));
+          const audit = JSON.parse(fs.readFileSync(process.env.AUDIT_PATH, "utf8"));
+          const picks = Array.isArray(payload?.picks) ? payload.picks : [];
+          const universeCount = Number(audit?.fixtureUniverse?.count ?? audit?.sourceContract?.fixtureUniverse?.count ?? 0);
+          console.log(JSON.stringify({
+            day,
+            buildOk: result?.ok !== false,
+            source: payload?.source || null,
+            pickCount: picks.length,
+            universeCount,
+            outputPath: process.env.OUT_PATH
+          }, null, 2));
+          if (result?.ok === false || payload?.date !== day || !Array.isArray(payload?.picks) || universeCount <= 0) process.exit(1);
+          NODE
+
+            TRACKED_MUTATIONS="$(git status --porcelain --untracked-files=no)"
+            if [ -n "$TRACKED_MUTATIONS" ]; then
+              echo "ERROR: pre-event replay mutated tracked source tree"
+              echo "$TRACKED_MUTATIONS"
+              exit 1
+            fi
+            popd >/dev/null
+
+            SOURCE_REF="$SOURCE_REF" SOURCE_AT="$SOURCE_AT" BOUNDARY_UTC="$BOUNDARY_UTC" DAY_KEY="$DAY" OUT_PATH="$OUT" node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import {
+            ensurePlanAObservationDay,
+            readPlanAObservationDay
+          } from "./engine-v1/value/plan-a-observation.js";
+
+          const day = process.env.DAY_KEY;
+          const sourcePayload = JSON.parse(fs.readFileSync(process.env.OUT_PATH, "utf8"));
+          const frozen = ensurePlanAObservationDay(day, sourcePayload, {
+            sourcePath: `git:${process.env.SOURCE_REF}:pre-event-replay:${day}`,
+            provenance: {
+              kind: "historical_pre_event_git_replay_recovery",
+              recoveryReason: "missing_pre_midnight_plan_a_observation_during_publication_backlog",
+              sourceCommit: process.env.SOURCE_REF,
+              sourceCommitAt: process.env.SOURCE_AT,
+              operationalDayBoundaryUtc: process.env.BOUNDARY_UTC,
+              sourceCommitPrecedesOperationalDay: true,
+              replayReadOnly: true,
+              hindsightInputAllowed: false
+            }
+          });
+          console.log(JSON.stringify({ day, frozen }, null, 2));
+          if (frozen?.ok !== true || frozen?.conflict === true) process.exit(1);
+
+          const read = readPlanAObservationDay(day);
+          console.log(JSON.stringify({
+            day,
+            readOk: read.ok,
+            count: read?.payload?.count ?? null,
+            signature: read?.payload?.observationSignature ?? null
+          }, null, 2));
+          if (!read.ok) process.exit(1);
+          NODE
+
+            git worktree remove --force "$WORKTREE"
+          }
+
+          # Europe/Athens was UTC+3 on both dates.
+          recover_day "2026-09-01" "26e893e753a5dff383088213aae948a4b3ed5f45" "2026-08-31T21:00:00Z"
+          recover_day "2026-09-02" "030b9b1aa54a03e8fc0ceaa08d76b0e4cd3e113b" "2026-09-01T21:00:00Z"
+
+      - name: Validate and commit only recovered immutable Plan A observations
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore --staged . || true
+
+          for DAY in 2026-09-01 2026-09-02; do
+            test -f "data/value-plans/${DAY}/plan-a.json"
+            test -f "data/value-plans/${DAY}/plan-a-audit.json"
+            git add "data/value-plans/${DAY}/plan-a.json" "data/value-plans/${DAY}/plan-a-audit.json"
+          done
+
+          STAGED="$(git diff --cached --name-only || true)"
+          printf '%s\n' "$STAGED"
+          BAD="$(printf '%s\n' "$STAGED" | grep -Ev '^data/value-plans/2026-09-(01|02)/plan-a(-audit)?\.json$' || true)"
+          if [ -n "$BAD" ]; then
+            echo "ERROR: unexpected recovery paths staged"
+            echo "$BAD"
+            exit 1
+          fi
+
+          node engine-v1/jobs/guard-staged-data-boundary.js \
+            --label=sep1-sep2-pre-event-plan-a-recovery \
+            --allow='^data/value-plans/2026-09-(01|02)/plan-a(-audit)?\.json$'
+          git diff --cached --check
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --cached --quiet; then
+            echo "No Plan A recovery changes required."
+          else
+            git commit -m "P0: Recover Sep1 Sep2 Plan A from pre-event Git replay"
+            bash tools/git-push-rebase-retry.sh
+          fi
+
+  publish-sep1:
+    needs: recover-pre-event-plan-a
+    runs-on: ubuntu-latest
+    timeout-minutes: 220
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Dispatch and verify Sep1
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          WORKFLOW="daily-deploy-snapshot.yml"
+          BEFORE="$(gh run list --workflow "$WORKFLOW" --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
+          gh workflow run "$WORKFLOW" --ref main -f dayKey=2026-09-01 -f triggerRender=false
+          RUN_ID=""
+          for attempt in $(seq 1 60); do
+            sleep 2
+            CANDIDATE="$(gh run list --workflow "$WORKFLOW" --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
+            if [ -n "$CANDIDATE" ] && [ "$CANDIDATE" != "0" ] && [ "$CANDIDATE" != "$BEFORE" ]; then RUN_ID="$CANDIDATE"; break; fi
+          done
+          test -n "$RUN_ID"
+          echo "SEP1_DAILY_RUN_ID=$RUN_ID"
+          gh run watch "$RUN_ID" --exit-status --interval 15
+
+          git fetch origin main
+          git show origin/main:data/deploy-snapshots/latest.json >/tmp/latest-sep1.json
+          git show origin/main:data/deploy-snapshots/2026-09-01/manifest.json >/tmp/manifest-sep1.json
+          node - <<'NODE'
+          const fs = require("fs");
+          const latest = JSON.parse(fs.readFileSync("/tmp/latest-sep1.json", "utf8"));
+          const m = JSON.parse(fs.readFileSync("/tmp/manifest-sep1.json", "utf8"));
+          const c = m.counts || {};
+          console.log(JSON.stringify({ date: m.date, latest: latest.date, counts: c, valueGate: m.valueGate }, null, 2));
+          if (latest.date !== "2026-09-01") process.exit(1);
+          if (m.date !== "2026-09-01" || m.ok !== true) process.exit(1);
+          if (c.fixtures !== c.details || c.detailsMissingForFixtures !== 0) process.exit(1);
+          if (m.valueGate?.ok !== true || m.valueGate?.frozenReleaseSafe !== true || m.valueGate?.orphanPickCount !== 0) process.exit(1);
+          NODE
+
+  publish-sep2:
+    needs: publish-sep1
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Dispatch and verify Sep2 with Render redeploy
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          WORKFLOW="daily-deploy-snapshot.yml"
+          BEFORE="$(gh run list --workflow "$WORKFLOW" --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
+          gh workflow run "$WORKFLOW" --ref main -f dayKey=2026-09-02 -f triggerRender=true
+          RUN_ID=""
+          for attempt in $(seq 1 60); do
+            sleep 2
+            CANDIDATE="$(gh run list --workflow "$WORKFLOW" --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
+            if [ -n "$CANDIDATE" ] && [ "$CANDIDATE" != "0" ] && [ "$CANDIDATE" != "$BEFORE" ]; then RUN_ID="$CANDIDATE"; break; fi
+          done
+          test -n "$RUN_ID"
+          echo "SEP2_DAILY_RUN_ID=$RUN_ID"
+          gh run watch "$RUN_ID" --exit-status --interval 15
+
+          git fetch origin main
+          git show origin/main:data/deploy-snapshots/latest.json >/tmp/latest-sep2.json
+          git show origin/main:data/deploy-snapshots/2026-09-02/manifest.json >/tmp/manifest-sep2.json
+          node - <<'NODE'
+          const fs = require("fs");
+          const latest = JSON.parse(fs.readFileSync("/tmp/latest-sep2.json", "utf8"));
+          const m = JSON.parse(fs.readFileSync("/tmp/manifest-sep2.json", "utf8"));
+          const c = m.counts || {};
+          console.log(JSON.stringify({ date: m.date, latest: latest.date, counts: c, valueGate: m.valueGate }, null, 2));
+          if (latest.date !== "2026-09-02") process.exit(1);
+          if (m.date !== "2026-09-02" || m.ok !== true) process.exit(1);
+          if (c.fixtures !== c.details || c.detailsMissingForFixtures !== 0) process.exit(1);
+          if (m.valueGate?.ok !== true || m.valueGate?.frozenReleaseSafe !== true || m.valueGate?.orphanPickCount !== 0) process.exit(1);
+          NODE
+
+      - name: Verify public Engine and UI reached Sep2
+        shell: bash
+        run: |
+          set -euo pipefail
+          ENGINE_URL="https://ai-matchlab-engine.onrender.com"
+          UI_URL="https://ai-matchlab-ultra-ui-new.onrender.com"
+
+          for attempt in $(seq 1 30); do
+            echo "PUBLIC_VERIFY attempt=$attempt"
+            UI_DAY="$(curl -fsS --max-time 30 "$UI_URL/data/deploy-snapshots/latest.json" 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>{try{process.stdout.write(String(JSON.parse(s).date||""))}catch{}})' || true)"
+            ENGINE_DAY="$(curl -fsS --max-time 30 "$ENGINE_URL/fixtures-runtime?mode=today&date=2026-09-02" 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>{try{const x=JSON.parse(s);process.stdout.write(String(x.date||x.dayKey||x.snapshotDate||""))}catch{}})' || true)"
+            echo "PUBLIC_UI_DAY=$UI_DAY PUBLIC_ENGINE_DAY=$ENGINE_DAY"
+            if [ "$UI_DAY" = "2026-09-02" ] && [ "$ENGINE_DAY" = "2026-09-02" ]; then
+              echo "P0_FINAL_PUBLICATION_CATCHUP_SEP1_SEP2=PASS"
+              exit 0
+            fi
+            sleep 20
+          done
+
+          echo "ERROR: public Engine/UI did not converge to 2026-09-02"
+          exit 1
