@@ -43,12 +43,24 @@ const TEAM_AFFIX_RE =
   /\b(fc|afc|cf|sc|ac|cd|ca|ec|se|ad|sv|fk|if|bk|aif|club|calcio|fodbold|futebol|footballclub|dos|das|de|do|da|e)\b/g;
 
 export function normalizeTeamTokens(name = "") {
-  return String(name || "")
+  const normalized = String(name || "")
     .normalize("NFD").replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/&/g, " and ")
-    .replace(/[.'`’]/g, "")            // collapse dotted abbreviations: f.c. → fc
+    .replace(/[.'`’]/g, "");           // collapse dotted abbreviations: f.c. → fc
+
+  const stripped = normalized
     .replace(TEAM_AFFIX_RE, " ")
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (stripped) return stripped;
+
+  // Never emit an empty canonical team identity solely because the
+  // complete legitimate display name is itself a generic football affix.
+  // Normal names retain the existing affix-stripping behavior unchanged.
+  return normalized
     .replace(/[^a-z0-9 ]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
