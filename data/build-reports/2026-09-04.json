@@ -2,10 +2,10 @@
   "ok": false,
   "schema": "ai-matchlab.day-build-report.v1",
   "dayKey": "2026-09-04",
-  "generatedAt": "2026-09-04T17:37:05.756Z",
+  "generatedAt": "2026-09-04T20:12:54.407Z",
   "universe": {
     "expected": null,
-    "canonical": 194,
+    "canonical": 195,
     "published": 0,
     "details": 0,
     "byLeague": {
@@ -35,7 +35,7 @@
         "den.2": 3,
         "ecu.1": 2,
         "ecu.2": 4,
-        "egy.2": 4,
+        "egy.2": 5,
         "eng.1": 1,
         "eng.5": 1,
         "eng.fa": 5,
@@ -636,11 +636,19 @@
   "settlement": null,
   "foundationIntegrity": {
     "schema": "ai-matchlab.foundation-integrity.v1",
-    "generatedAt": "2026-09-04T17:37:05.523Z",
+    "generatedAt": "2026-09-04T20:12:54.170Z",
     "season": "2026-2027",
-    "modelReady": true,
+    "modelReady": false,
     "publicationReady": false,
     "blocked": [
+      {
+        "component": "historyIndex",
+        "reason": "history_index_foundation_stale"
+      },
+      {
+        "component": "modelPriors",
+        "reason": "model_priors_foundation_stale"
+      },
       {
         "component": "details",
         "reason": "details_foundation_not_ready"
@@ -650,7 +658,7 @@
       {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 2396,
+        "count": 2406,
         "informational": true
       },
       {
@@ -685,6 +693,7 @@
   },
   "hardFailures": [
     "manifest_missing",
+    "foundation_model_not_ready",
     "foundation_publication_not_ready",
     "snapshot_stale",
     "value_plan_comparison_missing"

@@ -1,25 +1,25 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-09-04",
-  "generatedAt": "2026-09-03T21:02:33.108Z",
+  "generatedAt": "2026-09-04T20:12:54.591Z",
   "severity": "error",
   "issueCounts": {
-    "error": 10,
+    "error": 12,
     "warning": 4,
     "info": 6
   },
   "alert": true,
   "alertCounts": {
-    "error": 4,
-    "warning": 4,
+    "error": 1,
+    "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 20,
-  "actionableIssueCount": 14,
-  "newIssueCount": 11,
-  "newActionableIssueCount": 8,
-  "resolvedIssueCount": 8,
-  "persistentIssueCount": 9,
+  "activeIssueCount": 22,
+  "actionableIssueCount": 16,
+  "newIssueCount": 1,
+  "newActionableIssueCount": 1,
+  "resolvedIssueCount": 0,
+  "persistentIssueCount": 21,
   "activeIssues": [
     {
       "severity": "error",
@@ -51,10 +51,40 @@
     {
       "severity": "error",
       "source": "foundation-integrity",
+      "type": "foundation_model_not_ready",
+      "message": "Model foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
       "type": "foundation_publication_not_ready",
       "message": "Publication foundation is not ready.",
       "details": {
         "blocked": [
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
           {
             "component": "details",
             "reason": "details_foundation_not_ready"
@@ -70,7 +100,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 2396,
+        "count": 2406,
         "informational": true
       }
     },
@@ -105,6 +135,15 @@
       "message": "manifest_missing",
       "details": {
         "failure": "manifest_missing"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_model_not_ready",
+      "details": {
+        "failure": "foundation_model_not_ready"
       }
     },
     {
@@ -305,10 +344,40 @@
     {
       "severity": "error",
       "source": "foundation-integrity",
+      "type": "foundation_model_not_ready",
+      "message": "Model foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
       "type": "foundation_publication_not_ready",
       "message": "Publication foundation is not ready.",
       "details": {
         "blocked": [
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
           {
             "component": "details",
             "reason": "details_foundation_not_ready"
@@ -323,6 +392,15 @@
       "message": "manifest_missing",
       "details": {
         "failure": "manifest_missing"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_model_not_ready",
+      "details": {
+        "failure": "foundation_model_not_ready"
       }
     },
     {
@@ -423,6 +501,55 @@
   "newIssues": [
     {
       "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_model_not_ready",
+      "message": "Model foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_model_not_ready",
+      "message": "Model foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    }
+  ],
+  "resolvedIssues": [],
+  "persistentIssues": [
+    {
+      "severity": "error",
       "source": "manifest",
       "type": "artifact_missing",
       "message": "Snapshot manifest is missing.",
@@ -446,6 +573,109 @@
       "message": "Freshness report is missing.",
       "details": {
         "artifact": "data/deploy-snapshots/2026-09-04/freshness-report.json"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "age_expired_results_rows_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "age_expired_results_rows_present",
+        "count": 2406,
+        "informational": true
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "history_semantic_warnings_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "history_semantic_warnings_present",
+        "count": 4,
+        "informational": true
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "score_consistent_alias_mirror_conflicts_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "score_consistent_alias_mirror_conflicts_present",
+        "count": 47,
+        "informational": true
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "manifest_missing",
+      "details": {
+        "failure": "manifest_missing"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_model_not_ready",
+      "details": {
+        "failure": "foundation_model_not_ready"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_publication_not_ready",
+      "details": {
+        "failure": "foundation_publication_not_ready"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "value_plan_comparison_missing",
+      "details": {
+        "failure": "value_plan_comparison_missing"
       }
     },
     {
@@ -475,6 +705,16 @@
         ],
         "raw": "acquisition_skipped_slugs:bol.copa,bra.copa_do_brazil,eng.fa_qual,eng.w.1,fra.w.1,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
         "contextOnly": false
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -575,271 +815,6 @@
           "B",
           "B2"
         ]
-      }
-    }
-  ],
-  "newActionableIssues": [
-    {
-      "severity": "error",
-      "source": "manifest",
-      "type": "artifact_missing",
-      "message": "Snapshot manifest is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-09-04/manifest.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "invariant-report",
-      "type": "artifact_missing",
-      "message": "Invariant report is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-09-04/invariant-report.json"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "artifact_missing",
-      "message": "Freshness report is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-09-04/freshness-report.json"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_warning",
-      "message": "canonical_leagues_missing_from_published:alb.1,arg.1,arg.2,arm.1,aze.1,aze.2,bel.1,bel.2,blr.1,blr.2,bol.1,bra.2,bul.1,caf.champions,caf.confed,col.1,col.2,cro.1,cyp.1,cze.2,den.1,den.2,ecu.1,ecu.2,egy.2,eng.1,eng.5,eng.fa,esp.1,esp.2,est.2,fin.2,fra.1,fra.2,fro.2,geo.1,ger.1,ger.2,ger.3,gib.1,hon.1,hun.1,idn.1,irl.1,irl.2,ita.1,kaz.2,kor.2,kos.1,kos.2,ksa.1,ltu.2,mda.2,mex.2,mkd.1,mne.1,mys.1,ned.1,ned.2,nir.1,nir.2,nor.1,par.1,per.1,per.2,pol.1,pol.2,por.1,qat.1,rou.1,rou.2,rsa.1,rsa.2,rus.2,sco.2,smr.1,srb.1,sui.2,svk.2,svn.1,svn.2,swe.2,tur.1,uae.1,uae.2,uga.1,ukr.1,ukr.2,uru.2,ven.1,wal.1,wal.2,zim.1",
-      "details": {
-        "raw": "canonical_leagues_missing_from_published:alb.1,arg.1,arg.2,arm.1,aze.1,aze.2,bel.1,bel.2,blr.1,blr.2,bol.1,bra.2,bul.1,caf.champions,caf.confed,col.1,col.2,cro.1,cyp.1,cze.2,den.1,den.2,ecu.1,ecu.2,egy.2,eng.1,eng.5,eng.fa,esp.1,esp.2,est.2,fin.2,fra.1,fra.2,fro.2,geo.1,ger.1,ger.2,ger.3,gib.1,hon.1,hun.1,idn.1,irl.1,irl.2,ita.1,kaz.2,kor.2,kos.1,kos.2,ksa.1,ltu.2,mda.2,mex.2,mkd.1,mne.1,mys.1,ned.1,ned.2,nir.1,nir.2,nor.1,par.1,per.1,per.2,pol.1,pol.2,por.1,qat.1,rou.1,rou.2,rsa.1,rsa.2,rus.2,sco.2,smr.1,srb.1,sui.2,svk.2,svn.1,svn.2,swe.2,tur.1,uae.1,uae.2,uga.1,ukr.1,ukr.2,uru.2,ven.1,wal.1,wal.2,zim.1"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "acquisition_skipped_slugs",
-      "message": "Acquisition skipped slugs during fixture acquisition.",
-      "details": {
-        "slugs": [
-          "bol.copa",
-          "bra.copa_do_brazil",
-          "eng.fa_qual",
-          "eng.w.1",
-          "fra.w.1",
-          "usa.ncaa.m.1",
-          "usa.ncaa.w.1",
-          "usa.w.usl.1"
-        ],
-        "raw": "acquisition_skipped_slugs:bol.copa,bra.copa_do_brazil,eng.fa_qual,eng.w.1,fra.w.1,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
-        "contextOnly": false
-      }
-    },
-    {
-      "severity": "error",
-      "source": "active-competition-completeness",
-      "type": "active_competition_completeness_missing",
-      "message": "Independent target-day active competition coverage proof is missing.",
-      "details": {
-        "dayKey": "2026-09-04",
-        "artifact": "data/coverage-readiness/2026-09-04.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "value",
-      "type": "artifact_missing",
-      "message": "Production value artifact is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-09-04/value.json"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "value-audit",
-      "type": "artifact_missing",
-      "message": "Production value audit artifact is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-09-04/value-audit.json"
-      }
-    }
-  ],
-  "resolvedIssues": [
-    {
-      "severity": "error",
-      "source": "manifest",
-      "type": "artifact_missing",
-      "message": "Snapshot manifest is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-09-03/manifest.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "invariant-report",
-      "type": "artifact_missing",
-      "message": "Invariant report is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-09-03/invariant-report.json"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "artifact_missing",
-      "message": "Freshness report is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-09-03/freshness-report.json"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_warning",
-      "message": "canonical_leagues_missing_from_published:afc.asian_cup,arg.2,arm.1,aze.2,bel.1,blr.1,bra.1,bul.2,chi.1,col.1,den.1,ecu.1,ecu.2,egy.1,egy.2,esp.1,est.2,fra.1,hun.1,isr.1,ita.coppa_italia,kaz.2,ksa.1,ltu.1,mne.1,pol.1,qat.1,sco.1,sui.1,swe.1,tur.2,uga.1,usa.2,ven.1,ven.2,yem.1",
-      "details": {
-        "raw": "canonical_leagues_missing_from_published:afc.asian_cup,arg.2,arm.1,aze.2,bel.1,blr.1,bra.1,bul.2,chi.1,col.1,den.1,ecu.1,ecu.2,egy.1,egy.2,esp.1,est.2,fra.1,hun.1,isr.1,ita.coppa_italia,kaz.2,ksa.1,ltu.1,mne.1,pol.1,qat.1,sco.1,sui.1,swe.1,tur.2,uga.1,usa.2,ven.1,ven.2,yem.1"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "active-competition-completeness",
-      "type": "active_competition_completeness_missing",
-      "message": "Independent target-day active competition coverage proof is missing.",
-      "details": {
-        "dayKey": "2026-09-03",
-        "artifact": "data/coverage-readiness/2026-09-03.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "value",
-      "type": "artifact_missing",
-      "message": "Production value artifact is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-09-03/value.json"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "value-audit",
-      "type": "artifact_missing",
-      "message": "Production value audit artifact is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-09-03/value-audit.json"
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "artifact_missing",
-      "message": "Four-plan Value comparison artifact is missing.",
-      "details": {
-        "artifact": "data/value-comparison/2026-09-03.json",
-        "requiredPlans": [
-          "A",
-          "A2",
-          "B",
-          "B2"
-        ]
-      }
-    }
-  ],
-  "persistentIssues": [
-    {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "foundation_publication_not_ready",
-      "message": "Publication foundation is not ready.",
-      "details": {
-        "blocked": [
-          {
-            "component": "details",
-            "reason": "details_foundation_not_ready"
-          }
-        ]
-      }
-    },
-    {
-      "severity": "info",
-      "source": "foundation-integrity",
-      "type": "age_expired_results_rows_present",
-      "message": "Foundation integrity informational condition.",
-      "details": {
-        "component": "historySemantic",
-        "reason": "age_expired_results_rows_present",
-        "count": 2220,
-        "informational": true
-      }
-    },
-    {
-      "severity": "info",
-      "source": "foundation-integrity",
-      "type": "history_semantic_warnings_present",
-      "message": "Foundation integrity informational condition.",
-      "details": {
-        "component": "historySemantic",
-        "reason": "history_semantic_warnings_present",
-        "count": 4,
-        "informational": true
-      }
-    },
-    {
-      "severity": "info",
-      "source": "foundation-integrity",
-      "type": "score_consistent_alias_mirror_conflicts_present",
-      "message": "Foundation integrity informational condition.",
-      "details": {
-        "component": "historySemantic",
-        "reason": "score_consistent_alias_mirror_conflicts_present",
-        "count": 47,
-        "informational": true
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "manifest_missing",
-      "details": {
-        "failure": "manifest_missing"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "foundation_publication_not_ready",
-      "details": {
-        "failure": "foundation_publication_not_ready"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "value_plan_comparison_missing",
-      "details": {
-        "failure": "value_plan_comparison_missing"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
-      "details": {
-        "clean": false,
-        "cleanStrict": false
       }
     }
   ]
