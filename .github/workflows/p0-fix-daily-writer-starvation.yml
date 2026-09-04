@@ -1,0 +1,77 @@
+name: P0 fix Daily writer starvation
+
+on:
+  push:
+    branches:
+      - fix/daily-writer-starvation-20260904
+    paths:
+      - .github/workflows/p0-fix-daily-writer-starvation.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-workflows:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout recovery branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Apply exact writer-priority patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          token_expr = "$" + "{{ github.token }}"
+          output_expr = "$" + "{{ steps.daily-priority.outputs.allow_writer }}"
+
+          admission = f'''  admission:\n    runs-on: ubuntu-latest\n    outputs:\n      allow_writer: {output_expr}\n    steps:\n      - name: Protect Daily writer priority\n        id: daily-priority\n        shell: bash\n        env:\n          GITHUB_TOKEN: {token_expr}\n        run: |\n          set -euo pipefail\n          API_URL="https://api.github.com/repos/${{GITHUB_REPOSITORY}}/actions/workflows/270329104/runs?branch=main&per_page=20"\n          RESPONSE_FILE="${{RUNNER_TEMP}}/daily-writer-priority.json"\n\n          if ! curl -fsSL \\\n            -H "Authorization: Bearer ${{GITHUB_TOKEN}}" \\\n            -H "Accept: application/vnd.github+json" \\\n            -H "X-GitHub-Api-Version: 2022-11-28" \\\n            -o "$RESPONSE_FILE" \\\n            "$API_URL"; then\n            echo "Daily writer lookup failed; failing closed and skipping lower-priority writer."\n            echo "allow_writer=false" >> "$GITHUB_OUTPUT"\n            exit 0\n          fi\n\n          ACTIVE_COUNT="$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1], encoding="utf-8")); print(sum(1 for r in d.get("workflow_runs", []) if str(r.get("status", "")).lower() != "completed"))' "$RESPONSE_FILE" 2>/dev/null || true)"\n\n          if ! [[ "$ACTIVE_COUNT" =~ ^[0-9]+$ ]]; then\n            echo "Daily writer response could not be parsed; failing closed."\n            echo "allow_writer=false" >> "$GITHUB_OUTPUT"\n            exit 0\n          fi\n\n          if [ "$ACTIVE_COUNT" -gt 0 ]; then\n            echo "Daily publication is queued/in progress; lower-priority writer will not enter the shared queue."\n            echo "allow_writer=false" >> "$GITHUB_OUTPUT"\n          else\n            echo "No active Daily publication; lower-priority writer may enter the shared queue."\n            echo "allow_writer=true" >> "$GITHUB_OUTPUT"\n          fi\n\n'''
+
+          intraday_path = Path('.github/workflows/intraday-deploy-snapshot-refresh.yml')
+          intraday = intraday_path.read_text(encoding='utf-8')
+          intraday_old = '''permissions:\n  contents: write\n  issues: write\n\nconcurrency:\n  group: ai-matchlab-data-writer\n  cancel-in-progress: false\n\njobs:\n  refresh-and-commit-snapshot:\n    runs-on: ubuntu-latest\n    timeout-minutes: 45\n'''
+          intraday_new = f'''permissions:\n  contents: write\n  issues: write\n  actions: read\n\njobs:\n{admission}  refresh-and-commit-snapshot:\n    needs: admission\n    if: needs.admission.outputs.allow_writer == 'true'\n    concurrency:\n      group: ai-matchlab-data-writer\n      cancel-in-progress: false\n    runs-on: ubuntu-latest\n    timeout-minutes: 45\n'''
+          if intraday.count(intraday_old) != 1:
+              raise SystemExit(f'intraday exact anchor count != 1: {intraday.count(intraday_old)}')
+          intraday_path.write_text(intraday.replace(intraday_old, intraday_new, 1), encoding='utf-8', newline='')
+
+          odds_path = Path('.github/workflows/odds-refresh.yml')
+          odds = odds_path.read_text(encoding='utf-8')
+          odds_old = '''permissions:\n  contents: write\n\n# Serialize every repository data writer. Odds refresh must never race the Daily\n# snapshot pipeline over deploy-snapshots/{day}/odds.json.\nconcurrency:\n  group: ai-matchlab-data-writer\n  cancel-in-progress: false\n\njobs:\n  refresh-odds:\n    runs-on: ubuntu-latest\n    timeout-minutes: 15\n'''
+          odds_new = f'''permissions:\n  contents: write\n  actions: read\n\n# Admission stays outside the shared writer queue so frequent Odds ticks cannot\n# replace a pending Daily publication. The real writer still uses the global\n# lock, preserving serialization over deploy-snapshots/{{day}}/odds.json.\njobs:\n{admission}  refresh-odds:\n    needs: admission\n    if: needs.admission.outputs.allow_writer == 'true'\n    concurrency:\n      group: ai-matchlab-data-writer\n      cancel-in-progress: false\n    runs-on: ubuntu-latest\n    timeout-minutes: 15\n'''
+          if odds.count(odds_old) != 1:
+              raise SystemExit(f'odds exact anchor count != 1: {odds.count(odds_old)}')
+          odds_path.write_text(odds.replace(odds_old, odds_new, 1), encoding='utf-8', newline='')
+          PY
+
+      - name: Validate exact patch surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          CHANGED="$(git diff --name-only)"
+          printf '%s\n' "$CHANGED"
+          EXPECTED="$(printf '%s\n' \
+            '.github/workflows/intraday-deploy-snapshot-refresh.yml' \
+            '.github/workflows/odds-refresh.yml')"
+          if [ "$CHANGED" != "$EXPECTED" ]; then
+            echo "ERROR: unexpected patch surface"
+            exit 1
+          fi
+          grep -n "Protect Daily writer priority" .github/workflows/intraday-deploy-snapshot-refresh.yml .github/workflows/odds-refresh.yml
+          grep -n "group: ai-matchlab-data-writer" .github/workflows/intraday-deploy-snapshot-refresh.yml .github/workflows/odds-refresh.yml
+          git diff -- .github/workflows/intraday-deploy-snapshot-refresh.yml .github/workflows/odds-refresh.yml
+
+      - name: Commit recovery patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/intraday-deploy-snapshot-refresh.yml .github/workflows/odds-refresh.yml
+          git commit -m "Protect Daily publication from writer starvation"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
