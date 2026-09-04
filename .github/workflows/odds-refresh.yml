@@ -21,15 +21,60 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
-# Serialize every repository data writer. Odds refresh must never race the Daily
-# snapshot pipeline over deploy-snapshots/{day}/odds.json.
-concurrency:
-  group: ai-matchlab-data-writer
-  cancel-in-progress: false
-
+# Admission stays outside the shared writer queue so frequent Odds ticks cannot
+# replace a pending Daily publication. The real writer still uses the global
+# lock, preserving serialization over deploy-snapshots/{day}/odds.json.
 jobs:
+  admission:
+    runs-on: ubuntu-latest
+    outputs:
+      allow_writer: ${{ steps.daily-priority.outputs.allow_writer }}
+    steps:
+      - name: Protect Daily writer priority
+        id: daily-priority
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          API_URL="https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/270329104/runs?branch=main&per_page=20"
+          RESPONSE_FILE="$RUNNER_TEMP/daily-writer-priority.json"
+
+          if ! curl -fsSL \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -o "$RESPONSE_FILE" \
+            "$API_URL"; then
+            echo "Daily writer lookup failed; failing closed and skipping lower-priority writer."
+            echo "allow_writer=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          ACTIVE_COUNT="$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1], encoding="utf-8")); print(sum(1 for r in d.get("workflow_runs", []) if str(r.get("status", "")).lower() != "completed"))' "$RESPONSE_FILE" 2>/dev/null || true)"
+
+          if ! [[ "$ACTIVE_COUNT" =~ ^[0-9]+$ ]]; then
+            echo "Daily writer response could not be parsed; failing closed."
+            echo "allow_writer=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "$ACTIVE_COUNT" -gt 0 ]; then
+            echo "Daily publication is queued/in progress; lower-priority writer will not enter the shared queue."
+            echo "allow_writer=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "No active Daily publication; lower-priority writer may enter the shared queue."
+            echo "allow_writer=true" >> "$GITHUB_OUTPUT"
+          fi
+
   refresh-odds:
+    needs: admission
+    if: needs.admission.outputs.allow_writer == 'true'
+    concurrency:
+      group: ai-matchlab-data-writer
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
