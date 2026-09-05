@@ -842,6 +842,90 @@ function dayFixtures(
     );
 }
 
+export function backfillCanonicalFixtureIds(
+  rows,
+  dayKey
+) {
+  const canonicalOwners =
+    new Map();
+
+  return (
+    Array.isArray(rows)
+      ? rows
+      : []
+  ).map(row => {
+    const existingCanonicalId =
+      normalizeMatchId(
+        row?.canonicalId
+      );
+
+    const matchId =
+      normalizeMatchId(
+        row?.matchId ||
+        row?.sourceMatchId ||
+        row?.sourceId ||
+        row?.matchKey ||
+        row?.id
+      );
+
+    const identityDay =
+      String(
+        dayKey ||
+        row?.dayKey ||
+        ""
+      ).trim();
+
+    const canonicalId =
+      existingCanonicalId ||
+      normalizeMatchId(
+        buildCanonicalId(
+          row?.leagueSlug,
+          row?.homeTeam,
+          row?.awayTeam,
+          identityDay
+        )
+      );
+
+    if (!canonicalId) {
+      return row;
+    }
+
+    if (matchId) {
+      const existingOwner =
+        canonicalOwners.get(
+          canonicalId
+        );
+
+      if (
+        existingOwner &&
+        existingOwner !== matchId
+      ) {
+        throw new Error(
+          "canonical_fixture_identity_collision:" +
+          identityDay + ":" +
+          canonicalId + ":" +
+          existingOwner + ":" +
+          matchId
+        );
+      }
+
+      canonicalOwners.set(
+        canonicalId,
+        matchId
+      );
+    }
+
+    if (existingCanonicalId) {
+      return row;
+    }
+
+    return {
+      ...row,
+      canonicalId
+    };
+  });
+}
+
 export function canonicalFixturesForDay(dayKey) {
   const dir = resolveDataPath("canonical-fixtures", dayKey);
   const rows = [];
@@ -903,7 +987,14 @@ export function canonicalFixturesForDay(dayKey) {
           canonicalizeFixtureDisplayNames
         );
 
-    for (const fixture of fixtures) {
+
+    for (
+      const fixture of
+      backfillCanonicalFixtureIds(
+        fixtures,
+        dayKey
+      )
+    ) {
       const matchId = normalizeMatchId(
         fixture?.matchId ||
         fixture?.sourceMatchId ||

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   applyProductionIdentityMembershipGate,
+  backfillCanonicalFixtureIds,
   fixtureBelongsToAthensDay,
   mergeCanonicalWithRuntimeOverlay
 } from "./day-fixture-universe.js";
@@ -57,6 +58,143 @@ function canonicalFixture(
     ...overrides
   };
 }
+
+test(
+  "canonical read path derives missing canonicalId without mutating stored truth row",
+  () => {
+    const source = {
+      matchId:
+        "401907192",
+
+      sourceId:
+        "401907192",
+
+      sourceMatchId:
+        "401907192",
+
+      leagueSlug:
+        "ned.cup",
+
+      dayKey:
+        "2026-09-01",
+
+      homeTeam:
+        "Be Quick 1887",
+
+      awayTeam:
+        "AFC"
+    };
+
+    const result =
+      backfillCanonicalFixtureIds(
+        [source],
+        "2026-09-01"
+      );
+
+    assert.equal(
+      source.canonicalId,
+      undefined
+    );
+
+    assert.equal(
+      result.length,
+      1
+    );
+
+    assert.equal(
+      result[0].canonicalId,
+      "cid_nedcup_bequick1887_afc_20260901"
+    );
+
+    assert.equal(
+      result[0].matchId,
+      "401907192"
+    );
+  }
+);
+
+test(
+  "canonical read path preserves an existing canonicalId",
+  () => {
+    const source = {
+      canonicalId:
+        "cid_existing_authoritative_identity",
+
+      matchId:
+        "provider-1",
+
+      leagueSlug:
+        "ned.cup",
+
+      homeTeam:
+        "Example Home",
+
+      awayTeam:
+        "Example Away",
+
+      dayKey:
+        "2026-09-01"
+    };
+
+    const [result] =
+      backfillCanonicalFixtureIds(
+        [source],
+        "2026-09-01"
+      );
+
+    assert.strictEqual(
+      result,
+      source
+    );
+
+    assert.equal(
+      result.canonicalId,
+      "cid_existing_authoritative_identity"
+    );
+  }
+);
+
+test(
+  "derived canonicalId collision fails closed",
+  () => {
+    assert.throws(
+      () =>
+        backfillCanonicalFixtureIds(
+          [
+            {
+              matchId:
+                "provider-a",
+
+              leagueSlug:
+                "ned.cup",
+
+              homeTeam:
+                "Be Quick 1887",
+
+              awayTeam:
+                "AFC"
+            },
+            {
+              matchId:
+                "provider-b",
+
+              leagueSlug:
+                "ned.cup",
+
+              homeTeam:
+                "Be Quick 1887",
+
+              awayTeam:
+                "AFC"
+            }
+          ],
+          "2026-09-01"
+        ),
+      /canonical_fixture_identity_collision/
+    );
+  }
+);
+
 
 test(
   "kickoff Athens day overrides an incorrect stored dayKey",
