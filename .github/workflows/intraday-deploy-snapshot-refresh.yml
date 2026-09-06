@@ -626,41 +626,125 @@ jobs:
           node - <<'NODE'
           const fs = require("fs");
           const day = process.env.DAY_KEY;
+
           const plans = [
-            ["B", `data/value-plans/${day}/plan-b-audit.json`],
-            ["B2", `data/value-plans/${day}/plan-b2-audit.json`]
+            {
+              label: "B",
+              planId: "plan-b",
+              outputMode: "plan-b-observation",
+              planFile: `data/value-plans/${day}/plan-b.json`,
+              auditFile: `data/value-plans/${day}/plan-b-audit.json`
+            },
+            {
+              label: "B2",
+              planId: "plan-b2",
+              outputMode: "plan-b2-observation",
+              planFile: `data/value-plans/${day}/plan-b2.json`,
+              auditFile: `data/value-plans/${day}/plan-b2-audit.json`
+            }
           ];
 
-          for (const [plan, file] of plans) {
-            if (!fs.existsSync(file)) {
-              throw new Error(`Plan ${plan} assessment audit missing: ${file}`);
+          for (const spec of plans) {
+            if (!fs.existsSync(spec.planFile)) {
+              throw new Error(`Plan ${spec.label} observation missing: ${spec.planFile}`);
             }
 
-            const audit = JSON.parse(fs.readFileSync(file, "utf8"));
+            if (!fs.existsSync(spec.auditFile)) {
+              throw new Error(`Plan ${spec.label} assessment audit missing: ${spec.auditFile}`);
+            }
+
+            const plan = JSON.parse(fs.readFileSync(spec.planFile, "utf8"));
+            const audit = JSON.parse(fs.readFileSync(spec.auditFile, "utf8"));
+
             const membership = audit?.membership || {};
+            const auditSource = audit?.sourceContract || {};
+            const planSource = plan?.sourceContract || {};
+            const auditRecovery = audit?.recoveryContract || {};
+            const planRecovery = plan?.recoveryContract || {};
+
             const canonicalFixtures = Number(
               membership.canonicalFixtures ??
               membership.fixtureUniverse?.count ??
               membership.evaluatedFixtureCount ??
               0
             );
+
             const assessmentRows = Number(membership.assessmentRows ?? 0);
             const joinedMatches = Number(membership.joinedMatches ?? 0);
 
+            const auditUniverse =
+              membership.fixtureUniverse ??
+              auditSource.fixtureUniverse ??
+              {};
+
+            const planUniverse = planSource.fixtureUniverse ?? {};
+
+            const explicitZeroPickRecovery =
+              plan?.ok === true &&
+              audit?.ok === true &&
+              plan?.date === day &&
+              audit?.date === day &&
+              plan?.planId === spec.planId &&
+              audit?.planId === spec.planId &&
+              plan?.outputMode === spec.outputMode &&
+              audit?.outputMode === spec.outputMode &&
+              plan?.source === "historical_missing_observation_recovery_sentinel" &&
+              audit?.source === "historical_missing_observation_recovery_sentinel" &&
+              Number(plan?.count) === 0 &&
+              Array.isArray(plan?.picks) &&
+              plan.picks.length === 0 &&
+              planSource.recoveryObservation === true &&
+              auditSource.recoveryObservation === true &&
+              planSource.retrospectiveModelOutputUsed === false &&
+              auditSource.retrospectiveModelOutputUsed === false &&
+              planRecovery.authenticPayloadRecovered === false &&
+              auditRecovery.authenticPayloadRecovered === false &&
+              planRecovery.retrospectivePredictionGeneration === false &&
+              auditRecovery.retrospectivePredictionGeneration === false &&
+              planRecovery.inventedHistoricalPicks === false &&
+              auditRecovery.inventedHistoricalPicks === false &&
+              Number(membership.outputPicks ?? 0) === 0 &&
+              Number(membership.outputValidPicks ?? 0) === 0 &&
+              Number(membership.outputOrphanPicks ?? 0) === 0 &&
+              Number(membership.outputAmbiguousPicks ?? 0) === 0 &&
+              canonicalFixtures > 0 &&
+              Number(planUniverse.count ?? -1) === canonicalFixtures &&
+              Number(auditUniverse.count ?? -1) === canonicalFixtures &&
+              typeof planUniverse.hash === "string" &&
+              planUniverse.hash.length > 0 &&
+              planUniverse.hash === auditUniverse.hash;
+
             console.log(JSON.stringify({
-              plan,
+              plan: spec.label,
               canonicalFixtures,
               assessmentRows,
               joinedMatches,
-              assessmentInputSource: audit?.sourceContract?.assessmentInputSource || null
+              explicitZeroPickRecovery
             }));
 
+            if (explicitZeroPickRecovery) {
+              if (assessmentRows !== 0 || joinedMatches !== 0) {
+                throw new Error(
+                  `Plan ${spec.label} recovery sentinel must not claim assessment/join rows`
+                );
+              }
+
+              console.log(
+                `Plan ${spec.label}: accepted explicit zero-pick recovery sentinel; retrospective model output remains forbidden.`
+              );
+              continue;
+            }
+
             if (canonicalFixtures > 0 && assessmentRows <= 0) {
-              throw new Error(`Plan ${plan} has ${canonicalFixtures} fixtures but zero aiAssessment rows`);
+              throw new Error(
+                `Plan ${spec.label} has ${canonicalFixtures} fixtures but zero aiAssessment rows`
+              );
             }
 
             if (assessmentRows > 0 && joinedMatches <= 0) {
-              throw new Error(`Plan ${plan} has aiAssessment rows but zero canonical identity joins`);
+              throw new Error(
+                `Plan ${spec.label} has aiAssessment rows but zero canonical identity joins`
+              );
             }
           }
           NODE
