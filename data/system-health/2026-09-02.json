@@ -1,7 +1,7 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-09-02",
-  "generatedAt": "2026-09-02T16:42:08.194Z",
+  "generatedAt": "2026-09-06T05:11:17.333Z",
   "severity": "error",
   "issueCounts": {
     "error": 10,
@@ -10,16 +10,16 @@
   },
   "alert": true,
   "alertCounts": {
-    "error": 0,
-    "warning": 1,
+    "error": 4,
+    "warning": 3,
     "info": 0
   },
   "activeIssueCount": 17,
   "actionableIssueCount": 13,
-  "newIssueCount": 1,
-  "newActionableIssueCount": 1,
-  "resolvedIssueCount": 1,
-  "persistentIssueCount": 16,
+  "newIssueCount": 7,
+  "newActionableIssueCount": 7,
+  "resolvedIssueCount": 7,
+  "persistentIssueCount": 10,
   "activeIssues": [
     {
       "severity": "error",
@@ -184,16 +184,103 @@
     {
       "severity": "info",
       "source": "value-comparison",
-      "type": "artifact_missing",
-      "message": "Four-plan Value comparison artifact is missing.",
+      "type": "value_plan_comparison_summary",
+      "message": "Four-plan Value comparison artifact is available.",
       "details": {
-        "artifact": "data/value-comparison/2026-09-02.json",
+        "complete": true,
         "requiredPlans": [
           "A",
           "A2",
           "B",
           "B2"
-        ]
+        ],
+        "presentPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "missingPlans": [],
+        "planA": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planA2": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planB": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planB2": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        }
       }
     }
   ],
@@ -325,38 +412,71 @@
   ],
   "newIssues": [
     {
+      "severity": "error",
+      "source": "manifest",
+      "type": "artifact_missing",
+      "message": "Snapshot manifest is missing.",
+      "details": {
+        "artifact": "data/deploy-snapshots/2026-09-02/manifest.json"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "artifact_missing",
+      "message": "Invariant report is missing.",
+      "details": {
+        "artifact": "data/deploy-snapshots/2026-09-02/invariant-report.json"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "artifact_missing",
+      "message": "Freshness report is missing.",
+      "details": {
+        "artifact": "data/deploy-snapshots/2026-09-02/freshness-report.json"
+      }
+    },
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "build_warning",
       "message": "canonical_leagues_missing_from_published:arm.2,aut.1,bel.1,bih.1,blr.1,bra.2,bul.1,bul.2,col.1,col.2,cro.2,cze.1,den.1,ecu.1,egy.1,eng.2,eng.3,est.1,ger.dfb_pokal,isr.1,ita.coppa_italia,jpn.1,ksa.2,mlt.1,ned.cup,rsa.1,rsa.2,sco.1,sui.1,svn.1,tur.2,uga.1,ven.1,ven.2,zim.1",
       "details": {
         "raw": "canonical_leagues_missing_from_published:arm.2,aut.1,bel.1,bih.1,blr.1,bra.2,bul.1,bul.2,col.1,col.2,cro.2,cze.1,den.1,ecu.1,egy.1,eng.2,eng.3,est.1,ger.dfb_pokal,isr.1,ita.coppa_italia,jpn.1,ksa.2,mlt.1,ned.cup,rsa.1,rsa.2,sco.1,sui.1,svn.1,tur.2,uga.1,ven.1,ven.2,zim.1"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "active-competition-completeness",
+      "type": "active_competition_completeness_missing",
+      "message": "Independent target-day active competition coverage proof is missing.",
+      "details": {
+        "dayKey": "2026-09-02",
+        "artifact": "data/coverage-readiness/2026-09-02.json"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "value",
+      "type": "artifact_missing",
+      "message": "Production value artifact is missing.",
+      "details": {
+        "artifact": "data/deploy-snapshots/2026-09-02/value.json"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-audit",
+      "type": "artifact_missing",
+      "message": "Production value audit artifact is missing.",
+      "details": {
+        "artifact": "data/deploy-snapshots/2026-09-02/value-audit.json"
       }
     }
   ],
   "newActionableIssues": [
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_warning",
-      "message": "canonical_leagues_missing_from_published:arm.2,aut.1,bel.1,bih.1,blr.1,bra.2,bul.1,bul.2,col.1,col.2,cro.2,cze.1,den.1,ecu.1,egy.1,eng.2,eng.3,est.1,ger.dfb_pokal,isr.1,ita.coppa_italia,jpn.1,ksa.2,mlt.1,ned.cup,rsa.1,rsa.2,sco.1,sui.1,svn.1,tur.2,uga.1,ven.1,ven.2,zim.1",
-      "details": {
-        "raw": "canonical_leagues_missing_from_published:arm.2,aut.1,bel.1,bih.1,blr.1,bra.2,bul.1,bul.2,col.1,col.2,cro.2,cze.1,den.1,ecu.1,egy.1,eng.2,eng.3,est.1,ger.dfb_pokal,isr.1,ita.coppa_italia,jpn.1,ksa.2,mlt.1,ned.cup,rsa.1,rsa.2,sco.1,sui.1,svn.1,tur.2,uga.1,ven.1,ven.2,zim.1"
-      }
-    }
-  ],
-  "resolvedIssues": [
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_warning",
-      "message": "canonical_leagues_missing_from_published:arm.2,aut.1,bel.1,bih.1,blr.1,bra.2,bul.1,bul.2,col.1,col.2,cro.2,cze.1,den.1,ecu.1,egy.1,eng.2,eng.3,est.1,ger.dfb_pokal,isr.1,ita.coppa_italia,jpn.1,ksa.2,mlt.1,ned.cup,rsa.1,rsa.2,sco.1,sui.1,svn.1,tur.2,uga.1,ven.2,zim.1",
-      "details": {
-        "raw": "canonical_leagues_missing_from_published:arm.2,aut.1,bel.1,bih.1,blr.1,bra.2,bul.1,bul.2,col.1,col.2,cro.2,cze.1,den.1,ecu.1,egy.1,eng.2,eng.3,est.1,ger.dfb_pokal,isr.1,ita.coppa_italia,jpn.1,ksa.2,mlt.1,ned.cup,rsa.1,rsa.2,sco.1,sui.1,svn.1,tur.2,uga.1,ven.2,zim.1"
-      }
-    }
-  ],
-  "persistentIssues": [
     {
       "severity": "error",
       "source": "manifest",
@@ -385,6 +505,111 @@
       }
     },
     {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:arm.2,aut.1,bel.1,bih.1,blr.1,bra.2,bul.1,bul.2,col.1,col.2,cro.2,cze.1,den.1,ecu.1,egy.1,eng.2,eng.3,est.1,ger.dfb_pokal,isr.1,ita.coppa_italia,jpn.1,ksa.2,mlt.1,ned.cup,rsa.1,rsa.2,sco.1,sui.1,svn.1,tur.2,uga.1,ven.1,ven.2,zim.1",
+      "details": {
+        "raw": "canonical_leagues_missing_from_published:arm.2,aut.1,bel.1,bih.1,blr.1,bra.2,bul.1,bul.2,col.1,col.2,cro.2,cze.1,den.1,ecu.1,egy.1,eng.2,eng.3,est.1,ger.dfb_pokal,isr.1,ita.coppa_italia,jpn.1,ksa.2,mlt.1,ned.cup,rsa.1,rsa.2,sco.1,sui.1,svn.1,tur.2,uga.1,ven.1,ven.2,zim.1"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "active-competition-completeness",
+      "type": "active_competition_completeness_missing",
+      "message": "Independent target-day active competition coverage proof is missing.",
+      "details": {
+        "dayKey": "2026-09-02",
+        "artifact": "data/coverage-readiness/2026-09-02.json"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "value",
+      "type": "artifact_missing",
+      "message": "Production value artifact is missing.",
+      "details": {
+        "artifact": "data/deploy-snapshots/2026-09-02/value.json"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-audit",
+      "type": "artifact_missing",
+      "message": "Production value audit artifact is missing.",
+      "details": {
+        "artifact": "data/deploy-snapshots/2026-09-02/value-audit.json"
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "error",
+      "source": "manifest",
+      "type": "artifact_missing",
+      "message": "Snapshot manifest is missing.",
+      "details": {
+        "artifact": "data/deploy-snapshots/2026-09-01/manifest.json"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "artifact_missing",
+      "message": "Invariant report is missing.",
+      "details": {
+        "artifact": "data/deploy-snapshots/2026-09-01/invariant-report.json"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "artifact_missing",
+      "message": "Freshness report is missing.",
+      "details": {
+        "artifact": "data/deploy-snapshots/2026-09-01/freshness-report.json"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:arg.1,arg.2,arm.2,aut.1,bih.1,bra.1,bra.2,bul.2,chi.1,chi.2,col.1,col.2,egy.1,eng.1,eng.2,eng.3,eng.4,eng.5,ger.dfb_pokal,isl.1,ita.coppa_italia,ksa.1,ksa.2,ned.cup,per.1,rsa.1,sco.challenge,srb.2,sui.1,sui.2,swe.2,tur.2,uga.1,ukr.1,ven.1",
+      "details": {
+        "raw": "canonical_leagues_missing_from_published:arg.1,arg.2,arm.2,aut.1,bih.1,bra.1,bra.2,bul.2,chi.1,chi.2,col.1,col.2,egy.1,eng.1,eng.2,eng.3,eng.4,eng.5,ger.dfb_pokal,isl.1,ita.coppa_italia,ksa.1,ksa.2,ned.cup,per.1,rsa.1,sco.challenge,srb.2,sui.1,sui.2,swe.2,tur.2,uga.1,ukr.1,ven.1"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "active-competition-completeness",
+      "type": "active_competition_completeness_missing",
+      "message": "Independent target-day active competition coverage proof is missing.",
+      "details": {
+        "dayKey": "2026-09-01",
+        "artifact": "data/coverage-readiness/2026-09-01.json"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "value",
+      "type": "artifact_missing",
+      "message": "Production value artifact is missing.",
+      "details": {
+        "artifact": "data/deploy-snapshots/2026-09-01/value.json"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-audit",
+      "type": "artifact_missing",
+      "message": "Production value audit artifact is missing.",
+      "details": {
+        "artifact": "data/deploy-snapshots/2026-09-01/value-audit.json"
+      }
+    }
+  ],
+  "persistentIssues": [
+    {
       "severity": "error",
       "source": "foundation-integrity",
       "type": "foundation_publication_not_ready",
@@ -406,7 +631,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 1926,
+        "count": 1968,
         "informational": true
       }
     },
@@ -481,46 +706,105 @@
       }
     },
     {
-      "severity": "error",
-      "source": "active-competition-completeness",
-      "type": "active_competition_completeness_missing",
-      "message": "Independent target-day active competition coverage proof is missing.",
-      "details": {
-        "dayKey": "2026-09-02",
-        "artifact": "data/coverage-readiness/2026-09-02.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "value",
-      "type": "artifact_missing",
-      "message": "Production value artifact is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-09-02/value.json"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "value-audit",
-      "type": "artifact_missing",
-      "message": "Production value audit artifact is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-09-02/value-audit.json"
-      }
-    },
-    {
       "severity": "info",
       "source": "value-comparison",
-      "type": "artifact_missing",
-      "message": "Four-plan Value comparison artifact is missing.",
+      "type": "value_plan_comparison_summary",
+      "message": "Four-plan Value comparison artifact is available.",
       "details": {
-        "artifact": "data/value-comparison/2026-09-02.json",
+        "complete": true,
         "requiredPlans": [
           "A",
           "A2",
           "B",
           "B2"
-        ]
+        ],
+        "presentPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "missingPlans": [],
+        "planA": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planA2": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planB": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planB2": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        }
       }
     }
   ]
