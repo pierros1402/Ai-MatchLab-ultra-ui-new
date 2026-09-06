@@ -6,7 +6,7 @@
     "daysBack": 1,
     "daysForward": 14
   },
-  "sourceLatestUpdatedAt": "2026-09-05T04:08:57.558Z",
+  "sourceLatestUpdatedAt": "2026-09-06T03:22:27.165Z",
   "resolver": {
     "schema": "ai-matchlab.production-identity-resolver-runtime.v2",
     "extensionLedgerSha256": "c9792faa016c0b531130ec1ffedd0a090c32a1532b786eff87e6f73f76ea3e60",
@@ -25,15 +25,15 @@
   },
   "summary": {
     "scannedDays": 16,
-    "scannedLeagueFiles": 753,
-    "inputRows": 2586,
+    "scannedLeagueFiles": 778,
+    "inputRows": 2674,
     "autoPromotable": 0,
-    "pendingIndependentConfirmation": 5,
-    "ambiguous": 13,
+    "pendingIndependentConfirmation": 6,
+    "ambiguous": 12,
     "conflictRejected": 4,
     "alreadyManagedPairs": 2,
     "independentConfirmed": 0,
-    "independentConfirmationRetryPending": 5
+    "independentConfirmationRetryPending": 6
   },
   "targetDays": [
     {
@@ -327,7 +327,7 @@
                 "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
                 "oddsUsed": false,
                 "attempts": 1,
-                "lastAttemptAt": "2026-09-05T04:08:57.902Z",
+                "lastAttemptAt": "2026-09-06T03:22:27.501Z",
                 "retryable": true,
                 "providerStatus": "MISSING_API_KEY",
                 "evaluationStatus": null,
@@ -417,7 +417,7 @@
         {
           "leagueSlug": "caf.confed",
           "inputRows": 13,
-          "temporalCrossProviderPairs": 10,
+          "temporalCrossProviderPairs": 6,
           "autoPromotable": [],
           "pendingIndependentConfirmation": [],
           "ambiguous": [
@@ -430,7 +430,6 @@
                 "cid_cafconfed_atomicngome_associacaoblackbulls_20260905",
                 "cid_cafconfed_greenmamba_primeiroagosto_20260905",
                 "cid_cafconfed_kmkm_alahlitripoli_20260905",
-                "cid_cafconfed_kmkmzan_alahlytripolilby_20260905",
                 "cid_cafconfed_redarrows_ententebouletrouge_20260905",
                 "cid_cafconfed_redarrowszam_inaterougemad_20260905"
               ],
@@ -626,37 +625,74 @@
     },
     {
       "dayKey": "2026-09-06",
-      "leagueFiles": 119,
+      "leagueFiles": 125,
       "recoveryLeagueReports": [
         {
           "leagueSlug": "arg.2",
-          "inputRows": 12,
-          "temporalCrossProviderPairs": 2,
+          "inputRows": 11,
+          "temporalCrossProviderPairs": 1,
           "autoPromotable": [],
-          "pendingIndependentConfirmation": [],
-          "ambiguous": [
+          "pendingIndependentConfirmation": [
             {
               "leagueSlug": "arg.2",
               "kickoffUtc": "2026-09-06T18:30:00.000Z",
-              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "U30rauj3",
+                "canonicalId": "cid_arg2_almagro_gimnasiajujuy_20260906",
+                "kickoffUtc": "2026-09-06T18:30:00.000Z",
+                "homeTeam": "Almagro",
+                "awayTeam": "Gimnasia Jujuy"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401844104",
+                "canonicalId": "cid_arg2_sanmartinsanjuan_midland_20260906",
+                "kickoffUtc": "2026-09-06T18:30Z",
+                "homeTeam": "San Martín (San Juan)",
+                "awayTeam": "Midland"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": "gcid_2e91852e88b1417611b599ba",
+                  "rightGlobalClubId": null
+                },
+                "away": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": "gcid_a78224b54af6e51ee5fa1f72",
+                  "rightGlobalClubId": null
+                },
+                "stableSides": 0,
+                "conflict": false
+              },
+              "recoveryStatus": "PENDING_INDEPENDENT_CONFIRMATION",
               "promotionAuthorized": false,
-              "rowIds": [
-                "cid_arg2_acassuso_allboys_20260906",
-                "cid_arg2_almagro_gimnasiajujuy_20260906",
-                "cid_arg2_almagro_gimnasiayesgrimajujuy_20260906",
-                "cid_arg2_sanmartinsanjuan_midland_20260906"
-              ],
-              "providers": [
-                "espn",
-                "flashscore"
-              ]
+              "requiresIndependentConfirmation": true,
+              "independentConfirmation": {
+                "status": "PENDING_RETRY",
+                "source": "api_football",
+                "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
+                "oddsUsed": false,
+                "attempts": 1,
+                "lastAttemptAt": "2026-09-06T03:22:27.501Z",
+                "retryable": true,
+                "providerStatus": "UNMAPPED_LEAGUE",
+                "evaluationStatus": null,
+                "thirdSourceKickoffRows": 0
+              }
             }
           ],
+          "ambiguous": [],
           "conflictRejected": [],
           "summary": {
             "autoPromotable": 0,
-            "pendingIndependentConfirmation": 0,
-            "ambiguous": 1,
+            "pendingIndependentConfirmation": 1,
+            "ambiguous": 0,
             "conflictRejected": 0,
             "alreadyManagedPairs": 1
           }
@@ -713,7 +749,7 @@
                 "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
                 "oddsUsed": false,
                 "attempts": 1,
-                "lastAttemptAt": "2026-09-05T04:08:57.903Z",
+                "lastAttemptAt": "2026-09-06T03:22:27.501Z",
                 "retryable": true,
                 "providerStatus": "MISSING_API_KEY",
                 "evaluationStatus": null,
@@ -801,7 +837,7 @@
                 "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
                 "oddsUsed": false,
                 "attempts": 1,
-                "lastAttemptAt": "2026-09-05T04:08:57.903Z",
+                "lastAttemptAt": "2026-09-06T03:22:27.501Z",
                 "retryable": true,
                 "providerStatus": "MISSING_API_KEY",
                 "evaluationStatus": null,
@@ -854,7 +890,7 @@
                 "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
                 "oddsUsed": false,
                 "attempts": 1,
-                "lastAttemptAt": "2026-09-05T04:08:57.903Z",
+                "lastAttemptAt": "2026-09-06T03:22:27.501Z",
                 "retryable": true,
                 "providerStatus": "MISSING_API_KEY",
                 "evaluationStatus": null,
@@ -940,7 +976,7 @@
                 "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
                 "oddsUsed": false,
                 "attempts": 1,
-                "lastAttemptAt": "2026-09-05T04:08:57.903Z",
+                "lastAttemptAt": "2026-09-06T03:22:27.501Z",
                 "retryable": true,
                 "providerStatus": "MISSING_API_KEY",
                 "evaluationStatus": null,
@@ -1046,17 +1082,17 @@
     },
     {
       "dayKey": "2026-09-07",
-      "leagueFiles": 61,
+      "leagueFiles": 62,
       "recoveryLeagueReports": []
     },
     {
       "dayKey": "2026-09-08",
-      "leagueFiles": 13,
+      "leagueFiles": 30,
       "recoveryLeagueReports": []
     },
     {
       "dayKey": "2026-09-09",
-      "leagueFiles": 11,
+      "leagueFiles": 12,
       "recoveryLeagueReports": []
     },
     {
@@ -1095,7 +1131,7 @@
     "evidenceEndpoint": "fixtures",
     "oddsAllowed": false,
     "fuzzyMatchingAllowed": false,
-    "runAt": "2026-09-05T04:08:57.903Z",
+    "runAt": "2026-09-06T03:22:27.501Z",
     "attempts": [
       {
         "dayKey": "2026-09-04",
@@ -1103,6 +1139,14 @@
         "key": "cid_cafconfed_alhilalportsudan_welwaloadigrat_20260904|cid_cafconfed_hilalalsahilsud_welwaloadigrateth_20260904",
         "status": "PENDING_RETRY",
         "providerStatus": "MISSING_API_KEY",
+        "evaluationStatus": null
+      },
+      {
+        "dayKey": "2026-09-06",
+        "leagueSlug": "arg.2",
+        "key": "cid_arg2_almagro_gimnasiajujuy_20260906|cid_arg2_sanmartinsanjuan_midland_20260906",
+        "status": "PENDING_RETRY",
+        "providerStatus": "UNMAPPED_LEAGUE",
         "evaluationStatus": null
       },
       {
