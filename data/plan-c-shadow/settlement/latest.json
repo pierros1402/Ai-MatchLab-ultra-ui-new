@@ -3,27 +3,27 @@
   "ok": true,
   "mode": "SHADOW",
   "productionEligible": false,
-  "sourcePredictionSetHash": "9cc3bb3d5446321bde0d8c66c3173b1005e7fcfb9999164113851dbd2db81643",
-  "idempotencyHash": "e28922c25073c6939ba2c1c65ad6ffacbc893ecc04ff17319226652255bd33a7",
+  "sourcePredictionSetHash": "365c2203998a8d6018042b5c9ab69906952a1805b160de7d0773dfedef996063",
+  "idempotencyHash": "98cf2c4e2ac430d74cefa1f9c41d7bf89a8b0c0620f9ca0fa97b476ab6b9b7d6",
   "accounting": {
-    "total": 18,
-    "settled": 5,
+    "total": 21,
+    "settled": 8,
     "voidExcluded": 0,
     "pending": 13,
     "balanced": true
   },
   "brierSummary": {
-    "adjustedMeanBrier": 0.21850937,
-    "baselineMeanBrier": 0.2207252,
-    "delta": -0.00221583,
-    "n": 5
+    "adjustedMeanBrier": 0.22696384,
+    "baselineMeanBrier": 0.22762635,
+    "delta": -0.00066251,
+    "n": 8
   },
   "hitRateSummary": {
-    "frozenPickCount": 8,
-    "settledPickCount": 3,
-    "hits": 2,
-    "misses": 1,
-    "hitRate": 0.66666667
+    "frozenPickCount": 9,
+    "settledPickCount": 5,
+    "hits": 3,
+    "misses": 2,
+    "hitRate": 0.6
   },
   "records": [
     {
@@ -37,6 +37,23 @@
         "pOver25Baseline": 0.50212933,
         "lambdaHomeAdjusted": 1.1808,
         "lambdaAwayAdjusted": 1.513679
+      },
+      "truth": null,
+      "pendingReason": "CANONICAL_STATUS_PRE",
+      "brier": null,
+      "hitRate": null
+    },
+    {
+      "canonicalFixtureId": "cid_bra1_corinthians_fluminense_20260920",
+      "state": "PENDING",
+      "planCPick": false,
+      "prediction": {
+        "signature": "640d7ae74fa8bb73c4bde9ea23ba4db71f474b0e61dcef43d74c60db0fa72aba",
+        "planCPick": false,
+        "pOver25Adjusted": 0.43982271,
+        "pOver25Baseline": 0.43996946,
+        "lambdaHomeAdjusted": 1.245814,
+        "lambdaAwayAdjusted": 1.190782
       },
       "truth": null,
       "pendingReason": "CANONICAL_STATUS_PRE",
@@ -192,7 +209,7 @@
     },
     {
       "canonicalFixtureId": "cid_eng1_brentford_sunderland_20260905",
-      "state": "PENDING",
+      "state": "SETTLED",
       "planCPick": true,
       "prediction": {
         "signature": "45468b7c0e0a22f780876fb9aa8d1f2996351b2f81764a0e1d796c18468afa50",
@@ -202,10 +219,24 @@
         "lambdaHomeAdjusted": 1.850357,
         "lambdaAwayAdjusted": 1.1285
       },
-      "truth": null,
-      "pendingReason": "CANONICAL_STATUS_PRE",
-      "brier": null,
-      "hitRate": null
+      "truth": {
+        "status": "FT",
+        "source": "data/canonical-fixtures/2026-09-05/eng.1.json",
+        "sourceSha256": "bd65531ac9b07d7c13a0eec12b54bed11b42a759bb96256d636ae4b2014b3528",
+        "scoreHome": 1,
+        "scoreAway": 1,
+        "totalGoals": 2,
+        "actualOver25": 0
+      },
+      "pendingReason": null,
+      "brier": {
+        "adjusted": 0.32724381,
+        "baseline": 0.31970113
+      },
+      "hitRate": {
+        "applicableToHitRate": true,
+        "isHit": false
+      }
     },
     {
       "canonicalFixtureId": "cid_eng1_sunderland_arsenal_20260912",
@@ -226,7 +257,7 @@
     },
     {
       "canonicalFixtureId": "cid_esp1_athletic_atleticomadrid_20260905",
-      "state": "PENDING",
+      "state": "SETTLED",
       "planCPick": false,
       "prediction": {
         "signature": "19d7ceee5337ff5acb71177775f829644d880664600e278ecc3847511b67d975",
@@ -235,6 +266,37 @@
         "pOver25Baseline": 0.52501854,
         "lambdaHomeAdjusted": 1.365621,
         "lambdaAwayAdjusted": 1.409425
+      },
+      "truth": {
+        "status": "FT",
+        "source": "data/canonical-fixtures/2026-09-05/esp.1.json",
+        "sourceSha256": "f14b98c0de5877436715e66c4836638510c2f0f61332286bda141aa0bf6b11e7",
+        "scoreHome": 3,
+        "scoreAway": 0,
+        "totalGoals": 3,
+        "actualOver25": 1
+      },
+      "pendingReason": null,
+      "brier": {
+        "adjusted": 0.22602766,
+        "baseline": 0.22560739
+      },
+      "hitRate": {
+        "applicableToHitRate": false,
+        "isHit": null
+      }
+    },
+    {
+      "canonicalFixtureId": "cid_esp1_atleticomadrid_realmadrid_20260920",
+      "state": "PENDING",
+      "planCPick": true,
+      "prediction": {
+        "signature": "9a7be420c736f20fd5739050c881f2b7be752f51e0fc9b82a2443dae67dddfbf",
+        "planCPick": true,
+        "pOver25Adjusted": 0.56521547,
+        "pOver25Baseline": 0.5664128,
+        "lambdaHomeAdjusted": 1.560496,
+        "lambdaAwayAdjusted": 1.388194
       },
       "truth": null,
       "pendingReason": "CANONICAL_STATUS_PRE",
@@ -355,8 +417,25 @@
       "hitRate": null
     },
     {
-      "canonicalFixtureId": "cid_ita1_internazionale_napoli_20260905",
+      "canonicalFixtureId": "cid_esp1_valencia_realsociedad_20260920",
       "state": "PENDING",
+      "planCPick": false,
+      "prediction": {
+        "signature": "e639a0f035c8c3e6b65a61bfe71fec0fa11daa550d8a3c414ea1efec35ceaceb",
+        "planCPick": false,
+        "pOver25Adjusted": 0.39692088,
+        "pOver25Baseline": 0.3971746,
+        "lambdaHomeAdjusted": 1.199622,
+        "lambdaAwayAdjusted": 1.073874
+      },
+      "truth": null,
+      "pendingReason": "CANONICAL_STATUS_PRE",
+      "brier": null,
+      "hitRate": null
+    },
+    {
+      "canonicalFixtureId": "cid_ita1_internazionale_napoli_20260905",
+      "state": "SETTLED",
       "planCPick": true,
       "prediction": {
         "signature": "027f4906303fe7abb7140909bb3d033f6f9c09cdc78a01e0ec8d31726342642a",
@@ -366,10 +445,24 @@
         "lambdaHomeAdjusted": 1.718361,
         "lambdaAwayAdjusted": 1.331204
       },
-      "truth": null,
-      "pendingReason": "CANONICAL_STATUS_PRE",
-      "brier": null,
-      "hitRate": null
+      "truth": {
+        "status": "FT",
+        "source": "data/canonical-fixtures/2026-09-05/ita.1.json",
+        "sourceSha256": "12e6a6ce36345884245dfdaf6a217edd194bc9c14bb993db5d1cd334c0d3a879",
+        "scoreHome": 3,
+        "scoreAway": 2,
+        "totalGoals": 5,
+        "actualOver25": 1
+      },
+      "pendingReason": null,
+      "brier": {
+        "adjusted": 0.16989236,
+        "baseline": 0.1720763
+      },
+      "hitRate": {
+        "applicableToHitRate": true,
+        "isHit": true
+      }
     },
     {
       "canonicalFixtureId": "cid_ita1_napoli_como_20260830",
