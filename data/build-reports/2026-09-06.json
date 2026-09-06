@@ -1,17 +1,17 @@
 {
-  "ok": true,
+  "ok": false,
   "schema": "ai-matchlab.day-build-report.v1",
   "dayKey": "2026-09-06",
-  "generatedAt": "2026-09-06T17:21:31.831Z",
+  "generatedAt": "2026-09-06T19:10:27.825Z",
   "universe": {
     "expected": null,
-    "canonical": 478,
+    "canonical": 480,
     "published": 477,
     "details": 477,
     "byLeague": {
       "expected": {},
       "canonical": {
-        "afc.asian_cup": 20,
+        "afc.asian_cup": 22,
         "alb.1": 2,
         "alb.2": 3,
         "and.1": 4,
@@ -167,7 +167,6 @@
         "cze.2": 2,
         "idn.1": 3,
         "and.1": 4,
-        "isr.2": 6,
         "ukr.1": 6,
         "jpn.1": 9,
         "est.2": 2,
@@ -257,6 +256,7 @@
         "cro.1": 2,
         "cyp.1": 2,
         "geo.1": 1,
+        "isr.2": 6,
         "mlt.1": 2,
         "gre.1": 4,
         "srb.1": 2,
@@ -681,9 +681,13 @@
     }
   },
   "freshness": {
-    "ok": true,
-    "manifestGeneratedAt": "2026-09-06T17:19:56.350Z",
-    "reasons": [],
+    "ok": false,
+    "manifestGeneratedAt": "2026-09-06T19:09:38.128Z",
+    "reasons": [
+      "plan_a2_audit_stale_against_canonical",
+      "plan_b_audit_stale_against_canonical",
+      "plan_b2_audit_stale_against_canonical"
+    ],
     "staleInputs": []
   },
   "invariant": {
@@ -691,7 +695,7 @@
     "blocked": 0,
     "warnings": 0,
     "autoFixed": 0,
-    "checkedAt": "2026-09-06T17:20:28.096Z"
+    "checkedAt": "2026-09-06T19:09:39.532Z"
   },
   "value": {
     "source": "historical_missing_observation_recovery_sentinel",
@@ -716,7 +720,7 @@
     }
   },
   "settlement": {
-    "generatedAt": "2026-09-06T17:21:01.789Z",
+    "generatedAt": "2026-09-06T19:09:39.453Z",
     "requiredPlans": [
       "A",
       "A2",
@@ -766,16 +770,21 @@
   },
   "foundationIntegrity": {
     "schema": "ai-matchlab.foundation-integrity.v1",
-    "generatedAt": "2026-09-06T17:21:31.599Z",
+    "generatedAt": "2026-09-06T19:10:27.567Z",
     "season": "2026-2027",
     "modelReady": true,
-    "publicationReady": true,
-    "blocked": [],
+    "publicationReady": false,
+    "blocked": [
+      {
+        "component": "details",
+        "reason": "details_foundation_not_ready"
+      }
+    ],
     "warnings": [
       {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 2498,
+        "count": 2510,
         "informational": true
       },
       {
@@ -808,10 +817,13 @@
     "supersededOpenCanonicalIds": [],
     "supersededOpenFixtures": []
   },
-  "hardFailures": [],
+  "hardFailures": [
+    "foundation_publication_not_ready",
+    "snapshot_stale"
+  ],
   "warnings": [
     "acquisition_skipped_slugs:concacaf.leagues.cup,eng.fa_qual,eng.w.1,esp.w.1,fra.w.1,ned.w.1,ned.w.knvb_cup,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1"
   ],
-  "clean": true,
+  "clean": false,
   "cleanStrict": false
 }

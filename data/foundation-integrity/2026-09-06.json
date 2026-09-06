@@ -1,17 +1,22 @@
 {
   "schema": "ai-matchlab.foundation-integrity.v1",
-  "generatedAt": "2026-09-06T17:21:31.599Z",
+  "generatedAt": "2026-09-06T19:10:27.567Z",
   "dayKey": "2026-09-06",
   "season": "2026-2027",
-  "ok": true,
+  "ok": false,
   "modelReady": true,
-  "publicationReady": true,
-  "blocked": [],
+  "publicationReady": false,
+  "blocked": [
+    {
+      "component": "details",
+      "reason": "details_foundation_not_ready"
+    }
+  ],
   "warnings": [
     {
       "component": "historySemantic",
       "reason": "age_expired_results_rows_present",
-      "count": 2498,
+      "count": 2510,
       "informational": true
     },
     {
@@ -35,7 +40,7 @@
         "ok": false,
         "clean": false,
         "schema": "ai-matchlab.history-semantic-integrity.v1",
-        "generatedAt": "2026-09-06T17:21:30.231Z",
+        "generatedAt": "2026-09-06T19:10:26.432Z",
         "sourceContract": {
           "readOnlyTruthLayers": true,
           "truthWrites": 0,
@@ -83,7 +88,7 @@
           {
             "type": "results_expired_entries",
             "severity": "info",
-            "count": 2498,
+            "count": 2510,
             "detail": "Age-expired rows are reported separately and are not treated as duplicates."
           }
         ],
@@ -92,7 +97,7 @@
           "teamKeyCount": 17737,
           "entryCount": 434235,
           "reconstructedMatchIdCount": 216997,
-          "expiredEntryCount": 2498,
+          "expiredEntryCount": 2510,
           "invalidEntryCount": 0,
           "orphanMatchIdCount": 1,
           "multiSideMatchIdCount": 194,
@@ -1756,7 +1761,7 @@
             {
               "slug": "chi.1",
               "actionable": 2,
-              "expiredEntryCount": 20,
+              "expiredEntryCount": 22,
               "invalidEntryCount": 0,
               "orphanMatchIdCount": 0,
               "mirrorConflictCount": 1,
@@ -4651,7 +4656,7 @@
       "reason": null,
       "detail": {
         "schema": "ai-matchlab.standings-foundation-audit.v1",
-        "generatedAt": "2026-09-06T17:21:30.265Z",
+        "generatedAt": "2026-09-06T19:10:26.469Z",
         "ok": true,
         "season": "2026-2027",
         "summary": {
@@ -184249,27 +184254,66 @@
       }
     },
     "details": {
-      "ok": true,
-      "reason": null,
+      "ok": false,
+      "reason": "details_foundation_not_ready",
       "detail": {
         "schema": "ai-matchlab.details-foundation-audit.v2",
-        "generatedAt": "2026-09-06T17:21:31.598Z",
+        "generatedAt": "2026-09-06T19:10:27.566Z",
         "dayKey": "2026-09-06",
-        "ok": true,
+        "ok": false,
         "publicationUniverse": {
           "mode": "intraday_status_only",
-          "currentFixtureCount": 477,
+          "currentFixtureCount": 479,
           "publishedFixtureCount": 477,
-          "deferredFixtureCount": 0,
-          "deferredFixtureIds": []
+          "deferredFixtureCount": 2,
+          "deferredFixtureIds": [
+            "cid_afcasiancup_nepalu20_northernmarianaislandsu20_20260906",
+            "cid_afcasiancup_philippinesu20_lebanonu20_20260906"
+          ]
         },
         "summary": {
           "expectedFixtures": 477,
           "detailFiles": 477,
           "checked": 477,
-          "issueCount": 0
+          "issueCount": 7
         },
-        "issues": []
+        "issues": [
+          {
+            "code": "DETAIL_KICKOFF_MISMATCH",
+            "file": "cid_isr2_mnazareth_maccabibneiraina_20260906.json",
+            "id": "cid_isr2_mnazareth_maccabibneiraina_20260906"
+          },
+          {
+            "code": "DETAIL_FORM_CUTOFF_MISMATCH",
+            "file": "cid_isr2_mnazareth_maccabibneiraina_20260906.json",
+            "id": "cid_isr2_mnazareth_maccabibneiraina_20260906"
+          },
+          {
+            "code": "DETAIL_LEAGUE_FORM_CUTOFF_MISMATCH",
+            "file": "cid_isr2_mnazareth_maccabibneiraina_20260906.json",
+            "id": "cid_isr2_mnazareth_maccabibneiraina_20260906"
+          },
+          {
+            "code": "DETAIL_KICKOFF_MISMATCH",
+            "file": "cid_usa2_miami_pittsburgh_20260906.json",
+            "id": "cid_usa2_miami_pittsburgh_20260906"
+          },
+          {
+            "code": "DETAIL_FORM_CUTOFF_MISMATCH",
+            "file": "cid_usa2_miami_pittsburgh_20260906.json",
+            "id": "cid_usa2_miami_pittsburgh_20260906"
+          },
+          {
+            "code": "DETAIL_LEAGUE_FORM_CUTOFF_MISMATCH",
+            "file": "cid_usa2_miami_pittsburgh_20260906.json",
+            "id": "cid_usa2_miami_pittsburgh_20260906"
+          },
+          {
+            "code": "DETAIL_H2H_CUTOFF_MISMATCH",
+            "file": "cid_usa2_miami_pittsburgh_20260906.json",
+            "id": "cid_usa2_miami_pittsburgh_20260906"
+          }
+        ]
       }
     }
   },
