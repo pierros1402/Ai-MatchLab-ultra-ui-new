@@ -1006,6 +1006,7 @@ jobs:
 
           const day = process.env.DAY_KEY;
           const file = `data/deploy-snapshots/${day}/fixtures.json`;
+          const manifestFile = `data/deploy-snapshots/${day}/manifest.json`;
 
           function readJsonFromHead(path) {
             try {
@@ -1092,15 +1093,75 @@ jobs:
           const afterNorm = normalize(after);
           const materialChanged = JSON.stringify(beforeNorm) !== JSON.stringify(afterNorm);
 
+          function requiredManifestHashState(payload) {
+            const files =
+              payload?.files && typeof payload.files === "object"
+                ? payload.files
+                : {};
+
+            const hashes =
+              payload?.fileHashes && typeof payload.fileHashes === "object"
+                ? payload.fileHashes
+                : {};
+
+            const required = [
+              files.fixtures,
+              files.value,
+              files.valueAudit,
+              files.planCShadow,
+              files.planCShadowAudit
+            ]
+              .map(value => String(value || "").trim())
+              .filter(Boolean);
+
+            const uniqueRequired = [...new Set(required)].sort();
+
+            const missing = uniqueRequired.filter(fileName => {
+              const hash = String(hashes[fileName] || "").trim();
+              return !/^[a-f0-9]{64}$/iu.test(hash);
+            });
+
+            return {
+              required: uniqueRequired,
+              missing
+            };
+          }
+
+          const manifestBefore = readJsonFromHead(manifestFile);
+          const manifestAfter = readJsonFile(manifestFile);
+
+          const beforeHashState =
+            requiredManifestHashState(manifestBefore);
+
+          const afterHashState =
+            requiredManifestHashState(manifestAfter);
+
+          const requiredFileSetChanged =
+            JSON.stringify(beforeHashState.required) !==
+            JSON.stringify(afterHashState.required);
+
+          const manifestContractRepair =
+            afterHashState.required.length > 0 &&
+            afterHashState.missing.length === 0 &&
+            (
+              beforeHashState.missing.length > 0 ||
+              requiredFileSetChanged
+            );
+
           console.log(JSON.stringify({
             file,
             beforeRows: beforeNorm.length,
             afterRows: afterNorm.length,
-            materialChanged
+            materialChanged,
+            manifestContractRepair,
+            manifestRequiredFilesBefore: beforeHashState.required,
+            manifestMissingHashesBefore: beforeHashState.missing,
+            manifestRequiredFilesAfter: afterHashState.required,
+            manifestMissingHashesAfter: afterHashState.missing
           }, null, 2));
 
-          if (!materialChanged) {
-            console.log("No material score/status/minute changes. Restoring staged deploy snapshot files to avoid timestamp-only commit.");
+          if (!materialChanged && !manifestContractRepair) {
+            console.log("No material score/status/minute or manifest-contract repair change. Restoring staged deploy snapshot files to avoid timestamp-only commit.");
             execFileSync("git", ["restore", "--staged", "--", "data/deploy-snapshots"], { stdio: "inherit" });
             execFileSync("git", ["restore", "--", "data/deploy-snapshots"], { stdio: "inherit" });
             // build-reports/<day>.json lives outside deploy-snapshots; its only
@@ -1152,7 +1213,7 @@ jobs:
             }
           }
 
-          let commitNeeded = materialChanged;
+          let commitNeeded = materialChanged || manifestContractRepair;
           if (!commitNeeded) {
             try {
               execFileSync("git", ["diff", "--cached", "--quiet"], { stdio: "ignore" });
@@ -1184,6 +1245,7 @@ jobs:
 
           console.log(JSON.stringify({
             materialChanged,
+            manifestContractRepair,
             canonicalStatusChanged,
             commitNeeded: finalCommitNeeded
           }, null, 2));
