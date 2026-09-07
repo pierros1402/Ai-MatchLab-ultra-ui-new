@@ -1,26 +1,50 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-09-07",
-  "generatedAt": "2026-09-07T14:53:24.503Z",
+  "generatedAt": "2026-09-07T18:53:34.577Z",
   "severity": "warning",
   "issueCounts": {
     "error": 0,
-    "warning": 5,
+    "warning": 7,
     "info": 11
   },
   "alert": true,
   "alertCounts": {
     "error": 0,
-    "warning": 4,
+    "warning": 7,
     "info": 0
   },
-  "activeIssueCount": 16,
-  "actionableIssueCount": 5,
-  "newIssueCount": 10,
-  "newActionableIssueCount": 4,
-  "resolvedIssueCount": 14,
+  "activeIssueCount": 18,
+  "actionableIssueCount": 7,
+  "newIssueCount": 12,
+  "newActionableIssueCount": 7,
+  "resolvedIssueCount": 12,
   "persistentIssueCount": 6,
   "activeIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-09-07.json",
+        "at": "2026-09-07T18:23:44.624Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -9251
+      }
+    },
     {
       "severity": "info",
       "source": "freshness-report",
@@ -990,6 +1014,30 @@
   "actionableIssues": [
     {
       "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-09-07.json",
+        "at": "2026-09-07T18:23:44.624Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -9251
+      }
+    },
+    {
+      "severity": "warning",
       "source": "build-report",
       "type": "build_warning",
       "message": "canonical_leagues_missing_from_published:nor.1",
@@ -1653,6 +1701,30 @@
   ],
   "newIssues": [
     {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-09-07.json",
+        "at": "2026-09-07T18:23:44.624Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -9251
+      }
+    },
+    {
       "severity": "info",
       "source": "freshness-report",
       "type": "skipped_freshness_input",
@@ -1739,6 +1811,28 @@
     {
       "severity": "warning",
       "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "col.copa",
+          "concacaf.leagues.cup",
+          "eng.fa_qual",
+          "eng.w.1",
+          "esp.w.1",
+          "fra.w.1",
+          "ned.w.1",
+          "ned.w.knvb_cup",
+          "usa.ncaa.m.1",
+          "usa.ncaa.w.1"
+        ],
+        "raw": "acquisition_skipped_slugs:col.copa,concacaf.leagues.cup,eng.fa_qual,eng.w.1,esp.w.1,fra.w.1,ned.w.1,ned.w.knvb_cup,usa.ncaa.m.1,usa.ncaa.w.1",
+        "contextOnly": false
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
       "type": "build_not_strict_clean",
       "message": "Build report is clean but not strict-clean.",
       "details": {
@@ -1759,8 +1853,8 @@
         "overdue": false,
         "settlementSource": "value-comparison",
         "picks": 3,
-        "settled": 0,
-        "unresolved": 3
+        "settled": 1,
+        "unresolved": 2
       }
     },
     {
@@ -1775,8 +1869,8 @@
         "overdue": false,
         "settlementSource": "value-comparison",
         "picks": 3,
-        "settled": 0,
-        "unresolved": 3
+        "settled": 1,
+        "unresolved": 2
       }
     },
     {
@@ -2398,111 +2492,33 @@
           "slv.1"
         ]
       }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "value_plan_comparison_summary",
-      "message": "Four-plan Value comparison artifact is available.",
-      "details": {
-        "complete": true,
-        "requiredPlans": [
-          "A",
-          "A2",
-          "B",
-          "B2"
-        ],
-        "presentPlans": [
-          "A",
-          "A2",
-          "B",
-          "B2"
-        ],
-        "missingPlans": [],
-        "planA": {
-          "count": 3,
-          "summary": {
-            "picks": 3,
-            "uniqueMatches": 3,
-            "settled": 0,
-            "wins": 0,
-            "losses": 0,
-            "voids": 0,
-            "unresolved": 3,
-            "unsupported": 0,
-            "hitRate": null,
-            "oddsAvailable": 0,
-            "averageOdds": null,
-            "totalStake": null,
-            "totalReturn": null,
-            "profit": null,
-            "roi": null
-          }
-        },
-        "planA2": {
-          "count": 3,
-          "summary": {
-            "picks": 3,
-            "uniqueMatches": 3,
-            "settled": 0,
-            "wins": 0,
-            "losses": 0,
-            "voids": 0,
-            "unresolved": 3,
-            "unsupported": 0,
-            "hitRate": null,
-            "oddsAvailable": 0,
-            "averageOdds": null,
-            "totalStake": null,
-            "totalReturn": null,
-            "profit": null,
-            "roi": null
-          }
-        },
-        "planB": {
-          "count": 0,
-          "summary": {
-            "picks": 0,
-            "uniqueMatches": 0,
-            "settled": 0,
-            "wins": 0,
-            "losses": 0,
-            "voids": 0,
-            "unresolved": 0,
-            "unsupported": 0,
-            "hitRate": null,
-            "oddsAvailable": 0,
-            "averageOdds": null,
-            "totalStake": null,
-            "totalReturn": null,
-            "profit": null,
-            "roi": null
-          }
-        },
-        "planB2": {
-          "count": 0,
-          "summary": {
-            "picks": 0,
-            "uniqueMatches": 0,
-            "settled": 0,
-            "wins": 0,
-            "losses": 0,
-            "voids": 0,
-            "unresolved": 0,
-            "unsupported": 0,
-            "hitRate": null,
-            "oddsAvailable": 0,
-            "averageOdds": null,
-            "totalStake": null,
-            "totalReturn": null,
-            "profit": null,
-            "roi": null
-          }
-        }
-      }
     }
   ],
   "newActionableIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-09-07.json",
+        "at": "2026-09-07T18:23:44.624Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -9251
+      }
+    },
     {
       "severity": "warning",
       "source": "build-report",
@@ -2510,6 +2526,28 @@
       "message": "canonical_leagues_missing_from_published:nor.1",
       "details": {
         "raw": "canonical_leagues_missing_from_published:nor.1"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "col.copa",
+          "concacaf.leagues.cup",
+          "eng.fa_qual",
+          "eng.w.1",
+          "esp.w.1",
+          "fra.w.1",
+          "ned.w.1",
+          "ned.w.knvb_cup",
+          "usa.ncaa.m.1",
+          "usa.ncaa.w.1"
+        ],
+        "raw": "acquisition_skipped_slugs:col.copa,concacaf.leagues.cup,eng.fa_qual,eng.w.1,esp.w.1,fra.w.1,ned.w.1,ned.w.knvb_cup,usa.ncaa.m.1,usa.ncaa.w.1",
+        "contextOnly": false
       }
     },
     {
@@ -3146,30 +3184,145 @@
   ],
   "resolvedIssues": [
     {
-      "severity": "error",
-      "source": "manifest",
-      "type": "artifact_missing",
-      "message": "Snapshot manifest is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-09-07/manifest.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "invariant-report",
-      "type": "artifact_missing",
-      "message": "Invariant report is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-09-07/invariant-report.json"
-      }
-    },
-    {
-      "severity": "warning",
+      "severity": "info",
       "source": "freshness-report",
-      "type": "artifact_missing",
-      "message": "Freshness report is missing.",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
       "details": {
-        "artifact": "data/deploy-snapshots/2026-09-07/freshness-report.json"
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-09-06.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "coverage_readiness",
+        "artifact": "coverage-readiness/2026-09-06.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_coverage_readiness",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "snapshot_value_audit",
+        "artifact": "deploy-snapshots/2026-09-06/value-audit.json",
+        "at": null,
+        "staleReason": "snapshot_value_audit_stale_against_canonical",
+        "preservation": null,
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_a2",
+        "artifact": "value-plans/2026-09-06/plan-a2.json",
+        "at": null,
+        "staleReason": "plan_a2_stale_against_canonical",
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-09-06",
+          "currentAthensDay": "2026-09-07",
+          "fixtureCount": 477,
+          "frozenHash": "59f0f4a6a4e46c8fedcf52801e33ad73be54890584e1db2e5a83e324476f9fda",
+          "currentHash": "6d0fc2609c44f41c3b49290ae9576e90db278f75b8d0e3fa4c4732ac5a7d4171",
+          "strictFrozenParity": true,
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": false,
+          "removedFixtureIds": [],
+          "deferredCurrentFixtureIds": [
+            "cid_afcasiancup_nepalu20_northernmarianaislandsu20_20260906",
+            "cid_afcasiancup_philippinesu20_lebanonu20_20260906"
+          ],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "none"
+        },
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b",
+        "artifact": "value-plans/2026-09-06/plan-b.json",
+        "at": null,
+        "staleReason": "plan_b_stale_against_canonical",
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-09-06",
+          "currentAthensDay": "2026-09-07",
+          "fixtureCount": 477,
+          "frozenHash": "59f0f4a6a4e46c8fedcf52801e33ad73be54890584e1db2e5a83e324476f9fda",
+          "currentHash": "6d0fc2609c44f41c3b49290ae9576e90db278f75b8d0e3fa4c4732ac5a7d4171",
+          "strictFrozenParity": true,
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": false,
+          "removedFixtureIds": [],
+          "deferredCurrentFixtureIds": [
+            "cid_afcasiancup_nepalu20_northernmarianaislandsu20_20260906",
+            "cid_afcasiancup_philippinesu20_lebanonu20_20260906"
+          ],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "none"
+        },
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b2",
+        "artifact": "value-plans/2026-09-06/plan-b2.json",
+        "at": null,
+        "staleReason": "plan_b2_stale_against_canonical",
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-09-06",
+          "currentAthensDay": "2026-09-07",
+          "fixtureCount": 477,
+          "frozenHash": "59f0f4a6a4e46c8fedcf52801e33ad73be54890584e1db2e5a83e324476f9fda",
+          "currentHash": "6d0fc2609c44f41c3b49290ae9576e90db278f75b8d0e3fa4c4732ac5a7d4171",
+          "strictFrozenParity": true,
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": false,
+          "removedFixtureIds": [],
+          "deferredCurrentFixtureIds": [
+            "cid_afcasiancup_nepalu20_northernmarianaislandsu20_20260906",
+            "cid_afcasiancup_philippinesu20_lebanonu20_20260906"
+          ],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "none"
+        },
+        "skipped": "artifact_missing_or_no_timestamp"
       }
     },
     {
@@ -3184,15 +3337,6 @@
             "reason": "details_foundation_not_ready"
           }
         ]
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "manifest_missing",
-      "details": {
-        "failure": "manifest_missing"
       }
     },
     {
@@ -3214,21 +3358,25 @@
       }
     },
     {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "value_plan_comparison_missing",
-      "details": {
-        "failure": "value_plan_comparison_missing"
-      }
-    },
-    {
       "severity": "warning",
       "source": "build-report",
-      "type": "build_warning",
-      "message": "canonical_leagues_missing_from_published:arg.1,arg.2,arm.2,blr.1,bol.1,bra.1,bra.2,bul.1,bul.2,can.1,chi.1,col.1,col.2,crc.1,cyp.1,den.1,ecu.1,egy.1,eng.3,eng.fa,esp.1,esp.2,fifa.world,fin.2,fra.2,fro.2,geo.2,gre.1,gre.2,gua.1,hon.1,hun.2,isr.1,isr.2,ita.1,ita.2,ksa.1,ksa.2,ltu.1,ltu.2,lva.1,lva.2,mex.1,mex.2,mkd.1,ned.2,nor.1,par.1,per.1,per.2,pol.1,pol.2,por.1,por.2,rou.1,rus.1,slv.1,srb.1,srb.2,svk.2,swe.1,swe.2,tur.1,tur.2,ukr.1,uru.1,ven.1",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
       "details": {
-        "raw": "canonical_leagues_missing_from_published:arg.1,arg.2,arm.2,blr.1,bol.1,bra.1,bra.2,bul.1,bul.2,can.1,chi.1,col.1,col.2,crc.1,cyp.1,den.1,ecu.1,egy.1,eng.3,eng.fa,esp.1,esp.2,fifa.world,fin.2,fra.2,fro.2,geo.2,gre.1,gre.2,gua.1,hon.1,hun.2,isr.1,isr.2,ita.1,ita.2,ksa.1,ksa.2,ltu.1,ltu.2,lva.1,lva.2,mex.1,mex.2,mkd.1,ned.2,nor.1,par.1,per.1,per.2,pol.1,pol.2,por.1,por.2,rou.1,rus.1,slv.1,srb.1,srb.2,svk.2,swe.1,swe.2,tur.1,tur.2,ukr.1,uru.1,ven.1"
+        "slugs": [
+          "concacaf.leagues.cup",
+          "eng.fa_qual",
+          "eng.w.1",
+          "esp.w.1",
+          "fra.w.1",
+          "ned.w.1",
+          "ned.w.knvb_cup",
+          "usa.ncaa.m.1",
+          "usa.ncaa.w.1",
+          "usa.w.usl.1"
+        ],
+        "raw": "acquisition_skipped_slugs:concacaf.leagues.cup,eng.fa_qual,eng.w.1,esp.w.1,fra.w.1,ned.w.1,ned.w.knvb_cup,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
+        "contextOnly": false
       }
     },
     {
@@ -3247,41 +3395,8 @@
       "type": "active_competition_completeness_missing",
       "message": "Independent target-day active competition coverage proof is missing.",
       "details": {
-        "dayKey": "2026-09-07",
-        "artifact": "data/coverage-readiness/2026-09-07.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "value",
-      "type": "artifact_missing",
-      "message": "Production value artifact is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-09-07/value.json"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "value-audit",
-      "type": "artifact_missing",
-      "message": "Production value audit artifact is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-09-07/value-audit.json"
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "artifact_missing",
-      "message": "Four-plan Value comparison artifact is missing.",
-      "details": {
-        "artifact": "data/value-comparison/2026-09-07.json",
-        "requiredPlans": [
-          "A",
-          "A2",
-          "B",
-          "B2"
-        ]
+        "dayKey": "2026-09-06",
+        "artifact": "data/coverage-readiness/2026-09-06.json"
       }
     }
   ],
@@ -3294,7 +3409,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 2554,
+        "count": 2564,
         "informational": true
       }
     },
@@ -3320,28 +3435,6 @@
         "reason": "score_consistent_alias_mirror_conflicts_present",
         "count": 47,
         "informational": true
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "acquisition_skipped_slugs",
-      "message": "Acquisition skipped slugs during fixture acquisition.",
-      "details": {
-        "slugs": [
-          "col.copa",
-          "concacaf.leagues.cup",
-          "eng.fa_qual",
-          "eng.w.1",
-          "esp.w.1",
-          "fra.w.1",
-          "ned.w.1",
-          "ned.w.knvb_cup",
-          "usa.ncaa.m.1",
-          "usa.ncaa.w.1"
-        ],
-        "raw": "acquisition_skipped_slugs:col.copa,concacaf.leagues.cup,eng.fa_qual,eng.w.1,esp.w.1,fra.w.1,ned.w.1,ned.w.knvb_cup,usa.ncaa.m.1,usa.ncaa.w.1",
-        "contextOnly": false
       }
     },
     {
@@ -3399,6 +3492,108 @@
           "pendingCount": 0,
           "rejectedCount": 19,
           "alreadyDeclaredCount": 0
+        }
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "value_plan_comparison_summary",
+      "message": "Four-plan Value comparison artifact is available.",
+      "details": {
+        "complete": true,
+        "requiredPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "presentPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "missingPlans": [],
+        "planA": {
+          "count": 3,
+          "summary": {
+            "picks": 3,
+            "uniqueMatches": 3,
+            "settled": 1,
+            "wins": 0,
+            "losses": 1,
+            "voids": 0,
+            "unresolved": 2,
+            "unsupported": 0,
+            "hitRate": 0,
+            "oddsAvailable": 1,
+            "averageOdds": 1.83,
+            "totalStake": 1,
+            "totalReturn": 0,
+            "profit": -1,
+            "roi": -1
+          }
+        },
+        "planA2": {
+          "count": 3,
+          "summary": {
+            "picks": 3,
+            "uniqueMatches": 3,
+            "settled": 1,
+            "wins": 0,
+            "losses": 1,
+            "voids": 0,
+            "unresolved": 2,
+            "unsupported": 0,
+            "hitRate": 0,
+            "oddsAvailable": 1,
+            "averageOdds": 1.83,
+            "totalStake": 1,
+            "totalReturn": 0,
+            "profit": -1,
+            "roi": -1
+          }
+        },
+        "planB": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planB2": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
         }
       }
     }
