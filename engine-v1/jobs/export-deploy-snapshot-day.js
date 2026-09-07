@@ -18,6 +18,10 @@ import {
   isFrozenPlanAPublication
 } from "../core/frozen-value-release-contract.js";
 import {
+  buildValueFixtureUniverse,
+  valueFixtureUniverseContract
+} from "../core/value-fixture-universe.js";
+import {
   resolvePlanAPublicationPayload
 } from "../value/plan-a-publication-authority.js";
 import {
@@ -190,6 +194,369 @@ export function validatedPersistedSnapshotValueArtifact(
   }
 
   return payload;
+}
+
+
+const HISTORICAL_RECOVERY_SENTINEL_SOURCE =
+  "historical_missing_observation_recovery_sentinel";
+
+function cleanRecoveryContractValue(value) {
+  return String(value ?? "").trim();
+}
+
+function normalizedRecoveryFixtureUniverse(
+  universe
+) {
+  if (
+    !universe ||
+    typeof universe !== "object"
+  ) {
+    return null;
+  }
+
+  const canonicalIds =
+    Array.isArray(universe?.canonicalIds)
+      ? universe.canonicalIds.map(
+          cleanRecoveryContractValue
+        )
+      : [];
+
+  const count =
+    Number(universe?.count);
+
+  const hash =
+    cleanRecoveryContractValue(
+      universe?.hash
+    ).toLowerCase();
+
+  const valid =
+    cleanRecoveryContractValue(
+      universe?.schema
+    ) ===
+      "ai-matchlab.value-fixture-universe.v1" &&
+    cleanRecoveryContractValue(
+      universe?.source
+    ) ===
+      "canonical_fixtures" &&
+    Number.isInteger(count) &&
+    count >= 0 &&
+    canonicalIds.length === count &&
+    canonicalIds.every(Boolean) &&
+    new Set(canonicalIds).size ===
+      canonicalIds.length &&
+    /^[a-f0-9]{64}$/i.test(hash);
+
+  if (!valid) {
+    return null;
+  }
+
+  return {
+    schema:
+      "ai-matchlab.value-fixture-universe.v1",
+
+    source:
+      "canonical_fixtures",
+
+    count,
+
+    hash,
+
+    canonicalIds:
+      [...canonicalIds]
+  };
+}
+
+function sameRecoveryFixtureUniverse(
+  left,
+  right
+) {
+  if (!left || !right) {
+    return false;
+  }
+
+  if (
+    left.count !== right.count ||
+    left.hash !== right.hash ||
+    left.canonicalIds.length !==
+      right.canonicalIds.length
+  ) {
+    return false;
+  }
+
+  return left.canonicalIds.every(
+    (id, index) =>
+      id === right.canonicalIds[index]
+  );
+}
+
+function frozenRecoverySiblingUniverse(
+  payload,
+  dayKey
+) {
+  if (
+    !payload ||
+    typeof payload !== "object" ||
+    payload?.ok !== true ||
+    cleanRecoveryContractValue(
+      payload?.date
+    ) !==
+      cleanRecoveryContractValue(dayKey) ||
+    cleanRecoveryContractValue(
+      payload?.source
+    ) !==
+      HISTORICAL_RECOVERY_SENTINEL_SOURCE ||
+    Number(payload?.count) !== 0 ||
+    !Array.isArray(payload?.picks) ||
+    payload.picks.length !== 0 ||
+    payload
+      ?.sourceContract
+      ?.recoveryObservation !== true ||
+    payload
+      ?.sourceContract
+      ?.retrospectiveModelOutputUsed !==
+      false ||
+    payload
+      ?.recoveryContract
+      ?.authenticPayloadRecovered !==
+      false ||
+    payload
+      ?.recoveryContract
+      ?.retrospectivePredictionGeneration !==
+      false ||
+    payload
+      ?.recoveryContract
+      ?.inventedHistoricalPicks !== false
+  ) {
+    return null;
+  }
+
+  return normalizedRecoveryFixtureUniverse(
+    payload
+      ?.sourceContract
+      ?.fixtureUniverse
+  );
+}
+
+export function buildHistoricalRecoveryPublicationBindingArtifact({
+  dayKey = "",
+  valueArtifact = null,
+  planA2Artifact = null,
+  planBArtifact = null,
+  planB2Artifact = null,
+  currentUniverse = null
+} = {}) {
+  const unchanged = () => ({
+    valueArtifact,
+    evidence: null
+  });
+
+  if (
+    cleanRecoveryContractValue(
+      valueArtifact?.source
+    ) !==
+      HISTORICAL_RECOVERY_SENTINEL_SOURCE
+  ) {
+    return unchanged();
+  }
+
+  const embeddedPrimary =
+    normalizedRecoveryFixtureUniverse(
+      valueArtifact?.fixtureUniverse
+    );
+
+  const embeddedSource =
+    normalizedRecoveryFixtureUniverse(
+      valueArtifact
+        ?.sourceContract
+        ?.fixtureUniverse
+    );
+
+  // 06/09 already carries its own frozen 477-fixture
+  // universe. Preserve that exact historical cohort even
+  // if current canonical later grows.
+  if (
+    embeddedPrimary &&
+    embeddedSource &&
+    sameRecoveryFixtureUniverse(
+      embeddedPrimary,
+      embeddedSource
+    )
+  ) {
+    return {
+      valueArtifact,
+      evidence: {
+        source:
+          "artifact_embedded",
+
+        count:
+          embeddedPrimary.count,
+
+        hash:
+          embeddedPrimary.hash,
+
+        plans:
+          []
+      }
+    };
+  }
+
+  const a2Universe =
+    frozenRecoverySiblingUniverse(
+      planA2Artifact,
+      dayKey
+    );
+
+  const bUniverse =
+    frozenRecoverySiblingUniverse(
+      planBArtifact,
+      dayKey
+    );
+
+  const b2Universe =
+    frozenRecoverySiblingUniverse(
+      planB2Artifact,
+      dayKey
+    );
+
+  const canonicalUniverse =
+    normalizedRecoveryFixtureUniverse(
+      currentUniverse
+    );
+
+  const consensus =
+    Boolean(
+      a2Universe &&
+      bUniverse &&
+      b2Universe &&
+      canonicalUniverse &&
+      sameRecoveryFixtureUniverse(
+        a2Universe,
+        bUniverse
+      ) &&
+      sameRecoveryFixtureUniverse(
+        a2Universe,
+        b2Universe
+      ) &&
+      sameRecoveryFixtureUniverse(
+        a2Universe,
+        canonicalUniverse
+      )
+    );
+
+  if (!consensus) {
+    return unchanged();
+  }
+
+  /*
+   * IMPORTANT:
+   * This is an in-memory publication binding artifact only.
+   *
+   * It does NOT modify:
+   *   data/value-plans/<day>/plan-a.json
+   *   A2/B/B2 recovery observations
+   *   canonical truth
+   *
+   * The missing Plan A universe for 01-05 is supplied only
+   * from exact A2/B/B2 frozen consensus that also matches
+   * the current canonical Value universe.
+   */
+  const fixtureUniverse = {
+    ...a2Universe,
+    canonicalIds:
+      [...a2Universe.canonicalIds]
+  };
+
+  const sourceContractUniverse = {
+    ...fixtureUniverse,
+    canonicalIds:
+      [...fixtureUniverse.canonicalIds]
+  };
+
+  const bindingArtifact = {
+    ...valueArtifact,
+
+    fixtureUniverse,
+
+    sourceContract: {
+      ...(valueArtifact?.sourceContract || {}),
+
+      fixtureUniverse:
+        sourceContractUniverse
+    }
+  };
+
+  return {
+    valueArtifact:
+      bindingArtifact,
+
+    evidence: {
+      source:
+        "frozen_sibling_consensus",
+
+      count:
+        fixtureUniverse.count,
+
+      hash:
+        fixtureUniverse.hash,
+
+      plans:
+        ["A2", "B", "B2"]
+    }
+  };
+}
+
+export function recoveryPublicationBindingForDay(
+  dayKey,
+  valueArtifact
+) {
+  const planDir =
+    resolveDataPath(
+      "value-plans",
+      dayKey
+    );
+
+  const planA2Artifact =
+    readJsonSafe(
+      path.join(
+        planDir,
+        "plan-a2.json"
+      ),
+      null
+    );
+
+  const planBArtifact =
+    readJsonSafe(
+      path.join(
+        planDir,
+        "plan-b.json"
+      ),
+      null
+    );
+
+  const planB2Artifact =
+    readJsonSafe(
+      path.join(
+        planDir,
+        "plan-b2.json"
+      ),
+      null
+    );
+
+  const currentUniverse =
+    valueFixtureUniverseContract(
+      buildValueFixtureUniverse(
+        dayKey
+      )
+    );
+
+  return buildHistoricalRecoveryPublicationBindingArtifact({
+    dayKey,
+    valueArtifact,
+    planA2Artifact,
+    planBArtifact,
+    planB2Artifact,
+    currentUniverse
+  });
 }
 
 function valueForDay(dayKey, options = {}) {
@@ -1264,14 +1631,21 @@ const valueFreshAgainstCanonical = (latestCanonicalAt === null || valueArtifactA
 // timestamps may advance, but a stale timestamp is waivable only when an
 // explicitly preserved artifact is exact-identity bound to this day's
 // canonical fixture universe with zero orphan or missing-id picks.
+const recoveryPublicationBinding =
+  recoveryPublicationBindingForDay(
+    dayKey,
+    persistedValueOut
+  );
+
 const frozenValueBinding = evaluateFrozenValueFixtureBinding({
   preserveSnapshotValueBytes,
   frozenPublicationAuthority:
     isFrozenPlanAPublication(
-      persistedValueOut
+      recoveryPublicationBinding.valueArtifact
     ),
   dayKey,
-  valueArtifact: persistedValueOut,
+  valueArtifact:
+    recoveryPublicationBinding.valueArtifact,
   fixtures
 });
 
@@ -1353,6 +1727,18 @@ valueGate: {
   missingMatchIdPickIndexes: frozenValueBinding.missingMatchIdPickIndexes,
   dayBound: frozenValueBinding.dayBound,
   canonicalSourceBound: frozenValueBinding.canonicalSourceBound,
+  recoveryContractBound: frozenValueBinding.recoveryContractBound === true,
+  recoveryPublishedUniverseBound: frozenValueBinding.recoveryPublishedUniverseBound === true,
+  recoveryUniverseEvidenceSource:
+    recoveryPublicationBinding.evidence?.source || null,
+  recoveryUniverseEvidenceCount:
+    recoveryPublicationBinding.evidence?.count ?? null,
+  recoveryUniverseEvidenceHash:
+    recoveryPublicationBinding.evidence?.hash || null,
+  recoveryUniverseEvidencePlans:
+    Array.isArray(recoveryPublicationBinding.evidence?.plans)
+      ? [...recoveryPublicationBinding.evidence.plans]
+      : [],
   ok: !(fixturesOut.count > 0 && String(persistedValueOut?.source || "") === "missing_local_value_file") && (
     valueFreshAgainstCanonical !== false || frozenValueBinding.releaseSafe === true
   )
