@@ -2,14 +2,62 @@
   "dayKey": "2026-09-08",
   "leagueSlug": "col.1",
   "leagueName": "Colombia Primera A",
-  "updatedAt": "2026-09-07T18:48:29.766Z",
-  "count": 2,
+  "updatedAt": "2026-09-07T21:38:48.653Z",
+  "count": 1,
   "sourceMeta": {
-    "acquisitionProvider": "espn_all_scoreboard",
-    "requestedLeagueSlug": "all",
+    "acquisitionProvider": "espn_direct_league_status",
+    "requestedLeagueSlug": "col.1",
     "requestedDayKey": "2026-09-08",
-    "mergedAt": "2026-09-07T18:48:29.766Z",
-    "mode": "supplemental_target_seed_only"
+    "providerFetchSlugs": [
+      "col.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 2,
+      "matches": 1,
+      "fetches": [
+        {
+          "providerSlug": "col.1",
+          "dayKey": "2026-09-07",
+          "ok": true,
+          "events": 1,
+          "matched": 1
+        },
+        {
+          "providerSlug": "col.1",
+          "dayKey": "2026-09-09",
+          "ok": true,
+          "events": 0,
+          "matched": 0
+        }
+      ]
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 1,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 1,
+      "wrongDayRemovedRows": 1,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [
+        {
+          "providerSlug": "col.1",
+          "providerMatchId": "401878012",
+          "ok": true,
+          "kind": "other_day",
+          "authoritativeDayKey": "2026-10-22",
+          "reason": null
+        }
+      ],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-09-07T21:38:48.653Z",
+    "mode": "targeted_live_status_refresh"
   },
   "fixtures": [
     {
@@ -31,46 +79,13 @@
       "awayTeam": "Deportes Tolima",
       "venue": "Estadio Bello Horizonte - Rey Pele",
       "firstSeenAt": "2026-09-03T11:41:14.105Z",
-      "lastSeenAt": "2026-09-07T18:48:29.711Z",
+      "lastSeenAt": "2026-09-07T21:38:48.493Z",
+      "providerLeagueSlug": "col.1",
       "status": "PRE",
       "rawStatus": "STATUS_SCHEDULED",
       "minute": "0'",
       "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null,
-      "providerLeagueSlug": "col.1"
-    },
-    {
-      "canonicalId": "cid_col1_llaneros_deportivocali_20260908",
-      "matchId": "cid_col1_llaneros_deportivocali_20260908",
-      "matchKey": "llaneros|deportivocali|1788829200000",
-      "source": "espn",
-      "sourceId": "401878012",
-      "sourceMatchId": "401878012",
-      "providerIds": {
-        "espn": "401878012"
-      },
-      "leagueSlug": "col.1",
-      "leagueName": "Colombia Primera A",
-      "dayKey": "2026-09-08",
-      "fetchedDayKey": "2026-09-07",
-      "kickoffUtc": "2026-09-08T01:00Z",
-      "homeTeam": "Llaneros FC",
-      "awayTeam": "Deportivo Cali",
-      "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null,
-      "status": "SPECIAL",
-      "rawStatus": "STATUS_POSTPONED",
-      "minute": null,
-      "venue": "Estadio Bello Horizonte - Rey Pele",
-      "firstSeenAt": "2026-08-24T15:06:36.734Z",
-      "lastSeenAt": "2026-09-02T04:35:19.766Z",
-      "homeScore": null,
-      "awayScore": null,
-      "isDisplayFinal": false
+      "scoreAway": null
     }
   ]
 }
