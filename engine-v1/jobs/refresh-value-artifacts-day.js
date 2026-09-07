@@ -1108,7 +1108,9 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
         outputMode: "plan-b-observation"
       });
 
-  const adjustedPlans = await buildValueA2B2Day(date);
+  const adjustedPlans = await buildValueA2B2Day(date, {
+    allowCurrentDayBootstrap: true
+  });
   const planA2 = adjustedPlans?.plans?.A2 || null;
   const planB2 = adjustedPlans?.plans?.B2 || null;
 

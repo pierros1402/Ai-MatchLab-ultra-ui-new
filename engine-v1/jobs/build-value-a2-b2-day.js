@@ -90,60 +90,43 @@ export function readFrozenAdjustedValueObservations(dayKey) {
   };
 }
 
-export async function buildValueA2B2Day(dayKey, options = {}) {
+function readAdjustedValueObservationPresence(dayKey) {
   const dir = resolveDataPath("value-plans", dayKey);
-  ensureDir(dir);
 
-  const calendarDay = String(options.calendarDay || athensDayKey());
-  const freezeObservations = shouldFreezeAdjustedValueObservations(
-    dayKey,
-    calendarDay
+  return {
+    planA2: fs.existsSync(path.join(dir, "plan-a2.json")),
+    auditA2: fs.existsSync(path.join(dir, "plan-a2-audit.json")),
+    planB2: fs.existsSync(path.join(dir, "plan-b2.json")),
+    auditB2: fs.existsSync(path.join(dir, "plan-b2-audit.json"))
+  };
+}
+
+function allAdjustedValueObservationFilesAbsent(presence) {
+  return Boolean(
+    presence?.planA2 === false &&
+    presence?.auditA2 === false &&
+    presence?.planB2 === false &&
+    presence?.auditB2 === false
   );
+}
 
-  const readFrozen = options.readFrozen || readFrozenAdjustedValueObservations;
-  const buildValue = options.buildValue || buildValueDay;
-  const deriveValue = options.deriveValue || deriveValueFromOdds;
-
-  if (freezeObservations) {
-    const frozen = readFrozen(dayKey) || {};
-
-    if (!frozen.A2 || !frozen.B2) {
-      return {
-        ok: false,
-        date: dayKey,
-        freezeObservations: true,
-        reason: "missing_or_invalid_frozen_adjusted_value_observation",
-        missing: [
-          !frozen.A2 ? "A2" : null,
-          !frozen.B2 ? "B2" : null
-        ].filter(Boolean),
-        plans: {
-          A2: frozen.A2 || null,
-          B2: frozen.B2 || null
-        }
-      };
-    }
-
-    return {
-      ok: true,
-      date: dayKey,
-      freezeObservations: true,
-      preservedExisting: true,
-      plans: {
-        A2: {
-          ...frozen.A2,
-          ok: true
-        },
-        B2: frozen.B2
-      }
-    };
-  }
-
+async function buildFreshAdjustedValuePlans(
+  dayKey,
+  { buildValue, deriveValue }
+) {
   const planA2 = await buildValue(dayKey, {
     rebuild: true,
     opponentAdjusted: true,
-    outputPath: resolveDataPath("value-plans", dayKey, "plan-a2.json"),
-    auditPath: resolveDataPath("value-plans", dayKey, "plan-a2-audit.json")
+    outputPath: resolveDataPath(
+      "value-plans",
+      dayKey,
+      "plan-a2.json"
+    ),
+    auditPath: resolveDataPath(
+      "value-plans",
+      dayKey,
+      "plan-a2-audit.json"
+    )
   });
 
   const planB2 = deriveValue(dayKey, {
@@ -152,14 +135,124 @@ export async function buildValueA2B2Day(dayKey, options = {}) {
   });
 
   return {
-    ok: planA2?.ok === true && planB2?.ok === true,
+    A2: planA2,
+    B2: planB2
+  };
+}
+
+export async function buildValueA2B2Day(dayKey, options = {}) {
+  const dir = resolveDataPath("value-plans", dayKey);
+  const ensureOutputDir = options.ensureOutputDir || ensureDir;
+  ensureOutputDir(dir);
+
+  const calendarDay = String(
+    options.calendarDay || athensDayKey()
+  );
+
+  const freezeObservations =
+    shouldFreezeAdjustedValueObservations(
+      dayKey,
+      calendarDay
+    );
+
+  const readFrozen =
+    options.readFrozen || readFrozenAdjustedValueObservations;
+
+  const readPresence =
+    options.readPresence || readAdjustedValueObservationPresence;
+
+  const buildValue =
+    options.buildValue || buildValueDay;
+
+  const deriveValue =
+    options.deriveValue || deriveValueFromOdds;
+
+  if (freezeObservations) {
+    const frozen = readFrozen(dayKey) || {};
+
+    if (frozen.A2 && frozen.B2) {
+      return {
+        ok: true,
+        date: dayKey,
+        freezeObservations: true,
+        preservedExisting: true,
+        bootstrapCurrentDay: false,
+        plans: {
+          A2: {
+            ...frozen.A2,
+            ok: true
+          },
+          B2: frozen.B2
+        }
+      };
+    }
+
+    const artifactPresence =
+      readPresence(dayKey) || {};
+
+    const bootstrapCurrentDay = Boolean(
+      options.allowCurrentDayBootstrap === true &&
+      dayKey === calendarDay &&
+      !frozen.A2 &&
+      !frozen.B2 &&
+      allAdjustedValueObservationFilesAbsent(
+        artifactPresence
+      )
+    );
+
+    if (!bootstrapCurrentDay) {
+      return {
+        ok: false,
+        date: dayKey,
+        freezeObservations: true,
+        reason:
+          "missing_or_invalid_frozen_adjusted_value_observation",
+        missing: [
+          !frozen.A2 ? "A2" : null,
+          !frozen.B2 ? "B2" : null
+        ].filter(Boolean),
+        artifactPresence,
+        plans: {
+          A2: frozen.A2 || null,
+          B2: frozen.B2 || null
+        }
+      };
+    }
+
+    const freshPlans =
+      await buildFreshAdjustedValuePlans(
+        dayKey,
+        { buildValue, deriveValue }
+      );
+
+    return {
+      ok:
+        freshPlans.A2?.ok === true &&
+        freshPlans.B2?.ok === true,
+      date: dayKey,
+      freezeObservations: true,
+      preservedExisting: false,
+      bootstrapCurrentDay: true,
+      artifactPresence,
+      plans: freshPlans
+    };
+  }
+
+  const freshPlans =
+    await buildFreshAdjustedValuePlans(
+      dayKey,
+      { buildValue, deriveValue }
+    );
+
+  return {
+    ok:
+      freshPlans.A2?.ok === true &&
+      freshPlans.B2?.ok === true,
     date: dayKey,
     freezeObservations: false,
     preservedExisting: false,
-    plans: {
-      A2: planA2,
-      B2: planB2
-    }
+    bootstrapCurrentDay: false,
+    plans: freshPlans
   };
 }
 
