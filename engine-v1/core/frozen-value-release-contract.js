@@ -44,6 +44,37 @@ export function isFrozenPlanAPublication(
   );
 }
 
+export function isVerifiedHistoricalRecoverySentinel(
+  valueArtifact,
+  expectedDay = ""
+) {
+  const picks = Array.isArray(valueArtifact?.picks)
+    ? valueArtifact.picks
+    : null;
+  const recoveryContract = valueArtifact?.recoveryContract || {};
+  const sourceContract = valueArtifact?.sourceContract || {};
+  const day = clean(expectedDay);
+
+  return Boolean(
+    isFrozenPlanAPublication(valueArtifact) &&
+    clean(valueArtifact?.source) ===
+      "historical_missing_observation_recovery_sentinel" &&
+    (!day || clean(valueArtifact?.date) === day) &&
+    Number.isInteger(valueArtifact?.count) &&
+    valueArtifact.count === 0 &&
+    picks &&
+    picks.length === 0 &&
+    Number(recoveryContract?.version) === 1 &&
+    recoveryContract?.recoveryObservation === true &&
+    clean(recoveryContract?.mode) ===
+      "historical_missing_observation_zero_pick_sentinel" &&
+    recoveryContract?.authenticPayloadRecovered === false &&
+    recoveryContract?.retrospectivePredictionGeneration === false &&
+    recoveryContract?.inventedHistoricalPicks === false &&
+    sourceContract?.recoveryObservation === true
+  );
+}
+
 export function evaluateFrozenValueFixtureBinding({
   preserveSnapshotValueBytes = false,
   frozenPublicationAuthority = false,
@@ -67,7 +98,9 @@ export function evaluateFrozenValueFixtureBinding({
       missingMatchIdPickCount: 0,
       missingMatchIdPickIndexes: Object.freeze([]),
       dayBound: false,
-      canonicalSourceBound: false
+      canonicalSourceBound: false,
+      historicalRecoverySourceBound: false,
+      publicationSourceBound: false
     });
   }
 
@@ -89,11 +122,15 @@ export function evaluateFrozenValueFixtureBinding({
   const artifactDay = clean(valueArtifact?.date);
   const dayBound = Boolean(expectedDay) && artifactDay === expectedDay;
   const canonicalSourceBound = clean(valueArtifact?.source) === "canonical_fixtures";
+  const historicalRecoverySourceBound =
+    isVerifiedHistoricalRecoverySentinel(valueArtifact, expectedDay);
+  const publicationSourceBound =
+    canonicalSourceBound || historicalRecoverySourceBound;
   const coherentCount = Number.isInteger(valueArtifact?.count) &&
     valueArtifact.count >= 0 && valueArtifact.count === picks.length;
   const frozenIdentityBound = Boolean(
     valueArtifact && typeof valueArtifact === "object" &&
-    coherentCount && dayBound && canonicalSourceBound &&
+    coherentCount && dayBound && publicationSourceBound &&
     missingMatchIdPickIndexes.length === 0 && orphanPickIds.length === 0
   );
 
@@ -107,7 +144,9 @@ export function evaluateFrozenValueFixtureBinding({
     missingMatchIdPickCount: missingMatchIdPickIndexes.length,
     missingMatchIdPickIndexes: Object.freeze([...missingMatchIdPickIndexes]),
     dayBound,
-    canonicalSourceBound
+    canonicalSourceBound,
+    historicalRecoverySourceBound,
+    publicationSourceBound
   });
 }
 
