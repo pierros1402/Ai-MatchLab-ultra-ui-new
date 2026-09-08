@@ -1,0 +1,260 @@
+name: Publication rollover watchdog
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/publication-watchdog.yml"
+      - "tools/git-push-rebase-retry.sh"
+  schedule:
+    # UTC candidates covering 00:17-07:17 Europe/Athens across DST/standard
+    # time. The local guard below rejects candidates outside the recovery window.
+    - cron: "17 0,1,2,3,4,5,21,22,23 * * *"
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: ai-matchlab-publication-watchdog
+  cancel-in-progress: false
+
+jobs:
+  publication-watchdog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Inspect publication state
+        id: state
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          DAY_KEY="$(TZ=Europe/Athens date +%F)"
+          ATHENS_HOUR="$((10#$(TZ=Europe/Athens date +%H)))"
+          EVENT_NAME="${GITHUB_EVENT_NAME}"
+          HEAD_REF="$(git rev-parse HEAD)"
+
+          echo "DAY_KEY=${DAY_KEY}"
+          echo "ATHENS_HOUR=${ATHENS_HOUR}"
+          echo "EVENT_NAME=${EVENT_NAME}"
+          echo "HEAD_REF=${HEAD_REF}"
+
+          # Scheduled checks are only a post-rollover recovery net. Push/manual
+          # checks are allowed at any hour so installation and incident recovery
+          # can converge immediately.
+          if [[ "${EVENT_NAME}" == "schedule" ]] && (( ATHENS_HOUR > 7 )); then
+            echo "MODE=skip" >> "$GITHUB_ENV"
+            echo "mode=skip" >> "$GITHUB_OUTPUT"
+            echo "Scheduled watchdog outside 00:00-07:59 Europe/Athens; skipping."
+            exit 0
+          fi
+
+          LATEST_DAY="$(
+            node -e '
+              const fs=require("fs");
+              try {
+                const x=JSON.parse(fs.readFileSync("data/deploy-snapshots/latest.json","utf8"));
+                process.stdout.write(String(x?.date || ""));
+              } catch {}
+            '
+          )"
+
+          echo "LATEST_DAY=${LATEST_DAY}"
+
+          if [[ "${LATEST_DAY}" > "${DAY_KEY}" ]]; then
+            echo "MODE=healthy" >> "$GITHUB_ENV"
+            echo "mode=healthy" >> "$GITHUB_OUTPUT"
+            echo "Repository is already pre-published beyond Athens today; no recovery required."
+            exit 0
+          fi
+
+          MANIFEST="data/deploy-snapshots/${DAY_KEY}/manifest.json"
+
+          if [[ "${LATEST_DAY}" == "${DAY_KEY}" && -f "${MANIFEST}" ]]; then
+            EXPECTED_HASH="$(
+              DAY_KEY="${DAY_KEY}" node --input-type=module -e '
+                import fs from "node:fs";
+                import { validateDeploySnapshotManifest } from "./engine-v1/core/deploy-snapshot-release-contract.js";
+                const day=process.env.DAY_KEY;
+                const latest=JSON.parse(fs.readFileSync("data/deploy-snapshots/latest.json","utf8"));
+                const manifest=JSON.parse(fs.readFileSync(`data/deploy-snapshots/${day}/manifest.json`,"utf8"));
+                const check=validateDeploySnapshotManifest(manifest,day);
+                if(!check.ok){
+                  console.error(JSON.stringify({reason:"manifest_invalid",errors:check.errors}));
+                  process.exit(2);
+                }
+                if(latest?.date!==day || latest?.hash!==manifest?.hash){
+                  console.error(JSON.stringify({
+                    reason:"latest_manifest_binding_mismatch",
+                    latestDate:latest?.date,
+                    latestHash:latest?.hash,
+                    manifestHash:manifest?.hash
+                  }));
+                  process.exit(3);
+                }
+                process.stdout.write(String(manifest.hash));
+              '
+            )"
+
+            PUBLIC_STATE="$(
+              curl -fsS --connect-timeout 10 --max-time 30 \
+                "https://ai-matchlab-engine.onrender.com/deploy-snapshot/latest" \
+                2>/dev/null || true
+            )"
+
+            PUBLIC_BINDING="$(
+              printf '%s' "${PUBLIC_STATE}" |
+                DAY_KEY="${DAY_KEY}" EXPECTED_HASH="${EXPECTED_HASH}" node -e '
+                  let raw="";
+                  process.stdin.on("data",c=>raw+=c);
+                  process.stdin.on("end",()=>{
+                    try{
+                      const x=JSON.parse(raw);
+                      const ok=x?.date===process.env.DAY_KEY && x?.hash===process.env.EXPECTED_HASH;
+                      process.stdout.write(ok?"match":"mismatch");
+                    }catch{
+                      process.stdout.write("mismatch");
+                    }
+                  });
+                '
+            )"
+
+            echo "EXPECTED_HASH=${EXPECTED_HASH}"
+            echo "PUBLIC_BINDING=${PUBLIC_BINDING}"
+
+            if [[ "${PUBLIC_BINDING}" == "match" ]]; then
+              echo "MODE=healthy" >> "$GITHUB_ENV"
+              echo "mode=healthy" >> "$GITHUB_OUTPUT"
+              echo "Git and public engine are already converged for ${DAY_KEY}."
+              exit 0
+            fi
+
+            echo "MODE=sync" >> "$GITHUB_ENV"
+            echo "mode=sync" >> "$GITHUB_OUTPUT"
+            echo "dayKey=${DAY_KEY}" >> "$GITHUB_OUTPUT"
+            echo "ref=${HEAD_REF}" >> "$GITHUB_OUTPUT"
+            echo "hash=${EXPECTED_HASH}" >> "$GITHUB_OUTPUT"
+            echo "Git publication is valid but public engine is stale; exact-ref sync required."
+            exit 0
+          fi
+
+          # Never promote latest here. Missing/invalid Git publication must go
+          # through the full Daily gates for TODAY; the watchdog only dispatches
+          # that existing fail-closed contract.
+          echo "Repository publication for ${DAY_KEY} is missing or incomplete."
+
+          RUNS_FILE="$RUNNER_TEMP/daily-runs.json"
+          API_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/daily-deploy-snapshot.yml/runs?branch=main&per_page=20"
+
+          curl -fsSL \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -o "${RUNS_FILE}" \
+            "${API_URL}"
+
+          DECISION="$(
+            node -e '
+              const fs=require("fs");
+              const payload=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));
+              const runs=Array.isArray(payload?.workflow_runs)?payload.workflow_runs:[];
+              const active=runs.filter(r=>String(r?.status||"").toLowerCase()!=="completed");
+              if(active.length){process.stdout.write("active");process.exit(0);}
+              const manual=runs
+                .filter(r=>r?.event==="workflow_dispatch")
+                .sort((a,b)=>String(b?.created_at||"").localeCompare(String(a?.created_at||"")));
+              if(manual.length){
+                const t=Date.parse(String(manual[0]?.created_at||""));
+                if(Number.isFinite(t) && Date.now()-t < 90*60*1000){
+                  process.stdout.write("cooldown");
+                  process.exit(0);
+                }
+              }
+              process.stdout.write("dispatch");
+            ' "${RUNS_FILE}"
+          )"
+
+          echo "RECOVERY_DECISION=${DECISION}"
+
+          case "${DECISION}" in
+            active|cooldown)
+              echo "MODE=wait" >> "$GITHUB_ENV"
+              echo "mode=wait" >> "$GITHUB_OUTPUT"
+              ;;
+            dispatch)
+              echo "MODE=dispatch" >> "$GITHUB_ENV"
+              echo "mode=dispatch" >> "$GITHUB_OUTPUT"
+              echo "dayKey=${DAY_KEY}" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "ERROR: unknown recovery decision: ${DECISION}" >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Converge public engine to existing immutable Git publication
+        if: steps.state.outputs.mode == 'sync'
+        shell: bash
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          bash tools/sync-public-snapshot.sh \
+            "${{ steps.state.outputs.dayKey }}" \
+            "${{ steps.state.outputs.ref }}"
+
+      - name: Dispatch controlled same-day Daily recovery
+        if: steps.state.outputs.mode == 'dispatch'
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          DAY_KEY: ${{ steps.state.outputs.dayKey }}
+        run: |
+          set -euo pipefail
+
+          PAYLOAD="$(
+            DAY_KEY="${DAY_KEY}" node -e '
+              process.stdout.write(JSON.stringify({
+                ref:"main",
+                inputs:{
+                  dayKey:process.env.DAY_KEY,
+                  triggerRender:"false"
+                }
+              }));
+            '
+          )"
+
+          curl -fsS \
+            -X POST \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -H "Content-Type: application/json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/daily-deploy-snapshot.yml/dispatches" \
+            --data "${PAYLOAD}"
+
+          echo "CONTROLLED_DAILY_RECOVERY_DISPATCHED=true"
+          echo "CONTROLLED_DAILY_RECOVERY_DAY=${DAY_KEY}"
+
+      - name: Watchdog summary
+        if: always()
+        shell: bash
+        run: |
+          echo "PUBLICATION_WATCHDOG_MODE=${MODE:-unknown}"
+          echo "Athens day: $(TZ=Europe/Athens date +%F)"
