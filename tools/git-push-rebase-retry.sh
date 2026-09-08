@@ -3,14 +3,33 @@
 #
 # Tracked dirty files are handled by rebase.autoStash. Generated untracked files
 # are backed up outside the worktree before rebase, then restored only when the
-# rebased tree does not already contain an equal path. A differing collision is
-# fail-closed and the preserved copy is reported for diagnosis.
+# rebased tree does not already contain an equal path.
+#
+# Safety rule:
+#   - every differing untracked collision remains fail-closed by default;
+#   - ONLY the two explicitly derived/non-canonical day-cache files
+#       data/deploy-snapshots/YYYY-MM-DD/odds.json
+#       data/deploy-snapshots/YYYY-MM-DD/fixtures-all.json
+#     may accept the already-published remote version after a rebase.
+#
+# This narrow remote-wins exception prevents a concurrent odds/cache writer from
+# aborting a long Daily truth checkpoint. It never applies to canonical fixtures,
+# history, final results, Value Plan A, details, manifests, latest.json, or any
+# other source-of-truth/publication artifact.
 set -euo pipefail
 
 BRANCH="${GITHUB_REF_NAME:-main}"
 ATTEMPTS="${PUSH_RETRY_ATTEMPTS:-5}"
 BACKUP_ROOT=""
 UNTRACKED_LIST=""
+
+# Exact derived-cache paths only. Callers may override this with a stricter
+# expression (including an empty value to disable the exception).
+if [[ -v PUSH_RETRY_REMOTE_WINS_UNTRACKED_REGEX ]]; then
+  REMOTE_WINS_UNTRACKED_REGEX="${PUSH_RETRY_REMOTE_WINS_UNTRACKED_REGEX}"
+else
+  REMOTE_WINS_UNTRACKED_REGEX='^data/deploy-snapshots/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/(odds\.json|fixtures-all\.json)$'
+fi
 
 cleanup_backup() {
   if [[ -n "${BACKUP_ROOT}" && -d "${BACKUP_ROOT}" ]]; then
@@ -84,17 +103,22 @@ restore_untracked() {
     return 0
   fi
 
-  python3 - "${UNTRACKED_LIST}" "${BACKUP_ROOT}/files" "${conflict_root}" <<'PY'
+  python3 - "${UNTRACKED_LIST}" "${BACKUP_ROOT}/files" "${conflict_root}" "${REMOTE_WINS_UNTRACKED_REGEX}" <<'PY'
 import filecmp
 import os
 import pathlib
+import re
 import shutil
 import sys
 
 list_path = pathlib.Path(sys.argv[1])
 backup_root = pathlib.Path(sys.argv[2])
 conflict_root = pathlib.Path(sys.argv[3])
+remote_wins_regex = sys.argv[4]
+remote_wins_pattern = re.compile(remote_wins_regex) if remote_wins_regex else None
+
 conflicts = []
+remote_wins = []
 restored = 0
 identical = 0
 
@@ -127,6 +151,13 @@ for raw in list_path.read_bytes().split(b"\0"):
         identical += 1
         continue
 
+    # Remote-wins is intentionally restricted to explicitly allow-listed,
+    # derived deploy-cache paths. Keep the remote tracked copy produced by the
+    # successful rebase and discard the runner's stale/untracked copy.
+    if remote_wins_pattern and remote_wins_pattern.fullmatch(rel):
+        remote_wins.append(rel)
+        continue
+
     preserved = conflict_root / rel
     preserved.parent.mkdir(parents=True, exist_ok=True)
     if saved.is_symlink():
@@ -137,7 +168,16 @@ for raw in list_path.read_bytes().split(b"\0"):
         shutil.copy2(saved, preserved)
     conflicts.append(rel)
 
-print(f"push-retry untracked restored={restored} identical_after_rebase={identical} conflicts={len(conflicts)}")
+print(
+    "push-retry untracked "
+    f"restored={restored} "
+    f"identical_after_rebase={identical} "
+    f"remote_wins={len(remote_wins)} "
+    f"conflicts={len(conflicts)}"
+)
+for rel in remote_wins:
+    print(f"REMOTE_WINS_UNTRACKED={rel}")
+
 if conflicts:
     print(f"ERROR: differing untracked files preserved under {conflict_root}")
     for rel in conflicts:
