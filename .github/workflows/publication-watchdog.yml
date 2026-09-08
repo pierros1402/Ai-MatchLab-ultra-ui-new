@@ -8,10 +8,14 @@ on:
     paths:
       - ".github/workflows/publication-watchdog.yml"
       - "tools/git-push-rebase-retry.sh"
+      - "data/deploy-snapshots/latest.json"
+      - "data/deploy-snapshots/*/manifest.json"
   schedule:
-    # UTC candidates covering 00:17-07:17 Europe/Athens across DST/standard
-    # time. The local guard below rejects candidates outside the recovery window.
-    - cron: "17 0,1,2,3,4,5,21,22,23 * * *"
+    # Lightweight all-day convergence/recovery check. If publication is healthy
+    # this exits quickly; if it is missing, the existing full Daily contract is
+    # dispatched for Europe/Athens TODAY. Half-hour cadence bounds a stuck day
+    # without turning the watchdog itself into a data writer.
+    - cron: "17,47 * * * *"
 
 permissions:
   contents: read
@@ -45,25 +49,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          DAY_KEY="$(TZ=Europe/Athens date +%F)"
-          ATHENS_HOUR="$((10#$(TZ=Europe/Athens date +%H)))"
+          CALENDAR_DAY="$(TZ=Europe/Athens date +%F)"
           EVENT_NAME="${GITHUB_EVENT_NAME}"
           HEAD_REF="$(git rev-parse HEAD)"
 
-          echo "DAY_KEY=${DAY_KEY}"
-          echo "ATHENS_HOUR=${ATHENS_HOUR}"
+          echo "CALENDAR_DAY=${CALENDAR_DAY}"
           echo "EVENT_NAME=${EVENT_NAME}"
           echo "HEAD_REF=${HEAD_REF}"
-
-          # Scheduled checks are only a post-rollover recovery net. Push/manual
-          # checks are allowed at any hour so installation and incident recovery
-          # can converge immediately.
-          if [[ "${EVENT_NAME}" == "schedule" ]] && (( ATHENS_HOUR > 7 )); then
-            echo "MODE=skip" >> "$GITHUB_ENV"
-            echo "mode=skip" >> "$GITHUB_OUTPUT"
-            echo "Scheduled watchdog outside 00:00-07:59 Europe/Athens; skipping."
-            exit 0
-          fi
 
           LATEST_DAY="$(
             node -e '
@@ -77,87 +69,101 @@ jobs:
 
           echo "LATEST_DAY=${LATEST_DAY}"
 
-          if [[ "${LATEST_DAY}" > "${DAY_KEY}" ]]; then
-            echo "MODE=healthy" >> "$GITHUB_ENV"
-            echo "mode=healthy" >> "$GITHUB_OUTPUT"
-            echo "Repository is already pre-published beyond Athens today; no recovery required."
-            exit 0
-          fi
+          # If Git already has a current-day or next-day atomic publication,
+          # validate that exact latest binding and converge the public engine to
+          # it. This also covers the normal pre-midnight TOMORROW publication.
+          if [[ -n "${LATEST_DAY}" && "${LATEST_DAY}" < "${CALENDAR_DAY}" ]]; then
+            echo "Git publication is stale: latest=${LATEST_DAY}, Athens today=${CALENDAR_DAY}."
+          elif [[ -n "${LATEST_DAY}" ]]; then
+            TARGET_DAY="${LATEST_DAY}"
+            MANIFEST="data/deploy-snapshots/${TARGET_DAY}/manifest.json"
 
-          MANIFEST="data/deploy-snapshots/${DAY_KEY}/manifest.json"
-
-          if [[ "${LATEST_DAY}" == "${DAY_KEY}" && -f "${MANIFEST}" ]]; then
-            EXPECTED_HASH="$(
-              DAY_KEY="${DAY_KEY}" node --input-type=module -e '
-                import fs from "node:fs";
-                import { validateDeploySnapshotManifest } from "./engine-v1/core/deploy-snapshot-release-contract.js";
-                const day=process.env.DAY_KEY;
-                const latest=JSON.parse(fs.readFileSync("data/deploy-snapshots/latest.json","utf8"));
-                const manifest=JSON.parse(fs.readFileSync(`data/deploy-snapshots/${day}/manifest.json`,"utf8"));
-                const check=validateDeploySnapshotManifest(manifest,day);
-                if(!check.ok){
-                  console.error(JSON.stringify({reason:"manifest_invalid",errors:check.errors}));
-                  process.exit(2);
-                }
-                if(latest?.date!==day || latest?.hash!==manifest?.hash){
-                  console.error(JSON.stringify({
-                    reason:"latest_manifest_binding_mismatch",
-                    latestDate:latest?.date,
-                    latestHash:latest?.hash,
-                    manifestHash:manifest?.hash
-                  }));
-                  process.exit(3);
-                }
-                process.stdout.write(String(manifest.hash));
-              '
-            )"
-
-            PUBLIC_STATE="$(
-              curl -fsS --connect-timeout 10 --max-time 30 \
-                "https://ai-matchlab-engine.onrender.com/deploy-snapshot/latest" \
-                2>/dev/null || true
-            )"
-
-            PUBLIC_BINDING="$(
-              printf '%s' "${PUBLIC_STATE}" |
-                DAY_KEY="${DAY_KEY}" EXPECTED_HASH="${EXPECTED_HASH}" node -e '
-                  let raw="";
-                  process.stdin.on("data",c=>raw+=c);
-                  process.stdin.on("end",()=>{
-                    try{
-                      const x=JSON.parse(raw);
-                      const ok=x?.date===process.env.DAY_KEY && x?.hash===process.env.EXPECTED_HASH;
-                      process.stdout.write(ok?"match":"mismatch");
-                    }catch{
-                      process.stdout.write("mismatch");
-                    }
-                  });
+            if [[ -f "${MANIFEST}" ]]; then
+              set +e
+              EXPECTED_HASH="$(
+                DAY_KEY="${TARGET_DAY}" node --input-type=module -e '
+                  import fs from "node:fs";
+                  import { validateDeploySnapshotManifest } from "./engine-v1/core/deploy-snapshot-release-contract.js";
+                  const day=process.env.DAY_KEY;
+                  const latest=JSON.parse(fs.readFileSync("data/deploy-snapshots/latest.json","utf8"));
+                  const manifest=JSON.parse(fs.readFileSync(`data/deploy-snapshots/${day}/manifest.json`,"utf8"));
+                  const check=validateDeploySnapshotManifest(manifest,day);
+                  if(!check.ok){
+                    console.error(JSON.stringify({reason:"manifest_invalid",errors:check.errors}));
+                    process.exit(2);
+                  }
+                  if(latest?.date!==day || latest?.hash!==manifest?.hash){
+                    console.error(JSON.stringify({
+                      reason:"latest_manifest_binding_mismatch",
+                      latestDate:latest?.date,
+                      latestHash:latest?.hash,
+                      manifestHash:manifest?.hash
+                    }));
+                    process.exit(3);
+                  }
+                  process.stdout.write(String(manifest.hash));
                 '
-            )"
+              )"
+              VALIDATION_RC=$?
+              set -e
 
-            echo "EXPECTED_HASH=${EXPECTED_HASH}"
-            echo "PUBLIC_BINDING=${PUBLIC_BINDING}"
+              if [[ "${VALIDATION_RC}" -eq 0 && -n "${EXPECTED_HASH}" ]]; then
+                PUBLIC_STATE="$(
+                  curl -fsS --connect-timeout 10 --max-time 30 \
+                    "https://ai-matchlab-engine.onrender.com/deploy-snapshot/latest" \
+                    2>/dev/null || true
+                )"
 
-            if [[ "${PUBLIC_BINDING}" == "match" ]]; then
-              echo "MODE=healthy" >> "$GITHUB_ENV"
-              echo "mode=healthy" >> "$GITHUB_OUTPUT"
-              echo "Git and public engine are already converged for ${DAY_KEY}."
-              exit 0
+                PUBLIC_BINDING="$(
+                  printf '%s' "${PUBLIC_STATE}" |
+                    DAY_KEY="${TARGET_DAY}" EXPECTED_HASH="${EXPECTED_HASH}" node -e '
+                      let raw="";
+                      process.stdin.on("data",c=>raw+=c);
+                      process.stdin.on("end",()=>{
+                        try{
+                          const x=JSON.parse(raw);
+                          const ok=x?.date===process.env.DAY_KEY && x?.hash===process.env.EXPECTED_HASH;
+                          process.stdout.write(ok?"match":"mismatch");
+                        }catch{
+                          process.stdout.write("mismatch");
+                        }
+                      });
+                    '
+                )"
+
+                echo "TARGET_DAY=${TARGET_DAY}"
+                echo "EXPECTED_HASH=${EXPECTED_HASH}"
+                echo "PUBLIC_BINDING=${PUBLIC_BINDING}"
+
+                if [[ "${PUBLIC_BINDING}" == "match" ]]; then
+                  echo "MODE=healthy" >> "$GITHUB_ENV"
+                  echo "mode=healthy" >> "$GITHUB_OUTPUT"
+                  echo "Git and public engine are converged for ${TARGET_DAY}."
+                  exit 0
+                fi
+
+                echo "MODE=sync" >> "$GITHUB_ENV"
+                echo "mode=sync" >> "$GITHUB_OUTPUT"
+                echo "dayKey=${TARGET_DAY}" >> "$GITHUB_OUTPUT"
+                echo "ref=${HEAD_REF}" >> "$GITHUB_OUTPUT"
+                echo "hash=${EXPECTED_HASH}" >> "$GITHUB_OUTPUT"
+                echo "Git publication is valid but public engine is stale; exact-ref sync required."
+                exit 0
+              fi
+
+              echo "Latest/manifest binding is invalid; full current-day recovery required."
+            else
+              echo "Latest points to ${TARGET_DAY} but ${MANIFEST} is missing; full current-day recovery required."
             fi
-
-            echo "MODE=sync" >> "$GITHUB_ENV"
-            echo "mode=sync" >> "$GITHUB_OUTPUT"
-            echo "dayKey=${DAY_KEY}" >> "$GITHUB_OUTPUT"
-            echo "ref=${HEAD_REF}" >> "$GITHUB_OUTPUT"
-            echo "hash=${EXPECTED_HASH}" >> "$GITHUB_OUTPUT"
-            echo "Git publication is valid but public engine is stale; exact-ref sync required."
-            exit 0
+          else
+            echo "Latest publication pointer is missing or unreadable; full current-day recovery required."
           fi
 
-          # Never promote latest here. Missing/invalid Git publication must go
-          # through the full Daily gates for TODAY; the watchdog only dispatches
-          # that existing fail-closed contract.
-          echo "Repository publication for ${DAY_KEY} is missing or incomplete."
+          # Missing/stale/invalid Git publication must go through the complete
+          # fail-closed Daily gates for TODAY. The watchdog never manufactures
+          # fixtures, Value, manifest, or latest.json itself.
+          RECOVERY_DAY="${CALENDAR_DAY}"
+          echo "Repository publication for ${RECOVERY_DAY} is missing or incomplete."
 
           RUNS_FILE="$RUNNER_TEMP/daily-runs.json"
           API_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/daily-deploy-snapshot.yml/runs?branch=main&per_page=20"
@@ -181,7 +187,7 @@ jobs:
                 .sort((a,b)=>String(b?.created_at||"").localeCompare(String(a?.created_at||"")));
               if(manual.length){
                 const t=Date.parse(String(manual[0]?.created_at||""));
-                if(Number.isFinite(t) && Date.now()-t < 90*60*1000){
+                if(Number.isFinite(t) && Date.now()-t < 20*60*1000){
                   process.stdout.write("cooldown");
                   process.exit(0);
                 }
@@ -200,7 +206,7 @@ jobs:
             dispatch)
               echo "MODE=dispatch" >> "$GITHUB_ENV"
               echo "mode=dispatch" >> "$GITHUB_OUTPUT"
-              echo "dayKey=${DAY_KEY}" >> "$GITHUB_OUTPUT"
+              echo "dayKey=${RECOVERY_DAY}" >> "$GITHUB_OUTPUT"
               ;;
             *)
               echo "ERROR: unknown recovery decision: ${DECISION}" >&2
