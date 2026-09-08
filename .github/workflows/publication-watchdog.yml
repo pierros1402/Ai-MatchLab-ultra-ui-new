@@ -154,7 +154,7 @@ jobs:
                   # midnight while preserving the normal Daily schedule as the
                   # primary mechanism.
                   if [[
-                    "${EVENT_NAME}" == "schedule" &&
+                    ( "${EVENT_NAME}" == "schedule" || "${EVENT_NAME}" == "push" ) &&
                     "${TARGET_DAY}" == "${CALENDAR_DAY}" &&
                     "${ATHENS_TOTAL_MINUTES}" -ge 1170 &&
                     "${ATHENS_TOTAL_MINUTES}" -le 1259
