@@ -7,7 +7,11 @@
 import fs from "fs";
 import { pathToFileURL } from "node:url";
 import { athensDayKey } from "../core/daykey.js";
+import {
+  evaluateDeployOverlayPublicationEligibility
+} from "../core/deploy-overlay-publication-contract.js";
 import { resolveDataPath } from "../storage/data-root.js";
+import { getOddsForDay } from "../storage/odds-memory-db.js";
 import { runOddsOpening } from "./run-odds-opening.js";
 import { supplementCanonicalAssessments } from "./canonical-assessment-supplement.js";
 import { exportOddsSnapshotDay } from "./export-odds-snapshot-day.js";
@@ -58,6 +62,7 @@ export function assertPersistedAssessmentPostcondition(
 
 export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
   const existing = readExistingSnapshot(dayKey);
+  const overlayPublication = evaluateDeployOverlayPublicationEligibility(dayKey);
   const lastScrapeAt = existing?.generatedAt ? Date.parse(existing.generatedAt) : null;
   const kickoffsUtc = (existing?.matches || [])
     .map(m => m.kickoffUtc ? Date.parse(m.kickoffUtc) : kickoffToUtcMs(m.kickoffLocal))
@@ -78,16 +83,35 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
       ? { due: true, reason: "missing_model_assessments", hoursSinceLast: null }
       : oddsUpdateDecision({ lastScrapeAt, kickoffsUtc });
 
+  // odds.json and fixtures-all.json are mutable UI overlays, not members of the
+  // immutable manifest hash. Never create them inside an unpublished day. The
+  // source odds/model-assessment stores may still refresh below, so Daily can
+  // build Value B/B2 without letting an independent writer race the atomic
+  // publication transaction.
   let fixturesChanged = false;
-  try {
-    const fx = await exportFixturesSnapshotDay(dayKey);
-    fixturesChanged = fx.changed;
-  } catch (err) {
-    console.warn("[run-odds-refresh] fixtures export failed", String(err?.message || err));
+  if (overlayPublication.eligible) {
+    try {
+      const fx = await exportFixturesSnapshotDay(dayKey);
+      fixturesChanged = fx.changed;
+    } catch (err) {
+      console.warn("[run-odds-refresh] fixtures export failed", String(err?.message || err));
+    }
+  } else {
+    console.log(
+      `[run-odds-refresh] deploy overlay blocked for ${dayKey}: ${overlayPublication.reason}`
+    );
   }
 
   if (!decision.due) {
-    return { ok: true, dayKey, due: false, reason: decision.reason, changed: fixturesChanged, fixturesChanged };
+    return {
+      ok: true,
+      dayKey,
+      due: false,
+      reason: decision.reason,
+      changed: fixturesChanged,
+      fixturesChanged,
+      overlayPublication
+    };
   }
 
   await runOddsOpening();
@@ -95,6 +119,30 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
   // Model-only canonical supplement. No bookmaker odds are fabricated and no
   // already-started fixture receives a new assessment.
   const canonicalSupplement = supplementCanonicalAssessments(dayKey);
+
+  if (!overlayPublication.eligible) {
+    // On an unpublished day, prove the model input available to this process
+    // rather than persisting a deploy overlay. getOddsForDay is the same reader
+    // used by Plan B/B2 and therefore validates the actual downstream contract.
+    const persistence = assertPersistedAssessmentPostcondition(
+      getOddsForDay(dayKey),
+      dayKey,
+      { canonicalFixtureCount: canonicalSupplement.canonicalFixtures }
+    );
+
+    return {
+      ok: true,
+      dayKey,
+      due: true,
+      reason: decision.reason,
+      changed: false,
+      fixturesChanged: false,
+      count: persistence.matchRows,
+      assessmentRows: persistence.assessmentRows,
+      overlayPublication,
+      canonicalSupplement
+    };
+  }
 
   const snap = exportOddsSnapshotDay(dayKey);
   const persisted = readExistingSnapshot(dayKey);
@@ -113,6 +161,7 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
     fixturesChanged,
     count: snap.count,
     assessmentRows: persistence.assessmentRows,
+    overlayPublication,
     canonicalSupplement
   };
 }
