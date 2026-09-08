@@ -50,10 +50,12 @@ jobs:
           set -euo pipefail
 
           CALENDAR_DAY="$(TZ=Europe/Athens date +%F)"
+          NEXT_DAY="$(TZ=Europe/Athens date -d 'tomorrow' +%F)"
           EVENT_NAME="${GITHUB_EVENT_NAME}"
           HEAD_REF="$(git rev-parse HEAD)"
 
           echo "CALENDAR_DAY=${CALENDAR_DAY}"
+          echo "NEXT_DAY=${NEXT_DAY}"
           echo "EVENT_NAME=${EVENT_NAME}"
           echo "HEAD_REF=${HEAD_REF}"
 
@@ -69,11 +71,13 @@ jobs:
 
           echo "LATEST_DAY=${LATEST_DAY}"
 
-          # If Git already has a current-day or next-day atomic publication,
-          # validate that exact latest binding and converge the public engine to
-          # it. This also covers the normal pre-midnight TOMORROW publication.
+          # Only current-day or next-day atomic publication is valid. Anything
+          # older is stale; anything beyond tomorrow is an invalid future pointer
+          # and must go through the same complete fail-closed recovery path.
           if [[ -n "${LATEST_DAY}" && "${LATEST_DAY}" < "${CALENDAR_DAY}" ]]; then
             echo "Git publication is stale: latest=${LATEST_DAY}, Athens today=${CALENDAR_DAY}."
+          elif [[ -n "${LATEST_DAY}" && "${LATEST_DAY}" > "${NEXT_DAY}" ]]; then
+            echo "Git publication is beyond the allowed next-day horizon: latest=${LATEST_DAY}, allowedMax=${NEXT_DAY}."
           elif [[ -n "${LATEST_DAY}" ]]; then
             TARGET_DAY="${LATEST_DAY}"
             MANIFEST="data/deploy-snapshots/${TARGET_DAY}/manifest.json"
