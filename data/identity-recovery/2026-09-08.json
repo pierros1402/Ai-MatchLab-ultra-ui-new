@@ -6,7 +6,7 @@
     "daysBack": 1,
     "daysForward": 14
   },
-  "sourceLatestUpdatedAt": "2026-09-07T18:48:29.769Z",
+  "sourceLatestUpdatedAt": "2026-09-08T04:22:05.992Z",
   "resolver": {
     "schema": "ai-matchlab.production-identity-resolver-runtime.v2",
     "extensionLedgerSha256": "c9792faa016c0b531130ec1ffedd0a090c32a1532b786eff87e6f73f76ea3e60",
@@ -17,7 +17,7 @@
       "sourceFixtureIds": 174
     }
   },
-  "status": "CLEAN",
+  "status": "REVIEW_REQUIRED",
   "promotionPolicy": {
     "broadFuzzyAllowed": false,
     "unresolvedTwoSidedAutoPromotionAllowed": false,
@@ -25,13 +25,15 @@
   },
   "summary": {
     "scannedDays": 16,
-    "scannedLeagueFiles": 409,
-    "inputRows": 1381,
+    "scannedLeagueFiles": 431,
+    "inputRows": 1424,
     "autoPromotable": 0,
-    "pendingIndependentConfirmation": 0,
+    "pendingIndependentConfirmation": 1,
     "ambiguous": 0,
     "conflictRejected": 0,
-    "alreadyManagedPairs": 0
+    "alreadyManagedPairs": 0,
+    "independentConfirmed": 0,
+    "independentConfirmationRetryPending": 1
   },
   "targetDays": [
     {
@@ -46,13 +48,84 @@
     },
     {
       "dayKey": "2026-09-09",
-      "leagueFiles": 35,
+      "leagueFiles": 36,
       "recoveryLeagueReports": []
     },
     {
       "dayKey": "2026-09-10",
-      "leagueFiles": 11,
-      "recoveryLeagueReports": []
+      "leagueFiles": 31,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "conmebol.libertadores",
+          "inputRows": 3,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [
+            {
+              "leagueSlug": "conmebol.libertadores",
+              "kickoffUtc": "2026-09-09T22:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "MHvWTvoS",
+                "canonicalId": "cid_conmebollibertadores_palmeirasbra_lduquitoecu_20260910",
+                "kickoffUtc": "2026-09-09T22:00:00.000Z",
+                "homeTeam": "Palmeiras (Bra)",
+                "awayTeam": "LDU Quito (Ecu)"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401912527",
+                "canonicalId": "cid_conmebollibertadores_palmeiras_ligaquito_20260910",
+                "kickoffUtc": "2026-09-09T22:00Z",
+                "homeTeam": "Palmeiras",
+                "awayTeam": "Liga de Quito"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "away": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "stableSides": 0,
+                "conflict": false
+              },
+              "recoveryStatus": "PENDING_INDEPENDENT_CONFIRMATION",
+              "promotionAuthorized": false,
+              "requiresIndependentConfirmation": true,
+              "independentConfirmation": {
+                "status": "PENDING_RETRY",
+                "source": "api_football",
+                "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
+                "oddsUsed": false,
+                "attempts": 1,
+                "lastAttemptAt": "2026-09-08T04:22:06.329Z",
+                "retryable": true,
+                "providerStatus": "MISSING_API_KEY",
+                "evaluationStatus": null,
+                "thirdSourceKickoffRows": 0
+              }
+            }
+          ],
+          "ambiguous": [],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 1,
+            "ambiguous": 0,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
     },
     {
       "dayKey": "2026-09-11",
@@ -81,7 +154,7 @@
     },
     {
       "dayKey": "2026-09-16",
-      "leagueFiles": 13,
+      "leagueFiles": 14,
       "recoveryLeagueReports": []
     },
     {
@@ -114,5 +187,22 @@
       "leagueFiles": 4,
       "recoveryLeagueReports": []
     }
-  ]
+  ],
+  "independentConfirmation": {
+    "source": "api_football",
+    "evidenceEndpoint": "fixtures",
+    "oddsAllowed": false,
+    "fuzzyMatchingAllowed": false,
+    "runAt": "2026-09-08T04:22:06.330Z",
+    "attempts": [
+      {
+        "dayKey": "2026-09-10",
+        "leagueSlug": "conmebol.libertadores",
+        "key": "cid_conmebollibertadores_palmeiras_ligaquito_20260910|cid_conmebollibertadores_palmeirasbra_lduquitoecu_20260910",
+        "status": "PENDING_RETRY",
+        "providerStatus": "MISSING_API_KEY",
+        "evaluationStatus": null
+      }
+    ]
+  }
 }
