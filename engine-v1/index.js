@@ -1465,8 +1465,19 @@ app.get("/release", (_req, res) => {
 });
 
 app.get("/ready", (_req, res) => {
-  const day = athensDayKey();
+  const calendarDay = athensDayKey();
+  const nextDay = shiftDay(calendarDay, 1);
   const latest = readDeploySnapshotLatest();
+  const latestDay = String(latest?.date || "");
+
+  const latestDayAllowed =
+    latestDay === calendarDay ||
+    latestDay === nextDay;
+
+  const day = latestDayAllowed
+    ? latestDay
+    : calendarDay;
+
   const manifest = readDeploySnapshotManifest(day);
   const validation = manifest
     ? validateDeploySnapshotManifest(manifest, day)
@@ -1474,16 +1485,34 @@ app.get("/ready", (_req, res) => {
 
   const latestMatches = Boolean(
     latest &&
-    String(latest.date || "") === day &&
-    String(latest.hash || "").toLowerCase() === String(manifest?.hash || "").toLowerCase()
+    latestDayAllowed &&
+    String(latest.hash || "").toLowerCase() ===
+      String(manifest?.hash || "").toLowerCase()
   );
-  const ready = validation.ok && latestMatches;
+
+  const ready =
+    validation.ok &&
+    latestMatches;
+
+  const releaseState = ready
+    ? latestDay === nextDay
+      ? "next_day_prepublished"
+      : "current_day"
+    : latestDay && latestDay < calendarDay
+      ? "stale"
+      : latestDay && latestDay > nextDay
+        ? "future_invalid"
+        : "invalid";
 
   res.status(ready ? 200 : 503).json({
     ok: ready,
     ready,
     service: "engine-v1",
     day,
+    calendarDay,
+    operationalDay: calendarDay,
+    latestPublishedDay: latestDay || null,
+    releaseState,
     gitCommit: deployedGitCommit(),
     manifestHash: manifest?.hash || null,
     latestDay: latest?.date || null,
@@ -1494,7 +1523,6 @@ app.get("/ready", (_req, res) => {
     ]
   });
 });
-
 app.get("/deploy-snapshot", (req, res) => {
   const requestedDate = String(req.query.date || "");
   const date = resolveSnapshotDate(requestedDate);
