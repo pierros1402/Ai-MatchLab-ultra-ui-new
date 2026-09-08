@@ -140,6 +140,123 @@ jobs:
                 echo "PUBLIC_BINDING=${PUBLIC_BINDING}"
 
                 if [[ "${PUBLIC_BINDING}" == "match" ]]; then
+                  ATHENS_HOUR="$(TZ=Europe/Athens date +%H)"
+                  ATHENS_MINUTE="$(TZ=Europe/Athens date +%M)"
+                  ATHENS_TOTAL_MINUTES=$((10#$ATHENS_HOUR * 60 + 10#$ATHENS_MINUTE))
+
+                  # GitHub scheduled Daily events are not guaranteed delivery.
+                  # Once two normal evening opportunities have passed, a
+                  # scheduled watchdog run becomes the fail-safe prepublication
+                  # launcher for TOMORROW. It never builds publication artifacts
+                  # itself; it only dispatches the complete fail-closed Daily.
+                  #
+                  # 19:30-20:59 Athens leaves ample wall-clock budget before
+                  # midnight while preserving the normal Daily schedule as the
+                  # primary mechanism.
+                  if [[
+                    "${EVENT_NAME}" == "schedule" &&
+                    "${TARGET_DAY}" == "${CALENDAR_DAY}" &&
+                    "${ATHENS_TOTAL_MINUTES}" -ge 1170 &&
+                    "${ATHENS_TOTAL_MINUTES}" -le 1259
+                  ]]; then
+                    echo "Current-day publication is healthy but next-day prepublication is still absent."
+                    echo "Checking Daily activity before controlled next-day fallback."
+
+                    # A Daily candidate can be registered at the same minute as
+                    # this watchdog. Give GitHub Actions time to expose it before
+                    # deciding to dispatch another run.
+                    sleep 45
+
+                    RUNS_FILE="$RUNNER_TEMP/daily-runs-prepublication.json"
+                    API_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/daily-deploy-snapshot.yml/runs?branch=main&per_page=20"
+
+                    curl -fsSL \
+                      -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+                      -H "Accept: application/vnd.github+json" \
+                      -H "X-GitHub-Api-Version: 2022-11-28" \
+                      -o "${RUNS_FILE}" \
+                      "${API_URL}"
+
+                    PREPUBLISH_DECISION="$(
+                      node -e '
+                        const fs=require("fs");
+                        const payload=JSON.parse(
+                          fs.readFileSync(process.argv[1],"utf8")
+                        );
+
+                        const runs=
+                          Array.isArray(payload?.workflow_runs)
+                            ? payload.workflow_runs
+                            : [];
+
+                        const active=runs.filter(
+                          r =>
+                            String(r?.status || "").toLowerCase()
+                              !== "completed"
+                        );
+
+                        if(active.length){
+                          process.stdout.write("active");
+                          process.exit(0);
+                        }
+
+                        const recentNonFailed=runs.filter(r => {
+                          if(
+                            String(r?.status || "").toLowerCase()
+                              !== "completed"
+                          ){
+                            return false;
+                          }
+
+                          if(
+                            String(r?.conclusion || "").toLowerCase()
+                              === "failure"
+                          ){
+                            return false;
+                          }
+
+                          const t=Date.parse(
+                            String(r?.created_at || "")
+                          );
+
+                          return (
+                            Number.isFinite(t) &&
+                            Date.now()-t < 35*60*1000
+                          );
+                        });
+
+                        if(recentNonFailed.length){
+                          process.stdout.write("cooldown");
+                          process.exit(0);
+                        }
+
+                        process.stdout.write("dispatch");
+                      ' "${RUNS_FILE}"
+                    )"
+
+                    echo "PREPUBLICATION_DECISION=${PREPUBLISH_DECISION}"
+
+                    case "${PREPUBLISH_DECISION}" in
+                      active|cooldown)
+                        echo "MODE=prepublish_wait" >> "$GITHUB_ENV"
+                        echo "mode=prepublish_wait" >> "$GITHUB_OUTPUT"
+                        echo "Daily activity already exists; watchdog will not duplicate it."
+                        ;;
+                      dispatch)
+                        echo "MODE=dispatch" >> "$GITHUB_ENV"
+                        echo "mode=dispatch" >> "$GITHUB_OUTPUT"
+                        echo "dayKey=${NEXT_DAY}" >> "$GITHUB_OUTPUT"
+                        echo "No usable Daily activity detected; controlled TOMORROW dispatch required."
+                        ;;
+                      *)
+                        echo "ERROR: unknown prepublication decision: ${PREPUBLISH_DECISION}" >&2
+                        exit 1
+                        ;;
+                    esac
+
+                    exit 0
+                  fi
+
                   echo "MODE=healthy" >> "$GITHUB_ENV"
                   echo "mode=healthy" >> "$GITHUB_OUTPUT"
                   echo "Git and public engine are converged for ${TARGET_DAY}."
@@ -229,7 +346,7 @@ jobs:
             "${{ steps.state.outputs.dayKey }}" \
             "${{ steps.state.outputs.ref }}"
 
-      - name: Dispatch controlled same-day Daily recovery
+      - name: Dispatch controlled Daily publication/recovery
         if: steps.state.outputs.mode == 'dispatch'
         shell: bash
         env:
