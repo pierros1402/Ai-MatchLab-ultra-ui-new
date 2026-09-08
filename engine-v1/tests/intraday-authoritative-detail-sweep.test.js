@@ -183,8 +183,12 @@ test("intraday applies the publishable fixture detail sweep before export", () =
     "fixturesForSnapshotDay("
   );
 
+  const lockedRowsIndex = source.indexOf(
+    "const lockedPublishableStatusRows ="
+  );
+
   const patchIndex = source.indexOf(
-    "patchDetailsBasic(\n      safeDayKey,\n      publishableStatusRows"
+    "patchDetailsBasic(\n      safeDayKey,\n      lockedPublishableStatusRows"
   );
 
   const logIndex = source.indexOf(
@@ -199,7 +203,8 @@ test("intraday applies the publishable fixture detail sweep before export", () =
   assert.ok(publishableRowsIndex > reconciliationIndex);
   assert.ok(fixtureProjectionIndex >= 0);
   assert.ok(fixtureProjectionIndex >= publishableRowsIndex);
-  assert.ok(patchIndex > publishableRowsIndex);
+  assert.ok(lockedRowsIndex > publishableRowsIndex);
+  assert.ok(patchIndex > lockedRowsIndex);
   assert.ok(logIndex > patchIndex);
   assert.ok(exportIndex > logIndex);
 
@@ -210,7 +215,7 @@ test("intraday applies the publishable fixture detail sweep before export", () =
 
   assert.match(
     source,
-    /patchDetailsBasic\(\s*safeDayKey,\s*publishableStatusRows/
+    /patchDetailsBasic\(\s*safeDayKey,\s*lockedPublishableStatusRows/
   );
 
   assert.doesNotMatch(
