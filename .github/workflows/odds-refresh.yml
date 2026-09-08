@@ -39,7 +39,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          API_URL="https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/270329104/runs?branch=main&per_page=20"
+          API_URL="https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/daily-deploy-snapshot.yml/runs?branch=main&per_page=20"
           RESPONSE_FILE="$RUNNER_TEMP/daily-writer-priority.json"
 
           if ! curl -fsSL \
