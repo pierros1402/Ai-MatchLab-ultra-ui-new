@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-09-09",
-  "generatedAt": "2026-09-09T19:57:56.879Z",
+  "generatedAt": "2026-09-09T20:07:53.396Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,7 +18,7 @@
   "inputs": {
     "fixturesPath": "data/canonical-fixtures/2026-09-09",
     "finalResultsDir": "data/final-results/2026-09-09",
-    "verifiedFinalResults": 57,
+    "verifiedFinalResults": 59,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-09-09",
     "canonicalContradictionsRejected": [],
     "canonicalIdentityAmbiguities": [],
@@ -55,19 +55,19 @@
       "summary": {
         "picks": 2,
         "uniqueMatches": 2,
-        "settled": 1,
-        "wins": 0,
+        "settled": 2,
+        "wins": 1,
         "losses": 1,
         "voids": 0,
-        "unresolved": 1,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": 0,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 0.5,
+        "oddsAvailable": 1,
+        "averageOdds": 1.34,
+        "totalStake": 1,
+        "totalReturn": 1.34,
+        "profit": 0.34,
+        "roi": 0.34
       },
       "marketSummary": [
         {
@@ -92,19 +92,19 @@
           "market": "Over / Under 2.5",
           "picks": 1,
           "uniqueMatches": 1,
-          "settled": 0,
-          "wins": 0,
+          "settled": 1,
+          "wins": 1,
           "losses": 0,
           "voids": 0,
-          "unresolved": 1,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "hitRate": 1,
+          "oddsAvailable": 1,
+          "averageOdds": 1.34,
+          "totalStake": 1,
+          "totalReturn": 1.34,
+          "profit": 0.34,
+          "roi": 0.34
         }
       ],
       "picks": [
@@ -128,11 +128,75 @@
           "aiFairOdds": 1.47,
           "oddsDecimal": 1.34,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 1,
+            "scoreKey": "2-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-09T20:07:48.060Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401900357",
+                "canonicalId": "cid_ksa1_alnassr_abha_20260909",
+                "leagueName": "Saudi Pro League",
+                "home": "Al Nassr",
+                "away": "Abha",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-09T18:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "",
+                "terminalObservedAt": "2026-09-09T20:07:39.997Z",
+                "scoreKey": "2-1",
+                "homeTeam": "Al Nassr",
+                "awayTeam": "Abha",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_ksa1_alnassr_abha_20260909"
+                  ],
+                  "sourceFixtureId": "cid_ksa1_alnassr_abha_20260909",
+                  "resolvedFixtureId": "cid_ksa1_alnassr_abha_20260909",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Al Nassr",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Abha",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "xCm0wsDD",
+                "country": "Saudi Arabia",
+                "leagueName": "Saudi Professional League",
+                "leaguePath": "/football/saudi-arabia/saudi-professional-league/",
+                "home": "Al Nassr",
+                "away": "Abha",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-09T18:00:00.000Z",
+                "scoreKey": "2-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -209,19 +273,19 @@
       "summary": {
         "picks": 2,
         "uniqueMatches": 2,
-        "settled": 1,
-        "wins": 0,
+        "settled": 2,
+        "wins": 1,
         "losses": 1,
         "voids": 0,
-        "unresolved": 1,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": 0,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 0.5,
+        "oddsAvailable": 1,
+        "averageOdds": 1.34,
+        "totalStake": 1,
+        "totalReturn": 1.34,
+        "profit": 0.34,
+        "roi": 0.34
       },
       "marketSummary": [
         {
@@ -246,19 +310,19 @@
           "market": "Over / Under 2.5",
           "picks": 1,
           "uniqueMatches": 1,
-          "settled": 0,
-          "wins": 0,
+          "settled": 1,
+          "wins": 1,
           "losses": 0,
           "voids": 0,
-          "unresolved": 1,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "hitRate": 1,
+          "oddsAvailable": 1,
+          "averageOdds": 1.34,
+          "totalStake": 1,
+          "totalReturn": 1.34,
+          "profit": 0.34,
+          "roi": 0.34
         }
       ],
       "picks": [
@@ -282,11 +346,75 @@
           "aiFairOdds": 1.47,
           "oddsDecimal": 1.34,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 1,
+            "scoreKey": "2-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-09T20:07:48.060Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401900357",
+                "canonicalId": "cid_ksa1_alnassr_abha_20260909",
+                "leagueName": "Saudi Pro League",
+                "home": "Al Nassr",
+                "away": "Abha",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-09T18:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "",
+                "terminalObservedAt": "2026-09-09T20:07:39.997Z",
+                "scoreKey": "2-1",
+                "homeTeam": "Al Nassr",
+                "awayTeam": "Abha",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_ksa1_alnassr_abha_20260909"
+                  ],
+                  "sourceFixtureId": "cid_ksa1_alnassr_abha_20260909",
+                  "resolvedFixtureId": "cid_ksa1_alnassr_abha_20260909",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Al Nassr",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Abha",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "xCm0wsDD",
+                "country": "Saudi Arabia",
+                "leagueName": "Saudi Professional League",
+                "leaguePath": "/football/saudi-arabia/saudi-professional-league/",
+                "home": "Al Nassr",
+                "away": "Abha",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-09T18:00:00.000Z",
+                "scoreKey": "2-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -414,8 +542,8 @@
   },
   "comparison": {
     "pickDeltaPlanBMinusPlanA": -2,
-    "settledDeltaPlanBMinusPlanA": -1,
-    "winsDeltaPlanBMinusPlanA": 0,
+    "settledDeltaPlanBMinusPlanA": -2,
+    "winsDeltaPlanBMinusPlanA": -1,
     "lossesDeltaPlanBMinusPlanA": -1,
     "hitRateDeltaPlanBMinusPlanA": null,
     "roiDeltaPlanBMinusPlanA": null
