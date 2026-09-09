@@ -1,13 +1,13 @@
 {
-  "ok": true,
+  "ok": false,
   "schema": "ai-matchlab.day-build-report.v1",
   "dayKey": "2026-09-10",
-  "generatedAt": "2026-09-09T18:55:32.423Z",
+  "generatedAt": "2026-09-09T21:11:08.197Z",
   "universe": {
     "expected": null,
-    "canonical": 102,
-    "published": 102,
-    "details": 102,
+    "canonical": 92,
+    "published": 92,
+    "details": 92,
     "byLeague": {
       "expected": {},
       "canonical": {
@@ -17,7 +17,7 @@
         "caf.confed": 1,
         "can.1": 1,
         "chi.2": 3,
-        "col.1": 1,
+        "col.1": 0,
         "conmebol.libertadores": 3,
         "conmebol.sudamericana": 1,
         "ecu.2": 2,
@@ -31,7 +31,7 @@
         "isr.2": 6,
         "kaz.2": 3,
         "kos.1": 1,
-        "ksa.1": 9,
+        "ksa.1": 0,
         "lva.1": 1,
         "mne.1": 3,
         "por.1": 1,
@@ -54,7 +54,6 @@
         "bra.2": 5,
         "can.1": 1,
         "usa.1": 14,
-        "col.1": 1,
         "kaz.2": 3,
         "aze.2": 3,
         "fifa.world": 4,
@@ -74,14 +73,16 @@
         "srb.1": 1,
         "swe.2": 4,
         "mne.1": 3,
-        "ksa.1": 9,
         "gre.1": 1,
         "eng.3": 1,
         "por.1": 1,
         "ecu.2": 2
       }
     },
-    "canonicalLeaguesMissingFromPublished": [],
+    "canonicalLeaguesMissingFromPublished": [
+      "col.1",
+      "ksa.1"
+    ],
     "expectedLeaguesMissingFromPublished": []
   },
   "acquisition": {
@@ -569,9 +570,14 @@
     }
   },
   "freshness": {
-    "ok": true,
-    "manifestGeneratedAt": "2026-09-09T18:54:36.975Z",
-    "reasons": [],
+    "ok": false,
+    "manifestGeneratedAt": "2026-09-09T21:10:32.325Z",
+    "reasons": [
+      "plan_a2_stale_against_canonical",
+      "plan_a2_audit_stale_against_canonical",
+      "plan_b_audit_stale_against_canonical",
+      "plan_b2_audit_stale_against_canonical"
+    ],
     "staleInputs": []
   },
   "invariant": {
@@ -579,7 +585,7 @@
     "blocked": 0,
     "warnings": 0,
     "autoFixed": 0,
-    "checkedAt": "2026-09-09T18:54:37.238Z"
+    "checkedAt": "2026-09-09T21:08:03.874Z"
   },
   "value": {
     "source": "canonical_fixtures",
@@ -604,7 +610,7 @@
     }
   },
   "settlement": {
-    "generatedAt": "2026-09-09T18:53:38.304Z",
+    "generatedAt": "2026-09-09T21:07:50.797Z",
     "requiredPlans": [
       "A",
       "A2",
@@ -654,7 +660,7 @@
   },
   "foundationIntegrity": {
     "schema": "ai-matchlab.foundation-integrity.v1",
-    "generatedAt": "2026-09-09T18:55:32.087Z",
+    "generatedAt": "2026-09-09T21:11:07.959Z",
     "season": "2026-2027",
     "modelReady": true,
     "publicationReady": true,
@@ -663,7 +669,7 @@
       {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 2820,
+        "count": 2848,
         "informational": true
       },
       {
@@ -696,10 +702,13 @@
     "supersededOpenCanonicalIds": [],
     "supersededOpenFixtures": []
   },
-  "hardFailures": [],
+  "hardFailures": [
+    "snapshot_stale"
+  ],
   "warnings": [
+    "canonical_leagues_missing_from_published:col.1,ksa.1",
     "acquisition_skipped_slugs:bol.copa,col.copa,concacaf.central.american.cup,eng.fa_qual,esp.copa_de_la_reina,usa.ncaa.m.1,usa.ncaa.w.1"
   ],
-  "clean": true,
+  "clean": false,
   "cleanStrict": false
 }
