@@ -233,3 +233,346 @@ test("canonical team-form fallback fails closed below six form samples on either
   assert.equal(priceCalls, 0);
   assert.equal(recorded.length, 0);
 });
+
+test("canonical supplement can use safe cross-competition form while preserving the six-match threshold", () => {
+  const recorded = [];
+  let priceOptions = null;
+
+  const summary =
+    supplementCanonicalAssessments(
+      "2026-08-14",
+      {
+        nowMs: NOW,
+
+        canonicalFixtures: [{
+          canonicalId:
+            "cid_cross_form_home_away_20260814",
+          leagueSlug:
+            "eng.fa",
+          leagueName:
+            "FA Cup",
+          dayKey:
+            "2026-08-14",
+          homeTeam:
+            "Crystal Palace",
+          awayTeam:
+            "Middlesbrough",
+          kickoffUtc:
+            "2026-08-14T18:00:00.000Z"
+        }],
+
+        readStandingsFn:
+          () => ({ accepted: null }),
+
+        resolveAliasesFn:
+          (_slug, name) => [name],
+
+        formFn:
+          () => ({
+            sample: 0,
+            gfRate: null,
+            gaRate: null,
+            ppg: null
+          }),
+
+        crossFormFn:
+          (_slug, name) => ({
+            ok: true,
+            sample: 6,
+            gfRate:
+              name === "Crystal Palace"
+                ? 1.7
+                : 1.4,
+            gaRate: 1.0,
+            ppg: 1.8,
+            source:
+              "cross_competition_form",
+            sourceCountry:
+              "england",
+            sourceSlugs:
+              name === "Crystal Palace"
+                ? ["eng.1"]
+                : ["eng.2"]
+          }),
+
+        xgFn:
+          () => ({
+            sample: 0,
+            xgForRate: null,
+            xgAgainstRate: null
+          }),
+
+        priceFn:
+          (_home, _away, options) => {
+            priceOptions = options;
+
+            return {
+              model: {
+                formUsed: true,
+                xgUsed: false
+              },
+              markets: {
+                OU25: {
+                  probs: {
+                    over: 0.59,
+                    under: 0.41
+                  }
+                }
+              }
+            };
+          },
+
+        recordFn:
+          (id, meta) =>
+            recorded.push({
+              id,
+              meta
+            })
+      }
+    );
+
+  assert.equal(
+    summary.assessmentRowsWritten,
+    1
+  );
+
+  assert.equal(
+    summary.assessmentRowsFromTeamFormFallback,
+    1
+  );
+
+  assert.equal(
+    summary.assessmentRowsFromCrossCompetitionFormFallback,
+    1
+  );
+
+  assert.equal(
+    recorded.length,
+    1
+  );
+
+  assert.equal(
+    recorded[0].meta.aiAssessment.inputSource,
+    "canonical_fixture_cross_competition_team_form_fallback"
+  );
+
+  assert.equal(
+    recorded[0]
+      .meta
+      .aiAssessment
+      .model
+      .crossCompetitionFormUsed,
+    true
+  );
+
+  assert.equal(
+    recorded[0]
+      .meta
+      .aiAssessment
+      .model
+      .minimumFormSamplePerSide,
+    6
+  );
+
+  assert.equal(
+    priceOptions.homeForm.sample,
+    6
+  );
+
+  assert.equal(
+    priceOptions.awayForm.sample,
+    6
+  );
+});
+
+test("cross-competition form still fails closed below six matches on either side", () => {
+  const recorded = [];
+  let priceCalls = 0;
+
+  const summary =
+    supplementCanonicalAssessments(
+      "2026-08-14",
+      {
+        nowMs: NOW,
+
+        canonicalFixtures: [{
+          canonicalId:
+            "cid_cross_form_short_sample_20260814",
+          leagueSlug:
+            "eng.fa",
+          dayKey:
+            "2026-08-14",
+          homeTeam:
+            "Crystal Palace",
+          awayTeam:
+            "Middlesbrough",
+          kickoffUtc:
+            "2026-08-14T18:00:00.000Z"
+        }],
+
+        readStandingsFn:
+          () => ({ accepted: null }),
+
+        resolveAliasesFn:
+          (_slug, name) => [name],
+
+        formFn:
+          () => ({
+            sample: 0,
+            gfRate: null,
+            gaRate: null,
+            ppg: null
+          }),
+
+        crossFormFn:
+          (_slug, name) => ({
+            ok: true,
+            sample:
+              name === "Crystal Palace"
+                ? 6
+                : 5,
+            gfRate: 1.4,
+            gaRate: 1.0,
+            ppg: 1.6,
+            source:
+              "cross_competition_form"
+          }),
+
+        xgFn:
+          () => null,
+
+        priceFn:
+          () => {
+            priceCalls++;
+
+            return {
+              model: {},
+              markets: {
+                OU25: {
+                  probs: {
+                    over: 0.5,
+                    under: 0.5
+                  }
+                }
+              }
+            };
+          },
+
+        recordFn:
+          (...args) =>
+            recorded.push(args)
+      }
+    );
+
+  assert.equal(
+    summary.assessmentRowsWritten,
+    0
+  );
+
+  assert.equal(
+    summary.skippedInsufficientTeamEvidence,
+    1
+  );
+
+  assert.equal(
+    priceCalls,
+    0
+  );
+
+  assert.equal(
+    recorded.length,
+    0
+  );
+});
+
+test("ambiguous cross-competition identity remains fail closed and is audited", () => {
+  const recorded = [];
+
+  const summary =
+    supplementCanonicalAssessments(
+      "2026-08-14",
+      {
+        nowMs: NOW,
+
+        canonicalFixtures: [{
+          canonicalId:
+            "cid_ambiguous_team_20260814",
+          leagueSlug:
+            "uefa.champions",
+          dayKey:
+            "2026-08-14",
+          homeTeam:
+            "Arsenal",
+          awayTeam:
+            "Away",
+          kickoffUtc:
+            "2026-08-14T18:00:00.000Z"
+        }],
+
+        readStandingsFn:
+          () => ({ accepted: null }),
+
+        resolveAliasesFn:
+          (_slug, name) => [name],
+
+        formFn:
+          () => ({
+            sample: 0,
+            gfRate: null,
+            gaRate: null,
+            ppg: null
+          }),
+
+        crossFormFn:
+          (_slug, name) =>
+            name === "Arsenal"
+              ? {
+                  ok: false,
+                  sample: 0,
+                  reason:
+                    "cross_country_identity_ambiguous"
+                }
+              : {
+                  ok: true,
+                  sample: 6,
+                  gfRate: 1.2,
+                  gaRate: 1.0,
+                  ppg: 1.5
+                },
+
+        xgFn:
+          () => null,
+
+        priceFn:
+          () => {
+            throw new Error(
+              "priceFn must not run"
+            );
+          },
+
+        recordFn:
+          (...args) =>
+            recorded.push(args)
+      }
+    );
+
+  assert.equal(
+    summary.assessmentRowsWritten,
+    0
+  );
+
+  assert.equal(
+    summary.skippedCrossCompetitionAmbiguousIdentity,
+    1
+  );
+
+  assert.equal(
+    summary.skippedInsufficientTeamEvidence,
+    1
+  );
+
+  assert.equal(
+    recorded.length,
+    0
+  );
+});

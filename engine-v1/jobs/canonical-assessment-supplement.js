@@ -19,6 +19,10 @@ import { readStandings } from "../storage/standings-memory-db.js";
 import { recordOddsSnapshot } from "../storage/odds-memory-db.js";
 import { priceMatchFromStandings } from "../odds/ai-odds-model.js";
 import { teamFormRates } from "../storage/results-memory-db.js";
+import {
+  createCrossCompetitionFormResolver,
+  isCrossCompetitionFormFixtureScopeSupported
+} from "../storage/cross-competition-form-db.js";
 import { teamXgRates } from "../storage/discipline-memory-db.js";
 import { resolveAliasCandidates } from "../storage/team-aliases-db.js";
 import { normalizeTeamKey as normalizeTeam } from "../core/normalize.js";
@@ -147,6 +151,47 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
   const priceFn = options.priceFn || priceMatchFromStandings;
   const formFn = options.formFn || teamFormRates;
   const xgFn = options.xgFn || teamXgRates;
+
+  const injectedCrossFormFn =
+    options.crossFormFn || null;
+
+  let defaultCrossFormFn = null;
+
+  const resolveCrossForm = (
+    fixtureSlug,
+    teamName,
+    window,
+    resolveOptions
+  ) => {
+    if (injectedCrossFormFn) {
+      return injectedCrossFormFn(
+        fixtureSlug,
+        teamName,
+        window,
+        resolveOptions
+      );
+    }
+
+    if (
+      !isCrossCompetitionFormFixtureScopeSupported(
+        fixtureSlug
+      )
+    ) {
+      return null;
+    }
+
+    if (!defaultCrossFormFn) {
+      defaultCrossFormFn =
+        createCrossCompetitionFormResolver();
+    }
+
+    return defaultCrossFormFn(
+      fixtureSlug,
+      teamName,
+      window,
+      resolveOptions
+    );
+  };
   const recordFn = options.recordFn || recordOddsSnapshot;
 
   const leagueCache = new Map();
@@ -157,6 +202,8 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
     assessmentRowsWritten: 0,
     assessmentRowsFromTrustedStandings: 0,
     assessmentRowsFromTeamFormFallback: 0,
+    assessmentRowsFromCrossCompetitionFormFallback: 0,
+    skippedCrossCompetitionAmbiguousIdentity: 0,
     skippedInvalidKickoff: 0,
     skippedStarted: 0,
     skippedMissingIdentity: 0,
@@ -228,25 +275,120 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
       });
       assessmentPath = "trusted_standings";
     } else {
+      const homeCrossForm =
+        homeEvidence.formSample < MIN_FALLBACK_FORM_SAMPLE
+          ? resolveCrossForm(
+              leagueSlug,
+              home,
+              MIN_FALLBACK_FORM_SAMPLE,
+              { beforeMs: kickoffMs }
+            )
+          : null;
+
+      const awayCrossForm =
+        awayEvidence.formSample < MIN_FALLBACK_FORM_SAMPLE
+          ? resolveCrossForm(
+              leagueSlug,
+              away,
+              MIN_FALLBACK_FORM_SAMPLE,
+              { beforeMs: kickoffMs }
+            )
+          : null;
+
+      const homeCrossSample =
+        Number(homeCrossForm?.sample) || 0;
+
+      const awayCrossSample =
+        Number(awayCrossForm?.sample) || 0;
+
+      const homeUsesCrossCompetition =
+        homeCrossSample >
+          homeEvidence.formSample;
+
+      const awayUsesCrossCompetition =
+        awayCrossSample >
+          awayEvidence.formSample;
+
+      const homeFallbackEvidence =
+        homeUsesCrossCompetition
+          ? {
+              ...homeEvidence,
+              form: homeCrossForm,
+              formSample: homeCrossSample
+            }
+          : homeEvidence;
+
+      const awayFallbackEvidence =
+        awayUsesCrossCompetition
+          ? {
+              ...awayEvidence,
+              form: awayCrossForm,
+              formSample: awayCrossSample
+            }
+          : awayEvidence;
+
       const fallbackEligible =
-        homeEvidence.formSample >= MIN_FALLBACK_FORM_SAMPLE &&
-        awayEvidence.formSample >= MIN_FALLBACK_FORM_SAMPLE;
+        homeFallbackEvidence.formSample >=
+          MIN_FALLBACK_FORM_SAMPLE &&
+        awayFallbackEvidence.formSample >=
+          MIN_FALLBACK_FORM_SAMPLE;
 
       if (!fallbackEligible) {
-        if (!league) summary.skippedMissingStandings++;
-        else summary.skippedTeamResolution++;
-        summary.skippedInsufficientTeamEvidence++;
+        if (!league) {
+          summary.skippedMissingStandings++;
+        }
+        else {
+          summary.skippedTeamResolution++;
+        }
+
+        if (
+          homeCrossForm?.reason ===
+            "cross_country_identity_ambiguous" ||
+          awayCrossForm?.reason ===
+            "cross_country_identity_ambiguous" ||
+          homeCrossForm?.reason ===
+            "global_club_id_conflict" ||
+          awayCrossForm?.reason ===
+            "global_club_id_conflict"
+        ) {
+          summary
+            .skippedCrossCompetitionAmbiguousIdentity++;
+        }
+
+        summary
+          .skippedInsufficientTeamEvidence++;
+
         continue;
       }
 
       priced = priceFn({}, {}, {
         leagueAvgGoalsPerTeam: 1.35,
-        homeForm: homeEvidence.form,
-        awayForm: awayEvidence.form,
-        homeXg: homeEvidence.xg,
-        awayXg: awayEvidence.xg
+        homeForm:
+          homeFallbackEvidence.form,
+        awayForm:
+          awayFallbackEvidence.form,
+        homeXg:
+          homeEvidence.xg,
+        awayXg:
+          awayEvidence.xg
       });
-      assessmentPath = "team_form_fallback";
+
+      assessmentPath =
+        homeUsesCrossCompetition ||
+        awayUsesCrossCompetition
+          ? "cross_competition_team_form_fallback"
+          : "team_form_fallback";
+
+      fixture._crossCompetitionFormEvidence = {
+        home:
+          homeUsesCrossCompetition
+            ? homeCrossForm
+            : null,
+        away:
+          awayUsesCrossCompetition
+            ? awayCrossForm
+            : null
+      };
     }
 
     const markets = priced?.markets;
@@ -266,35 +408,77 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
         dayKey,
         kickoffUtc: fixture?.kickoffUtc || null,
         aiAssessment: {
-          model: assessmentPath === "team_form_fallback"
-            ? {
-                ...(priced?.model || {}),
-                source: priced?.model?.xgUsed
-                  ? "ai_poisson_team_form_xg_fallback"
-                  : "ai_poisson_team_form_fallback",
-                trustedStandingsUsed: false,
-                minimumFormSamplePerSide: MIN_FALLBACK_FORM_SAMPLE
-              }
-            : priced?.model
+          model:
+            assessmentPath !== "trusted_standings"
               ? {
-                  ...priced.model,
-                  trustedStandingsUsed: true
+                  ...(priced?.model || {}),
+                  source:
+                    assessmentPath ===
+                      "cross_competition_team_form_fallback"
+                      ? (
+                          priced?.model?.xgUsed
+                            ? "ai_poisson_cross_competition_team_form_xg_fallback"
+                            : "ai_poisson_cross_competition_team_form_fallback"
+                        )
+                      : (
+                          priced?.model?.xgUsed
+                            ? "ai_poisson_team_form_xg_fallback"
+                            : "ai_poisson_team_form_fallback"
+                        ),
+                  trustedStandingsUsed: false,
+                  minimumFormSamplePerSide:
+                    MIN_FALLBACK_FORM_SAMPLE,
+                  crossCompetitionFormUsed:
+                    assessmentPath ===
+                      "cross_competition_team_form_fallback",
+                  crossCompetitionFormEvidence:
+                    assessmentPath ===
+                      "cross_competition_team_form_fallback"
+                      ? fixture
+                          ._crossCompetitionFormEvidence
+                      : null
                 }
-              : null,
+              : priced?.model
+                ? {
+                    ...priced.model,
+                    trustedStandingsUsed: true
+                  }
+                : null,
           markets,
-          inputSource: assessmentPath === "team_form_fallback"
-            ? "canonical_fixture_team_form_fallback"
-            : "canonical_fixture_trusted_standings"
+          inputSource:
+            assessmentPath ===
+              "cross_competition_team_form_fallback"
+              ? "canonical_fixture_cross_competition_team_form_fallback"
+              : assessmentPath ===
+                  "team_form_fallback"
+                ? "canonical_fixture_team_form_fallback"
+                : "canonical_fixture_trusted_standings"
         }
       },
       { markets: {} }
     );
 
     summary.assessmentRowsWritten++;
-    if (assessmentPath === "team_form_fallback") {
-      summary.assessmentRowsFromTeamFormFallback++;
-    } else {
-      summary.assessmentRowsFromTrustedStandings++;
+    if (
+      assessmentPath ===
+        "team_form_fallback" ||
+      assessmentPath ===
+        "cross_competition_team_form_fallback"
+    ) {
+      summary
+        .assessmentRowsFromTeamFormFallback++;
+
+      if (
+        assessmentPath ===
+          "cross_competition_team_form_fallback"
+      ) {
+        summary
+          .assessmentRowsFromCrossCompetitionFormFallback++;
+      }
+    }
+    else {
+      summary
+        .assessmentRowsFromTrustedStandings++;
     }
   }
 
