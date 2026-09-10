@@ -1,25 +1,25 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-09-10",
-  "generatedAt": "2026-09-10T19:33:54.706Z",
+  "generatedAt": "2026-09-10T21:51:06.211Z",
   "severity": "error",
   "issueCounts": {
     "error": 4,
-    "warning": 9,
-    "info": 11
+    "warning": 11,
+    "info": 9
   },
   "alert": true,
   "alertCounts": {
-    "error": 1,
-    "warning": 0,
+    "error": 0,
+    "warning": 7,
     "info": 0
   },
   "activeIssueCount": 24,
-  "actionableIssueCount": 13,
-  "newIssueCount": 1,
-  "newActionableIssueCount": 1,
-  "resolvedIssueCount": 0,
-  "persistentIssueCount": 23,
+  "actionableIssueCount": 15,
+  "newIssueCount": 10,
+  "newActionableIssueCount": 7,
+  "resolvedIssueCount": 8,
+  "persistentIssueCount": 14,
   "activeIssues": [
     {
       "severity": "warning",
@@ -300,15 +300,15 @@
       }
     },
     {
-      "severity": "info",
+      "severity": "warning",
       "source": "value-comparison",
       "type": "plan_a_unresolved_settlement",
-      "message": "Plan A picks are still unresolved.",
+      "message": "Plan A picks remain unresolved 1 day after fixture day.",
       "details": {
         "dayKey": "2026-09-10",
-        "todayDayKey": "2026-09-10",
-        "ageDays": 0,
-        "overdue": false,
+        "todayDayKey": "2026-09-11",
+        "ageDays": 1,
+        "overdue": true,
         "settlementSource": "value-comparison",
         "picks": 5,
         "settled": 4,
@@ -316,15 +316,15 @@
       }
     },
     {
-      "severity": "info",
+      "severity": "warning",
       "source": "value-comparison",
       "type": "plan_a2_unresolved_settlement",
-      "message": "Plan A2 picks are still unresolved.",
+      "message": "Plan A2 picks remain unresolved 1 day after fixture day.",
       "details": {
         "dayKey": "2026-09-10",
-        "todayDayKey": "2026-09-10",
-        "ageDays": 0,
-        "overdue": false,
+        "todayDayKey": "2026-09-11",
+        "ageDays": 1,
+        "overdue": true,
         "settlementSource": "value-comparison",
         "picks": 5,
         "settled": 4,
@@ -1216,6 +1216,38 @@
     },
     {
       "severity": "warning",
+      "source": "value-comparison",
+      "type": "plan_a_unresolved_settlement",
+      "message": "Plan A picks remain unresolved 1 day after fixture day.",
+      "details": {
+        "dayKey": "2026-09-10",
+        "todayDayKey": "2026-09-11",
+        "ageDays": 1,
+        "overdue": true,
+        "settlementSource": "value-comparison",
+        "picks": 5,
+        "settled": 4,
+        "unresolved": 1
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-comparison",
+      "type": "plan_a2_unresolved_settlement",
+      "message": "Plan A2 picks remain unresolved 1 day after fixture day.",
+      "details": {
+        "dayKey": "2026-09-10",
+        "todayDayKey": "2026-09-11",
+        "ageDays": 1,
+        "overdue": true,
+        "settlementSource": "value-comparison",
+        "picks": 5,
+        "settled": 4,
+        "unresolved": 1
+      }
+    },
+    {
+      "severity": "warning",
       "source": "active-competition-completeness",
       "type": "active_competition_scope_unresolved",
       "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
@@ -1856,53 +1888,6 @@
   ],
   "newIssues": [
     {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "foundation_publication_not_ready",
-      "message": "Publication foundation is not ready.",
-      "details": {
-        "blocked": [
-          {
-            "component": "details",
-            "reason": "details_foundation_not_ready"
-          }
-        ]
-      }
-    }
-  ],
-  "newActionableIssues": [
-    {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "foundation_publication_not_ready",
-      "message": "Publication foundation is not ready.",
-      "details": {
-        "blocked": [
-          {
-            "component": "details",
-            "reason": "details_foundation_not_ready"
-          }
-        ]
-      }
-    }
-  ],
-  "resolvedIssues": [],
-  "persistentIssues": [
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
-      "details": {
-        "reasons": [
-          "plan_a2_stale_against_canonical",
-          "plan_a2_audit_stale_against_canonical",
-          "plan_b_audit_stale_against_canonical",
-          "plan_b2_audit_stale_against_canonical"
-        ]
-      }
-    },
-    {
       "severity": "warning",
       "source": "freshness-report",
       "type": "stale_derived_artifact",
@@ -2000,6 +1985,288 @@
       }
     },
     {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:col.1,ksa.1",
+      "details": {
+        "raw": "canonical_leagues_missing_from_published:col.1,ksa.1"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-comparison",
+      "type": "plan_a_unresolved_settlement",
+      "message": "Plan A picks remain unresolved 1 day after fixture day.",
+      "details": {
+        "dayKey": "2026-09-10",
+        "todayDayKey": "2026-09-11",
+        "ageDays": 1,
+        "overdue": true,
+        "settlementSource": "value-comparison",
+        "picks": 5,
+        "settled": 4,
+        "unresolved": 1
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-comparison",
+      "type": "plan_a2_unresolved_settlement",
+      "message": "Plan A2 picks remain unresolved 1 day after fixture day.",
+      "details": {
+        "dayKey": "2026-09-10",
+        "todayDayKey": "2026-09-11",
+        "ageDays": 1,
+        "overdue": true,
+        "settlementSource": "value-comparison",
+        "picks": 5,
+        "settled": 4,
+        "unresolved": 1
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2",
+        "artifact": "value-plans/2026-09-10/plan-a2.json",
+        "at": 1788980017507,
+        "staleReason": "plan_a2_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -77322682
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2_audit",
+        "artifact": "value-plans/2026-09-10/plan-a2-audit.json",
+        "at": "2026-09-09T18:53:37.508Z",
+        "staleReason": "plan_a2_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -77322681
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b_audit",
+        "artifact": "value-plans/2026-09-10/plan-b-audit.json",
+        "at": "2026-09-09T18:51:56.303Z",
+        "staleReason": "plan_b_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -77423886
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b2_audit",
+        "artifact": "value-plans/2026-09-10/plan-b2-audit.json",
+        "at": "2026-09-09T18:53:38.277Z",
+        "staleReason": "plan_b2_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -77321912
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:col.1,ksa.1",
+      "details": {
+        "raw": "canonical_leagues_missing_from_published:col.1,ksa.1"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-comparison",
+      "type": "plan_a_unresolved_settlement",
+      "message": "Plan A picks remain unresolved 1 day after fixture day.",
+      "details": {
+        "dayKey": "2026-09-10",
+        "todayDayKey": "2026-09-11",
+        "ageDays": 1,
+        "overdue": true,
+        "settlementSource": "value-comparison",
+        "picks": 5,
+        "settled": 4,
+        "unresolved": 1
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-comparison",
+      "type": "plan_a2_unresolved_settlement",
+      "message": "Plan A2 picks remain unresolved 1 day after fixture day.",
+      "details": {
+        "dayKey": "2026-09-10",
+        "todayDayKey": "2026-09-11",
+        "ageDays": 1,
+        "overdue": true,
+        "settlementSource": "value-comparison",
+        "picks": 5,
+        "settled": 4,
+        "unresolved": 1
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2",
+        "artifact": "value-plans/2026-09-09/plan-a2.json",
+        "at": 1788891402672,
+        "staleReason": "plan_a2_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -96079333
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2_audit",
+        "artifact": "value-plans/2026-09-09/plan-a2-audit.json",
+        "at": "2026-09-08T18:16:42.673Z",
+        "staleReason": "plan_a2_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -96079332
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b_audit",
+        "artifact": "value-plans/2026-09-09/plan-b-audit.json",
+        "at": "2026-09-08T18:14:37.928Z",
+        "staleReason": "plan_b_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -96204077
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b2_audit",
+        "artifact": "value-plans/2026-09-09/plan-b2-audit.json",
+        "at": "2026-09-08T18:16:44.013Z",
+        "staleReason": "plan_b2_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -96077992
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-09-09.json",
+        "at": "2026-09-09T20:57:54.359Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -7646
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-09-09.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b",
+        "artifact": "value-plans/2026-09-09/plan-b.json",
+        "at": null,
+        "staleReason": "plan_b_stale_against_canonical",
+        "preservation": null,
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b2",
+        "artifact": "value-plans/2026-09-09/plan-b2.json",
+        "at": null,
+        "staleReason": "plan_b2_stale_against_canonical",
+        "preservation": null,
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    }
+  ],
+  "persistentIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "plan_a2_stale_against_canonical",
+          "plan_a2_audit_stale_against_canonical",
+          "plan_b_audit_stale_against_canonical",
+          "plan_b2_audit_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
       "severity": "info",
       "source": "foundation-integrity",
       "type": "age_expired_results_rows_present",
@@ -2007,7 +2274,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 3684,
+        "count": 3698,
         "informational": true
       }
     },
@@ -2051,15 +2318,6 @@
       "message": "snapshot_stale",
       "details": {
         "failure": "snapshot_stale"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_warning",
-      "message": "canonical_leagues_missing_from_published:col.1,ksa.1",
-      "details": {
-        "raw": "canonical_leagues_missing_from_published:col.1,ksa.1"
       }
     },
     {
@@ -2150,38 +2408,6 @@
           "rejectedCount": 22,
           "alreadyDeclaredCount": 0
         }
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a_unresolved_settlement",
-      "message": "Plan A picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-09-10",
-        "todayDayKey": "2026-09-10",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 5,
-        "settled": 4,
-        "unresolved": 1
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a2_unresolved_settlement",
-      "message": "Plan A2 picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-09-10",
-        "todayDayKey": "2026-09-10",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 5,
-        "settled": 4,
-        "unresolved": 1
       }
     },
     {
