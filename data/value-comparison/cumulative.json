@@ -1,7 +1,7 @@
 {
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison-cumulative.v1",
-  "generatedAt": "2026-09-10T21:51:06.331Z",
+  "generatedAt": "2026-09-10T23:09:04.416Z",
   "note": "Rolled-up immutable Plan A vs Plan B observations for the full trial window. Historical minimum-sample exclusions are applied only to derived statistics; frozen observations remain immutable. Snapshot-integrity warnings remain diagnostics.",
   "historicalStatisticsCorrection": {
     "active": true,
@@ -39,9 +39,9 @@
     "correctedStatisticalPopulation": 401
   },
   "trialStartDay": "2026-07-05",
-  "dayCount": 63,
+  "dayCount": 64,
   "firstDay": "2026-07-05",
-  "lastDay": "2026-09-10",
+  "lastDay": "2026-09-11",
   "requireIntegrityClean": false,
   "requireImmutablePlanA": true,
   "daysIncluded": [
@@ -107,7 +107,8 @@
     "2026-09-07",
     "2026-09-08",
     "2026-09-09",
-    "2026-09-10"
+    "2026-09-10",
+    "2026-09-11"
   ],
   "daysExcluded": [
     {
@@ -870,21 +871,32 @@
           "snapshot_stale"
         ]
       }
+    },
+    {
+      "dayKey": "2026-09-11",
+      "reason": "build_report_not_clean",
+      "details": {
+        "ok": false,
+        "reason": "build_report_not_clean",
+        "hardFailures": [
+          "foundation_publication_not_ready"
+        ]
+      }
     }
   ],
-  "integrityWarningDayCount": 56,
+  "integrityWarningDayCount": 57,
   "plans": {
     "A": {
       "id": "plan-a",
       "label": "Plan A - frozen production observation",
       "totals": {
-        "picks": 226,
-        "uniqueMatches": 214,
+        "picks": 230,
+        "uniqueMatches": 218,
         "settled": 222,
         "wins": 154,
         "losses": 68,
         "voids": 2,
-        "unresolved": 2,
+        "unresolved": 6,
         "unsupported": 0,
         "oddsAvailable": 90,
         "totalStake": 90,
@@ -916,7 +928,7 @@
     }
   },
   "comparison": {
-    "picksDeltaPlanBMinusPlanA": -44,
+    "picksDeltaPlanBMinusPlanA": -48,
     "settledDeltaPlanBMinusPlanA": -40,
     "winsDeltaPlanBMinusPlanA": -25,
     "lossesDeltaPlanBMinusPlanA": -15,
