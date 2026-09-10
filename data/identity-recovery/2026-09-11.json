@@ -1,0 +1,865 @@
+{
+  "schema": "ai-matchlab.identity-recovery-window.v1",
+  "runDayKey": "2026-09-11",
+  "source": "raw_canonical_fixtures_pre_dedup",
+  "window": {
+    "daysBack": 1,
+    "daysForward": 14
+  },
+  "sourceLatestUpdatedAt": "2026-09-10T17:49:05.170Z",
+  "resolver": {
+    "schema": "ai-matchlab.production-identity-resolver-runtime.v2",
+    "extensionLedgerSha256": "c9792faa016c0b531130ec1ffedd0a090c32a1532b786eff87e6f73f76ea3e60",
+    "effectiveCounts": {
+      "identityBindings": 118,
+      "retainedFixtureIds": 87,
+      "suppressedFixtureAliases": 87,
+      "sourceFixtureIds": 174
+    }
+  },
+  "status": "REVIEW_REQUIRED",
+  "promotionPolicy": {
+    "broadFuzzyAllowed": false,
+    "unresolvedTwoSidedAutoPromotionAllowed": false,
+    "independentConfirmationRequiredForTwoSidedUnknown": true
+  },
+  "summary": {
+    "scannedDays": 16,
+    "scannedLeagueFiles": 468,
+    "inputRows": 1656,
+    "autoPromotable": 1,
+    "pendingIndependentConfirmation": 4,
+    "ambiguous": 8,
+    "conflictRejected": 2,
+    "alreadyManagedPairs": 0,
+    "independentConfirmed": 0,
+    "independentConfirmationRetryPending": 4
+  },
+  "targetDays": [
+    {
+      "dayKey": "2026-09-10",
+      "leagueFiles": 33,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "conmebol.libertadores",
+          "inputRows": 3,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [
+            {
+              "leagueSlug": "conmebol.libertadores",
+              "kickoffUtc": "2026-09-09T22:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "MHvWTvoS",
+                "canonicalId": "cid_conmebollibertadores_palmeirasbra_lduquitoecu_20260910",
+                "kickoffUtc": "2026-09-09T22:00:00.000Z",
+                "homeTeam": "Palmeiras (Bra)",
+                "awayTeam": "LDU Quito (Ecu)"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401912527",
+                "canonicalId": "cid_conmebollibertadores_palmeiras_ligaquito_20260910",
+                "kickoffUtc": "2026-09-09T22:00Z",
+                "homeTeam": "Palmeiras",
+                "awayTeam": "Liga de Quito"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "away": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "stableSides": 0,
+                "conflict": false
+              },
+              "recoveryStatus": "PENDING_INDEPENDENT_CONFIRMATION",
+              "promotionAuthorized": false,
+              "requiresIndependentConfirmation": true,
+              "independentConfirmation": {
+                "status": "PENDING_RETRY",
+                "source": "api_football",
+                "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
+                "oddsUsed": false,
+                "attempts": 1,
+                "lastAttemptAt": "2026-09-10T17:49:05.506Z",
+                "retryable": true,
+                "providerStatus": "MISSING_API_KEY",
+                "evaluationStatus": null,
+                "thirdSourceKickoffRows": 0
+              }
+            }
+          ],
+          "ambiguous": [],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 1,
+            "ambiguous": 0,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
+    },
+    {
+      "dayKey": "2026-09-11",
+      "leagueFiles": 97,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-12",
+      "leagueFiles": 124,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "bel.1",
+          "inputRows": 5,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [
+            {
+              "leagueSlug": "bel.1",
+              "kickoffUtc": "2026-09-12T16:15:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "nLey99Ta",
+                "canonicalId": "cid_bel1_westerlo_stliege_20260912",
+                "kickoffUtc": "2026-09-12T16:15:00.000Z",
+                "homeTeam": "Westerlo",
+                "awayTeam": "St. Liege"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401878994",
+                "canonicalId": "cid_bel1_kvcwesterlo_standardliege_20260912",
+                "kickoffUtc": "2026-09-12T16:15Z",
+                "homeTeam": "KVC Westerlo",
+                "awayTeam": "Standard Liege"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "GLOBAL_ID_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": "gcid_3efb7463b2cf0c696077f487"
+                },
+                "away": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "stableSides": 1,
+                "conflict": false
+              },
+              "recoveryStatus": "AUTO_PROMOTABLE_IDENTITY_EXTENSION",
+              "promotionAuthorized": true,
+              "requiresIndependentConfirmation": false
+            }
+          ],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 1,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 0,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "caf.champions",
+          "inputRows": 18,
+          "temporalCrossProviderPairs": 10,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [
+            {
+              "leagueSlug": "caf.champions",
+              "kickoffUtc": "2026-09-12T13:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_cafchampions_africanstars_asmangasport_20260912",
+                "cid_cafchampions_alhilalomdurman_aiglenoirmakamba_20260912",
+                "cid_cafchampions_heegan_elmerriekhbentiu_20260912",
+                "cid_cafchampions_nsingizinihotspurs_scottlandmabvuku_20260912",
+                "cid_cafchampions_orlandopirates_lacurewaves_20260912",
+                "cid_cafchampions_powerdynamos_almerrikh_20260912",
+                "cid_cafchampions_powerdynamoszam_almerreikhsud_20260912"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            },
+            {
+              "leagueSlug": "caf.champions",
+              "kickoffUtc": "2026-09-12T15:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_cafchampions_petroatleticoang_udsongomoz_20260912",
+                "cid_cafchampions_petroluanda_udsongo_20260912",
+                "cid_cafchampions_rahimo_maghrebasfes_20260912",
+                "cid_cafchampions_rahimobfa_maghrebfezmar_20260912"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 2,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "caf.confed",
+          "inputRows": 18,
+          "temporalCrossProviderPairs": 22,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [
+            {
+              "leagueSlug": "caf.confed",
+              "kickoffUtc": "2026-09-12T12:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "M5zjzZyR",
+                "canonicalId": "cid_cafconfed_tuskerken_madanisud_20260912",
+                "kickoffUtc": "2026-09-12T12:00:00.000Z",
+                "homeTeam": "Tusker (Ken)",
+                "awayTeam": "Madani (Sud)"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401909440",
+                "canonicalId": "cid_cafconfed_tusker_alahliwadmedani_20260912",
+                "kickoffUtc": "2026-09-12T12:00Z",
+                "homeTeam": "Tusker FC",
+                "awayTeam": "Al Ahli Wad Medani"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "away": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "stableSides": 0,
+                "conflict": false
+              },
+              "recoveryStatus": "PENDING_INDEPENDENT_CONFIRMATION",
+              "promotionAuthorized": false,
+              "requiresIndependentConfirmation": true,
+              "independentConfirmation": {
+                "status": "PENDING_RETRY",
+                "source": "api_football",
+                "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
+                "oddsUsed": false,
+                "attempts": 1,
+                "lastAttemptAt": "2026-09-10T17:49:05.506Z",
+                "retryable": true,
+                "providerStatus": "MISSING_API_KEY",
+                "evaluationStatus": null,
+                "thirdSourceKickoffRows": 0
+              }
+            },
+            {
+              "leagueSlug": "caf.confed",
+              "kickoffUtc": "2026-09-12T14:30:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "xz8taFAd",
+                "canonicalId": "cid_cafconfed_inaterougemad_redarrowszam_20260912",
+                "kickoffUtc": "2026-09-12T14:30:00.000Z",
+                "homeTeam": "Inate Rouge (Mad)",
+                "awayTeam": "Red Arrows (Zam)"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401909443",
+                "canonicalId": "cid_cafconfed_ententebouletrouge_redarrows_20260912",
+                "kickoffUtc": "2026-09-12T14:30Z",
+                "homeTeam": "Entente Boulet Rouge",
+                "awayTeam": "Red Arrows"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "away": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "stableSides": 0,
+                "conflict": false
+              },
+              "recoveryStatus": "PENDING_INDEPENDENT_CONFIRMATION",
+              "promotionAuthorized": false,
+              "requiresIndependentConfirmation": true,
+              "independentConfirmation": {
+                "status": "PENDING_RETRY",
+                "source": "api_football",
+                "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
+                "oddsUsed": false,
+                "attempts": 1,
+                "lastAttemptAt": "2026-09-10T17:49:05.506Z",
+                "retryable": true,
+                "providerStatus": "MISSING_API_KEY",
+                "evaluationStatus": null,
+                "thirdSourceKickoffRows": 0
+              }
+            }
+          ],
+          "ambiguous": [
+            {
+              "leagueSlug": "caf.confed",
+              "kickoffUtc": "2026-09-12T16:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_cafconfed_eastendlions_afadplateau_20260912",
+                "cid_cafconfed_eastendlionssie_academiefadivo_20260912",
+                "cid_cafconfed_kitara_mogadishucity_20260912",
+                "cid_cafconfed_rayonsport_panthere_20260912",
+                "cid_cafconfed_welwaloadigrat_alhilalportsudan_20260912",
+                "cid_cafconfed_welwaloadigrateth_hilalalsahilsud_20260912"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            },
+            {
+              "leagueSlug": "caf.confed",
+              "kickoffUtc": "2026-09-12T17:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_cafconfed_alahlitripoli_kmkm_20260912",
+                "cid_cafconfed_alahlytripolilby_kmkmzan_20260912",
+                "cid_cafconfed_asasdji_zedegy_20260912",
+                "cid_cafconfed_diambarssaly_esperencesportivezarzis_20260912",
+                "cid_cafconfed_djiboutitelecom_zed_20260912",
+                "cid_cafconfed_jwanenggalaxy_aspl2000_20260912",
+                "cid_cafconfed_jwanenggalaxybot_portlouismus_20260912"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 2,
+            "ambiguous": 2,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "eng.1",
+          "inputRows": 43,
+          "temporalCrossProviderPairs": 165,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [
+            {
+              "leagueSlug": "eng.1",
+              "kickoffUtc": "2026-09-12T14:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_eng1_alvechurch_stamford_20260912",
+                "cid_eng1_astonvilla_nottinghamforest_20260912",
+                "cid_eng1_aveley_leatherhead_20260912",
+                "cid_eng1_banbury_leiston_20260912",
+                "cid_eng1_bath_chippenham_20260912",
+                "cid_eng1_bishopsstortford_leamington_20260912",
+                "cid_eng1_bournemouth_brentford_20260912",
+                "cid_eng1_bromsgrove_burytown_20260912",
+                "cid_eng1_burgesshill_ramsgate_20260912",
+                "cid_eng1_carshalton_dartford_20260912",
+                "cid_eng1_chatham_lewes_20260912",
+                "cid_eng1_chelsea_hullcity_20260912",
+                "cid_eng1_chertsey_malverntown_20260912",
+                "cid_eng1_crystalpalace_ipswichtown_20260912",
+                "cid_eng1_dulwichhamlet_brentwood_20260912",
+                "cid_eng1_eastbourneboro_cheshunt_20260912",
+                "cid_eng1_enfieldtown_craywanderers_20260912",
+                "cid_eng1_evesham_berkhamsted_20260912",
+                "cid_eng1_frome_hanwelltown_20260912",
+                "cid_eng1_gloucester_basingstoke_20260912",
+                "cid_eng1_gosport_taunton_20260912",
+                "cid_eng1_halesowen_leightontown_20260912",
+                "cid_eng1_hanworth_yatetown_20260912",
+                "cid_eng1_havantandw_poole_20260912",
+                "cid_eng1_hitchin_stourbridge_20260912",
+                "cid_eng1_kettering_stratford_20260912",
+                "cid_eng1_liverpool_fulham_20260912",
+                "cid_eng1_maldonandtiptree_whitehawk_20260912",
+                "cid_eng1_needhammarket_worcester_20260912",
+                "cid_eng1_peterboroughsports_rushall_20260912",
+                "cid_eng1_racingwarwick_ansteynomads_20260912",
+                "cid_eng1_realbedford_redditch_20260912",
+                "cid_eng1_sholing_plymouthparkway_20260912",
+                "cid_eng1_stalbans_threebridges_20260912",
+                "cid_eng1_uxbridge_chichester_20260912",
+                "cid_eng1_welling_wingateandfinchley_20260912",
+                "cid_eng1_whyteleafe_stanway_20260912",
+                "cid_eng1_wimborne_bracknell_20260912"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 1,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "eng.5",
+          "inputRows": 35,
+          "temporalCrossProviderPairs": 192,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [
+            {
+              "leagueSlug": "eng.5",
+              "kickoffUtc": "2026-09-12T14:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_eng5_bostonunited_wealdstone_20260912",
+                "cid_eng5_braintree_maidstone_20260912",
+                "cid_eng5_buxton_chester_20260912",
+                "cid_eng5_eastleigh_borehamwood_20260912",
+                "cid_eng5_ebbsfleet_salisbury_20260912",
+                "cid_eng5_farnborough_dover_20260912",
+                "cid_eng5_folkestone_farnham_20260912",
+                "cid_eng5_forestgreenrovers_gateshead_20260912",
+                "cid_eng5_halifaxtown_hornchurch_20260912",
+                "cid_eng5_hamptonandrichmond_chelmsford_20260912",
+                "cid_eng5_harborough_telford_20260912",
+                "cid_eng5_hebburntown_hednesford_20260912",
+                "cid_eng5_hemelhempstead_tonbridge_20260912",
+                "cid_eng5_hereford_southshields_20260912",
+                "cid_eng5_horsham_chesham_20260912",
+                "cid_eng5_kingslynn_chorley_20260912",
+                "cid_eng5_maidenhead_billericay_20260912",
+                "cid_eng5_marine_darlington_20260912",
+                "cid_eng5_morecambe_brackleytown_20260912",
+                "cid_eng5_radcliffe_oxfordcity_20260912",
+                "cid_eng5_scarborough_merthyrtown_20260912",
+                "cid_eng5_solihullmoors_aldershottown_20260912",
+                "cid_eng5_spaldingunited_bedford_20260912",
+                "cid_eng5_spennymoor_macclesfield_20260912",
+                "cid_eng5_suttonunited_scunthorpeunited_20260912",
+                "cid_eng5_torquay_dorking_20260912",
+                "cid_eng5_totton_slough_20260912",
+                "cid_eng5_truro_waltonandhersham_20260912",
+                "cid_eng5_westonsupermare_dagandred_20260912",
+                "cid_eng5_woking_altrincham_20260912",
+                "cid_eng5_worksop_southport_20260912",
+                "cid_eng5_yeoviltown_fylde_20260912"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 1,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "esp.2",
+          "inputRows": 6,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [],
+          "conflictRejected": [
+            {
+              "leagueSlug": "esp.2",
+              "kickoffUtc": "2026-09-12T12:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "6JLtCg5T",
+                "canonicalId": "cid_esp2_andorra_realsociedadb_20260912",
+                "kickoffUtc": "2026-09-12T12:00:00.000Z",
+                "homeTeam": "Andorra",
+                "awayTeam": "Real Sociedad B"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401883173",
+                "canonicalId": "cid_esp2_andorra_realsociedadii_20260912",
+                "kickoffUtc": "2026-09-12T12:00Z",
+                "homeTeam": "FC Andorra",
+                "awayTeam": "Real Sociedad II"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "NORMALIZED_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": null,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null,
+                  "productionIdentityComplete": false
+                },
+                "away": {
+                  "kind": "SQUAD_CONFLICT",
+                  "stable": false,
+                  "conflict": true
+                },
+                "stableSides": 1,
+                "conflict": true
+              },
+              "recoveryStatus": "REJECTED_IDENTITY_CONFLICT",
+              "promotionAuthorized": false
+            }
+          ],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 0,
+            "conflictRejected": 1,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "ger.1",
+          "inputRows": 7,
+          "temporalCrossProviderPairs": 5,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [],
+          "conflictRejected": [
+            {
+              "leagueSlug": "ger.1",
+              "kickoffUtc": "2026-09-12T13:30:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "Y9Vxfuid",
+                "canonicalId": "cid_ger1_freiburg_bmonchengladbach_20260912",
+                "kickoffUtc": "2026-09-12T13:30:00.000Z",
+                "homeTeam": "Freiburg",
+                "awayTeam": "B. Monchengladbach"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401884796",
+                "canonicalId": "cid_ger1_freiburg_borussiamonchengladbach_20260912",
+                "kickoffUtc": "2026-09-12T13:30Z",
+                "homeTeam": "SC Freiburg",
+                "awayTeam": "Borussia Mönchengladbach"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "NORMALIZED_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": null,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null,
+                  "productionIdentityComplete": false
+                },
+                "away": {
+                  "kind": "SQUAD_CONFLICT",
+                  "stable": false,
+                  "conflict": true
+                },
+                "stableSides": 1,
+                "conflict": true
+              },
+              "recoveryStatus": "REJECTED_IDENTITY_CONFLICT",
+              "promotionAuthorized": false
+            }
+          ],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 0,
+            "conflictRejected": 1,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "ita.1",
+          "inputRows": 9,
+          "temporalCrossProviderPairs": 3,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [
+            {
+              "leagueSlug": "ita.1",
+              "kickoffUtc": "2026-09-12T16:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "vDqENTcc",
+                "canonicalId": "cid_ita1_sanremese_cellevarazze_20260912",
+                "kickoffUtc": "2026-09-12T16:00:00.000Z",
+                "homeTeam": "Sanremese",
+                "awayTeam": "Celle Varazze"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401874941",
+                "canonicalId": "cid_ita1_lazio_milan_20260912",
+                "kickoffUtc": "2026-09-12T16:00Z",
+                "homeTeam": "Lazio",
+                "awayTeam": "AC Milan"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "away": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "stableSides": 0,
+                "conflict": false
+              },
+              "recoveryStatus": "PENDING_INDEPENDENT_CONFIRMATION",
+              "promotionAuthorized": false,
+              "requiresIndependentConfirmation": true,
+              "independentConfirmation": {
+                "status": "PENDING_RETRY",
+                "source": "api_football",
+                "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
+                "oddsUsed": false,
+                "attempts": 1,
+                "lastAttemptAt": "2026-09-10T17:49:05.506Z",
+                "retryable": true,
+                "providerStatus": "MISSING_API_KEY",
+                "evaluationStatus": null,
+                "thirdSourceKickoffRows": 0
+              }
+            }
+          ],
+          "ambiguous": [
+            {
+              "leagueSlug": "ita.1",
+              "kickoffUtc": "2026-09-12T13:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_ita1_asti_gozzano_20260912",
+                "cid_ita1_borgosesia_saluzzo_20260912",
+                "cid_ita1_genoa_frosinone_20260912"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 1,
+            "ambiguous": 1,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "ita.2",
+          "inputRows": 15,
+          "temporalCrossProviderPairs": 6,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [
+            {
+              "leagueSlug": "ita.2",
+              "kickoffUtc": "2026-09-12T13:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_ita2_atalantau23_pescara_20260912",
+                "cid_ita2_padova_ascoli_20260912",
+                "cid_ita2_sudtirol_modena_20260912",
+                "cid_ita2_vado_campobasso_20260912",
+                "cid_ita2_vicenza_juvestabia_20260912"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 1,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
+    },
+    {
+      "dayKey": "2026-09-13",
+      "leagueFiles": 39,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-14",
+      "leagueFiles": 20,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-15",
+      "leagueFiles": 18,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-16",
+      "leagueFiles": 14,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-17",
+      "leagueFiles": 10,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-18",
+      "leagueFiles": 24,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-19",
+      "leagueFiles": 36,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-20",
+      "leagueFiles": 31,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-21",
+      "leagueFiles": 8,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-22",
+      "leagueFiles": 4,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-23",
+      "leagueFiles": 3,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-24",
+      "leagueFiles": 2,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-25",
+      "leagueFiles": 5,
+      "recoveryLeagueReports": []
+    }
+  ],
+  "independentConfirmation": {
+    "source": "api_football",
+    "evidenceEndpoint": "fixtures",
+    "oddsAllowed": false,
+    "fuzzyMatchingAllowed": false,
+    "runAt": "2026-09-10T17:49:05.507Z",
+    "attempts": [
+      {
+        "dayKey": "2026-09-10",
+        "leagueSlug": "conmebol.libertadores",
+        "key": "cid_conmebollibertadores_palmeiras_ligaquito_20260910|cid_conmebollibertadores_palmeirasbra_lduquitoecu_20260910",
+        "status": "PENDING_RETRY",
+        "providerStatus": "MISSING_API_KEY",
+        "evaluationStatus": null
+      },
+      {
+        "dayKey": "2026-09-12",
+        "leagueSlug": "caf.confed",
+        "key": "cid_cafconfed_tusker_alahliwadmedani_20260912|cid_cafconfed_tuskerken_madanisud_20260912",
+        "status": "PENDING_RETRY",
+        "providerStatus": "MISSING_API_KEY",
+        "evaluationStatus": null
+      },
+      {
+        "dayKey": "2026-09-12",
+        "leagueSlug": "caf.confed",
+        "key": "cid_cafconfed_ententebouletrouge_redarrows_20260912|cid_cafconfed_inaterougemad_redarrowszam_20260912",
+        "status": "PENDING_RETRY",
+        "providerStatus": "MISSING_API_KEY",
+        "evaluationStatus": null
+      },
+      {
+        "dayKey": "2026-09-12",
+        "leagueSlug": "ita.1",
+        "key": "cid_ita1_lazio_milan_20260912|cid_ita1_sanremese_cellevarazze_20260912",
+        "status": "PENDING_RETRY",
+        "providerStatus": "MISSING_API_KEY",
+        "evaluationStatus": null
+      }
+    ]
+  }
+}
