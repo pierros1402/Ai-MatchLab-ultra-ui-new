@@ -1,25 +1,25 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-09-10",
-  "generatedAt": "2026-09-10T04:46:12.222Z",
+  "generatedAt": "2026-09-10T19:33:54.706Z",
   "severity": "error",
   "issueCounts": {
-    "error": 2,
+    "error": 4,
     "warning": 9,
     "info": 11
   },
-  "alert": false,
+  "alert": true,
   "alertCounts": {
-    "error": 0,
+    "error": 1,
     "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 22,
-  "actionableIssueCount": 11,
-  "newIssueCount": 0,
-  "newActionableIssueCount": 0,
-  "resolvedIssueCount": 1,
-  "persistentIssueCount": 22,
+  "activeIssueCount": 24,
+  "actionableIssueCount": 13,
+  "newIssueCount": 1,
+  "newActionableIssueCount": 1,
+  "resolvedIssueCount": 0,
+  "persistentIssueCount": 23,
   "activeIssues": [
     {
       "severity": "warning",
@@ -133,6 +133,20 @@
       }
     },
     {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
       "severity": "info",
       "source": "foundation-integrity",
       "type": "age_expired_results_rows_present",
@@ -140,7 +154,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 3590,
+        "count": 3684,
         "informational": true
       }
     },
@@ -166,6 +180,15 @@
         "reason": "score_consistent_alias_mirror_conflicts_present",
         "count": 47,
         "informational": true
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_publication_not_ready",
+      "details": {
+        "failure": "foundation_publication_not_ready"
       }
     },
     {
@@ -288,8 +311,8 @@
         "overdue": false,
         "settlementSource": "value-comparison",
         "picks": 5,
-        "settled": 3,
-        "unresolved": 2
+        "settled": 4,
+        "unresolved": 1
       }
     },
     {
@@ -304,8 +327,8 @@
         "overdue": false,
         "settlementSource": "value-comparison",
         "picks": 5,
-        "settled": 3,
-        "unresolved": 2
+        "settled": 4,
+        "unresolved": 1
       }
     },
     {
@@ -972,13 +995,13 @@
           "summary": {
             "picks": 5,
             "uniqueMatches": 5,
-            "settled": 3,
-            "wins": 2,
+            "settled": 4,
+            "wins": 3,
             "losses": 1,
             "voids": 0,
-            "unresolved": 2,
+            "unresolved": 1,
             "unsupported": 0,
-            "hitRate": 0.6667,
+            "hitRate": 0.75,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -992,13 +1015,13 @@
           "summary": {
             "picks": 5,
             "uniqueMatches": 5,
-            "settled": 3,
-            "wins": 2,
+            "settled": 4,
+            "wins": 3,
             "losses": 1,
             "voids": 0,
-            "unresolved": 2,
+            "unresolved": 1,
             "unsupported": 0,
-            "hitRate": 0.6667,
+            "hitRate": 0.75,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -1123,6 +1146,29 @@
     },
     {
       "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_publication_not_ready",
+      "details": {
+        "failure": "foundation_publication_not_ready"
+      }
+    },
+    {
+      "severity": "error",
       "source": "build-report",
       "type": "build_hard_failure",
       "message": "snapshot_stale",
@@ -1808,23 +1854,39 @@
       }
     }
   ],
-  "newIssues": [],
-  "newActionableIssues": [],
-  "resolvedIssues": [
+  "newIssues": [
     {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
       "details": {
-        "kind": "value_plan_comparison",
-        "artifact": "value-comparison/2026-09-10.json",
-        "at": "2026-09-10T04:33:11.251Z",
-        "staleReason": "value_plan_comparison_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -7519
+        "blocked": [
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
       }
     }
   ],
+  "newActionableIssues": [
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    }
+  ],
+  "resolvedIssues": [],
   "persistentIssues": [
     {
       "severity": "warning",
@@ -1851,7 +1913,7 @@
         "at": 1788980017507,
         "staleReason": "plan_a2_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -35344629
+        "olderThanLatestCanonicalMs": -77322682
       }
     },
     {
@@ -1865,7 +1927,7 @@
         "at": "2026-09-09T18:53:37.508Z",
         "staleReason": "plan_a2_audit_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -35344628
+        "olderThanLatestCanonicalMs": -77322681
       }
     },
     {
@@ -1879,7 +1941,7 @@
         "at": "2026-09-09T18:51:56.303Z",
         "staleReason": "plan_b_audit_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -35445833
+        "olderThanLatestCanonicalMs": -77423886
       }
     },
     {
@@ -1893,7 +1955,7 @@
         "at": "2026-09-09T18:53:38.277Z",
         "staleReason": "plan_b2_audit_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -35343859
+        "olderThanLatestCanonicalMs": -77321912
       }
     },
     {
@@ -1945,7 +2007,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 2878,
+        "count": 3684,
         "informational": true
       }
     },
@@ -1971,6 +2033,15 @@
         "reason": "score_consistent_alias_mirror_conflicts_present",
         "count": 47,
         "informational": true
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_publication_not_ready",
+      "details": {
+        "failure": "foundation_publication_not_ready"
       }
     },
     {
@@ -2093,8 +2164,8 @@
         "overdue": false,
         "settlementSource": "value-comparison",
         "picks": 5,
-        "settled": 0,
-        "unresolved": 5
+        "settled": 4,
+        "unresolved": 1
       }
     },
     {
@@ -2109,8 +2180,8 @@
         "overdue": false,
         "settlementSource": "value-comparison",
         "picks": 5,
-        "settled": 0,
-        "unresolved": 5
+        "settled": 4,
+        "unresolved": 1
       }
     },
     {
@@ -2777,13 +2848,13 @@
           "summary": {
             "picks": 5,
             "uniqueMatches": 5,
-            "settled": 0,
-            "wins": 0,
-            "losses": 0,
+            "settled": 4,
+            "wins": 3,
+            "losses": 1,
             "voids": 0,
-            "unresolved": 5,
+            "unresolved": 1,
             "unsupported": 0,
-            "hitRate": null,
+            "hitRate": 0.75,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -2797,13 +2868,13 @@
           "summary": {
             "picks": 5,
             "uniqueMatches": 5,
-            "settled": 0,
-            "wins": 0,
-            "losses": 0,
+            "settled": 4,
+            "wins": 3,
+            "losses": 1,
             "voids": 0,
-            "unresolved": 5,
+            "unresolved": 1,
             "unsupported": 0,
-            "hitRate": null,
+            "hitRate": 0.75,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
