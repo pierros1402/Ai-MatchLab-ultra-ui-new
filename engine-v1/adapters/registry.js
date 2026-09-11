@@ -1,7 +1,7 @@
 import { fetchLeagueFixtures } from "./espn.js";
 import { normalizeFixture } from "../core/normalize.js";
 import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
-import { resolveSlug, resolveSlugFromPath } from "../odds/flashscore-league-map.js";
+import { resolveFlashscoreCompetitionIdentity } from "../core/flashscore-competition-identity.js";
 import { resolveInternational } from "../odds/international-competitions.js";
 import { buildCanonicalId } from "../core/canonical-id.js";
 import { athensDayFromKickoff } from "../core/daykey.js";
@@ -155,23 +155,42 @@ const FIXTURE_ADAPTERS = [
     // Returns raw Flashscore row objects filtered to the requested slug + dayKey.
     async fetch({ slug, dayKey }) {
       const { rows } = await getFlashscoreRows(dayKey);
+
       return rows.filter(fx => {
-        const intl = resolveInternational(fx.leagueName, fx.country);
-        const resolved = intl?.slug
-          || resolveSlugFromPath(fx.leaguePath)
-          || resolveSlug(fx.country, fx.leagueName);
-        return resolved === slug;
+        const identity =
+          resolveFlashscoreCompetitionIdentity(fx);
+
+        return (
+          identity?.ok === true &&
+          identity.status === "resolved" &&
+          identity.canonicalSlug === slug
+        );
       });
     },
     // Converts a Flashscore row to the canonical fixture shape.
     normalize(fx, slug) {
       if (!fx?.kickoffUtc || !fx?.home || !fx?.away) return null;
 
-      const intl = resolveInternational(fx.leagueName, fx.country);
-      const leagueSlug = intl?.slug
-        || resolveSlugFromPath(fx.leaguePath)
-        || resolveSlug(fx.country, fx.leagueName)
-        || slug;
+      const identity =
+        resolveFlashscoreCompetitionIdentity(fx);
+
+      if (
+        identity?.ok !== true ||
+        identity.status !== "resolved" ||
+        !identity.canonicalSlug ||
+        identity.canonicalSlug !== slug
+      ) {
+        return null;
+      }
+
+      const leagueSlug =
+        identity.canonicalSlug;
+
+      const intl =
+        resolveInternational(
+          fx.leagueName,
+          fx.country
+        );
 
       // Identity and bucketing must use the Athens calendar day of the
       // kickoff, like the ESPN path (normalize.js) — NOT the feed's raw

@@ -381,6 +381,12 @@ export const DOMESTIC_PATH_SLUG = {
   "/football/tanzania/ligi-kuu-bara/": "tan.1",
   "/football/yemen/division-1/": "yem.1",
   "/football/zimbabwe/premier-soccer-league/": "zim.1",
+
+  // Exact Flashscore provider-path aliases for already-declared canonical competitions.
+  "/football/england/national-league/": "eng.5",
+  "/football/germany/3-liga/": "ger.3",
+  "/football/latvia/1-liga/": "lva.2",
+  "/football/wales/cymru-north/": "wal.2",
 };
 
 export function resolveSlugFromPath(leaguePath) {
