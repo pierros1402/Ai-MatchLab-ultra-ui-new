@@ -199,6 +199,20 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
     dayKey,
     canonicalFixtures: fixtures.length,
     eligibleUpcomingFixtures: 0,
+
+    /*
+     * Two different contracts:
+     *
+     * eligibleUpcomingFixtures:
+     *   valid canonical identity + future kickoff.
+     *
+     * modelEvidenceEligibleFixtures:
+     *   enough trusted/form evidence to require an assessment.
+     */
+    modelEvidenceEligibleFixtures: 0,
+    modelEvidenceEligibleFixtureIds: [],
+    assessmentFixtureIds: [],
+
     assessmentRowsWritten: 0,
     assessmentRowsFromTrustedStandings: 0,
     assessmentRowsFromTeamFormFallback: 0,
@@ -266,6 +280,11 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
     let assessmentPath = null;
 
     if (league && homeHit && awayHit) {
+      summary.modelEvidenceEligibleFixtures++;
+      summary.modelEvidenceEligibleFixtureIds.push(
+        canonicalId
+      );
+
       priced = priceFn(homeHit.row, awayHit.row, {
         leagueAvgGoalsPerTeam: league.leagueAvg,
         homeForm: homeEvidence.form,
@@ -360,6 +379,11 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
 
         continue;
       }
+
+      summary.modelEvidenceEligibleFixtures++;
+      summary.modelEvidenceEligibleFixtureIds.push(
+        canonicalId
+      );
 
       priced = priceFn({}, {}, {
         leagueAvgGoalsPerTeam: 1.35,
@@ -459,6 +483,9 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
     );
 
     summary.assessmentRowsWritten++;
+    summary.assessmentFixtureIds.push(
+      canonicalId
+    );
     if (
       assessmentPath ===
         "team_form_fallback" ||
@@ -481,6 +508,54 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
         .assessmentRowsFromTrustedStandings++;
     }
   }
+
+  const assessedIds =
+    new Set(
+      summary.assessmentFixtureIds
+    );
+
+  summary
+    .unassessedModelEvidenceEligibleFixtureIds =
+      summary
+        .modelEvidenceEligibleFixtureIds
+        .filter(
+          id => !assessedIds.has(id)
+        );
+
+  summary
+    .unassessedModelEvidenceEligibleFixtures =
+      summary
+        .unassessedModelEvidenceEligibleFixtureIds
+        .length;
+
+  summary.modelEvidenceUnavailableFixtures =
+    Math.max(
+      0,
+      summary.eligibleUpcomingFixtures -
+        summary.modelEvidenceEligibleFixtures
+    );
+
+  summary.modelEvidenceCoverageOfUpcomingPct =
+    summary.eligibleUpcomingFixtures > 0
+      ? Number(
+          (
+            100 *
+            summary.modelEvidenceEligibleFixtures /
+            summary.eligibleUpcomingFixtures
+          ).toFixed(1)
+        )
+      : null;
+
+  summary.assessmentCoverageOfModelEvidencePct =
+    summary.modelEvidenceEligibleFixtures > 0
+      ? Number(
+          (
+            100 *
+            summary.assessmentRowsWritten /
+            summary.modelEvidenceEligibleFixtures
+          ).toFixed(1)
+        )
+      : null;
 
   return summary;
 }

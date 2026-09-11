@@ -9,7 +9,10 @@ import { pathToFileURL } from "node:url";
 import { athensDayKey } from "../core/daykey.js";
 import { resolveDataPath } from "../storage/data-root.js";
 import { runOddsOpening } from "./run-odds-opening.js";
-import { supplementCanonicalAssessments } from "./canonical-assessment-supplement.js";
+import {
+  readCanonicalFixtureDay,
+  supplementCanonicalAssessments
+} from "./canonical-assessment-supplement.js";
 import { exportOddsSnapshotDay } from "./export-odds-snapshot-day.js";
 import { exportFixturesSnapshotDay } from "./export-fixtures-snapshot-day.js";
 import { oddsUpdateDecision, kickoffToUtcMs } from "../odds/odds-schedule.js";
@@ -35,25 +38,223 @@ export function persistedAssessmentSummary(snapshot) {
 export function assertPersistedAssessmentPostcondition(
   snapshot,
   dayKey,
-  { canonicalFixtureCount = 0 } = {}
+  {
+    canonicalFixtureCount = 0,
+    canonicalFixtureIds = [],
+    requiredAssessmentFixtureIds = []
+  } = {}
 ) {
-  const summary = persistedAssessmentSummary(snapshot);
-  const canonicalCount = Number(canonicalFixtureCount) || 0;
-  const requiresAssessment = canonicalCount > 0 || summary.matchRows > 0;
+  const summary =
+    persistedAssessmentSummary(snapshot);
 
-  if (requiresAssessment && summary.assessmentRows === 0) {
+  const canonicalCount =
+    Number(canonicalFixtureCount) || 0;
+
+  const assessedRows =
+    (Array.isArray(snapshot?.matches)
+      ? snapshot.matches
+      : []
+    ).filter(
+      match =>
+        match?.aiAssessment?.markets &&
+        typeof match.aiAssessment.markets === "object" &&
+        Object.keys(
+          match.aiAssessment.markets
+        ).length > 0
+    );
+
+  const idOf = row =>
+    String(
+      row?.canonicalId ||
+      row?.matchId ||
+      ""
+    ).trim();
+
+  const canonicalSet =
+    new Set(
+      (Array.isArray(canonicalFixtureIds)
+        ? canonicalFixtureIds
+        : []
+      )
+        .map(value => String(value || "").trim())
+        .filter(Boolean)
+    );
+
+  const requiredSet =
+    new Set(
+      (Array.isArray(requiredAssessmentFixtureIds)
+        ? requiredAssessmentFixtureIds
+        : []
+      )
+        .map(value => String(value || "").trim())
+        .filter(Boolean)
+    );
+
+  const assessedIdSet =
+    new Set(
+      assessedRows
+        .map(idOf)
+        .filter(Boolean)
+    );
+
+  const joinedRows =
+    canonicalSet.size > 0
+      ? assessedRows.filter(
+          row =>
+            canonicalSet.has(
+              idOf(row)
+            )
+        )
+      : [];
+
+  const orphanRows =
+    canonicalSet.size > 0
+      ? assessedRows.filter(
+          row =>
+            !canonicalSet.has(
+              idOf(row)
+            )
+        )
+      : [];
+
+  const requiresAssessment =
+    requiredSet.size > 0;
+
+  if (
+    requiresAssessment &&
+    summary.assessmentRows === 0
+  ) {
     const error = new Error(
       `persisted_model_assessments_missing:${dayKey}:matches=${summary.matchRows}:canonical=${canonicalCount}`
     );
-    error.code = "persisted_model_assessments_missing";
+
+    error.code =
+      "persisted_model_assessments_missing";
+
     error.dayKey = dayKey;
     error.matchRows = summary.matchRows;
-    error.assessmentRows = summary.assessmentRows;
-    error.canonicalFixtureCount = canonicalCount;
+    error.assessmentRows =
+      summary.assessmentRows;
+    error.canonicalFixtureCount =
+      canonicalCount;
+
     throw error;
   }
 
-  return summary;
+  if (
+    requiredSet.size > 0 &&
+    canonicalSet.size === 0
+  ) {
+    const error = new Error(
+      `required_assessment_canonical_universe_missing:${dayKey}`
+    );
+
+    error.code =
+      "required_assessment_canonical_universe_missing";
+
+    error.dayKey = dayKey;
+    error.canonicalFixtureCount =
+      canonicalCount;
+    error.requiredAssessmentRows =
+      requiredSet.size;
+
+    throw error;
+  }
+
+  const requiredOutsideCanonical =
+    [...requiredSet].filter(
+      id => !canonicalSet.has(id)
+    );
+
+  if (requiredOutsideCanonical.length) {
+    const error = new Error(
+      `required_assessment_outside_canonical_universe:${dayKey}`
+    );
+
+    error.code =
+      "required_assessment_outside_canonical_universe";
+
+    error.dayKey = dayKey;
+    error.requiredOutsideCanonical =
+      requiredOutsideCanonical;
+
+    throw error;
+  }
+
+  if (
+    canonicalSet.size > 0 &&
+    summary.assessmentRows > 0 &&
+    joinedRows.length === 0
+  ) {
+    const error = new Error(
+      `persisted_model_assessments_not_in_canonical_universe:${dayKey}`
+    );
+
+    error.code =
+      "persisted_model_assessments_not_in_canonical_universe";
+
+    error.dayKey = dayKey;
+    error.assessmentRows =
+      summary.assessmentRows;
+    error.canonicalFixtureCount =
+      canonicalCount;
+
+    throw error;
+  }
+
+  const missingRequired =
+    [...requiredSet].filter(
+      id => !assessedIdSet.has(id)
+    );
+
+  if (missingRequired.length) {
+    const error = new Error(
+      `persisted_model_assessment_coverage_incomplete:${dayKey}:missing=${missingRequired.length}:required=${requiredSet.size}`
+    );
+
+    error.code =
+      "persisted_model_assessment_coverage_incomplete";
+
+    error.dayKey = dayKey;
+    error.requiredAssessmentRows =
+      requiredSet.size;
+    error.missingRequiredAssessmentRows =
+      missingRequired.length;
+    error.missingRequiredAssessmentFixtureIds =
+      missingRequired;
+
+    throw error;
+  }
+
+  if (
+    canonicalSet.size === 0 &&
+    requiredSet.size === 0
+  ) {
+    return summary;
+  }
+
+  return {
+    ...summary,
+
+    canonicalJoinedAssessmentRows:
+      joinedRows.length,
+
+    canonicalOrphanAssessmentRows:
+      orphanRows.length,
+
+    requiredAssessmentRows:
+      requiredSet.size,
+
+    requiredAssessmentRowsPresent:
+      requiredSet.size,
+
+    missingRequiredAssessmentRows: 0,
+
+    assessmentCoverageOfRequiredPct:
+      requiredSet.size > 0
+        ? 100
+        : null
+  };
 }
 
 export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
@@ -98,11 +299,32 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
 
   const snap = exportOddsSnapshotDay(dayKey);
   const persisted = readExistingSnapshot(dayKey);
-  const persistence = assertPersistedAssessmentPostcondition(
-    persisted,
-    dayKey,
-    { canonicalFixtureCount: canonicalSupplement.canonicalFixtures }
-  );
+
+  const canonicalFixtureIds =
+    readCanonicalFixtureDay(dayKey)
+      .map(
+        row =>
+          row?.canonicalId ||
+          row?.matchId ||
+          null
+      )
+      .filter(Boolean);
+
+  const persistence =
+    assertPersistedAssessmentPostcondition(
+      persisted,
+      dayKey,
+      {
+        canonicalFixtureCount:
+          canonicalSupplement.canonicalFixtures,
+
+        canonicalFixtureIds,
+
+        requiredAssessmentFixtureIds:
+          canonicalSupplement
+            .modelEvidenceEligibleFixtureIds
+      }
+    );
 
   return {
     ok: true,

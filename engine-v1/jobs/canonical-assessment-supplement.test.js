@@ -576,3 +576,89 @@ test("ambiguous cross-competition identity remains fail closed and is audited", 
     0
   );
 });
+test("model evidence eligibility remains visible when pricing returns no markets", () => {
+  const recorded = [];
+
+  const canonicalId =
+    "cid_evidence_eligible_empty_markets_20260814";
+
+  const summary =
+    supplementCanonicalAssessments(
+      "2026-08-14",
+      {
+        nowMs: NOW,
+        canonicalFixtures: [{
+          canonicalId,
+          leagueSlug: "test.1",
+          leagueName: "Test League",
+          dayKey: "2026-08-14",
+          homeTeam: "Home",
+          awayTeam: "Away",
+          kickoffUtc:
+            "2026-08-14T18:00:00.000Z"
+        }],
+        readStandingsFn: standings,
+        resolveAliasesFn:
+          (_slug, name) => [name],
+        formFn: noRates,
+        xgFn: noRates,
+        priceFn: () => ({
+          model: {
+            source: "test_poisson"
+          },
+          markets: {}
+        }),
+        recordFn:
+          (...args) => recorded.push(args)
+      }
+    );
+
+  assert.equal(
+    summary.eligibleUpcomingFixtures,
+    1
+  );
+  assert.equal(
+    summary.modelEvidenceEligibleFixtures,
+    1
+  );
+  assert.deepEqual(
+    summary.modelEvidenceEligibleFixtureIds,
+    [canonicalId]
+  );
+  assert.equal(
+    summary.assessmentRowsWritten,
+    0
+  );
+  assert.deepEqual(
+    summary.assessmentFixtureIds,
+    []
+  );
+  assert.equal(
+    summary.skippedEmptyAssessment,
+    1
+  );
+  assert.deepEqual(
+    summary.unassessedModelEvidenceEligibleFixtureIds,
+    [canonicalId]
+  );
+  assert.equal(
+    summary.unassessedModelEvidenceEligibleFixtures,
+    1
+  );
+  assert.equal(
+    summary.modelEvidenceUnavailableFixtures,
+    0
+  );
+  assert.equal(
+    summary.modelEvidenceCoverageOfUpcomingPct,
+    100
+  );
+  assert.equal(
+    summary.assessmentCoverageOfModelEvidencePct,
+    0
+  );
+  assert.equal(
+    recorded.length,
+    0
+  );
+});
