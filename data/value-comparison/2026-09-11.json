@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-09-11",
-  "generatedAt": "2026-09-11T16:58:41.457Z",
+  "generatedAt": "2026-09-11T22:06:20.215Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,7 +18,7 @@
   "inputs": {
     "fixturesPath": "data/canonical-fixtures/2026-09-11",
     "finalResultsDir": "data/final-results/2026-09-11",
-    "verifiedFinalResults": 70,
+    "verifiedFinalResults": 196,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-09-11",
     "canonicalContradictionsRejected": [],
     "canonicalIdentityAmbiguities": [],
@@ -55,38 +55,38 @@
       "summary": {
         "picks": 4,
         "uniqueMatches": 4,
-        "settled": 1,
-        "wins": 1,
+        "settled": 4,
+        "wins": 4,
         "losses": 0,
         "voids": 0,
-        "unresolved": 3,
+        "unresolved": 0,
         "unsupported": 0,
         "hitRate": 1,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "oddsAvailable": 3,
+        "averageOdds": 1.4533,
+        "totalStake": 3,
+        "totalReturn": 4.36,
+        "profit": 1.36,
+        "roi": 0.4533
       },
       "marketSummary": [
         {
           "market": "Over / Under 2.5",
           "picks": 4,
           "uniqueMatches": 4,
-          "settled": 1,
-          "wins": 1,
+          "settled": 4,
+          "wins": 4,
           "losses": 0,
           "voids": 0,
-          "unresolved": 3,
+          "unresolved": 0,
           "unsupported": 0,
           "hitRate": 1,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "oddsAvailable": 3,
+          "averageOdds": 1.4533,
+          "totalStake": 3,
+          "totalReturn": 4.36,
+          "profit": 1.36,
+          "roi": 0.4533
         }
       ],
       "picks": [
@@ -169,11 +169,75 @@
           "aiFairOdds": 1.81,
           "oddsDecimal": 1.47,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 1,
+            "scoreKey": "3-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-11T22:06:02.756Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401875940",
+                "canonicalId": "cid_ned2_helmondsport_jongpsv_20260911",
+                "leagueName": "Eerste Divisie",
+                "home": "Helmond Sport",
+                "away": "Jong PSV",
+                "scoreHome": 3,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-11T18:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-11T21:59:34.943Z",
+                "scoreKey": "3-1",
+                "homeTeam": "Helmond Sport",
+                "awayTeam": "Jong PSV",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_ned2_helmondsport_jongpsv_20260911"
+                  ],
+                  "sourceFixtureId": "cid_ned2_helmondsport_jongpsv_20260911",
+                  "resolvedFixtureId": "cid_ned2_helmondsport_jongpsv_20260911",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Helmond Sport",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Jong PSV",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "lpWDQhyK",
+                "country": "Netherlands",
+                "leagueName": "Eerste Divisie",
+                "leaguePath": "/football/netherlands/eerste-divisie/",
+                "home": "Helmond",
+                "away": "Jong PSV",
+                "scoreHome": 3,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-11T18:00:00.000Z",
+                "scoreKey": "3-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -195,11 +259,75 @@
           "aiFairOdds": 1.58,
           "oddsDecimal": 1.38,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 3,
+            "scoreKey": "2-3"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-11T22:06:02.881Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401875936",
+                "canonicalId": "cid_ned2_nacbreda_jongutrecht_20260911",
+                "leagueName": "Eerste Divisie",
+                "home": "NAC Breda",
+                "away": "Jong FC Utrecht",
+                "scoreHome": 2,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-09-11T18:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-11T21:59:34.944Z",
+                "scoreKey": "2-3",
+                "homeTeam": "NAC Breda",
+                "awayTeam": "Jong FC Utrecht",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_ned2_nacbreda_jongutrecht_20260911"
+                  ],
+                  "sourceFixtureId": "cid_ned2_nacbreda_jongutrecht_20260911",
+                  "resolvedFixtureId": "cid_ned2_nacbreda_jongutrecht_20260911",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "NAC Breda",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Jong FC Utrecht",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "YXy7FSSI",
+                "country": "Netherlands",
+                "leagueName": "Eerste Divisie",
+                "leaguePath": "/football/netherlands/eerste-divisie/",
+                "home": "NAC Breda",
+                "away": "Jong Utrecht",
+                "scoreHome": 2,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-09-11T18:00:00.000Z",
+                "scoreKey": "2-3"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -221,11 +349,75 @@
           "aiFairOdds": 1.52,
           "oddsDecimal": 1.51,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 1,
+            "scoreKey": "2-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-11T22:06:02.691Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401875942",
+                "canonicalId": "cid_ned2_eindhoven_dordrecht_20260911",
+                "leagueName": "Eerste Divisie",
+                "home": "FC Eindhoven",
+                "away": "FC Dordrecht",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-11T18:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-11T21:59:34.943Z",
+                "scoreKey": "2-1",
+                "homeTeam": "FC Eindhoven",
+                "awayTeam": "FC Dordrecht",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_ned2_eindhoven_dordrecht_20260911"
+                  ],
+                  "sourceFixtureId": "cid_ned2_eindhoven_dordrecht_20260911",
+                  "resolvedFixtureId": "cid_ned2_eindhoven_dordrecht_20260911",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "FC Eindhoven",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "FC Dordrecht",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "ncgMK2m1",
+                "country": "Netherlands",
+                "leagueName": "Eerste Divisie",
+                "leaguePath": "/football/netherlands/eerste-divisie/",
+                "home": "Eindhoven FC",
+                "away": "Dordrecht",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-11T18:00:00.000Z",
+                "scoreKey": "2-1"
+              }
+            ]
+          }
         }
       ]
     },
@@ -243,38 +435,38 @@
       "summary": {
         "picks": 4,
         "uniqueMatches": 4,
-        "settled": 1,
-        "wins": 1,
+        "settled": 4,
+        "wins": 4,
         "losses": 0,
         "voids": 0,
-        "unresolved": 3,
+        "unresolved": 0,
         "unsupported": 0,
         "hitRate": 1,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "oddsAvailable": 3,
+        "averageOdds": 1.4533,
+        "totalStake": 3,
+        "totalReturn": 4.36,
+        "profit": 1.36,
+        "roi": 0.4533
       },
       "marketSummary": [
         {
           "market": "Over / Under 2.5",
           "picks": 4,
           "uniqueMatches": 4,
-          "settled": 1,
-          "wins": 1,
+          "settled": 4,
+          "wins": 4,
           "losses": 0,
           "voids": 0,
-          "unresolved": 3,
+          "unresolved": 0,
           "unsupported": 0,
           "hitRate": 1,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "oddsAvailable": 3,
+          "averageOdds": 1.4533,
+          "totalStake": 3,
+          "totalReturn": 4.36,
+          "profit": 1.36,
+          "roi": 0.4533
         }
       ],
       "picks": [
@@ -357,11 +549,75 @@
           "aiFairOdds": 1.81,
           "oddsDecimal": 1.47,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 1,
+            "scoreKey": "3-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-11T22:06:02.756Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401875940",
+                "canonicalId": "cid_ned2_helmondsport_jongpsv_20260911",
+                "leagueName": "Eerste Divisie",
+                "home": "Helmond Sport",
+                "away": "Jong PSV",
+                "scoreHome": 3,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-11T18:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-11T21:59:34.943Z",
+                "scoreKey": "3-1",
+                "homeTeam": "Helmond Sport",
+                "awayTeam": "Jong PSV",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_ned2_helmondsport_jongpsv_20260911"
+                  ],
+                  "sourceFixtureId": "cid_ned2_helmondsport_jongpsv_20260911",
+                  "resolvedFixtureId": "cid_ned2_helmondsport_jongpsv_20260911",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Helmond Sport",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Jong PSV",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "lpWDQhyK",
+                "country": "Netherlands",
+                "leagueName": "Eerste Divisie",
+                "leaguePath": "/football/netherlands/eerste-divisie/",
+                "home": "Helmond",
+                "away": "Jong PSV",
+                "scoreHome": 3,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-11T18:00:00.000Z",
+                "scoreKey": "3-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -383,11 +639,75 @@
           "aiFairOdds": 1.58,
           "oddsDecimal": 1.38,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 3,
+            "scoreKey": "2-3"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-11T22:06:02.881Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401875936",
+                "canonicalId": "cid_ned2_nacbreda_jongutrecht_20260911",
+                "leagueName": "Eerste Divisie",
+                "home": "NAC Breda",
+                "away": "Jong FC Utrecht",
+                "scoreHome": 2,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-09-11T18:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-11T21:59:34.944Z",
+                "scoreKey": "2-3",
+                "homeTeam": "NAC Breda",
+                "awayTeam": "Jong FC Utrecht",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_ned2_nacbreda_jongutrecht_20260911"
+                  ],
+                  "sourceFixtureId": "cid_ned2_nacbreda_jongutrecht_20260911",
+                  "resolvedFixtureId": "cid_ned2_nacbreda_jongutrecht_20260911",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "NAC Breda",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Jong FC Utrecht",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "YXy7FSSI",
+                "country": "Netherlands",
+                "leagueName": "Eerste Divisie",
+                "leaguePath": "/football/netherlands/eerste-divisie/",
+                "home": "NAC Breda",
+                "away": "Jong Utrecht",
+                "scoreHome": 2,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-09-11T18:00:00.000Z",
+                "scoreKey": "2-3"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -409,11 +729,75 @@
           "aiFairOdds": 1.52,
           "oddsDecimal": 1.51,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 1,
+            "scoreKey": "2-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-11T22:06:02.691Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401875942",
+                "canonicalId": "cid_ned2_eindhoven_dordrecht_20260911",
+                "leagueName": "Eerste Divisie",
+                "home": "FC Eindhoven",
+                "away": "FC Dordrecht",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-11T18:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-11T21:59:34.943Z",
+                "scoreKey": "2-1",
+                "homeTeam": "FC Eindhoven",
+                "awayTeam": "FC Dordrecht",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_ned2_eindhoven_dordrecht_20260911"
+                  ],
+                  "sourceFixtureId": "cid_ned2_eindhoven_dordrecht_20260911",
+                  "resolvedFixtureId": "cid_ned2_eindhoven_dordrecht_20260911",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "FC Eindhoven",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "FC Dordrecht",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "ncgMK2m1",
+                "country": "Netherlands",
+                "leagueName": "Eerste Divisie",
+                "leaguePath": "/football/netherlands/eerste-divisie/",
+                "home": "Eindhoven FC",
+                "away": "Dordrecht",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-11T18:00:00.000Z",
+                "scoreKey": "2-1"
+              }
+            ]
+          }
         }
       ]
     },
@@ -482,8 +866,8 @@
   },
   "comparison": {
     "pickDeltaPlanBMinusPlanA": -4,
-    "settledDeltaPlanBMinusPlanA": -1,
-    "winsDeltaPlanBMinusPlanA": -1,
+    "settledDeltaPlanBMinusPlanA": -4,
+    "winsDeltaPlanBMinusPlanA": -4,
     "lossesDeltaPlanBMinusPlanA": 0,
     "hitRateDeltaPlanBMinusPlanA": null,
     "roiDeltaPlanBMinusPlanA": null
