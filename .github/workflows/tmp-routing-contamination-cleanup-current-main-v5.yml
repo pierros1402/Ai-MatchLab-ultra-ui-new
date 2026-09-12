@@ -1,0 +1,391 @@
+name: TMP routing contamination cleanup current-main V5
+
+on:
+  push:
+    branches:
+      - fix/20260912-routing-contamination-cleanup-v2
+    paths:
+      - ".github/workflows/tmp-routing-contamination-cleanup-current-main-v5.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tmp-routing-contamination-cleanup-current-main-v5
+  cancel-in-progress: false
+
+env:
+  EXPECTED_BASE: "3d5a53f07270bf65f46be20fbf7c110b9357c7bc"
+  OLD_HELPER_BASE: "4a7d448dfa827d392983764057423841b2b737fe"
+  REPAIR_BRANCH: "fix/20260912-routing-contamination-cleanup-v2"
+  HELPER: "tools/tmp-routing-contamination-cleanup-20260912.mjs"
+  V4_WORKFLOW: ".github/workflows/tmp-routing-contamination-cleanup-current-main-v4.yml"
+  DIAG_WORKFLOW: ".github/workflows/tmp-routing-contamination-strict-gates-diagnostic-20260912.yml"
+  V5_WORKFLOW: ".github/workflows/tmp-routing-contamination-cleanup-current-main-v5.yml"
+
+jobs:
+  repair-validate-v5:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout isolated repair branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact current-main baseline and temporary-only branch delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git merge-base HEAD "$EXPECTED_BASE")" = "$EXPECTED_BASE"
+          test -z "$(git status --porcelain)"
+
+          ACTUAL="$(git diff --name-only "$EXPECTED_BASE"..HEAD | sort)"
+          EXPECTED="$(printf '%s\n' "$V4_WORKFLOW" "$DIAG_WORKFLOW" "$V5_WORKFLOW" "$HELPER" | sort)"
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "ERROR: unexpected branch pre-repair diff"
+            echo "ACTUAL:"; printf '%s\n' "$ACTUAL"
+            echo "EXPECTED:"; printf '%s\n' "$EXPECTED"
+            exit 1
+          fi
+
+          echo "REPAIR_BASE_VERIFIED=$EXPECTED_BASE"
+          echo "REPAIR_BRANCH_HEAD=$(git rev-parse HEAD)"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Harden helper in runner working tree only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import os
+
+          p = Path("tools/tmp-routing-contamination-cleanup-20260912.mjs")
+          s = p.read_text(encoding="utf-8")
+
+          old_base = f'const BASE_SHA = "{os.environ["OLD_HELPER_BASE"]}";'
+          new_base = f'const BASE_SHA = "{os.environ["EXPECTED_BASE"]}";'
+          if s.count(old_base) != 1:
+              raise SystemExit(f"helper base anchor count != 1: {s.count(old_base)}")
+          s = s.replace(old_base, new_base, 1)
+
+          old = '''function assertExactCounts(actual, expected, label) {
+            const actualJson = JSON.stringify(actual);
+            const expectedJson = JSON.stringify(expected);
+            if (actualJson !== expectedJson) {
+              fail(`${label}_mismatch`, { actual, expected });
+            }
+          }
+          '''
+          new = '''function normalizeForComparison(value) {
+            if (Array.isArray(value)) return value.map(normalizeForComparison);
+            if (value && typeof value === "object") {
+              return Object.fromEntries(
+                Object.keys(value).sort().map(key => [key, normalizeForComparison(value[key])])
+              );
+            }
+            return value;
+          }
+
+          function assertExactCounts(actual, expected, label) {
+            const actualJson = JSON.stringify(normalizeForComparison(actual));
+            const expectedJson = JSON.stringify(normalizeForComparison(expected));
+            if (actualJson !== expectedJson) {
+              fail(`${label}_mismatch`, { actual, expected });
+            }
+          }
+          '''
+          if s.count(old) != 1:
+              raise SystemExit(f"assertExactCounts anchor count != 1: {s.count(old)}")
+          s = s.replace(old, new, 1)
+
+          start_token = '  document.routingContaminationRepair = {'
+          end_token = '  writeJson(entry.file, document);'
+          start_index = s.find(start_token)
+          end_index = s.find(end_token, start_index + len(start_token)) if start_index >= 0 else -1
+          if start_index < 0 or end_index < 0:
+              raise SystemExit(f"canonical metadata delimiters missing: start={start_index} end={end_index}")
+          if s.find(start_token, start_index + len(start_token)) >= 0:
+              raise SystemExit("canonical metadata start delimiter is not unique")
+          s = s[:start_index] + s[end_index:]
+
+          p.write_text(s, encoding="utf-8", newline="\n")
+          PY
+
+          node --check "$HELPER"
+          git diff --check
+
+      - name: Capture protected immutable hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          protected_hashes() {
+            for day in 2026-09-10 2026-09-11 2026-09-12; do
+              for file in \
+                "data/deploy-snapshots/${day}/value.json" \
+                "data/deploy-snapshots/${day}/value-audit.json" \
+                "data/value/${day}.json" \
+                "data/value/_audit/${day}.json"; do
+                [ -f "$file" ] && sha256sum "$file"
+              done
+              if [ -d "data/value-plans/${day}" ]; then
+                find "data/value-plans/${day}" -maxdepth 1 -type f -name '*.json' -print0 \
+                  | sort -z | xargs -0 -r sha256sum
+              fi
+            done | sort
+          }
+
+          protected_hashes > "$RUNNER_TEMP/protected-value-hashes.before"
+          cat "$RUNNER_TEMP/protected-value-hashes.before"
+
+          for day in 2026-09-10 2026-09-11 2026-09-12; do
+            file="data/deploy-snapshots/${day}/fixtures-all.json"
+            [ -f "$file" ] && sha256sum "$file"
+          done | sort > "$RUNNER_TEMP/fixtures-all-hashes.before"
+
+          sha256sum data/value-comparison/2026-09-10.json data/value-comparison/2026-09-11.json \
+            | sort > "$RUNNER_TEMP/historical-comparison-hashes.before"
+
+      - name: Apply quarantine-first active truth cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          node "$HELPER"
+
+      - name: Re-export historical snapshots without retrospective Details rebuild
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-09-10 --no-update-latest --preserve-value --preserve-details --no-build-missing-details --fail-on-missing-details
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-09-11 --no-update-latest --preserve-value --preserve-details --no-build-missing-details --fail-on-missing-details
+
+      - name: Rebuild current-day source Details from clean canonical truth
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-details-day.js 2026-09-12 --rebuild
+
+      - name: Re-export current day from rebuilt Details and frozen Plan A authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-09-12 \
+            --update-latest \
+            --replace-details \
+            --no-build-missing-details \
+            --fail-on-missing-details
+
+      - name: Refresh current-day derived Value comparison only
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-value-plan-comparison-day.js --date=2026-09-12 --write
+
+      - name: Refresh and gate snapshot invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          for day in 2026-09-10 2026-09-11 2026-09-12; do
+            node ./engine-v1/jobs/run-snapshot-invariant-check.js "$day"
+            node ./engine-v1/jobs/run-snapshot-invariant-check.js "$day" --gate
+          done
+
+      - name: Refresh historical freshness reports without gating legacy debt
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date=2026-09-10
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date=2026-09-11
+
+      - name: Require current-day strict gates green
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date=2026-09-12 --gate
+          node ./engine-v1/jobs/verify-details-value-mirror-day.js --date=2026-09-12 --gate
+          node ./engine-v1/jobs/check-value-artifact-gate.js --date=2026-09-12
+          node ./engine-v1/jobs/verify-daily-publish-contract.js --date=2026-09-12 --gate
+
+      - name: Verify immutable Value bytes and autonomous fixtures-all are unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          protected_hashes() {
+            for day in 2026-09-10 2026-09-11 2026-09-12; do
+              for file in \
+                "data/deploy-snapshots/${day}/value.json" \
+                "data/deploy-snapshots/${day}/value-audit.json" \
+                "data/value/${day}.json" \
+                "data/value/_audit/${day}.json"; do
+                [ -f "$file" ] && sha256sum "$file"
+              done
+              if [ -d "data/value-plans/${day}" ]; then
+                find "data/value-plans/${day}" -maxdepth 1 -type f -name '*.json' -print0 \
+                  | sort -z | xargs -0 -r sha256sum
+              fi
+            done | sort
+          }
+
+          protected_hashes > "$RUNNER_TEMP/protected-value-hashes.after"
+          diff -u "$RUNNER_TEMP/protected-value-hashes.before" "$RUNNER_TEMP/protected-value-hashes.after"
+
+          for day in 2026-09-10 2026-09-11 2026-09-12; do
+            file="data/deploy-snapshots/${day}/fixtures-all.json"
+            [ -f "$file" ] && sha256sum "$file"
+          done | sort > "$RUNNER_TEMP/fixtures-all-hashes.after"
+          diff -u "$RUNNER_TEMP/fixtures-all-hashes.before" "$RUNNER_TEMP/fixtures-all-hashes.after"
+
+          sha256sum data/value-comparison/2026-09-10.json data/value-comparison/2026-09-11.json \
+            | sort > "$RUNNER_TEMP/historical-comparison-hashes.after"
+          diff -u "$RUNNER_TEMP/historical-comparison-hashes.before" "$RUNNER_TEMP/historical-comparison-hashes.after"
+
+          echo "IMMUTABLE_VALUE_HASHES_UNCHANGED=true"
+          echo "FIXTURES_ALL_HASHES_UNCHANGED=true"
+          echo "HISTORICAL_COMPARISON_HASHES_UNCHANGED=true"
+
+      - name: Verify contamination removal quarantine and current publication parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const crypto = require('crypto');
+          const qFile = 'data/competition-routing-quarantine/2026-09-12/manifest.json';
+          const q = JSON.parse(fs.readFileSync(qFile,'utf8'));
+          if (q?.ok !== true || q?.summary?.candidateCount !== 69) throw new Error('quarantine contract failed');
+          const ids = q.candidates.map(row => String(row.canonicalId));
+          const idSet = new Set(ids);
+          if (idSet.size !== 69) throw new Error('candidate identity set mismatch');
+          const sha256 = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+          for (const row of q.archiveRecords) {
+            if (!fs.existsSync(row.archivePath)) throw new Error(`archive missing: ${row.archivePath}`);
+            if (sha256(row.archivePath) !== row.sha256) throw new Error(`archive hash mismatch: ${row.archivePath}`);
+          }
+          for (const candidate of q.candidates) {
+            const finalFile = `data/final-results/${candidate.day}/${candidate.canonicalId}.json`;
+            if (fs.existsSync(finalFile)) throw new Error(`active contaminated final result remains: ${finalFile}`);
+          }
+          for (const day of ['2026-09-10','2026-09-11','2026-09-12']) {
+            const root = `data/deploy-snapshots/${day}`;
+            const fixturesDoc = JSON.parse(fs.readFileSync(`${root}/fixtures.json`,'utf8'));
+            const fixtures = Array.isArray(fixturesDoc.fixtures) ? fixturesDoc.fixtures : [];
+            const fixtureIds = new Set(fixtures.map(row => String(row.canonicalId || row.matchId || '').trim()).filter(Boolean));
+            for (const id of idSet) {
+              if (fixtureIds.has(id)) throw new Error(`contaminated fixture still published: ${day}:${id}`);
+              if (fs.existsSync(`${root}/details/${id}.json`)) throw new Error(`contaminated detail still published: ${day}:${id}`);
+            }
+          }
+          const latest = JSON.parse(fs.readFileSync('data/deploy-snapshots/latest.json','utf8'));
+          const manifest = JSON.parse(fs.readFileSync('data/deploy-snapshots/2026-09-12/manifest.json','utf8'));
+          if (latest.date !== '2026-09-12') throw new Error(`latest date drift: ${latest.date}`);
+          if (latest.hash !== manifest.hash) throw new Error('latest hash mismatch vs repaired manifest');
+          console.log(JSON.stringify({
+            ok:true,
+            candidateCount:ids.length,
+            latestDate:latest.date,
+            manifestHash:manifest.hash,
+            fixtures:manifest?.counts?.fixtures,
+            details:manifest?.counts?.details,
+            valuePicks:manifest?.counts?.valuePicks
+          },null,2));
+          NODE
+
+      - name: Run routing and history regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test \
+            engine-v1/tests/flashscore-adapter-competition-routing.test.js \
+            engine-v1/tests/daily-history-catchup-h2h-scope.test.js
+
+      - name: Remove transient source Details before staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf data/details/2026-09-12
+          if git status --short -- data/details/2026-09-12 | grep -q .; then
+            echo "ERROR: source Details would alter repository state"
+            git status --short -- data/details/2026-09-12
+            exit 1
+          fi
+          echo "TRANSIENT_SOURCE_DETAILS_NOT_PERSISTED=true"
+
+      - name: Verify exact repair write-set
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore -- "$HELPER"
+
+          CHANGED="$(git diff --name-only "$EXPECTED_BASE" -- data | sort)"
+          BAD="$(printf '%s\n' "$CHANGED" | grep -Ev '^(data/canonical-fixtures/2026-09-(10|11|12|13)/|data/final-results/2026-09-(10|11)/|data/deploy-snapshots/(latest\.json$|2026-09-(10|11|12)/)|data/multi-odds/2026-09-(10|11|12|13)\.json$|data/competition-routing-quarantine/2026-09-12/|data/value-comparison/2026-09-12\.json$)' || true)"
+          if [ -n "$BAD" ]; then
+            echo "ERROR: unexpected repair data paths"
+            echo "$BAD"
+            exit 1
+          fi
+
+          if printf '%s\n' "$CHANGED" | grep -Eq '^data/(value/|value-plans/)'; then
+            echo "ERROR: immutable Value source artifact changed"
+            exit 1
+          fi
+
+          echo "=== VALIDATED REPAIR DATA WRITE SET ==="
+          printf '%s\n' "$CHANGED"
+          git diff --check "$EXPECTED_BASE" -- data
+
+      - name: Commit validated data-only repair to isolated branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git restore --staged . || true
+
+          git add -A -- \
+            data/canonical-fixtures/2026-09-10 \
+            data/canonical-fixtures/2026-09-11 \
+            data/canonical-fixtures/2026-09-12 \
+            data/canonical-fixtures/2026-09-13 \
+            data/final-results/2026-09-10 \
+            data/final-results/2026-09-11 \
+            data/deploy-snapshots/2026-09-10 \
+            data/deploy-snapshots/2026-09-11 \
+            data/deploy-snapshots/2026-09-12 \
+            data/deploy-snapshots/latest.json \
+            data/multi-odds/2026-09-10.json \
+            data/multi-odds/2026-09-11.json \
+            data/multi-odds/2026-09-12.json \
+            data/multi-odds/2026-09-13.json \
+            data/competition-routing-quarantine/2026-09-12 \
+            data/value-comparison/2026-09-12.json
+
+          STAGED="$(git diff --cached --name-only | sort)"
+          BAD="$(printf '%s\n' "$STAGED" | grep -Ev '^(data/canonical-fixtures/2026-09-(10|11|12|13)/|data/final-results/2026-09-(10|11)/|data/deploy-snapshots/(latest\.json$|2026-09-(10|11|12)/)|data/multi-odds/2026-09-(10|11|12|13)\.json$|data/competition-routing-quarantine/2026-09-12/|data/value-comparison/2026-09-12\.json$)' || true)"
+          if [ -n "$BAD" ]; then
+            echo "ERROR: unexpected staged paths"
+            echo "$BAD"
+            exit 1
+          fi
+          test -n "$STAGED"
+          git diff --cached --check
+          echo "=== STAGED DATA-ONLY REPAIR ==="
+          printf '%s\n' "$STAGED"
+
+          git commit -m "Quarantine residual competition routing contamination"
+          git push origin HEAD:"$REPAIR_BRANCH"
