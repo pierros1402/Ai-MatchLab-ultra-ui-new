@@ -1,0 +1,268 @@
+name: TMP routing contamination strict-gates diagnostic 2026-09-12
+
+on:
+  push:
+    branches:
+      - fix/20260912-routing-contamination-cleanup-v2
+    paths:
+      - ".github/workflows/tmp-routing-contamination-strict-gates-diagnostic-20260912.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tmp-routing-contamination-strict-gates-diagnostic-20260912
+  cancel-in-progress: false
+
+env:
+  EXPECTED_BASE: "3d5a53f07270bf65f46be20fbf7c110b9357c7bc"
+  OLD_HELPER_BASE: "4a7d448dfa827d392983764057423841b2b737fe"
+  HELPER: "tools/tmp-routing-contamination-cleanup-20260912.mjs"
+  V4_WORKFLOW: ".github/workflows/tmp-routing-contamination-cleanup-current-main-v4.yml"
+  DIAG_WORKFLOW: ".github/workflows/tmp-routing-contamination-strict-gates-diagnostic-20260912.yml"
+
+jobs:
+  diagnose-strict-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout isolated diagnostic branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact diagnostic baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git merge-base HEAD "$EXPECTED_BASE")" = "$EXPECTED_BASE"
+          test -z "$(git status --porcelain)"
+
+          ACTUAL="$(git diff --name-only "$EXPECTED_BASE"..HEAD | sort)"
+          EXPECTED="$(printf '%s\n' "$V4_WORKFLOW" "$DIAG_WORKFLOW" "$HELPER" | sort)"
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "ERROR: unexpected branch diff before diagnostic"
+            echo "ACTUAL:"; printf '%s\n' "$ACTUAL"
+            echo "EXPECTED:"; printf '%s\n' "$EXPECTED"
+            exit 1
+          fi
+
+          echo "DIAGNOSTIC_BASE_VERIFIED=$EXPECTED_BASE"
+          echo "DIAGNOSTIC_BRANCH_HEAD=$(git rev-parse HEAD)"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Harden helper in runner working tree only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import os
+
+          p = Path("tools/tmp-routing-contamination-cleanup-20260912.mjs")
+          s = p.read_text(encoding="utf-8")
+
+          old_base = f'const BASE_SHA = "{os.environ["OLD_HELPER_BASE"]}";'
+          new_base = f'const BASE_SHA = "{os.environ["EXPECTED_BASE"]}";'
+          if s.count(old_base) != 1:
+              raise SystemExit(f"helper base anchor count != 1: {s.count(old_base)}")
+          s = s.replace(old_base, new_base, 1)
+
+          old = '''function assertExactCounts(actual, expected, label) {
+            const actualJson = JSON.stringify(actual);
+            const expectedJson = JSON.stringify(expected);
+            if (actualJson !== expectedJson) {
+              fail(`${label}_mismatch`, { actual, expected });
+            }
+          }
+          '''
+          new = '''function normalizeForComparison(value) {
+            if (Array.isArray(value)) return value.map(normalizeForComparison);
+            if (value && typeof value === "object") {
+              return Object.fromEntries(
+                Object.keys(value).sort().map(key => [key, normalizeForComparison(value[key])])
+              );
+            }
+            return value;
+          }
+
+          function assertExactCounts(actual, expected, label) {
+            const actualJson = JSON.stringify(normalizeForComparison(actual));
+            const expectedJson = JSON.stringify(normalizeForComparison(expected));
+            if (actualJson !== expectedJson) {
+              fail(`${label}_mismatch`, { actual, expected });
+            }
+          }
+          '''
+          if s.count(old) != 1:
+              raise SystemExit(f"assertExactCounts anchor count != 1: {s.count(old)}")
+          s = s.replace(old, new, 1)
+
+          start_token = '  document.routingContaminationRepair = {'
+          end_token = '  writeJson(entry.file, document);'
+          start_index = s.find(start_token)
+          end_index = s.find(end_token, start_index + len(start_token)) if start_index >= 0 else -1
+          if start_index < 0 or end_index < 0:
+              raise SystemExit(f"canonical metadata delimiters missing: start={start_index} end={end_index}")
+          if s.find(start_token, start_index + len(start_token)) >= 0:
+              raise SystemExit("canonical metadata start delimiter is not unique")
+          s = s[:start_index] + s[end_index:]
+
+          p.write_text(s, encoding="utf-8", newline="\n")
+          PY
+
+          node --check "$HELPER"
+          git diff --check
+
+      - name: Reproduce quarantine-first cleanup in runner only
+        shell: bash
+        run: |
+          set -euo pipefail
+          node "$HELPER"
+
+      - name: Reproduce affected snapshot re-export
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-09-10 --no-update-latest --preserve-value --preserve-details --no-build-missing-details --fail-on-missing-details
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-09-11 --no-update-latest --preserve-value --preserve-details --no-build-missing-details --fail-on-missing-details
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-09-12 --update-latest --preserve-value --preserve-details --no-build-missing-details --fail-on-missing-details
+
+      - name: Reproduce V4 invariant state
+        shell: bash
+        run: |
+          set -euo pipefail
+          for day in 2026-09-10 2026-09-11 2026-09-12; do
+            node ./engine-v1/jobs/run-snapshot-invariant-check.js "$day"
+            node ./engine-v1/jobs/run-snapshot-invariant-check.js "$day" --gate
+          done
+
+      - name: Reproduce V4 historical freshness state
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date=2026-09-10
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date=2026-09-11
+
+      - name: Show runner mutations before strict diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "=== GIT STATUS BEFORE STRICT DIAGNOSTICS ==="
+          git status --short
+          echo "=== CHANGED PATHS BEFORE STRICT DIAGNOSTICS ==="
+          git diff --name-only | sort
+
+      - name: Diagnose 12/09 artifact freshness gate
+        id: freshness
+        shell: bash
+        run: |
+          set -uo pipefail
+          LOG="$RUNNER_TEMP/strict-freshness.log"
+          set +e
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date=2026-09-12 --gate >"$LOG" 2>&1
+          STATUS=$?
+          set -e
+          cat "$LOG"
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          echo "STRICT_FRESHNESS_STATUS=$STATUS"
+          exit 0
+
+      - name: Diagnose 12/09 Value artifact gate
+        id: value_gate
+        shell: bash
+        run: |
+          set -uo pipefail
+          LOG="$RUNNER_TEMP/strict-value-gate.log"
+          set +e
+          node ./engine-v1/jobs/check-value-artifact-gate.js --date=2026-09-12 >"$LOG" 2>&1
+          STATUS=$?
+          set -e
+          cat "$LOG"
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          echo "STRICT_VALUE_GATE_STATUS=$STATUS"
+          exit 0
+
+      - name: Diagnose 12/09 daily publish contract
+        id: publish_gate
+        shell: bash
+        run: |
+          set -uo pipefail
+          LOG="$RUNNER_TEMP/strict-publish-contract.log"
+          set +e
+          node ./engine-v1/jobs/verify-daily-publish-contract.js --date=2026-09-12 --gate >"$LOG" 2>&1
+          STATUS=$?
+          set -e
+          cat "$LOG"
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          echo "STRICT_PUBLISH_CONTRACT_STATUS=$STATUS"
+          exit 0
+
+      - name: Write diagnostic summary
+        if: always()
+        shell: bash
+        env:
+          FRESHNESS_STATUS: ${{ steps.freshness.outputs.status }}
+          VALUE_GATE_STATUS: ${{ steps.value_gate.outputs.status }}
+          PUBLISH_GATE_STATUS: ${{ steps.publish_gate.outputs.status }}
+        run: |
+          set -euo pipefail
+          {
+            echo "diagnostic_branch_head=$(git rev-parse HEAD)"
+            echo "expected_base=$EXPECTED_BASE"
+            echo "freshness_status=${FRESHNESS_STATUS:-not_run}"
+            echo "value_gate_status=${VALUE_GATE_STATUS:-not_run}"
+            echo "publish_gate_status=${PUBLISH_GATE_STATUS:-not_run}"
+            echo "main_was_not_updated_by_this_workflow=true"
+          } | tee "$RUNNER_TEMP/strict-gates-summary.txt"
+
+      - name: Upload strict-gate diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: routing-contamination-strict-gates-diagnostic-20260912
+          path: |
+            ${{ runner.temp }}/strict-freshness.log
+            ${{ runner.temp }}/strict-value-gate.log
+            ${{ runner.temp }}/strict-publish-contract.log
+            ${{ runner.temp }}/strict-gates-summary.txt
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Final diagnostic verdict
+        if: always()
+        shell: bash
+        env:
+          FRESHNESS_STATUS: ${{ steps.freshness.outputs.status }}
+          VALUE_GATE_STATUS: ${{ steps.value_gate.outputs.status }}
+          PUBLISH_GATE_STATUS: ${{ steps.publish_gate.outputs.status }}
+        run: |
+          set -euo pipefail
+          echo "freshness=${FRESHNESS_STATUS:-not_run}"
+          echo "value_gate=${VALUE_GATE_STATUS:-not_run}"
+          echo "publish_gate=${PUBLISH_GATE_STATUS:-not_run}"
+
+          test "${FRESHNESS_STATUS:-not_run}" = "0"
+          test "${VALUE_GATE_STATUS:-not_run}" = "0"
+          test "${PUBLISH_GATE_STATUS:-not_run}" = "0"
+
+      - name: Prove workflow contains no repository publication action
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "NO_REPOSITORY_COMMIT_OR_PUSH_STEP=true"
+          echo "WORKFLOW_PERMISSIONS_CONTENTS_READ=true"
