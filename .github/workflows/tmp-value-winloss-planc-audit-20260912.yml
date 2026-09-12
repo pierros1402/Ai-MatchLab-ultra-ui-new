@@ -1,0 +1,129 @@
+name: TMP Value WIN LOSS and Plan C audit 20260912
+
+on:
+  push:
+    branches:
+      - audit/20260912-value-winloss-planc
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Public engine Value comparison audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          for day in 2026-09-11 2026-09-12; do
+            out="/tmp/value-comparison-${day}.json"
+            echo "=== PUBLIC VALUE COMPARISON ${day} ==="
+            for attempt in 1 2 3; do
+              if curl --fail --silent --show-error --location --max-time 90 \
+                "https://ai-matchlab-engine.onrender.com/value-comparison?date=${day}" \
+                -o "$out"; then
+                break
+              fi
+              if [ "$attempt" = "3" ]; then
+                echo "PUBLIC_FETCH_FAILED day=${day}"
+                exit 1
+              fi
+              sleep 5
+            done
+            DAY="$day" FILE="$out" node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const day = process.env.DAY;
+          const file = process.env.FILE;
+          const x = JSON.parse(fs.readFileSync(file, 'utf8'));
+          const plans = x?.plans || {};
+          const summary = {};
+          for (const [key, plan] of Object.entries(plans)) {
+            const picks = Array.isArray(plan?.picks) ? plan.picks : [];
+            summary[key] = {
+              count: picks.length,
+              resultCounts: picks.reduce((a,p)=>{const r=String(p?.result||'').toUpperCase()||'MISSING';a[r]=(a[r]||0)+1;return a;},{}),
+              settlementCounts: picks.reduce((a,p)=>{const r=String(p?.settlement||'').toUpperCase()||'MISSING';a[r]=(a[r]||0)+1;return a;},{}),
+              samples: picks.slice(0,5).map(p=>({matchId:p?.matchId,result:p?.result,settlement:p?.settlement,finalScore:p?.finalScore}))
+            };
+          }
+          console.log(JSON.stringify({day, ok:x?.ok, source:x?.source, planKeys:Object.keys(plans), summary}, null, 2));
+          NODE
+          done
+
+      - name: Repository comparison and export settlement audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          for (const day of ['2026-09-11','2026-09-12']) {
+            const f = `data/value-comparison/${day}.json`;
+            const x = JSON.parse(fs.readFileSync(f,'utf8'));
+            const out = {};
+            for (const [key,plan] of Object.entries(x?.plans||{})) {
+              const picks = Array.isArray(plan?.picks)?plan.picks:[];
+              out[key]={count:picks.length, results:picks.reduce((a,p)=>{const r=String(p?.result||'').toUpperCase()||'MISSING';a[r]=(a[r]||0)+1;return a;},{})};
+            }
+            console.log('REPO_COMPARISON', day, JSON.stringify(out));
+          }
+          const exp=fs.readFileSync('engine-v1/core/value-export-report.js','utf8');
+          for (const needle of ['VALUE_EXPORT_PLAN_ORDER','Final Score','Result','finalScore','result']) {
+            console.log(`EXPORT_CONTAINS ${needle}=${exp.includes(needle)}`);
+          }
+          NODE
+
+      - name: Plan C day-bound projection audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          for (const day of ['2026-09-11','2026-09-12']) {
+            const f=`data/plan-c-shadow/${day}.json`;
+            const x=JSON.parse(fs.readFileSync(f,'utf8'));
+            const entries=Array.isArray(x?.entries)?x.entries:[];
+            const sameDay=entries.filter(e=>String(e?.prediction?.day||'')===day);
+            const sameDayPicks=sameDay.filter(e=>e?.prediction?.planCPick===true);
+            const settled=sameDayPicks.filter(e=>String(e?.settlement?.state||'').toUpperCase()==='SETTLED');
+            console.log(JSON.stringify({day,sourceCount:entries.length,sourcePickCount:x?.pickCount,sameDayCount:sameDay.length,sameDayPickCount:sameDayPicks.length,settledSameDayPicks:settled.length,samples:sameDayPicks.map(e=>({id:e?.prediction?.canonicalFixtureId,state:e?.settlement?.state,isHit:e?.settlement?.hitRate?.isHit,scoreHome:e?.settlement?.truth?.scoreHome,scoreAway:e?.settlement?.truth?.scoreAway}))},null,2));
+          }
+          NODE
+
+      - name: Source wiring audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const files=[
+            'engine-v1/jobs/build-value-plan-comparison-day.js',
+            'engine-v1/core/value-export-report.js',
+            'assets/js/live/value-adapter.js',
+            'assets/js/ui/value-picks.js'
+          ];
+          const needles=['planA2','planB2','planC','methodologyAggregateWinner','VALUE_EXPORT_PLAN_ORDER','renderPlanComparison','settlementMarkup','resultMeta'];
+          for (const file of files) {
+            const lines=fs.readFileSync(file,'utf8').split(/\r?\n/);
+            console.log(`=== ${file} ===`);
+            for (let i=0;i<lines.length;i++) {
+              if (needles.some(n=>lines[i].includes(n))) {
+                console.log(`${i+1}:${lines[i]}`);
+              }
+            }
+          }
+          NODE
+
+      - name: Prove checkout clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          echo "READ_ONLY_AUDIT_PASS"
