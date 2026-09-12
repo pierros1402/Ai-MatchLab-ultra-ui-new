@@ -1,0 +1,424 @@
+name: TMP history truth propagation repair 2026-09-12
+
+on:
+  push:
+    branches:
+      - fix/20260912-history-truth-propagation-v1
+    paths:
+      - ".github/workflows/tmp-history-truth-propagation-repair-20260912.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tmp-history-truth-propagation-repair-20260912
+  cancel-in-progress: false
+
+env:
+  EXPECTED_BASE: "04bf1d8708d885a6b20f554453812431fbe10466"
+  WORKFLOW_PATH: ".github/workflows/tmp-history-truth-propagation-repair-20260912.yml"
+  RELEASE_BRANCH: "release/20260912-history-truth-propagation-v1"
+
+jobs:
+  repair-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout isolated repair branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact source-bound base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_BASE"
+          test -z "$(git status --porcelain)"
+          test "$(git diff --name-only "$EXPECTED_BASE"..HEAD)" = "$WORKFLOW_PATH"
+          echo "HISTORY_REPAIR_BASE_VERIFIED=$EXPECTED_BASE"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Capture protected immutable bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          protected() {
+            for day in 2026-09-09 2026-09-10 2026-09-11 2026-09-12; do
+              for file in \
+                "data/deploy-snapshots/${day}/value.json" \
+                "data/deploy-snapshots/${day}/value-audit.json" \
+                "data/value/${day}.json" \
+                "data/value/_audit/${day}.json"; do
+                [ -f "$file" ] && sha256sum "$file"
+              done
+              if [ -d "data/value-plans/${day}" ]; then
+                find "data/value-plans/${day}" -maxdepth 1 -type f -name '*.json' -print0 | sort -z | xargs -0 -r sha256sum
+              fi
+              file="data/value-comparison/${day}.json"
+              [ -f "$file" ] && sha256sum "$file"
+            done
+            [ -f data/value-comparison/cumulative.json ] && sha256sum data/value-comparison/cumulative.json
+            [ -f data/deploy-snapshots/2026-09-12/fixtures-all.json ] && sha256sum data/deploy-snapshots/2026-09-12/fixtures-all.json
+            sha256sum data/final-results/2026-09-10/cid_aze2_gancabasar_khankendi_20260910.json
+          }
+          protected | sort > "$RUNNER_TEMP/protected.before"
+
+      - name: Assert stale identity is not a frozen Value pick
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const stale = 'cid_aze2_cebrayil_khankendi_20260910';
+          const roots = [
+            'data/deploy-snapshots/2026-09-10/value.json',
+            'data/value/2026-09-10.json',
+            'data/value-plans/2026-09-10'
+          ];
+          const files = [];
+          for (const root of roots) {
+            if (!fs.existsSync(root)) continue;
+            const st = fs.statSync(root);
+            if (st.isFile()) files.push(root);
+            else for (const name of fs.readdirSync(root).filter(x => x.endsWith('.json')).sort()) files.push(path.join(root,name));
+          }
+          const hits = [];
+          const walk = (value, file, trail=[]) => {
+            if (Array.isArray(value)) return value.forEach((x,i)=>walk(x,file,[...trail,i]));
+            if (!value || typeof value !== 'object') return;
+            if (Array.isArray(value.picks)) {
+              for (let i=0;i<value.picks.length;i++) {
+                const p=value.picks[i]||{};
+                const id=String(p.matchId||p.canonicalId||p.id||'');
+                if (id===stale) hits.push({file,trail:[...trail,'picks',i],id});
+              }
+            }
+            for (const [k,v] of Object.entries(value)) walk(v,file,[...trail,k]);
+          };
+          for (const file of files) walk(JSON.parse(fs.readFileSync(file,'utf8')),file);
+          if (hits.length) throw new Error(`stale identity is a frozen Value pick: ${JSON.stringify(hits)}`);
+          console.log(JSON.stringify({ok:true,checkedFiles:files.length,staleFrozenPickHits:0},null,2));
+          NODE
+
+      - name: Apply source-bound truth repair with quarantine
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const crypto = require('crypto');
+          const base = process.env.EXPECTED_BASE;
+          const repairAt = new Date().toISOString();
+          const root = 'data/history-truth-repair-quarantine/2026-09-12';
+          if (fs.existsSync(root)) throw new Error('history truth repair quarantine already exists');
+          const sha = b => crypto.createHash('sha256').update(b).digest('hex');
+          const read = f => JSON.parse(fs.readFileSync(f,'utf8'));
+          const write = (f,v) => { fs.mkdirSync(path.dirname(f),{recursive:true}); fs.writeFileSync(f,JSON.stringify(v,null,2)+'\n','utf8'); };
+          const archiveRecords=[];
+          const archive = f => {
+            const bytes=fs.readFileSync(f);
+            const out=path.join(root,'originals',f);
+            fs.mkdirSync(path.dirname(out),{recursive:true});
+            fs.writeFileSync(out,bytes);
+            if (!fs.readFileSync(out).equals(bytes)) throw new Error(`archive byte mismatch:${f}`);
+            archiveRecords.push({sourcePath:f,archivePath:out,bytes:bytes.length,sha256:sha(bytes)});
+          };
+          const exactRow = (doc,id) => {
+            const rows=(doc.fixtures||[]).filter(x=>String(x.canonicalId||'')===id);
+            if(rows.length!==1) throw new Error(`expected exactly one canonical row:${id}:${rows.length}`);
+            return rows[0];
+          };
+          const assertEq=(a,b,label)=>{if(a!==b) throw new Error(`${label}: expected=${JSON.stringify(b)} actual=${JSON.stringify(a)}`)};
+
+          const sweCanonicalPath='data/canonical-fixtures/2026-09-09/swe.2.json';
+          const sweFinalPath='data/final-results/2026-09-09/cid_swe2_ljungskile_norrby_20260909.json';
+          const colCanonicalPath='data/canonical-fixtures/2026-09-11/col.2.json';
+          const colFinalPath='data/final-results/2026-09-11/cid_col2_patriotas_barranquilla_20260911.json';
+          const staleFinalPath='data/final-results/2026-09-10/cid_aze2_cebrayil_khankendi_20260910.json';
+          const goodFinalPath='data/final-results/2026-09-10/cid_aze2_gancabasar_khankendi_20260910.json';
+          const azeCanonicalPath='data/canonical-fixtures/2026-09-10/aze.2.json';
+
+          const sweCanonical=read(sweCanonicalPath), sweFinal=read(sweFinalPath);
+          const sweId='cid_swe2_ljungskile_norrby_20260909';
+          const swe=exactRow(sweCanonical,sweId);
+          assertEq(swe.sourceId,'tKmEv32c','swe canonical provider id');
+          assertEq(swe.scoreHome,1,'swe stale home score'); assertEq(swe.scoreAway,1,'swe stale away score');
+          assertEq(swe.status,'FT','swe canonical status');
+          assertEq(sweFinal.matchId,sweId,'swe final id'); assertEq(sweFinal.sources?.[0]?.providerMatchId,'tKmEv32c','swe final provider id');
+          assertEq(sweFinal.scoreHome,2,'swe verified home score'); assertEq(sweFinal.scoreAway,1,'swe verified away score');
+          assertEq(sweFinal.terminalScoreRevision?.state,'APPLIED','swe terminal revision state');
+          assertEq(sweFinal.terminalScoreRevision?.previousScore,'1-1','swe previous score');
+          assertEq(sweFinal.terminalScoreRevision?.correctedScore,'2-1','swe corrected score');
+          if(Number(sweFinal.terminalScoreRevision?.observationCount||0)<2) throw new Error('swe terminal revision observation count <2');
+          assertEq(sweFinal.terminalScoreRevision?.oddsUsed,false,'swe oddsUsed');
+
+          const colCanonical=read(colCanonicalPath), colFinal=read(colFinalPath);
+          const colId='cid_col2_patriotas_barranquilla_20260911';
+          const col=exactRow(colCanonical,colId);
+          assertEq(col.sourceId,'G87hieRG','col canonical provider id');
+          assertEq(col.scoreHome,0,'col stale home score'); assertEq(col.scoreAway,0,'col stale away score');
+          assertEq(col.status,'FT','col canonical status');
+          assertEq(colFinal.matchId,colId,'col final id'); assertEq(colFinal.sources?.[0]?.providerMatchId,'G87hieRG','col final provider id');
+          assertEq(colFinal.scoreHome,3,'col verified home score'); assertEq(colFinal.scoreAway,1,'col verified away score');
+          assertEq(colFinal.terminalScoreRevision?.state,'APPLIED','col terminal revision state');
+          assertEq(colFinal.terminalScoreRevision?.previousScore,'0-0','col previous score');
+          assertEq(colFinal.terminalScoreRevision?.correctedScore,'3-1','col corrected score');
+          if(Number(colFinal.terminalScoreRevision?.observationCount||0)<2) throw new Error('col terminal revision observation count <2');
+          assertEq(colFinal.terminalScoreRevision?.oddsUsed,false,'col oddsUsed');
+
+          const stale=read(staleFinalPath), good=read(goodFinalPath), azeCanonical=read(azeCanonicalPath);
+          const goodId='cid_aze2_gancabasar_khankendi_20260910';
+          const goodCanonical=exactRow(azeCanonical,goodId);
+          assertEq(stale.matchId,'cid_aze2_cebrayil_khankendi_20260910','stale aze id');
+          assertEq(stale.sources?.[0]?.providerMatchId,'fTRPmVvJ','stale aze provider');
+          assertEq(good.matchId,goodId,'good aze id'); assertEq(good.sources?.[0]?.providerMatchId,'fTRPmVvJ','good aze provider');
+          assertEq(goodCanonical.sourceId,'fTRPmVvJ','canonical aze provider');
+          assertEq(goodCanonical.homeTeam,'Gancabasar','canonical aze home'); assertEq(goodCanonical.awayTeam,'Khankendi','canonical aze away');
+          assertEq(good.scoreHome,2,'good aze final home'); assertEq(good.scoreAway,1,'good aze final away');
+          assertEq(goodCanonical.scoreHome,2,'canonical aze home score'); assertEq(goodCanonical.scoreAway,1,'canonical aze away score');
+          assertEq(stale.scoreHome,good.scoreHome,'aze duplicate score home'); assertEq(stale.scoreAway,good.scoreAway,'aze duplicate score away');
+          assertEq(stale.kickoffUtc,good.kickoffUtc,'aze duplicate kickoff');
+
+          archive(sweCanonicalPath); archive(colCanonicalPath); archive(staleFinalPath);
+          swe.scoreHome=2; swe.scoreAway=1; sweCanonical.updatedAt=repairAt; write(sweCanonicalPath,sweCanonical);
+          col.scoreHome=3; col.scoreAway=1; colCanonical.updatedAt=repairAt; write(colCanonicalPath,colCanonical);
+          fs.unlinkSync(staleFinalPath);
+
+          const evidenceFiles=[sweFinalPath,colFinalPath,goodFinalPath,azeCanonicalPath];
+          const evidence=evidenceFiles.map(f=>{const b=fs.readFileSync(f);return {path:f,bytes:b.length,sha256:sha(b)}});
+          write(path.join(root,'manifest.json'),{
+            schema:'ai-matchlab.history-truth-repair-quarantine.v1',ok:true,repairBaseSha:base,generatedAt:repairAt,
+            policy:{canonicalSourceOfTruth:true,noHeuristicFt:true,frozenValueRewritten:false,staleIdentityFinalPolicy:'archive_byte_exact_then_remove_active_duplicate'},
+            repairs:[
+              {day:'2026-09-09',matchId:sweId,provider:'flashscore',providerMatchId:'tKmEv32c',action:'canonical_terminal_score_revision',previousScore:'1-1',correctedScore:'2-1',evidence:'terminalScoreRevision_APPLIED_two_observations'},
+              {day:'2026-09-10',matchId:'cid_aze2_cebrayil_khankendi_20260910',replacementMatchId:goodId,provider:'flashscore',providerMatchId:'fTRPmVvJ',action:'archive_remove_stale_duplicate_final_identity',score:'2-1'},
+              {day:'2026-09-11',matchId:colId,provider:'flashscore',providerMatchId:'G87hieRG',action:'canonical_terminal_score_revision',previousScore:'0-0',correctedScore:'3-1',evidence:'terminalScoreRevision_APPLIED_two_observations'}
+            ],archiveRecords,evidence
+          });
+          console.log(JSON.stringify({ok:true,repairAt,archiveCount:archiveRecords.length},null,2));
+          NODE
+
+      - name: Prove all three history days now pass pure truth parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { buildHistoryDayFromTruth } from './engine-v1/jobs/append-finalized-day-to-history.js';
+          const expected={
+            '2026-09-09':{canonical:77,played:76,verified:76,accepted:76},
+            '2026-09-10':{canonical:88,played:86,verified:86,accepted:86},
+            '2026-09-11':{canonical:189,played:185,verified:185,accepted:185}
+          };
+          for(const [day,e] of Object.entries(expected)){
+            const r=buildHistoryDayFromTruth(day);
+            if(r.ok!==true||r.errors?.length) throw new Error(`${day} parity failed:${JSON.stringify(r.errors)}`);
+            if(r.canonicalFixtureCount!==e.canonical||r.canonicalPlayedFinalCount!==e.played||r.verifiedFinalCount!==e.verified||r.acceptedRows!==e.accepted) throw new Error(`${day} count mismatch:${JSON.stringify(r)}`);
+            console.log(JSON.stringify({day,ok:r.ok,acceptedRows:r.acceptedRows,errors:r.errors.length}));
+          }
+          NODE
+
+      - name: Append repaired days and rebuild history report
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { appendFinalizedDayToHistory } from './engine-v1/jobs/append-finalized-day-to-history.js';
+          import { buildHistoryReport } from './engine-v1/jobs/build-history-report.js';
+          const expected={'2026-09-09':76,'2026-09-10':86,'2026-09-11':185};
+          for(const [day,count] of Object.entries(expected)){
+            const r=await appendFinalizedDayToHistory(day);
+            if(r.ok!==true||r.rowsWritten!==count) throw new Error(`${day} append failed:${JSON.stringify(r)}`);
+          }
+          const rr=buildHistoryReport('2026-2027');
+          if(rr.ok!==true) throw new Error(`report rebuild failed:${JSON.stringify(rr)}`);
+          const report=JSON.parse(fs.readFileSync('data/history/2026-2027.report.json','utf8'));
+          if(report.to!=='2026-09-11'||report.lastCompletedDay!=='2026-09-11'||report.totalMatches!==4196) throw new Error(`history report summary mismatch:${JSON.stringify({to:report.to,lastCompletedDay:report.lastCompletedDay,totalMatches:report.totalMatches})}`);
+          for(const [day,count] of Object.entries(expected)) if(report.byDay?.[day]!==count) throw new Error(`history report day mismatch:${day}:${report.byDay?.[day]}`);
+          console.log(JSON.stringify({ok:true,to:report.to,lastCompletedDay:report.lastCompletedDay,totalMatches:report.totalMatches,byDay:Object.fromEntries(Object.keys(expected).map(d=>[d,report.byDay[d]]))},null,2));
+          NODE
+
+      - name: Rebuild history indexes and H2H foundation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { rebuildIndexesForSeason } from './engine-v1/jobs/rebuild-indexes-for-season.js';
+          import { rebuildH2HFoundationFromCurrentHistory } from './engine-v1/jobs/rebuild-h2h-foundation-from-current-history.js';
+          import { validateHistoryIndexFoundationSync, validateH2HFoundationSync, validateModelPriorsFoundationSync } from './engine-v1/core/derived-history-foundation.js';
+          const idx=await rebuildIndexesForSeason('2026-09-11');
+          if(idx.ok!==true) throw new Error(`index rebuild failed:${JSON.stringify(idx)}`);
+          const iv=validateHistoryIndexFoundationSync('2026-2027');
+          if(iv.ok!==true) throw new Error(`index foundation invalid:${JSON.stringify(iv)}`);
+          const h=rebuildH2HFoundationFromCurrentHistory();
+          if(h.ok!==true) throw new Error(`h2h rebuild failed:${JSON.stringify(h)}`);
+          const hv=validateH2HFoundationSync();
+          if(hv.ok!==true) throw new Error(`h2h foundation invalid:${JSON.stringify(hv)}`);
+          const mv=validateModelPriorsFoundationSync('2026-2027');
+          if(mv.ok!==true) throw new Error(`model priors unexpectedly stale:${JSON.stringify(mv)}`);
+          console.log(JSON.stringify({ok:true,indexFingerprint:iv.artifact?.foundationFingerprint,h2hFingerprint:hv.artifact?.foundationFingerprint,modelPriorsUnchanged:true},null,2));
+          NODE
+
+      - name: Rebuild current-day Details from repaired history foundations
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-details-day.js 2026-09-12 --rebuild
+
+      - name: Re-export current-day snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-09-12 --update-latest --replace-details --no-build-missing-details --fail-on-missing-details
+
+      - name: Run strict current-day publication gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/run-snapshot-invariant-check.js 2026-09-12
+          node ./engine-v1/jobs/run-snapshot-invariant-check.js 2026-09-12 --gate
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date=2026-09-12 --gate
+          node ./engine-v1/jobs/verify-details-value-mirror-day.js --date=2026-09-12 --gate
+          node ./engine-v1/jobs/check-value-artifact-gate.js --date=2026-09-12
+          node ./engine-v1/jobs/verify-daily-publish-contract.js --date=2026-09-12 --gate
+
+      - name: Prove protected immutable bytes unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          protected() {
+            for day in 2026-09-09 2026-09-10 2026-09-11 2026-09-12; do
+              for file in \
+                "data/deploy-snapshots/${day}/value.json" \
+                "data/deploy-snapshots/${day}/value-audit.json" \
+                "data/value/${day}.json" \
+                "data/value/_audit/${day}.json"; do
+                [ -f "$file" ] && sha256sum "$file"
+              done
+              if [ -d "data/value-plans/${day}" ]; then
+                find "data/value-plans/${day}" -maxdepth 1 -type f -name '*.json' -print0 | sort -z | xargs -0 -r sha256sum
+              fi
+              file="data/value-comparison/${day}.json"
+              [ -f "$file" ] && sha256sum "$file"
+            done
+            [ -f data/value-comparison/cumulative.json ] && sha256sum data/value-comparison/cumulative.json
+            [ -f data/deploy-snapshots/2026-09-12/fixtures-all.json ] && sha256sum data/deploy-snapshots/2026-09-12/fixtures-all.json
+            sha256sum data/final-results/2026-09-10/cid_aze2_gancabasar_khankendi_20260910.json
+          }
+          protected | sort > "$RUNNER_TEMP/protected.after"
+          diff -u "$RUNNER_TEMP/protected.before" "$RUNNER_TEMP/protected.after"
+          echo "PROTECTED_BYTES_UNCHANGED=true"
+
+      - name: Re-audit history propagation and quarantine integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          import { buildHistoryDayFromTruth } from './engine-v1/jobs/append-finalized-day-to-history.js';
+          const hist=JSON.parse(fs.readFileSync('data/history/2026-2027.json','utf8'));
+          const byDay=new Map((hist.days||[]).map(d=>[d.dayKey,d]));
+          const expected={'2026-09-09':76,'2026-09-10':86,'2026-09-11':185};
+          for(const [day,count] of Object.entries(expected)){
+            const p=buildHistoryDayFromTruth(day);
+            if(p.ok!==true||p.errors?.length) throw new Error(`${day} post-repair parity failed`);
+            if((byDay.get(day)?.rows||[]).length!==count) throw new Error(`${day} history stored rows mismatch`);
+          }
+          const q=JSON.parse(fs.readFileSync('data/history-truth-repair-quarantine/2026-09-12/manifest.json','utf8'));
+          if(q.ok!==true||q.archiveRecords?.length!==3) throw new Error('quarantine manifest contract failed');
+          const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+          for(const r of q.archiveRecords){const b=fs.readFileSync(r.archivePath);if(b.length!==r.bytes||sha(b)!==r.sha256)throw new Error(`archive mismatch:${r.archivePath}`)}
+          if(fs.existsSync('data/final-results/2026-09-10/cid_aze2_cebrayil_khankendi_20260910.json')) throw new Error('stale Cebrayil final still active');
+          if(!fs.existsSync('data/final-results/2026-09-10/cid_aze2_gancabasar_khankendi_20260910.json')) throw new Error('correct Gancabasar final missing');
+          console.log(JSON.stringify({ok:true,historyDays:Object.fromEntries(Object.entries(expected)),archiveCount:q.archiveRecords.length},null,2));
+          NODE
+
+      - name: Run history regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test engine-v1/tests/daily-history-catchup-h2h-scope.test.js
+
+      - name: Remove transient source Details
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf data/details/2026-09-12
+          ! git status --short -- data/details/2026-09-12 | grep -q .
+
+      - name: Require remote main still pinned
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main:refs/remotes/origin/main-history-repair
+          ACTUAL="$(git rev-parse refs/remotes/origin/main-history-repair)"
+          test "$ACTUAL" = "$EXPECTED_BASE"
+          echo "REMOTE_MAIN_STILL_PINNED=$ACTUAL"
+
+      - name: Build clean data-only release commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f "$WORKFLOW_PATH"
+          git reset "$EXPECTED_BASE"
+          git add -A data
+          git diff --cached --check
+          CHANGED="$(git diff --cached --name-only "$EXPECTED_BASE" | sort)"
+          test -n "$CHANGED"
+          BAD="$(printf '%s\n' "$CHANGED" | grep -Ev '^(data/canonical-fixtures/2026-09-09/swe\.2\.json$|data/canonical-fixtures/2026-09-11/col\.2\.json$|data/final-results/2026-09-10/cid_aze2_cebrayil_khankendi_20260910\.json$|data/history-truth-repair-quarantine/2026-09-12/|data/history/2026-2027(\.report)?\.json$|data/history-index/|data/h2h/|data/h2h-foundation/current\.json$|data/deploy-snapshots/2026-09-12/|data/deploy-snapshots/latest\.json$)' || true)"
+          if [ -n "$BAD" ]; then
+            echo "ERROR: unexpected history repair release write-set"
+            printf '%s\n' "$BAD"
+            exit 1
+          fi
+          ! printf '%s\n' "$CHANGED" | grep -Eq '^(\.github/|tools/|data/value/|data/value-plans/|data/model-priors/)'
+          TREE="$(git write-tree)"
+          export GIT_AUTHOR_NAME='matchlab-repair'
+          export GIT_AUTHOR_EMAIL='matchlab-repair@users.noreply.github.com'
+          export GIT_COMMITTER_NAME='matchlab-repair'
+          export GIT_COMMITTER_EMAIL='matchlab-repair@users.noreply.github.com'
+          COMMIT="$(printf '%s\n' 'Repair recent history truth propagation' | git commit-tree "$TREE" -p "$EXPECTED_BASE")"
+          test "$(git rev-parse "$COMMIT^")" = "$EXPECTED_BASE"
+          test -z "$(git diff --name-only "$EXPECTED_BASE" "$COMMIT" | grep -Ev '^data/' || true)"
+          printf '%s\n' "$COMMIT" > "$RUNNER_TEMP/release-commit.txt"
+          printf '%s\n' "$TREE" > "$RUNNER_TEMP/release-tree.txt"
+          printf '%s\n' "$CHANGED" > "$RUNNER_TEMP/release-paths.txt"
+          echo "CLEAN_RELEASE_COMMIT=$COMMIT"
+
+      - name: Push clean commit to release branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          COMMIT="$(cat "$RUNNER_TEMP/release-commit.txt")"
+          git push origin "$COMMIT:refs/heads/$RELEASE_BRANCH"
+          echo "RELEASE_BRANCH_PUSHED=$RELEASE_BRANCH"
+          echo "MAIN_NOT_UPDATED=true"
+
+      - name: Upload release evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: history-truth-propagation-release-evidence
+          path: |
+            ${{ runner.temp }}/release-commit.txt
+            ${{ runner.temp }}/release-tree.txt
+            ${{ runner.temp }}/release-paths.txt
+            ${{ runner.temp }}/protected.before
+            ${{ runner.temp }}/protected.after
+          if-no-files-found: error
+          retention-days: 14
