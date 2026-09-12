@@ -19,7 +19,6 @@ env:
   EXPECTED_BASE: "4a7d448dfa827d392983764057423841b2b737fe"
   REPAIR_BRANCH: "fix/20260912-routing-contamination-cleanup-v1"
   HELPER: "tools/tmp-routing-contamination-cleanup-20260912.mjs"
-  WORKFLOW_FILE: ".github/workflows/tmp-routing-contamination-cleanup-20260912.yml"
 
 jobs:
   repair-validate:
@@ -59,14 +58,14 @@ jobs:
         with:
           node-version: "24"
 
-      - name: Install root dependencies
-        run: npm ci --no-audit --no-fund
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
 
-      - name: Install engine dependencies
-        working-directory: engine-v1
-        run: npm ci --no-audit --no-fund
-
-      - name: Harden temporary helper before execution
+      - name: Harden helper in working tree only
         shell: bash
         run: |
           set -euo pipefail
@@ -111,17 +110,15 @@ jobs:
               raise SystemExit(f"assertExactCounts anchor count != 1: {s.count(old)}")
           s = s.replace(old, new, 1)
 
-          extra = '''  document.routingContaminationRepair = {
-            repairedAt: repairAt,
-            repairKey: REPAIR_KEY,
-            removedRows: removed.length,
-            policy: "strict_competition_identity"
-          };
-          '''
-
-          if s.count(extra) != 1:
-              raise SystemExit(f"canonical metadata anchor count != 1: {s.count(extra)}")
-          s = s.replace(extra, "", 1)
+          start_token = '  document.routingContaminationRepair = {'
+          end_token = '  writeJson(entry.file, document);'
+          start_index = s.find(start_token)
+          end_index = s.find(end_token, start_index + len(start_token)) if start_index >= 0 else -1
+          if start_index < 0 or end_index < 0:
+              raise SystemExit(f"canonical metadata delimiters missing: start={start_index} end={end_index}")
+          if s.find(start_token, start_index + len(start_token)) >= 0:
+              raise SystemExit("canonical metadata start delimiter is not unique")
+          s = s[:start_index] + s[end_index:]
 
           p.write_text(s, encoding="utf-8", newline="\n")
           PY
@@ -133,7 +130,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           snapshot_hashes() {
             for day in 2026-09-10 2026-09-11 2026-09-12; do
               for file in \
@@ -143,18 +139,14 @@ jobs:
                 "data/value-comparison/${day}.json"; do
                 [ -f "$file" ] && sha256sum "$file"
               done
-
               if [ -d "data/value-plans/${day}" ]; then
                 find "data/value-plans/${day}" -maxdepth 1 -type f -name '*.json' -print0 \
-                  | sort -z \
-                  | xargs -0 -r sha256sum
+                  | sort -z | xargs -0 -r sha256sum
               fi
             done | sort
           }
-
           snapshot_hashes > "$RUNNER_TEMP/value-hashes.before"
           cat "$RUNNER_TEMP/value-hashes.before"
-
           node -e '
             const fs=require("fs");
             const latest=JSON.parse(fs.readFileSync("data/deploy-snapshots/latest.json","utf8"));
@@ -173,29 +165,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-09-10 \
-            --no-update-latest \
-            --preserve-value \
-            --preserve-details \
-            --no-build-missing-details \
-            --fail-on-missing-details
-
+            --no-update-latest --preserve-value --preserve-details \
+            --no-build-missing-details --fail-on-missing-details
           node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-09-11 \
-            --no-update-latest \
-            --preserve-value \
-            --preserve-details \
-            --no-build-missing-details \
-            --fail-on-missing-details
-
+            --no-update-latest --preserve-value --preserve-details \
+            --no-build-missing-details --fail-on-missing-details
           node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-09-12 \
-            --update-latest \
-            --preserve-value \
-            --preserve-details \
-            --no-build-missing-details \
-            --fail-on-missing-details
+            --update-latest --preserve-value --preserve-details \
+            --no-build-missing-details --fail-on-missing-details
 
-      - name: Refresh invariant and freshness evidence
+      - name: Refresh and gate repaired publication evidence
         shell: bash
         run: |
           set -euo pipefail
@@ -205,7 +185,6 @@ jobs:
             node ./engine-v1/jobs/verify-details-value-mirror-day.js --date="$day" --gate
             node ./engine-v1/jobs/check-value-artifact-gate.js --date="$day"
           done
-
           node ./engine-v1/jobs/verify-daily-publish-contract.js --date=2026-09-10 --prepublish --gate
           node ./engine-v1/jobs/verify-daily-publish-contract.js --date=2026-09-11 --prepublish --gate
           node ./engine-v1/jobs/verify-daily-publish-contract.js --date=2026-09-12 --gate
@@ -214,7 +193,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           snapshot_hashes() {
             for day in 2026-09-10 2026-09-11 2026-09-12; do
               for file in \
@@ -224,15 +202,12 @@ jobs:
                 "data/value-comparison/${day}.json"; do
                 [ -f "$file" ] && sha256sum "$file"
               done
-
               if [ -d "data/value-plans/${day}" ]; then
                 find "data/value-plans/${day}" -maxdepth 1 -type f -name '*.json' -print0 \
-                  | sort -z \
-                  | xargs -0 -r sha256sum
+                  | sort -z | xargs -0 -r sha256sum
               fi
             done | sort
           }
-
           snapshot_hashes > "$RUNNER_TEMP/value-hashes.after"
           diff -u "$RUNNER_TEMP/value-hashes.before" "$RUNNER_TEMP/value-hashes.after"
           echo "IMMUTABLE_VALUE_HASHES_UNCHANGED=true"
@@ -243,30 +218,18 @@ jobs:
           set -euo pipefail
           node <<'NODE'
           const fs = require("fs");
-          const path = require("path");
           const crypto = require("crypto");
-
           const qFile = "data/competition-routing-quarantine/2026-09-12/manifest.json";
           const q = JSON.parse(fs.readFileSync(qFile, "utf8"));
-          if (q?.ok !== true || q?.summary?.candidateCount !== 69) {
-            throw new Error("quarantine manifest contract failed");
-          }
-
+          if (q?.ok !== true || q?.summary?.candidateCount !== 69) throw new Error("quarantine manifest contract failed");
           const ids = q.candidates.map(row => String(row.canonicalId));
           const idSet = new Set(ids);
           if (idSet.size !== 69) throw new Error("candidate identity set mismatch");
-
           const sha256 = file => crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
           for (const row of q.archiveRecords) {
             if (!fs.existsSync(row.archivePath)) throw new Error(`archive missing: ${row.archivePath}`);
             if (sha256(row.archivePath) !== row.sha256) throw new Error(`archive hash mismatch: ${row.archivePath}`);
           }
-
-          for (const candidate of q.candidates) {
-            const finalFile = `data/final-results/${candidate.day}/${candidate.canonicalId}.json`;
-            if (fs.existsSync(finalFile)) throw new Error(`active contaminated final result remains: ${finalFile}`);
-          }
-
           const clean = value => String(value ?? "").trim();
           const classify = (slug, row) => {
             const league = clean(row?.leagueName).toLowerCase();
@@ -276,7 +239,10 @@ jobs:
             if (slug === "fifa.world" && /\bu20\s*w\b/iu.test(teams)) return true;
             return false;
           };
-
+          for (const candidate of q.candidates) {
+            const finalFile = `data/final-results/${candidate.day}/${candidate.canonicalId}.json`;
+            if (fs.existsSync(finalFile)) throw new Error(`active contaminated final result remains: ${finalFile}`);
+          }
           for (const day of ["2026-09-10","2026-09-11","2026-09-12","2026-09-13"]) {
             for (const slug of ["eng.1","pol.2","fifa.world"]) {
               const file = `data/canonical-fixtures/${day}/${slug}.json`;
@@ -287,7 +253,6 @@ jobs:
               if (Number(doc.count) !== rows.length) throw new Error(`canonical count mismatch: ${file}`);
             }
           }
-
           for (const day of ["2026-09-10","2026-09-11","2026-09-12"]) {
             const root = `data/deploy-snapshots/${day}`;
             const fixturesDoc = JSON.parse(fs.readFileSync(`${root}/fixtures.json`,"utf8"));
@@ -297,17 +262,13 @@ jobs:
               if (fixtureIds.has(id)) throw new Error(`contaminated fixture still published: ${day}:${id}`);
               if (fs.existsSync(`${root}/details/${id}.json`)) throw new Error(`contaminated detail still published: ${day}:${id}`);
             }
-
             const oddsFile = `${root}/odds.json`;
             if (fs.existsSync(oddsFile)) {
               const odds = JSON.parse(fs.readFileSync(oddsFile,"utf8"));
               for (const match of Array.isArray(odds.matches) ? odds.matches : []) {
-                if (idSet.has(clean(match.canonicalId)) || idSet.has(clean(match.matchId))) {
-                  throw new Error(`contaminated snapshot odds row remains: ${day}`);
-                }
+                if (idSet.has(clean(match.canonicalId)) || idSet.has(clean(match.matchId))) throw new Error(`contaminated snapshot odds row remains: ${day}`);
               }
             }
-
             const value = JSON.parse(fs.readFileSync(`${root}/value.json`,"utf8"));
             for (const pick of Array.isArray(value.picks) ? value.picks : []) {
               const id = clean(pick.matchId || pick.canonicalId || pick.fixtureId || pick.id);
@@ -315,31 +276,17 @@ jobs:
               if (idSet.has(id)) throw new Error(`contaminated frozen Value pick: ${day}:${id}`);
             }
           }
-
           for (const day of ["2026-09-10","2026-09-11","2026-09-12","2026-09-13"]) {
             const file = `data/multi-odds/${day}.json`;
             if (!fs.existsSync(file)) continue;
             const text = fs.readFileSync(file,"utf8");
-            for (const id of idSet) {
-              if (text.includes(id)) throw new Error(`contaminated multi-odds reference remains: ${day}:${id}`);
-            }
+            for (const id of idSet) if (text.includes(id)) throw new Error(`contaminated multi-odds reference remains: ${day}:${id}`);
           }
-
           const latest = JSON.parse(fs.readFileSync("data/deploy-snapshots/latest.json","utf8"));
           const manifest = JSON.parse(fs.readFileSync("data/deploy-snapshots/2026-09-12/manifest.json","utf8"));
           if (latest.date !== "2026-09-12") throw new Error(`latest date drift: ${latest.date}`);
-          if (latest.hash !== manifest.hash) throw new Error("latest hash does not match repaired 2026-09-12 manifest");
-
-          console.log(JSON.stringify({
-            ok: true,
-            candidateCount: ids.length,
-            archiveRecords: q.archiveRecords.length,
-            latestDate: latest.date,
-            repairedManifestHash: manifest.hash,
-            repairedFixtureCount: manifest?.counts?.fixtures,
-            repairedDetailCount: manifest?.counts?.details,
-            frozenValuePicks: manifest?.counts?.valuePicks
-          }, null, 2));
+          if (latest.hash !== manifest.hash) throw new Error("latest hash does not match repaired manifest");
+          console.log(JSON.stringify({ok:true,candidateCount:ids.length,archiveRecords:q.archiveRecords.length,latestDate:latest.date,repairedManifestHash:manifest.hash,repairedFixtureCount:manifest?.counts?.fixtures,repairedDetailCount:manifest?.counts?.details,frozenValuePicks:manifest?.counts?.valuePicks},null,2));
           NODE
 
       - name: Run targeted regression tests
@@ -350,62 +297,39 @@ jobs:
             engine-v1/tests/flashscore-adapter-competition-routing.test.js \
             engine-v1/tests/daily-history-catchup-h2h-scope.test.js
 
-      - name: Verify final write-set and self-remove temporary tooling
+      - name: Restore temporary helper and verify data-only write-set
         shell: bash
         run: |
           set -euo pipefail
+          git restore "$HELPER"
+          test -z "$(git diff --name-only HEAD -- "$HELPER")"
 
-          git rm "$HELPER" "$WORKFLOW_FILE"
-
-          CHANGED="$(git diff --name-only "$EXPECTED_BASE" | sort)"
-          BAD="$(printf '%s\n' "$CHANGED" | grep -Ev '^(data/canonical-fixtures/2026-09-(10|11|12|13)/|data/final-results/2026-09-(10|11)/|data/deploy-snapshots/(latest\.json$|2026-09-(10|11|12)/)|data/multi-odds/2026-09-(10|11|12|13)\.json$|data/competition-routing-quarantine/2026-09-12/)' || true)"
-
+          CHANGED="$(git diff --name-only HEAD | sort)"
+          BAD="$(printf '%s\n' "$CHANGED" | grep -Ev '^(data/canonical-fixtures/2026-09-(10|11|12|13)/|data/final-results/2026-09-(10|11|12|13)/|data/deploy-snapshots/(latest\.json$|2026-09-(10|11|12)/)|data/multi-odds/2026-09-(10|11|12|13)\.json$|data/competition-routing-quarantine/2026-09-12/)' || true)"
           if [ -n "$BAD" ]; then
             echo "ERROR: unexpected repair paths:"
             echo "$BAD"
             exit 1
           fi
-
           if printf '%s\n' "$CHANGED" | grep -Eq '^data/(value/|value-plans/|value-comparison/)'; then
             echo "ERROR: immutable Value artifacts changed"
             exit 1
           fi
-
           if [ -z "$CHANGED" ]; then
-            echo "ERROR: repair produced no changes"
+            echo "ERROR: repair produced no data changes"
             exit 1
           fi
-
-          echo "=== FINAL REPAIR WRITE SET ==="
+          echo "=== DATA-ONLY REPAIR WRITE SET ==="
           printf '%s\n' "$CHANGED"
-          git diff --check "$EXPECTED_BASE"
+          git diff --check HEAD
 
-      - name: Commit validated repair to isolated branch
+      - name: Commit validated data repair to isolated branch
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git add -A \
-            data/canonical-fixtures/2026-09-10 \
-            data/canonical-fixtures/2026-09-11 \
-            data/canonical-fixtures/2026-09-12 \
-            data/canonical-fixtures/2026-09-13 \
-            data/final-results/2026-09-10 \
-            data/final-results/2026-09-11 \
-            data/deploy-snapshots/2026-09-10 \
-            data/deploy-snapshots/2026-09-11 \
-            data/deploy-snapshots/2026-09-12 \
-            data/deploy-snapshots/latest.json \
-            data/multi-odds/2026-09-10.json \
-            data/multi-odds/2026-09-11.json \
-            data/multi-odds/2026-09-12.json \
-            data/multi-odds/2026-09-13.json \
-            data/competition-routing-quarantine/2026-09-12 \
-            "$HELPER" \
-            "$WORKFLOW_FILE"
-
+          git add -A data
           git diff --cached --check
           git commit -m "Quarantine residual competition routing contamination"
           git push origin HEAD:"$REPAIR_BRANCH"
