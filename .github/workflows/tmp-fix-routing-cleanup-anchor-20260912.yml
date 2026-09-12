@@ -62,8 +62,17 @@ jobs:
           git rm .github/workflows/tmp-fix-routing-cleanup-anchor-20260912.yml
 
           ACTUAL="$(git diff --name-only HEAD | sort)"
-          EXPECTED=".github/workflows/tmp-routing-contamination-cleanup-20260912.yml"
-          test "$ACTUAL" = "$EXPECTED"
+          EXPECTED="$(printf '%s\n' \
+            '.github/workflows/tmp-fix-routing-cleanup-anchor-20260912.yml' \
+            '.github/workflows/tmp-routing-contamination-cleanup-20260912.yml' \
+            | sort)"
+
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "ERROR: unexpected patcher write-set"
+            echo "ACTUAL:"; printf '%s\n' "$ACTUAL"
+            echo "EXPECTED:"; printf '%s\n' "$EXPECTED"
+            exit 1
+          fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
