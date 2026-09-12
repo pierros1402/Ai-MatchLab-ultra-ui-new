@@ -1970,7 +1970,7 @@ export async function runDailyCycle(options = {}) {
     // can no longer hold a hundred real finals hostage. Gates kept: no
     // terminal row without a score, no duplicate ids — never fabricates.
     historyCatchUp = [];
-    for (let back = 2; back <= 7; back++) {
+    for (let back = 1; back <= 7; back++) {
       const day = shiftDay(dayKey, -back);
       try {
         let liveRefresh = null;
