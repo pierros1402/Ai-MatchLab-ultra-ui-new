@@ -39,7 +39,7 @@ jobs:
     # Manual incident-recovery runs need enough room for the same exhaustive
     # cycle plus the publication gates; Day29 proved that the cycle alone can
     # legitimately consume almost the entire scheduled budget.
-    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && 180 || 100 }}
+    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && 300 || 100 }}
 
     steps:
       - name: Checkout repository
