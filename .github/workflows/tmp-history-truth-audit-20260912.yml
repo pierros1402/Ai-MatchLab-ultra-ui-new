@@ -1,0 +1,113 @@
+name: TMP history truth audit 2026-09-12
+
+on:
+  push:
+    branches:
+      - audit/20260912-history-propagation-truth
+
+permissions:
+  contents: read
+
+env:
+  AUDIT_BASE: 04bf1d8708d885a6b20f554453812431fbe10466
+
+jobs:
+  audit-history-truth:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify source-bound audit branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$AUDIT_BASE"
+          CHANGED="$(git diff --name-only "$AUDIT_BASE" HEAD)"
+          test "$CHANGED" = ".github/workflows/tmp-history-truth-audit-20260912.yml"
+          git diff --check "$AUDIT_BASE" HEAD
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: |
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Run pure history truth audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE' | tee /tmp/history-truth-audit.json
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { buildHistoryDayFromTruth } from './engine-v1/jobs/append-finalized-day-to-history.js';
+
+          const days = ['2026-09-08','2026-09-09','2026-09-10','2026-09-11'];
+          const historyPath = 'data/history/2026-2027.json';
+          const reportPath = 'data/history/2026-2027.report.json';
+          const history = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
+          const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+          const historyDays = new Map((Array.isArray(history?.days) ? history.days : []).map(d => [d.dayKey, d]));
+
+          const result = {
+            auditBase: process.env.AUDIT_BASE,
+            historyReport: {
+              generatedAt: report.generatedAt ?? null,
+              to: report.to ?? null,
+              lastCompletedDay: report.lastCompletedDay ?? null,
+              totalMatches: report.totalMatches ?? null
+            },
+            days: []
+          };
+
+          for (const day of days) {
+            const build = buildHistoryDayFromTruth(day);
+            const reasonCounts = {};
+            for (const error of build.errors || []) {
+              const key = String(error?.reason || 'unknown');
+              reasonCounts[key] = (reasonCounts[key] || 0) + 1;
+            }
+            const finalDir = path.join('data','final-results',day);
+            const finalFiles = fs.existsSync(finalDir)
+              ? fs.readdirSync(finalDir).filter(x => x.endsWith('.json')).length
+              : 0;
+            const stored = historyDays.get(day) || null;
+            result.days.push({
+              day,
+              buildOk: build.ok === true,
+              buildReason: build.reason ?? null,
+              canonicalFixtureCount: build.canonicalFixtureCount ?? null,
+              canonicalPlayedFinalCount: build.canonicalPlayedFinalCount ?? null,
+              verifiedFinalCount: build.verifiedFinalCount ?? null,
+              acceptedRows: build.acceptedRows ?? null,
+              finalResultFiles: finalFiles,
+              errorCount: Array.isArray(build.errors) ? build.errors.length : 0,
+              errorReasonCounts: reasonCounts,
+              errors: build.errors || [],
+              historyStored: !!stored,
+              historyStoredRows: Array.isArray(stored?.rows) ? stored.rows.length : 0
+            });
+          }
+
+          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
+          NODE
+
+      - name: Prove checkout remained read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          echo "READ_ONLY_HISTORY_AUDIT_PASS=true"
+
+      - name: Upload audit evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: history-truth-audit-20260912
+          path: /tmp/history-truth-audit.json
+          if-no-files-found: error
