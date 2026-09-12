@@ -1,0 +1,44 @@
+name: TMP Mito Flashscore provider ID audit 20260912
+
+on:
+  push:
+    branches:
+      - audit/20260912-value-winloss-planc
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - run: |
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+      - name: Fetch exact provider row
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { fetchFlashscoreFixtures } from './engine-v1/odds/flashscore-fixtures-source.js';
+          for (const offsets of [[0],[-1,0,1]]) {
+            const feed = await fetchFlashscoreFixtures({ offsets });
+            const rows = Array.isArray(feed?.rows) ? feed.rows : [];
+            const exact = rows.filter(r => String(r?.matchId || '').trim() === 'rg0dw98U');
+            const team = rows.filter(r => /mito|kawasaki/i.test(`${r?.home||''} ${r?.away||''}`));
+            console.log(JSON.stringify({
+              offsets,
+              total: rows.length,
+              exact,
+              teamMatches: team.map(r=>({matchId:r?.matchId,home:r?.home,away:r?.away,kickoffUtc:r?.kickoffUtc,finished:r?.finished,playedFinal:r?.playedFinal,scoreHome:r?.scoreHome,scoreAway:r?.scoreAway,status:r?.status,statusCode:r?.statusCode}))
+            }, null, 2));
+          }
+          NODE
+      - name: Prove clean
+        run: test -z "$(git status --porcelain)"
