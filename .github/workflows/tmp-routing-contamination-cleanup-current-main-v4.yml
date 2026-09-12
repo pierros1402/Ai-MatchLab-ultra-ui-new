@@ -1,0 +1,544 @@
+name: TMP routing contamination cleanup current-main V4
+
+on:
+  push:
+    branches:
+      - fix/20260912-routing-contamination-cleanup-v2
+    paths:
+      - ".github/workflows/tmp-routing-contamination-cleanup-current-main-v4.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tmp-routing-contamination-cleanup-current-main-v4
+  cancel-in-progress: false
+
+env:
+  EXPECTED_BASE: "3d5a53f07270bf65f46be20fbf7c110b9357c7bc"
+  OLD_HELPER_BASE: "4a7d448dfa827d392983764057423841b2b737fe"
+  REPAIR_BRANCH: "fix/20260912-routing-contamination-cleanup-v2"
+  HELPER: "tools/tmp-routing-contamination-cleanup-20260912.mjs"
+  WORKFLOW_FILE: ".github/workflows/tmp-routing-contamination-cleanup-current-main-v4.yml"
+
+jobs:
+  repair-validate-v4:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout clean current-main repair branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact current-main baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git merge-base HEAD "$EXPECTED_BASE")" = "$EXPECTED_BASE"
+          test -z "$(git status --porcelain)"
+
+          ACTUAL="$(git diff --name-only "$EXPECTED_BASE"..HEAD | sort)"
+          EXPECTED="$(printf '%s\n' "$WORKFLOW_FILE" "$HELPER" | sort)"
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "ERROR: unexpected branch pre-repair diff"
+            echo "ACTUAL:"; printf '%s\n' "$ACTUAL"
+            echo "EXPECTED:"; printf '%s\n' "$EXPECTED"
+            exit 1
+          fi
+
+          echo "REPAIR_BASE_VERIFIED=$EXPECTED_BASE"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Harden helper in working tree only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import os
+
+          p = Path("tools/tmp-routing-contamination-cleanup-20260912.mjs")
+          s = p.read_text(encoding="utf-8")
+
+          old_base = f'const BASE_SHA = "{os.environ["OLD_HELPER_BASE"]}";'
+          new_base = f'const BASE_SHA = "{os.environ["EXPECTED_BASE"]}";'
+          if s.count(old_base) != 1:
+              raise SystemExit(f"helper base anchor count != 1: {s.count(old_base)}")
+          s = s.replace(old_base, new_base, 1)
+
+          old = '''function assertExactCounts(actual, expected, label) {
+            const actualJson = JSON.stringify(actual);
+            const expectedJson = JSON.stringify(expected);
+            if (actualJson !== expectedJson) {
+              fail(`${label}_mismatch`, { actual, expected });
+            }
+          }
+          '''
+          new = '''function normalizeForComparison(value) {
+            if (Array.isArray(value)) return value.map(normalizeForComparison);
+            if (value && typeof value === "object") {
+              return Object.fromEntries(
+                Object.keys(value).sort().map(key => [key, normalizeForComparison(value[key])])
+              );
+            }
+            return value;
+          }
+
+          function assertExactCounts(actual, expected, label) {
+            const actualJson = JSON.stringify(normalizeForComparison(actual));
+            const expectedJson = JSON.stringify(normalizeForComparison(expected));
+            if (actualJson !== expectedJson) {
+              fail(`${label}_mismatch`, { actual, expected });
+            }
+          }
+          '''
+          if s.count(old) != 1:
+              raise SystemExit(f"assertExactCounts anchor count != 1: {s.count(old)}")
+          s = s.replace(old, new, 1)
+
+          start_token = '  document.routingContaminationRepair = {'
+          end_token = '  writeJson(entry.file, document);'
+          start_index = s.find(start_token)
+          end_index = s.find(end_token, start_index + len(start_token)) if start_index >= 0 else -1
+          if start_index < 0 or end_index < 0:
+              raise SystemExit(f"canonical metadata delimiters missing: start={start_index} end={end_index}")
+          if s.find(start_token, start_index + len(start_token)) >= 0:
+              raise SystemExit("canonical metadata start delimiter is not unique")
+          s = s[:start_index] + s[end_index:]
+
+          p.write_text(s, encoding="utf-8", newline="\n")
+          PY
+
+          node --check "$HELPER"
+          git diff --check
+
+      - name: Capture protected hashes and baseline validation state
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          protected_hashes() {
+            for day in 2026-09-10 2026-09-11 2026-09-12; do
+              for file in \
+                "data/deploy-snapshots/${day}/value.json" \
+                "data/deploy-snapshots/${day}/value-audit.json" \
+                "data/value/_audit/${day}.json" \
+                "data/value-comparison/${day}.json"; do
+                [ -f "$file" ] && sha256sum "$file"
+              done
+              if [ -d "data/value-plans/${day}" ]; then
+                find "data/value-plans/${day}" -maxdepth 1 -type f -name '*.json' -print0 \
+                  | sort -z | xargs -0 -r sha256sum
+              fi
+            done | sort
+          }
+          protected_hashes > "$RUNNER_TEMP/protected-value-hashes.before"
+
+          for day in 2026-09-10 2026-09-11 2026-09-12; do
+            file="data/deploy-snapshots/${day}/fixtures-all.json"
+            [ -f "$file" ] && sha256sum "$file"
+          done | sort > "$RUNNER_TEMP/fixtures-all-hashes.before"
+
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const out = process.env.RUNNER_TEMP;
+          const days = ['2026-09-10','2026-09-11','2026-09-12'];
+          const clean = v => String(v ?? '').trim();
+          const stable = value => {
+            if (Array.isArray(value)) return value.map(stable);
+            if (!value || typeof value !== 'object') return value;
+            return Object.fromEntries(Object.keys(value).sort().map(k => [k, stable(value[k])]));
+          };
+          const normalizedRows = value => (Array.isArray(value) ? value : []).map(row => JSON.stringify(stable(row))).sort();
+          const sameRows = (a,b) => JSON.stringify(normalizedRows(a)) === JSON.stringify(normalizedRows(b));
+          const fixtureIds = fixture => new Set([
+            fixture?.canonicalId, fixture?.matchId, fixture?.sourceMatchId,
+            fixture?.providerMatchId, fixture?.sourceId, fixture?.matchKey
+          ].map(clean).filter(Boolean));
+          const pickMatches = (pick, fixture) => [pick?.canonicalId,pick?.matchId].map(clean).filter(Boolean).some(id => fixtureIds(fixture).has(id));
+          const pickId = pick => clean(pick?.canonicalId || pick?.matchId);
+          const read = file => JSON.parse(fs.readFileSync(file,'utf8'));
+
+          function mirror(day) {
+            const root = `data/deploy-snapshots/${day}`;
+            const planAFile = `data/value-plans/${day}/plan-a.json`;
+            const publication = fs.existsSync(planAFile) ? read(planAFile) : read(`${root}/value.json`);
+            const picks = Array.isArray(publication?.picks) ? publication.picks : [];
+            const fixturesDoc = read(`${root}/fixtures.json`);
+            const fixtures = Array.isArray(fixturesDoc?.fixtures) ? fixturesDoc.fixtures : [];
+            const detailDir = `${root}/details`;
+            const actualFiles = fs.existsSync(detailDir) ? fs.readdirSync(detailDir).filter(n => n.endsWith('.json')).sort() : [];
+            const expectedFiles = fixtures.map(f => `${clean(f.canonicalId || f.matchId)}.json`).filter(n => n !== '.json').sort();
+            const actualSet = new Set(actualFiles);
+            const expectedSet = new Set(expectedFiles);
+            const missingDetailFiles = expectedFiles.filter(n => !actualSet.has(n));
+            const extraDetailFiles = actualFiles.filter(n => !expectedSet.has(n));
+            const orphanPickIds = picks.filter(p => !fixtures.some(f => pickMatches(p,f))).map(pickId).sort();
+            const valueMismatches = [];
+            const summaryMismatches = [];
+            for (const fixture of fixtures) {
+              const id = clean(fixture.canonicalId || fixture.matchId);
+              if (!id || !actualSet.has(`${id}.json`)) continue;
+              const detail = read(path.join(detailDir, `${id}.json`));
+              const expected = picks.filter(p => pickMatches(p, fixture));
+              const actual = Array.isArray(detail?.value) ? detail.value : [];
+              if (!sameRows(expected, actual)) valueMismatches.push(id);
+              if (Number(detail?.valueSummary?.count ?? 0) !== expected.length) summaryMismatches.push(id);
+            }
+            const snapshotValue = read(`${root}/value.json`);
+            const snapshotPicks = Array.isArray(snapshotValue?.picks) ? snapshotValue.picks : [];
+            const manifest = read(`${root}/manifest.json`);
+            return {
+              day,
+              fixtureCount: fixtures.length,
+              publicationPickCount: picks.length,
+              orphanPickIds,
+              missingDetailFiles,
+              extraDetailFiles,
+              valueMismatches: valueMismatches.sort(),
+              summaryMismatches: summaryMismatches.sort(),
+              snapshotValueMatchesPublication: sameRows(picks, snapshotPicks),
+              manifestValuePicks: Number(manifest?.counts?.valuePicks ?? -1),
+              manifestDetails: Number(manifest?.counts?.details ?? -1),
+              sourceDetailsTreeExists: fs.existsSync(`data/details/${day}`)
+            };
+          }
+
+          const mirrorBaseline = Object.fromEntries(days.map(day => [day, mirror(day)]));
+          fs.writeFileSync(`${out}/snapshot-mirror.before.json`, JSON.stringify(mirrorBaseline, null, 2));
+
+          const freshnessBaseline = {};
+          for (const day of days) {
+            const file = `data/deploy-snapshots/${day}/freshness-report.json`;
+            const report = fs.existsSync(file) ? read(file) : {};
+            freshnessBaseline[day] = {
+              ok: report?.ok === true,
+              reasons: [...new Set(Array.isArray(report?.reasons) ? report.reasons.map(clean).filter(Boolean) : [])].sort(),
+              staleInputReasons: [...new Set(Array.isArray(report?.staleInputs) ? report.staleInputs.map(x => clean(x?.staleReason)).filter(Boolean) : [])].sort(),
+              missingArtifacts: [...new Set(Array.isArray(report?.missingRequiredArtifacts) ? report.missingRequiredArtifacts.map(x => clean(x?.artifact || x?.kind || JSON.stringify(x))).filter(Boolean) : [])].sort(),
+              fourPlanComplete: report?.fourPlanContract?.complete === true
+            };
+          }
+          fs.writeFileSync(`${out}/freshness.before.json`, JSON.stringify(freshnessBaseline, null, 2));
+
+          const latest = read('data/deploy-snapshots/latest.json');
+          if (latest.date !== '2026-09-12') throw new Error(`unexpected latest baseline: ${latest.date}`);
+          console.log('=== BASELINE SNAPSHOT MIRROR ===');
+          console.log(JSON.stringify(mirrorBaseline, null, 2));
+          console.log('=== BASELINE FRESHNESS ===');
+          console.log(JSON.stringify(freshnessBaseline, null, 2));
+          console.log(`LATEST_BASELINE_DATE=${latest.date}`);
+          console.log(`LATEST_BASELINE_HASH=${latest.hash}`);
+          NODE
+
+      - name: Apply quarantine-first active truth cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          node "$HELPER"
+
+      - name: Re-export affected snapshots from clean canonical truth
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-09-10 --no-update-latest --preserve-value --preserve-details --no-build-missing-details --fail-on-missing-details
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-09-11 --no-update-latest --preserve-value --preserve-details --no-build-missing-details --fail-on-missing-details
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-09-12 --update-latest --preserve-value --preserve-details --no-build-missing-details --fail-on-missing-details
+
+      - name: Refresh and gate snapshot invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          for day in 2026-09-10 2026-09-11 2026-09-12; do
+            node ./engine-v1/jobs/run-snapshot-invariant-check.js "$day"
+            node ./engine-v1/jobs/run-snapshot-invariant-check.js "$day" --gate
+          done
+
+      - name: Verify historical freshness has no new debt
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date=2026-09-10
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date=2026-09-11
+          node <<'NODE'
+          const fs = require('fs');
+          const clean = v => String(v ?? '').trim();
+          const before = JSON.parse(fs.readFileSync(`${process.env.RUNNER_TEMP}/freshness.before.json`, 'utf8'));
+          const subset = (after, prior) => after.every(x => prior.includes(x));
+          for (const day of ['2026-09-10','2026-09-11']) {
+            const report = JSON.parse(fs.readFileSync(`data/deploy-snapshots/${day}/freshness-report.json`, 'utf8'));
+            const after = {
+              reasons: [...new Set(Array.isArray(report?.reasons) ? report.reasons.map(clean).filter(Boolean) : [])].sort(),
+              staleInputReasons: [...new Set(Array.isArray(report?.staleInputs) ? report.staleInputs.map(x => clean(x?.staleReason)).filter(Boolean) : [])].sort(),
+              missingArtifacts: [...new Set(Array.isArray(report?.missingRequiredArtifacts) ? report.missingRequiredArtifacts.map(x => clean(x?.artifact || x?.kind || JSON.stringify(x))).filter(Boolean) : [])].sort(),
+              fourPlanComplete: report?.fourPlanContract?.complete === true
+            };
+            const prior = before[day];
+            if (!subset(after.reasons, prior.reasons)) throw new Error(`${day}: new freshness reasons: ${JSON.stringify(after.reasons.filter(x => !prior.reasons.includes(x)))}`);
+            if (!subset(after.staleInputReasons, prior.staleInputReasons)) throw new Error(`${day}: new stale input reasons`);
+            if (!subset(after.missingArtifacts, prior.missingArtifacts)) throw new Error(`${day}: new missing required artifacts`);
+            if (prior.fourPlanComplete && !after.fourPlanComplete) throw new Error(`${day}: four-plan contract regressed`);
+            console.log(`${day}: NO_NEW_FRESHNESS_DEBT=true`);
+            console.log(JSON.stringify({before:prior,after},null,2));
+          }
+          NODE
+
+      - name: Require current-day freshness and publication gates green
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date=2026-09-12 --gate
+          node ./engine-v1/jobs/check-value-artifact-gate.js --date=2026-09-12
+          node ./engine-v1/jobs/verify-daily-publish-contract.js --date=2026-09-12 --gate
+
+      - name: Verify snapshot-only Value mirror did not regress
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const days = ['2026-09-10','2026-09-11','2026-09-12'];
+          const clean = v => String(v ?? '').trim();
+          const stable = value => {
+            if (Array.isArray(value)) return value.map(stable);
+            if (!value || typeof value !== 'object') return value;
+            return Object.fromEntries(Object.keys(value).sort().map(k => [k, stable(value[k])]));
+          };
+          const normalizedRows = value => (Array.isArray(value) ? value : []).map(row => JSON.stringify(stable(row))).sort();
+          const sameRows = (a,b) => JSON.stringify(normalizedRows(a)) === JSON.stringify(normalizedRows(b));
+          const fixtureIds = fixture => new Set([
+            fixture?.canonicalId, fixture?.matchId, fixture?.sourceMatchId,
+            fixture?.providerMatchId, fixture?.sourceId, fixture?.matchKey
+          ].map(clean).filter(Boolean));
+          const pickMatches = (pick, fixture) => [pick?.canonicalId,pick?.matchId].map(clean).filter(Boolean).some(id => fixtureIds(fixture).has(id));
+          const pickId = pick => clean(pick?.canonicalId || pick?.matchId);
+          const read = file => JSON.parse(fs.readFileSync(file,'utf8'));
+
+          function mirror(day) {
+            const root = `data/deploy-snapshots/${day}`;
+            const planAFile = `data/value-plans/${day}/plan-a.json`;
+            const publication = fs.existsSync(planAFile) ? read(planAFile) : read(`${root}/value.json`);
+            const picks = Array.isArray(publication?.picks) ? publication.picks : [];
+            const fixturesDoc = read(`${root}/fixtures.json`);
+            const fixtures = Array.isArray(fixturesDoc?.fixtures) ? fixturesDoc.fixtures : [];
+            const detailDir = `${root}/details`;
+            const actualFiles = fs.existsSync(detailDir) ? fs.readdirSync(detailDir).filter(n => n.endsWith('.json')).sort() : [];
+            const expectedFiles = fixtures.map(f => `${clean(f.canonicalId || f.matchId)}.json`).filter(n => n !== '.json').sort();
+            const actualSet = new Set(actualFiles);
+            const expectedSet = new Set(expectedFiles);
+            const missingDetailFiles = expectedFiles.filter(n => !actualSet.has(n));
+            const extraDetailFiles = actualFiles.filter(n => !expectedSet.has(n));
+            const orphanPickIds = picks.filter(p => !fixtures.some(f => pickMatches(p,f))).map(pickId).sort();
+            const valueMismatches = [];
+            const summaryMismatches = [];
+            for (const fixture of fixtures) {
+              const id = clean(fixture.canonicalId || fixture.matchId);
+              if (!id || !actualSet.has(`${id}.json`)) continue;
+              const detail = read(path.join(detailDir, `${id}.json`));
+              const expected = picks.filter(p => pickMatches(p, fixture));
+              const actual = Array.isArray(detail?.value) ? detail.value : [];
+              if (!sameRows(expected, actual)) valueMismatches.push(id);
+              if (Number(detail?.valueSummary?.count ?? 0) !== expected.length) summaryMismatches.push(id);
+            }
+            const snapshotValue = read(`${root}/value.json`);
+            const snapshotPicks = Array.isArray(snapshotValue?.picks) ? snapshotValue.picks : [];
+            return {
+              day,
+              fixtureCount: fixtures.length,
+              publicationPickCount: picks.length,
+              orphanPickIds,
+              missingDetailFiles,
+              extraDetailFiles,
+              valueMismatches: valueMismatches.sort(),
+              summaryMismatches: summaryMismatches.sort(),
+              snapshotValueMatchesPublication: sameRows(picks, snapshotPicks)
+            };
+          }
+
+          const before = JSON.parse(fs.readFileSync(`${process.env.RUNNER_TEMP}/snapshot-mirror.before.json`, 'utf8'));
+          const after = Object.fromEntries(days.map(day => [day, mirror(day)]));
+          for (const day of days) {
+            const b = before[day];
+            const a = after[day];
+            if (a.missingDetailFiles.length !== 0) throw new Error(`${day}: missing snapshot details after repair`);
+            if (a.extraDetailFiles.length !== 0) throw new Error(`${day}: extra snapshot details after repair`);
+            if (a.valueMismatches.length !== 0) throw new Error(`${day}: snapshot detail Value mismatches`);
+            if (a.summaryMismatches.length !== 0) throw new Error(`${day}: snapshot detail ValueSummary mismatches`);
+            if (!a.snapshotValueMatchesPublication) throw new Error(`${day}: snapshot Value differs from frozen publication`);
+            if (JSON.stringify(a.orphanPickIds) !== JSON.stringify(b.orphanPickIds)) {
+              throw new Error(`${day}: publication orphan set changed: before=${JSON.stringify(b.orphanPickIds)} after=${JSON.stringify(a.orphanPickIds)}`);
+            }
+            if (day === '2026-09-12' && a.orphanPickIds.length !== 0) throw new Error(`${day}: current-day publication has orphan picks`);
+            console.log(`${day}: SNAPSHOT_MIRROR_NO_REGRESSION=true`);
+          }
+          fs.writeFileSync(`${process.env.RUNNER_TEMP}/snapshot-mirror.after.json`, JSON.stringify(after, null, 2));
+          console.log(JSON.stringify({before,after},null,2));
+          NODE
+
+      - name: Verify immutable Value and autonomous fixtures-all bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          protected_hashes() {
+            for day in 2026-09-10 2026-09-11 2026-09-12; do
+              for file in \
+                "data/deploy-snapshots/${day}/value.json" \
+                "data/deploy-snapshots/${day}/value-audit.json" \
+                "data/value/_audit/${day}.json" \
+                "data/value-comparison/${day}.json"; do
+                [ -f "$file" ] && sha256sum "$file"
+              done
+              if [ -d "data/value-plans/${day}" ]; then
+                find "data/value-plans/${day}" -maxdepth 1 -type f -name '*.json' -print0 \
+                  | sort -z | xargs -0 -r sha256sum
+              fi
+            done | sort
+          }
+          protected_hashes > "$RUNNER_TEMP/protected-value-hashes.after"
+          diff -u "$RUNNER_TEMP/protected-value-hashes.before" "$RUNNER_TEMP/protected-value-hashes.after"
+
+          for day in 2026-09-10 2026-09-11 2026-09-12; do
+            file="data/deploy-snapshots/${day}/fixtures-all.json"
+            [ -f "$file" ] && sha256sum "$file"
+          done | sort > "$RUNNER_TEMP/fixtures-all-hashes.after"
+          diff -u "$RUNNER_TEMP/fixtures-all-hashes.before" "$RUNNER_TEMP/fixtures-all-hashes.after"
+
+          echo "IMMUTABLE_VALUE_HASHES_UNCHANGED=true"
+          echo "FIXTURES_ALL_HASHES_UNCHANGED=true"
+
+      - name: Verify active contamination is gone everywhere public
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const crypto = require('crypto');
+          const qFile = 'data/competition-routing-quarantine/2026-09-12/manifest.json';
+          const q = JSON.parse(fs.readFileSync(qFile,'utf8'));
+          if (q?.ok !== true || q?.summary?.candidateCount !== 69) throw new Error('quarantine manifest contract failed');
+          if (q?.repairBaseSha !== process.env.EXPECTED_BASE) throw new Error(`quarantine base mismatch: ${q?.repairBaseSha}`);
+          const ids = q.candidates.map(row => String(row.canonicalId));
+          const idSet = new Set(ids);
+          if (idSet.size !== 69) throw new Error('candidate identity set mismatch');
+          const sha256 = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+          for (const row of q.archiveRecords) {
+            if (!fs.existsSync(row.archivePath)) throw new Error(`archive missing: ${row.archivePath}`);
+            if (sha256(row.archivePath) !== row.sha256) throw new Error(`archive hash mismatch: ${row.archivePath}`);
+          }
+          const clean = v => String(v ?? '').trim();
+          const classify = (slug,row) => {
+            const league=clean(row?.leagueName).toLowerCase();
+            const teams=`${clean(row?.homeTeam||row?.home)} ${clean(row?.awayTeam||row?.away)}`;
+            if(slug==='eng.1'&&league!=='premier league') return true;
+            if(slug==='pol.2'&&!['division 1','i liga'].includes(league)) return true;
+            if(slug==='fifa.world'&&/\bu20\s*w\b/iu.test(teams)) return true;
+            return false;
+          };
+          for(const day of ['2026-09-10','2026-09-11','2026-09-12','2026-09-13']) {
+            for(const slug of ['eng.1','pol.2','fifa.world']) {
+              const file=`data/canonical-fixtures/${day}/${slug}.json`;
+              if(!fs.existsSync(file)) continue;
+              const doc=JSON.parse(fs.readFileSync(file,'utf8'));
+              const rows=Array.isArray(doc.fixtures)?doc.fixtures:[];
+              if(rows.some(row=>classify(slug,row))) throw new Error(`canonical contamination remains: ${file}`);
+              if(Number(doc.count)!==rows.length) throw new Error(`canonical count mismatch: ${file}`);
+            }
+            for (const candidate of q.candidates.filter(row => row.day === day)) {
+              const finalFile=`data/final-results/${day}/${candidate.canonicalId}.json`;
+              if(fs.existsSync(finalFile)) throw new Error(`active contaminated final result remains: ${finalFile}`);
+            }
+          }
+          for(const day of ['2026-09-10','2026-09-11','2026-09-12']) {
+            const root=`data/deploy-snapshots/${day}`;
+            const fixtures=JSON.parse(fs.readFileSync(`${root}/fixtures.json`,'utf8'))?.fixtures || [];
+            const fixtureIds=new Set(fixtures.map(row=>clean(row.canonicalId||row.matchId)));
+            for(const id of idSet) {
+              if(fixtureIds.has(id)) throw new Error(`contaminated fixture still published: ${day}:${id}`);
+              if(fs.existsSync(`${root}/details/${id}.json`)) throw new Error(`contaminated detail still published: ${day}:${id}`);
+            }
+            for (const file of [`${root}/odds.json`,`${root}/fixtures-all.json`,`${root}/plan-c-shadow.json`,`${root}/plan-c-shadow-audit.json`]) {
+              if (!fs.existsSync(file)) continue;
+              const text=fs.readFileSync(file,'utf8');
+              const hits=ids.filter(id=>text.includes(id));
+              if(hits.length) throw new Error(`contaminated references remain in ${file}: ${hits.slice(0,10).join(',')}`);
+            }
+          }
+          for(const day of ['2026-09-10','2026-09-11','2026-09-12','2026-09-13']) {
+            const file=`data/multi-odds/${day}.json`;
+            if(!fs.existsSync(file)) continue;
+            const text=fs.readFileSync(file,'utf8');
+            const hits=ids.filter(id=>text.includes(id));
+            if(hits.length) throw new Error(`contaminated multi-odds references remain: ${day}:${hits.slice(0,10).join(',')}`);
+          }
+          const latest=JSON.parse(fs.readFileSync('data/deploy-snapshots/latest.json','utf8'));
+          const manifest=JSON.parse(fs.readFileSync('data/deploy-snapshots/2026-09-12/manifest.json','utf8'));
+          if(latest.date!=='2026-09-12') throw new Error(`latest date drift: ${latest.date}`);
+          if(latest.hash!==manifest.hash) throw new Error('latest hash does not match repaired manifest');
+          console.log(JSON.stringify({ok:true,candidateCount:ids.length,archiveRecords:q.archiveRecords.length,latestDate:latest.date,repairedManifestHash:manifest.hash,repairedFixtureCount:manifest?.counts?.fixtures,repairedDetailCount:manifest?.counts?.details,frozenValuePicks:manifest?.counts?.valuePicks},null,2));
+          NODE
+
+      - name: Run targeted routing and history regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test \
+            engine-v1/tests/flashscore-adapter-competition-routing.test.js \
+            engine-v1/tests/daily-history-catchup-h2h-scope.test.js
+
+      - name: Restore helper and verify data-only write-set
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore "$HELPER"
+          test -z "$(git diff --name-only HEAD -- "$HELPER")"
+
+          CHANGED="$(git diff --name-only HEAD | sort)"
+          BAD="$(printf '%s\n' "$CHANGED" | grep -Ev '^(data/canonical-fixtures/2026-09-(10|11|12|13)/|data/final-results/2026-09-(10|11|12|13)/|data/deploy-snapshots/(latest\.json$|2026-09-(10|11|12)/)|data/multi-odds/2026-09-(10|11|12|13)\.json$|data/competition-routing-quarantine/2026-09-12/)' || true)"
+          if [ -n "$BAD" ]; then
+            echo "ERROR: unexpected repair paths:"
+            echo "$BAD"
+            exit 1
+          fi
+          if printf '%s\n' "$CHANGED" | grep -Eq '^data/(value/|value-plans/|value-comparison/)'; then
+            echo "ERROR: immutable Value artifacts changed"
+            exit 1
+          fi
+          if printf '%s\n' "$CHANGED" | grep -Eq '^data/deploy-snapshots/2026-09-(10|11|12)/fixtures-all\.json$'; then
+            echo "ERROR: fixtures-all changed despite byte-preservation contract"
+            exit 1
+          fi
+          test -n "$CHANGED"
+          echo "=== FINAL DATA WRITE SET ==="
+          printf '%s\n' "$CHANGED"
+          git diff --check
+
+      - name: Commit validated data repair to isolated branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A data/canonical-fixtures/2026-09-10 data/canonical-fixtures/2026-09-11 data/canonical-fixtures/2026-09-12 data/canonical-fixtures/2026-09-13
+          git add -A data/final-results/2026-09-10 data/final-results/2026-09-11 data/final-results/2026-09-12 data/final-results/2026-09-13
+          git add -A data/deploy-snapshots/2026-09-10 data/deploy-snapshots/2026-09-11 data/deploy-snapshots/2026-09-12 data/deploy-snapshots/latest.json
+          git add -A data/multi-odds/2026-09-10.json data/multi-odds/2026-09-11.json data/multi-odds/2026-09-12.json data/multi-odds/2026-09-13.json
+          git add -A data/competition-routing-quarantine/2026-09-12
+          test -z "$(git diff --name-only)"
+          git diff --cached --check
+          git commit -m "Quarantine residual competition routing contamination"
+          git push origin HEAD:"$REPAIR_BRANCH"
