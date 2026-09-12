@@ -6,7 +6,7 @@
     "daysBack": 1,
     "daysForward": 14
   },
-  "sourceLatestUpdatedAt": "2026-09-12T17:18:19.662Z",
+  "sourceLatestUpdatedAt": "2026-09-12T21:06:02.505Z",
   "resolver": {
     "schema": "ai-matchlab.production-identity-resolver-runtime.v2",
     "extensionLedgerSha256": "85f47c17184558234abd65154eb38c45b672c011e2a78f7924d839e2eb865427",
@@ -25,78 +25,21 @@
   },
   "summary": {
     "scannedDays": 16,
-    "scannedLeagueFiles": 487,
-    "inputRows": 1834,
-    "autoPromotable": 1,
-    "pendingIndependentConfirmation": 5,
+    "scannedLeagueFiles": 509,
+    "inputRows": 1835,
+    "autoPromotable": 0,
+    "pendingIndependentConfirmation": 6,
     "ambiguous": 13,
     "conflictRejected": 3,
     "alreadyManagedPairs": 1,
     "independentConfirmed": 0,
-    "independentConfirmationRetryPending": 5
+    "independentConfirmationRetryPending": 6
   },
   "targetDays": [
     {
       "dayKey": "2026-09-12",
-      "leagueFiles": 128,
+      "leagueFiles": 127,
       "recoveryLeagueReports": [
-        {
-          "leagueSlug": "bel.1",
-          "inputRows": 5,
-          "temporalCrossProviderPairs": 1,
-          "autoPromotable": [
-            {
-              "leagueSlug": "bel.1",
-              "kickoffUtc": "2026-09-12T16:15:00.000Z",
-              "left": {
-                "source": "flashscore",
-                "sourceId": "nLey99Ta",
-                "canonicalId": "cid_bel1_westerlo_stliege_20260912",
-                "kickoffUtc": "2026-09-12T16:15:00.000Z",
-                "homeTeam": "Westerlo",
-                "awayTeam": "St. Liege"
-              },
-              "right": {
-                "source": "espn",
-                "sourceId": "401878994",
-                "canonicalId": "cid_bel1_kvcwesterlo_standardliege_20260912",
-                "kickoffUtc": "2026-09-12T16:15Z",
-                "homeTeam": "KVC Westerlo",
-                "awayTeam": "Standard Liege"
-              },
-              "evidence": {
-                "home": {
-                  "kind": "GLOBAL_ID_EXACT",
-                  "stable": true,
-                  "conflict": false,
-                  "globalClubId": "gcid_3efb7463b2cf0c696077f487"
-                },
-                "away": {
-                  "kind": "UNRESOLVED_ALIAS",
-                  "stable": false,
-                  "conflict": false,
-                  "leftGlobalClubId": null,
-                  "rightGlobalClubId": null
-                },
-                "stableSides": 1,
-                "conflict": false
-              },
-              "recoveryStatus": "AUTO_PROMOTABLE_IDENTITY_EXTENSION",
-              "promotionAuthorized": true,
-              "requiresIndependentConfirmation": false
-            }
-          ],
-          "pendingIndependentConfirmation": [],
-          "ambiguous": [],
-          "conflictRejected": [],
-          "summary": {
-            "autoPromotable": 1,
-            "pendingIndependentConfirmation": 0,
-            "ambiguous": 0,
-            "conflictRejected": 0,
-            "alreadyManagedPairs": 0
-          }
-        },
         {
           "leagueSlug": "caf.champions",
           "inputRows": 18,
@@ -201,7 +144,60 @@
                 "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
                 "oddsUsed": false,
                 "attempts": 1,
-                "lastAttemptAt": "2026-09-12T17:18:20.035Z",
+                "lastAttemptAt": "2026-09-12T21:06:02.786Z",
+                "retryable": true,
+                "providerStatus": "MISSING_API_KEY",
+                "evaluationStatus": null,
+                "thirdSourceKickoffRows": 0
+              }
+            },
+            {
+              "leagueSlug": "caf.confed",
+              "kickoffUtc": "2026-09-12T13:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "8Ocw9dwS",
+                "canonicalId": "cid_cafconfed_welwaloadigrateth_hilalalsahilsud_20260912",
+                "kickoffUtc": "2026-09-12T13:00:00.000Z",
+                "homeTeam": "Welwalo Adigrat (Eth)",
+                "awayTeam": "Hilal Alsahil (Sud)"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401909436",
+                "canonicalId": "cid_cafconfed_welwaloadigrat_alhilalportsudan_20260912",
+                "kickoffUtc": "2026-09-12T13:00Z",
+                "homeTeam": "Welwalo Adigrat",
+                "awayTeam": "Al Hilal Port Sudan"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "away": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "stableSides": 0,
+                "conflict": false
+              },
+              "recoveryStatus": "PENDING_INDEPENDENT_CONFIRMATION",
+              "promotionAuthorized": false,
+              "requiresIndependentConfirmation": true,
+              "independentConfirmation": {
+                "status": "PENDING_RETRY",
+                "source": "api_football",
+                "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
+                "oddsUsed": false,
+                "attempts": 1,
+                "lastAttemptAt": "2026-09-12T21:06:02.786Z",
                 "retryable": true,
                 "providerStatus": "MISSING_API_KEY",
                 "evaluationStatus": null,
@@ -218,8 +214,7 @@
               "rowIds": [
                 "cid_cafconfed_eastendlions_afadplateau_20260912",
                 "cid_cafconfed_eastendlionssie_academiefadivo_20260912",
-                "cid_cafconfed_rayonsport_panthere_20260912",
-                "cid_cafconfed_welwaloadigrat_alhilalportsudan_20260912"
+                "cid_cafconfed_rayonsport_panthere_20260912"
               ],
               "providers": [
                 "espn",
@@ -249,75 +244,8 @@
           "conflictRejected": [],
           "summary": {
             "autoPromotable": 0,
-            "pendingIndependentConfirmation": 1,
+            "pendingIndependentConfirmation": 2,
             "ambiguous": 2,
-            "conflictRejected": 0,
-            "alreadyManagedPairs": 0
-          }
-        },
-        {
-          "leagueSlug": "eng.1",
-          "inputRows": 43,
-          "temporalCrossProviderPairs": 165,
-          "autoPromotable": [],
-          "pendingIndependentConfirmation": [],
-          "ambiguous": [
-            {
-              "leagueSlug": "eng.1",
-              "kickoffUtc": "2026-09-12T14:00:00.000Z",
-              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
-              "promotionAuthorized": false,
-              "rowIds": [
-                "cid_eng1_alvechurch_stamford_20260912",
-                "cid_eng1_astonvilla_nottinghamforest_20260912",
-                "cid_eng1_aveley_leatherhead_20260912",
-                "cid_eng1_banbury_leiston_20260912",
-                "cid_eng1_bath_chippenham_20260912",
-                "cid_eng1_bishopsstortford_leamington_20260912",
-                "cid_eng1_bournemouth_brentford_20260912",
-                "cid_eng1_bromsgrove_burytown_20260912",
-                "cid_eng1_burgesshill_ramsgate_20260912",
-                "cid_eng1_carshalton_dartford_20260912",
-                "cid_eng1_chatham_lewes_20260912",
-                "cid_eng1_chelsea_hullcity_20260912",
-                "cid_eng1_chertsey_malverntown_20260912",
-                "cid_eng1_crystalpalace_ipswichtown_20260912",
-                "cid_eng1_dulwichhamlet_brentwood_20260912",
-                "cid_eng1_eastbourneboro_cheshunt_20260912",
-                "cid_eng1_enfieldtown_craywanderers_20260912",
-                "cid_eng1_evesham_berkhamsted_20260912",
-                "cid_eng1_frome_hanwelltown_20260912",
-                "cid_eng1_gloucester_basingstoke_20260912",
-                "cid_eng1_gosport_taunton_20260912",
-                "cid_eng1_halesowen_leightontown_20260912",
-                "cid_eng1_hanworth_yatetown_20260912",
-                "cid_eng1_havantandw_poole_20260912",
-                "cid_eng1_hitchin_stourbridge_20260912",
-                "cid_eng1_kettering_stratford_20260912",
-                "cid_eng1_liverpool_fulham_20260912",
-                "cid_eng1_maldonandtiptree_whitehawk_20260912",
-                "cid_eng1_needhammarket_worcester_20260912",
-                "cid_eng1_peterboroughsports_rushall_20260912",
-                "cid_eng1_racingwarwick_ansteynomads_20260912",
-                "cid_eng1_realbedford_redditch_20260912",
-                "cid_eng1_sholing_plymouthparkway_20260912",
-                "cid_eng1_stalbans_threebridges_20260912",
-                "cid_eng1_uxbridge_chichester_20260912",
-                "cid_eng1_welling_wingateandfinchley_20260912",
-                "cid_eng1_whyteleafe_stanway_20260912",
-                "cid_eng1_wimborne_bracknell_20260912"
-              ],
-              "providers": [
-                "espn",
-                "flashscore"
-              ]
-            }
-          ],
-          "conflictRejected": [],
-          "summary": {
-            "autoPromotable": 0,
-            "pendingIndependentConfirmation": 0,
-            "ambiguous": 1,
             "conflictRejected": 0,
             "alreadyManagedPairs": 0
           }
@@ -549,7 +477,7 @@
                 "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
                 "oddsUsed": false,
                 "attempts": 1,
-                "lastAttemptAt": "2026-09-12T17:18:20.035Z",
+                "lastAttemptAt": "2026-09-12T21:06:02.786Z",
                 "retryable": true,
                 "providerStatus": "MISSING_API_KEY",
                 "evaluationStatus": null,
@@ -621,7 +549,7 @@
     },
     {
       "dayKey": "2026-09-13",
-      "leagueFiles": 125,
+      "leagueFiles": 124,
       "recoveryLeagueReports": [
         {
           "leagueSlug": "arg.2",
@@ -742,7 +670,7 @@
                 "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
                 "oddsUsed": false,
                 "attempts": 1,
-                "lastAttemptAt": "2026-09-12T17:18:20.035Z",
+                "lastAttemptAt": "2026-09-12T21:06:02.786Z",
                 "retryable": true,
                 "providerStatus": "MISSING_API_KEY",
                 "evaluationStatus": null,
@@ -812,7 +740,7 @@
                 "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
                 "oddsUsed": false,
                 "attempts": 1,
-                "lastAttemptAt": "2026-09-12T17:18:20.035Z",
+                "lastAttemptAt": "2026-09-12T21:06:02.786Z",
                 "retryable": true,
                 "providerStatus": "MISSING_API_KEY",
                 "evaluationStatus": null,
@@ -941,7 +869,7 @@
                 "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
                 "oddsUsed": false,
                 "attempts": 1,
-                "lastAttemptAt": "2026-09-12T17:18:20.035Z",
+                "lastAttemptAt": "2026-09-12T21:06:02.786Z",
                 "retryable": true,
                 "providerStatus": "MISSING_API_KEY",
                 "evaluationStatus": null,
@@ -1036,12 +964,45 @@
     },
     {
       "dayKey": "2026-09-15",
-      "leagueFiles": 19,
-      "recoveryLeagueReports": []
+      "leagueFiles": 41,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "afc.champions",
+          "inputRows": 9,
+          "temporalCrossProviderPairs": 2,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [
+            {
+              "leagueSlug": "afc.champions",
+              "kickoffUtc": "2026-09-15T12:15:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_afcchampions_beijingguoan_pohangsteelers_20260915",
+                "cid_afcchampions_johordarultazim_buriramunited_20260915",
+                "cid_afcchampions_johordtmys_buriramtha_20260915"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 1,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
     },
     {
       "dayKey": "2026-09-16",
-      "leagueFiles": 14,
+      "leagueFiles": 16,
       "recoveryLeagueReports": []
     },
     {
@@ -1105,12 +1066,20 @@
     "evidenceEndpoint": "fixtures",
     "oddsAllowed": false,
     "fuzzyMatchingAllowed": false,
-    "runAt": "2026-09-12T17:18:20.035Z",
+    "runAt": "2026-09-12T21:06:02.786Z",
     "attempts": [
       {
         "dayKey": "2026-09-12",
         "leagueSlug": "caf.confed",
         "key": "cid_cafconfed_tusker_alahliwadmedani_20260912|cid_cafconfed_tuskerken_madanisud_20260912",
+        "status": "PENDING_RETRY",
+        "providerStatus": "MISSING_API_KEY",
+        "evaluationStatus": null
+      },
+      {
+        "dayKey": "2026-09-12",
+        "leagueSlug": "caf.confed",
+        "key": "cid_cafconfed_welwaloadigrat_alhilalportsudan_20260912|cid_cafconfed_welwaloadigrateth_hilalalsahilsud_20260912",
         "status": "PENDING_RETRY",
         "providerStatus": "MISSING_API_KEY",
         "evaluationStatus": null
