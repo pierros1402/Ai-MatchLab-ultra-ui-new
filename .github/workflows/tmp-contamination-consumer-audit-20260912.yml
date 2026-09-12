@@ -1,0 +1,43 @@
+name: TMP contamination consumer audit 2026-09-12
+
+on:
+  push:
+    branches:
+      - audit/20260912-contamination-current-main
+    paths:
+      - ".github/workflows/tmp-contamination-consumer-audit-20260912.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit-consumers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Inspect residual-artifact consumers
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "=== IDENTITY RECOVERY REFERENCES IN EXECUTABLE SOURCE ==="
+          grep -RIn --exclude-dir=node_modules --exclude='*.md' --exclude='*.json' \
+            -E 'identity-recovery|identityRecovery' engine-v1 tools .github || true
+          echo "=== TEAM NEWS WORKSET / RESEARCH INPUT REFERENCES ==="
+          grep -RIn --exclude-dir=node_modules --exclude='*.md' --exclude='*.json' \
+            -E '_worksets|_research-tasks|_research-results' engine-v1 tools .github || true
+          echo "=== VALUE AUDIT / VALUE PLAN INPUT REFERENCES ==="
+          grep -RIn --exclude-dir=node_modules --exclude='*.md' --exclude='*.json' \
+            -E 'value/_audit|value-plans|value-audit' engine-v1 tools .github | head -n 400 || true
+
+      - name: Prove read-only checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          echo "READ_ONLY_CHECKOUT_CLEAN=true"
