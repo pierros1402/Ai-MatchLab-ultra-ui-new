@@ -1,0 +1,209 @@
+name: TMP contamination audit 2026-09-12
+
+on:
+  push:
+    branches:
+      - audit/20260912-contamination-current-main
+    paths:
+      - ".github/workflows/tmp-contamination-audit-20260912.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  EXPECTED_BASE: "4a7d448dfa827d392983764057423841b2b737fe"
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Verify audit base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_BASE"
+          test -z "$(git status --porcelain)"
+          echo "AUDIT_BASE_VERIFIED=$EXPECTED_BASE"
+
+      - name: Scan current-main contamination and all data references
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          const days = ['2026-09-10','2026-09-11','2026-09-12','2026-09-13'];
+          const slugs = ['eng.1','pol.2','fifa.world'];
+          const candidates = [];
+          const canonicalFiles = [];
+
+          function readJson(file) {
+            return JSON.parse(fs.readFileSync(file, 'utf8'));
+          }
+
+          function classify(slug, row) {
+            const leagueName = String(row?.leagueName || '').trim();
+            const teams = `${String(row?.homeTeam || '')} ${String(row?.awayTeam || '')}`;
+
+            if (slug === 'eng.1' && leagueName.toLowerCase() !== 'premier league') {
+              return `eng.1_wrong_competition:${leagueName || 'missing_league_name'}`;
+            }
+
+            if (
+              slug === 'pol.2' &&
+              !['division 1','i liga'].includes(leagueName.toLowerCase())
+            ) {
+              return `pol.2_wrong_competition:${leagueName || 'missing_league_name'}`;
+            }
+
+            if (slug === 'fifa.world' && /\bu20\s*w\b/i.test(teams)) {
+              return 'fifa.world_u20_women';
+            }
+
+            return null;
+          }
+
+          for (const day of days) {
+            for (const slug of slugs) {
+              const file = path.join('data','canonical-fixtures',day,`${slug}.json`);
+              if (!fs.existsSync(file)) continue;
+
+              const doc = readJson(file);
+              const fixtures = Array.isArray(doc?.fixtures) ? doc.fixtures : [];
+              let bad = 0;
+
+              for (const row of fixtures) {
+                const reason = classify(slug, row);
+                if (!reason) continue;
+                bad++;
+                candidates.push({
+                  day,
+                  slug,
+                  canonicalId: String(row?.canonicalId || row?.matchId || ''),
+                  sourceId: String(row?.sourceId || row?.sourceMatchId || ''),
+                  leagueName: row?.leagueName ?? null,
+                  homeTeam: row?.homeTeam ?? null,
+                  awayTeam: row?.awayTeam ?? null,
+                  kickoffUtc: row?.kickoffUtc ?? null,
+                  status: row?.status ?? row?.statusType ?? null,
+                  scoreHome: row?.scoreHome ?? null,
+                  scoreAway: row?.scoreAway ?? null,
+                  reason
+                });
+              }
+
+              canonicalFiles.push({
+                day,
+                slug,
+                file,
+                totalRows: fixtures.length,
+                candidateRows: bad,
+                retainedRows: fixtures.length - bad
+              });
+            }
+          }
+
+          const ids = [...new Set(candidates.map(x => x.canonicalId).filter(Boolean))];
+          const idSet = new Set(ids);
+          const refs = new Map(ids.map(id => [id, []]));
+          let filesScanned = 0;
+          let bytesScanned = 0;
+
+          const textExts = new Set(['.json','.jsonl','.txt','.md','.csv','.js','.mjs','.cjs','.yml','.yaml']);
+
+          function walk(dir) {
+            if (!fs.existsSync(dir)) return;
+            for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+              const full = path.join(dir, ent.name);
+              if (ent.isDirectory()) {
+                walk(full);
+                continue;
+              }
+              if (!ent.isFile()) continue;
+              if (!textExts.has(path.extname(ent.name).toLowerCase())) continue;
+
+              const st = fs.statSync(full);
+              filesScanned++;
+              bytesScanned += st.size;
+              const text = fs.readFileSync(full, 'utf8');
+
+              for (const id of idSet) {
+                if (text.includes(id)) refs.get(id).push(full.replace(/\\/g,'/'));
+              }
+            }
+          }
+
+          walk('data');
+
+          const candidateById = new Map(candidates.map(row => [row.canonicalId, row]));
+          const references = ids.map(id => {
+            const paths = [...new Set(refs.get(id) || [])].sort();
+            return {
+              canonicalId: id,
+              source: candidateById.get(id),
+              pathCount: paths.length,
+              paths,
+              finalResultsPaths: paths.filter(p => p.startsWith('data/final-results/')),
+              deploySnapshotPaths: paths.filter(p => p.startsWith('data/deploy-snapshots/')),
+              oddsPaths: paths.filter(p => /odds/i.test(p)),
+              valuePaths: paths.filter(p => /(^|\/)value([^/]*)(\/|\.|$)/i.test(p) || /value-comparison/i.test(p)),
+              historyPaths: paths.filter(p => /history|league-memory\/results/i.test(p))
+            };
+          });
+
+          const summary = {
+            auditBase: process.env.EXPECTED_BASE,
+            generatedAt: new Date().toISOString(),
+            days,
+            candidateCount: candidates.length,
+            uniqueCandidateIds: ids.length,
+            canonicalFiles,
+            bySlug: Object.fromEntries(slugs.map(slug => [slug, candidates.filter(x => x.slug === slug).length])),
+            byDay: Object.fromEntries(days.map(day => [day, candidates.filter(x => x.day === day).length])),
+            terminalCandidates: candidates.filter(x => /^(FT|FINAL|STATUS_FINAL|FULL_TIME)$/i.test(String(x.status || ''))).length,
+            finalResultsCandidateIds: references.filter(x => x.finalResultsPaths.length).map(x => x.canonicalId),
+            valueCandidateIds: references.filter(x => x.valuePaths.length).map(x => x.canonicalId),
+            deploySnapshotCandidateIds: references.filter(x => x.deploySnapshotPaths.length).map(x => x.canonicalId),
+            oddsCandidateIds: references.filter(x => x.oddsPaths.length).map(x => x.canonicalId),
+            historyCandidateIds: references.filter(x => x.historyPaths.length).map(x => x.canonicalId),
+            filesScanned,
+            bytesScanned
+          };
+
+          const report = { summary, candidates, references };
+          fs.writeFileSync(process.env.RUNNER_TEMP + '/contamination-audit.json', JSON.stringify(report, null, 2));
+
+          console.log('=== CONTAMINATION AUDIT SUMMARY ===');
+          console.log(JSON.stringify(summary, null, 2));
+          console.log('=== CANONICAL CANDIDATES ===');
+          for (const row of candidates) console.log(JSON.stringify(row));
+          console.log('=== FINAL-RESULTS-PROTECTED CANDIDATES ===');
+          for (const row of references.filter(x => x.finalResultsPaths.length)) {
+            console.log(JSON.stringify({ canonicalId: row.canonicalId, finalResultsPaths: row.finalResultsPaths }));
+          }
+          console.log('=== VALUE CANDIDATE IDS ===');
+          console.log(JSON.stringify(summary.valueCandidateIds, null, 2));
+          NODE
+
+      - name: Upload audit evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: contamination-audit-20260912
+          path: ${{ runner.temp }}/contamination-audit.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Prove read-only checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          echo "READ_ONLY_CHECKOUT_CLEAN=true"
