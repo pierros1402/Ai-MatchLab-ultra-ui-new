@@ -1,0 +1,338 @@
+name: TMP routing contamination cleanup current-main V7
+
+on:
+  push:
+    branches:
+      - fix/20260912-routing-contamination-cleanup-v4
+    paths:
+      - ".github/workflows/tmp-routing-contamination-cleanup-current-main-v7.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tmp-routing-contamination-cleanup-current-main-v7
+  cancel-in-progress: false
+
+env:
+  EXPECTED_BASE: "f108c1ea4592bfaac5c86ab5681dbb91095b832e"
+  HELPER_SOURCE_COMMIT: "9d270dffc27e44c7325aa358dd5bbe6c813c6039"
+  HELPER_SOURCE_BRANCH: "fix/20260912-routing-contamination-cleanup-v2"
+  HELPER_SOURCE_PATH: "tools/tmp-routing-contamination-cleanup-20260912.mjs"
+  OLD_HELPER_BASE: "4a7d448dfa827d392983764057423841b2b737fe"
+  V7_WORKFLOW: ".github/workflows/tmp-routing-contamination-cleanup-current-main-v7.yml"
+  RELEASE_BRANCH: "release/20260912-routing-contamination-cleanup-v4"
+
+jobs:
+  repair-validate-v7:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout isolated V7 branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact V7 base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_BASE"
+          test -z "$(git status --porcelain)"
+          test "$(git diff --name-only "$EXPECTED_BASE"..HEAD)" = "$V7_WORKFLOW"
+          echo "V7_BASE_VERIFIED=$EXPECTED_BASE"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Load exact validated helper into runner temp
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$HELPER_SOURCE_BRANCH:refs/remotes/origin/helper-source-v7"
+          git merge-base --is-ancestor "$HELPER_SOURCE_COMMIT" refs/remotes/origin/helper-source-v7
+          git show "$HELPER_SOURCE_COMMIT:$HELPER_SOURCE_PATH" > "$RUNNER_TEMP/routing-cleanup-helper.mjs"
+
+          python - <<'PY'
+          from pathlib import Path
+          import os
+          p = Path(os.environ['RUNNER_TEMP']) / 'routing-cleanup-helper.mjs'
+          s = p.read_text(encoding='utf-8')
+          old_base = f'const BASE_SHA = "{os.environ["OLD_HELPER_BASE"]}";'
+          new_base = f'const BASE_SHA = "{os.environ["EXPECTED_BASE"]}";'
+          if s.count(old_base) != 1:
+              raise SystemExit(f'helper base anchor count != 1: {s.count(old_base)}')
+          s = s.replace(old_base, new_base, 1)
+
+          old = '''function assertExactCounts(actual, expected, label) {
+            const actualJson = JSON.stringify(actual);
+            const expectedJson = JSON.stringify(expected);
+            if (actualJson !== expectedJson) {
+              fail(`${label}_mismatch`, { actual, expected });
+            }
+          }
+          '''
+          new = '''function normalizeForComparison(value) {
+            if (Array.isArray(value)) return value.map(normalizeForComparison);
+            if (value && typeof value === "object") {
+              return Object.fromEntries(
+                Object.keys(value).sort().map(key => [key, normalizeForComparison(value[key])])
+              );
+            }
+            return value;
+          }
+
+          function assertExactCounts(actual, expected, label) {
+            const actualJson = JSON.stringify(normalizeForComparison(actual));
+            const expectedJson = JSON.stringify(normalizeForComparison(expected));
+            if (actualJson !== expectedJson) {
+              fail(`${label}_mismatch`, { actual, expected });
+            }
+          }
+          '''
+          if s.count(old) != 1:
+              raise SystemExit(f'assertExactCounts anchor count != 1: {s.count(old)}')
+          s = s.replace(old, new, 1)
+
+          start_token = '  document.routingContaminationRepair = {'
+          end_token = '  writeJson(entry.file, document);'
+          start_index = s.find(start_token)
+          end_index = s.find(end_token, start_index + len(start_token)) if start_index >= 0 else -1
+          if start_index < 0 or end_index < 0:
+              raise SystemExit(f'canonical metadata delimiters missing: start={start_index} end={end_index}')
+          if s.find(start_token, start_index + len(start_token)) >= 0:
+              raise SystemExit('canonical metadata start delimiter is not unique')
+          s = s[:start_index] + s[end_index:]
+          p.write_text(s, encoding='utf-8', newline='\n')
+          PY
+
+          node --check "$RUNNER_TEMP/routing-cleanup-helper.mjs"
+          grep -q 'normalizeForComparison' "$RUNNER_TEMP/routing-cleanup-helper.mjs"
+          ! grep -q 'routingContaminationRepair' "$RUNNER_TEMP/routing-cleanup-helper.mjs"
+          test -z "$(git status --porcelain --untracked-files=no)"
+
+      - name: Capture protected bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          protected() {
+            for day in 2026-09-10 2026-09-11 2026-09-12; do
+              for file in \
+                "data/deploy-snapshots/${day}/value.json" \
+                "data/deploy-snapshots/${day}/value-audit.json" \
+                "data/value/${day}.json" \
+                "data/value/_audit/${day}.json"; do
+                [ -f "$file" ] && sha256sum "$file"
+              done
+              if [ -d "data/value-plans/${day}" ]; then
+                find "data/value-plans/${day}" -maxdepth 1 -type f -name '*.json' -print0 | sort -z | xargs -0 -r sha256sum
+              fi
+            done
+            sha256sum data/value-comparison/2026-09-10.json data/value-comparison/2026-09-11.json data/value-comparison/cumulative.json
+            for day in 2026-09-05 2026-09-06 2026-09-07 2026-09-08 2026-09-09 2026-09-10 2026-09-11; do
+              file="data/final-result-conflicts/${day}.json"
+              [ -f "$file" ] && sha256sum "$file"
+            done
+            for day in 2026-09-10 2026-09-11 2026-09-12; do
+              file="data/deploy-snapshots/${day}/fixtures-all.json"
+              [ -f "$file" ] && sha256sum "$file"
+            done
+          }
+          protected | sort > "$RUNNER_TEMP/protected.before"
+
+      - name: Apply quarantine-first cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          node "$RUNNER_TEMP/routing-cleanup-helper.mjs"
+
+      - name: Re-export historical snapshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-09-10 --no-update-latest --preserve-value --preserve-details --no-build-missing-details --fail-on-missing-details
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-09-11 --no-update-latest --preserve-value --preserve-details --no-build-missing-details --fail-on-missing-details
+
+      - name: Rebuild current-day source Details
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-details-day.js 2026-09-12 --rebuild
+
+      - name: Re-export current day
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-09-12 --update-latest --replace-details --no-build-missing-details --fail-on-missing-details
+
+      - name: Refresh current-day derived comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-value-plan-comparison-day.js --date=2026-09-12 --write
+
+      - name: Run invariant and freshness validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          for day in 2026-09-10 2026-09-11 2026-09-12; do
+            node ./engine-v1/jobs/run-snapshot-invariant-check.js "$day"
+            node ./engine-v1/jobs/run-snapshot-invariant-check.js "$day" --gate
+          done
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date=2026-09-10
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date=2026-09-11
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date=2026-09-12 --gate
+          node ./engine-v1/jobs/verify-details-value-mirror-day.js --date=2026-09-12 --gate
+          node ./engine-v1/jobs/check-value-artifact-gate.js --date=2026-09-12
+          node ./engine-v1/jobs/verify-daily-publish-contract.js --date=2026-09-12 --gate
+
+      - name: Prove protected bytes unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          protected() {
+            for day in 2026-09-10 2026-09-11 2026-09-12; do
+              for file in \
+                "data/deploy-snapshots/${day}/value.json" \
+                "data/deploy-snapshots/${day}/value-audit.json" \
+                "data/value/${day}.json" \
+                "data/value/_audit/${day}.json"; do
+                [ -f "$file" ] && sha256sum "$file"
+              done
+              if [ -d "data/value-plans/${day}" ]; then
+                find "data/value-plans/${day}" -maxdepth 1 -type f -name '*.json' -print0 | sort -z | xargs -0 -r sha256sum
+              fi
+            done
+            sha256sum data/value-comparison/2026-09-10.json data/value-comparison/2026-09-11.json data/value-comparison/cumulative.json
+            for day in 2026-09-05 2026-09-06 2026-09-07 2026-09-08 2026-09-09 2026-09-10 2026-09-11; do
+              file="data/final-result-conflicts/${day}.json"
+              [ -f "$file" ] && sha256sum "$file"
+            done
+            for day in 2026-09-10 2026-09-11 2026-09-12; do
+              file="data/deploy-snapshots/${day}/fixtures-all.json"
+              [ -f "$file" ] && sha256sum "$file"
+            done
+          }
+          protected | sort > "$RUNNER_TEMP/protected.after"
+          diff -u "$RUNNER_TEMP/protected.before" "$RUNNER_TEMP/protected.after"
+          echo "PROTECTED_BYTES_UNCHANGED=true"
+
+      - name: Verify contamination removal and quarantine
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const crypto = require('crypto');
+          const q = JSON.parse(fs.readFileSync('data/competition-routing-quarantine/2026-09-12/manifest.json','utf8'));
+          if (q?.ok !== true || q?.summary?.candidateCount !== 69) throw new Error('quarantine contract failed');
+          const ids = new Set(q.candidates.map(x => String(x.canonicalId)));
+          if (ids.size !== 69) throw new Error('candidate set mismatch');
+          const sha = f => crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex');
+          for (const row of q.archiveRecords) {
+            if (!fs.existsSync(row.archivePath) || sha(row.archivePath) !== row.sha256) throw new Error(`bad archive:${row.archivePath}`);
+          }
+          for (const c of q.candidates) {
+            const f = `data/final-results/${c.day}/${c.canonicalId}.json`;
+            if (fs.existsSync(f)) throw new Error(`contaminated final remains:${f}`);
+          }
+          for (const day of ['2026-09-10','2026-09-11','2026-09-12']) {
+            const root = `data/deploy-snapshots/${day}`;
+            const doc = JSON.parse(fs.readFileSync(`${root}/fixtures.json`,'utf8'));
+            const active = new Set((doc.fixtures || []).map(x => String(x.canonicalId || x.matchId || '')));
+            for (const id of ids) {
+              if (active.has(id)) throw new Error(`contaminated fixture published:${day}:${id}`);
+              if (fs.existsSync(`${root}/details/${id}.json`)) throw new Error(`contaminated detail published:${day}:${id}`);
+            }
+          }
+          const latest = JSON.parse(fs.readFileSync('data/deploy-snapshots/latest.json','utf8'));
+          const manifest = JSON.parse(fs.readFileSync('data/deploy-snapshots/2026-09-12/manifest.json','utf8'));
+          if (latest.date !== '2026-09-12' || latest.hash !== manifest.hash) throw new Error('latest/manifest parity failed');
+          console.log(JSON.stringify({ok:true,candidates:ids.size,fixtures:manifest?.counts?.fixtures,details:manifest?.counts?.details,valuePicks:manifest?.counts?.valuePicks,hash:manifest.hash},null,2));
+          NODE
+
+      - name: Run routing and history regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test engine-v1/tests/flashscore-adapter-competition-routing.test.js engine-v1/tests/daily-history-catchup-h2h-scope.test.js
+
+      - name: Remove transient source Details
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf data/details/2026-09-12
+          ! git status --short -- data/details/2026-09-12 | grep -q .
+
+      - name: Require remote main still pinned
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main:refs/remotes/origin/main-v7
+          ACTUAL="$(git rev-parse refs/remotes/origin/main-v7)"
+          test "$ACTUAL" = "$EXPECTED_BASE"
+          echo "REMOTE_MAIN_STILL_PINNED=$ACTUAL"
+
+      - name: Build clean data-only release commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f "$V7_WORKFLOW"
+          git reset "$EXPECTED_BASE"
+          git add -A data
+          git diff --cached --check
+
+          CHANGED="$(git diff --cached --name-only "$EXPECTED_BASE" | sort)"
+          BAD="$(printf '%s\n' "$CHANGED" | grep -Ev '^(data/canonical-fixtures/2026-09-(10|11|12|13)/(eng\.1|pol\.2|fifa\.world)\.json$|data/final-results/2026-09-(10|11)/|data/deploy-snapshots/(latest\.json$|2026-09-(10|11|12)/)|data/multi-odds/2026-09-(10|11|12|13)\.json$|data/competition-routing-quarantine/2026-09-12/|data/value-comparison/2026-09-12\.json$)' || true)"
+          if [ -n "$BAD" ]; then
+            echo "ERROR: unexpected release write-set"
+            printf '%s\n' "$BAD"
+            exit 1
+          fi
+          test -n "$CHANGED"
+          ! printf '%s\n' "$CHANGED" | grep -Eq '^(\.github/|tools/|data/value/|data/value-plans/)'
+
+          TREE="$(git write-tree)"
+          export GIT_AUTHOR_NAME='matchlab-repair'
+          export GIT_AUTHOR_EMAIL='matchlab-repair@users.noreply.github.com'
+          export GIT_COMMITTER_NAME='matchlab-repair'
+          export GIT_COMMITTER_EMAIL='matchlab-repair@users.noreply.github.com'
+          COMMIT="$(printf '%s\n' 'Quarantine residual competition routing contamination' | git commit-tree "$TREE" -p "$EXPECTED_BASE")"
+          test "$(git rev-parse "$COMMIT^")" = "$EXPECTED_BASE"
+          test -z "$(git diff --name-only "$EXPECTED_BASE" "$COMMIT" | grep -Ev '^data/' || true)"
+          printf '%s\n' "$COMMIT" > "$RUNNER_TEMP/release-commit.txt"
+          printf '%s\n' "$TREE" > "$RUNNER_TEMP/release-tree.txt"
+          printf '%s\n' "$CHANGED" > "$RUNNER_TEMP/release-paths.txt"
+          echo "CLEAN_RELEASE_COMMIT=$COMMIT"
+
+      - name: Push clean commit to release branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          COMMIT="$(cat "$RUNNER_TEMP/release-commit.txt")"
+          git push origin "$COMMIT:refs/heads/$RELEASE_BRANCH"
+          echo "RELEASE_BRANCH_PUSHED=$RELEASE_BRANCH"
+          echo "MAIN_NOT_UPDATED=true"
+
+      - name: Upload V7 release evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: routing-contamination-cleanup-v7-release-evidence
+          path: |
+            ${{ runner.temp }}/release-commit.txt
+            ${{ runner.temp }}/release-tree.txt
+            ${{ runner.temp }}/release-paths.txt
+            ${{ runner.temp }}/protected.before
+            ${{ runner.temp }}/protected.after
+          if-no-files-found: error
+          retention-days: 14
