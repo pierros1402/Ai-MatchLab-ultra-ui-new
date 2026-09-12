@@ -1,0 +1,83 @@
+name: TMP current-day settlement producer audit 20260912
+
+on:
+  push:
+    branches:
+      - audit/20260912-value-winloss-planc
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  settlement-producer-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Run production-equivalent current-day verified-final exporter
+        shell: bash
+        run: |
+          set -uo pipefail
+          rm -rf data/final-results/2026-09-12
+          rm -f data/final-result-conflicts/2026-09-12.json
+          set +e
+          node ./engine-v1/jobs/export-verified-final-results-day.js \
+            --date=2026-09-12 \
+            --write \
+            --all-fixtures 2>&1 | tee /tmp/default-export.log
+          code=${PIPESTATUS[0]}
+          set -e
+          echo "DEFAULT_EXIT=$code"
+          echo "DEFAULT_FINAL_COUNT=$(find data/final-results/2026-09-12 -maxdepth 1 -type f -name '*.json' 2>/dev/null | wc -l)"
+          test -f data/final-results/2026-09-12/cid_jpn1_mitohollyhock_kawasakifrontale_20260912.json && echo Mito_Default=FOUND || echo Mito_Default=MISSING
+          grep -E -i 'mito|kawasaki|rg0dw98U|no_exact|unresolved|verified|error|skip|offset' /tmp/default-export.log | tail -160 || true
+
+      - name: Run offset-window diagnostic
+        shell: bash
+        run: |
+          set -uo pipefail
+          rm -rf data/final-results/2026-09-12
+          rm -f data/final-result-conflicts/2026-09-12.json
+          set +e
+          node ./engine-v1/jobs/export-verified-final-results-day.js \
+            --date=2026-09-12 \
+            --write \
+            --all-fixtures \
+            --offsets=-1,0,1 2>&1 | tee /tmp/window-export.log
+          code=${PIPESTATUS[0]}
+          set -e
+          echo "WINDOW_EXIT=$code"
+          echo "WINDOW_FINAL_COUNT=$(find data/final-results/2026-09-12 -maxdepth 1 -type f -name '*.json' 2>/dev/null | wc -l)"
+          if test -f data/final-results/2026-09-12/cid_jpn1_mitohollyhock_kawasakifrontale_20260912.json; then
+            echo Mito_Window=FOUND
+            node -e 'const x=require("./data/final-results/2026-09-12/cid_jpn1_mitohollyhock_kawasakifrontale_20260912.json"); console.log(JSON.stringify(x,null,2))'
+          else
+            echo Mito_Window=MISSING
+          fi
+          grep -E -i 'mito|kawasaki|rg0dw98U|no_exact|unresolved|verified|error|skip|offset' /tmp/window-export.log | tail -200 || true
+
+      - name: Restore runner mutations and prove clean source tree
+        if: always()
+        shell: bash
+        run: |
+          git reset --hard HEAD
+          git clean -fd data/final-results data/final-result-conflicts
+          test -z "$(git status --porcelain)"
+          echo SETTLEMENT_PRODUCER_AUDIT_CLEAN
