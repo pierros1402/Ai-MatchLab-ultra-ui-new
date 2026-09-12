@@ -1,0 +1,338 @@
+name: TMP routing contamination cleanup 2026-09-12 V3
+
+on:
+  push:
+    branches:
+      - fix/20260912-routing-contamination-cleanup-v1
+    paths:
+      - ".github/workflows/tmp-routing-contamination-cleanup-20260912-v3.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tmp-routing-contamination-cleanup-20260912-v3
+  cancel-in-progress: false
+
+env:
+  EXPECTED_BASE: "4a7d448dfa827d392983764057423841b2b737fe"
+  REPAIR_BRANCH: "fix/20260912-routing-contamination-cleanup-v1"
+  HELPER: "tools/tmp-routing-contamination-cleanup-20260912.mjs"
+
+jobs:
+  repair-validate-v3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout isolated repair branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact repair baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git merge-base HEAD "$EXPECTED_BASE")" = "$EXPECTED_BASE"
+          test -z "$(git status --porcelain)"
+          ACTUAL="$(git diff --name-only "$EXPECTED_BASE"..HEAD | sort)"
+          EXPECTED="$(printf '%s\n' \
+            '.github/workflows/tmp-routing-contamination-cleanup-20260912-v2.yml' \
+            '.github/workflows/tmp-routing-contamination-cleanup-20260912-v3.yml' \
+            '.github/workflows/tmp-routing-contamination-cleanup-20260912.yml' \
+            'tools/tmp-routing-contamination-cleanup-20260912.mjs' \
+            | sort)"
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "ERROR: unexpected branch pre-repair diff"
+            echo "ACTUAL:"; printf '%s\n' "$ACTUAL"
+            echo "EXPECTED:"; printf '%s\n' "$EXPECTED"
+            exit 1
+          fi
+          echo "REPAIR_BASE_VERIFIED=$EXPECTED_BASE"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Harden helper in working tree only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("tools/tmp-routing-contamination-cleanup-20260912.mjs")
+          s = p.read_text(encoding="utf-8")
+          old = '''function assertExactCounts(actual, expected, label) {
+            const actualJson = JSON.stringify(actual);
+            const expectedJson = JSON.stringify(expected);
+            if (actualJson !== expectedJson) {
+              fail(`${label}_mismatch`, { actual, expected });
+            }
+          }
+          '''
+          new = '''function normalizeForComparison(value) {
+            if (Array.isArray(value)) return value.map(normalizeForComparison);
+            if (value && typeof value === "object") {
+              return Object.fromEntries(Object.keys(value).sort().map(key => [key, normalizeForComparison(value[key])]));
+            }
+            return value;
+          }
+          function assertExactCounts(actual, expected, label) {
+            const actualJson = JSON.stringify(normalizeForComparison(actual));
+            const expectedJson = JSON.stringify(normalizeForComparison(expected));
+            if (actualJson !== expectedJson) fail(`${label}_mismatch`, { actual, expected });
+          }
+          '''
+          if s.count(old) != 1:
+              raise SystemExit(f"assertExactCounts anchor count != 1: {s.count(old)}")
+          s = s.replace(old, new, 1)
+          start_token = '  document.routingContaminationRepair = {'
+          end_token = '  writeJson(entry.file, document);'
+          start_index = s.find(start_token)
+          end_index = s.find(end_token, start_index + len(start_token)) if start_index >= 0 else -1
+          if start_index < 0 or end_index < 0:
+              raise SystemExit(f"canonical metadata delimiters missing: start={start_index} end={end_index}")
+          if s.find(start_token, start_index + len(start_token)) >= 0:
+              raise SystemExit("canonical metadata start delimiter is not unique")
+          s = s[:start_index] + s[end_index:]
+          p.write_text(s, encoding="utf-8", newline="\n")
+          PY
+          node --check "$HELPER"
+          git diff --check
+
+      - name: Capture immutable Value hashes before repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          snapshot_hashes() {
+            for day in 2026-09-10 2026-09-11 2026-09-12; do
+              for file in \
+                "data/deploy-snapshots/${day}/value.json" \
+                "data/deploy-snapshots/${day}/value-audit.json" \
+                "data/value/_audit/${day}.json" \
+                "data/value-comparison/${day}.json"; do
+                [ -f "$file" ] && sha256sum "$file"
+              done
+              if [ -d "data/value-plans/${day}" ]; then
+                find "data/value-plans/${day}" -maxdepth 1 -type f -name '*.json' -print0 | sort -z | xargs -0 -r sha256sum
+              fi
+            done | sort
+          }
+          snapshot_hashes > "$RUNNER_TEMP/value-hashes.before"
+          cat "$RUNNER_TEMP/value-hashes.before"
+          node -e '
+            const fs=require("fs");
+            const latest=JSON.parse(fs.readFileSync("data/deploy-snapshots/latest.json","utf8"));
+            if(latest.date!=="2026-09-12") throw new Error(`unexpected latest baseline: ${latest.date}`);
+            console.log(`LATEST_BASELINE_DATE=${latest.date}`);
+            console.log(`LATEST_BASELINE_HASH=${latest.hash}`);
+          '
+
+      - name: Apply quarantine-first active truth cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          node "$HELPER"
+
+      - name: Re-export affected snapshots from clean canonical truth
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-09-10 --no-update-latest --preserve-value --preserve-details --no-build-missing-details --fail-on-missing-details
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-09-11 --no-update-latest --preserve-value --preserve-details --no-build-missing-details --fail-on-missing-details
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-09-12 --update-latest --preserve-value --preserve-details --no-build-missing-details --fail-on-missing-details
+
+      - name: Refresh invariant evidence for all repaired days
+        shell: bash
+        run: |
+          set -euo pipefail
+          for day in 2026-09-10 2026-09-11 2026-09-12; do
+            node ./engine-v1/jobs/run-snapshot-invariant-check.js "$day"
+            node ./engine-v1/jobs/run-snapshot-invariant-check.js "$day" --gate
+            node ./engine-v1/jobs/verify-details-value-mirror-day.js --date="$day" --gate
+            node ./engine-v1/jobs/check-value-artifact-gate.js --date="$day"
+          done
+
+      - name: Verify legacy freshness debt did not expand
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date=2026-09-10
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date=2026-09-11
+          node <<'NODE'
+          const fs = require('fs');
+          const contract = {
+            '2026-09-10': [
+              'plan_a2_stale_against_canonical',
+              'plan_a2_audit_stale_against_canonical',
+              'plan_b_audit_stale_against_canonical',
+              'plan_b2_audit_stale_against_canonical'
+            ],
+            '2026-09-11': [
+              'value_plan_comparison_stale_against_canonical'
+            ]
+          };
+          for (const [day, expectedReasons] of Object.entries(contract)) {
+            const r = JSON.parse(fs.readFileSync(`data/deploy-snapshots/${day}/freshness-report.json`, 'utf8'));
+            const actualReasons = [...new Set(r.reasons || [])].sort();
+            const expected = [...expectedReasons].sort();
+            if ((r.staleInputs || []).length !== 0) throw new Error(`${day}: new stale upstream inputs`);
+            if ((r.missingRequiredArtifacts || []).length !== 0) throw new Error(`${day}: required artifacts missing`);
+            if (r?.fourPlanContract?.complete !== true) throw new Error(`${day}: four-plan contract incomplete`);
+            if (JSON.stringify(actualReasons) !== JSON.stringify(expected)) {
+              throw new Error(`${day}: freshness debt changed; actual=${JSON.stringify(actualReasons)} expected=${JSON.stringify(expected)}`);
+            }
+            console.log(`${day}: LEGACY_FRESHNESS_DEBT_UNCHANGED=${actualReasons.join(',')}`);
+          }
+          NODE
+
+      - name: Require current-day freshness and publish contract green
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date=2026-09-12 --gate
+          node ./engine-v1/jobs/verify-daily-publish-contract.js --date=2026-09-12 --gate
+
+      - name: Verify immutable Value bytes are unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          snapshot_hashes() {
+            for day in 2026-09-10 2026-09-11 2026-09-12; do
+              for file in \
+                "data/deploy-snapshots/${day}/value.json" \
+                "data/deploy-snapshots/${day}/value-audit.json" \
+                "data/value/_audit/${day}.json" \
+                "data/value-comparison/${day}.json"; do
+                [ -f "$file" ] && sha256sum "$file"
+              done
+              if [ -d "data/value-plans/${day}" ]; then
+                find "data/value-plans/${day}" -maxdepth 1 -type f -name '*.json' -print0 | sort -z | xargs -0 -r sha256sum
+              fi
+            done | sort
+          }
+          snapshot_hashes > "$RUNNER_TEMP/value-hashes.after"
+          diff -u "$RUNNER_TEMP/value-hashes.before" "$RUNNER_TEMP/value-hashes.after"
+          echo "IMMUTABLE_VALUE_HASHES_UNCHANGED=true"
+
+      - name: Verify active contamination is gone and quarantine is exact
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const crypto = require('crypto');
+          const q = JSON.parse(fs.readFileSync('data/competition-routing-quarantine/2026-09-12/manifest.json','utf8'));
+          if (q?.ok !== true || q?.summary?.candidateCount !== 69) throw new Error('quarantine manifest contract failed');
+          const ids = q.candidates.map(row => String(row.canonicalId));
+          const idSet = new Set(ids);
+          if (idSet.size !== 69) throw new Error('candidate identity set mismatch');
+          const sha256 = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+          for (const row of q.archiveRecords) {
+            if (!fs.existsSync(row.archivePath)) throw new Error(`archive missing: ${row.archivePath}`);
+            if (sha256(row.archivePath) !== row.sha256) throw new Error(`archive hash mismatch: ${row.archivePath}`);
+          }
+          const clean = value => String(value ?? '').trim();
+          const classify = (slug,row) => {
+            const league=clean(row?.leagueName).toLowerCase();
+            const teams=`${clean(row?.homeTeam||row?.home)} ${clean(row?.awayTeam||row?.away)}`;
+            if(slug==='eng.1'&&league!=='premier league') return true;
+            if(slug==='pol.2'&&!['division 1','i liga'].includes(league)) return true;
+            if(slug==='fifa.world'&&/\bu20\s*w\b/iu.test(teams)) return true;
+            return false;
+          };
+          for (const candidate of q.candidates) {
+            const f=`data/final-results/${candidate.day}/${candidate.canonicalId}.json`;
+            if(fs.existsSync(f)) throw new Error(`active contaminated final result remains: ${f}`);
+          }
+          for(const day of ['2026-09-10','2026-09-11','2026-09-12','2026-09-13']) {
+            for(const slug of ['eng.1','pol.2','fifa.world']) {
+              const f=`data/canonical-fixtures/${day}/${slug}.json`;
+              if(!fs.existsSync(f)) continue;
+              const d=JSON.parse(fs.readFileSync(f,'utf8'));
+              const rows=Array.isArray(d.fixtures)?d.fixtures:[];
+              if(rows.some(row=>classify(slug,row))) throw new Error(`canonical contamination remains: ${f}`);
+              if(Number(d.count)!==rows.length) throw new Error(`canonical count mismatch: ${f}`);
+            }
+          }
+          for(const day of ['2026-09-10','2026-09-11','2026-09-12']) {
+            const root=`data/deploy-snapshots/${day}`;
+            const d=JSON.parse(fs.readFileSync(`${root}/fixtures.json`,'utf8'));
+            const rows=Array.isArray(d.fixtures)?d.fixtures:[];
+            const fixtureIds=new Set(rows.map(row=>clean(row.canonicalId||row.matchId)));
+            for(const id of idSet) {
+              if(fixtureIds.has(id)) throw new Error(`contaminated fixture still published: ${day}:${id}`);
+              if(fs.existsSync(`${root}/details/${id}.json`)) throw new Error(`contaminated detail still published: ${day}:${id}`);
+            }
+            const oddsFile=`${root}/odds.json`;
+            if(fs.existsSync(oddsFile)) {
+              const odds=JSON.parse(fs.readFileSync(oddsFile,'utf8'));
+              for(const m of Array.isArray(odds.matches)?odds.matches:[]) {
+                if(idSet.has(clean(m.canonicalId))||idSet.has(clean(m.matchId))) throw new Error(`contaminated odds row remains: ${day}`);
+              }
+            }
+            const value=JSON.parse(fs.readFileSync(`${root}/value.json`,'utf8'));
+            for(const pick of Array.isArray(value.picks)?value.picks:[]) {
+              const id=clean(pick.matchId||pick.canonicalId||pick.fixtureId||pick.id);
+              if(!fixtureIds.has(id)) throw new Error(`frozen Value pick outside clean snapshot: ${day}:${id}`);
+              if(idSet.has(id)) throw new Error(`contaminated frozen Value pick: ${day}:${id}`);
+            }
+          }
+          for(const day of ['2026-09-10','2026-09-11','2026-09-12','2026-09-13']) {
+            const f=`data/multi-odds/${day}.json`;
+            if(!fs.existsSync(f)) continue;
+            const text=fs.readFileSync(f,'utf8');
+            for(const id of idSet) if(text.includes(id)) throw new Error(`contaminated multi-odds reference remains: ${day}:${id}`);
+          }
+          const latest=JSON.parse(fs.readFileSync('data/deploy-snapshots/latest.json','utf8'));
+          const manifest=JSON.parse(fs.readFileSync('data/deploy-snapshots/2026-09-12/manifest.json','utf8'));
+          if(latest.date!=='2026-09-12') throw new Error(`latest date drift: ${latest.date}`);
+          if(latest.hash!==manifest.hash) throw new Error('latest hash does not match repaired manifest');
+          console.log(JSON.stringify({ok:true,candidateCount:ids.length,archiveRecords:q.archiveRecords.length,latestDate:latest.date,repairedManifestHash:manifest.hash,repairedFixtureCount:manifest?.counts?.fixtures,repairedDetailCount:manifest?.counts?.details,frozenValuePicks:manifest?.counts?.valuePicks},null,2));
+          NODE
+
+      - name: Run targeted regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test engine-v1/tests/flashscore-adapter-competition-routing.test.js engine-v1/tests/daily-history-catchup-h2h-scope.test.js
+
+      - name: Restore helper and verify data-only write-set
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore "$HELPER"
+          test -z "$(git diff --name-only HEAD -- "$HELPER")"
+          CHANGED="$(git diff --name-only HEAD | sort)"
+          BAD="$(printf '%s\n' "$CHANGED" | grep -Ev '^(data/canonical-fixtures/2026-09-(10|11|12|13)/|data/final-results/2026-09-(10|11|12|13)/|data/deploy-snapshots/(latest\.json$|2026-09-(10|11|12)/)|data/multi-odds/2026-09-(10|11|12|13)\.json$|data/competition-routing-quarantine/2026-09-12/)' || true)"
+          if [ -n "$BAD" ]; then echo "ERROR: unexpected repair paths:"; echo "$BAD"; exit 1; fi
+          if printf '%s\n' "$CHANGED" | grep -Eq '^data/(value/|value-plans/|value-comparison/)'; then echo "ERROR: immutable Value artifacts changed"; exit 1; fi
+          test -n "$CHANGED"
+          echo "=== FINAL DATA WRITE SET ==="
+          printf '%s\n' "$CHANGED"
+          git diff --check
+
+      - name: Commit validated data repair to isolated branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A data/canonical-fixtures/2026-09-10 data/canonical-fixtures/2026-09-11 data/canonical-fixtures/2026-09-12 data/canonical-fixtures/2026-09-13
+          git add -A data/final-results/2026-09-10 data/final-results/2026-09-11 data/final-results/2026-09-12 data/final-results/2026-09-13
+          git add -A data/deploy-snapshots/2026-09-10 data/deploy-snapshots/2026-09-11 data/deploy-snapshots/2026-09-12 data/deploy-snapshots/latest.json
+          git add -A data/multi-odds/2026-09-10.json data/multi-odds/2026-09-11.json data/multi-odds/2026-09-12.json data/multi-odds/2026-09-13.json
+          git add -A data/competition-routing-quarantine/2026-09-12
+          test -z "$(git diff --name-only)"
+          git diff --cached --check
+          git commit -m "Quarantine residual competition routing contamination"
+          git push origin HEAD:"$REPAIR_BRANCH"
