@@ -1953,6 +1953,64 @@ async function buildOneDetail(match, { dayKey, valuePicksByMatch, allRows, rebui
   return { status: "built", file };
 }
 
+export function pruneStaleDetailsFiles(detailsDir, expectedFiles = []) {
+  const dir = String(detailsDir || "").trim();
+
+  if (!dir || !fs.existsSync(dir)) {
+    return {
+      ok: true,
+      removed: 0,
+      files: []
+    };
+  }
+
+  const expectedNames =
+    new Set(
+      (Array.isArray(expectedFiles) ? expectedFiles : [])
+        .map(file =>
+          path.basename(
+            String(file || "").trim()
+          )
+        )
+        .filter(name =>
+          name.endsWith(".json")
+        )
+    );
+
+  // Fail closed: a whole-day rebuild with no expected detail files must
+  // never turn into a delete-all operation.
+  if (!expectedNames.size) {
+    return {
+      ok: false,
+      reason: "empty_expected_details_set",
+      removed: 0,
+      files: []
+    };
+  }
+
+  const staleFiles =
+    fs.readdirSync(dir, { withFileTypes: true })
+      .filter(entry =>
+        entry.isFile() &&
+        entry.name.endsWith(".json") &&
+        !expectedNames.has(entry.name)
+      )
+      .map(entry => entry.name)
+      .sort();
+
+  for (const file of staleFiles) {
+    fs.unlinkSync(
+      path.join(dir, file)
+    );
+  }
+
+  return {
+    ok: true,
+    removed: staleFiles.length,
+    files: staleFiles
+  };
+}
+
 export async function buildDetailsDay(dayKey, { rebuild = false } = {}) {
   // SINGLE source of truth: build a detail for exactly the published fixture
   // universe (canonical ∪ runtime). Previously this picked runtime-XOR-canonical
@@ -1996,6 +2054,27 @@ export async function buildDetailsDay(dayKey, { rebuild = false } = {}) {
     if (result.status === "built") built += 1;
     else skipped += 1;
     files.push(result.file);
+  }
+
+  if (rebuild) {
+    const pruneResult =
+      pruneStaleDetailsFiles(
+        resolveDataPath("details", dayKey),
+        files
+      );
+
+    if (!pruneResult.ok) {
+      throw new Error(
+        `details_rebuild_prune_failed:${pruneResult.reason || "unknown"}`
+      );
+    }
+
+    console.log("[build-details-day] rebuild:prune", {
+      dayKey,
+      expectedFiles: files.length,
+      removed: pruneResult.removed,
+      files: pruneResult.files
+    });
   }
 
   return {
