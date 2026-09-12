@@ -1,0 +1,77 @@
+name: TMP Value public UI and export audit 20260912
+
+on:
+  push:
+    branches:
+      - audit/20260912-value-winloss-planc
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit-public-ui-export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Compare public UI Value scripts with repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          for rel in assets/js/ui/value-picks.js assets/js/live/value-adapter.js; do
+            url="https://ai-matchlab-ultra-ui-new.onrender.com/${rel}"
+            out="/tmp/$(basename "$rel")"
+            curl --fail --silent --show-error --location --max-time 90 "$url" -o "$out"
+            echo "=== ${rel} ==="
+            echo "REPO_SHA256=$(sha256sum "$rel" | awk '{print $1}')"
+            echo "PUBLIC_SHA256=$(sha256sum "$out" | awk '{print $1}')"
+            echo "PUBLIC_BYTES=$(wc -c < "$out")"
+            grep -n -E 'resultBadgeHtml|renderPlanComparison|planCPick|planC|value-comparison' "$out" | head -80 || true
+          done
+
+      - name: Inspect export route contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const s=fs.readFileSync('engine-v1/index.js','utf8').split(/\r?\n/);
+          for(let i=0;i<s.length;i++){
+            if(s[i].includes('/value-export/range')){
+              const a=Math.max(0,i-8), b=Math.min(s.length,i+140);
+              console.log(s.slice(a,b).map((x,j)=>`${a+j+1}:${x}`).join('\n'));
+            }
+          }
+          NODE
+
+      - name: Public JSON export settlement audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=/tmp/value-export.json
+          curl --fail --silent --show-error --location --max-time 90 \
+            'https://ai-matchlab-engine.onrender.com/value-export/range?from=2026-09-11&to=2026-09-11&format=json' \
+            -o "$out"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const x=JSON.parse(fs.readFileSync('/tmp/value-export.json','utf8'));
+          const summary={ok:x?.ok,schema:x?.schema,planOrder:x?.planOrder,totalRows:x?.totalRows,integrity:x?.integrity?.status,plans:{}};
+          for(const key of x?.planOrder||[]){
+            const p=x?.plans?.[key]||{};
+            const rows=Array.isArray(p?.picks)?p.picks:[];
+            summary.plans[key]={count:rows.length,results:rows.reduce((a,r)=>{const k=String(r?.result||'MISSING');a[k]=(a[k]||0)+1;return a;},{}),samples:rows.slice(0,5).map(r=>({matchId:r?.matchId,result:r?.result,finalScore:r?.finalScore}))};
+          }
+          console.log(JSON.stringify(summary,null,2));
+          NODE
+
+      - name: Prove checkout clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          echo READ_ONLY_PUBLIC_UI_EXPORT_AUDIT_PASS
