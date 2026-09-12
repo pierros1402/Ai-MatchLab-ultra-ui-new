@@ -1,0 +1,72 @@
+name: TMP fix routing cleanup anchor 2026-09-12
+
+on:
+  push:
+    branches:
+      - fix/20260912-routing-contamination-cleanup-v1
+    paths:
+      - ".github/workflows/tmp-fix-routing-cleanup-anchor-20260912.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-self-remove:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Replace brittle metadata anchor logic
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          target = Path(".github/workflows/tmp-routing-contamination-cleanup-20260912.yml")
+          lines = target.read_text(encoding="utf-8").splitlines()
+
+          start = next((i for i, line in enumerate(lines) if line.strip() == "extra = '''  document.routingContaminationRepair = {"), None)
+          end = next((i for i, line in enumerate(lines) if line.strip() == 's = s.replace(extra, "", 1)'), None)
+
+          if start is None or end is None or end < start:
+              raise SystemExit(f"metadata hardening block not found exactly once: start={start} end={end}")
+
+          replacement = [
+              "          start_token = '  document.routingContaminationRepair = {'",
+              "          end_token = '  writeJson(entry.file, document);'",
+              "          start_index = s.find(start_token)",
+              "          end_index = s.find(end_token, start_index + len(start_token)) if start_index >= 0 else -1",
+              "          if start_index < 0 or end_index < 0:",
+              "              raise SystemExit(f'canonical metadata delimiters missing: start={start_index} end={end_index}')",
+              "          if s.find(start_token, start_index + len(start_token)) >= 0:",
+              "              raise SystemExit('canonical metadata start delimiter is not unique')",
+              "          s = s[:start_index] + s[end_index:]",
+          ]
+
+          lines[start:end + 1] = replacement
+          target.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+          PY
+
+          git diff --check
+          grep -n "start_token = '  document.routingContaminationRepair" .github/workflows/tmp-routing-contamination-cleanup-20260912.yml
+
+      - name: Self-remove and commit repair-tooling fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/tmp-fix-routing-cleanup-anchor-20260912.yml
+
+          ACTUAL="$(git diff --name-only HEAD | sort)"
+          EXPECTED=".github/workflows/tmp-routing-contamination-cleanup-20260912.yml"
+          test "$ACTUAL" = "$EXPECTED"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/tmp-routing-contamination-cleanup-20260912.yml
+          git commit -m "Harden temporary contamination cleanup anchor"
+          git push origin HEAD:fix/20260912-routing-contamination-cleanup-v1
