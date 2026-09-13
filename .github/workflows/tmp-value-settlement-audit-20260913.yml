@@ -1,0 +1,137 @@
+name: TMP Value settlement audit 2026-09-13
+
+on:
+  push:
+    branches:
+      - audit/20260913-value-settlement-current-main
+
+permissions:
+  contents: read
+
+jobs:
+  audit-value-settlement:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Verify exact source baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_BASE="b1de324b81119b7101fe6ab515d6eae94edd65c0"
+          ACTUAL_PARENT="$(git rev-parse HEAD^)"
+          test "$ACTUAL_PARENT" = "$EXPECTED_BASE"
+          CHANGED="$(git diff --name-only "$EXPECTED_BASE"..HEAD)"
+          test "$CHANGED" = ".github/workflows/tmp-value-settlement-audit-20260913.yml"
+          echo "VALUE_SETTLEMENT_AUDIT_BASE_VERIFIED=$EXPECTED_BASE"
+
+      - name: Audit recent Value settlement state
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+
+          const days = ['2026-09-09','2026-09-10','2026-09-11','2026-09-12'];
+          const plans = ['A','A2','B','B2'];
+          const out = { ok: true, days: {}, totals: { picks:0, settled:0, wins:0, losses:0, voids:0, unresolved:0, unsupported:0 } };
+
+          function readJson(file) {
+            return JSON.parse(fs.readFileSync(file, 'utf8'));
+          }
+          function listJson(dir) {
+            if (!fs.existsSync(dir)) return [];
+            return fs.readdirSync(dir).filter((name) => name.endsWith('.json')).sort();
+          }
+
+          for (const day of days) {
+            const comparisonPath = `data/value-comparison/${day}.json`;
+            if (!fs.existsSync(comparisonPath)) {
+              out.ok = false;
+              out.days[day] = { error: 'comparison_missing' };
+              continue;
+            }
+            const comparison = readJson(comparisonPath);
+            const finalsDir = `data/final-results/${day}`;
+            const finalFiles = listJson(finalsDir);
+            const verifiedFinals = [];
+            const invalidFinalFiles = [];
+            for (const name of finalFiles) {
+              try {
+                const row = readJson(path.join(finalsDir, name));
+                if (row?.verifiedFinalTruth === true) verifiedFinals.push(String(row?.matchId || name.replace(/\.json$/u,'')));
+                else invalidFinalFiles.push(name);
+              } catch {
+                invalidFinalFiles.push(name);
+              }
+            }
+            const finalSet = new Set(verifiedFinals);
+            const planSummary = {};
+            const unresolvedRows = [];
+            for (const planId of plans) {
+              const plan = comparison?.plans?.[planId] || null;
+              if (!plan) {
+                planSummary[planId] = null;
+                continue;
+              }
+              const s = plan?.summary || {};
+              const normalized = {
+                picks: Number(s.picks || 0),
+                settled: Number(s.settled || 0),
+                wins: Number(s.wins || 0),
+                losses: Number(s.losses || 0),
+                voids: Number(s.voids || 0),
+                unresolved: Number(s.unresolved || 0),
+                unsupported: Number(s.unsupported || 0),
+              };
+              planSummary[planId] = normalized;
+              for (const key of Object.keys(out.totals)) out.totals[key] += normalized[key] || 0;
+              for (const pick of Array.isArray(plan?.picks) ? plan.picks : []) {
+                if (String(pick?.result || '').toUpperCase() === 'UNRESOLVED' || String(pick?.finalStatus || '').toLowerCase() === 'unresolved') {
+                  const matchId = String(pick?.canonicalMatchId || pick?.matchId || '');
+                  unresolvedRows.push({
+                    plan: planId,
+                    matchId,
+                    homeTeam: pick?.homeTeam || null,
+                    awayTeam: pick?.awayTeam || null,
+                    market: pick?.market || null,
+                    pick: pick?.pick || null,
+                    hasVerifiedFinalArtifact: finalSet.has(matchId),
+                    finalStatus: pick?.finalStatus || null,
+                    result: pick?.result || null,
+                  });
+                }
+              }
+            }
+            out.days[day] = {
+              comparisonGeneratedAt: comparison?.generatedAt || null,
+              comparisonOk: comparison?.ok === true,
+              comparisonVerifiedFinalResults: Number(comparison?.inputs?.verifiedFinalResults ?? -1),
+              activeFinalResultFiles: finalFiles.length,
+              activeVerifiedFinals: verifiedFinals.length,
+              invalidFinalFiles,
+              plans: planSummary,
+              unresolvedRows,
+            };
+          }
+
+          console.log(JSON.stringify(out, null, 2));
+          if (!out.ok) process.exit(1);
+          NODE
+
+      - name: Prove checkout stayed read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          echo "READ_ONLY_VALUE_SETTLEMENT_AUDIT=PASS"
