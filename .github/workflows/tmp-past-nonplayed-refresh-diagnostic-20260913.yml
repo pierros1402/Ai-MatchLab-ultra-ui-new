@@ -1,0 +1,125 @@
+name: TMP past non-played refresh diagnostic 20260913
+
+on:
+  push:
+    branches:
+      - audit/20260913-past-nonplayed-refresh-diagnostic
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout diagnostic branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Verify exact base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="$(git rev-parse HEAD^)"
+          test "$BASE" = "c2b014b53e7cc6786502b134ae6d6607dc98bc32"
+          echo "DIAGNOSTIC_BASE=$BASE"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Capture target rows before refresh
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE' | tee /tmp/before.json
+          import fs from 'node:fs';
+          const targets = [
+            ['2026-09-09','chi.2','cid_chi2_sanfelipe_sanluis_20260909'],
+            ['2026-09-11','kos.2','cid_kos2_ferizaj_istogu_20260911'],
+            ['2026-09-11','fro.1','cid_fro1_abargir_toftir_20260911']
+          ];
+          const out=[];
+          for (const [day,slug,id] of targets) {
+            const file=`data/canonical-fixtures/${day}/${slug}.json`;
+            const doc=JSON.parse(fs.readFileSync(file,'utf8'));
+            const rows=Array.isArray(doc)?doc:(doc.fixtures||doc.rows||doc.matches||[]);
+            const r=rows.find(x=>String(x.canonicalId||x.matchId||'')===id);
+            out.push({day,slug,id,found:!!r,status:r?.status??null,rawStatus:r?.rawStatus??null,statusLong:r?.statusLong??null,minute:r?.minute??null,scoreHome:r?.scoreHome??null,scoreAway:r?.scoreAway??null,sourceId:r?.sourceId??r?.sourceMatchId??null});
+          }
+          console.log(JSON.stringify(out,null,2));
+          NODE
+
+      - name: Run exact past-day live refreshes
+        id: refresh
+        shell: bash
+        run: |
+          set +e
+          node ./engine-v1/jobs/run-live-status-refresh-day.js 2026-09-09 --include-all-open 2>&1 | tee /tmp/refresh-2026-09-09.log
+          S09=${PIPESTATUS[0]}
+          node ./engine-v1/jobs/run-live-status-refresh-day.js 2026-09-11 --include-all-open 2>&1 | tee /tmp/refresh-2026-09-11.log
+          S11=${PIPESTATUS[0]}
+          echo "status09=$S09" >> "$GITHUB_OUTPUT"
+          echo "status11=$S11" >> "$GITHUB_OUTPUT"
+          echo "REFRESH_09_EXIT=$S09"
+          echo "REFRESH_11_EXIT=$S11"
+          exit 0
+
+      - name: Capture target rows after refresh and diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE' | tee /tmp/after.json
+          import fs from 'node:fs';
+          const targets = [
+            ['2026-09-09','chi.2','cid_chi2_sanfelipe_sanluis_20260909'],
+            ['2026-09-11','kos.2','cid_kos2_ferizaj_istogu_20260911'],
+            ['2026-09-11','fro.1','cid_fro1_abargir_toftir_20260911']
+          ];
+          const out=[];
+          for (const [day,slug,id] of targets) {
+            const file=`data/canonical-fixtures/${day}/${slug}.json`;
+            const doc=JSON.parse(fs.readFileSync(file,'utf8'));
+            const rows=Array.isArray(doc)?doc:(doc.fixtures||doc.rows||doc.matches||[]);
+            const r=rows.find(x=>String(x.canonicalId||x.matchId||'')===id);
+            out.push({day,slug,id,found:!!r,status:r?.status??null,rawStatus:r?.rawStatus??null,statusLong:r?.statusLong??null,minute:r?.minute??null,scoreHome:r?.scoreHome??null,scoreAway:r?.scoreAway??null,sourceId:r?.sourceId??r?.sourceMatchId??null});
+          }
+          console.log(JSON.stringify(out,null,2));
+          NODE
+          echo '=== CHANGED PATHS ===' | tee /tmp/changed-paths.txt
+          git diff --name-status | tee -a /tmp/changed-paths.txt
+          echo '=== TARGET DIFF ===' | tee /tmp/target-diff.txt
+          git diff -- data/canonical-fixtures/2026-09-09/chi.2.json data/canonical-fixtures/2026-09-11/kos.2.json data/canonical-fixtures/2026-09-11/fro.1.json | tee -a /tmp/target-diff.txt
+
+      - name: Diagnostic summary
+        shell: bash
+        run: |
+          echo "2026-09-09 refresh exit: ${{ steps.refresh.outputs.status09 }}"
+          echo "2026-09-11 refresh exit: ${{ steps.refresh.outputs.status11 }}"
+          echo '--- before ---'
+          cat /tmp/before.json
+          echo '--- after ---'
+          cat /tmp/after.json
+
+      - name: Upload diagnostic evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: past-nonplayed-refresh-diagnostic-20260913
+          path: |
+            /tmp/before.json
+            /tmp/after.json
+            /tmp/refresh-2026-09-09.log
+            /tmp/refresh-2026-09-11.log
+            /tmp/changed-paths.txt
+            /tmp/target-diff.txt
+          if-no-files-found: error
