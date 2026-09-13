@@ -1,0 +1,95 @@
+name: TMP history propagation diagnostic 20260913
+
+on:
+  push:
+    branches:
+      - audit/20260913-history-propagation-diagnostic
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose-history:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout diagnostic branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Diagnose verified history truth parity read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/history-diagnostic
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { buildHistoryDayFromTruth } from "./engine-v1/jobs/append-finalized-day-to-history.js";
+
+          const days = ["2026-09-09", "2026-09-10", "2026-09-11"];
+          const historyReportPath = "data/history/2026-2027.report.json";
+          const baseline = fs.existsSync(historyReportPath)
+            ? JSON.parse(fs.readFileSync(historyReportPath, "utf8"))
+            : null;
+
+          const results = days.map((dayKey) => {
+            const r = buildHistoryDayFromTruth(dayKey);
+            return {
+              dayKey,
+              ok: r.ok === true,
+              reason: r.reason ?? null,
+              season: r.season ?? null,
+              canonicalFixtureCount: r.canonicalFixtureCount ?? null,
+              canonicalPlayedFinalCount: r.canonicalPlayedFinalCount ?? null,
+              verifiedFinalCount: r.verifiedFinalCount ?? null,
+              acceptedRows: r.acceptedRows ?? null,
+              errorCount: Array.isArray(r.errors) ? r.errors.length : 0,
+              errors: Array.isArray(r.errors) ? r.errors : []
+            };
+          });
+
+          const payload = {
+            diagnosticSchema: "ai-matchlab.history-propagation-readonly.v1",
+            repositoryHead: process.env.GITHUB_SHA || null,
+            baselineHistory: baseline ? {
+              generatedAt: baseline.generatedAt ?? null,
+              to: baseline.to ?? null,
+              lastCompletedDay: baseline.lastCompletedDay ?? null,
+              totalMatches: baseline.totalMatches ?? null
+            } : null,
+            results
+          };
+
+          console.log("=== HISTORY PROPAGATION READ-ONLY DIAGNOSTIC ===");
+          console.log(JSON.stringify(payload, null, 2));
+          fs.writeFileSync(
+            "/tmp/history-diagnostic/history-diagnostic.json",
+            JSON.stringify(payload, null, 2) + "\n",
+            "utf8"
+          );
+          NODE
+
+      - name: Prove repository unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          STATUS="$(git status --porcelain)"
+          if [ -n "$STATUS" ]; then
+            echo "ERROR: diagnostic mutated repository:"
+            echo "$STATUS"
+            exit 1
+          fi
+          echo "READ_ONLY_REPOSITORY_STATE=PASS"
+
+      - name: Upload diagnostic evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: history-propagation-diagnostic-20260913
+          path: /tmp/history-diagnostic/history-diagnostic.json
+          if-no-files-found: error
