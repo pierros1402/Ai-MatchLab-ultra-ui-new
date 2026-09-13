@@ -1,0 +1,68 @@
+name: TMP Daily run state 2026-09-13
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - audit/20260913-history-d1-readiness
+    paths:
+      - ".github/workflows/tmp-daily-run-state-20260913.yml"
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  audit-daily-runs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Read Daily workflow runs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          API="https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/daily-deploy-snapshot.yml/runs?branch=main&per_page=20"
+          curl -fsSL \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "${API}" > /tmp/daily-runs-raw.json
+
+          node <<'NODE' | tee /tmp/daily-runs-summary.json
+          const fs = require('fs');
+          const payload = JSON.parse(fs.readFileSync('/tmp/daily-runs-raw.json','utf8'));
+          const rows = (payload.workflow_runs || []).slice(0, 12).map(r => ({
+            id: r.id,
+            run_number: r.run_number,
+            event: r.event,
+            status: r.status,
+            conclusion: r.conclusion,
+            head_sha: r.head_sha,
+            created_at: r.created_at,
+            updated_at: r.updated_at,
+            run_started_at: r.run_started_at,
+            html_url: r.html_url
+          }));
+          console.log(JSON.stringify({count: rows.length, runs: rows}, null, 2));
+          NODE
+
+      - name: Prove repository remained clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --short)"
+          echo "READ_ONLY_RUN_AUDIT_CLEAN=true"
+
+      - name: Upload Daily run evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-run-state-20260913
+          path: /tmp/daily-runs-summary.json
+          if-no-files-found: error
