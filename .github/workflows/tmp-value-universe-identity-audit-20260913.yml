@@ -1,0 +1,79 @@
+name: TMP Value universe identity audit 20260913
+
+on:
+  push:
+    branches:
+      - audit/20260913-value-universe-identity
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      - name: Verify base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "4cae2c0432ea9eae52eed6c1718fb45e5c1a9656"
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Install dependencies
+        run: |
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+      - name: Compare current universes
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE' | tee /tmp/value-universe-identity.json
+          import fs from 'node:fs';
+          import { buildValueFixtureUniverse } from './engine-v1/core/value-fixture-universe.js';
+          import { getFixturesByDay } from './engine-v1/storage/json-db.js';
+          const day='2026-09-12';
+          const read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
+          const current=buildValueFixtureUniverse(day);
+          const runtime=getFixturesByDay(day);
+          const snapshot=read(`data/deploy-snapshots/${day}/fixtures.json`);
+          const manifest=read(`data/deploy-snapshots/${day}/manifest.json`);
+          const docs={
+            planA:read(`data/deploy-snapshots/${day}/value-audit.json`),
+            planA2:read(`data/value-plans/${day}/plan-a2-audit.json`),
+            planB:read(`data/value-plans/${day}/plan-b.json`),
+            planB2:read(`data/value-plans/${day}/plan-b2.json`)
+          };
+          const universe=d=>d?.fixtureUniverse||d?.sourceContract?.fixtureUniverse||null;
+          const contracts=Object.fromEntries(Object.entries(docs).map(([k,d])=>{const u=universe(d);return [k,{count:u?.count??null,hash:u?.hash??null,source:u?.source??null}]}));
+          const runtimeIds=new Set(runtime.map(r=>String(r.canonicalId||r.matchId||'')).filter(Boolean));
+          const currentIds=new Set(current.canonicalIds);
+          const runtimeOnly=[...runtimeIds].filter(id=>!currentIds.has(id)).sort();
+          const canonicalOnly=[...currentIds].filter(id=>!runtimeIds.has(id)).sort();
+          const out={
+            day,
+            authoritativeCurrent:{count:current.count,hash:current.hash,source:current.source},
+            legacyRuntimeDb:{count:runtime.length},
+            publishedSnapshot:{count:Array.isArray(snapshot?.fixtures)?snapshot.fixtures.length:null,manifestCount:manifest?.counts?.fixtures??null},
+            runtimeVsCanonical:{runtimeOnlyCount:runtimeOnly.length,canonicalOnlyCount:canonicalOnly.length,runtimeOnlySample:runtimeOnly.slice(0,20),canonicalOnlySample:canonicalOnly.slice(0,20)},
+            frozenContracts:contracts,
+            frozenExactParity:new Set(Object.values(contracts).map(x=>`${x.count}|${x.hash}|${x.source}`)).size===1
+          };
+          console.log(JSON.stringify(out,null,2));
+          NODE
+      - name: Prove no tracked mutation
+        run: |
+          git diff --exit-code
+          git diff --cached --exit-code
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: value-universe-identity-audit-20260913
+          path: /tmp/value-universe-identity.json
+          if-no-files-found: error
