@@ -24,7 +24,7 @@ jobs:
         run: |
           set -euo pipefail
           BASE=b4abcdd47da8164df94f76aa7612d711c984c087
-          test "$(git rev-parse HEAD^)" = "$BASE"
+          git cat-file commit HEAD | grep -Fx "parent $BASE"
           echo "AUDIT_BASE=$BASE"
           echo "AUDIT_HEAD=$(git rev-parse HEAD)"
 
