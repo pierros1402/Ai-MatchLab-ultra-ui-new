@@ -1,0 +1,81 @@
+name: TMP value coverage evidence persistence 20260913 V3
+
+on:
+  push:
+    branches:
+      - fix/20260913-value-coverage-evidence-persistence
+
+permissions:
+  contents: write
+
+jobs:
+  normalize-and-validate:
+    if: github.event.head_commit.message == 'Normalize Value coverage evidence patch formatting'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout isolated branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Normalize formatting
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('engine-v1/jobs/build-league-gap-report-day.js')
+          s = p.read_text(encoding='utf-8')
+          old = '''  const snapshot = snapshotStateForDay(date);
+          const valueCoverageSourcePath =
+          `data/value/_coverage-reports/${date}.json`;
+          const valueCoverageReport = readJsonSafe(
+          resolveDataPath("value", "_coverage-reports", `${date}.json`),
+          null
+          );
+          const valueCoverageEvidence = normalizeValueCoverageEvidence(
+          valueCoverageReport,
+          date,
+          valueCoverageSourcePath
+          );
+          '''
+          new = '''  const snapshot = snapshotStateForDay(date);
+          const valueCoverageSourcePath =
+            `data/value/_coverage-reports/${date}.json`;
+          const valueCoverageReport = readJsonSafe(
+            resolveDataPath("value", "_coverage-reports", `${date}.json`),
+            null
+          );
+          const valueCoverageEvidence = normalizeValueCoverageEvidence(
+            valueCoverageReport,
+            date,
+            valueCoverageSourcePath
+          );
+          '''
+          if s.count(old) != 1:
+              raise SystemExit(f'format anchor count={s.count(old)}')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          PY
+          git diff --check
+
+      - name: Re-run syntax and regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/core/value-coverage-evidence.js
+          node --check engine-v1/jobs/build-league-gap-report-day.js
+          node --check engine-v1/tests/value-coverage-evidence-persistence.test.js
+          node --test engine-v1/tests/value-coverage-evidence-persistence.test.js
+          node --test engine-v1/tests/daily-history-catchup-h2h-scope.test.js
+
+      - name: Commit formatting-only source change
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHANGED="$(git status --short | awk '{print $2}' | grep -Ev '^\.github/workflows/' | sort)"
+          test "$CHANGED" = "engine-v1/jobs/build-league-gap-report-day.js"
+          git add engine-v1/jobs/build-league-gap-report-day.js
+          git config user.name "matchlab-repair"
+          git config user.email "matchlab-repair@users.noreply.github.com"
+          git commit -m "Normalize Value coverage evidence formatting"
+          git push origin HEAD:fix/20260913-value-coverage-evidence-persistence
