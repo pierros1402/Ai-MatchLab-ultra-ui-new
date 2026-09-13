@@ -1,0 +1,151 @@
+name: TMP Value coverage evidence persistence validation 2026-09-13 V2
+
+on:
+  push:
+    branches:
+      - audit/20260913-value-coverage-evidence-persistence-validation-v2
+
+permissions:
+  contents: read
+
+jobs:
+  validate-value-coverage-evidence-persistence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout validation branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Verify exact source commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_COMMIT="c2b014b53e7cc6786502b134ae6d6607dc98bc32"
+          BASE="6061d11e0ff6bb9c73665769a3cd1db88adfa8b9"
+          test "$(git rev-parse HEAD^)" = "$SOURCE_COMMIT"
+          test "$(git diff --name-only "$SOURCE_COMMIT"..HEAD)" = ".github/workflows/tmp-value-coverage-evidence-persistence-validation-20260913-v2.yml"
+          SOURCE_CHANGED="$(git diff --name-only "$BASE".."$SOURCE_COMMIT" | sort)"
+          EXPECTED=$'engine-v1/core/value-coverage-evidence.js\nengine-v1/jobs/build-league-gap-report-day.js\nengine-v1/tests/value-coverage-evidence-persistence.test.js'
+          test "$SOURCE_CHANGED" = "$EXPECTED"
+          echo "PERSISTENCE_SOURCE_COMMIT_VERIFIED=$SOURCE_COMMIT"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Syntax and regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/core/value-coverage-evidence.js
+          node --check engine-v1/jobs/build-league-gap-report-day.js
+          node --check engine-v1/tests/value-coverage-evidence-persistence.test.js
+          node --test engine-v1/tests/value-coverage-evidence-persistence.test.js
+          node --test engine-v1/tests/value-coverage-canonical-universe.test.js
+          node --test engine-v1/tests/daily-history-catchup-h2h-scope.test.js
+
+      - name: Verify production ordering
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const source = fs.readFileSync('engine-v1/jobs/run-daily-cycle.js', 'utf8').replace(/\r\n/g, '\n');
+          const coverageIndex = source.indexOf('valueCoverageReport = await buildValueCoverageReportDay(dayKey);');
+          const gapIndex = source.indexOf('const gapReport = buildLeagueGapReportDay(dayKey);');
+          assert.notEqual(coverageIndex, -1);
+          assert.notEqual(gapIndex, -1);
+          assert.ok(coverageIndex < gapIndex, `coverageIndex=${coverageIndex} gapIndex=${gapIndex}`);
+          console.log(JSON.stringify({ok:true, coverageIndex, gapIndex, order:'coverage_then_readiness'}, null, 2));
+          NODE
+
+      - name: Runtime evidence persistence round-trip
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import assert from 'node:assert/strict';
+          import { buildLeagueGapReportDay } from './engine-v1/jobs/build-league-gap-report-day.js';
+
+          const dayKey = '2099-01-01';
+          const rawDir = path.join('data','value','_coverage-reports');
+          const rawFile = path.join(rawDir, `${dayKey}.json`);
+          const readinessDir = path.join('data','coverage-readiness');
+          const readinessFile = path.join(readinessDir, `${dayKey}.json`);
+          fs.mkdirSync(rawDir, {recursive:true});
+          fs.mkdirSync(readinessDir, {recursive:true});
+          const raw = {
+            dayKey,
+            generatedAt:'2099-01-01T12:00:00.000Z',
+            source:{
+              inputSource:'canonical_fixtures',
+              canonicalMatches:2,
+              snapshotFallbackMatches:0,
+              sourceMatches:2,
+              playable:2,
+              fixtureUniverse:{
+                schema:'ai-matchlab.value-fixture-universe.v1',
+                source:'canonical_fixtures',
+                count:2,
+                hash:'synthetic-fixture-universe-hash',
+                canonicalIds:['cid_a','cid_b']
+              }
+            },
+            counts:{totalRows:2,detailsFound:2,intelligenceOk:2,valueReturned:1,valueNull:1,valueFailed:0,minimumRecentSampleNull:1},
+            breakdown:{nullByReason:{minimum_recent_sample:1},nullByClass:{low_recent_sample:1},nullByLeague:{'test.1':1},returnedByLeague:{'test.1':1}},
+            rows:[{matchId:'cid_a',valueReturned:true},{matchId:'cid_b',valueReturned:false,nullReason:'minimum_recent_sample'}]
+          };
+          fs.writeFileSync(rawFile, `${JSON.stringify(raw,null,2)}\n`, 'utf8');
+          const built = buildLeagueGapReportDay(dayKey);
+          const persisted = JSON.parse(fs.readFileSync(readinessFile,'utf8'));
+          assert.equal(built?.valueCoverageEvidence?.present, true);
+          assert.equal(persisted?.valueCoverageEvidence?.present, true);
+          assert.equal(persisted?.valueCoverageEvidence?.source?.inputSource, 'canonical_fixtures');
+          assert.equal(persisted?.valueCoverageEvidence?.source?.fixtureUniverse?.count, 2);
+          assert.equal(persisted?.valueCoverageEvidence?.source?.fixtureUniverse?.hash, 'synthetic-fixture-universe-hash');
+          assert.deepEqual(persisted?.valueCoverageEvidence?.source?.fixtureUniverse?.canonicalIds, ['cid_a','cid_b']);
+          assert.equal(persisted?.summary?.valueCoverage?.present, true);
+          assert.equal(persisted?.summary?.valueCoverage?.canonicalMatches, 2);
+          assert.equal(persisted?.summary?.valueCoverage?.sourceMatches, 2);
+          assert.equal(persisted?.summary?.valueCoverage?.valueReturned, 1);
+          console.log(JSON.stringify({
+            ok:true,
+            evidencePresent:true,
+            inputSource:persisted.valueCoverageEvidence.source.inputSource,
+            fixtureUniverse:persisted.valueCoverageEvidence.source.fixtureUniverse,
+            summary:persisted.summary.valueCoverage
+          },null,2));
+          fs.rmSync(rawFile,{force:true});
+          fs.rmSync(readinessFile,{force:true});
+          NODE
+
+      - name: Require remote main still pinned
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_MAIN="6061d11e0ff6bb9c73665769a3cd1db88adfa8b9"
+          git fetch origin main --quiet
+          ACTUAL_MAIN="$(git rev-parse origin/main)"
+          echo "EXPECTED_MAIN=$EXPECTED_MAIN"
+          echo "ACTUAL_MAIN=$ACTUAL_MAIN"
+          test "$ACTUAL_MAIN" = "$EXPECTED_MAIN"
+
+      - name: Prove validation checkout clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          echo "VALUE_COVERAGE_EVIDENCE_PERSISTENCE_VALIDATION=PASS"
