@@ -34,6 +34,10 @@ import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import {
   buildActiveCompetitionCompleteness
 } from "../system-health/active-competition-completeness-policy.js";
+import {
+  normalizeValueCoverageEvidence,
+  summarizeValueCoverageEvidence
+} from "../core/value-coverage-evidence.js";
 
 function log(...a) { console.log("[league-gap-report]", ...a); }
 
@@ -343,6 +347,17 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
     });
 
   const snapshot = snapshotStateForDay(date);
+  const valueCoverageSourcePath =
+    `data/value/_coverage-reports/${date}.json`;
+  const valueCoverageReport = readJsonSafe(
+    resolveDataPath("value", "_coverage-reports", `${date}.json`),
+    null
+  );
+  const valueCoverageEvidence = normalizeValueCoverageEvidence(
+    valueCoverageReport,
+    date,
+    valueCoverageSourcePath
+  );
   // Full-season matchday ledger stamps (jobs/build-matchday-ledger.js), read once
   // from league-memory. The axis gives ONE round per league; the ledger gives
   // rowsWithRound — how many of the season's fixtures actually carry an imputed
@@ -470,6 +485,8 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
       disabledLeagues: disabledDeclared,
       activeCompetitionCompleteness:
         activeCompetitionCompleteness.summary,
+      valueCoverage:
+        summarizeValueCoverageEvidence(valueCoverageEvidence),
       leagueOnly: {
         declaredLeagues: rows.filter(r => r.isLeague).length,
         leaguesWithCanonicalFixtures: rows.filter(r => r.isLeague && r.canonicalFixtures > 0).length,
@@ -532,6 +549,7 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
       byStatus
     },
     activeCompetitionCompleteness,
+    valueCoverageEvidence,
     broken,
     undeclaredSlugs,
     leagues: rows
