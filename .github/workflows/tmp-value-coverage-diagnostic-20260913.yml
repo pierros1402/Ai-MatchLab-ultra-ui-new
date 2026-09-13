@@ -1,0 +1,106 @@
+name: TMP Value coverage diagnostic 20260913
+
+on:
+  push:
+    branches:
+      - audit/20260913-value-coverage-current-main
+
+permissions:
+  contents: read
+
+jobs:
+  value-coverage-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact source base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="b1de324b81119b7101fe6ab515d6eae94edd65c0"
+          test "$(git rev-parse HEAD^)" = "$BASE"
+          test "$(git diff --name-only "$BASE"..HEAD)" = ".github/workflows/tmp-value-coverage-diagnostic-20260913.yml"
+          echo "VALUE_COVERAGE_DIAGNOSTIC_BASE=$BASE"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npm --prefix engine-v1 ci --no-audit --no-fund
+
+      - name: Build ephemeral coverage reports
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/value-coverage-evidence
+          for DAY in 2026-09-12 2026-09-13; do
+            echo "=== VALUE COVERAGE $DAY ===" | tee "/tmp/value-coverage-evidence/${DAY}.log"
+            node ./engine-v1/jobs/build-value-coverage-report-day.js "$DAY" | tee -a "/tmp/value-coverage-evidence/${DAY}.log"
+            REPORT="data/value/_coverage-reports/${DAY}.json"
+            test -f "$REPORT"
+            cp "$REPORT" "/tmp/value-coverage-evidence/${DAY}.json"
+          done
+
+      - name: Summarize coverage counters
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          for (const day of ['2026-09-12','2026-09-13']) {
+            const p = `/tmp/value-coverage-evidence/${day}.json`;
+            const r = JSON.parse(fs.readFileSync(p, 'utf8'));
+            const playable = Number(r?.source?.playable || 0);
+            const returned = Number(r?.counts?.valueReturned || 0);
+            const valueNull = Number(r?.counts?.valueNull || 0);
+            const coveragePct = playable > 0 ? Number((100 * returned / playable).toFixed(4)) : null;
+            console.log(JSON.stringify({
+              day,
+              inputSource: r?.source?.inputSource || null,
+              sourceMatches: r?.source?.sourceMatches ?? null,
+              playable,
+              detailsFound: r?.counts?.detailsFound ?? null,
+              intelligenceOk: r?.counts?.intelligenceOk ?? null,
+              valueReturned: returned,
+              valueNull,
+              valueFailed: r?.counts?.valueFailed ?? null,
+              minimumRecentSampleNull: r?.counts?.minimumRecentSampleNull ?? null,
+              coveragePct,
+              nullByReason: r?.breakdown?.nullByReason || {},
+              nullByClass: r?.breakdown?.nullByClass || {}
+            }, null, 2));
+          }
+          NODE
+
+      - name: Remove ephemeral reports and prove clean checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f data/value/_coverage-reports/2026-09-12.json data/value/_coverage-reports/2026-09-13.json
+          rmdir data/value/_coverage-reports 2>/dev/null || true
+          STATUS="$(git status --porcelain)"
+          if [ -n "$STATUS" ]; then
+            echo "ERROR: diagnostic mutated checkout"
+            echo "$STATUS"
+            exit 1
+          fi
+          echo "DIAGNOSTIC_CHECKOUT_CLEAN=true"
+
+      - name: Upload coverage evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: value-coverage-diagnostic-20260913
+          path: /tmp/value-coverage-evidence
+          if-no-files-found: error
+          retention-days: 14
