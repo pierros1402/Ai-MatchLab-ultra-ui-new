@@ -1,0 +1,259 @@
+name: TMP Value occurrence displacement VOID validation V3
+
+on:
+  push:
+    branches:
+      - fix/20260910-value-occurrence-displacement-void-v3
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tmp-value-occurrence-displacement-void-v3-20260913
+  cancel-in-progress: false
+
+jobs:
+  validate-release-v3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout isolated V3 branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact isolated baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="b1de324b81119b7101fe6ab515d6eae94edd65c0"
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          EXPECTED=$'.github/workflows/tmp-value-occurrence-displacement-void-20260913.yml\n.github/workflows/tmp-value-occurrence-displacement-void-v2-20260913.yml\n.github/workflows/tmp-value-occurrence-displacement-void-v3-20260913.yml\nengine-v1/core/value-settlement-occurrence-displacement.js\nengine-v1/tests/value-occurrence-displacement-comparison.test.js\nengine-v1/tests/value-occurrence-displacement-settlement.test.js\ntools/tmp-value-occurrence-displacement-patch.py'
+          ACTUAL="$(git diff --name-only "$BASE"..HEAD | sort)"
+          test "$ACTUAL" = "$EXPECTED"
+          echo "BASE_VERIFIED=$BASE"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Prove midnight regression is pre-existing baseline debt
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          node --test engine-v1/tests/midnight-release-deadline-contract.test.js > /tmp/midnight-before.log 2>&1
+          RC=$?
+          set -e
+          cat /tmp/midnight-before.log
+          test "$RC" -ne 0
+          grep -F 'scheduled full publication is tomorrow-only and cannot consume midnight' /tmp/midnight-before.log
+          grep -F '300 !== 180' /tmp/midnight-before.log
+          echo "PREEXISTING_MIDNIGHT_REGRESSION_PROVED=PASS"
+
+      - name: Apply structural occurrence settlement patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/tmp-value-occurrence-displacement-patch.py
+          node --check engine-v1/core/value-settlement-occurrence-displacement.js
+          node --check engine-v1/jobs/build-value-plan-comparison-day.js
+          node --check engine-v1/tests/value-occurrence-displacement-settlement.test.js
+          node --check engine-v1/tests/value-occurrence-displacement-comparison.test.js
+          git diff --check
+
+      - name: Run targeted settlement tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test \
+            engine-v1/tests/value-occurrence-displacement-settlement.test.js \
+            engine-v1/tests/value-occurrence-displacement-comparison.test.js \
+            engine-v1/tests/value-plan-comparison-nonplayed.test.js \
+            engine-v1/tests/value-comparison-exact-identity.test.js \
+            engine-v1/tests/non-played-state-contract.test.js
+
+      - name: Capture immutable Value hashes before rebuild
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            for f in \
+              data/value/2026-09-10.json \
+              data/value/_audit/2026-09-10.json \
+              data/value-plans/2026-09-10/*.json \
+              data/deploy-snapshots/2026-09-10/value.json \
+              data/deploy-snapshots/2026-09-10/value-audit.json; do
+              test -f "$f" && sha256sum "$f"
+            done
+          } | sort > /tmp/value-before.sha256
+
+      - name: Rebuild only derived 2026-09-10 comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          node engine-v1/jobs/build-value-plan-comparison-day.js --date=2026-09-10 --write
+
+      - name: Verify exact settlement closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const c = JSON.parse(fs.readFileSync('data/value-comparison/2026-09-10.json', 'utf8'));
+          if (c?.ok !== true) throw new Error('comparison_not_ok');
+          for (const planId of ['A','A2']) {
+            const plan = c?.plans?.[planId];
+            if (!plan) throw new Error(`${planId}_missing`);
+            if (Number(plan?.summary?.picks) !== 5) throw new Error(`${planId}_pick_count_changed`);
+            if (Number(plan?.summary?.settled) !== 4) throw new Error(`${planId}_graded_count_changed`);
+            if (Number(plan?.summary?.unresolved) !== 0) throw new Error(`${planId}_unresolved_not_zero`);
+            if (Number(plan?.summary?.voids) !== 1) throw new Error(`${planId}_voids_not_one`);
+            if (Number(plan?.summary?.wins) !== 3) throw new Error(`${planId}_wins_changed`);
+            if (Number(plan?.summary?.losses) !== 1) throw new Error(`${planId}_losses_changed`);
+            const row = (plan?.picks || []).find((p) => p?.matchId === 'cid_ksa1_alkhaleej_alnassr_20260910');
+            if (!row) throw new Error(`${planId}_target_pick_missing`);
+            if (row.result !== 'VOID') throw new Error(`${planId}_target_not_void`);
+            if (row.finalScore !== null) throw new Error(`${planId}_manufactured_score`);
+            if (row.finalStatus !== 'STATUS_OCCURRENCE_MOVED_OTHER_DAY') throw new Error(`${planId}_wrong_final_status`);
+            const p = row.finalResultProvenance || {};
+            if (p.verifiedOccurrenceDisplacement !== true) throw new Error(`${planId}_missing_displacement_provenance`);
+            if (p.providerMatchId !== '401900921') throw new Error(`${planId}_wrong_provider_id`);
+            if (p.originalDayKey !== '2026-09-10' || p.authoritativeDayKey !== '2026-09-12') throw new Error(`${planId}_wrong_days`);
+            if (p.authoritativeCanonicalId !== 'cid_ksa1_alkhaleej_alnassr_20260912') throw new Error(`${planId}_wrong_target_id`);
+          }
+          for (const planId of ['B','B2']) {
+            const plan = c?.plans?.[planId];
+            if (plan && Number(plan?.summary?.picks || 0) !== 0) throw new Error(`${planId}_unexpected_picks`);
+          }
+          if (fs.existsSync('data/final-results/2026-09-10/cid_ksa1_alkhaleej_alnassr_20260910.json')) {
+            throw new Error('synthetic_final_result_created');
+          }
+          console.log(JSON.stringify({ ok: true, A: c.plans.A.summary, A2: c.plans.A2.summary }, null, 2));
+          NODE
+
+      - name: Prove frozen Value bytes unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            for f in \
+              data/value/2026-09-10.json \
+              data/value/_audit/2026-09-10.json \
+              data/value-plans/2026-09-10/*.json \
+              data/deploy-snapshots/2026-09-10/value.json \
+              data/deploy-snapshots/2026-09-10/value-audit.json; do
+              test -f "$f" && sha256sum "$f"
+            done
+          } | sort > /tmp/value-after.sha256
+          diff -u /tmp/value-before.sha256 /tmp/value-after.sha256
+          echo "FROZEN_VALUE_BYTES_UNCHANGED=PASS"
+
+      - name: Run all engine regressions except proven baseline midnight debt
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -d '' TESTS < <(find engine-v1/tests -maxdepth 1 -type f -name '*.test.js' ! -name 'midnight-release-deadline-contract.test.js' -print0 | sort -z)
+          test "${#TESTS[@]}" -gt 0
+          node --test "${TESTS[@]}"
+
+      - name: Prove midnight regression is unchanged after patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          node --test engine-v1/tests/midnight-release-deadline-contract.test.js > /tmp/midnight-after.log 2>&1
+          RC=$?
+          set -e
+          cat /tmp/midnight-after.log
+          test "$RC" -ne 0
+          grep -F 'scheduled full publication is tomorrow-only and cannot consume midnight' /tmp/midnight-after.log
+          grep -F '300 !== 180' /tmp/midnight-after.log
+          echo "MIDNIGHT_BASELINE_DEBT_UNCHANGED=PASS"
+
+      - name: Verify runtime write-set
+        shell: bash
+        run: |
+          set -euo pipefail
+          ACTUAL="$(git status --porcelain | sed -E 's/^.. //' | sort)"
+          EXPECTED=$'data/value-comparison/2026-09-10.json\nengine-v1/jobs/build-value-plan-comparison-day.js'
+          test "$ACTUAL" = "$EXPECTED"
+          git diff --check
+          echo "RUNTIME_WRITESET=PASS"
+
+      - name: Require remote main still pinned
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="b1de324b81119b7101fe6ab515d6eae94edd65c0"
+          git fetch origin main
+          CURRENT="$(git rev-parse origin/main)"
+          echo "REMOTE_MAIN=$CURRENT"
+          test "$CURRENT" = "$BASE"
+
+      - name: Build clean release commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="b1de324b81119b7101fe6ab515d6eae94edd65c0"
+          TMP="$(mktemp -d)"
+          mkdir -p "$TMP/engine-v1/core" "$TMP/engine-v1/jobs" "$TMP/engine-v1/tests" "$TMP/data/value-comparison"
+          cp engine-v1/core/value-settlement-occurrence-displacement.js "$TMP/engine-v1/core/"
+          cp engine-v1/jobs/build-value-plan-comparison-day.js "$TMP/engine-v1/jobs/"
+          cp engine-v1/tests/value-occurrence-displacement-settlement.test.js "$TMP/engine-v1/tests/"
+          cp engine-v1/tests/value-occurrence-displacement-comparison.test.js "$TMP/engine-v1/tests/"
+          cp data/value-comparison/2026-09-10.json "$TMP/data/value-comparison/"
+
+          git reset --hard HEAD
+          git clean -fd
+          git checkout --detach "$BASE"
+
+          mkdir -p engine-v1/core engine-v1/jobs engine-v1/tests data/value-comparison
+          cp "$TMP/engine-v1/core/value-settlement-occurrence-displacement.js" engine-v1/core/
+          cp "$TMP/engine-v1/jobs/build-value-plan-comparison-day.js" engine-v1/jobs/
+          cp "$TMP/engine-v1/tests/value-occurrence-displacement-settlement.test.js" engine-v1/tests/
+          cp "$TMP/engine-v1/tests/value-occurrence-displacement-comparison.test.js" engine-v1/tests/
+          cp "$TMP/data/value-comparison/2026-09-10.json" data/value-comparison/
+
+          git add \
+            engine-v1/core/value-settlement-occurrence-displacement.js \
+            engine-v1/jobs/build-value-plan-comparison-day.js \
+            engine-v1/tests/value-occurrence-displacement-settlement.test.js \
+            engine-v1/tests/value-occurrence-displacement-comparison.test.js \
+            data/value-comparison/2026-09-10.json
+
+          PATHS="$(git diff --cached --name-only | sort)"
+          EXPECTED=$'data/value-comparison/2026-09-10.json\nengine-v1/core/value-settlement-occurrence-displacement.js\nengine-v1/jobs/build-value-plan-comparison-day.js\nengine-v1/tests/value-occurrence-displacement-comparison.test.js\nengine-v1/tests/value-occurrence-displacement-settlement.test.js'
+          test "$PATHS" = "$EXPECTED"
+          git diff --cached --check
+
+          git config user.name "matchlab-repair"
+          git config user.email "matchlab-repair@users.noreply.github.com"
+          git commit -m "Settle authoritative moved Value occurrence as VOID"
+          test "$(git rev-parse HEAD^)" = "$BASE"
+          echo "RELEASE_SHA=$(git rev-parse HEAD)"
+
+      - name: Push clean commit to release branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push origin HEAD:refs/heads/release/20260910-value-occurrence-displacement-void-v3
+
+      - name: Upload validation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: value-occurrence-displacement-void-validation-v3
+          path: |
+            /tmp/value-before.sha256
+            /tmp/value-after.sha256
+            /tmp/midnight-before.log
+            /tmp/midnight-after.log
+          if-no-files-found: error
