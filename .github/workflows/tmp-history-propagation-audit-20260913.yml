@@ -1,0 +1,155 @@
+name: TMP history propagation closure audit 20260913
+
+on:
+  push:
+    branches:
+      - audit/20260913-history-propagation-closure
+
+permissions:
+  contents: read
+
+env:
+  EXPECTED_BASE: f470ce1e5c72aa1b6b3b2f129800aba658887bf0
+
+jobs:
+  audit-history-propagation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify audit parent is exact main
+        shell: bash
+        run: |
+          set -euo pipefail
+          PARENT="$(git rev-parse HEAD^)"
+          test "$PARENT" = "$EXPECTED_BASE"
+          git diff --quiet "$EXPECTED_BASE" -- . ':(exclude).github/workflows/tmp-history-propagation-audit-20260913.yml'
+          echo "AUDIT_BASE_VERIFIED=$EXPECTED_BASE"
+
+      - name: Audit committed history propagation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          const read = p => JSON.parse(fs.readFileSync(p, 'utf8'));
+          const historyPath = 'data/history/2026-2027.json';
+          const reportPath = 'data/history/2026-2027.report.json';
+          const quarantinePath = 'data/competition-routing-quarantine/2026-09-12/manifest.json';
+
+          const history = read(historyPath);
+          const report = read(reportPath);
+          const quarantine = read(quarantinePath);
+
+          const expected = {
+            '2026-09-09': 76,
+            '2026-09-10': 86,
+            '2026-09-11': 185,
+          };
+
+          const days = Array.isArray(history.days) ? history.days : [];
+          const byDay = new Map(days.map(d => [String(d.dayKey || ''), d]));
+          const allRows = days.flatMap(d => Array.isArray(d.rows) ? d.rows : []);
+          const allIds = allRows.map(r => String(r?.id || '')).filter(Boolean);
+          const allIdSet = new Set(allIds);
+          const duplicateIds = [...new Set(allIds.filter((id, i) => allIds.indexOf(id) !== i))].sort();
+
+          const quarantineText = JSON.stringify(quarantine);
+          const candidateIds = [...new Set(quarantineText.match(/cid_[a-z0-9_]+_202609(?:10|11|12|13)/g) || [])].sort();
+          const contaminatedHistoryIds = candidateIds.filter(id => allIdSet.has(id));
+
+          const target = {};
+          const failures = [];
+          const requiredTruth = [
+            'canonicalIdExact',
+            'athensDayExact',
+            'orderedTeamPairMatched',
+            'canonicalPlayedTerminal',
+            'exactScoreParity',
+            'verifiedFinalTruth',
+            'nullScoreCoercionForbidden',
+          ];
+
+          for (const [dayKey, expectedCount] of Object.entries(expected)) {
+            const bucket = byDay.get(dayKey);
+            if (!bucket) {
+              failures.push(`${dayKey}:missing_history_bucket`);
+              continue;
+            }
+            const rows = Array.isArray(bucket.rows) ? bucket.rows : [];
+            const ids = rows.map(r => String(r?.id || '')).filter(Boolean);
+            const unique = new Set(ids);
+            const wrongDay = rows.filter(r => String(r?.dayKey || '') !== dayKey).map(r => r?.id || null);
+            const badStatus = rows.filter(r => !['FT','AET','PEN'].includes(String(r?.status || '').toUpperCase())).map(r => r?.id || null);
+            const badTruth = rows.filter(r => requiredTruth.some(k => r?.truthContract?.[k] !== true)).map(r => r?.id || null);
+            const contaminated = ids.filter(id => candidateIds.includes(id));
+
+            target[dayKey] = {
+              expectedCount,
+              matchCount: Number(bucket.matchCount ?? rows.length),
+              rowCount: rows.length,
+              uniqueIdCount: unique.size,
+              wrongDayCount: wrongDay.length,
+              badStatusCount: badStatus.length,
+              badTruthContractCount: badTruth.length,
+              contaminatedIdCount: contaminated.length,
+              reportCount: Number(report?.byDay?.[dayKey] ?? -1),
+            };
+
+            if (rows.length !== expectedCount) failures.push(`${dayKey}:row_count_${rows.length}_expected_${expectedCount}`);
+            if (Number(bucket.matchCount ?? rows.length) !== expectedCount) failures.push(`${dayKey}:match_count_mismatch`);
+            if (unique.size !== rows.length) failures.push(`${dayKey}:duplicate_ids`);
+            if (wrongDay.length) failures.push(`${dayKey}:wrong_day_rows_${wrongDay.length}`);
+            if (badStatus.length) failures.push(`${dayKey}:bad_terminal_status_${badStatus.length}`);
+            if (badTruth.length) failures.push(`${dayKey}:bad_truth_contract_${badTruth.length}`);
+            if (contaminated.length) failures.push(`${dayKey}:quarantined_ids_present_${contaminated.length}`);
+            if (Number(report?.byDay?.[dayKey] ?? -1) !== expectedCount) failures.push(`${dayKey}:report_count_mismatch`);
+          }
+
+          if (candidateIds.length !== 69) failures.push(`quarantine_candidate_count_${candidateIds.length}_expected_69`);
+          if (contaminatedHistoryIds.length) failures.push(`quarantined_ids_in_full_history_${contaminatedHistoryIds.length}`);
+          if (duplicateIds.length) failures.push(`duplicate_ids_in_full_history_${duplicateIds.length}`);
+          if (String(report?.lastCompletedDay || '') !== '2026-09-11') failures.push(`last_completed_day_${report?.lastCompletedDay}`);
+          if (String(report?.to || '') !== '2026-09-11') failures.push(`report_to_${report?.to}`);
+          if (Number(report?.totalMatches || 0) !== allRows.length) failures.push(`report_total_${report?.totalMatches}_history_rows_${allRows.length}`);
+          if (allRows.length !== 4196) failures.push(`history_total_${allRows.length}_expected_4196`);
+
+          const result = {
+            ok: failures.length === 0,
+            auditedBase: process.env.EXPECTED_BASE,
+            historySeason: history.season || null,
+            totalHistoryRows: allRows.length,
+            reportTotalMatches: report.totalMatches,
+            reportTo: report.to,
+            lastCompletedDay: report.lastCompletedDay,
+            quarantineCandidateCount: candidateIds.length,
+            contaminatedHistoryIdCount: contaminatedHistoryIds.length,
+            duplicateHistoryIdCount: duplicateIds.length,
+            targetDays: target,
+            failures,
+          };
+
+          fs.writeFileSync('/tmp/history-propagation-audit.json', JSON.stringify(result, null, 2) + '\n');
+          console.log(JSON.stringify(result, null, 2));
+          if (!result.ok) process.exit(1);
+          NODE
+
+      - name: Prove checkout remained read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --short)"
+          echo "READ_ONLY_CHECKOUT=PASS"
+
+      - name: Upload audit evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: history-propagation-closure-20260913
+          path: /tmp/history-propagation-audit.json
+          if-no-files-found: error
