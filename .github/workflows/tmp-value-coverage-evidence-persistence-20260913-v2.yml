@@ -1,0 +1,298 @@
+name: TMP value coverage evidence persistence 20260913 V2
+
+on:
+  push:
+    branches:
+      - fix/20260913-value-coverage-evidence-persistence
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-validate-v2:
+    if: github.event.head_commit.message == 'Harden temporary value coverage evidence patcher'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout isolated branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact isolated base
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_BASE="b5c593aa721980f5200de2151750752a9959abab"
+          test "$(git merge-base HEAD "$EXPECTED_BASE")" = "$EXPECTED_BASE"
+          CHANGED="$(git diff --name-only "$EXPECTED_BASE"..HEAD | sort)"
+          EXPECTED=$(printf '%s\n' \
+            .github/workflows/tmp-value-coverage-evidence-persistence-20260913-v2.yml \
+            .github/workflows/tmp-value-coverage-evidence-persistence-20260913.yml | sort)
+          test "$CHANGED" = "$EXPECTED"
+
+      - name: Apply evidence persistence patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > engine-v1/core/value-coverage-evidence.js <<'EOF'
+          function objectOrNull(value) {
+            return value && typeof value === "object" && !Array.isArray(value)
+              ? value
+              : null;
+          }
+
+          export function normalizeValueCoverageEvidence(report, dayKey, sourcePath = null) {
+            const date = String(dayKey || "");
+            const input = objectOrNull(report);
+
+            if (!input) {
+              return {
+                present: false,
+                dayKey: date,
+                sourcePath,
+                generatedAt: null,
+                source: null,
+                counts: null,
+                breakdown: null,
+                rows: []
+              };
+            }
+
+            return {
+              present: true,
+              dayKey: String(input.dayKey || date),
+              sourcePath,
+              generatedAt: input.generatedAt || null,
+              source: objectOrNull(input.source),
+              counts: objectOrNull(input.counts),
+              breakdown: objectOrNull(input.breakdown),
+              rows: Array.isArray(input.rows) ? input.rows : []
+            };
+          }
+
+          export function summarizeValueCoverageEvidence(evidence) {
+            const e = objectOrNull(evidence) || {};
+            const source = objectOrNull(e.source) || {};
+            const counts = objectOrNull(e.counts) || {};
+
+            return {
+              present: e.present === true,
+              inputSource: source.inputSource || null,
+              canonicalMatches: Number(source.canonicalMatches || 0),
+              sourceMatches: Number(source.sourceMatches || 0),
+              playable: Number(source.playable || 0),
+              totalRows: Number(counts.totalRows || 0),
+              detailsFound: Number(counts.detailsFound || 0),
+              intelligenceOk: Number(counts.intelligenceOk || 0),
+              valueReturned: Number(counts.valueReturned || 0),
+              valueNull: Number(counts.valueNull || 0),
+              valueFailed: Number(counts.valueFailed || 0),
+              minimumRecentSampleNull: Number(counts.minimumRecentSampleNull || 0)
+            };
+          }
+          EOF
+
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('engine-v1/jobs/build-league-gap-report-day.js')
+          s = p.read_text(encoding='utf-8')
+
+          import_anchor = '''import {
+            buildActiveCompetitionCompleteness
+          } from "../system-health/active-competition-completeness-policy.js";
+          '''
+          import_replacement = import_anchor + '''import {
+            normalizeValueCoverageEvidence,
+            summarizeValueCoverageEvidence
+          } from "../core/value-coverage-evidence.js";
+          '''
+          if s.count(import_anchor) != 1:
+              raise SystemExit(f'import anchor count={s.count(import_anchor)}')
+          s = s.replace(import_anchor, import_replacement, 1)
+
+          snapshot_anchor = '  const snapshot = snapshotStateForDay(date);\n'
+          snapshot_replacement = snapshot_anchor + '''  const valueCoverageSourcePath =
+            `data/value/_coverage-reports/${date}.json`;
+          const valueCoverageReport = readJsonSafe(
+            resolveDataPath("value", "_coverage-reports", `${date}.json`),
+            null
+          );
+          const valueCoverageEvidence = normalizeValueCoverageEvidence(
+            valueCoverageReport,
+            date,
+            valueCoverageSourcePath
+          );
+          '''
+          if s.count(snapshot_anchor) != 1:
+              raise SystemExit(f'snapshot anchor count={s.count(snapshot_anchor)}')
+          s = s.replace(snapshot_anchor, snapshot_replacement, 1)
+
+          summary_pattern = re.compile(
+              r'(\n\s+activeCompetitionCompleteness:\n\s+activeCompetitionCompleteness\.summary,\n)'
+          )
+          if len(summary_pattern.findall(s)) != 1:
+              raise SystemExit(f'summary anchor count={len(summary_pattern.findall(s))}')
+          s = summary_pattern.sub(
+              r'\1      valueCoverage:\n        summarizeValueCoverageEvidence(valueCoverageEvidence),\n',
+              s,
+              count=1
+          )
+
+          top_pattern = re.compile(
+              r'(\n\s{4}activeCompetitionCompleteness,\n)(\s{4}broken,\n)'
+          )
+          if len(top_pattern.findall(s)) != 1:
+              raise SystemExit(f'top-level anchor count={len(top_pattern.findall(s))}')
+          s = top_pattern.sub(
+              r'\1    valueCoverageEvidence,\n\2',
+              s,
+              count=1
+          )
+
+          p.write_text(s, encoding='utf-8')
+          PY
+
+          cat > engine-v1/tests/value-coverage-evidence-persistence.test.js <<'EOF'
+          import test from "node:test";
+          import assert from "node:assert/strict";
+          import fs from "node:fs";
+
+          import {
+            normalizeValueCoverageEvidence,
+            summarizeValueCoverageEvidence
+          } from "../core/value-coverage-evidence.js";
+
+          test("value coverage evidence preserves the denominator diagnostics", () => {
+            const report = {
+              dayKey: "2026-09-13",
+              generatedAt: "2026-09-13T05:00:00.000Z",
+              source: {
+                inputSource: "canonical_fixtures",
+                canonicalMatches: 120,
+                snapshotFallbackMatches: 0,
+                sourceMatches: 120,
+                playable: 117
+              },
+              counts: {
+                totalRows: 117,
+                detailsFound: 115,
+                intelligenceOk: 112,
+                valueReturned: 88,
+                valueNull: 24,
+                valueFailed: 5,
+                minimumRecentSampleNull: 19
+              },
+              breakdown: {
+                nullByReason: { minimum_recent_sample: 19, other: 5 },
+                nullByClass: { low_recent_sample: 19 },
+                nullByLeague: { "eng.1": 2 },
+                returnedByLeague: { "eng.1": 8 }
+              },
+              rows: [
+                {
+                  matchId: "cid_test_home_away_20260913",
+                  detailsFound: true,
+                  intelligenceOk: true,
+                  valueReturned: false,
+                  nullReason: "minimum_recent_sample"
+                }
+              ]
+            };
+
+            const evidence = normalizeValueCoverageEvidence(
+              report,
+              "2026-09-13",
+              "data/value/_coverage-reports/2026-09-13.json"
+            );
+
+            assert.equal(evidence.present, true);
+            assert.equal(evidence.dayKey, "2026-09-13");
+            assert.deepEqual(evidence.source, report.source);
+            assert.deepEqual(evidence.counts, report.counts);
+            assert.deepEqual(evidence.breakdown, report.breakdown);
+            assert.deepEqual(evidence.rows, report.rows);
+            assert.deepEqual(summarizeValueCoverageEvidence(evidence), {
+              present: true,
+              inputSource: "canonical_fixtures",
+              canonicalMatches: 120,
+              sourceMatches: 120,
+              playable: 117,
+              totalRows: 117,
+              detailsFound: 115,
+              intelligenceOk: 112,
+              valueReturned: 88,
+              valueNull: 24,
+              valueFailed: 5,
+              minimumRecentSampleNull: 19
+            });
+          });
+
+          test("missing raw coverage evidence is explicit and non-fabricated", () => {
+            const evidence = normalizeValueCoverageEvidence(
+              null,
+              "2026-09-13",
+              "data/value/_coverage-reports/2026-09-13.json"
+            );
+
+            assert.deepEqual(evidence, {
+              present: false,
+              dayKey: "2026-09-13",
+              sourcePath: "data/value/_coverage-reports/2026-09-13.json",
+              generatedAt: null,
+              source: null,
+              counts: null,
+              breakdown: null,
+              rows: []
+            });
+          });
+
+          test("league readiness report embeds value coverage evidence for ungated persistence", () => {
+            const source = fs
+              .readFileSync(
+                new URL("../jobs/build-league-gap-report-day.js", import.meta.url),
+                "utf8"
+              )
+              .replace(/\r\n/g, "\n");
+
+            assert.match(
+              source,
+              /resolveDataPath\("value", "_coverage-reports", `\$\{date\}\.json`\)/u
+            );
+            assert.match(source, /valueCoverageEvidence/u);
+            assert.match(source, /summarizeValueCoverageEvidence\(valueCoverageEvidence\)/u);
+          });
+          EOF
+
+          git diff --check
+
+      - name: Validate syntax and regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/core/value-coverage-evidence.js
+          node --check engine-v1/jobs/build-league-gap-report-day.js
+          node --check engine-v1/tests/value-coverage-evidence-persistence.test.js
+          node --test engine-v1/tests/value-coverage-evidence-persistence.test.js
+          node --test engine-v1/tests/daily-history-catchup-h2h-scope.test.js
+
+      - name: Verify exact write set and commit code only
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED=$(printf '%s\n' \
+            engine-v1/core/value-coverage-evidence.js \
+            engine-v1/jobs/build-league-gap-report-day.js \
+            engine-v1/tests/value-coverage-evidence-persistence.test.js | sort)
+          ACTUAL=$(git status --short | awk '{print $2}' | grep -Ev '^\.github/workflows/tmp-value-coverage-evidence-persistence-20260913(-v2)?\.yml$' | sort)
+          test "$ACTUAL" = "$EXPECTED"
+
+          git add \
+            engine-v1/core/value-coverage-evidence.js \
+            engine-v1/jobs/build-league-gap-report-day.js \
+            engine-v1/tests/value-coverage-evidence-persistence.test.js
+          git config user.name "matchlab-repair"
+          git config user.email "matchlab-repair@users.noreply.github.com"
+          git commit -m "Persist Value denominator evidence in readiness report"
+          git push origin HEAD:fix/20260913-value-coverage-evidence-persistence
