@@ -1,0 +1,125 @@
+name: TMP history propagation audit 2026-09-13
+
+on:
+  push:
+    branches:
+      - audit/20260913-history-propagation-current-main
+
+permissions:
+  contents: read
+
+jobs:
+  audit-history-propagation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Verify exact source baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_BASE="b1de324b81119b7101fe6ab515d6eae94edd65c0"
+          ACTUAL_PARENT="$(git rev-parse HEAD^)"
+          test "$ACTUAL_PARENT" = "$EXPECTED_BASE"
+          CHANGED="$(git diff --name-only "$EXPECTED_BASE"..HEAD)"
+          test "$CHANGED" = ".github/workflows/tmp-history-propagation-audit-20260913.yml"
+          echo "HISTORY_AUDIT_BASE_VERIFIED=$EXPECTED_BASE"
+
+      - name: Audit propagated history truth
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+
+          const historyPath = 'data/history/2026-2027.json';
+          const reportPath = 'data/history/2026-2027.report.json';
+          const quarantinePath = 'data/competition-routing-quarantine/2026-09-12/manifest.json';
+
+          const history = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
+          const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+          const quarantine = JSON.parse(fs.readFileSync(quarantinePath, 'utf8'));
+
+          const expectedCounts = {
+            '2026-09-09': 76,
+            '2026-09-10': 86,
+            '2026-09-11': 185,
+          };
+          const unresolvedExpectedAbsent = new Set([
+            'cid_chi2_sanfelipe_sanluis_20260909',
+            'cid_kos2_ferizaj_istogu_20260911',
+            'cid_fro1_abargir_toftir_20260911',
+          ]);
+
+          const days = Array.isArray(history?.days) ? history.days : [];
+          const dayMap = new Map(days.map((day) => [String(day?.dayKey || ''), day]));
+          const allRecentRows = [];
+          const perDay = {};
+          const errors = [];
+
+          for (const [dayKey, expected] of Object.entries(expectedCounts)) {
+            const day = dayMap.get(dayKey);
+            const rows = Array.isArray(day?.rows) ? day.rows : [];
+            const ids = rows.map((row) => String(row?.id || '')).filter(Boolean);
+            const duplicateIds = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
+            perDay[dayKey] = {
+              historyRows: rows.length,
+              reportRows: Number(report?.byDay?.[dayKey] ?? -1),
+              duplicateIds,
+            };
+            if (rows.length !== expected) errors.push(`${dayKey}: history ${rows.length} != expected ${expected}`);
+            if (Number(report?.byDay?.[dayKey] ?? -1) !== expected) errors.push(`${dayKey}: report != expected ${expected}`);
+            if (duplicateIds.length) errors.push(`${dayKey}: duplicate history ids: ${duplicateIds.join(',')}`);
+            allRecentRows.push(...rows);
+          }
+
+          const recentIds = new Set(allRecentRows.map((row) => String(row?.id || '')).filter(Boolean));
+          const quarantinedFinalIds = new Set(
+            (Array.isArray(quarantine?.finalResultRemovals) ? quarantine.finalResultRemovals : [])
+              .filter((row) => ['2026-09-10', '2026-09-11'].includes(String(row?.day || '')))
+              .map((row) => String(row?.canonicalId || ''))
+              .filter(Boolean)
+          );
+          const quarantineHits = [...quarantinedFinalIds].filter((id) => recentIds.has(id)).sort();
+          if (quarantineHits.length) errors.push(`quarantined ids present in history: ${quarantineHits.join(',')}`);
+
+          const unresolvedHits = [...unresolvedExpectedAbsent].filter((id) => recentIds.has(id)).sort();
+          if (unresolvedHits.length) errors.push(`unresolved ids incorrectly present in history: ${unresolvedHits.join(',')}`);
+
+          if (report?.to !== '2026-09-11') errors.push(`report.to=${report?.to}`);
+          if (report?.lastCompletedDay !== '2026-09-11') errors.push(`lastCompletedDay=${report?.lastCompletedDay}`);
+          if (Number(report?.totalMatches) !== 4196) errors.push(`totalMatches=${report?.totalMatches}`);
+
+          const summary = {
+            ok: errors.length === 0,
+            historySeason: history?.season || null,
+            reportGeneratedAt: report?.generatedAt || null,
+            reportTo: report?.to || null,
+            lastCompletedDay: report?.lastCompletedDay || null,
+            totalMatches: report?.totalMatches ?? null,
+            perDay,
+            quarantinedFinalIdCountChecked: quarantinedFinalIds.size,
+            quarantineHits,
+            unresolvedExpectedAbsent: [...unresolvedExpectedAbsent],
+            unresolvedHits,
+            errors,
+          };
+          console.log(JSON.stringify(summary, null, 2));
+          if (!summary.ok) process.exit(1);
+          NODE
+
+      - name: Prove checkout stayed read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          echo "READ_ONLY_HISTORY_AUDIT=PASS"
