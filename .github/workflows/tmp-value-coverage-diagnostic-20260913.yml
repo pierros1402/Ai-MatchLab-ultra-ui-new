@@ -1,0 +1,99 @@
+name: TMP Value coverage diagnostic 20260913
+
+on:
+  push:
+    branches:
+      - audit/20260913-value-coverage-diagnostic-v1
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose-value-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout diagnostic branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Verify exact read-only base
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_BASE="b8dc35441cc8d69553425e581bd3693f473e8df6"
+          ACTUAL_BASE="$(git rev-parse HEAD^)"
+          test "$ACTUAL_BASE" = "$EXPECTED_BASE"
+          CHANGED="$(git diff --name-only HEAD^ HEAD)"
+          test "$CHANGED" = ".github/workflows/tmp-value-coverage-diagnostic-20260913.yml"
+          echo "VALUE_COVERAGE_DIAGNOSTIC_BASE=$ACTUAL_BASE"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Build read-only Value coverage diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          for DAY in 2026-09-13 2026-09-14; do
+            echo "=== VALUE COVERAGE $DAY ==="
+            node ./engine-v1/jobs/build-value-coverage-report-day.js "$DAY"
+            FILE="data/value/_coverage-reports/${DAY}.json"
+            test -f "$FILE"
+            DAY_KEY="$DAY" node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const day = process.env.DAY_KEY;
+          const file = `data/value/_coverage-reports/${day}.json`;
+          const r = JSON.parse(fs.readFileSync(file, 'utf8'));
+          const rows = Array.isArray(r.rows) ? r.rows : [];
+          const marketReasonCounts = {};
+          for (const row of rows) {
+            const md = row?.valuePreview?.marketDiagnostics || {};
+            for (const [market, d] of Object.entries(md)) {
+              if (d?.eligible === true) continue;
+              for (const reason of Array.isArray(d?.reasons) ? d.reasons : []) {
+                const key = `${market}::${reason}`;
+                marketReasonCounts[key] = (marketReasonCounts[key] || 0) + 1;
+              }
+            }
+          }
+          const topMarketRejections = Object.fromEntries(
+            Object.entries(marketReasonCounts)
+              .sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0]))
+              .slice(0,30)
+          );
+          const out = {
+            dayKey: r.dayKey,
+            season: r.season,
+            source: r.source,
+            counts: r.counts,
+            breakdown: r.breakdown,
+            topMarketRejections
+          };
+          console.log(JSON.stringify(out, null, 2));
+          fs.writeFileSync(`/tmp/value-coverage-${day}.compact.json`, JSON.stringify(out, null, 2) + '\n');
+          NODE
+          done
+
+      - name: Prove repository stayed unmodified except transient coverage reports
+        shell: bash
+        run: |
+          set -euo pipefail
+          STATUS="$(git status --short)"
+          echo "$STATUS"
+          BAD="$(printf '%s\n' "$STATUS" | grep -Ev '^\?\? data/value/_coverage-reports/2026-09-(13|14)\.json$' || true)"
+          if [ -n "$BAD" ]; then
+            echo "Unexpected worktree mutation:"
+            echo "$BAD"
+            exit 1
+          fi
