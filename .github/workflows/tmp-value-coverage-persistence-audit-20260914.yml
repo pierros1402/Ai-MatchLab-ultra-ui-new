@@ -1,0 +1,102 @@
+name: TMP Value coverage persistence audit 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-value-coverage-persistence
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Verify exact audit base
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_BASE="b8dc35441cc8d69553425e581bd3693f473e8df6"
+          ACTUAL_PARENT="$(git rev-parse HEAD^)"
+          test "$ACTUAL_PARENT" = "$EXPECTED_BASE"
+          CHANGED="$(git diff --name-only "$EXPECTED_BASE" HEAD)"
+          test "$CHANGED" = ".github/workflows/tmp-value-coverage-persistence-audit-20260914.yml"
+          echo "AUDIT_BASE_VERIFIED=$EXPECTED_BASE"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Prove baseline report is not committed
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -f data/value/_coverage-reports/2026-09-14.json
+          echo "BASELINE_COVERAGE_REPORT_COMMITTED=false"
+
+      - name: Build Value coverage report read-only evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-value-coverage-report-day.js 2026-09-14 | tee /tmp/value-coverage-builder-output.json
+          test -f data/value/_coverage-reports/2026-09-14.json
+          cp data/value/_coverage-reports/2026-09-14.json /tmp/value-coverage-2026-09-14.json
+
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const p = JSON.parse(fs.readFileSync('/tmp/value-coverage-2026-09-14.json','utf8'));
+          const s = p.source || {};
+          const c = p.counts || {};
+          if (p.ok !== true) throw new Error('coverage_report_not_ok');
+          if (s.inputSource !== 'canonical_fixtures') throw new Error(`unexpected_input_source:${s.inputSource}`);
+          if (Number(s.snapshotFallbackMatches || 0) !== 0) throw new Error('snapshot_fallback_not_zero');
+          if (Number(s.sourceMatches || 0) !== Number(s.canonicalMatches || 0)) throw new Error('source_canonical_count_mismatch');
+          if (Number(c.totalRows || 0) !== Number(s.playable || 0)) throw new Error('playable_denominator_mismatch');
+          if (Number(s.fixtureUniverse?.count || 0) !== Number(s.canonicalMatches || 0)) throw new Error('fixture_universe_count_mismatch');
+          if (!String(s.fixtureUniverse?.hash || '').match(/^[a-f0-9]{64}$/)) throw new Error('fixture_universe_hash_missing');
+          console.log(JSON.stringify({
+            dayKey:p.dayKey,
+            canonicalMatches:s.canonicalMatches,
+            sourceMatches:s.sourceMatches,
+            playable:s.playable,
+            fixtureUniverse:s.fixtureUniverse,
+            counts:c,
+            nullByReason:p.breakdown?.nullByReason || {}
+          }, null, 2));
+NODE
+
+      - name: Restore clean checkout after evidence capture
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore --staged --worktree -- data/value/_coverage-reports 2>/dev/null || true
+          git clean -fd -- data/value/_coverage-reports
+          STATUS="$(git status --porcelain)"
+          if [ -n "$STATUS" ]; then
+            echo "$STATUS"
+            exit 1
+          fi
+          echo "AUDIT_CHECKOUT_CLEAN=true"
+
+      - name: Upload coverage evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: value-coverage-persistence-audit-20260914
+          path: |
+            /tmp/value-coverage-2026-09-14.json
+            /tmp/value-coverage-builder-output.json
+          if-no-files-found: error
