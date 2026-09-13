@@ -1,0 +1,341 @@
+name: TMP autonomous history truth convergence V3
+
+on:
+  push:
+    branches:
+      - fix/20260913-autonomous-history-truth-convergence-v3
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tmp-autonomous-history-truth-convergence-v3
+  cancel-in-progress: false
+
+jobs:
+  validate-and-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASE_SHA: b4abcdd47da8164df94f76aa7612d711c984c087
+      RELEASE_BRANCH: release/20260913-autonomous-history-truth-convergence-v3
+    steps:
+      - name: Checkout isolated branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify isolated baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git merge-base HEAD "$BASE_SHA")" = "$BASE_SHA"
+          test "$(git diff --name-only "$BASE_SHA"...HEAD)" = ".github/workflows/tmp-autonomous-history-truth-convergence-v3.yml"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Apply autonomous history convergence patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('engine-v1/jobs/run-daily-cycle.js')
+          s = p.read_text(encoding='utf-8').replace('\r\n', '\n')
+
+          # Stable top-level import replacement.
+          old_import = 'import { appendFinalizedDayToHistory } from "./append-finalized-day-to-history.js";'
+          new_import = '''import {
+            appendFinalizedDayToHistory,
+            buildHistoryDayFromTruth
+          } from "./append-finalized-day-to-history.js";
+          import {
+            shouldRefreshVerifiedFinalTruth,
+            summarizeHistoryTruthParity
+          } from "../core/history-truth-convergence.js";'''
+          if s.count(old_import) != 1:
+              raise SystemExit(f'import anchor count != 1: {s.count(old_import)}')
+          s = s.replace(old_import, new_import, 1)
+
+          # Stable helper insertion before the existing settlement section.
+          helper_anchor = '// Value settlement chain for one day: verified final results for Plan A,'
+          helper = '''function refreshVerifiedFinalTruthAllFixtures(dayKey, label, offsetDays = 0) {
+            const offsets = [...new Set([offsetDays - 1, offsetDays, offsetDays + 1])];
+            const offsetsArg = `--offsets=${offsets.join(",")}`;
+            return runDailyCycleNodeJob([
+              "./engine-v1/jobs/export-verified-final-results-day.js",
+              `--date=${dayKey}`,
+              "--write",
+              "--all-fixtures",
+              offsetsArg
+            ], `${label}-verified-final-results-all-fixtures`);
+          }
+
+          '''
+          if s.count(helper_anchor) != 1:
+              raise SystemExit(f'helper anchor count != 1: {s.count(helper_anchor)}')
+          s = s.replace(helper_anchor, helper + helper_anchor, 1)
+
+          # Restrict all remaining edits to the unique D-1..D-7 catch-up region.
+          comment_marker = '    // History catch-up:'
+          start = s.find(comment_marker)
+          if start < 0:
+              raise SystemExit('history catch-up start marker missing')
+          loop_marker = '    historyCatchUp = [];'
+          loop_start = s.find(loop_marker, start)
+          if loop_start < 0:
+              raise SystemExit('history catch-up loop start missing')
+          end_marker = '    if (historyCatchUp.length) {'
+          end = s.find(end_marker, loop_start)
+          if end < 0:
+              raise SystemExit('history catch-up region end missing')
+          region = s[loop_start:end]
+
+          readiness_line = '      const readiness = auditFinalizationReadinessDay(day);'
+          if region.count(readiness_line) != 1:
+              raise SystemExit(f'readiness line count in catch-up != 1: {region.count(readiness_line)}')
+          parity_block = '''      const readiness = auditFinalizationReadinessDay(day);
+
+                // History owns its own final-truth convergence. Missing verified-final
+                // evidence is refreshed independently of Value. Structural conflicts
+                // remain fail-closed and are surfaced in the catch-up diagnostics.
+                let historyParity = buildHistoryDayFromTruth(day);
+                let historyTruthRefreshAttempted = false;
+                let historyTruthRefreshStatus = null;
+
+                if (shouldRefreshVerifiedFinalTruth(historyParity)) {
+                  historyTruthRefreshAttempted = true;
+                  const historyTruthRefresh = refreshVerifiedFinalTruthAllFixtures(
+                    day,
+                    `catch-up-history-${day}`,
+                    -back
+                  );
+                  historyTruthRefreshStatus = historyTruthRefresh?.status ?? null;
+                  historyParity = buildHistoryDayFromTruth(day);
+                }
+
+                const historyParitySummary = summarizeHistoryTruthParity(historyParity);'''
+          region = region.replace(readiness_line, parity_block, 1)
+
+          duplicate_line = '        (readiness?.duplicateIdCount ?? 0) === 0'
+          if region.count(duplicate_line) != 1:
+              raise SystemExit(f'duplicate gate line count in catch-up != 1: {region.count(duplicate_line)}')
+          region = region.replace(
+              duplicate_line,
+              duplicate_line + ' &&\n        historyParity?.ok === true',
+              1
+          )
+
+          merged_line = '        appendedRows: append?.mergedRows ?? 0,'
+          if region.count(merged_line) != 1:
+              raise SystemExit(f'mergedRows line count in catch-up != 1: {region.count(merged_line)}')
+          diagnostics = '''        historyTruthRefreshAttempted,
+                  historyTruthRefreshStatus,
+                  historyParity: historyParitySummary,
+                  appended: !!append?.ok,
+                  appendedRows: append?.rowsWritten ?? 0,
+                  historyAppendReason:
+                    append?.reason ||
+                    (historyParity?.ok === true ? null : historyParity?.reason || null),'''
+          old_diag = '''        appended: !!append?.ok,
+                  appendedRows: append?.mergedRows ?? 0,'''
+          if region.count(old_diag) != 1:
+              raise SystemExit(f'append diagnostics pair count in catch-up != 1: {region.count(old_diag)}')
+          region = region.replace(old_diag, diagnostics, 1)
+
+          s = s[:loop_start] + region + s[end:]
+          s = s.replace(
+            'appendFinalizedDayToHistory merges by id',
+            'appendFinalizedDayToHistory atomically replaces the verified played-final set'
+          )
+          p.write_text(s, encoding='utf-8')
+          PY
+
+          cat > engine-v1/core/history-truth-convergence.js <<'EOF'
+          function cleanReason(value) {
+            return String(value ?? "").trim();
+          }
+
+          export function summarizeHistoryTruthParity(build = null, options = {}) {
+            const rawLimit = Number(options?.sampleLimit ?? 12);
+            const sampleLimit = Number.isInteger(rawLimit) && rawLimit >= 0 ? rawLimit : 12;
+            const errors = Array.isArray(build?.errors) ? build.errors : [];
+            const byReason = {};
+            for (const error of errors) {
+              const reason = cleanReason(error?.reason) || "unknown";
+              byReason[reason] = Number(byReason[reason] || 0) + 1;
+            }
+            return {
+              ok: build?.ok === true,
+              reason: build?.reason || null,
+              dayKey: build?.dayKey || null,
+              season: build?.season || null,
+              canonicalFixtureCount: Number(build?.canonicalFixtureCount || 0),
+              canonicalPlayedFinalCount: Number(build?.canonicalPlayedFinalCount || 0),
+              verifiedFinalCount: Number(build?.verifiedFinalCount || 0),
+              acceptedRows: Number(build?.acceptedRows || 0),
+              errorCount: errors.length,
+              byReason,
+              sampleErrors: errors.slice(0, sampleLimit).map(error => ({
+                reason: cleanReason(error?.reason) || "unknown",
+                matchId: error?.matchId || null,
+                canonicalState: error?.canonicalState || null,
+                actualDay: error?.actualDay || null
+              }))
+            };
+          }
+
+          export function shouldRefreshVerifiedFinalTruth(build = null) {
+            if (build?.ok === true) return false;
+            const errors = Array.isArray(build?.errors) ? build.errors : [];
+            return errors.some(error =>
+              cleanReason(error?.reason) === "canonical_final_missing_verified_final"
+            );
+          }
+          EOF
+
+          cat > engine-v1/tests/history-truth-convergence.test.js <<'EOF'
+          import test from "node:test";
+          import assert from "node:assert/strict";
+          import {
+            shouldRefreshVerifiedFinalTruth,
+            summarizeHistoryTruthParity
+          } from "../core/history-truth-convergence.js";
+
+          test("missing verified finals trigger autonomous history truth refresh", () => {
+            assert.equal(shouldRefreshVerifiedFinalTruth({
+              ok: false,
+              errors: [{ reason: "canonical_final_missing_verified_final", matchId: "m2" }]
+            }), true);
+          });
+
+          test("structural conflicts never trigger automatic evidence overwrite", () => {
+            for (const reason of [
+              "canonical_verified_final_score_mismatch",
+              "canonical_verified_final_team_mismatch",
+              "verified_final_missing_canonical_fixture",
+              "verified_final_canonical_nonterminal"
+            ]) {
+              assert.equal(shouldRefreshVerifiedFinalTruth({
+                ok: false,
+                errors: [{ reason, matchId: "m1" }]
+              }), false, reason);
+            }
+          });
+
+          test("parity summary counts reasons and bounds samples", () => {
+            const summary = summarizeHistoryTruthParity({
+              ok: false,
+              reason: "history_truth_parity_failed",
+              dayKey: "2026-09-10",
+              canonicalFixtureCount: 5,
+              canonicalPlayedFinalCount: 4,
+              verifiedFinalCount: 2,
+              acceptedRows: 2,
+              errors: [
+                { reason: "canonical_final_missing_verified_final", matchId: "a" },
+                { reason: "canonical_final_missing_verified_final", matchId: "b" },
+                { reason: "canonical_verified_final_score_mismatch", matchId: "c" }
+              ]
+            }, { sampleLimit: 2 });
+            assert.equal(summary.errorCount, 3);
+            assert.deepEqual(summary.byReason, {
+              canonical_final_missing_verified_final: 2,
+              canonical_verified_final_score_mismatch: 1
+            });
+            assert.equal(summary.sampleErrors.length, 2);
+          });
+          EOF
+
+          cat >> engine-v1/tests/daily-history-catchup-h2h-scope.test.js <<'EOF'
+
+          test("history catch-up owns verified-final convergence independently of Value", () => {
+            const parityIndex = source.indexOf("let historyParity = buildHistoryDayFromTruth(day);");
+            const decisionIndex = source.indexOf("shouldRefreshVerifiedFinalTruth(historyParity)", parityIndex);
+            const refreshIndex = source.indexOf("refreshVerifiedFinalTruthAllFixtures(", decisionIndex);
+            const appendIndex = source.indexOf("append = await appendFinalizedDayToHistory(day);", refreshIndex);
+            assert.ok(parityIndex >= 0);
+            assert.ok(decisionIndex > parityIndex);
+            assert.ok(refreshIndex > decisionIndex);
+            assert.ok(appendIndex > refreshIndex);
+            assert.match(source, /historyParity\?\.ok === true/u);
+            assert.match(source, /append\?\.rowsWritten \?\? 0/u);
+            assert.doesNotMatch(source, /append\?\.mergedRows/u);
+          });
+          EOF
+
+          node --check engine-v1/jobs/run-daily-cycle.js
+          node --check engine-v1/core/history-truth-convergence.js
+          node --check engine-v1/tests/history-truth-convergence.test.js
+          node --check engine-v1/tests/daily-history-catchup-h2h-scope.test.js
+          git diff --check
+
+      - name: Targeted regression
+        run: |
+          set -euo pipefail
+          node --test engine-v1/tests/history-truth-convergence.test.js engine-v1/tests/daily-history-catchup-h2h-scope.test.js
+
+      - name: Verify current history truth parity read only
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { buildHistoryDayFromTruth } from './engine-v1/jobs/append-finalized-day-to-history.js';
+          import { summarizeHistoryTruthParity } from './engine-v1/core/history-truth-convergence.js';
+          for (const day of ['2026-09-09','2026-09-10','2026-09-11']) {
+            const build = buildHistoryDayFromTruth(day);
+            const summary = summarizeHistoryTruthParity(build);
+            console.log(JSON.stringify(summary));
+            if (!build.ok) process.exitCode = 1;
+          }
+          NODE
+
+      - name: Full engine regression
+        run: |
+          set -euo pipefail
+          node --test engine-v1/tests/*.test.js
+
+      - name: Verify source-only write set
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add engine-v1/jobs/run-daily-cycle.js engine-v1/core/history-truth-convergence.js engine-v1/tests/history-truth-convergence.test.js engine-v1/tests/daily-history-catchup-h2h-scope.test.js
+          ACTUAL="$(git diff --cached --name-only | sort)"
+          EXPECTED="$(printf '%s\n' engine-v1/core/history-truth-convergence.js engine-v1/jobs/run-daily-cycle.js engine-v1/tests/daily-history-catchup-h2h-scope.test.js engine-v1/tests/history-truth-convergence.test.js | sort)"
+          test "$ACTUAL" = "$EXPECTED"
+          git diff --cached --check
+          git diff --cached --binary > /tmp/history-convergence.patch
+
+      - name: Require remote main still pinned
+        shell: bash
+        run: |
+          set -euo pipefail
+          REMOTE_MAIN="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          echo "REMOTE_MAIN=$REMOTE_MAIN"
+          test "$REMOTE_MAIN" = "$BASE_SHA"
+
+      - name: Build clean source-only release commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git reset --hard "$BASE_SHA"
+          git clean -fd
+          git apply --index /tmp/history-convergence.patch
+          git config user.name "matchlab-repair"
+          git config user.email "matchlab-repair@users.noreply.github.com"
+          git commit -m "Make recent history truth convergence autonomous"
+          test "$(git rev-parse HEAD^)" = "$BASE_SHA"
+          BAD="$(git diff --name-only "$BASE_SHA" HEAD | grep -Ev '^engine-v1/(core/history-truth-convergence\.js|jobs/run-daily-cycle\.js|tests/(daily-history-catchup-h2h-scope|history-truth-convergence)\.test\.js)$' || true)"
+          test -z "$BAD"
+          echo "RELEASE_SHA=$(git rev-parse HEAD)"
+
+      - name: Push release branch only
+        run: git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
