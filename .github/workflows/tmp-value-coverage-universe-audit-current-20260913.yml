@@ -1,0 +1,99 @@
+name: TMP Value coverage universe audit current 2026-09-13
+
+on:
+  push:
+    branches:
+      - audit/20260913-value-coverage-current-main-v2
+
+permissions:
+  contents: read
+
+jobs:
+  audit-value-coverage-universe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact source baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_BASE="b4abcdd47da8164df94f76aa7612d711c984c087"
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_BASE"
+          test "$(git diff --name-only "$EXPECTED_BASE"..HEAD)" = ".github/workflows/tmp-value-coverage-universe-audit-current-20260913.yml"
+          echo "VALUE_COVERAGE_AUDIT_BASE_VERIFIED=$EXPECTED_BASE"
+
+      - name: Compare Value coverage fixture universes
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { buildValueFixtureUniverse } from './engine-v1/core/value-fixture-universe.js';
+          import { getFixturesByDay } from './engine-v1/storage/json-db.js';
+
+          const dayKey = '2026-09-13';
+          const canonical = buildValueFixtureUniverse(dayKey);
+          const legacy = getFixturesByDay(dayKey);
+          let snapshot = [];
+          try {
+            const raw = JSON.parse(fs.readFileSync(`data/deploy-snapshots/${dayKey}/fixtures.json`, 'utf8'));
+            snapshot = Array.isArray(raw?.fixtures) ? raw.fixtures : Array.isArray(raw) ? raw : [];
+            snapshot = snapshot.filter((row) => String(row?.dayKey || row?.date || '').slice(0, 10) === dayKey);
+          } catch {}
+
+          const idOf = (row) => String(row?.canonicalId || row?.matchId || row?.id || '').trim();
+          const ids = (rows) => new Set(rows.map(idOf).filter(Boolean));
+          const canonicalIds = ids(canonical?.fixtures || []);
+          const legacyIds = ids(legacy || []);
+          const snapshotIds = ids(snapshot || []);
+          const diff = (a, b) => [...a].filter((id) => !b.has(id)).sort();
+
+          const summary = {
+            ok: true,
+            dayKey,
+            canonicalValueUniverse: {
+              schema: canonical?.schema || null,
+              source: canonical?.source || null,
+              count: Number(canonical?.count ?? -1),
+              rowCount: Array.isArray(canonical?.fixtures) ? canonical.fixtures.length : -1,
+              hash: canonical?.hash || null,
+            },
+            legacyCoverageInput: {
+              count: legacy.length,
+              uniqueIds: legacyIds.size,
+              missingFromLegacy: diff(canonicalIds, legacyIds).length,
+              extraInLegacy: diff(legacyIds, canonicalIds).length,
+              missingFromLegacySample: diff(canonicalIds, legacyIds).slice(0, 20),
+              extraInLegacySample: diff(legacyIds, canonicalIds).slice(0, 20),
+            },
+            deploySnapshot: {
+              count: snapshot.length,
+              uniqueIds: snapshotIds.size,
+              missingFromSnapshot: diff(canonicalIds, snapshotIds).length,
+              extraInSnapshot: diff(snapshotIds, canonicalIds).length,
+              missingFromSnapshotSample: diff(canonicalIds, snapshotIds).slice(0, 20),
+              extraInSnapshotSample: diff(snapshotIds, canonicalIds).slice(0, 20),
+            },
+          };
+          summary.contractEquivalentLegacy =
+            summary.canonicalValueUniverse.count === summary.legacyCoverageInput.count &&
+            summary.legacyCoverageInput.missingFromLegacy === 0 &&
+            summary.legacyCoverageInput.extraInLegacy === 0;
+          summary.contractEquivalentSnapshot =
+            summary.canonicalValueUniverse.count === summary.deploySnapshot.count &&
+            summary.deploySnapshot.missingFromSnapshot === 0 &&
+            summary.deploySnapshot.extraInSnapshot === 0;
+          console.log(JSON.stringify(summary, null, 2));
+          NODE
+
+      - name: Prove checkout stayed read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          echo "READ_ONLY_VALUE_COVERAGE_AUDIT=PASS"
