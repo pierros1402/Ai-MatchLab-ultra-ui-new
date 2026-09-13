@@ -1,0 +1,166 @@
+name: TMP Value denominator read-only 2026-09-13
+
+on:
+  push:
+    branches:
+      - audit/20260913-value-denominator-readonly
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tmp-value-denominator-readonly-20260913
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact production base
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_BASE="c2b014b53e7cc6786502b134ae6d6607dc98bc32"
+          ACTUAL_BASE="$(git rev-parse HEAD^)"
+          test "$ACTUAL_BASE" = "$EXPECTED_BASE"
+          echo "AUDIT_BASE=$ACTUAL_BASE"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Build raw Value coverage denominator evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-value-coverage-report-day.js 2026-09-13
+
+      - name: Build readiness report with persisted denominator evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-league-gap-report-day.js 2026-09-13
+
+      - name: Verify denominator contract and write compact evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .audit-evidence
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+
+          const day = '2026-09-13';
+          const coveragePath = `data/value/_coverage-reports/${day}.json`;
+          const readinessPath = `data/coverage-readiness/${day}.json`;
+          const coverage = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
+          const readiness = JSON.parse(fs.readFileSync(readinessPath, 'utf8'));
+
+          const source = coverage.source || {};
+          const counts = coverage.counts || {};
+          const universe = source.fixtureUniverse || {};
+          const embedded = readiness.valueCoverageEvidence || {};
+          const embeddedSummary = readiness?.summary?.valueCoverage || {};
+
+          const failures = [];
+          const check = (ok, reason) => { if (!ok) failures.push(reason); };
+
+          check(coverage.ok === true, 'coverage_report_not_ok');
+          check(source.inputSource === 'canonical_fixtures', 'input_source_not_canonical');
+          check(Number(source.snapshotFallbackMatches || 0) === 0, 'snapshot_fallback_nonzero');
+          check(universe.source === 'canonical_fixtures', 'fixture_universe_source_not_canonical');
+          check(typeof universe.hash === 'string' && universe.hash.length > 0, 'fixture_universe_hash_missing');
+          check(Number(universe.count) === Number(source.canonicalMatches), 'universe_count_vs_canonical_mismatch');
+          check(Number(source.canonicalMatches) === Number(source.sourceMatches), 'canonical_vs_source_mismatch');
+          check(Number(source.playable) === Number(counts.totalRows), 'playable_vs_total_rows_mismatch');
+          check(embedded.present === true, 'readiness_evidence_missing');
+          check(embedded.dayKey === day, 'readiness_evidence_day_mismatch');
+          check(embedded?.source?.inputSource === 'canonical_fixtures', 'readiness_input_source_not_canonical');
+          check(Number(embedded?.source?.canonicalMatches) === Number(source.canonicalMatches), 'embedded_canonical_count_mismatch');
+          check(Number(embedded?.source?.playable) === Number(source.playable), 'embedded_playable_count_mismatch');
+          check(Number(embedded?.counts?.totalRows) === Number(counts.totalRows), 'embedded_total_rows_mismatch');
+          check(Number(embeddedSummary.canonicalMatches) === Number(source.canonicalMatches), 'summary_canonical_count_mismatch');
+          check(Number(embeddedSummary.playable) === Number(source.playable), 'summary_playable_count_mismatch');
+
+          const pct = (n, d) => d > 0 ? Number((100 * n / d).toFixed(2)) : null;
+          const playable = Number(source.playable || 0);
+          const summary = {
+            ok: failures.length === 0,
+            dayKey: day,
+            source: {
+              inputSource: source.inputSource || null,
+              canonicalMatches: Number(source.canonicalMatches || 0),
+              snapshotFallbackMatches: Number(source.snapshotFallbackMatches || 0),
+              sourceMatches: Number(source.sourceMatches || 0),
+              playable,
+              fixtureUniverse: universe
+            },
+            counts: {
+              totalRows: Number(counts.totalRows || 0),
+              detailsFound: Number(counts.detailsFound || 0),
+              intelligenceOk: Number(counts.intelligenceOk || 0),
+              valueReturned: Number(counts.valueReturned || 0),
+              valueNull: Number(counts.valueNull || 0),
+              valueFailed: Number(counts.valueFailed || 0),
+              minimumRecentSampleNull: Number(counts.minimumRecentSampleNull || 0)
+            },
+            coveragePctOfPlayable: {
+              detailsFound: pct(Number(counts.detailsFound || 0), playable),
+              intelligenceOk: pct(Number(counts.intelligenceOk || 0), playable),
+              valueReturned: pct(Number(counts.valueReturned || 0), playable),
+              valueNull: pct(Number(counts.valueNull || 0), playable),
+              valueFailed: pct(Number(counts.valueFailed || 0), playable),
+              minimumRecentSampleNull: pct(Number(counts.minimumRecentSampleNull || 0), playable)
+            },
+            breakdown: coverage.breakdown || null,
+            readinessSummary: embeddedSummary,
+            failures
+          };
+
+          fs.writeFileSync('.audit-evidence/value-denominator-summary.json', JSON.stringify(summary, null, 2) + '\n');
+          console.log(JSON.stringify(summary, null, 2));
+          if (failures.length) process.exit(1);
+          NODE
+
+      - name: Prove repository remains unmodified except generated audit outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git status --short
+          mapfile -t PATHS < <(git status --porcelain=v1 | sed -E 's/^.. //' | sort)
+          for p in "${PATHS[@]}"; do
+            case "$p" in
+              data/value/_coverage-reports/2026-09-13.json|data/coverage-readiness/2026-09-13.json|.audit-evidence/value-denominator-summary.json)
+                ;;
+              *)
+                echo "ERROR: unexpected audit write path: $p"
+                exit 1
+                ;;
+            esac
+          done
+          test -z "$(git diff --name-only)"
+          test -z "$(git diff --cached --name-only)"
+
+      - name: Upload denominator evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: value-denominator-readonly-20260913
+          if-no-files-found: error
+          path: |
+            data/value/_coverage-reports/2026-09-13.json
+            data/coverage-readiness/2026-09-13.json
+            .audit-evidence/value-denominator-summary.json
