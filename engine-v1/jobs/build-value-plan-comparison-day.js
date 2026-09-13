@@ -17,6 +17,10 @@ import { validatePicksAgainstCanonicalFixtures } from "../core/plan-b-canonical-
 import {
   overlayProductionEvidenceDocumentReadView,
 } from "../core/production-evidence-identity-overlay.js";
+import {
+  buildOccurrenceDisplacementSettlementProvenance,
+  resolveValueSettlementOccurrenceDisplacement
+} from "../core/value-settlement-occurrence-displacement.js";
 
 // P0-C P5 READ BOUNDARY: value-plan, odds, fixture and final-result evidence views.
 
@@ -841,6 +845,13 @@ export function resolveComparisonKickoff(
 export function enrichPick(row, fixture, finalResult, planId, oddsEntry, multiMarkets) {
   const id = rowId(row);
   const nonPlayedVoid = isValueSettlementVoidState(fixture);
+  const occurrenceDisplacement =
+    !finalResult && !nonPlayedVoid
+      ? resolveValueSettlementOccurrenceDisplacement(row)
+      : null;
+  const occurrenceDisplacementVoid =
+    occurrenceDisplacement?.verified === true &&
+    occurrenceDisplacement?.action === "VOID";
   const verifiedScore = resolveVerifiedFinalScore(finalResult);
   const win = finalResult && !nonPlayedVoid
     ? evaluatePickResult(row, finalResult)
@@ -860,7 +871,9 @@ export function enrichPick(row, fixture, finalResult, planId, oddsEntry, multiMa
             fixture?.rawStatus ||
             fixture?.status
           ) || null
-        : null
+        : occurrenceDisplacementVoid
+          ? "STATUS_OCCURRENCE_MOVED_OTHER_DAY"
+          : null
     );
   const finalStatusType =
     resolveComparisonFinalStatusType(finalResult) ||
@@ -871,15 +884,19 @@ export function enrichPick(row, fixture, finalResult, planId, oddsEntry, multiMa
             fixture?.rawStatus ||
             fixture?.status
           ) || null
-        : null
+        : occurrenceDisplacementVoid
+          ? "STATUS_OCCURRENCE_MOVED_OTHER_DAY"
+          : null
     );
   const finalResultProvenance =
     nonPlayedVoid
       ? buildComparisonNonPlayedProvenance(fixture)
-      : buildComparisonFinalResultProvenance(finalResult);
+      : occurrenceDisplacementVoid
+        ? buildOccurrenceDisplacementSettlementProvenance(occurrenceDisplacement)
+        : buildComparisonFinalResultProvenance(finalResult);
 
   let settlement = "UNRESOLVED";
-  if (nonPlayedVoid) settlement = "VOID";
+  if (nonPlayedVoid || occurrenceDisplacementVoid) settlement = "VOID";
   else if (finalResult && win === true) settlement = "WIN";
   else if (finalResult && win === false) settlement = "LOSS";
   else if (finalResult && win === null) settlement = "UNSUPPORTED";
@@ -925,7 +942,7 @@ export function enrichPick(row, fixture, finalResult, planId, oddsEntry, multiMa
     oddsUse: odds ? "display_settlement_only" : null,
     finalStatus,
     finalStatusType,
-    finalScore: nonPlayedVoid ? null : verifiedScore,
+    finalScore: (nonPlayedVoid || occurrenceDisplacementVoid) ? null : verifiedScore,
     result: settlement,
     finalResultProvenance
   };
@@ -1061,7 +1078,7 @@ export function buildPlanAUnavailableComparisonPayload({
       planB: "retrospective_strict_value_policy_v2.3_observation_artifact",
       planBCanonicalFixtureMembershipRequired: true,
       planBOddsMayCreateFixtures: false,
-      finalTruth: "verified_final_results_or_canonical_non_played_state",
+      finalTruth: "verified_final_results_or_canonical_non_played_state_or_verified_occurrence_displacement",
       deploySnapshotUsedAsFinalTruth: false,
       realBookmakerOddsUsedForValue: false,
       oddsUse: "display_settlement_only_when_present"
@@ -1437,7 +1454,7 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
       planB: "strict_value_policy_v2.3_observation_artifact",
       planBCanonicalFixtureMembershipRequired: true,
       planBOddsMayCreateFixtures: false,
-      finalTruth: "verified_final_results_or_canonical_non_played_state",
+      finalTruth: "verified_final_results_or_canonical_non_played_state_or_verified_occurrence_displacement",
       deploySnapshotUsedAsFinalTruth: false,
       realBookmakerOddsUsedForValue: false,
       oddsUse: "display_settlement_only_when_present"

@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-09-10",
-  "generatedAt": "2026-09-12T23:09:43.902Z",
+  "generatedAt": "2026-09-13T03:47:40.896Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -10,7 +10,7 @@
     "planB": "strict_value_policy_v2.3_observation_artifact",
     "planBCanonicalFixtureMembershipRequired": true,
     "planBOddsMayCreateFixtures": false,
-    "finalTruth": "verified_final_results_or_canonical_non_played_state",
+    "finalTruth": "verified_final_results_or_canonical_non_played_state_or_verified_occurrence_displacement",
     "deploySnapshotUsedAsFinalTruth": false,
     "realBookmakerOddsUsedForValue": false,
     "oddsUse": "display_settlement_only_when_present"
@@ -58,8 +58,8 @@
         "settled": 4,
         "wins": 3,
         "losses": 1,
-        "voids": 0,
-        "unresolved": 1,
+        "voids": 1,
+        "unresolved": 0,
         "unsupported": 0,
         "hitRate": 0.75,
         "oddsAvailable": 0,
@@ -77,8 +77,8 @@
           "settled": 4,
           "wins": 3,
           "losses": 1,
-          "voids": 0,
-          "unresolved": 1,
+          "voids": 1,
+          "unresolved": 0,
           "unsupported": 0,
           "hitRate": 0.75,
           "oddsAvailable": 0,
@@ -110,11 +110,45 @@
           "aiFairOdds": 1.72,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
+          "finalStatus": "STATUS_OCCURRENCE_MOVED_OTHER_DAY",
+          "finalStatusType": "STATUS_OCCURRENCE_MOVED_OTHER_DAY",
           "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "result": "VOID",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": false,
+            "verifiedNonPlayedTruth": false,
+            "verifiedOccurrenceDisplacement": true,
+            "verdict": "verified_occurrence_moved_void",
+            "source": "espn",
+            "method": "authoritative_provider_occurrence_moved_other_day",
+            "authority": "canonical_fixture_store_exact_event_summary",
+            "sourceCount": 2,
+            "independentSourceCount": 1,
+            "generatedAt": null,
+            "providerMatchId": "401900921",
+            "originalDayKey": "2026-09-10",
+            "originalCanonicalId": "cid_ksa1_alkhaleej_alnassr_20260910",
+            "originalKickoffUtc": "2026-09-10T18:00:00.000Z",
+            "authoritativeDayKey": "2026-09-12",
+            "authoritativeCanonicalId": "cid_ksa1_alkhaleej_alnassr_20260912",
+            "authoritativeKickoffUtc": "2026-09-12T18:00:00.000Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401900921",
+                "role": "original_day_exact_event_summary_reconciliation",
+                "dayKey": "2026-09-10",
+                "reconciliationKind": "other_day"
+              },
+              {
+                "provider": "espn",
+                "providerMatchId": "401900921",
+                "role": "authoritative_target_canonical_occurrence",
+                "dayKey": "2026-09-12",
+                "canonicalId": "cid_ksa1_alkhaleej_alnassr_20260912"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -371,8 +405,8 @@
         "settled": 4,
         "wins": 3,
         "losses": 1,
-        "voids": 0,
-        "unresolved": 1,
+        "voids": 1,
+        "unresolved": 0,
         "unsupported": 0,
         "hitRate": 0.75,
         "oddsAvailable": 0,
@@ -390,8 +424,8 @@
           "settled": 4,
           "wins": 3,
           "losses": 1,
-          "voids": 0,
-          "unresolved": 1,
+          "voids": 1,
+          "unresolved": 0,
           "unsupported": 0,
           "hitRate": 0.75,
           "oddsAvailable": 0,
@@ -423,11 +457,45 @@
           "aiFairOdds": 1.72,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
+          "finalStatus": "STATUS_OCCURRENCE_MOVED_OTHER_DAY",
+          "finalStatusType": "STATUS_OCCURRENCE_MOVED_OTHER_DAY",
           "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "result": "VOID",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": false,
+            "verifiedNonPlayedTruth": false,
+            "verifiedOccurrenceDisplacement": true,
+            "verdict": "verified_occurrence_moved_void",
+            "source": "espn",
+            "method": "authoritative_provider_occurrence_moved_other_day",
+            "authority": "canonical_fixture_store_exact_event_summary",
+            "sourceCount": 2,
+            "independentSourceCount": 1,
+            "generatedAt": null,
+            "providerMatchId": "401900921",
+            "originalDayKey": "2026-09-10",
+            "originalCanonicalId": "cid_ksa1_alkhaleej_alnassr_20260910",
+            "originalKickoffUtc": "2026-09-10T18:00:00.000Z",
+            "authoritativeDayKey": "2026-09-12",
+            "authoritativeCanonicalId": "cid_ksa1_alkhaleej_alnassr_20260912",
+            "authoritativeKickoffUtc": "2026-09-12T18:00:00.000Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401900921",
+                "role": "original_day_exact_event_summary_reconciliation",
+                "dayKey": "2026-09-10",
+                "reconciliationKind": "other_day"
+              },
+              {
+                "provider": "espn",
+                "providerMatchId": "401900921",
+                "role": "authoritative_target_canonical_occurrence",
+                "dayKey": "2026-09-12",
+                "canonicalId": "cid_ksa1_alkhaleej_alnassr_20260912"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
