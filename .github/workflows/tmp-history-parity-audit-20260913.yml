@@ -1,0 +1,82 @@
+name: TMP history parity audit 20260913
+
+on:
+  push:
+    branches:
+      - audit/20260913-history-parity
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit-history-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Verify exact base ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor b4abcdd47da8164df94f76aa7612d711c984c087 HEAD
+          echo "AUDIT_HEAD=$(git rev-parse HEAD)"
+          echo "AUDIT_BASE=b4abcdd47da8164df94f76aa7612d711c984c087"
+
+      - name: Run read-only history truth parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { buildHistoryDayFromTruth } from './engine-v1/jobs/append-finalized-day-to-history.js';
+
+          const days = ['2026-09-09','2026-09-10','2026-09-11','2026-09-12'];
+          const reportPath = 'data/history/2026-2027.report.json';
+          const report = fs.existsSync(reportPath) ? JSON.parse(fs.readFileSync(reportPath,'utf8')) : null;
+          console.log('=== COMMITTED HISTORY REPORT ===');
+          console.log(JSON.stringify({
+            generatedAt: report?.generatedAt ?? null,
+            to: report?.to ?? null,
+            lastCompletedDay: report?.lastCompletedDay ?? null,
+            byDay: Object.fromEntries(days.map(d => [d, report?.byDay?.[d] ?? null]))
+          }, null, 2));
+
+          console.log('=== READ-ONLY BUILD RESULTS ===');
+          for (const dayKey of days) {
+            const r = buildHistoryDayFromTruth(dayKey);
+            const byReason = {};
+            for (const e of (r.errors || [])) {
+              const k = String(e?.reason || 'unknown');
+              byReason[k] = (byReason[k] || 0) + 1;
+            }
+            console.log(JSON.stringify({
+              dayKey,
+              ok: r.ok,
+              reason: r.reason ?? null,
+              canonicalFixtureCount: r.canonicalFixtureCount ?? null,
+              canonicalPlayedFinalCount: r.canonicalPlayedFinalCount ?? null,
+              verifiedFinalCount: r.verifiedFinalCount ?? null,
+              acceptedRows: r.acceptedRows ?? null,
+              errorCount: Array.isArray(r.errors) ? r.errors.length : 0,
+              byReason,
+              errors: (r.errors || []).slice(0, 25)
+            }, null, 2));
+          }
+          NODE
+
+      - name: Prove checkout clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --short)"
+          echo "READ_ONLY_AUDIT_CLEAN=true"
