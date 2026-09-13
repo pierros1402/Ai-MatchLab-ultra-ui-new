@@ -10,7 +10,7 @@ import {
   loadValueIndexes,
   loadModelPriors
 } from "../core/value-engine-v1.js";
-import { getFixturesByDay } from "../storage/json-db.js";
+import { buildValueFixtureUniverse } from "../core/value-fixture-universe.js";
 import { resolveDataPath } from "../storage/data-root.js";
 import { currentSeason } from "../core/season.js";
 
@@ -23,20 +23,6 @@ function readJsonSafe(file, fallback = null) {
   } catch {
     return fallback;
   }
-}
-
-function readDeploySnapshotFixturesByDay(dayKey) {
-  const filePath = resolveDataPath("deploy-snapshots", dayKey, "fixtures.json");
-  const payload = readJsonSafe(filePath, null);
-  const rows = Array.isArray(payload?.fixtures)
-    ? payload.fixtures
-    : Array.isArray(payload)
-      ? payload
-      : [];
-
-  return rows
-    .filter(row => String(row?.dayKey || row?.date || "").slice(0, 10) === String(dayKey))
-    .sort((a, b) => String(a.kickoffUtc || a.kickoff || "").localeCompare(String(b.kickoffUtc || b.kickoff || "")));
 }
 
 function readDetailsForValueCoverage(dayKey, matchId) {
@@ -261,29 +247,44 @@ function buildMarketRejectionDiagnostics(value) {
   return diagnostics;
 }
 
+export function resolveValueCoverageSource(
+  dayKey,
+  { buildUniverse = buildValueFixtureUniverse } = {}
+) {
+  const valueUniverse = buildUniverse(dayKey);
+
+  if (
+    !valueUniverse ||
+    valueUniverse.source !== "canonical_fixtures" ||
+    !Array.isArray(valueUniverse.fixtures) ||
+    Number(valueUniverse.count) !== valueUniverse.fixtures.length ||
+    !String(valueUniverse.hash || "").trim()
+  ) {
+    throw new Error("VALUE_COVERAGE_FIXTURE_UNIVERSE_INVALID");
+  }
+
+  const canonicalMatches = valueUniverse.fixtures;
+
+  return {
+    valueUniverse,
+    canonicalMatches,
+    sourceMatches: canonicalMatches,
+    inputSource: canonicalMatches.length > 0
+      ? "canonical_fixtures"
+      : "empty"
+  };
+}
+
 export async function buildValueCoverageReportDay(dayKey = athensDayKey(), options = {}) {
   const season = String(options.season || DEFAULT_SEASON);
-  const canonicalMatches = getFixturesByDay(dayKey);
-  const snapshotFallbackMatches = canonicalMatches.length === 0
-    ? readDeploySnapshotFixturesByDay(dayKey)
-    : [];
-
-  const sourceMatches = canonicalMatches.length > 0
-    ? canonicalMatches
-    : snapshotFallbackMatches;
-
-  const inputSource = canonicalMatches.length > 0
-    ? "canonical_fixtures"
-    : snapshotFallbackMatches.length > 0
-      ? "deploy_snapshot_fixtures_fallback"
-      : "empty";
-
-  if (canonicalMatches.length === 0 && snapshotFallbackMatches.length > 0) {
-    console.log("[value-coverage] using deploy snapshot fixture fallback", {
-      dayKey,
-      sourceMatches: snapshotFallbackMatches.length
-    });
-  }
+  const {
+    valueUniverse,
+    canonicalMatches,
+    sourceMatches,
+    inputSource
+  } = resolveValueCoverageSource(dayKey, {
+    buildUniverse: options.buildUniverse
+  });
 
   const playable = sourceMatches.filter(isPlayable);
 
@@ -391,9 +392,15 @@ export async function buildValueCoverageReportDay(dayKey = athensDayKey(), optio
     source: {
       inputSource,
       canonicalMatches: canonicalMatches.length,
-      snapshotFallbackMatches: snapshotFallbackMatches.length,
+      snapshotFallbackMatches: 0,
       sourceMatches: sourceMatches.length,
-      playable: playable.length
+      playable: playable.length,
+      fixtureUniverse: {
+        schema: valueUniverse.schema || null,
+        source: valueUniverse.source || null,
+        count: Number(valueUniverse.count || 0),
+        hash: valueUniverse.hash || null
+      }
     },
     counts: {
       totalRows: rows.length,
