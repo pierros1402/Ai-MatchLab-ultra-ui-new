@@ -1,0 +1,146 @@
+name: TMP cross-day reschedule classifier validation 20260913
+
+on:
+  push:
+    branches:
+      - work/20260913-crossday-reschedule-classifier-v1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout classifier branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Verify exact production base and write-set
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=b4abcdd47da8164df94f76aa7612d711c984c087
+          git fetch --no-tags --depth=1 origin "$BASE"
+          CHANGED="$(git diff --name-only "$BASE" HEAD | sort)"
+          EXPECTED="$(printf '%s\n' \
+            '.github/workflows/tmp-crossday-reschedule-classifier-validation-20260913.yml' \
+            'engine-v1/core/cross-day-provider-reschedule.js' \
+            'engine-v1/tests/cross-day-provider-reschedule-classifier.test.js' | sort)"
+          echo '=== CHANGED ==='
+          printf '%s\n' "$CHANGED"
+          test "$CHANGED" = "$EXPECTED"
+          echo "CLASSIFIER_WRITESET_EXACT=true"
+
+      - name: Syntax check
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/core/cross-day-provider-reschedule.js
+          node --check engine-v1/tests/cross-day-provider-reschedule-classifier.test.js
+
+      - name: Run focused classifier tests
+        shell: bash
+        run: node --test engine-v1/tests/cross-day-provider-reschedule-classifier.test.js
+
+      - name: Scan current canonical store through classifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { classifyCrossDayProviderRescheduleGroup } from './engine-v1/core/cross-day-provider-reschedule.js';
+
+          const AS_OF = Date.parse('2026-09-13T15:45:00.000Z');
+          const root = 'data/canonical-fixtures';
+          const groups = new Map();
+
+          for (const day of fs.readdirSync(root).filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x)).sort()) {
+            const dir = path.join(root, day);
+            for (const name of fs.readdirSync(dir).filter(x => x.endsWith('.json')).sort()) {
+              let payload;
+              try { payload = JSON.parse(fs.readFileSync(path.join(dir, name), 'utf8')); }
+              catch { continue; }
+              const fixtures = Array.isArray(payload?.fixtures) ? payload.fixtures : [];
+              for (const row of fixtures) {
+                const source = String(row?.source || '').trim().toLowerCase();
+                const pid = String(row?.sourceMatchId || row?.sourceId || row?.providerMatchId || '').trim();
+                if (!source || !pid) continue;
+                const key = `${source}:${pid}`;
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(row);
+              }
+            }
+          }
+
+          const crossDay = [...groups.entries()]
+            .filter(([, rows]) => new Set(rows.map(r => String(r?.dayKey || ''))).size > 1);
+
+          const accepted = [];
+          const rejectedByReason = {};
+          for (const [providerIdentity, rows] of crossDay) {
+            const result = classifyCrossDayProviderRescheduleGroup(rows, { asOfMs: AS_OF });
+            if (result.ok) {
+              accepted.push({ providerIdentity, ...result });
+            } else {
+              rejectedByReason[result.reason] = (rejectedByReason[result.reason] || 0) + 1;
+            }
+          }
+
+          const superseded = accepted.flatMap(result =>
+            result.superseded.map(row => ({
+              providerIdentity: result.providerIdentity,
+              evidenceCanonicalId: result.evidence.canonicalId,
+              evidenceDayKey: result.evidence.dayKey,
+              ...row
+            }))
+          );
+
+          const targetIds = new Set([
+            'cid_kos2_ferizaj_istogu_20260911',
+            'cid_kos2_ferizaj_istogu_20260912',
+            'cid_fro1_abargir_toftir_20260911',
+            'cid_chi2_sanfelipe_sanluis_20260909'
+          ]);
+
+          const targetSuperseded = superseded.filter(row => targetIds.has(row.canonicalId));
+
+          console.log(JSON.stringify({
+            asOf: new Date(AS_OF).toISOString(),
+            crossDayProviderGroups: crossDay.length,
+            acceptedGroups: accepted.length,
+            supersededHistoricalRows: superseded.length,
+            rejectedByReason,
+            targetSuperseded,
+            acceptedSample: accepted.slice(0, 50).map(x => ({
+              providerIdentity: x.providerIdentity,
+              evidence: x.evidence,
+              superseded: x.superseded
+            }))
+          }, null, 2));
+
+          if (!targetSuperseded.some(x => x.canonicalId === 'cid_kos2_ferizaj_istogu_20260911')) {
+            throw new Error('ferizaj_20260911_not_classified');
+          }
+          if (!targetSuperseded.some(x => x.canonicalId === 'cid_kos2_ferizaj_istogu_20260912')) {
+            throw new Error('ferizaj_20260912_not_classified');
+          }
+          if (!targetSuperseded.some(x => x.canonicalId === 'cid_fro1_abargir_toftir_20260911')) {
+            throw new Error('ab_argir_20260911_not_classified');
+          }
+          if (targetSuperseded.some(x => x.canonicalId === 'cid_chi2_sanfelipe_sanluis_20260909')) {
+            throw new Error('san_felipe_must_not_classify_without_cross_day_provider_evidence');
+          }
+          NODE
+
+      - name: Prove validation stayed read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          STATUS="$(git status --porcelain)"
+          test -z "$STATUS" || { echo "$STATUS"; exit 1; }
+          echo "READ_ONLY_REPOSITORY_CLEAN=true"
