@@ -1,0 +1,123 @@
+name: TMP cross-day reschedule contract audit 20260913
+
+on:
+  push:
+    branches:
+      - audit/20260913-crossday-reschedule-contract-v1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout pinned audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Verify exact pinned production base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=b4abcdd47da8164df94f76aa7612d711c984c087
+          AUDIT_PATH=.github/workflows/tmp-crossday-reschedule-contract-audit-20260913.yml
+          git fetch --no-tags --depth=1 origin "$BASE"
+          CHANGED="$(git diff --name-only "$BASE" HEAD)"
+          printf '%s\n' "$CHANGED"
+          test "$CHANGED" = "$AUDIT_PATH"
+          echo "PINNED_BASE_ONLY_AUDIT_WORKFLOW_DIFF=true"
+
+      - name: Locate existing non-played decision consumers
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== resolveVerifiedFlashscoreNonPlayedDecision consumers ==='
+          git grep -n 'resolveVerifiedFlashscoreNonPlayedDecision' -- 'engine-v1/**' || true
+          echo '=== resolveApprovedFlashscoreNonPlayedDecision consumers ==='
+          git grep -n 'resolveApprovedFlashscoreNonPlayedDecision' -- 'engine-v1/**' || true
+          echo '=== exact_provider_occurrence_rescheduled references ==='
+          git grep -n 'exact_provider_occurrence_rescheduled' -- 'engine-v1/**' || true
+
+      - name: Scan canonical store for cross-day provider identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+
+          const root = 'data/canonical-fixtures';
+          const rows = [];
+          for (const day of fs.readdirSync(root).filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x)).sort()) {
+            const dir = path.join(root, day);
+            for (const name of fs.readdirSync(dir).filter(x => x.endsWith('.json')).sort()) {
+              let payload;
+              try { payload = JSON.parse(fs.readFileSync(path.join(dir, name), 'utf8')); }
+              catch { continue; }
+              const fixtures = Array.isArray(payload?.fixtures) ? payload.fixtures : [];
+              for (const r of fixtures) {
+                const source = String(r?.source || '').trim().toLowerCase();
+                const pid = String(r?.sourceMatchId || r?.sourceId || r?.providerMatchId || '').trim();
+                if (!source || !pid) continue;
+                rows.push({
+                  day,
+                  file: `${day}/${name}`,
+                  source,
+                  pid,
+                  canonicalId: r?.canonicalId || null,
+                  leagueSlug: r?.leagueSlug || null,
+                  homeTeam: r?.homeTeam || null,
+                  awayTeam: r?.awayTeam || null,
+                  kickoffUtc: r?.kickoffUtc || null,
+                  status: r?.status || null,
+                  rawStatus: r?.rawStatus || null,
+                  scoreHome: r?.scoreHome ?? null,
+                  scoreAway: r?.scoreAway ?? null
+                });
+              }
+            }
+          }
+
+          const groups = new Map();
+          for (const r of rows) {
+            const k = `${r.source}:${r.pid}`;
+            if (!groups.has(k)) groups.set(k, []);
+            groups.get(k).push(r);
+          }
+
+          const crossDay = [...groups.entries()]
+            .map(([providerIdentity, items]) => ({providerIdentity, items: items.sort((a,b)=>a.day.localeCompare(b.day))}))
+            .filter(g => new Set(g.items.map(x => x.day)).size > 1);
+
+          const scorelessScheduled = crossDay.filter(g => {
+            const items = g.items;
+            const sameLeague = new Set(items.map(x => x.leagueSlug)).size === 1;
+            const samePair = new Set(items.map(x => `${String(x.homeTeam).toLowerCase()}|${String(x.awayTeam).toLowerCase()}`)).size === 1;
+            const allScoreless = items.every(x => x.scoreHome === null && x.scoreAway === null);
+            const hasScheduled = items.some(x => /SCHEDULED|PRE/i.test(String(x.status || x.rawStatus || '')));
+            return sameLeague && samePair && allScoreless && hasScheduled;
+          });
+
+          const targets = new Set(['Khg606iL','OtToQ8QO','bR8MdXt2']);
+          const targetGroups = crossDay.filter(g => targets.has(g.items[0]?.pid));
+
+          console.log(JSON.stringify({
+            totalCanonicalRows: rows.length,
+            crossDayProviderIdentityGroups: crossDay.length,
+            scorelessSameLeagueSamePairCrossDayGroups: scorelessScheduled.length,
+            targetGroups,
+            scorelessScheduledSample: scorelessScheduled.slice(0,100)
+          }, null, 2));
+          NODE
+
+      - name: Prove repository remained read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          STATUS="$(git status --porcelain)"
+          test -z "$STATUS" || { echo "$STATUS"; exit 1; }
+          echo "READ_ONLY_REPOSITORY_CLEAN=true"
