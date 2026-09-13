@@ -1,0 +1,243 @@
+name: TMP fix Value coverage canonical universe 20260913
+
+on:
+  push:
+    branches:
+      - fix/20260913-value-coverage-canonical-universe
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout isolated fix branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Verify exact base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=4cae2c0432ea9eae52eed6c1718fb45e5c1a9656
+          test "$(git rev-parse HEAD^)" = "$BASE"
+          CHANGED="$(git diff --name-only HEAD^ HEAD)"
+          test "$CHANGED" = ".github/workflows/tmp-fix-value-coverage-canonical-universe-20260913.yml"
+          echo "BASE_SHA=$BASE" >> "$GITHUB_ENV"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Patch coverage producer to canonical universe
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('engine-v1/jobs/build-value-coverage-report-day.js')
+          s=p.read_text(encoding='utf-8')
+
+          old='import { getFixturesByDay } from "../storage/json-db.js";'
+          new='import { buildValueFixtureUniverse } from "../core/value-fixture-universe.js";'
+          if s.count(old)!=1:
+              raise SystemExit(f'import anchor count != 1: {s.count(old)}')
+          s=s.replace(old,new,1)
+
+          old_func='''function readDeploySnapshotFixturesByDay(dayKey) {\n  const filePath = resolveDataPath("deploy-snapshots", dayKey, "fixtures.json");\n  const payload = readJsonSafe(filePath, null);\n  const rows = Array.isArray(payload?.fixtures)\n    ? payload.fixtures\n    : Array.isArray(payload)\n      ? payload\n      : [];\n\n  return rows\n    .filter(row => String(row?.dayKey || row?.date || "").slice(0, 10) === String(dayKey))\n    .sort((a, b) => String(a.kickoffUtc || a.kickoff || "").localeCompare(String(b.kickoffUtc || b.kickoff || "")));\n}\n\n'''
+          if s.count(old_func)!=1:
+              raise SystemExit(f'snapshot fallback function anchor count != 1: {s.count(old_func)}')
+          s=s.replace(old_func,'',1)
+
+          marker='export async function buildValueCoverageReportDay(dayKey = athensDayKey(), options = {}) {'
+          if s.count(marker)!=1:
+              raise SystemExit(f'build marker count != 1: {s.count(marker)}')
+          helper='''export function resolveValueCoverageSource(\n  dayKey,\n  { buildUniverse = buildValueFixtureUniverse } = {}\n) {\n  const valueUniverse = buildUniverse(dayKey);\n\n  if (\n    !valueUniverse ||\n    valueUniverse.source !== "canonical_fixtures" ||\n    !Array.isArray(valueUniverse.fixtures) ||\n    Number(valueUniverse.count) !== valueUniverse.fixtures.length ||\n    !String(valueUniverse.hash || "").trim()\n  ) {\n    throw new Error("VALUE_COVERAGE_FIXTURE_UNIVERSE_INVALID");\n  }\n\n  const canonicalMatches = valueUniverse.fixtures;\n\n  return {\n    valueUniverse,\n    canonicalMatches,\n    sourceMatches: canonicalMatches,\n    inputSource: canonicalMatches.length > 0\n      ? "canonical_fixtures"\n      : "empty"\n  };\n}\n\n'''
+          s=s.replace(marker,helper+marker,1)
+
+          old_block='''  const season = String(options.season || DEFAULT_SEASON);\n  const canonicalMatches = getFixturesByDay(dayKey);\n  const snapshotFallbackMatches = canonicalMatches.length === 0\n    ? readDeploySnapshotFixturesByDay(dayKey)\n    : [];\n\n  const sourceMatches = canonicalMatches.length > 0\n    ? canonicalMatches\n    : snapshotFallbackMatches;\n\n  const inputSource = canonicalMatches.length > 0\n    ? "canonical_fixtures"\n    : snapshotFallbackMatches.length > 0\n      ? "deploy_snapshot_fixtures_fallback"\n      : "empty";\n\n  if (canonicalMatches.length === 0 && snapshotFallbackMatches.length > 0) {\n    console.log("[value-coverage] using deploy snapshot fixture fallback", {\n      dayKey,\n      sourceMatches: snapshotFallbackMatches.length\n    });\n  }\n\n  const playable = sourceMatches.filter(isPlayable);\n'''
+          new_block='''  const season = String(options.season || DEFAULT_SEASON);\n  const {\n    valueUniverse,\n    canonicalMatches,\n    sourceMatches,\n    inputSource\n  } = resolveValueCoverageSource(dayKey, {\n    buildUniverse: options.buildUniverse\n  });\n\n  const playable = sourceMatches.filter(isPlayable);\n'''
+          if s.count(old_block)!=1:
+              raise SystemExit(f'source block anchor count != 1: {s.count(old_block)}')
+          s=s.replace(old_block,new_block,1)
+
+          old_source='''    source: {\n      inputSource,\n      canonicalMatches: canonicalMatches.length,\n      snapshotFallbackMatches: snapshotFallbackMatches.length,\n      sourceMatches: sourceMatches.length,\n      playable: playable.length\n    },\n'''
+          new_source='''    source: {\n      inputSource,\n      canonicalMatches: canonicalMatches.length,\n      snapshotFallbackMatches: 0,\n      sourceMatches: sourceMatches.length,\n      playable: playable.length,\n      fixtureUniverse: {\n        schema: valueUniverse.schema || null,\n        source: valueUniverse.source || null,\n        count: Number(valueUniverse.count || 0),\n        hash: valueUniverse.hash || null\n      }\n    },\n'''
+          if s.count(old_source)!=1:
+              raise SystemExit(f'report source anchor count != 1: {s.count(old_source)}')
+          s=s.replace(old_source,new_source,1)
+
+          p.write_text(s,encoding='utf-8')
+          PY
+
+          cat > engine-v1/tests/value-coverage-canonical-universe.test.js <<'EOF'
+          import test from "node:test";
+          import assert from "node:assert/strict";
+
+          import { resolveValueCoverageSource } from "../jobs/build-value-coverage-report-day.js";
+
+          test("Value coverage uses the exact canonical Value universe and never snapshot fallback", () => {
+            const fixtures = [
+              { canonicalId: "cid_a", matchId: "cid_a" },
+              { canonicalId: "cid_b", matchId: "cid_b" }
+            ];
+            const universe = {
+              schema: "ai-matchlab.value-fixture-universe.v1",
+              source: "canonical_fixtures",
+              count: 2,
+              hash: "abc123",
+              canonicalIds: ["cid_a", "cid_b"],
+              fixtures
+            };
+
+            const resolved = resolveValueCoverageSource("2026-09-12", {
+              buildUniverse: dayKey => {
+                assert.equal(dayKey, "2026-09-12");
+                return universe;
+              }
+            });
+
+            assert.equal(resolved.inputSource, "canonical_fixtures");
+            assert.strictEqual(resolved.valueUniverse, universe);
+            assert.strictEqual(resolved.canonicalMatches, fixtures);
+            assert.strictEqual(resolved.sourceMatches, fixtures);
+          });
+
+          test("Value coverage reports empty when canonical Value universe is empty", () => {
+            const resolved = resolveValueCoverageSource("2026-09-12", {
+              buildUniverse: () => ({
+                schema: "ai-matchlab.value-fixture-universe.v1",
+                source: "canonical_fixtures",
+                count: 0,
+                hash: "empty-hash",
+                canonicalIds: [],
+                fixtures: []
+              })
+            });
+
+            assert.equal(resolved.inputSource, "empty");
+            assert.deepEqual(resolved.sourceMatches, []);
+          });
+
+          test("Value coverage fails closed on malformed or non-canonical universe", () => {
+            assert.throws(
+              () => resolveValueCoverageSource("2026-09-12", {
+                buildUniverse: () => ({ source: "deploy_snapshot", count: 1, hash: "x", fixtures: [{}] })
+              }),
+              /VALUE_COVERAGE_FIXTURE_UNIVERSE_INVALID/
+            );
+
+            assert.throws(
+              () => resolveValueCoverageSource("2026-09-12", {
+                buildUniverse: () => ({ source: "canonical_fixtures", count: 2, hash: "x", fixtures: [{}] })
+              }),
+              /VALUE_COVERAGE_FIXTURE_UNIVERSE_INVALID/
+            );
+          });
+          EOF
+
+          node --check engine-v1/jobs/build-value-coverage-report-day.js
+          node --check engine-v1/tests/value-coverage-canonical-universe.test.js
+          git diff --check
+
+      - name: Run targeted regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test engine-v1/tests/value-coverage-canonical-universe.test.js | tee /tmp/value-coverage-targeted-test.log
+          if [ -f engine-v1/tests/value-fixture-universe.test.js ]; then
+            node --test engine-v1/tests/value-fixture-universe.test.js | tee -a /tmp/value-coverage-targeted-test.log
+          fi
+
+      - name: Rebuild coverage report from authoritative current universe
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-value-coverage-report-day.js 2026-09-12 | tee /tmp/value-coverage-canonical-build.log
+          cp data/value/_coverage-reports/2026-09-12.json /tmp/value-coverage-canonical-2026-09-12.json
+
+      - name: Verify exact authoritative provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE' | tee /tmp/value-coverage-canonical-verification.json
+          import fs from 'node:fs';
+          const r=JSON.parse(fs.readFileSync('/tmp/value-coverage-canonical-2026-09-12.json','utf8'));
+          const expected={count:536,hash:'e6b04486b26406e1f0126240bce89cc299c8855f7f2831bf6de388117c81cb43'};
+          const s=r.source||{};
+          if(s.inputSource!=='canonical_fixtures') throw new Error(`wrong inputSource ${s.inputSource}`);
+          if(s.canonicalMatches!==expected.count) throw new Error(`wrong canonicalMatches ${s.canonicalMatches}`);
+          if(s.sourceMatches!==expected.count) throw new Error(`wrong sourceMatches ${s.sourceMatches}`);
+          if(s.snapshotFallbackMatches!==0) throw new Error(`snapshot fallback used ${s.snapshotFallbackMatches}`);
+          if(s.fixtureUniverse?.count!==expected.count) throw new Error(`wrong universe count ${s.fixtureUniverse?.count}`);
+          if(s.fixtureUniverse?.hash!==expected.hash) throw new Error(`wrong universe hash ${s.fixtureUniverse?.hash}`);
+          if(s.fixtureUniverse?.source!=='canonical_fixtures') throw new Error('wrong universe source');
+          if(Number(r.counts?.totalRows||0)!==Number(s.playable||0)) throw new Error('playable/row mismatch');
+          if(Number(r.counts?.detailsFound||0)>Number(r.counts?.totalRows||0)) throw new Error('details count impossible');
+          if(Number(r.counts?.valueReturned||0)+Number(r.counts?.valueNull||0)+Number(r.counts?.valueFailed||0)!==Number(r.counts?.totalRows||0)) throw new Error('coverage accounting mismatch');
+          console.log(JSON.stringify({ok:true,source:s,counts:r.counts,breakdown:r.breakdown},null,2));
+          NODE
+
+      - name: Prepare clean source-only release commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f data/value/_coverage-reports/2026-09-12.json
+
+          git config user.name "matchlab-repair"
+          git config user.email "matchlab-repair@users.noreply.github.com"
+
+          # Build index from exact production base so the temporary workflow is excluded.
+          git read-tree "${BASE_SHA}^{tree}"
+          git add engine-v1/jobs/build-value-coverage-report-day.js engine-v1/tests/value-coverage-canonical-universe.test.js
+
+          STAGED="$(git diff --cached --name-only "$BASE_SHA")"
+          EXPECTED=$'engine-v1/jobs/build-value-coverage-report-day.js\nengine-v1/tests/value-coverage-canonical-universe.test.js'
+          test "$STAGED" = "$EXPECTED"
+          git diff --cached --check
+
+          TREE="$(git write-tree)"
+          CLEAN_SHA="$(printf '%s\n' 'Use canonical universe for Value coverage diagnostics' | git commit-tree "$TREE" -p "$BASE_SHA")"
+          echo "CLEAN_SHA=$CLEAN_SHA" >> "$GITHUB_ENV"
+          echo "CLEAN_TREE=$TREE" >> "$GITHUB_ENV"
+
+          CLEAN_FILES="$(git diff --name-only "$BASE_SHA" "$CLEAN_SHA")"
+          test "$CLEAN_FILES" = "$EXPECTED"
+          echo "CLEAN_SHA=$CLEAN_SHA"
+          echo "CLEAN_TREE=$TREE"
+
+      - name: Require remote main still pinned
+        shell: bash
+        run: |
+          set -euo pipefail
+          REMOTE_MAIN="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          echo "REMOTE_MAIN=$REMOTE_MAIN"
+          test "$REMOTE_MAIN" = "$BASE_SHA"
+
+      - name: Push validated clean commit to release branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push origin "$CLEAN_SHA:refs/heads/release/20260913-value-coverage-canonical-universe"
+
+      - name: Upload validation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: value-coverage-canonical-universe-validation-20260913
+          if-no-files-found: error
+          path: |
+            /tmp/value-coverage-targeted-test.log
+            /tmp/value-coverage-canonical-build.log
+            /tmp/value-coverage-canonical-verification.json
+            /tmp/value-coverage-canonical-2026-09-12.json
