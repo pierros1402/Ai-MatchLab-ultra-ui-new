@@ -1,4 +1,5 @@
 const DEFAULT_PAST_GRACE_MS = 6 * 60 * 60 * 1000;
+const DEFAULT_MIN_KICKOFF_SHIFT_MS = 6 * 60 * 60 * 1000;
 
 function clean(value) {
   return String(value ?? "").trim();
@@ -102,7 +103,8 @@ export function classifyCrossDayProviderRescheduleGroup(
   rows = [],
   {
     asOfMs = Date.now(),
-    pastGraceMs = DEFAULT_PAST_GRACE_MS
+    pastGraceMs = DEFAULT_PAST_GRACE_MS,
+    minKickoffShiftMs = DEFAULT_MIN_KICKOFF_SHIFT_MS
   } = {}
 ) {
   const input = Array.isArray(rows) ? rows.filter(Boolean) : [];
@@ -130,6 +132,7 @@ export function classifyCrossDayProviderRescheduleGroup(
     !item.homeKey ||
     !item.awayKey ||
     !Number.isFinite(item.kickoffMs) ||
+    !Number.isFinite(item.firstSeenMs) ||
     !Number.isFinite(item.lastSeenMs)
   )) {
     return { ok: false, reason: "cross_day_group_identity_or_time_incomplete" };
@@ -137,6 +140,10 @@ export function classifyCrossDayProviderRescheduleGroup(
 
   if (new Set(enriched.map(item => item.identity)).size !== 1) {
     return { ok: false, reason: "cross_day_provider_identity_mismatch" };
+  }
+
+  if (sourceName(enriched[0].row) !== "flashscore") {
+    return { ok: false, reason: "cross_day_provider_not_flashscore" };
   }
 
   if (new Set(enriched.map(item => item.dayKey)).size < 2) {
@@ -166,14 +173,24 @@ export function classifyCrossDayProviderRescheduleGroup(
 
   const safeAsOfMs = Number(asOfMs);
   const safeGraceMs = Number(pastGraceMs);
-  if (!Number.isFinite(safeAsOfMs) || !Number.isFinite(safeGraceMs) || safeGraceMs < 0) {
+  const safeMinKickoffShiftMs = Number(minKickoffShiftMs);
+  if (
+    !Number.isFinite(safeAsOfMs) ||
+    !Number.isFinite(safeGraceMs) ||
+    safeGraceMs < 0 ||
+    !Number.isFinite(safeMinKickoffShiftMs) ||
+    safeMinKickoffShiftMs < 0
+  ) {
     return { ok: false, reason: "cross_day_classifier_time_options_invalid" };
   }
 
   const superseded = byObservation
     .slice(1)
     .filter(item =>
-      item.kickoffMs < evidence.kickoffMs &&
+      evidence.dayKey > item.dayKey &&
+      evidence.kickoffMs > item.kickoffMs &&
+      evidence.kickoffMs - item.kickoffMs >= safeMinKickoffShiftMs &&
+      evidence.firstSeenMs > item.lastSeenMs &&
       item.lastSeenMs < evidence.lastSeenMs &&
       safeAsOfMs >= item.kickoffMs + safeGraceMs &&
       isScorelessScheduled(item.row)
@@ -184,6 +201,7 @@ export function classifyCrossDayProviderRescheduleGroup(
         clean(evidence.row?.canonicalId || evidence.row?.matchId) || null,
       supersededByDayKey: evidence.dayKey,
       supersededByKickoffUtc: clean(evidence.row?.kickoffUtc) || null,
+      supersededByFirstSeenAt: clean(evidence.row?.firstSeenAt) || null,
       supersededByLastSeenAt: clean(evidence.row?.lastSeenAt) || null,
       decisionBasis: "exact_provider_identity_cross_day_supersession"
     }));
@@ -208,12 +226,15 @@ export function classifyCrossDayProviderRescheduleGroup(
     evidence: compactRow(evidence.row),
     superseded,
     guarantees: {
+      flashscoreProviderOnly: true,
       exactProviderIdentity: true,
       sameLeague: true,
       exactNormalizedOrderedTeamPair: true,
       uniqueLatestObservation: true,
       strictlyNewerKickoff: true,
+      minimumKickoffShiftRequired: true,
       strictlyNewerObservation: true,
+      nonOverlappingObservationWindows: true,
       oldKickoffPastGraceRequired: true,
       oldOccurrenceScorelessScheduledOnly: true,
       playedFinalNeverSuperseded: true,
@@ -224,3 +245,6 @@ export function classifyCrossDayProviderRescheduleGroup(
 
 export const CROSS_DAY_PROVIDER_RESCHEDULE_DEFAULT_PAST_GRACE_MS =
   DEFAULT_PAST_GRACE_MS;
+
+export const CROSS_DAY_PROVIDER_RESCHEDULE_DEFAULT_MIN_KICKOFF_SHIFT_MS =
+  DEFAULT_MIN_KICKOFF_SHIFT_MS;
