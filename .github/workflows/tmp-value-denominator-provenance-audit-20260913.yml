@@ -1,0 +1,152 @@
+name: TMP Value denominator provenance audit 20260913
+
+on:
+  push:
+    branches:
+      - audit/20260913-value-denominator-provenance
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Verify exact audit base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=4cae2c0432ea9eae52eed6c1718fb45e5c1a9656
+          test "$(git rev-parse HEAD^)" = "$BASE"
+          CHANGED="$(git diff --name-only HEAD^ HEAD)"
+          test "$CHANGED" = ".github/workflows/tmp-value-denominator-provenance-audit-20260913.yml"
+          echo "AUDIT_BASE=$BASE"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Build current Value coverage report read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-value-coverage-report-day.js 2026-09-12 | tee /tmp/value-coverage-build.log
+
+      - name: Build denominator and provenance summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+
+          const read = p => fs.existsSync(p) ? JSON.parse(fs.readFileSync(p,'utf8')) : null;
+          const sha = p => fs.existsSync(p) ? crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex') : null;
+          const day='2026-09-12';
+          const coverage=read(`data/value/_coverage-reports/${day}.json`);
+          const manifest=read(`data/deploy-snapshots/${day}/manifest.json`);
+          const paths={
+            planA:`data/deploy-snapshots/${day}/value.json`,
+            planAAudit:`data/deploy-snapshots/${day}/value-audit.json`,
+            planA2:`data/value-plans/${day}/plan-a2.json`,
+            planA2Audit:`data/value-plans/${day}/plan-a2-audit.json`,
+            planB:`data/value-plans/${day}/plan-b.json`,
+            planBAudit:`data/value-plans/${day}/plan-b-audit.json`,
+            planB2:`data/value-plans/${day}/plan-b2.json`,
+            planB2Audit:`data/value-plans/${day}/plan-b2-audit.json`,
+            comparison:`data/value-comparison/${day}.json`
+          };
+          const docs=Object.fromEntries(Object.entries(paths).map(([k,p])=>[k,read(p)]));
+          function universe(doc){
+            const candidates=[
+              doc?.sourceContract?.fixtureUniverse,
+              doc?.fixtureUniverse,
+              doc?.audit?.sourceContract?.fixtureUniverse,
+              doc?.meta?.sourceContract?.fixtureUniverse,
+              doc?.contract?.fixtureUniverse,
+              doc?.inputContract?.fixtureUniverse
+            ].filter(Boolean);
+            if(candidates.length) return candidates[0];
+            // search shallowly for the exact fixtureUniverse key without mutating anything
+            const seen=new Set();
+            const q=[doc];
+            while(q.length){
+              const x=q.shift();
+              if(!x || typeof x!=='object' || seen.has(x)) continue;
+              seen.add(x);
+              if(x.fixtureUniverse && typeof x.fixtureUniverse==='object') return x.fixtureUniverse;
+              for(const v of Object.values(x)) if(v && typeof v==='object') q.push(v);
+            }
+            return null;
+          }
+          function picks(doc){return Array.isArray(doc?.picks)?doc.picks:[];}
+          const planSummary={};
+          for(const [k,doc] of Object.entries(docs)){
+            if(!doc) { planSummary[k]={exists:false}; continue; }
+            const u=universe(doc);
+            planSummary[k]={
+              exists:true,
+              source:doc.source ?? null,
+              count:doc.count ?? (Array.isArray(doc.picks)?doc.picks.length:null),
+              pickCount:picks(doc).length,
+              universe:u?{schema:u.schema??null,source:u.source??null,count:u.count??null,hash:u.hash??null,canonicalIdCount:Array.isArray(u.canonicalIds)?u.canonicalIds.length:null}:null,
+              sha256:sha(paths[k])
+            };
+          }
+          const returned=(coverage?.rows||[]).filter(r=>r.valueReturned);
+          const nulls=(coverage?.rows||[]).filter(r=>r.nullReason);
+          const missingDetails=(coverage?.rows||[]).filter(r=>!r.detailsFound);
+          const intelligenceFailed=(coverage?.rows||[]).filter(r=>!r.intelligenceOk);
+          const errors=(coverage?.rows||[]).filter(r=>r.valueError);
+          const currentFixtureIds=new Set((read(`data/deploy-snapshots/${day}/fixtures.json`)?.fixtures||[]).map(r=>r.matchId||r.canonicalId).filter(Boolean));
+          const prodPicks=picks(docs.planA);
+          const orphanProd=prodPicks.filter(p=>!currentFixtureIds.has(p.matchId)).map(p=>p.matchId);
+          const frozenUniverses=['planA2','planA2Audit','planB','planBAudit','planB2','planB2Audit']
+            .map(k=>({k,u:universe(docs[k])})).filter(x=>x.u);
+          const universePairs=frozenUniverses.map(x=>({plan:x.k,count:x.u.count??null,hash:x.u.hash??null,source:x.u.source??null}));
+          const uniqueUniverseKeys=[...new Set(universePairs.map(x=>`${x.count}|${x.hash}|${x.source}`))];
+          const summary={
+            baseSha:'4cae2c0432ea9eae52eed6c1718fb45e5c1a9656',
+            day,
+            manifest:{fixtureCount:manifest?.counts?.fixtures??null,detailCount:manifest?.counts?.details??null,valuePicks:manifest?.counts?.valuePicks??null,publicationMode:manifest?.publicationUniverse?.mode??null,valueGate:manifest?.valueGate??null},
+            coverage:{source:coverage?.source??null,counts:coverage?.counts??null,breakdown:coverage?.breakdown??null},
+            derived:{valueReturnedCount:returned.length,valueNullCount:nulls.length,missingDetailsCount:missingDetails.length,intelligenceFailedCount:intelligenceFailed.length,valueErrorCount:errors.length,productionPickCount:prodPicks.length,productionOrphanPickIds:orphanProd},
+            frozenUniverseParity:{universes:universePairs,uniqueUniverseContractCount:uniqueUniverseKeys.length,exactParity:uniqueUniverseKeys.length===1},
+            plans:planSummary
+          };
+          fs.writeFileSync('/tmp/value-denominator-provenance-summary.json',JSON.stringify(summary,null,2)+'\n');
+          console.log(JSON.stringify(summary,null,2));
+          NODE
+
+      - name: Prove repository tracked state unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code
+          git diff --cached --exit-code
+          echo "=== STATUS (generated report may be ignored/untracked) ==="
+          git status --short
+
+      - name: Upload audit evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: value-denominator-provenance-audit-20260913
+          if-no-files-found: error
+          path: |
+            data/value/_coverage-reports/2026-09-12.json
+            /tmp/value-denominator-provenance-summary.json
+            /tmp/value-coverage-build.log
