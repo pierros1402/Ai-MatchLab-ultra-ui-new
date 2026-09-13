@@ -2,14 +2,48 @@
   "dayKey": "2026-09-13",
   "leagueSlug": "par.1",
   "leagueName": "par.1",
-  "updatedAt": "2026-09-13T14:39:23.213Z",
+  "updatedAt": "2026-09-13T20:56:44.262Z",
   "count": 2,
   "sourceMeta": {
-    "acquisitionProvider": "espn_all_scoreboard",
-    "requestedLeagueSlug": "all",
+    "acquisitionProvider": "espn_direct_league_status",
+    "requestedLeagueSlug": "par.1",
     "requestedDayKey": "2026-09-13",
-    "mergedAt": "2026-09-13T14:39:23.213Z",
-    "mode": "supplemental_target_seed_only"
+    "providerFetchSlugs": [
+      "par.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 0,
+      "matches": 0,
+      "fetches": []
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-09-13T20:56:44.262Z",
+    "mode": "targeted_live_status_refresh",
+    "authoritativeTerminalOverlayPromotion": {
+      "schema": "ai-matchlab.authoritative-terminal-overlay-promotion.v1",
+      "promotedAt": "2026-09-13T20:57:20.805Z",
+      "exactProviderIdOnly": true,
+      "orderedTeamIdentityRequired": true,
+      "athensDayRequired": true,
+      "explicitTerminalStatusRequired": true,
+      "numericScoreRequired": true,
+      "heuristicIdentity": false
+    }
   },
   "fixtures": [
     {
@@ -60,16 +94,40 @@
       "kickoffUtc": "2026-09-13T19:00Z",
       "homeTeam": "Club Olimpia",
       "awayTeam": "Sportivo Luqueño",
-      "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null,
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
       "venue": "Defensores del Chaco",
       "firstSeenAt": "2026-09-12T17:18:19.540Z",
-      "lastSeenAt": "2026-09-13T14:39:23.130Z"
+      "lastSeenAt": "2026-09-13T20:56:44.262Z",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+3'",
+      "scoreHome": 3,
+      "scoreAway": 0,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
+      "penalties": null,
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-09-13T20:57:20.805Z",
+        "provider": "espn",
+        "providerMatchId": "401888599",
+        "dayKey": "2026-09-13",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 3,
+          "scoreAway": 0
+        }
+      }
     }
   ]
 }
