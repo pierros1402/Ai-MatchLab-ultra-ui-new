@@ -1,0 +1,98 @@
+name: TMP diagnostic run-odds-refresh 2026-09-13
+
+on:
+  push:
+    branches:
+      - diag/20260913-run-odds-refresh-force
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout diagnostic branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify diagnostic base
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_BASE="b0a4fae19f9cc01339200ce1f233e6de9ec86075"
+          ACTUAL_PARENT="$(git rev-parse HEAD^)"
+          test "$ACTUAL_PARENT" = "$EXPECTED_BASE"
+          CHANGED="$(git diff --name-only HEAD^ HEAD)"
+          test "$CHANGED" = ".github/workflows/tmp-diag-run-odds-refresh-20260913.yml"
+          echo "DIAG_BASE_VERIFIED=$EXPECTED_BASE"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Reproduce forced odds refresh without publication
+        id: diag
+        shell: bash
+        run: |
+          set -u
+          OUT="$RUNNER_TEMP/run-odds-refresh.stdout.txt"
+          ERR="$RUNNER_TEMP/run-odds-refresh.stderr.txt"
+          STATUS="$RUNNER_TEMP/run-odds-refresh.exit-code.txt"
+          TREE="$RUNNER_TEMP/git-status-after.txt"
+          BEFORE="$RUNNER_TEMP/git-status-before.txt"
+
+          git status --short > "$BEFORE"
+
+          set +e
+          node ./engine-v1/jobs/run-odds-refresh.js 2026-09-13 --force >"$OUT" 2>"$ERR"
+          CODE=$?
+          set -e
+
+          printf '%s\n' "$CODE" > "$STATUS"
+          git status --short > "$TREE"
+
+          echo "exit_code=$CODE" >> "$GITHUB_OUTPUT"
+          echo "=== EXIT CODE ==="
+          cat "$STATUS"
+          echo "=== STDOUT ==="
+          cat "$OUT" || true
+          echo "=== STDERR ==="
+          cat "$ERR" || true
+          echo "=== WORKTREE AFTER ==="
+          cat "$TREE" || true
+
+          # Diagnostic only: preserve the real process code as evidence without
+          # failing before the artifact is uploaded.
+          exit 0
+
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: run-odds-refresh-20260913-diagnostic
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/run-odds-refresh.stdout.txt
+            ${{ runner.temp }}/run-odds-refresh.stderr.txt
+            ${{ runner.temp }}/run-odds-refresh.exit-code.txt
+            ${{ runner.temp }}/git-status-before.txt
+            ${{ runner.temp }}/git-status-after.txt
+
+      - name: Diagnostic summary
+        if: always()
+        shell: bash
+        run: |
+          echo "run-odds-refresh exit code: ${{ steps.diag.outputs.exit_code }}"
+          echo "No commit, push, publication, workflow dispatch, or deploy was performed."
