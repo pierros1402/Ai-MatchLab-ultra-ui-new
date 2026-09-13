@@ -137,6 +137,136 @@ jobs:
           }
           NODE
 
+      - name: Audit rolling-window candidate impact
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { classifyCrossDayProviderRescheduleGroup } from './engine-v1/core/cross-day-provider-reschedule.js';
+
+          const AS_OF = Date.parse('2026-09-13T15:45:00.000Z');
+          const WINDOW_FROM = '2026-09-06';
+          const WINDOW_TO = '2026-09-13';
+          const root = 'data/canonical-fixtures';
+          const groups = new Map();
+
+          function readJson(file) {
+            try { return JSON.parse(fs.readFileSync(file, 'utf8')); }
+            catch { return null; }
+          }
+
+          function jsonContains(file, matchId) {
+            if (!fs.existsSync(file)) return false;
+            try { return fs.readFileSync(file, 'utf8').includes(matchId); }
+            catch { return false; }
+          }
+
+          for (const day of fs.readdirSync(root).filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x)).sort()) {
+            const dir = path.join(root, day);
+            for (const name of fs.readdirSync(dir).filter(x => x.endsWith('.json')).sort()) {
+              const payload = readJson(path.join(dir, name));
+              const fixtures = Array.isArray(payload?.fixtures) ? payload.fixtures : [];
+              for (const row of fixtures) {
+                const source = String(row?.source || '').trim().toLowerCase();
+                const pid = String(row?.sourceMatchId || row?.sourceId || row?.providerMatchId || '').trim();
+                if (!source || !pid) continue;
+                const key = `${source}:${pid}`;
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(row);
+              }
+            }
+          }
+
+          const recent = [];
+          for (const rows of groups.values()) {
+            if (new Set(rows.map(r => String(r?.dayKey || ''))).size < 2) continue;
+            const result = classifyCrossDayProviderRescheduleGroup(rows, { asOfMs: AS_OF });
+            if (!result.ok) continue;
+            if (String(result.evidence?.dayKey || '') > WINDOW_TO) continue;
+
+            for (const old of result.superseded) {
+              if (old.dayKey < WINDOW_FROM || old.dayKey > WINDOW_TO) continue;
+
+              const id = old.canonicalId;
+              const day = old.dayKey;
+              const valuePlanDir = path.join('data/value-plans', day);
+              const planHits = [];
+              if (fs.existsSync(valuePlanDir)) {
+                for (const name of fs.readdirSync(valuePlanDir).filter(x => x.endsWith('.json')).sort()) {
+                  const file = path.join(valuePlanDir, name);
+                  if (jsonContains(file, id)) planHits.push(file);
+                }
+              }
+
+              const snapshotFixturesFile = path.join('data/deploy-snapshots', day, 'fixtures.json');
+              const snapshot = readJson(snapshotFixturesFile);
+              const snapshotRows = Array.isArray(snapshot?.fixtures) ? snapshot.fixtures : [];
+              const snapshotRow = snapshotRows.find(r => String(r?.matchId || r?.canonicalId || '') === id) || null;
+
+              const finalFile = path.join('data/final-results', day, `${id}.json`);
+              const historyFile = 'data/history/2026-2027.json';
+
+              recent.push({
+                canonicalId: id,
+                dayKey: day,
+                leagueSlug: old.leagueSlug,
+                homeTeam: old.homeTeam,
+                awayTeam: old.awayTeam,
+                providerIdentity: result.providerIdentity,
+                oldKickoffUtc: old.kickoffUtc,
+                evidenceCanonicalId: result.evidence.canonicalId,
+                evidenceDayKey: result.evidence.dayKey,
+                evidenceKickoffUtc: result.evidence.kickoffUtc,
+                evidenceStatus: result.evidence.status,
+                dependencies: {
+                  productionValue: jsonContains(path.join('data/value', `${day}.json`), id),
+                  valuePlans: planHits,
+                  valueComparison: jsonContains(path.join('data/value-comparison', `${day}.json`), id),
+                  snapshotValue: jsonContains(path.join('data/deploy-snapshots', day, 'value.json'), id),
+                  snapshotFixture: snapshotRow ? {
+                    status: snapshotRow.status ?? null,
+                    rawStatus: snapshotRow.rawStatus ?? null,
+                    scoreHome: snapshotRow.scoreHome ?? null,
+                    scoreAway: snapshotRow.scoreAway ?? null
+                  } : null,
+                  verifiedFinalArtifact: fs.existsSync(finalFile),
+                  historyContainsId: jsonContains(historyFile, id)
+                }
+              });
+            }
+          }
+
+          recent.sort((a,b) => a.dayKey.localeCompare(b.dayKey) || a.canonicalId.localeCompare(b.canonicalId));
+          const anyProductionValue = recent.filter(x => x.dependencies.productionValue || x.dependencies.snapshotValue);
+          const anyPlanReference = recent.filter(x => x.dependencies.valuePlans.length > 0);
+          const anyFinal = recent.filter(x => x.dependencies.verifiedFinalArtifact);
+          const anyHistory = recent.filter(x => x.dependencies.historyContainsId);
+
+          console.log(JSON.stringify({
+            window: { from: WINDOW_FROM, to: WINDOW_TO },
+            recentEligibleCount: recent.length,
+            productionValueReferencedCount: anyProductionValue.length,
+            anyValuePlanReferencedCount: anyPlanReference.length,
+            verifiedFinalArtifactCount: anyFinal.length,
+            historyReferencedCount: anyHistory.length,
+            recent
+          }, null, 2));
+
+          const ids = new Set(recent.map(x => x.canonicalId));
+          for (const required of [
+            'cid_kos2_ferizaj_istogu_20260911',
+            'cid_kos2_ferizaj_istogu_20260912',
+            'cid_fro1_abargir_toftir_20260911'
+          ]) {
+            if (!ids.has(required)) throw new Error(`required_recent_candidate_missing:${required}`);
+          }
+          if (ids.has('cid_chi2_sanfelipe_sanluis_20260909')) {
+            throw new Error('san_felipe_must_remain_unclassified');
+          }
+          NODE
+
       - name: Prove validation stayed read-only
         shell: bash
         run: |
