@@ -1,0 +1,123 @@
+name: TMP Value coverage canonical universe validation 2026-09-13 V2
+
+on:
+  push:
+    branches:
+      - audit/20260913-value-coverage-canonical-universe-validation-v2
+
+permissions:
+  contents: read
+
+jobs:
+  validate-value-coverage-canonical-universe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout validation branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Verify exact source commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_COMMIT="6061d11e0ff6bb9c73665769a3cd1db88adfa8b9"
+          test "$(git rev-parse HEAD^)" = "$SOURCE_COMMIT"
+          CHANGED="$(git diff --name-only "$SOURCE_COMMIT"..HEAD)"
+          test "$CHANGED" = ".github/workflows/tmp-value-coverage-canonical-universe-validation-20260913-v2.yml"
+          BASE="b4abcdd47da8164df94f76aa7612d711c984c087"
+          SOURCE_CHANGED="$(git diff --name-only "$BASE".."$SOURCE_COMMIT" | sort)"
+          EXPECTED=$'engine-v1/jobs/build-value-coverage-report-day.js\nengine-v1/tests/value-coverage-canonical-universe.test.js'
+          test "$SOURCE_CHANGED" = "$EXPECTED"
+          echo "SOURCE_COMMIT_VERIFIED=$SOURCE_COMMIT"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Syntax and focused regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/jobs/build-value-coverage-report-day.js
+          node --check engine-v1/tests/value-coverage-canonical-universe.test.js
+          node --test engine-v1/tests/value-coverage-canonical-universe.test.js
+          node --test engine-v1/tests/daily-history-catchup-h2h-scope.test.js
+
+      - name: Runtime canonical universe parity for 2026-09-13
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { buildValueFixtureUniverse } from './engine-v1/core/value-fixture-universe.js';
+          import { resolveValueCoverageSource } from './engine-v1/jobs/build-value-coverage-report-day.js';
+
+          const dayKey = '2026-09-13';
+          const expected = buildValueFixtureUniverse(dayKey);
+          const resolved = resolveValueCoverageSource(dayKey);
+
+          assert.equal(expected.source, 'canonical_fixtures');
+          assert.equal(expected.count, 454);
+          assert.equal(expected.hash, '2f4b6554a609c447626f7f63b8d9c977c5ba6d9ca7b394ce7564f569e9e641cc');
+          assert.equal(resolved.inputSource, 'canonical_fixtures');
+          assert.equal(resolved.valueUniverse.source, 'canonical_fixtures');
+          assert.equal(resolved.valueUniverse.count, expected.count);
+          assert.equal(resolved.valueUniverse.hash, expected.hash);
+          assert.deepEqual(resolved.valueUniverse.canonicalIds, expected.canonicalIds);
+          assert.equal(resolved.canonicalMatches.length, expected.count);
+          assert.equal(resolved.sourceMatches.length, expected.count);
+
+          console.log(JSON.stringify({
+            ok: true,
+            dayKey,
+            inputSource: resolved.inputSource,
+            count: resolved.valueUniverse.count,
+            hash: resolved.valueUniverse.hash,
+            snapshotFallbackMatches: 0,
+            canonicalIdsExact: true
+          }, null, 2));
+          NODE
+
+      - name: Prove no snapshot fallback remains in coverage source
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -q 'getFixturesByDay' engine-v1/jobs/build-value-coverage-report-day.js; then
+            echo 'ERROR: legacy getFixturesByDay coverage source remains'
+            exit 1
+          fi
+          if grep -q 'readDeploySnapshotFixturesByDay' engine-v1/jobs/build-value-coverage-report-day.js; then
+            echo 'ERROR: deploy snapshot fixture fallback remains'
+            exit 1
+          fi
+          grep -q 'buildValueFixtureUniverse' engine-v1/jobs/build-value-coverage-report-day.js
+          grep -q 'VALUE_COVERAGE_FIXTURE_UNIVERSE_INVALID' engine-v1/jobs/build-value-coverage-report-day.js
+          echo 'CANONICAL_ONLY_VALUE_COVERAGE_SOURCE=PASS'
+
+      - name: Require remote main still pinned
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_MAIN="b4abcdd47da8164df94f76aa7612d711c984c087"
+          git fetch origin main --quiet
+          ACTUAL_MAIN="$(git rev-parse origin/main)"
+          echo "EXPECTED_MAIN=$EXPECTED_MAIN"
+          echo "ACTUAL_MAIN=$ACTUAL_MAIN"
+          test "$ACTUAL_MAIN" = "$EXPECTED_MAIN"
+
+      - name: Prove validation checkout has no generated data changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          echo "VALUE_COVERAGE_VALIDATION_READ_ONLY=PASS"
