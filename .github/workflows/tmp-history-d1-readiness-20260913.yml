@@ -1,0 +1,94 @@
+name: TMP history D-1 readiness 2026-09-13
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - audit/20260913-history-d1-readiness
+    paths:
+      - ".github/workflows/tmp-history-d1-readiness-20260913.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit-history-d1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout pinned audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Verify audit baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="$(git rev-parse HEAD^)"
+          test "$BASE" = "4cae2c0432ea9eae52eed6c1718fb45e5c1a9656"
+          echo "AUDIT_BASE=$BASE"
+
+      - name: Evaluate exact D-1 history truth readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE' | tee /tmp/history-d1-readiness.json
+          import fs from "node:fs";
+          import { buildHistoryDayFromTruth } from "./engine-v1/jobs/append-finalized-day-to-history.js";
+
+          const dayKey = "2026-09-12";
+          const build = buildHistoryDayFromTruth(dayKey);
+          const byReason = {};
+          for (const error of build.errors || []) {
+            const key = String(error?.reason || "unknown");
+            byReason[key] = (byReason[key] || 0) + 1;
+          }
+
+          let committedHistoryHasDay = false;
+          let committedHistoryMatchCount = null;
+          try {
+            const history = JSON.parse(fs.readFileSync("data/history/2026-2027.json", "utf8"));
+            const day = (history.days || []).find(x => x?.dayKey === dayKey);
+            committedHistoryHasDay = Boolean(day);
+            committedHistoryMatchCount = day ? (Array.isArray(day.rows) ? day.rows.length : Number(day.matchCount || 0)) : null;
+          } catch {}
+
+          const result = {
+            auditedHead: process.env.GITHUB_SHA || null,
+            dayKey,
+            ok: build.ok === true,
+            reason: build.reason || null,
+            season: build.season || null,
+            canonicalFixtureCount: build.canonicalFixtureCount ?? null,
+            canonicalPlayedFinalCount: build.canonicalPlayedFinalCount ?? null,
+            verifiedFinalCount: build.verifiedFinalCount ?? null,
+            acceptedRows: build.acceptedRows ?? null,
+            errorCount: Array.isArray(build.errors) ? build.errors.length : 0,
+            errorsByReason: byReason,
+            errorSamples: (build.errors || []).slice(0, 50),
+            committedHistoryHasDay,
+            committedHistoryMatchCount
+          };
+
+          console.log(JSON.stringify(result, null, 2));
+          NODE
+
+      - name: Prove repository remained clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --short)"
+          echo "READ_ONLY_AUDIT_CLEAN=true"
+
+      - name: Upload readiness evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: history-d1-readiness-20260913
+          path: /tmp/history-d1-readiness.json
+          if-no-files-found: error
