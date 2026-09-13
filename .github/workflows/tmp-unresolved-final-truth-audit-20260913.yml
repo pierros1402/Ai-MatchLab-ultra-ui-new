@@ -1,0 +1,91 @@
+name: TMP unresolved final truth audit 20260913
+
+on:
+  push:
+    branches:
+      - audit/20260913-unresolved-final-truth-v1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout pinned audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Verify pinned base ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=b4abcdd47da8164df94f76aa7612d711c984c087
+          test "$(git rev-parse HEAD^)" = "$BASE"
+          echo "AUDIT_BASE=$BASE"
+          echo "AUDIT_HEAD=$(git rev-parse HEAD)"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npm --prefix engine-v1 ci --no-audit --no-fund
+
+      - name: Run production verifier dry-run for unresolved days
+        shell: bash
+        run: |
+          set -u
+          mkdir -p "$RUNNER_TEMP/final-truth-audit"
+
+          run_day() {
+            local day="$1"
+            local out="$RUNNER_TEMP/final-truth-audit/${day}.log"
+            echo "=== DRY RUN $day ==="
+            set +e
+            node ./engine-v1/jobs/export-verified-final-results-day.js \
+              --date="$day" \
+              --all-fixtures \
+              --offsets=-7,-6,-5,-4,-3,-2,-1,0 \
+              >"$out" 2>&1
+            local rc=$?
+            set -e
+            echo "DRY_RUN_RC_${day//-/_}=$rc"
+            echo "--- target evidence ---"
+            grep -E -C 5 \
+              'cid_chi2_sanfelipe_sanluis_20260909|cid_kos2_ferizaj_istogu_20260911|cid_fro1_abargir_toftir_20260911|San Felipe|San Luis|Ferizaj|Istogu|AB Argir|Toftir|Khg606iL|OtToQ8QO|bR8MdXt2' \
+              "$out" || true
+            echo "--- summary tail ---"
+            tail -n 80 "$out" || true
+          }
+
+          set -e
+          run_day 2026-09-09
+          run_day 2026-09-11
+
+      - name: Prove repository remained read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          STATUS="$(git status --porcelain)"
+          if [ -n "$STATUS" ]; then
+            echo "ERROR: dry-run mutated repository:"
+            echo "$STATUS"
+            exit 1
+          fi
+          echo "READ_ONLY_REPOSITORY_CLEAN=true"
+
+      - name: Upload raw audit logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: unresolved-final-truth-audit-20260913
+          path: ${{ runner.temp }}/final-truth-audit/*.log
+          if-no-files-found: error
