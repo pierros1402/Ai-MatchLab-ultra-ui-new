@@ -1,0 +1,61 @@
+name: TMP baseline midnight timeout test
+
+on:
+  push:
+    branches:
+      - audit/20260913-baseline-midnight-timeout-test
+
+permissions:
+  contents: read
+
+jobs:
+  baseline-midnight-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BASE_SHA: b4abcdd47da8164df94f76aa7612d711c984c087
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git merge-base HEAD "$BASE_SHA")" = "$BASE_SHA"
+          test "$(git diff --name-only "$BASE_SHA"...HEAD)" = ".github/workflows/tmp-baseline-midnight-timeout-test.yml"
+          echo "BASE_SHA=$BASE_SHA"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Run exact baseline midnight test
+        id: baseline
+        shell: bash
+        run: |
+          set +e
+          node --test engine-v1/tests/midnight-release-deadline-contract.test.js > /tmp/midnight.log 2>&1
+          code=$?
+          cat /tmp/midnight.log
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          if grep -Fq '300 !== 180' /tmp/midnight.log && \
+             grep -Fq 'scheduled full publication is tomorrow-only and cannot consume midnight' /tmp/midnight.log; then
+            echo "BASELINE_KNOWN_FAILURE_CONFIRMED=true"
+            exit 0
+          fi
+          echo "BASELINE_KNOWN_FAILURE_CONFIRMED=false"
+          exit 1
+
+      - name: Verify audit checkout remained clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --short)"
