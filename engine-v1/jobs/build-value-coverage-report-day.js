@@ -54,10 +54,10 @@ function safeNumber(value, fallback = 0) {
   return Number.isFinite(n) ? n : fallback;
 }
 
-function classifyMinimumSample(sample) {
+export function classifyMinimumSample(sample) {
   const minRequired = safeNumber(sample?.minRequiredRecentMatches, 3);
-  const homeBelowMin = safeNumber(sample?.homeBlendedSample, 0) < minRequired;
-  const awayBelowMin = safeNumber(sample?.awayBlendedSample, 0) < minRequired;
+  const homeBelowMin = safeNumber(sample?.homeRawSample, 0) < minRequired;
+  const awayBelowMin = safeNumber(sample?.awayRawSample, 0) < minRequired;
   const homeHasPrior = safeNumber(sample?.homePriorSample, 0) > 0;
   const awayHasPrior = safeNumber(sample?.awayPriorSample, 0) > 0;
   const homeHasRaw = safeNumber(sample?.homeRawSample, 0) > 0;
