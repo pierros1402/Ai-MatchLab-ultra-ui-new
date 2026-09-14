@@ -1,0 +1,102 @@
+name: TMP history convergence audit 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-history-convergence-current-main
+
+permissions:
+  contents: read
+
+jobs:
+  audit-history-convergence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact base ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="bee1afa9b45551af7e5c1ab05b99d4d3fb6418db"
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git rev-parse HEAD^)" = "$BASE"
+          echo "AUDIT_BASE_VERIFIED=$BASE"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Syntax checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/core/history-truth-convergence.js
+          node --check engine-v1/jobs/append-finalized-day-to-history.js
+          node --check engine-v1/jobs/run-daily-cycle.js
+
+      - name: Targeted history convergence tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test \
+            engine-v1/tests/history-truth-convergence.test.js \
+            engine-v1/tests/daily-history-catchup-h2h-scope.test.js
+
+      - name: Read-only truth parity audit 09-12 September
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { buildHistoryDayFromTruth } from './engine-v1/jobs/append-finalized-day-to-history.js';
+          import { summarizeHistoryTruthParity } from './engine-v1/core/history-truth-convergence.js';
+
+          const report = JSON.parse(fs.readFileSync('./data/history/2026-2027.report.json', 'utf8'));
+          const days = ['2026-09-09','2026-09-10','2026-09-11','2026-09-12'];
+          const out = [];
+          for (const day of days) {
+            const build = buildHistoryDayFromTruth(day);
+            const summary = summarizeHistoryTruthParity(build, { sampleLimit: 20 });
+            const expected = Number(report?.byDay?.[day] ?? -1);
+            out.push({ day, expectedReportRows: expected, ...summary });
+            if (summary.ok !== true) {
+              console.error(JSON.stringify({ type: 'history_truth_parity_failed', day, summary }, null, 2));
+              process.exitCode = 1;
+            }
+            if (summary.acceptedRows !== expected) {
+              console.error(JSON.stringify({ type: 'history_report_store_mismatch', day, expected, acceptedRows: summary.acceptedRows }, null, 2));
+              process.exitCode = 1;
+            }
+          }
+          console.log(JSON.stringify({
+            ok: process.exitCode !== 1,
+            reportTo: report.to,
+            lastCompletedDay: report.lastCompletedDay,
+            days: out
+          }, null, 2));
+          NODE
+
+      - name: Prove read-only worktree
+        shell: bash
+        run: |
+          set -euo pipefail
+          DIRTY="$(git status --short --untracked-files=no)"
+          if [ -n "$DIRTY" ]; then
+            echo "ERROR: tracked worktree changed during read-only audit"
+            echo "$DIRTY"
+            exit 1
+          fi
+          echo "READ_ONLY_WORKTREE_CLEAN=true"
