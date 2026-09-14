@@ -1,0 +1,50 @@
+name: TMP provider candidate scope audit 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-provider-candidate-scope
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scope-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Print all unresolved target-day provider candidates
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const r = JSON.parse(fs.readFileSync('data/coverage-readiness/2026-09-14.json','utf8'));
+          const rows = Array.isArray(r?.activeCompetitionCompleteness?.providerCandidates)
+            ? r.activeCompetitionCompleteness.providerCandidates
+            : [];
+          if (rows.length !== 52) throw new Error(`Expected 52 candidates, found ${rows.length}`);
+          const compact = rows.map((x,i)=>({
+            n:i+1,
+            providerCompetitionId:x.providerCompetitionId||null,
+            country:x.providerCountry||null,
+            name:x.providerName||null,
+            path:x.providerPath||null,
+            fixtures:Number(x.targetDayFixtureCount||0),
+            reason:x.reasonCode||null
+          }));
+          console.log(JSON.stringify({count:compact.length, candidates:compact},null,2));
+          NODE
+
+      - name: Prove read-only checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --short)"
+          echo "READ_ONLY_PROVIDER_SCOPE_AUDIT=PASS"
