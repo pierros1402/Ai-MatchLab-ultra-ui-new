@@ -1,0 +1,138 @@
+name: TMP Value denominator provenance final audit 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-value-denominator-provenance-final
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Verify exact audited parent
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "b07d67b7fbe213d124f25752c6e576dec6d25343"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Build current canonical Value coverage report
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-value-coverage-report-day.js 2026-09-14
+
+      - name: Audit denominator and provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('data/value/_coverage-reports/2026-09-14.json','utf8'));
+          const manifest = JSON.parse(fs.readFileSync('data/deploy-snapshots/2026-09-14/manifest.json','utf8'));
+          const audit = JSON.parse(fs.readFileSync('data/deploy-snapshots/2026-09-14/value-audit.json','utf8'));
+          const value = JSON.parse(fs.readFileSync('data/deploy-snapshots/2026-09-14/value.json','utf8'));
+
+          const canonical = Number(report?.source?.canonicalMatches ?? -1);
+          const sourceMatches = Number(report?.source?.sourceMatches ?? -1);
+          const playable = Number(report?.source?.playable ?? -1);
+          const universeCount = Number(report?.source?.fixtureUniverse?.count ?? -1);
+          const detailsFound = Number(report?.counts?.detailsFound ?? -1);
+          const intelligenceOk = Number(report?.counts?.intelligenceOk ?? -1);
+          const valueReturned = Number(report?.counts?.valueReturned ?? -1);
+          const valueNull = Number(report?.counts?.valueNull ?? -1);
+          const valueFailed = Number(report?.counts?.valueFailed ?? -1);
+          const totalRows = Number(report?.counts?.totalRows ?? -1);
+          const publishedCurrent = Number(manifest?.publicationUniverse?.currentFixtureCount ?? -1);
+          const publishedCount = Number(manifest?.publicationUniverse?.publishedFixtureCount ?? -1);
+          const manifestCanonical = Number(manifest?.canonicalFixtureCount ?? -1);
+          const frozenUniverse = Number(audit?.fixtureUniverse?.count ?? -1);
+          const frozenPicks = Number(value?.count ?? -1);
+
+          const pct = (n,d) => d > 0 ? Number((100*n/d).toFixed(2)) : null;
+
+          if (report?.source?.inputSource !== 'canonical_fixtures') throw new Error(`inputSource=${report?.source?.inputSource}`);
+          if (report?.source?.snapshotFallbackMatches !== 0) throw new Error(`snapshotFallbackMatches=${report?.source?.snapshotFallbackMatches}`);
+          if (report?.source?.fixtureUniverse?.source !== 'canonical_fixtures') throw new Error(`fixtureUniverse.source=${report?.source?.fixtureUniverse?.source}`);
+          if (!String(report?.source?.fixtureUniverse?.hash || '').trim()) throw new Error('missing current universe hash');
+          if (canonical !== 126 || sourceMatches !== 126 || universeCount !== 126) throw new Error(`current canonical denominator mismatch canonical=${canonical} source=${sourceMatches} universe=${universeCount}`);
+          if (manifestCanonical !== 126 || publishedCurrent !== 126 || publishedCount !== 126) throw new Error(`publication denominator mismatch manifest=${manifestCanonical} current=${publishedCurrent} published=${publishedCount}`);
+          if (totalRows !== playable) throw new Error(`playable/row mismatch playable=${playable} rows=${totalRows}`);
+          if (detailsFound > playable || intelligenceOk > playable || valueReturned > playable) throw new Error('coverage numerator exceeds playable denominator');
+          if (valueReturned + valueNull + valueFailed !== playable) throw new Error(`evaluation accounting mismatch returned=${valueReturned} null=${valueNull} failed=${valueFailed} playable=${playable}`);
+          if (frozenUniverse !== 127) throw new Error(`expected frozen observation universe 127, got ${frozenUniverse}`);
+          if (frozenPicks !== 2) throw new Error(`expected frozen Plan A picks 2, got ${frozenPicks}`);
+
+          const result = {
+            ok: true,
+            dayKey: report.dayKey,
+            currentCanonicalUniverse: {
+              count: canonical,
+              hash: report.source.fixtureUniverse.hash,
+              source: report.source.fixtureUniverse.source,
+              snapshotFallbackMatches: report.source.snapshotFallbackMatches,
+            },
+            publicationUniverse: {
+              currentFixtureCount: publishedCurrent,
+              publishedFixtureCount: publishedCount,
+              manifestCanonicalFixtureCount: manifestCanonical,
+            },
+            playableDenominator: playable,
+            coverage: {
+              detailsFound,
+              detailsPctOfPlayable: pct(detailsFound, playable),
+              intelligenceOk,
+              intelligencePctOfPlayable: pct(intelligenceOk, playable),
+              valueReturned,
+              valueReturnedPctOfPlayable: pct(valueReturned, playable),
+              valueNull,
+              valueFailed,
+            },
+            frozenObservation: {
+              fixtureUniverseCount: frozenUniverse,
+              fixtureUniverseHash: audit?.fixtureUniverse?.hash || null,
+              planAPicks: frozenPicks,
+              frozenReleaseSafe: manifest?.valueGate?.frozenReleaseSafe === true,
+              orphanPickCount: Number(manifest?.valueGate?.orphanPickCount || 0),
+            },
+            nullByReason: report?.breakdown?.nullByReason || {},
+            nullByClass: report?.breakdown?.nullByClass || {},
+          };
+
+          console.log('VALUE_DENOMINATOR_PROVENANCE_AUDIT=' + JSON.stringify(result));
+          NODE
+
+      - name: Remove transient report and prove read only
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f data/value/_coverage-reports/2026-09-14.json
+          rmdir data/value/_coverage-reports 2>/dev/null || true
+          if [ -n "$(git status --short)" ]; then
+            echo "ERROR: audit left repository changes"
+            git status --short
+            exit 1
+          fi
+          echo "READ_ONLY_CHECKOUT=PASS"
