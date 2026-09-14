@@ -1,0 +1,145 @@
+name: TMP history parity audit 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-history-parity
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  history-parity-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Verify exact audited base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="$(git rev-parse HEAD^)"
+          test "$BASE" = "36870d57fa27d113bab5f6de44228dabbc8a9d28"
+          echo "AUDITED_BASE=$BASE"
+
+      - name: Audit exact history parity for 2026-09-09 through 2026-09-12
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/history-parity-evidence
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { buildHistoryDayFromTruth } from './engine-v1/jobs/append-finalized-day-to-history.js';
+
+          const days = ['2026-09-09','2026-09-10','2026-09-11','2026-09-12'];
+          const historyPath = 'data/history/2026-2027.json';
+          const reportPath = 'data/history/2026-2027.report.json';
+          const quarantinePath = 'data/competition-routing-quarantine/2026-09-12/manifest.json';
+          const history = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
+          const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+          const quarantine = JSON.parse(fs.readFileSync(quarantinePath, 'utf8'));
+          const storedDays = new Map((history.days || []).map(day => [String(day.dayKey || ''), day]));
+          const quarantinedIds = new Set((quarantine.candidates || []).map(row => String(row.canonicalId || row.matchId || row.id || '')).filter(Boolean));
+
+          const stable = row => ({
+            id: String(row?.id || ''),
+            kickoff: String(row?.kickoff || ''),
+            leagueSlug: String(row?.leagueSlug || ''),
+            homeTeam: String(row?.homeTeam || ''),
+            awayTeam: String(row?.awayTeam || ''),
+            scoreHome: Number(row?.scoreHome),
+            scoreAway: Number(row?.scoreAway),
+            status: String(row?.status || ''),
+            outcome: String(row?.outcome || '')
+          });
+          const sortRows = rows => rows.map(stable).sort((a,b) => a.id.localeCompare(b.id));
+          const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
+
+          const result = {
+            schema: 'ai-matchlab.history-parity-audit.v1',
+            ok: true,
+            auditedHead: process.env.GITHUB_SHA,
+            auditedBase: '36870d57fa27d113bab5f6de44228dabbc8a9d28',
+            historyPath,
+            report: {
+              generatedAt: report.generatedAt || null,
+              to: report.to || null,
+              lastCompletedDay: report.lastCompletedDay || null,
+              byDay: {}
+            },
+            quarantineCandidateCount: quarantinedIds.size,
+            days: []
+          };
+
+          for (const dayKey of days) {
+            const expected = buildHistoryDayFromTruth(dayKey);
+            const stored = storedDays.get(dayKey) || null;
+            const expectedRows = sortRows(expected.rows || []);
+            const storedRows = sortRows(stored?.rows || []);
+            const expectedIds = new Set(expectedRows.map(row => row.id));
+            const storedIds = new Set(storedRows.map(row => row.id));
+            const quarantinedStoredIds = [...storedIds].filter(id => quarantinedIds.has(id)).sort();
+            const quarantinedExpectedIds = [...expectedIds].filter(id => quarantinedIds.has(id)).sort();
+            const missingStoredIds = [...expectedIds].filter(id => !storedIds.has(id)).sort();
+            const extraStoredIds = [...storedIds].filter(id => !expectedIds.has(id)).sort();
+            const rowParity = same(expectedRows, storedRows);
+            const dayOk = expected.ok === true && Boolean(stored) && rowParity && quarantinedStoredIds.length === 0 && quarantinedExpectedIds.length === 0;
+            result.report.byDay[dayKey] = Number(report?.byDay?.[dayKey] || 0);
+            result.days.push({
+              dayKey,
+              ok: dayOk,
+              expectedBuildOk: expected.ok === true,
+              expectedReason: expected.reason || null,
+              canonicalFixtureCount: expected.canonicalFixtureCount ?? null,
+              canonicalPlayedFinalCount: expected.canonicalPlayedFinalCount ?? null,
+              verifiedFinalCount: expected.verifiedFinalCount ?? null,
+              expectedRows: expectedRows.length,
+              storedRows: storedRows.length,
+              reportRows: Number(report?.byDay?.[dayKey] || 0),
+              rowParity,
+              missingStoredIds,
+              extraStoredIds,
+              quarantinedStoredIds,
+              quarantinedExpectedIds,
+              buildErrors: expected.errors || []
+            });
+            if (!dayOk || Number(report?.byDay?.[dayKey] || 0) !== storedRows.length) result.ok = false;
+          }
+
+          if (report.to !== '2026-09-12' || report.lastCompletedDay !== '2026-09-12') result.ok = false;
+
+          fs.writeFileSync('/tmp/history-parity-evidence/history-parity-audit.json', JSON.stringify(result, null, 2) + '\n');
+          console.log(JSON.stringify(result, null, 2));
+          if (!result.ok) process.exit(1);
+          NODE
+
+      - name: Prove checkout remained read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "ERROR: read-only audit changed checkout"
+            git status --short
+            exit 1
+          fi
+          echo "READ_ONLY_CHECKOUT_CLEAN=true"
+
+      - name: Upload history parity evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: history-parity-audit-20260914
+          path: /tmp/history-parity-evidence/history-parity-audit.json
+          if-no-files-found: warn
+          retention-days: 14
