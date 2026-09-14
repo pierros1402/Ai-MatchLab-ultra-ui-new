@@ -1,0 +1,125 @@
+name: TMP San Felipe provider truth audit
+
+on:
+  push:
+    branches:
+      - audit/20260914-sanfelipe-provider-truth-v1
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PINNED_MAIN: bee1afa9b45551af7e5c1ab05b99d4d3fb6418db
+      PROVIDER_ID: Khg606iL
+      CANONICAL_ID: cid_chi2_sanfelipe_sanluis_20260909
+
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact read-only base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$PINNED_MAIN"
+          CHANGED="$(git diff --name-only "$PINNED_MAIN" HEAD)"
+          test "$CHANGED" = ".github/workflows/tmp-sanfelipe-provider-truth-audit-20260914.yml"
+          test -z "$(git status --short)"
+          echo "AUDIT_BASE=$PINNED_MAIN"
+
+      - name: Scan exact provider and identity references
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/sanfelipe-audit
+
+          git grep -n -F "$PROVIDER_ID" -- data > /tmp/sanfelipe-audit/provider-id-hits.txt || true
+          git grep -n -F "$CANONICAL_ID" -- data > /tmp/sanfelipe-audit/canonical-id-hits.txt || true
+
+          : > /tmp/sanfelipe-audit/team-pair-files.txt
+          git grep -l -F 'San Felipe' -- data | while IFS= read -r file; do
+            if grep -qF 'San Luis' "$file"; then
+              echo "$file" >> /tmp/sanfelipe-audit/team-pair-files.txt
+            fi
+          done || true
+
+          : > /tmp/sanfelipe-audit/team-pair-context.txt
+          while IFS= read -r file; do
+            [ -n "$file" ] || continue
+            echo "===== $file =====" >> /tmp/sanfelipe-audit/team-pair-context.txt
+            grep -n -E 'Khg606iL|cid_chi2_sanfelipe_sanluis_20260909|San Felipe|San Luis|STATUS_|score(Home|Away)|dayKey|kickoffUtc|sourceId|providerMatchId|verifiedFinalTruth|finalTruthVerdict' "$file" >> /tmp/sanfelipe-audit/team-pair-context.txt || true
+          done < /tmp/sanfelipe-audit/team-pair-files.txt
+
+          node <<'NODE' > /tmp/sanfelipe-audit/summary.json
+          const fs = require('fs');
+          const provider = process.env.PROVIDER_ID;
+          const canonicalId = process.env.CANONICAL_ID;
+          const readLines = file => fs.existsSync(file)
+            ? fs.readFileSync(file, 'utf8').split(/\r?\n/u).filter(Boolean)
+            : [];
+          const providerHits = readLines('/tmp/sanfelipe-audit/provider-id-hits.txt');
+          const canonicalHits = readLines('/tmp/sanfelipe-audit/canonical-id-hits.txt');
+          const pairFiles = readLines('/tmp/sanfelipe-audit/team-pair-files.txt');
+          const pathOf = line => line.split(':')[0];
+          const unique = xs => [...new Set(xs)].sort();
+          const providerPaths = unique(providerHits.map(pathOf));
+          const canonicalPaths = unique(canonicalHits.map(pathOf));
+          const activePrefixes = [
+            'data/canonical-fixtures/',
+            'data/final-results/',
+            'data/history/',
+            'data/league-memory/',
+            'data/result-memory/',
+            'data/deploy-snapshots/',
+            'data/verification/',
+            'data/expected-matches/'
+          ];
+          const classify = p => {
+            if (p.includes('/quarantine/') || p.includes('/archive/') || p.includes('/_archive/')) return 'archive_or_quarantine';
+            if (activePrefixes.some(prefix => p.startsWith(prefix))) return 'active_or_derived_truth';
+            return 'diagnostic_or_other';
+          };
+          const payload = {
+            schema: 'ai-matchlab.sanfelipe-provider-truth-audit.v1',
+            auditBase: process.env.PINNED_MAIN,
+            providerId: provider,
+            canonicalId,
+            providerHitCount: providerHits.length,
+            providerPaths,
+            providerPathClasses: providerPaths.map(path => ({path, class: classify(path)})),
+            canonicalIdHitCount: canonicalHits.length,
+            canonicalPaths,
+            teamPairFileCount: pairFiles.length,
+            teamPairFiles: pairFiles,
+            exactLaterProviderCanonicalCandidatePaths: providerPaths.filter(p =>
+              p.startsWith('data/canonical-fixtures/') && !p.startsWith('data/canonical-fixtures/2026-09-09/')
+            ),
+            exactProviderFinalResultPaths: providerPaths.filter(p => p.startsWith('data/final-results/')),
+            exactProviderHistoryPaths: providerPaths.filter(p => p.startsWith('data/history/')),
+            exactProviderLeagueMemoryPaths: providerPaths.filter(p => p.startsWith('data/league-memory/')),
+            exactProviderResultMemoryPaths: providerPaths.filter(p => p.startsWith('data/result-memory/'))
+          };
+          process.stdout.write(JSON.stringify(payload, null, 2) + '\n');
+          NODE
+
+          cat /tmp/sanfelipe-audit/summary.json
+
+      - name: Prove checkout remained read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --short)"
+          echo "READ_ONLY_AUDIT=PASS"
+
+      - name: Upload audit evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: sanfelipe-provider-truth-audit-20260914
+          path: /tmp/sanfelipe-audit/
+          if-no-files-found: error
