@@ -1,0 +1,293 @@
+name: TMP Value coverage raw-sample classifier validation
+
+on:
+  push:
+    branches:
+      - fix/20260914-value-coverage-raw-sample-classifier
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tmp-value-coverage-raw-sample-classifier-20260914
+  cancel-in-progress: false
+
+jobs:
+  validate-and-build-clean-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASE_SHA: 5d22620c20cbe9a184fa6bc1f5b4cb02b7834ee1
+      RELEASE_BRANCH: release/20260914-value-coverage-raw-sample-classifier
+      DAY_KEY: 2026-09-14
+    steps:
+      - name: Checkout isolated branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact base
+        shell: bash
+        run: |
+          set -euo pipefail
+          PARENT="$(git rev-parse HEAD^)"
+          test "$PARENT" = "$BASE_SHA"
+          echo "BASE_VERIFIED=$BASE_SHA"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Apply minimal classifier patch and regression test
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("engine-v1/jobs/build-value-coverage-report-day.js")
+          text = path.read_text(encoding="utf-8")
+
+          replacements = [
+              (
+                  "function classifyMinimumSample(sample) {",
+                  "export function classifyMinimumSample(sample) {",
+              ),
+              (
+                  "  const homeBelowMin = safeNumber(sample?.homeBlendedSample, 0) < minRequired;",
+                  "  const homeBelowMin = safeNumber(sample?.homeRawSample, 0) < minRequired;",
+              ),
+              (
+                  "  const awayBelowMin = safeNumber(sample?.awayBlendedSample, 0) < minRequired;",
+                  "  const awayBelowMin = safeNumber(sample?.awayRawSample, 0) < minRequired;",
+              ),
+          ]
+
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"Expected exactly one classifier anchor, got {count}: {old}")
+              text = text.replace(old, new, 1)
+
+          path.write_text(text, encoding="utf-8")
+          PY
+
+          cat > engine-v1/tests/value-coverage-minimum-sample-classification.test.js <<'EOF'
+          import test from "node:test";
+          import assert from "node:assert/strict";
+
+          import { classifyMinimumSample } from "../jobs/build-value-coverage-report-day.js";
+
+          test("coverage classifier follows the raw current-season sample gate", () => {
+            assert.equal(
+              classifyMinimumSample({
+                minRequiredRecentMatches: 3,
+                homeRawSample: 2,
+                awayRawSample: 3,
+                homeBlendedSample: 5,
+                awayBlendedSample: 6,
+                homePriorSample: 166,
+                awayPriorSample: 159
+              }),
+              "low_recent_sample_prior_backed"
+            );
+          });
+
+          test("blended samples cannot hide a raw recent-sample shortfall", () => {
+            assert.equal(
+              classifyMinimumSample({
+                minRequiredRecentMatches: 3,
+                homeRawSample: 2,
+                awayRawSample: 3,
+                homeBlendedSample: 8,
+                awayBlendedSample: 9,
+                homePriorSample: 0,
+                awayPriorSample: 0
+              }),
+              "low_recent_sample"
+            );
+          });
+
+          test("missing raw history and priors stays explicitly classified", () => {
+            assert.equal(
+              classifyMinimumSample({
+                minRequiredRecentMatches: 3,
+                homeRawSample: 0,
+                awayRawSample: 0,
+                homeBlendedSample: 0,
+                awayBlendedSample: 0,
+                homePriorSample: 0,
+                awayPriorSample: 0
+              }),
+              "missing_both_team_history_and_priors"
+            );
+
+            assert.equal(
+              classifyMinimumSample({
+                minRequiredRecentMatches: 3,
+                homeRawSample: 0,
+                awayRawSample: 4,
+                homeBlendedSample: 0,
+                awayBlendedSample: 4,
+                homePriorSample: 0,
+                awayPriorSample: 0
+              }),
+              "missing_team_history_and_prior"
+            );
+          });
+
+          test("classifier fallback is unreachable when the raw gate is satisfied", () => {
+            assert.equal(
+              classifyMinimumSample({
+                minRequiredRecentMatches: 3,
+                homeRawSample: 3,
+                awayRawSample: 3,
+                homeBlendedSample: 3,
+                awayBlendedSample: 3,
+                homePriorSample: 0,
+                awayPriorSample: 0
+              }),
+              "unknown_minimum_sample_null"
+            );
+          });
+          EOF
+
+          node --check engine-v1/jobs/build-value-coverage-report-day.js
+          node --check engine-v1/tests/value-coverage-minimum-sample-classification.test.js
+          git diff --check
+
+      - name: Run targeted Value coverage regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test \
+            engine-v1/tests/value-coverage-minimum-sample-classification.test.js \
+            engine-v1/tests/value-coverage-canonical-universe.test.js \
+            engine-v1/tests/value-coverage-evidence-persistence.test.js \
+            engine-v1/tests/value-evidence-daily-persistence-contract.test.js \
+            engine-v1/tests/value-contract-hardening.test.js \
+            | tee "$RUNNER_TEMP/targeted-tests.tap"
+
+      - name: Regenerate 14 September coverage evidence without publishing
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-value-coverage-report-day.js "$DAY_KEY" | tee "$RUNNER_TEMP/coverage-build.log"
+
+          node <<'NODE'
+          const fs = require("fs");
+          const day = process.env.DAY_KEY;
+          const file = `data/value/_coverage-reports/${day}.json`;
+          const report = JSON.parse(fs.readFileSync(file, "utf8"));
+          const c = report.counts || {};
+          const classes = report.breakdown?.nullByClass || {};
+          const classTotal = Object.values(classes).reduce((sum, n) => sum + Number(n || 0), 0);
+
+          const expected = {
+            totalRows: 127,
+            detailsFound: 127,
+            intelligenceOk: 127,
+            valueReturned: 51,
+            valueNull: 76,
+            valueFailed: 0,
+            minimumRecentSampleNull: 76
+          };
+
+          for (const [key, value] of Object.entries(expected)) {
+            if (Number(c[key]) !== value) {
+              throw new Error(`coverage count changed: ${key} expected=${value} actual=${c[key]}`);
+            }
+          }
+          if (Number(classes.unknown_minimum_sample_null || 0) !== 0) {
+            throw new Error(`unknown minimum-sample classifications remain: ${classes.unknown_minimum_sample_null}`);
+          }
+          if (classTotal !== 76) {
+            throw new Error(`null-class total mismatch: expected=76 actual=${classTotal}`);
+          }
+
+          const summary = {
+            dayKey: report.dayKey,
+            counts: c,
+            nullByClass: classes,
+            nullByReason: report.breakdown?.nullByReason || {},
+            rawGateAligned: true
+          };
+          fs.writeFileSync(process.env.RUNNER_TEMP + "/coverage-summary.json", JSON.stringify(summary, null, 2) + "\n");
+          console.log(JSON.stringify(summary, null, 2));
+          NODE
+
+      - name: Run full engine regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test engine-v1/tests/*.test.js | tee "$RUNNER_TEMP/full-engine-tests.tap"
+
+      - name: Require remote main still pinned
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          REMOTE_MAIN="$(git rev-parse origin/main)"
+          echo "REMOTE_MAIN=$REMOTE_MAIN"
+          test "$REMOTE_MAIN" = "$BASE_SHA"
+
+      - name: Build clean code-only release commit
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SOURCE=engine-v1/jobs/build-value-coverage-report-day.js
+          TEST=engine-v1/tests/value-coverage-minimum-sample-classification.test.js
+
+          test -f "$SOURCE"
+          test -f "$TEST"
+
+          export GIT_INDEX_FILE="$RUNNER_TEMP/release-index"
+          rm -f "$GIT_INDEX_FILE"
+          git read-tree "$BASE_SHA^{tree}"
+          git add "$SOURCE" "$TEST"
+
+          STAGED="$(git diff --cached --name-only "$BASE_SHA")"
+          EXPECTED="$(printf '%s\n%s\n' "$SOURCE" "$TEST" | sort)"
+          ACTUAL="$(printf '%s\n' "$STAGED" | sort)"
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "Unexpected release paths:"
+            printf '%s\n' "$STAGED"
+            exit 1
+          fi
+
+          TREE="$(git write-tree)"
+          COMMIT="$(printf '%s\n' 'Align Value coverage diagnostics with raw sample gate' | git commit-tree "$TREE" -p "$BASE_SHA")"
+          echo "RELEASE_TREE=$TREE"
+          echo "RELEASE_COMMIT=$COMMIT"
+          echo "commit=$COMMIT" >> "$GITHUB_OUTPUT"
+
+          git diff-tree --no-commit-id --name-status -r "$COMMIT"
+
+      - name: Push clean commit to release branch only
+        shell: bash
+        env:
+          RELEASE_COMMIT: ${{ steps.release.outputs.commit }}
+        run: |
+          set -euo pipefail
+          git push origin "$RELEASE_COMMIT:refs/heads/$RELEASE_BRANCH"
+
+      - name: Upload classifier evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: value-coverage-raw-sample-classifier-evidence
+          path: |
+            ${{ runner.temp }}/coverage-summary.json
+            ${{ runner.temp }}/coverage-build.log
+            ${{ runner.temp }}/targeted-tests.tap
+            ${{ runner.temp }}/full-engine-tests.tap
+          if-no-files-found: error
