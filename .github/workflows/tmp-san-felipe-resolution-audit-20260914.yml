@@ -1,0 +1,135 @@
+name: TMP San Felipe resolution audit 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-san-felipe-resolution
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Verify exact audited parent
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "b07d67b7fbe213d124f25752c6e576dec6d25343"
+
+      - name: Scan provider identity across truth stores
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          const providerId = 'Khg606iL';
+          const oldCanonicalId = 'cid_chi2_sanfelipe_sanluis_20260909';
+
+          function walk(dir) {
+            if (!fs.existsSync(dir)) return [];
+            const out = [];
+            for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+              const p = path.join(dir, ent.name);
+              if (ent.isDirectory()) out.push(...walk(p));
+              else if (ent.isFile() && ent.name.endsWith('.json')) out.push(p);
+            }
+            return out;
+          }
+
+          function rowsOf(payload) {
+            if (Array.isArray(payload)) return payload;
+            for (const key of ['fixtures','matches','rows']) if (Array.isArray(payload?.[key])) return payload[key];
+            return [];
+          }
+
+          const canonicalHits = [];
+          for (const file of walk('data/canonical-fixtures')) {
+            let payload;
+            try { payload = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { continue; }
+            for (const row of rowsOf(payload)) {
+              const ids = [row?.sourceId, row?.sourceMatchId, row?.providerIds?.flashscore].map(v => String(v || ''));
+              const teamPair = `${String(row?.homeTeam || '').toLowerCase()}|${String(row?.awayTeam || '').toLowerCase()}`;
+              if (ids.includes(providerId) || (teamPair.includes('san felipe') && teamPair.includes('san luis'))) {
+                canonicalHits.push({
+                  file,
+                  canonicalId: row?.canonicalId || row?.matchId || null,
+                  dayKey: row?.dayKey || null,
+                  kickoffUtc: row?.kickoffUtc || null,
+                  homeTeam: row?.homeTeam || null,
+                  awayTeam: row?.awayTeam || null,
+                  status: row?.status || null,
+                  rawStatus: row?.rawStatus || null,
+                  scoreHome: row?.scoreHome ?? null,
+                  scoreAway: row?.scoreAway ?? null,
+                  sourceId: row?.sourceId || null,
+                  flashscore: row?.providerIds?.flashscore || null,
+                });
+              }
+            }
+          }
+
+          const finalHits = [];
+          for (const file of walk('data/final-results')) {
+            let row;
+            try { row = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { continue; }
+            const providerIds = [
+              row?.sourceId,
+              row?.sourceMatchId,
+              ...(Array.isArray(row?.sources) ? row.sources.map(s => s?.providerMatchId) : [])
+            ].map(v => String(v || ''));
+            const teamPair = `${String(row?.homeTeam || '').toLowerCase()}|${String(row?.awayTeam || '').toLowerCase()}`;
+            if (providerIds.includes(providerId) || (teamPair.includes('san felipe') && teamPair.includes('san luis'))) {
+              finalHits.push({
+                file,
+                matchId: row?.matchId || null,
+                dayKey: row?.dayKey || row?.date || null,
+                kickoffUtc: row?.kickoffUtc || null,
+                homeTeam: row?.homeTeam || null,
+                awayTeam: row?.awayTeam || null,
+                scoreHome: row?.scoreHome ?? row?.homeScore ?? null,
+                scoreAway: row?.scoreAway ?? row?.awayScore ?? null,
+                verifiedFinalTruth: row?.verifiedFinalTruth === true,
+                verdict: row?.finalTruthVerdict || row?.verdict || null,
+                providerIds: providerIds.filter(Boolean),
+              });
+            }
+          }
+
+          const history = JSON.parse(fs.readFileSync('data/history/2026-2027.json','utf8'));
+          const historyHits = [];
+          for (const day of Array.isArray(history?.days) ? history.days : []) {
+            for (const row of Array.isArray(day?.rows) ? day.rows : []) {
+              const teamPair = `${String(row?.homeTeam || '').toLowerCase()}|${String(row?.awayTeam || '').toLowerCase()}`;
+              if (String(row?.id || '') === oldCanonicalId || (teamPair.includes('san felipe') && teamPair.includes('san luis'))) {
+                historyHits.push({dayKey: day?.dayKey || row?.dayKey || null, id: row?.id || null, homeTeam: row?.homeTeam || null, awayTeam: row?.awayTeam || null, scoreHome: row?.scoreHome ?? null, scoreAway: row?.scoreAway ?? null});
+              }
+            }
+          }
+
+          console.log('SAN_FELIPE_RESOLUTION_AUDIT=' + JSON.stringify({
+            ok: true,
+            providerId,
+            oldCanonicalId,
+            canonicalHits,
+            finalHits,
+            historyHits,
+          }));
+          NODE
+
+      - name: Prove checkout remained read only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --short)"
+          echo "READ_ONLY_CHECKOUT=PASS"
