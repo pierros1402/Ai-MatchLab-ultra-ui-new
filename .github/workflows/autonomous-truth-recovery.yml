@@ -1,0 +1,162 @@
+name: Autonomous truth recovery
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_run:
+    workflows:
+      - "Daily deploy snapshot"
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ai-matchlab-data-writer
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Pin recovery base
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "RECOVERY_BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "RECOVERY_BASE_SHA=$(git rev-parse HEAD)"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Resolve Athens operational day
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "OPERATIONAL_DAY=$(TZ=Europe/Athens date +%F)" >> "$GITHUB_ENV"
+          echo "OPERATIONAL_DAY=$(TZ=Europe/Athens date +%F)"
+
+      - name: Run autonomous truth recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/run-autonomous-truth-recovery.js "$OPERATIONAL_DAY" --days-back=7
+
+      - name: Stage recovery checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore --staged . || true
+
+          for back in 1 2 3 4 5 6 7; do
+            k="$(TZ=Europe/Athens date -d "${OPERATIONAL_DAY} -${back} day" +%F)"
+            test -d "data/canonical-fixtures/$k" && git add "data/canonical-fixtures/$k/"
+            test -d "data/final-results/$k" && git add "data/final-results/$k/"
+            test -f "data/final-result-conflicts/$k.json" && git add "data/final-result-conflicts/$k.json"
+            test -f "data/value-comparison/$k.json" && git add "data/value-comparison/$k.json"
+            test -f "data/system-health/$k.json" && git add "data/system-health/$k.json"
+          done
+
+          test -f "data/value-comparison/cumulative.json" && git add data/value-comparison/cumulative.json
+          test -f "data/system-health/$OPERATIONAL_DAY.json" && git add "data/system-health/$OPERATIONAL_DAY.json"
+          test -f "data/system-health/latest.json" && git add data/system-health/latest.json
+          test -d data/history && git add -A data/history
+          test -d data/history-index && git add -A data/history-index
+          test -d data/h2h && git add -A data/h2h
+          test -d data/h2h-foundation && git add -A data/h2h-foundation
+          test -d data/model-priors && git add -A data/model-priors
+          test -d data/autonomous-recovery/history && git add -A data/autonomous-recovery/history
+
+          CANONICAL_DELETIONS="$(git diff --cached --name-status --diff-filter=D -- data/canonical-fixtures || true)"
+          if [ -n "$CANONICAL_DELETIONS" ]; then
+            echo "ERROR: autonomous recovery may not delete canonical fixture truth"
+            echo "$CANONICAL_DELETIONS"
+            exit 1
+          fi
+
+          FINAL_RESULT_DELETIONS="$(git diff --cached --name-status --diff-filter=D -- data/final-results || true)"
+          if [ -n "$FINAL_RESULT_DELETIONS" ]; then
+            echo "ERROR: autonomous recovery may not delete verified final-result truth"
+            echo "$FINAL_RESULT_DELETIONS"
+            exit 1
+          fi
+
+          node engine-v1/jobs/guard-staged-data-boundary.js \
+            --label=autonomous-truth-recovery \
+            --allow-data-deletions \
+            --allow='^(data/canonical-fixtures/[0-9]{4}-[0-9]{2}-[0-9]{2}/|data/final-results/[0-9]{4}-[0-9]{2}-[0-9]{2}/|data/final-result-conflicts/[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$|data/value-comparison/([0-9]{4}-[0-9]{2}-[0-9]{2}\.json|cumulative\.json)$|data/system-health/([0-9]{4}-[0-9]{2}-[0-9]{2}\.json|latest\.json)$|data/history/|data/history-index/|data/h2h/|data/h2h-foundation/|data/model-priors/|data/autonomous-recovery/history/)'
+
+          echo "=== AUTONOMOUS RECOVERY STAGED PATHS ==="
+          git diff --cached --name-status
+
+      - name: Require main still pinned
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          CURRENT_REMOTE="$(git rev-parse origin/main)"
+          if [ "$CURRENT_REMOTE" != "$RECOVERY_BASE_SHA" ]; then
+            echo "ERROR: main advanced during autonomous recovery"
+            echo "START=$RECOVERY_BASE_SHA"
+            echo "NOW=$CURRENT_REMOTE"
+            echo "No stale recovery commit will be pushed; next checkpoint will retry from the new truth."
+            exit 1
+          fi
+
+      - name: Persist autonomous recovery checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --cached --quiet; then
+            echo "No autonomous truth recovery changes to commit."
+            exit 0
+          fi
+
+          git config user.name "matchlab-recovery"
+          git config user.email "matchlab-recovery@users.noreply.github.com"
+          git commit -m "Persist autonomous truth recovery for $OPERATIONAL_DAY"
+          git push origin HEAD:main
+
+      - name: Escalate persistent ambiguous truth only
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs');
+          const file = 'data/autonomous-recovery/history/latest.json';
+          if (!fs.existsSync(file)) process.exit(0);
+          const report = JSON.parse(fs.readFileSync(file, 'utf8'));
+          const actionable = (report.days || []).filter(row => row.actionable);
+          console.log(JSON.stringify({
+            dayKey: report.operationalDayKey,
+            repairedCount: report.repairedCount,
+            pendingCount: report.pendingCount,
+            blockedIntegrityCount: report.blockedIntegrityCount,
+            actionableCount: actionable.length,
+            actionable
+          }, null, 2));
+          if (actionable.length > 0) {
+            console.error('Persistent or integrity-sensitive truth requires review; automated destructive repair remains forbidden.');
+            process.exit(1);
+          }
+          NODE
