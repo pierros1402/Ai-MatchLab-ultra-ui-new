@@ -1,0 +1,58 @@
+name: TMP Value coverage current-main v3 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-value-coverage-current-main-v3
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      - name: Verify exact base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=bee1afa9b45551af7e5c1ab05b99d4d3fb6418db
+          test "$(git rev-parse HEAD^)" = "$BASE"
+          echo "AUDIT_BASE=$BASE"
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: Install dependencies
+        run: |
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+      - name: Build current Value coverage report read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-value-coverage-report-day.js 2026-09-14
+          FILE=data/value/_coverage-reports/2026-09-14.json
+          test -f "$FILE"
+          node - <<'NODE'
+          const fs=require('fs');
+          const r=JSON.parse(fs.readFileSync('data/value/_coverage-reports/2026-09-14.json','utf8'));
+          console.log(JSON.stringify({dayKey:r.dayKey,source:r.source,counts:r.counts,breakdown:r.breakdown},null,2));
+          NODE
+      - name: Prove no tracked mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --short --untracked-files=no)"
+          echo READ_ONLY_TRACKED_STATE=PASS
+      - name: Upload coverage evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: value-coverage-current-main-v3-20260914
+          path: data/value/_coverage-reports/2026-09-14.json
+          if-no-files-found: error
