@@ -27,7 +27,7 @@ jobs:
           MERGE_BASE="$(git merge-base HEAD "$EXPECTED_BASE")"
           test "$MERGE_BASE" = "$EXPECTED_BASE"
           CHANGED="$(git diff --name-only "$EXPECTED_BASE" HEAD | sort)"
-          ALLOWED="$(printf '%s\n' '.github/workflows/tmp-value-coverage-provenance-audit-20260914.yml' 'tmp/value-coverage-provenance-audit-trigger-20260914.txt' | sort)"
+          ALLOWED="$(printf '%s\n' '.github/workflows/tmp-value-coverage-provenance-audit-20260914.yml' 'tmp/value-coverage-provenance-audit-trigger-20260914.txt' 'tmp/value-coverage-provenance-audit-trigger-20260914-v2.txt' | sort)"
           test "$CHANGED" = "$ALLOWED"
           echo "AUDIT_BASE=$EXPECTED_BASE"
 
@@ -92,14 +92,13 @@ jobs:
             topReturnedLeagues: Object.fromEntries(Object.entries(p?.breakdown?.returnedByLeague || {}).slice(0,25))
           };
           console.log(JSON.stringify(out,null,2));
-NODE
+          NODE
           cat /tmp/value-coverage-audit/summary.json
 
-      - name: Prove repository unchanged except ignored diagnostic output
+      - name: Prove repository unchanged except diagnostic output
         shell: bash
         run: |
           set -euo pipefail
-          git diff --exit-code HEAD -- . ':!data/value/_coverage-reports/2026-09-14.json'
           TRACKED="$(git status --short --untracked-files=no)"
           test -z "$TRACKED"
           echo "TRACKED_WORKTREE_CLEAN=true"
