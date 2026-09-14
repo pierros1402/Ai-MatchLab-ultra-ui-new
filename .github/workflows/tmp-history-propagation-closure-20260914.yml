@@ -1,0 +1,148 @@
+name: TMP history propagation closure 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-history-propagation-closure
+
+permissions:
+  contents: read
+
+jobs:
+  history-closure-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact audit base
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD^ > /tmp/base.txt
+          BASE="$(cat /tmp/base.txt)"
+          test "$BASE" = "add96e5ad981d43a1034e70e1260e6e4fb413b2d"
+          echo "AUDIT_BASE=$BASE"
+
+      - name: Audit history propagation closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+
+          const quarantinePath = 'data/competition-routing-quarantine/2026-09-12/manifest.json';
+          const historyPath = 'data/history/2026-2027.json';
+          const reportPath = 'data/history/2026-2027.report.json';
+
+          const quarantine = JSON.parse(fs.readFileSync(quarantinePath, 'utf8'));
+          const history = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
+          const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+
+          const candidates = Array.isArray(quarantine?.candidates) ? quarantine.candidates : [];
+          const candidateIds = new Set(candidates.map(x => String(x?.canonicalId || '')).filter(Boolean));
+          const expectedCounts = {
+            '2026-09-09': 76,
+            '2026-09-10': 86,
+            '2026-09-11': 185,
+            '2026-09-12': 519,
+          };
+
+          const failures = [];
+          if (candidateIds.size !== 69) {
+            failures.push(`candidate_id_count:${candidateIds.size}:expected:69`);
+          }
+
+          const days = Array.isArray(history?.days) ? history.days : [];
+          const dayMap = new Map();
+          const duplicateDayKeys = [];
+          for (const day of days) {
+            const key = String(day?.dayKey || '');
+            if (!key) continue;
+            if (dayMap.has(key)) duplicateDayKeys.push(key);
+            dayMap.set(key, day);
+          }
+          if (duplicateDayKeys.length) {
+            failures.push(`duplicate_day_keys:${[...new Set(duplicateDayKeys)].join(',')}`);
+          }
+
+          const targetRows = [];
+          const targetSummary = {};
+          for (const [dayKey, expected] of Object.entries(expectedCounts)) {
+            const day = dayMap.get(dayKey);
+            if (!day) {
+              failures.push(`missing_history_day:${dayKey}`);
+              continue;
+            }
+            const rows = Array.isArray(day.rows) ? day.rows : [];
+            const declared = Number(day.matchCount ?? -1);
+            targetSummary[dayKey] = { declared, rows: rows.length, expected };
+            if (declared !== expected) failures.push(`matchCount:${dayKey}:${declared}:expected:${expected}`);
+            if (rows.length !== expected) failures.push(`rows:${dayKey}:${rows.length}:expected:${expected}`);
+
+            const ids = rows.map(r => String(r?.id || '')).filter(Boolean);
+            const uniqueIds = new Set(ids);
+            if (ids.length !== uniqueIds.size) failures.push(`duplicate_ids_within_day:${dayKey}:${ids.length - uniqueIds.size}`);
+
+            for (const row of rows) {
+              if (String(row?.dayKey || '') !== dayKey) failures.push(`row_day_mismatch:${dayKey}:${row?.id || 'unknown'}`);
+              if (!Number.isInteger(Number(row?.scoreHome)) || Number(row?.scoreHome) < 0 ||
+                  !Number.isInteger(Number(row?.scoreAway)) || Number(row?.scoreAway) < 0) {
+                failures.push(`non_numeric_score:${dayKey}:${row?.id || 'unknown'}`);
+              }
+              if (row?.truthContract?.verifiedFinalTruth !== true) failures.push(`unverified_history_row:${dayKey}:${row?.id || 'unknown'}`);
+              targetRows.push(row);
+            }
+          }
+
+          const targetIds = targetRows.map(r => String(r?.id || '')).filter(Boolean);
+          const targetUnique = new Set(targetIds);
+          if (targetIds.length !== targetUnique.size) {
+            failures.push(`duplicate_ids_across_target_days:${targetIds.length - targetUnique.size}`);
+          }
+
+          const contaminationHits = [];
+          for (const day of days) {
+            for (const row of Array.isArray(day?.rows) ? day.rows : []) {
+              const id = String(row?.id || '');
+              if (candidateIds.has(id)) contaminationHits.push({ dayKey: day?.dayKey, id });
+            }
+          }
+          if (contaminationHits.length) {
+            failures.push(`quarantined_ids_in_history:${contaminationHits.length}`);
+          }
+
+          for (const [dayKey, expected] of Object.entries(expectedCounts)) {
+            const actual = Number(report?.byDay?.[dayKey] ?? -1);
+            if (actual !== expected) failures.push(`report_byDay:${dayKey}:${actual}:expected:${expected}`);
+          }
+          if (String(report?.lastCompletedDay || '') < '2026-09-12') {
+            failures.push(`report_lastCompletedDay:${report?.lastCompletedDay || 'missing'}:expected>=2026-09-12`);
+          }
+
+          const result = {
+            ok: failures.length === 0,
+            auditBase: 'add96e5ad981d43a1034e70e1260e6e4fb413b2d',
+            candidateIdCount: candidateIds.size,
+            contaminationHitCount: contaminationHits.length,
+            contaminationHits,
+            targetSummary,
+            targetRowCount: targetRows.length,
+            targetUniqueIdCount: targetUnique.size,
+            reportLastCompletedDay: report?.lastCompletedDay || null,
+            reportTo: report?.to || null,
+            failures,
+          };
+
+          console.log(JSON.stringify(result, null, 2));
+          if (!result.ok) process.exit(1);
+          NODE
+
+      - name: Prove checkout unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --short)"
+          echo "HISTORY_PROPAGATION_READ_ONLY_AUDIT=PASS"
