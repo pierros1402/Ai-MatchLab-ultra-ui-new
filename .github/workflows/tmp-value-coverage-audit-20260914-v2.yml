@@ -1,0 +1,135 @@
+name: TMP Value coverage audit 2026-09-14 V2
+
+on:
+  push:
+    branches:
+      - audit/20260914-value-coverage-current-main-v2
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  value-coverage-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASE_SHA: f7a42204e676f0508f14aacc84766cb469400617
+      DAY_KEY: 2026-09-14
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact current-main base and workflow-only branch delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$BASE_SHA"
+          DELTA="$(git diff --name-only "$BASE_SHA..HEAD")"
+          test "$DELTA" = ".github/workflows/tmp-value-coverage-audit-20260914-v2.yml"
+          echo "AUDIT_BASE_VERIFIED=$BASE_SHA"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Build Value coverage report read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-value-coverage-report-day.js "$DAY_KEY"
+
+      - name: Build compact audit summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          const day = process.env.DAY_KEY;
+          const reportPath = `data/value/_coverage-reports/${day}.json`;
+          const valuePath = `data/deploy-snapshots/${day}/value.json`;
+          const auditPath = `data/deploy-snapshots/${day}/value-audit.json`;
+          const planAAuditPath = `data/value-plans/${day}/plan-a-audit.json`;
+          const manifestPath = `data/deploy-snapshots/${day}/manifest.json`;
+          const read = p => JSON.parse(fs.readFileSync(p, 'utf8'));
+          const sha = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+          const report = read(reportPath);
+          const value = read(valuePath);
+          const audit = read(auditPath);
+          const planAAudit = read(planAAuditPath);
+          const manifest = read(manifestPath);
+          const summary = {
+            ok: true,
+            baseSha: process.env.BASE_SHA,
+            dayKey: day,
+            reportSha256: sha(reportPath),
+            source: report.source,
+            counts: report.counts,
+            nullByReason: report.breakdown?.nullByReason || {},
+            nullByClass: report.breakdown?.nullByClass || {},
+            publishedPlanA: {
+              count: Number(value.count || 0),
+              matchIds: (value.picks || []).map(p => p.matchId),
+              sha256: sha(valuePath)
+            },
+            diagnosticAudit: {
+              fixtureUniverseCount: Number(audit.fixtureUniverse?.count || 0),
+              evaluatedFixtureCount: Number(audit.evaluationAccounting?.evaluatedFixtureCount || 0),
+              rejectedFixtureCount: Number(audit.evaluationAccounting?.rejectedFixtureCount || 0),
+              approved: Number(audit.universe?.approved || 0),
+              candidateMarkets: Number(audit.universe?.candidateMarkets || 0),
+              unaccountedFixtureCount: Number(audit.evaluationAccounting?.unaccountedFixtureCount || 0),
+              byReason: audit.rejections?.byReason || {},
+              sha256: sha(auditPath)
+            },
+            immutablePlanAObservation: {
+              count: Number(planAAudit.count || 0),
+              observationSignature: planAAudit.observationSignature || null,
+              generatedAt: planAAudit.generatedAt || null,
+              sha256: sha(planAAuditPath)
+            },
+            manifest: {
+              canonicalFixtureCount: Number(manifest.canonicalFixtureCount || 0),
+              publishedFixtureCount: Number(manifest.publicationUniverse?.publishedFixtureCount || 0),
+              details: Number(manifest.counts?.details || 0),
+              valuePicks: Number(manifest.counts?.valuePicks || 0),
+              frozenReleaseSafe: manifest.valueGate?.frozenReleaseSafe === true,
+              orphanPickCount: Number(manifest.valueGate?.orphanPickCount || 0)
+            }
+          };
+          fs.writeFileSync('/tmp/value-coverage-summary.json', JSON.stringify(summary, null, 2) + '\n');
+          console.log(JSON.stringify(summary, null, 2));
+          NODE
+
+      - name: Require runner-only write set
+        shell: bash
+        run: |
+          set -euo pipefail
+          STATUS="$(git status --short)"
+          echo "$STATUS"
+          BAD="$(printf '%s\n' "$STATUS" | grep -vE '^\?\? data/value/_coverage-reports/2026-09-14\.json$|^ M data/value/_coverage-reports/2026-09-14\.json$' || true)"
+          if [ -n "$BAD" ]; then
+            echo "ERROR: unexpected runner write set"
+            echo "$BAD"
+            exit 1
+          fi
+
+      - name: Upload Value coverage evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: value-coverage-audit-20260914-v2
+          path: |
+            data/value/_coverage-reports/2026-09-14.json
+            /tmp/value-coverage-summary.json
+          if-no-files-found: error
