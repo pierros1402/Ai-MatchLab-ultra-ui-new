@@ -1,0 +1,178 @@
+name: TMP Value evidence persistence validation 20260914
+
+on:
+  push:
+    branches:
+      - fix/20260914-value-evidence-persistence-v1
+
+permissions:
+  contents: write
+
+jobs:
+  validate-value-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASE_SHA: 9e801fa4ad4adda3e9c0b73fe42b97fa4fac2cc3
+      RELEASE_BRANCH: release/20260914-value-evidence-persistence-v1
+    steps:
+      - name: Checkout isolated branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact isolated baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$BASE_SHA"
+          CHANGED="$(git diff --name-only "$BASE_SHA"..HEAD)"
+          test "$CHANGED" = ".github/workflows/tmp-value-evidence-persistence-20260914.yml"
+          echo "BASE_VERIFIED=$BASE_SHA"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npm ci --prefix engine-v1 --no-audit --no-fund
+
+      - name: Apply exact source patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          cycle_path = Path("engine-v1/jobs/run-daily-cycle.js")
+          cycle = cycle_path.read_text(encoding="utf-8")
+
+          start_marker = '  console.log("[daily-cycle] value-coverage-report:start", { dayKey });\n'
+          end_marker = '  console.log("[daily-cycle] four-plan-settlement-bundle:start", {\n'
+          assert cycle.count(start_marker) == 1, f"coverage start marker count={cycle.count(start_marker)}"
+          start = cycle.index(start_marker)
+          end = cycle.index(end_marker, start)
+          coverage_block = cycle[start:end]
+          assert coverage_block.count("buildValueCoverageReportDay(dayKey)") == 1
+          cycle = cycle[:start] + cycle[end:]
+
+          export_marker = '  console.log("[daily-cycle] deploy-snapshot-export:start", { dayKey });\n'
+          assert cycle.count(export_marker) == 1, f"export marker count={cycle.count(export_marker)}"
+          cycle = cycle.replace(export_marker, coverage_block + export_marker, 1)
+          assert cycle.count("valueCoverageReport = await buildValueCoverageReportDay(dayKey);") == 1
+          cycle_path.write_text(cycle, encoding="utf-8")
+
+          gap_path = Path("engine-v1/jobs/build-league-gap-report-day.js")
+          gap = gap_path.read_text(encoding="utf-8")
+
+          helper_marker = 'function inSeasonOn(slug, dayKey) {\n'
+          assert gap.count(helper_marker) == 1
+          helper = '''function persistedJsonEvidence(sourcePath, filePath) {\n  const payload = readJsonSafe(filePath, null);\n  return {\n    present: payload !== null,\n    sourcePath,\n    payload\n  };\n}\n\n'''
+          assert "function persistedJsonEvidence(" not in gap
+          gap = gap.replace(helper_marker, helper + helper_marker, 1)
+
+          coverage_anchor = '''  const valueCoverageEvidence = normalizeValueCoverageEvidence(\n    valueCoverageReport,\n    date,\n    valueCoverageSourcePath\n  );\n'''
+          assert gap.count(coverage_anchor) == 1
+          settlement_block = '''\n  const valueSettlementEvidence = {\n    bundle: persistedJsonEvidence(\n      `data/football-truth/_diagnostics/value-settlement-daily-cycle/${date}.four-plan-settlement-bundle.json`,\n      resolveDataPath(\n        "football-truth",\n        "_diagnostics",\n        "value-settlement-daily-cycle",\n        `${date}.four-plan-settlement-bundle.json`\n      )\n    ),\n    summary: persistedJsonEvidence(\n      `data/football-truth/_settlement-summaries/${date}.value-settlement-summary.json`,\n      resolveDataPath(\n        "football-truth",\n        "_settlement-summaries",\n        `${date}.value-settlement-summary.json`\n      )\n    ),\n    statistics: persistedJsonEvidence(\n      `data/football-truth/_settlement-statistics/value-settlement-statistics-${date}_to_${date}.json`,\n      resolveDataPath(\n        "football-truth",\n        "_settlement-statistics",\n        `value-settlement-statistics-${date}_to_${date}.json`\n      )\n    )\n  };\n'''
+          gap = gap.replace(coverage_anchor, coverage_anchor + settlement_block, 1)
+
+          report_anchor = '    valueCoverageEvidence,\n    broken,\n'
+          assert gap.count(report_anchor) == 1
+          gap = gap.replace(
+            report_anchor,
+            '    valueCoverageEvidence,\n    valueSettlementEvidence,\n    broken,\n',
+            1
+          )
+          gap_path.write_text(gap, encoding="utf-8")
+
+          test_path = Path("engine-v1/tests/value-evidence-daily-persistence-contract.test.js")
+          assert not test_path.exists()
+          test_path.write_text(r'''import test from "node:test";\nimport assert from "node:assert/strict";\nimport fs from "node:fs";\n\nfunction source(relativeUrl) {\n  return fs.readFileSync(new URL(relativeUrl, import.meta.url), "utf8").replace(/\\r\\n/g, "\\n");\n}\n\ntest("daily coverage evidence is rebuilt after final Details sync and before export", () => {\n  const daily = source("../jobs/run-daily-cycle.js");\n  const finalDetails = daily.indexOf('[daily-cycle] final-details-sync:done');\n  const coverage = daily.indexOf('[daily-cycle] value-coverage-report:start');\n  const exportStart = daily.indexOf('[daily-cycle] deploy-snapshot-export:start');\n\n  assert.ok(finalDetails >= 0, "final Details sync marker missing");\n  assert.ok(coverage > finalDetails, "coverage report must follow final Details sync");\n  assert.ok(exportStart > coverage, "coverage report must precede snapshot export");\n  assert.equal(\n    (daily.match(/valueCoverageReport = await buildValueCoverageReportDay\\(dayKey\\);/gu) || []).length,\n    1,\n    "coverage report must be built exactly once"\n  );\n});\n\ntest("coverage readiness persists full Value coverage and four-plan settlement evidence", () => {\n  const gap = source("../jobs/build-league-gap-report-day.js");\n  const workflow = source("../../.github/workflows/daily-deploy-snapshot.yml");\n\n  for (const fragment of [\n    "valueCoverageEvidence,",\n    "valueSettlementEvidence,",\n    "four-plan-settlement-bundle.json",\n    "value-settlement-summary.json",\n    "value-settlement-statistics-"\n  ]) {\n    assert.ok(gap.includes(fragment), `missing persisted evidence fragment: ${fragment}`);\n  }\n\n  assert.ok(\n    workflow.includes('git add "data/coverage-readiness/${DAY_KEY}.json"'),\n    "coverage-readiness must be staged in the ungated truth checkpoint"\n  );\n  assert.ok(\n    workflow.includes('data/coverage-readiness/${DAY_KEY}\\.json$'),\n    "coverage-readiness must remain explicitly allow-listed"\n  );\n});\n''', encoding="utf-8")
+          PY
+
+          git diff --check
+          git diff --name-only
+
+      - name: Syntax and targeted contract tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/jobs/run-daily-cycle.js
+          node --check engine-v1/jobs/build-league-gap-report-day.js
+          node --check engine-v1/tests/value-evidence-daily-persistence-contract.test.js
+          node --test \
+            engine-v1/tests/value-coverage-canonical-universe.test.js \
+            engine-v1/tests/value-coverage-evidence-persistence.test.js \
+            engine-v1/tests/value-evidence-daily-persistence-contract.test.js \
+            engine-v1/tests/value-current-day-settlement-live-contract.test.js \
+            engine-v1/tests/daily-details-foundation-order.test.js
+
+      - name: Full engine regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test engine-v1/tests/*.test.js
+
+      - name: Verify exact write set and create clean patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED="$(printf '%s\n' \
+            engine-v1/jobs/build-league-gap-report-day.js \
+            engine-v1/jobs/run-daily-cycle.js \
+            engine-v1/tests/value-evidence-daily-persistence-contract.test.js | sort)"
+          ACTUAL="$(git status --short | sed -E 's/^.. //' | sort)"
+          test "$ACTUAL" = "$EXPECTED"
+
+          git add \
+            engine-v1/jobs/build-league-gap-report-day.js \
+            engine-v1/jobs/run-daily-cycle.js \
+            engine-v1/tests/value-evidence-daily-persistence-contract.test.js
+          git diff --cached --check
+          git diff --cached --binary > /tmp/value-evidence.patch
+
+          git reset --hard "$BASE_SHA"
+          git clean -fd
+          git apply --index /tmp/value-evidence.patch
+
+          STAGED="$(git diff --cached --name-only | sort)"
+          test "$STAGED" = "$EXPECTED"
+
+      - name: Require remote main still pinned
+        shell: bash
+        run: |
+          set -euo pipefail
+          REMOTE_MAIN="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          echo "REMOTE_MAIN=$REMOTE_MAIN"
+          test "$REMOTE_MAIN" = "$BASE_SHA"
+
+      - name: Build clean release commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "matchlab-value-evidence"
+          git config user.email "matchlab-value-evidence@users.noreply.github.com"
+          git commit -m "Persist current Value coverage and settlement evidence"
+          RELEASE_SHA="$(git rev-parse HEAD)"
+          test "$(git rev-parse HEAD^)" = "$BASE_SHA"
+          echo "RELEASE_SHA=$RELEASE_SHA" >> "$GITHUB_ENV"
+          echo "RELEASE_SHA=$RELEASE_SHA"
+
+      - name: Push clean release branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push origin "HEAD:refs/heads/${RELEASE_BRANCH}"
+
+      - name: Upload validation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: value-evidence-persistence-v1-validation
+          path: /tmp/value-evidence.patch
+          if-no-files-found: error
+          retention-days: 14
