@@ -1,3 +1,6 @@
+import { sameTeamName } from "./fixture-dedup.js";
+import { classifyMatchState, MATCH_STATE_CLASS } from "./non-played-state.js";
+
 export const HISTORY_RECOVERY_ESCALATION_THRESHOLD = 3;
 
 const TARGETED_FINAL_RESULT_REASONS = new Set([
@@ -14,7 +17,24 @@ const INTEGRITY_BLOCK_REASONS = new Set([
   "canonical_verified_final_team_mismatch",
   "verified_final_missing_canonical_fixture",
   "canonical_day_mismatch",
-  "verified_final_day_mismatch"
+  "verified_final_day_mismatch",
+  "certified_history_canonical_status_conflict",
+  "certified_history_duplicate_canonical_id",
+  "certified_history_duplicate_history_id",
+  "certified_history_extra_row",
+  "certified_history_day_mismatch",
+  "certified_history_score_mismatch",
+  "certified_history_team_mismatch"
+]);
+
+const REQUIRED_HISTORY_TRUTH_FLAGS = Object.freeze([
+  "canonicalIdExact",
+  "athensDayExact",
+  "orderedTeamPairMatched",
+  "canonicalPlayedTerminal",
+  "exactScoreParity",
+  "verifiedFinalTruth",
+  "nullScoreCoercionForbidden"
 ]);
 
 function clean(value) {
@@ -24,6 +44,190 @@ function clean(value) {
 function numeric(value, fallback = 0) {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function strictScore(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string" && value.trim() === "") return null;
+  const n = Number(value);
+  return Number.isInteger(n) && n >= 0 ? n : null;
+}
+
+function reasonCounts(errors = []) {
+  const counts = {};
+  for (const row of errors) {
+    const reason = clean(row?.reason) || "unknown_certified_history_error";
+    counts[reason] = (counts[reason] || 0) + 1;
+  }
+  return counts;
+}
+
+function teamsMatch(slug, left, right) {
+  return (
+    sameTeamName(slug, left, right) ||
+    sameTeamName(slug, right, left)
+  );
+}
+
+export function validateCertifiedHistoryAgainstCanonical({
+  dayKey,
+  canonicalRows = [],
+  historyRows = []
+} = {}) {
+  const targetDay = clean(dayKey);
+  const errors = [];
+  const canonicalFinalById = new Map();
+  const historyById = new Map();
+
+  for (const row of Array.isArray(canonicalRows) ? canonicalRows : []) {
+    const state = classifyMatchState(row);
+    const id = clean(row?.canonicalId || row?.matchId);
+
+    if (state === MATCH_STATE_CLASS.CONFLICT) {
+      errors.push({
+        reason: "certified_history_canonical_status_conflict",
+        matchId: id || null,
+        integrity: true
+      });
+      continue;
+    }
+
+    if (state !== MATCH_STATE_CLASS.PLAYED_FINAL) continue;
+
+    if (!id) {
+      errors.push({ reason: "certified_history_missing_canonical_id", recoverable: true });
+      continue;
+    }
+
+    if (canonicalFinalById.has(id)) {
+      errors.push({
+        reason: "certified_history_duplicate_canonical_id",
+        matchId: id,
+        integrity: true
+      });
+      continue;
+    }
+
+    canonicalFinalById.set(id, row);
+  }
+
+  for (const row of Array.isArray(historyRows) ? historyRows : []) {
+    const id = clean(row?.id);
+    if (!id) {
+      errors.push({ reason: "certified_history_missing_history_id", recoverable: true });
+      continue;
+    }
+    if (historyById.has(id)) {
+      errors.push({
+        reason: "certified_history_duplicate_history_id",
+        matchId: id,
+        integrity: true
+      });
+      continue;
+    }
+    historyById.set(id, row);
+  }
+
+  for (const [id, canonical] of canonicalFinalById) {
+    const history = historyById.get(id);
+    if (!history) {
+      errors.push({
+        reason: "certified_history_missing_row",
+        matchId: id,
+        recoverable: true
+      });
+      continue;
+    }
+
+    if (clean(history?.dayKey) !== targetDay) {
+      errors.push({
+        reason: "certified_history_day_mismatch",
+        matchId: id,
+        actualDay: clean(history?.dayKey) || null,
+        integrity: true
+      });
+    }
+
+    const canonicalHome = strictScore(canonical?.scoreHome ?? canonical?.homeScore);
+    const canonicalAway = strictScore(canonical?.scoreAway ?? canonical?.awayScore);
+    const historyHome = strictScore(history?.scoreHome);
+    const historyAway = strictScore(history?.scoreAway);
+    if (
+      canonicalHome === null ||
+      canonicalAway === null ||
+      historyHome === null ||
+      historyAway === null
+    ) {
+      errors.push({
+        reason: "certified_history_numeric_score_required",
+        matchId: id,
+        recoverable: true
+      });
+    } else if (
+      canonicalHome !== historyHome ||
+      canonicalAway !== historyAway
+    ) {
+      errors.push({
+        reason: "certified_history_score_mismatch",
+        matchId: id,
+        canonicalScore: `${canonicalHome}-${canonicalAway}`,
+        historyScore: `${historyHome}-${historyAway}`,
+        integrity: true
+      });
+    }
+
+    const slug = clean(canonical?.leagueSlug || history?.leagueSlug);
+    if (
+      !teamsMatch(slug, canonical?.homeTeam, history?.homeTeam) ||
+      !teamsMatch(slug, canonical?.awayTeam, history?.awayTeam)
+    ) {
+      errors.push({
+        reason: "certified_history_team_mismatch",
+        matchId: id,
+        integrity: true
+      });
+    }
+
+    const truthContract = history?.truthContract || {};
+    const missingFlags = REQUIRED_HISTORY_TRUTH_FLAGS.filter(flag => truthContract?.[flag] !== true);
+    if (missingFlags.length) {
+      errors.push({
+        reason: "certified_history_truth_contract_incomplete",
+        matchId: id,
+        missingFlags,
+        recoverable: true
+      });
+    }
+  }
+
+  for (const [id] of historyById) {
+    if (!canonicalFinalById.has(id)) {
+      errors.push({
+        reason: "certified_history_extra_row",
+        matchId: id,
+        integrity: true
+      });
+    }
+  }
+
+  const integrityBlocked = errors.some(row => row?.integrity === true);
+  const recoverable = !integrityBlocked;
+  const ok =
+    errors.length === 0 &&
+    canonicalFinalById.size > 0 &&
+    historyById.size === canonicalFinalById.size;
+
+  return {
+    ok,
+    certified: ok,
+    dayKey: targetDay,
+    canonicalPlayedFinalCount: canonicalFinalById.size,
+    historyRowCount: historyById.size,
+    integrityBlocked,
+    recoverable,
+    reasonCounts: reasonCounts(errors),
+    errors
+  };
 }
 
 export function buildErrorReasonCounts(build) {
@@ -47,6 +251,7 @@ export function classifyHistoryRecovery({
   hasCanonical = false,
   readiness = null,
   build = null,
+  certifiedHistory = null,
   historyChanged = false
 } = {}) {
   if (!hasCanonical) {
@@ -56,6 +261,30 @@ export function classifyHistoryRecovery({
       retryAction: "none",
       immediatelyActionable: false,
       historyChanged: false
+    };
+  }
+
+  if (certifiedHistory?.ok === true) {
+    return {
+      state: "healthy",
+      reasons: [],
+      retryAction: "none",
+      immediatelyActionable: false,
+      historyChanged: false,
+      certifiedHistoryMemory: true
+    };
+  }
+
+  if (certifiedHistory?.integrityBlocked === true) {
+    const reasons = Object.keys(certifiedHistory?.reasonCounts || {}).sort();
+    return {
+      state: "blocked_integrity",
+      reasons: reasons.length ? reasons : ["certified_history_integrity_mismatch"],
+      reasonCounts: certifiedHistory?.reasonCounts || {},
+      retryAction: "human_truth_review",
+      immediatelyActionable: true,
+      historyChanged: false,
+      certifiedHistoryMemory: false
     };
   }
 
