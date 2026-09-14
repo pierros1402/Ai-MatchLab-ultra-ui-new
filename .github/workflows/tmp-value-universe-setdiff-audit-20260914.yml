@@ -1,0 +1,159 @@
+name: TMP Value universe set-diff audit 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-value-universe-setdiff
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Verify exact audited parent
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "b07d67b7fbe213d124f25752c6e576dec6d25343"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Compare current canonical Value universe with frozen publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { buildValueFixtureUniverse } from './engine-v1/core/value-fixture-universe.js';
+          import { canonicalFixturesForDay, fixtureBelongsToAthensDay } from './engine-v1/core/day-fixture-universe.js';
+          import { getProductionIdentityResolver } from './engine-v1/core/production-identity-resolver-runtime.js';
+
+          const dayKey = '2026-09-14';
+          const snap = JSON.parse(fs.readFileSync(`data/deploy-snapshots/${dayKey}/fixtures.json`, 'utf8'));
+          const manifest = JSON.parse(fs.readFileSync(`data/deploy-snapshots/${dayKey}/manifest.json`, 'utf8'));
+          const snapRows = Array.isArray(snap) ? snap : Array.isArray(snap.fixtures) ? snap.fixtures : Array.isArray(snap.matches) ? snap.matches : [];
+          const snapIds = snapRows.map(r => String(r?.canonicalId || r?.matchId || '').trim()).filter(Boolean);
+          const snapSet = new Set(snapIds);
+
+          const universe = buildValueFixtureUniverse(dayKey);
+          const currentRows = canonicalFixturesForDay(dayKey);
+          const currentIds = universe.canonicalIds;
+          const currentSet = new Set(currentIds);
+
+          const publicationOnly = snapIds.filter(id => !currentSet.has(id));
+          const currentOnly = currentIds.filter(id => !snapSet.has(id));
+
+          const rawDir = `data/canonical-fixtures/${dayKey}`;
+          const rawRows = [];
+          if (fs.existsSync(rawDir)) {
+            for (const name of fs.readdirSync(rawDir).filter(n => n.endsWith('.json')).sort()) {
+              const file = path.join(rawDir, name);
+              let payload;
+              try { payload = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { continue; }
+              const rows = Array.isArray(payload) ? payload : Array.isArray(payload?.fixtures) ? payload.fixtures : Array.isArray(payload?.matches) ? payload.matches : Array.isArray(payload?.rows) ? payload.rows : [];
+              for (const row of rows) rawRows.push({...row, __file:file});
+            }
+          }
+          const resolver = getProductionIdentityResolver();
+          const rawById = new Map(rawRows.map(r => [String(r?.canonicalId || r?.matchId || '').trim(), r]));
+          const snapshotById = new Map(snapRows.map(r => [String(r?.canonicalId || r?.matchId || '').trim(), r]));
+
+          function compact(row) {
+            if (!row) return null;
+            const id = String(row?.canonicalId || row?.matchId || '').trim();
+            let resolution = null;
+            try { resolution = id ? resolver.resolveFixtureId(id) : null; } catch (e) { resolution = {error:e?.message || String(e)}; }
+            return {
+              id,
+              file: row.__file || null,
+              leagueSlug: row?.leagueSlug || null,
+              leagueName: row?.leagueName || null,
+              homeTeam: row?.homeTeam || null,
+              awayTeam: row?.awayTeam || null,
+              kickoffUtc: row?.kickoffUtc || null,
+              dayKey: row?.dayKey || null,
+              status: row?.status || null,
+              rawStatus: row?.rawStatus || null,
+              scoreHome: row?.scoreHome ?? null,
+              scoreAway: row?.scoreAway ?? null,
+              sourceId: row?.sourceId || row?.sourceMatchId || null,
+              belongsToAthensDay: fixtureBelongsToAthensDay(row, dayKey),
+              productionIdentityResolution: resolution ? {
+                ok: resolution.ok ?? null,
+                status: resolution.status ?? null,
+                sourceRole: resolution.sourceRole ?? null,
+                resolvedFixtureId: resolution.resolvedFixtureId ?? null,
+              } : null,
+            };
+          }
+
+          const publicationOnlyDiagnostics = publicationOnly.map(id => ({
+            id,
+            snapshot: compact(snapshotById.get(id)),
+            currentRawCanonical: compact(rawById.get(id)),
+          }));
+          const currentOnlyDiagnostics = currentOnly.map(id => ({
+            id,
+            current: compact(currentRows.find(r => String(r?.canonicalId || r?.matchId || '').trim() === id)),
+          }));
+
+          const rawIds = rawRows.map(r => String(r?.canonicalId || r?.matchId || '').trim()).filter(Boolean);
+          const rawUniqueIds = [...new Set(rawIds)];
+          const rawOutsideAthensDay = rawRows.filter(r => !fixtureBelongsToAthensDay(r, dayKey)).map(compact);
+
+          const result = {
+            ok: true,
+            dayKey,
+            manifest: {
+              canonicalFixtureCount: manifest?.canonicalFixtureCount ?? null,
+              publishedFixtureCount: manifest?.publicationUniverse?.publishedFixtureCount ?? null,
+              generatedAt: manifest?.generatedAt || null,
+            },
+            frozenPublicationFixtureCount: snapRows.length,
+            frozenPublicationUniqueIds: new Set(snapIds).size,
+            currentValueUniverseCount: universe.count,
+            currentValueUniverseHash: universe.hash,
+            currentCanonicalFixturesForDayCount: currentRows.length,
+            rawCanonicalRows: rawRows.length,
+            rawCanonicalUniqueIds: rawUniqueIds.length,
+            publicationOnly,
+            currentOnly,
+            publicationOnlyDiagnostics,
+            currentOnlyDiagnostics,
+            rawOutsideAthensDay,
+          };
+
+          console.log('VALUE_UNIVERSE_SETDIFF_AUDIT=' + JSON.stringify(result));
+
+          if (snapRows.length !== 126) throw new Error(`snapshot fixtures expected 126, got ${snapRows.length}`);
+          if (universe.count !== 124) throw new Error(`current Value universe expected observed 124, got ${universe.count}`);
+          if (publicationOnly.length !== 2) throw new Error(`expected exactly 2 publication-only IDs, got ${publicationOnly.length}`);
+          if (currentOnly.length !== 0) throw new Error(`unexpected current-only IDs: ${currentOnly.join(',')}`);
+          NODE
+
+      - name: Prove checkout remained read only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --short)"
+          echo "READ_ONLY_CHECKOUT=PASS"
