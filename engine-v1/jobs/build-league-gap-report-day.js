@@ -54,6 +54,15 @@ function readJsonSafe(file, fallback = null) {
   }
 }
 
+function persistedJsonEvidence(sourcePath, filePath) {
+  const payload = readJsonSafe(filePath, null);
+  return {
+    present: payload !== null,
+    sourcePath,
+    payload
+  };
+}
+
 function inSeasonOn(slug, dayKey) {
   try {
     const meta = LEAGUES_BY_SLUG[slug] || {};
@@ -358,6 +367,34 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
     date,
     valueCoverageSourcePath
   );
+
+  const valueSettlementEvidence = {
+    bundle: persistedJsonEvidence(
+      `data/football-truth/_diagnostics/value-settlement-daily-cycle/${date}.four-plan-settlement-bundle.json`,
+      resolveDataPath(
+        "football-truth",
+        "_diagnostics",
+        "value-settlement-daily-cycle",
+        `${date}.four-plan-settlement-bundle.json`
+      )
+    ),
+    summary: persistedJsonEvidence(
+      `data/football-truth/_settlement-summaries/${date}.value-settlement-summary.json`,
+      resolveDataPath(
+        "football-truth",
+        "_settlement-summaries",
+        `${date}.value-settlement-summary.json`
+      )
+    ),
+    statistics: persistedJsonEvidence(
+      `data/football-truth/_settlement-statistics/value-settlement-statistics-${date}_to_${date}.json`,
+      resolveDataPath(
+        "football-truth",
+        "_settlement-statistics",
+        `value-settlement-statistics-${date}_to_${date}.json`
+      )
+    )
+  };
   // Full-season matchday ledger stamps (jobs/build-matchday-ledger.js), read once
   // from league-memory. The axis gives ONE round per league; the ledger gives
   // rowsWithRound — how many of the season's fixtures actually carry an imputed
@@ -550,6 +587,7 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
     },
     activeCompetitionCompleteness,
     valueCoverageEvidence,
+    valueSettlementEvidence,
     broken,
     undeclaredSlugs,
     leagues: rows

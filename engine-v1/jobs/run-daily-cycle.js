@@ -1380,20 +1380,6 @@ export async function runDailyCycle(options = {}) {
     count: valueBuild?.count ?? 0
   });
 
-  console.log("[daily-cycle] value-coverage-report:start", { dayKey });
-
-  valueCoverageReport = await buildValueCoverageReportDay(dayKey);
-
-  console.log("[daily-cycle] value-coverage-report:done", {
-    ok: valueCoverageReport?.ok,
-    dayKey: valueCoverageReport?.dayKey,
-    file: valueCoverageReport?.file || null,
-    valueReturned: valueCoverageReport?.counts?.valueReturned ?? 0,
-    valueNull: valueCoverageReport?.counts?.valueNull ?? 0,
-    minimumRecentSampleNull: valueCoverageReport?.counts?.minimumRecentSampleNull ?? 0,
-    nullByClass: valueCoverageReport?.breakdown?.nullByClass || {}
-  });
-
   console.log("[daily-cycle] four-plan-settlement-bundle:start", {
     dayKey
   });
@@ -1626,6 +1612,20 @@ export async function runDailyCycle(options = {}) {
     dayKey: finalDetailsSync?.dayKey,
     built: finalDetailsSync?.built ?? 0,
     skipped: finalDetailsSync?.skipped ?? 0
+  });
+
+  console.log("[daily-cycle] value-coverage-report:start", { dayKey });
+
+  valueCoverageReport = await buildValueCoverageReportDay(dayKey);
+
+  console.log("[daily-cycle] value-coverage-report:done", {
+    ok: valueCoverageReport?.ok,
+    dayKey: valueCoverageReport?.dayKey,
+    file: valueCoverageReport?.file || null,
+    valueReturned: valueCoverageReport?.counts?.valueReturned ?? 0,
+    valueNull: valueCoverageReport?.counts?.valueNull ?? 0,
+    minimumRecentSampleNull: valueCoverageReport?.counts?.minimumRecentSampleNull ?? 0,
+    nullByClass: valueCoverageReport?.breakdown?.nullByClass || {}
   });
 
   console.log("[daily-cycle] deploy-snapshot-export:start", { dayKey });
