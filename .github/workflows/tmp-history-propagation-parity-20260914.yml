@@ -15,7 +15,7 @@ jobs:
       - name: Checkout exact audit branch
         uses: actions/checkout@v7
         with:
-          fetch-depth: 2
+          fetch-depth: 4
 
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -27,8 +27,9 @@ jobs:
         run: |
           set -euo pipefail
           BASE="b07d67b7fbe213d124f25752c6e576dec6d25343"
-          PARENT="$(git rev-parse HEAD^)"
-          test "$PARENT" = "$BASE"
+          test "$(git cat-file -t "$BASE")" = "commit"
+          CHANGED="$(git diff --name-only "$BASE"..HEAD)"
+          test "$CHANGED" = ".github/workflows/tmp-history-propagation-parity-20260914.yml"
 
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
