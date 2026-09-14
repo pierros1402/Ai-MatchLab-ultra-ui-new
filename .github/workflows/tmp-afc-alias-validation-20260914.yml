@@ -1,0 +1,103 @@
+name: TMP AFC alias validation 20260914
+
+on:
+  push:
+    branches:
+      - fix/20260914-afc-cross-provider-aliases
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-afc-aliases:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout isolated branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Verify exact base and source-only patch boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="$(git merge-base HEAD 13b799c71ca574fc8e897051a7015e8cba61db9b)"
+          test "$BASE" = "13b799c71ca574fc8e897051a7015e8cba61db9b"
+          CHANGED="$(git diff --name-only 13b799c71ca574fc8e897051a7015e8cba61db9b..HEAD | sort)"
+          printf '%s\n' "$CHANGED"
+          BAD="$(printf '%s\n' "$CHANGED" | grep -Ev '^(data/team-aliases/afc\.champions\.json|engine-v1/tests/afc-cross-provider-fixture-dedup\.test\.js|\.github/workflows/tmp-afc-alias-validation-20260914\.yml)$' || true)"
+          test -z "$BAD"
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Syntax and targeted alias regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/tests/afc-cross-provider-fixture-dedup.test.js
+          node --test engine-v1/tests/afc-cross-provider-fixture-dedup.test.js
+          mapfile -t TESTS < <(find engine-v1/tests -maxdepth 1 -type f -name '*dedup*.test.js' ! -name 'afc-cross-provider-fixture-dedup.test.js' | sort)
+          if [ "${#TESTS[@]}" -gt 0 ]; then
+            node --test "${TESTS[@]}"
+          fi
+
+      - name: Prove current AFC canonical dedupes 8 to 6 in memory
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { dedupeLeagueDayFixtures } from './engine-v1/core/fixture-dedup.js';
+          const file = 'data/canonical-fixtures/2026-09-14/afc.champions.json';
+          const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+          if (raw.fixtures.length !== 8) throw new Error(`expected raw AFC count 8, got ${raw.fixtures.length}`);
+          const result = dedupeLeagueDayFixtures(raw.fixtures, { slug: 'afc.champions' });
+          const expectedDropped = [
+            'cid_afcchampions_neftchifargonauzb_alquwaaljawiyairq_20260914',
+            'cid_afcchampions_shababalahlidubaiuae_tractorirn_20260914'
+          ].sort();
+          const dropped = result.removed.map(x => x.droppedId).sort();
+          if (result.rows.length !== 6) throw new Error(`expected deduped AFC count 6, got ${result.rows.length}`);
+          if (JSON.stringify(dropped) !== JSON.stringify(expectedDropped)) throw new Error(`unexpected dropped ids: ${JSON.stringify(dropped)}`);
+          const byId = new Map(result.rows.map(x => [x.canonicalId, x]));
+          const neftchi = byId.get('cid_afcchampions_neftchifergana_airforce_20260914');
+          const shabab = byId.get('cid_afcchampions_shababalahli_traktorsazi_20260914');
+          if (neftchi?.providerIds?.flashscore !== 'riNKwxy1' || neftchi?.providerIds?.espn !== '401912664') throw new Error('Neftchi provider lineage missing');
+          if (shabab?.providerIds?.flashscore !== 'rBDEaJcK' || shabab?.providerIds?.espn !== '401912673') throw new Error('Shabab provider lineage missing');
+          console.log(JSON.stringify({rawCount:8,dedupedCount:6,dropped,neftchiProviderIds:neftchi.providerIds,shababProviderIds:shabab.providerIds},null,2));
+          NODE
+
+      - name: Prove Value universe consumes deduped canonical identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { buildValueFixtureUniverse } from './engine-v1/core/value-fixture-universe.js';
+          const u = buildValueFixtureUniverse('2026-09-14');
+          const ids = new Set(u.fixtures.map(x => x.matchId || x.canonicalId));
+          const dropped = [
+            'cid_afcchampions_neftchifargonauzb_alquwaaljawiyairq_20260914',
+            'cid_afcchampions_shababalahlidubaiuae_tractorirn_20260914'
+          ];
+          if (u.source !== 'canonical_fixtures') throw new Error(`unexpected universe source ${u.source}`);
+          for (const id of dropped) if (ids.has(id)) throw new Error(`duplicate still in Value universe: ${id}`);
+          if (!ids.has('cid_afcchampions_neftchifergana_airforce_20260914')) throw new Error('missing retained Neftchi ESPN identity');
+          if (!ids.has('cid_afcchampions_shababalahli_traktorsazi_20260914')) throw new Error('missing retained Shabab ESPN identity');
+          console.log(JSON.stringify({source:u.source,count:u.count,hash:u.hash},null,2));
+          NODE
+
+      - name: Prove validation remained read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          echo READ_ONLY_CHECKOUT_CLEAN=true
