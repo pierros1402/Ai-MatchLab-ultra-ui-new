@@ -1,0 +1,98 @@
+name: TMP history post-cleanup closure 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-history-post-cleanup-closure
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  history-closure-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Verify history propagation and quarantine exclusion
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+
+          const history = JSON.parse(fs.readFileSync('data/history/2026-2027.json', 'utf8'));
+          const report = JSON.parse(fs.readFileSync('data/history/2026-2027.report.json', 'utf8'));
+          const quarantine = JSON.parse(fs.readFileSync('data/competition-routing-quarantine/2026-09-12/manifest.json', 'utf8'));
+
+          const expected = {
+            '2026-09-09': 76,
+            '2026-09-10': 86,
+            '2026-09-11': 185,
+            '2026-09-12': 519,
+          };
+
+          const candidates = Array.isArray(quarantine?.candidates) ? quarantine.candidates : [];
+          const candidateIds = new Set(candidates.map(row => String(row?.canonicalId || '').trim()).filter(Boolean));
+          if (candidateIds.size !== 69) {
+            throw new Error(`Expected 69 quarantine candidate IDs, found ${candidateIds.size}`);
+          }
+
+          const days = Array.isArray(history?.days) ? history.days : [];
+          const dayMap = new Map(days.map(day => [String(day?.dayKey || ''), day]));
+          const dayResults = {};
+          for (const [dayKey, expectedCount] of Object.entries(expected)) {
+            const day = dayMap.get(dayKey);
+            const rows = Array.isArray(day?.rows) ? day.rows : [];
+            const reportCount = Number(report?.byDay?.[dayKey] ?? -1);
+            dayResults[dayKey] = {
+              historyRows: rows.length,
+              reportRows: reportCount,
+              expectedRows: expectedCount,
+            };
+            if (!day) throw new Error(`Missing history day bucket ${dayKey}`);
+            if (rows.length !== expectedCount) throw new Error(`${dayKey}: history rows ${rows.length} != ${expectedCount}`);
+            if (reportCount !== expectedCount) throw new Error(`${dayKey}: report rows ${reportCount} != ${expectedCount}`);
+          }
+
+          const contaminationHits = [];
+          for (const day of days) {
+            for (const row of Array.isArray(day?.rows) ? day.rows : []) {
+              const id = String(row?.id || row?.matchId || '').trim();
+              if (candidateIds.has(id)) contaminationHits.push({ dayKey: day?.dayKey || null, id });
+            }
+          }
+
+          if (contaminationHits.length) {
+            throw new Error(`Quarantined IDs found in history: ${JSON.stringify(contaminationHits.slice(0, 20))}`);
+          }
+          if (report?.lastCompletedDay !== '2026-09-12') {
+            throw new Error(`Unexpected lastCompletedDay=${report?.lastCompletedDay}`);
+          }
+          if (report?.to !== '2026-09-12') {
+            throw new Error(`Unexpected report.to=${report?.to}`);
+          }
+
+          console.log(JSON.stringify({
+            ok: true,
+            season: history?.season || null,
+            reportGeneratedAt: report?.generatedAt || null,
+            lastCompletedDay: report?.lastCompletedDay || null,
+            reportTo: report?.to || null,
+            quarantineCandidateIds: candidateIds.size,
+            contaminationHits: contaminationHits.length,
+            dayResults,
+          }, null, 2));
+          NODE
+
+      - name: Prove repository remained clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --short)"
+          echo "READ_ONLY_HISTORY_CLOSURE_AUDIT=PASS"
