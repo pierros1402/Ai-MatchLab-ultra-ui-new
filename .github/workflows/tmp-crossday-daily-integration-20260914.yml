@@ -159,6 +159,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # New source files are untracked at this point; intent-to-add makes
+          # them visible to git diff without staging their content.
+          git add -N \
+            engine-v1/core/cross-day-provider-reschedule.js \
+            engine-v1/jobs/apply-cross-day-verified-final-supersession.js \
+            engine-v1/tests/cross-day-provider-reschedule.test.js \
+            engine-v1/tests/cross-day-supersession-daily-integration.test.js
           git diff --name-only "$BASE" | sort > /tmp/source-paths.txt
           cat > /tmp/expected-source-paths.txt <<'EOF'
           .github/workflows/tmp-crossday-daily-integration-20260914.yml
@@ -240,6 +247,11 @@ jobs:
           test -s /tmp/source-integration.patch
 
           git reset --hard "$BASE"
+          rm -f \
+            engine-v1/core/cross-day-provider-reschedule.js \
+            engine-v1/jobs/apply-cross-day-verified-final-supersession.js \
+            engine-v1/tests/cross-day-provider-reschedule.test.js \
+            engine-v1/tests/cross-day-supersession-daily-integration.test.js
           git apply --index /tmp/source-integration.patch
           git diff --cached --name-only | sort > /tmp/release-paths.txt
           cat > /tmp/expected-release-paths.txt <<'EOF'
