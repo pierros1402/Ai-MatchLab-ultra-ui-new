@@ -1,0 +1,95 @@
+name: TMP status correction contract audit
+
+on:
+  push:
+    branches:
+      - audit/20260914-status-correction-contract-v1
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PINNED_MAIN: bee1afa9b45551af7e5c1ab05b99d4d3fb6418db
+
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact read-only base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$PINNED_MAIN"
+          CHANGED="$(git diff --name-only "$PINNED_MAIN" HEAD)"
+          test "$CHANGED" = ".github/workflows/tmp-status-correction-contract-audit-20260914.yml"
+          test -z "$(git status --short)"
+          echo "AUDIT_BASE=$PINNED_MAIN"
+
+      - name: Scan correction contracts and producers
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/status-correction-audit
+
+          git grep -n -I -E 'statusCorrection|verified_cross_day_provider_reschedule|cross-day-verified-final-supersession|STATUS_POSTPONED|STATUS_CANCELED|manual_official_url_validated|officialUrl|sourceUrl|reschedul|postpon' -- engine-v1 .github > /tmp/status-correction-audit/source-hits.txt || true
+
+          git grep -n -I -E 'statusCorrection|verified_cross_day_provider_reschedule|cross-day-verified-final-supersession' -- \
+            data/canonical-fixtures/2026-09-11/kos.2.json \
+            data/canonical-fixtures/2026-09-11/fro.1.json \
+            data/canonical-fixtures/2026-09-09/chi.2.json \
+            > /tmp/status-correction-audit/example-hits.txt || true
+
+          cut -d: -f1 /tmp/status-correction-audit/source-hits.txt | sort -u > /tmp/status-correction-audit/source-files.txt
+
+          : > /tmp/status-correction-audit/source-context.txt
+          while IFS= read -r file; do
+            [ -n "$file" ] || continue
+            echo "===== $file =====" >> /tmp/status-correction-audit/source-context.txt
+            grep -n -C 8 -E 'statusCorrection|verified_cross_day_provider_reschedule|cross-day-verified-final-supersession|manual_official_url_validated|officialUrl|sourceUrl|reschedul|postpon' "$file" >> /tmp/status-correction-audit/source-context.txt || true
+          done < /tmp/status-correction-audit/source-files.txt
+
+          node <<'NODE' > /tmp/status-correction-audit/summary.json
+          const fs = require('fs');
+          const lines = file => fs.existsSync(file) ? fs.readFileSync(file,'utf8').split(/\r?\n/u).filter(Boolean) : [];
+          const sourceHits = lines('/tmp/status-correction-audit/source-hits.txt');
+          const exampleHits = lines('/tmp/status-correction-audit/example-hits.txt');
+          const sourceFiles = lines('/tmp/status-correction-audit/source-files.txt');
+          const payload = {
+            schema: 'ai-matchlab.status-correction-contract-audit.v1',
+            auditBase: process.env.PINNED_MAIN,
+            sourceHitCount: sourceHits.length,
+            sourceFiles,
+            exampleHitCount: exampleHits.length,
+            hasCrossDaySupersessionSource: sourceHits.some(x => x.includes('verified_cross_day_provider_reschedule') || x.includes('cross-day-verified-final-supersession')),
+            hasManualOfficialValidatedSource: sourceHits.some(x => x.includes('manual_official_url_validated')),
+            hasOfficialUrlFieldSource: sourceHits.some(x => x.includes('officialUrl')),
+            hasSourceUrlFieldSource: sourceHits.some(x => x.includes('sourceUrl'))
+          };
+          process.stdout.write(JSON.stringify(payload,null,2)+'\n');
+          NODE
+
+          cat /tmp/status-correction-audit/summary.json
+          echo '=== SOURCE FILES ==='
+          cat /tmp/status-correction-audit/source-files.txt
+          echo '=== EXAMPLES ==='
+          cat /tmp/status-correction-audit/example-hits.txt
+
+      - name: Prove checkout remained read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --short)"
+          echo "READ_ONLY_AUDIT=PASS"
+
+      - name: Upload audit evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: status-correction-contract-audit-20260914
+          path: /tmp/status-correction-audit/
+          if-no-files-found: error
