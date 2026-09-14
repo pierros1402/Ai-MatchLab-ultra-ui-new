@@ -58,3 +58,18 @@ test("history catch-up retries D-1 through D-7", () => {
     "catch-up day must still be derived from the loop offset"
   );
 });
+
+
+test("history catch-up owns verified-final convergence independently of Value", () => {
+  const parityIndex = source.indexOf("let historyParity = buildHistoryDayFromTruth(day);");
+  const decisionIndex = source.indexOf("shouldRefreshVerifiedFinalTruth(historyParity)", parityIndex);
+  const refreshIndex = source.indexOf("refreshVerifiedFinalTruthAllFixtures(", decisionIndex);
+  const appendIndex = source.indexOf("append = await appendFinalizedDayToHistory(day);", refreshIndex);
+  assert.ok(parityIndex >= 0);
+  assert.ok(decisionIndex > parityIndex);
+  assert.ok(refreshIndex > decisionIndex);
+  assert.ok(appendIndex > refreshIndex);
+  assert.match(source, /historyParity\?\.ok === true/u);
+  assert.match(source, /append\?\.rowsWritten \?\? 0/u);
+  assert.doesNotMatch(source, /append\?\.mergedRows/u);
+});

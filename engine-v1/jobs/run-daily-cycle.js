@@ -7,7 +7,14 @@ import { discoverProviderCompetitionsDay } from "./discover-provider-competition
 import { discoverActiveLeagues } from "./discover-active-leagues.js";
 import { monitorActiveLeagues } from "./monitor-active-leagues.js";
 import { finalizeDayIfSafe } from "./finalize-day.js";
-import { appendFinalizedDayToHistory } from "./append-finalized-day-to-history.js";
+import {
+  appendFinalizedDayToHistory,
+  buildHistoryDayFromTruth
+} from "./append-finalized-day-to-history.js";
+import {
+  shouldRefreshVerifiedFinalTruth,
+  summarizeHistoryTruthParity
+} from "../core/history-truth-convergence.js";
 import { applyCrossDayVerifiedFinalSupersessionWindow } from "./apply-cross-day-verified-final-supersession.js";
 import { buildHistoryReport } from "./build-history-report.js";
 import { applyResultsTruthToCanonicalDay } from "./apply-results-truth-to-canonical-day.js";
@@ -198,6 +205,18 @@ function runDailyCycleNodeJob(args, label) {
   }
 
   return result;
+}
+
+function refreshVerifiedFinalTruthAllFixtures(dayKey, label, offsetDays = 0) {
+  const offsets = [...new Set([offsetDays - 1, offsetDays, offsetDays + 1])];
+  const offsetsArg = `--offsets=${offsets.join(",")}`;
+  return runDailyCycleNodeJob([
+    "./engine-v1/jobs/export-verified-final-results-day.js",
+    `--date=${dayKey}`,
+    "--write",
+    "--all-fixtures",
+    offsetsArg
+  ], `${label}-verified-final-results-all-fixtures`);
 }
 
 // Value settlement chain for one day: verified final results for Plan A,
@@ -2036,6 +2055,26 @@ export async function runDailyCycle(options = {}) {
         syncCanonicalFixturesToJsonDbDay(day);
         const readiness = auditFinalizationReadinessDay(day);
 
+        // History owns its own final-truth convergence. Missing verified-final
+        // evidence is refreshed independently of Value. Structural conflicts
+        // remain fail-closed and are surfaced in the catch-up diagnostics.
+        let historyParity = buildHistoryDayFromTruth(day);
+        let historyTruthRefreshAttempted = false;
+        let historyTruthRefreshStatus = null;
+
+        if (shouldRefreshVerifiedFinalTruth(historyParity)) {
+          historyTruthRefreshAttempted = true;
+          const historyTruthRefresh = refreshVerifiedFinalTruthAllFixtures(
+            day,
+            `catch-up-history-${day}`,
+            -back
+          );
+          historyTruthRefreshStatus = historyTruthRefresh?.status ?? null;
+          historyParity = buildHistoryDayFromTruth(day);
+        }
+
+        const historyParitySummary = summarizeHistoryTruthParity(historyParity);
+
         // Late-arriving-truth settlement: the finalize resettle above only
         // ever covers YESTERDAY, but a result can land 2+ days after the
         // match (Gap B kept Keflavik's 07-06 final out of the truth store
@@ -2068,7 +2107,8 @@ export async function runDailyCycle(options = {}) {
         if (
           (readiness?.terminal ?? 0) > 0 &&
           (readiness?.terminalMissingScore ?? 0) === 0 &&
-          (readiness?.duplicateIdCount ?? 0) === 0
+          (readiness?.duplicateIdCount ?? 0) === 0 &&
+          historyParity?.ok === true
         ) {
           append = await appendFinalizedDayToHistory(day);
         }
@@ -2094,8 +2134,14 @@ export async function runDailyCycle(options = {}) {
           open: readiness?.open ?? null,
           unresolvedPicks,
           resettled,
+          historyTruthRefreshAttempted,
+          historyTruthRefreshStatus,
+          historyParity: historyParitySummary,
           appended: !!append?.ok,
-          appendedRows: append?.mergedRows ?? 0,
+          appendedRows: append?.rowsWritten ?? 0,
+          historyAppendReason:
+            append?.reason ||
+            (historyParity?.ok === true ? null : historyParity?.reason || null),
           season: append?.season || null
         });
       } catch (e) {
