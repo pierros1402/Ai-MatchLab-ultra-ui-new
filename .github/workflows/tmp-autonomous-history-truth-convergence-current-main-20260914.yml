@@ -1,0 +1,323 @@
+name: TMP autonomous history truth convergence current-main
+
+on:
+  push:
+    branches:
+      - fix/20260914-autonomous-history-truth-convergence-current-main-v1
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tmp-autonomous-history-truth-convergence-current-main-20260914
+  cancel-in-progress: false
+
+jobs:
+  validate-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      PINNED_MAIN: 913e9a77a59e2d1341ab3b11ee6dbefa739fd86b
+      VALIDATED_SOURCE: ee4346fe64755df005da5a0b2570f8b0ac8615d5
+      RELEASE_BRANCH: release/20260914-autonomous-history-truth-convergence-current-main-v1
+
+    steps:
+      - name: Checkout isolated branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact current-main base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$PINNED_MAIN"
+          CHANGED="$(git diff --name-only "$PINNED_MAIN" HEAD)"
+          test "$CHANGED" = ".github/workflows/tmp-autonomous-history-truth-convergence-current-main-20260914.yml"
+          REMOTE_MAIN="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          test "$REMOTE_MAIN" = "$PINNED_MAIN"
+          echo "BASE_VERIFIED=$PINNED_MAIN"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Apply validated autonomous convergence patch to current source
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git show "$VALIDATED_SOURCE:engine-v1/core/history-truth-convergence.js" > engine-v1/core/history-truth-convergence.js
+          git show "$VALIDATED_SOURCE:engine-v1/tests/history-truth-convergence.test.js" > engine-v1/tests/history-truth-convergence.test.js
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          daily_path = Path('engine-v1/jobs/run-daily-cycle.js')
+          source = daily_path.read_text(encoding='utf-8')
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly 1 anchor, found {count}')
+              return text.replace(old, new, 1)
+
+          old_import = 'import { appendFinalizedDayToHistory } from "./append-finalized-day-to-history.js";\n'
+          new_import = '''import {
+            appendFinalizedDayToHistory,
+            buildHistoryDayFromTruth
+          } from "./append-finalized-day-to-history.js";
+          import {
+            shouldRefreshVerifiedFinalTruth,
+            summarizeHistoryTruthParity
+          } from "../core/history-truth-convergence.js";
+          '''
+          source = replace_once(source, old_import, new_import, 'history import')
+
+          if 'function refreshVerifiedFinalTruthAllFixtures(' in source:
+              raise SystemExit('refresh helper already present unexpectedly')
+          helper_anchor = '// Value settlement chain for one day:'
+          helper = '''function refreshVerifiedFinalTruthAllFixtures(dayKey, label, offsetDays = 0) {
+            const offsets = [...new Set([offsetDays - 1, offsetDays, offsetDays + 1])];
+            const offsetsArg = `--offsets=${offsets.join(",")}`;
+            return runDailyCycleNodeJob([
+              "./engine-v1/jobs/export-verified-final-results-day.js",
+              `--date=${dayKey}`,
+              "--write",
+              "--all-fixtures",
+              offsetsArg
+            ], `${label}-verified-final-results-all-fixtures`);
+          }
+
+          '''
+          source = replace_once(source, helper_anchor, helper + helper_anchor, 'value settlement helper anchor')
+
+          readiness_anchor = '''        const sweep = applyResultsTruthToCanonicalDay(day);
+                  syncCanonicalFixturesToJsonDbDay(day);
+                  const readiness = auditFinalizationReadinessDay(day);
+          '''
+          parity_block = '''        const sweep = applyResultsTruthToCanonicalDay(day);
+                  syncCanonicalFixturesToJsonDbDay(day);
+                  const readiness = auditFinalizationReadinessDay(day);
+
+                  // History owns its own final-truth convergence. Missing verified-final
+                  // evidence is refreshed independently of Value. Structural conflicts
+                  // remain fail-closed and are surfaced in the catch-up diagnostics.
+                  let historyParity = buildHistoryDayFromTruth(day);
+                  let historyTruthRefreshAttempted = false;
+                  let historyTruthRefreshStatus = null;
+
+                  if (shouldRefreshVerifiedFinalTruth(historyParity)) {
+                    historyTruthRefreshAttempted = true;
+                    const historyTruthRefresh = refreshVerifiedFinalTruthAllFixtures(
+                      day,
+                      `catch-up-history-${day}`,
+                      -back
+                    );
+                    historyTruthRefreshStatus = historyTruthRefresh?.status ?? null;
+                    historyParity = buildHistoryDayFromTruth(day);
+                  }
+
+                  const historyParitySummary = summarizeHistoryTruthParity(historyParity);
+          '''
+          source = replace_once(source, readiness_anchor, parity_block, 'catch-up readiness anchor')
+
+          append_anchor = '''        let append = null;
+                  if (
+                    (readiness?.terminal ?? 0) > 0 &&
+                    (readiness?.terminalMissingScore ?? 0) === 0 &&
+                    (readiness?.duplicateIdCount ?? 0) === 0
+                  ) {
+                    append = await appendFinalizedDayToHistory(day);
+                  }
+          '''
+          append_replacement = '''        let append = null;
+                  if (
+                    (readiness?.terminal ?? 0) > 0 &&
+                    (readiness?.terminalMissingScore ?? 0) === 0 &&
+                    (readiness?.duplicateIdCount ?? 0) === 0 &&
+                    historyParity?.ok === true
+                  ) {
+                    append = await appendFinalizedDayToHistory(day);
+                  }
+          '''
+          source = replace_once(source, append_anchor, append_replacement, 'catch-up append gate')
+
+          diagnostics_anchor = '''          resettled,
+                    appended: !!append?.ok,
+                    appendedRows: append?.mergedRows ?? 0,
+                    season: append?.season || null
+          '''
+          diagnostics_replacement = '''          resettled,
+                    historyTruthRefreshAttempted,
+                    historyTruthRefreshStatus,
+                    historyParity: historyParitySummary,
+                    appended: !!append?.ok,
+                    appendedRows: append?.rowsWritten ?? 0,
+                    historyAppendReason:
+                      append?.reason ||
+                      (historyParity?.ok === true ? null : historyParity?.reason || null),
+                    season: append?.season || null
+          '''
+          source = replace_once(source, diagnostics_anchor, diagnostics_replacement, 'catch-up diagnostics')
+
+          if 'append?.mergedRows' in source:
+              raise SystemExit('stale append?.mergedRows remains after patch')
+
+          daily_path.write_text(source, encoding='utf-8')
+
+          test_path = Path('engine-v1/tests/daily-history-catchup-h2h-scope.test.js')
+          test_source = test_path.read_text(encoding='utf-8')
+          marker = 'history catch-up owns verified-final convergence independently of Value'
+          if marker in test_source:
+              raise SystemExit('autonomous convergence test already present unexpectedly')
+          test_source = test_source.rstrip() + '''\n\n\ntest("history catch-up owns verified-final convergence independently of Value", () => {
+            const parityIndex = source.indexOf("let historyParity = buildHistoryDayFromTruth(day);");
+            const decisionIndex = source.indexOf("shouldRefreshVerifiedFinalTruth(historyParity)", parityIndex);
+            const refreshIndex = source.indexOf("refreshVerifiedFinalTruthAllFixtures(", decisionIndex);
+            const appendIndex = source.indexOf("append = await appendFinalizedDayToHistory(day);", refreshIndex);
+            assert.ok(parityIndex >= 0);
+            assert.ok(decisionIndex > parityIndex);
+            assert.ok(refreshIndex > decisionIndex);
+            assert.ok(appendIndex > refreshIndex);
+            assert.match(source, /historyParity\\?\\.ok === true/u);
+            assert.match(source, /append\\?\\.rowsWritten \\?\\? 0/u);
+            assert.doesNotMatch(source, /append\\?\\.mergedRows/u);
+          });\n'''
+          test_path.write_text(test_source, encoding='utf-8')
+          PY
+
+          git diff --check
+
+      - name: Verify exact source write-set
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED=$(cat <<'EOF'
+          engine-v1/core/history-truth-convergence.js
+          engine-v1/jobs/run-daily-cycle.js
+          engine-v1/tests/daily-history-catchup-h2h-scope.test.js
+          engine-v1/tests/history-truth-convergence.test.js
+          EOF
+          )
+          ACTUAL="$(git status --short | awk '{print $2}' | grep -v '^.github/workflows/tmp-autonomous-history-truth-convergence-current-main-20260914.yml$' | sort)"
+          EXPECTED_SORTED="$(printf '%s\n' "$EXPECTED" | sed '/^$/d' | sort)"
+          if [ "$ACTUAL" != "$EXPECTED_SORTED" ]; then
+            echo "Unexpected write-set"
+            echo "EXPECTED:"
+            echo "$EXPECTED_SORTED"
+            echo "ACTUAL:"
+            echo "$ACTUAL"
+            exit 1
+          fi
+
+      - name: Syntax checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/core/history-truth-convergence.js
+          node --check engine-v1/jobs/run-daily-cycle.js
+          node --check engine-v1/tests/daily-history-catchup-h2h-scope.test.js
+          node --check engine-v1/tests/history-truth-convergence.test.js
+
+      - name: Targeted history and cross-day regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test \
+            engine-v1/tests/history-truth-convergence.test.js \
+            engine-v1/tests/daily-history-catchup-h2h-scope.test.js \
+            engine-v1/tests/cross-day-provider-reschedule.test.js \
+            engine-v1/tests/cross-day-supersession-daily-integration.test.js \
+            engine-v1/tests/export-verified-final-results-day.test.js \
+            engine-v1/tests/historical-truth-repair-order.test.js \
+            engine-v1/tests/terminal-score-convergence.test.js \
+            engine-v1/tests/rebuild-indexes-for-season.test.js | tee /tmp/targeted-history-tests.tap
+
+      - name: Full engine regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test engine-v1/tests/*.test.js | tee /tmp/full-engine-tests.tap
+
+      - name: Prove tests did not mutate repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED=$(cat <<'EOF'
+          engine-v1/core/history-truth-convergence.js
+          engine-v1/jobs/run-daily-cycle.js
+          engine-v1/tests/daily-history-catchup-h2h-scope.test.js
+          engine-v1/tests/history-truth-convergence.test.js
+          EOF
+          )
+          ACTUAL="$(git status --short | awk '{print $2}' | grep -v '^.github/workflows/tmp-autonomous-history-truth-convergence-current-main-20260914.yml$' | sort)"
+          EXPECTED_SORTED="$(printf '%s\n' "$EXPECTED" | sed '/^$/d' | sort)"
+          test "$ACTUAL" = "$EXPECTED_SORTED"
+          git diff --check
+
+      - name: Require remote main still pinned
+        shell: bash
+        run: |
+          set -euo pipefail
+          REMOTE_MAIN="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          echo "REMOTE_MAIN=$REMOTE_MAIN"
+          test "$REMOTE_MAIN" = "$PINNED_MAIN"
+
+      - name: Build clean source-only release commit
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "matchlab-repair"
+          git config user.email "matchlab-repair@users.noreply.github.com"
+
+          git reset --mixed "$PINNED_MAIN"
+          git add \
+            engine-v1/core/history-truth-convergence.js \
+            engine-v1/jobs/run-daily-cycle.js \
+            engine-v1/tests/daily-history-catchup-h2h-scope.test.js \
+            engine-v1/tests/history-truth-convergence.test.js
+
+          EXPECTED=$(cat <<'EOF'
+          engine-v1/core/history-truth-convergence.js
+          engine-v1/jobs/run-daily-cycle.js
+          engine-v1/tests/daily-history-catchup-h2h-scope.test.js
+          engine-v1/tests/history-truth-convergence.test.js
+          EOF
+          )
+          ACTUAL="$(git diff --cached --name-only | sort)"
+          EXPECTED_SORTED="$(printf '%s\n' "$EXPECTED" | sed '/^$/d' | sort)"
+          test "$ACTUAL" = "$EXPECTED_SORTED"
+          git diff --cached --check
+
+          git commit -m "Make recent history truth convergence autonomous"
+          RELEASE_SHA="$(git rev-parse HEAD)"
+          test "$(git rev-parse HEAD^)" = "$PINNED_MAIN"
+          echo "release_sha=$RELEASE_SHA" >> "$GITHUB_OUTPUT"
+          echo "RELEASE_SHA=$RELEASE_SHA"
+
+      - name: Push clean commit to release branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          REMOTE_MAIN="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          test "$REMOTE_MAIN" = "$PINNED_MAIN"
+          git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
+          echo "RELEASE_BRANCH=$RELEASE_BRANCH"
+          echo "RELEASE_SHA=${{ steps.release.outputs.release_sha }}"
+
+      - name: Upload validation evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: autonomous-history-truth-convergence-current-main-v1-evidence
+          path: |
+            /tmp/targeted-history-tests.tap
+            /tmp/full-engine-tests.tap
+          if-no-files-found: ignore
