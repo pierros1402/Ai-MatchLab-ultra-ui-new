@@ -1,0 +1,112 @@
+name: TMP history propagation final audit V2 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-history-propagation-final-v2
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  history-propagation-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Verify exact audited parent
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_PARENT="b07d67b7fbe213d124f25752c6e576dec6d25343"
+          ACTUAL_PARENT="$(git rev-parse HEAD^)"
+          test "$ACTUAL_PARENT" = "$EXPECTED_PARENT"
+          echo "AUDIT_PARENT=$ACTUAL_PARENT"
+
+      - name: Audit quarantined IDs against committed history
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+
+          const quarantine = JSON.parse(fs.readFileSync('data/competition-routing-quarantine/2026-09-12/manifest.json', 'utf8'));
+          const history = JSON.parse(fs.readFileSync('data/history/2026-2027.json', 'utf8'));
+          const report = JSON.parse(fs.readFileSync('data/history/2026-2027.report.json', 'utf8'));
+
+          const candidates = Array.isArray(quarantine.candidates) ? quarantine.candidates : [];
+          const candidateIds = candidates.map(row => String(row?.canonicalId || '').trim()).filter(Boolean);
+          const uniqueCandidates = [...new Set(candidateIds)].sort();
+
+          if (quarantine?.summary?.candidateCount !== 69) {
+            throw new Error(`quarantine candidateCount mismatch: ${quarantine?.summary?.candidateCount}`);
+          }
+          if (candidateIds.length !== 69 || uniqueCandidates.length !== 69) {
+            throw new Error(`expected 69 exact unique candidate IDs, got rows=${candidateIds.length} unique=${uniqueCandidates.length}`);
+          }
+
+          const days = Array.isArray(history?.days) ? history.days : [];
+          const historyRows = days.flatMap(day => Array.isArray(day?.rows) ? day.rows : []);
+          const historyIds = new Set(historyRows.map(row => String(row?.id || row?.matchId || '').trim()).filter(Boolean));
+          const contaminationHits = uniqueCandidates.filter(id => historyIds.has(id));
+
+          const expectedByDay = {
+            '2026-09-09': 76,
+            '2026-09-10': 86,
+            '2026-09-11': 185,
+            '2026-09-12': 519,
+          };
+
+          const actualHistoryByDay = Object.fromEntries(
+            Object.keys(expectedByDay).map(dayKey => {
+              const day = days.find(row => String(row?.dayKey || '') === dayKey);
+              return [dayKey, Array.isArray(day?.rows) ? day.rows.length : 0];
+            })
+          );
+
+          for (const [dayKey, expected] of Object.entries(expectedByDay)) {
+            const reportCount = Number(report?.byDay?.[dayKey]);
+            const historyCount = Number(actualHistoryByDay[dayKey]);
+            if (reportCount !== expected) throw new Error(`report ${dayKey} expected ${expected}, got ${reportCount}`);
+            if (historyCount !== expected) throw new Error(`history ${dayKey} expected ${expected}, got ${historyCount}`);
+          }
+
+          if (String(report?.lastCompletedDay || '') !== '2026-09-12') {
+            throw new Error(`lastCompletedDay mismatch: ${report?.lastCompletedDay}`);
+          }
+          if (String(report?.to || '') !== '2026-09-12') {
+            throw new Error(`report.to mismatch: ${report?.to}`);
+          }
+          if (contaminationHits.length !== 0) {
+            throw new Error(`quarantined IDs present in history: ${contaminationHits.join(',')}`);
+          }
+
+          console.log('HISTORY_PROPAGATION_FINAL_AUDIT=' + JSON.stringify({
+            ok: true,
+            auditedMainParent: 'b07d67b7fbe213d124f25752c6e576dec6d25343',
+            quarantineCandidateCount: uniqueCandidates.length,
+            contaminationHits,
+            lastCompletedDay: report.lastCompletedDay,
+            reportTo: report.to,
+            expectedByDay,
+            actualHistoryByDay,
+            reportByDay: Object.fromEntries(Object.keys(expectedByDay).map(k => [k, report.byDay[k]])),
+            totalHistoryRows: historyRows.length,
+          }));
+          NODE
+
+      - name: Prove checkout remained read only
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "$(git status --short)" ]; then
+            echo "ERROR: audit mutated checkout"
+            git status --short
+            exit 1
+          fi
+          echo "READ_ONLY_CHECKOUT=PASS"
