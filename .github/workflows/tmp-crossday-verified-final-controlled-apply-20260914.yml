@@ -1,0 +1,211 @@
+name: TMP cross-day verified-final controlled apply 20260914
+
+on:
+  push:
+    branches:
+      - fix/20260914-crossday-verified-final-apply-v1
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ai-matchlab-data-writer
+  cancel-in-progress: false
+
+jobs:
+  apply-validate-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout controlled apply branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact base and implementation boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=add96e5ad981d43a1034e70e1260e6e4fb413b2d
+          echo "BASE=$BASE" >> "$GITHUB_ENV"
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "$BASE" || {
+            echo "ERROR: remote main moved before controlled apply"
+            echo "REMOTE_MAIN=$(git rev-parse origin/main)"
+            exit 1
+          }
+          git diff --name-only "$BASE" HEAD | sort > /tmp/changed.txt
+          cat > /tmp/expected.txt <<'EOF'
+          .github/workflows/tmp-crossday-verified-final-controlled-apply-20260914.yml
+          .github/workflows/tmp-crossday-verified-final-source-validation-20260914.yml
+          engine-v1/core/cross-day-provider-reschedule.js
+          engine-v1/jobs/apply-cross-day-verified-final-supersession.js
+          engine-v1/tests/cross-day-provider-reschedule.test.js
+          EOF
+          sort -o /tmp/expected.txt /tmp/expected.txt
+          diff -u /tmp/expected.txt /tmp/changed.txt
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npm --prefix engine-v1 ci --no-audit --no-fund
+
+      - name: Capture protected-tree fingerprints
+        shell: bash
+        run: |
+          set -euo pipefail
+          hash_tree() {
+            local label="$1"; shift
+            {
+              for p in "$@"; do
+                if [ -e "$p" ]; then find "$p" -type f -print0; fi
+              done
+            } | sort -z | xargs -0 -r sha256sum | sha256sum | awk '{print $1}' > "/tmp/${label}.before"
+          }
+          hash_tree history data/history data/history-index data/h2h data/h2h-foundation
+          hash_tree finals data/final-results data/final-result-conflicts
+          hash_tree value data/value data/value-plans data/value-comparison
+          hash_tree snapshots data/deploy-snapshots
+
+      - name: Re-prove source classifier before write
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/core/cross-day-provider-reschedule.js
+          node --check engine-v1/jobs/apply-cross-day-verified-final-supersession.js
+          node --check engine-v1/tests/cross-day-provider-reschedule.test.js
+          node --test engine-v1/tests/cross-day-provider-reschedule.test.js
+
+      - name: Controlled canonical-only apply
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { applyCrossDayVerifiedFinalSupersessionWindow } from './engine-v1/jobs/apply-cross-day-verified-final-supersession.js';
+          const expected = [
+            'cid_cafconfed_inaterougemad_redarrowszam_20260912',
+            'cid_engfa_bishopauckland_emley_20260908',
+            'cid_engfa_exmouthtown_banbury_20260908',
+            'cid_engfa_whyteleafe_crowborough_20260908',
+            'cid_fro1_abargir_toftir_20260911',
+            'cid_fro2_hbtorshavn2_tbtvoroyri_20260912',
+            'cid_fro2_suduroy_sandur_20260912',
+            'cid_kos2_ferizaj_istogu_20260911',
+            'cid_kos2_ferizaj_istogu_20260912'
+          ].sort();
+          const result = applyCrossDayVerifiedFinalSupersessionWindow('2026-09-14', { daysBack: 7, now: new Date(), write: true });
+          fs.writeFileSync('/tmp/apply-result.json', JSON.stringify(result, null, 2));
+          if (result?.ok !== true) throw new Error(`apply_not_ok:${result?.reason || 'unknown'}`);
+          const actual = result.mutations.map(row => row.canonicalId).sort();
+          if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error(`mutation_id_set_mismatch:${actual.join(',')}`);
+          if (result.mutationCount !== 9 || result.eligibleCount !== 9) throw new Error(`unexpected_counts:${result.eligibleCount}:${result.mutationCount}`);
+          if (result.mutations.some(row => row.toStatus !== 'STATUS_POSTPONED')) throw new Error('unexpected_target_status');
+          if (result.guarantees?.scoreNeverCopiedBackward !== true) throw new Error('score_copy_guard_missing');
+          if (result.guarantees?.noHistoryMutation !== true || result.guarantees?.noFinalResultMutation !== true || result.guarantees?.noValueMutation !== true || result.guarantees?.noDeploySnapshotMutation !== true) throw new Error('mutation_scope_guarantee_missing');
+          console.log(JSON.stringify({ok: result.ok, mutationCount: result.mutationCount, filesChanged: result.filesChanged, writtenFiles: result.writtenFiles, mutations: result.mutations, guarantees: result.guarantees}, null, 2));
+          NODE
+
+      - name: Verify exact canonical write-set and row postconditions
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --name-only | sort > /tmp/data-changed.txt
+          cat > /tmp/expected-data.txt <<'EOF'
+          data/canonical-fixtures/2026-09-08/eng.fa.json
+          data/canonical-fixtures/2026-09-11/fro.1.json
+          data/canonical-fixtures/2026-09-11/kos.2.json
+          data/canonical-fixtures/2026-09-12/caf.confed.json
+          data/canonical-fixtures/2026-09-12/fro.2.json
+          data/canonical-fixtures/2026-09-12/kos.2.json
+          EOF
+          sort -o /tmp/expected-data.txt /tmp/expected-data.txt
+          diff -u /tmp/expected-data.txt /tmp/data-changed.txt
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const expected = new Set(['cid_cafconfed_inaterougemad_redarrowszam_20260912','cid_engfa_bishopauckland_emley_20260908','cid_engfa_exmouthtown_banbury_20260908','cid_engfa_whyteleafe_crowborough_20260908','cid_fro1_abargir_toftir_20260911','cid_fro2_hbtorshavn2_tbtvoroyri_20260912','cid_fro2_suduroy_sandur_20260912','cid_kos2_ferizaj_istogu_20260911','cid_kos2_ferizaj_istogu_20260912']);
+          const files = ['data/canonical-fixtures/2026-09-08/eng.fa.json','data/canonical-fixtures/2026-09-11/fro.1.json','data/canonical-fixtures/2026-09-11/kos.2.json','data/canonical-fixtures/2026-09-12/caf.confed.json','data/canonical-fixtures/2026-09-12/fro.2.json','data/canonical-fixtures/2026-09-12/kos.2.json'];
+          const seen = new Set();
+          for (const file of files) {
+            const p = JSON.parse(fs.readFileSync(file, 'utf8'));
+            for (const row of p.fixtures || []) {
+              const id = String(row.canonicalId || '');
+              if (!expected.has(id)) continue;
+              seen.add(id);
+              if (row.status !== 'STATUS_POSTPONED' || row.statusType !== 'STATUS_POSTPONED' || row.rawStatus !== 'STATUS_POSTPONED') throw new Error(`postcondition_status_failed:${id}`);
+              if (row.scoreHome !== null || row.scoreAway !== null || row.minute !== null) throw new Error(`postcondition_score_or_minute_failed:${id}`);
+              if (row.statusCorrection?.reason !== 'verified_cross_day_provider_reschedule') throw new Error(`postcondition_reason_failed:${id}`);
+              if (row.statusCorrection?.providerEvidence?.verifiedFinalTruth !== true) throw new Error(`postcondition_verified_final_failed:${id}`);
+              if (row.statusCorrection?.guarantees?.scoreNeverCopiedBackward !== true) throw new Error(`postcondition_score_guard_failed:${id}`);
+            }
+          }
+          if (seen.size !== expected.size) throw new Error(`postcondition_seen_count:${seen.size}`);
+          console.log('EXACT_NINE_CANONICAL_POSTCONDITIONS=PASS');
+          NODE
+
+      - name: Prove protected trees unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          hash_tree() {
+            local label="$1"; shift
+            {
+              for p in "$@"; do
+                if [ -e "$p" ]; then find "$p" -type f -print0; fi
+              done
+            } | sort -z | xargs -0 -r sha256sum | sha256sum | awk '{print $1}' > "/tmp/${label}.after"
+          }
+          hash_tree history data/history data/history-index data/h2h data/h2h-foundation
+          hash_tree finals data/final-results data/final-result-conflicts
+          hash_tree value data/value data/value-plans data/value-comparison
+          hash_tree snapshots data/deploy-snapshots
+          for label in history finals value snapshots; do diff -u "/tmp/${label}.before" "/tmp/${label}.after"; done
+          echo 'PROTECTED_TREES_BYTE_IDENTICAL=PASS'
+
+      - name: Run targeted regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test engine-v1/tests/cross-day-provider-reschedule.test.js
+          node --test engine-v1/jobs/daily-history-catchup-h2h-scope.test.js
+
+      - name: Require remote main still pinned
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "$BASE" || { echo "ERROR: remote main moved during controlled apply"; echo "REMOTE_MAIN=$(git rev-parse origin/main)"; exit 1; }
+
+      - name: Build clean data-only release commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --binary -- data/canonical-fixtures > /tmp/crossday-data.patch
+          test -s /tmp/crossday-data.patch
+          git reset --hard "$BASE"
+          git apply --index /tmp/crossday-data.patch
+          git diff --cached --name-only | sort > /tmp/release-paths.txt
+          diff -u /tmp/expected-data.txt /tmp/release-paths.txt
+          BAD="$(grep -Ev '^data/canonical-fixtures/' /tmp/release-paths.txt || true)"
+          test -z "$BAD" || { echo "$BAD"; exit 1; }
+          git config user.name 'matchlab-repair'
+          git config user.email 'matchlab-repair@users.noreply.github.com'
+          git commit -m 'Mark verified cross-day superseded fixtures postponed'
+          RELEASE_SHA="$(git rev-parse HEAD)"
+          PARENT_SHA="$(git rev-parse HEAD^)"
+          test "$PARENT_SHA" = "$BASE"
+          echo "RELEASE_SHA=$RELEASE_SHA" >> "$GITHUB_ENV"
+          echo "CLEAN_RELEASE_SHA=$RELEASE_SHA"
+
+      - name: Push clean commit to release branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push origin HEAD:refs/heads/release/20260914-crossday-verified-final-supersession-v1
