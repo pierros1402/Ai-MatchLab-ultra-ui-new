@@ -35,14 +35,35 @@ function explicitScopeReason({
     clean(leagueName)
       .toLowerCase();
 
+  const scopeText =
+    `${safePath.replace(/[-_/]+/gu, " ")} ${safeName}`;
+
   if (
     safePath.includes(
       "/africa-cup-of-nations-women/"
     ) ||
-    /\bafrica cup of nations women\b/u
-      .test(safeName)
+    /\b(?:women|women's|womens|female)\b/u
+      .test(scopeText)
   ) {
     return "out_of_scope_womens_competition";
+  }
+
+  if (
+    /\b(?:u(?:1[4-9]|2[0-3])|under\s*(?:1[4-9]|2[0-3])|youth|primavera)\b/u
+      .test(scopeText)
+  ) {
+    return "out_of_scope_youth_competition";
+  }
+
+  if (
+    /\b(?:reserve|reserves|development)\b/u
+      .test(scopeText) ||
+    /\bpremier\s+league\s+2\b/u
+      .test(scopeText) ||
+    /\bprofessional\s+development\s+league\b/u
+      .test(scopeText)
+  ) {
+    return "out_of_scope_reserve_or_development_competition";
   }
 
   if (
