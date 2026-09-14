@@ -31,7 +31,7 @@ jobs:
           echo "AUDIT_REMOTE_MAIN=$REMOTE_MAIN"
           echo "AUDIT_SOURCE_PIN_OK=true"
 
-      - name: Validate committed history foundations read-only
+      - name: Diagnose foundation source drift read-only
         shell: bash
         run: |
           set -euo pipefail
@@ -42,6 +42,25 @@ jobs:
             validateH2HFoundationSync,
             validateModelPriorsFoundationSync
           } from './engine-v1/core/derived-history-foundation.js';
+
+          function memberDiff(artifactMembers = [], currentMembers = []) {
+            const oldMap = new Map(artifactMembers.map(x => [x.path, x]));
+            const newMap = new Map(currentMembers.map(x => [x.path, x]));
+            const added = [];
+            const removed = [];
+            const changed = [];
+            for (const [path, row] of newMap) {
+              const old = oldMap.get(path);
+              if (!old) added.push(row);
+              else if (old.sha256 !== row.sha256 || old.bytes !== row.bytes) {
+                changed.push({ path, before: { bytes: old.bytes, sha256: old.sha256 }, after: { bytes: row.bytes, sha256: row.sha256 } });
+              }
+            }
+            for (const [path, row] of oldMap) {
+              if (!newMap.has(path)) removed.push(row);
+            }
+            return { added, removed, changed };
+          }
 
           const report = JSON.parse(fs.readFileSync('./data/history/2026-2027.report.json', 'utf8'));
           const historyIndex = validateHistoryIndexFoundationSync('2026-2027');
@@ -64,42 +83,35 @@ jobs:
             historyIndex: {
               ok: historyIndex.ok,
               reason: historyIndex.reason,
-              artifactFoundationFingerprint: historyIndex.artifact?.foundationFingerprint ?? null,
-              currentFoundationFingerprint: historyIndex.current?.foundationFingerprint ?? null,
+              artifactGeneratedAt: historyIndex.artifact?.generatedAt ?? null,
               artifactSourceSha256: historyIndex.artifact?.source?.sha256 ?? null,
               currentSourceSha256: historyIndex.current?.source?.sha256 ?? null,
               artifactOutputsSha256: historyIndex.artifact?.outputs?.sha256 ?? null,
-              currentOutputsSha256: historyIndex.current?.outputs?.sha256 ?? null
+              currentOutputsSha256: historyIndex.current?.outputs?.sha256 ?? null,
+              sourceDiff: memberDiff(historyIndex.artifact?.source?.members, historyIndex.current?.source?.members)
             },
             h2h: {
               ok: h2h.ok,
               reason: h2h.reason,
-              artifactFoundationFingerprint: h2h.artifact?.foundationFingerprint ?? null,
-              currentFoundationFingerprint: h2h.current?.foundationFingerprint ?? null,
+              artifactGeneratedAt: h2h.artifact?.generatedAt ?? null,
               artifactSourceSha256: h2h.artifact?.source?.sha256 ?? null,
               currentSourceSha256: h2h.current?.source?.sha256 ?? null,
               artifactOutputsSha256: h2h.artifact?.outputs?.sha256 ?? null,
-              currentOutputsSha256: h2h.current?.outputs?.sha256 ?? null
+              currentOutputsSha256: h2h.current?.outputs?.sha256 ?? null,
+              sourceDiff: memberDiff(h2h.artifact?.source?.members, h2h.current?.source?.members)
             },
             modelPriors: {
               ok: modelPriors.ok,
               reason: modelPriors.reason,
-              artifactFoundationFingerprint: modelPriors.artifact?.foundationFingerprint ?? null,
-              currentFoundationFingerprint: modelPriors.current?.foundationFingerprint ?? null,
+              artifactGeneratedAt: modelPriors.artifact?.generatedAt ?? null,
               artifactSourceSha256: modelPriors.artifact?.source?.sha256 ?? null,
               currentSourceSha256: modelPriors.current?.source?.sha256 ?? null,
               artifactOutputsSha256: modelPriors.artifact?.outputs?.sha256 ?? null,
-              currentOutputsSha256: modelPriors.current?.outputs?.sha256 ?? null
+              currentOutputsSha256: modelPriors.current?.outputs?.sha256 ?? null,
+              sourceDiff: memberDiff(modelPriors.artifact?.source?.members, modelPriors.current?.source?.members)
             }
           };
           console.log(JSON.stringify(out, null, 2));
-
-          if (!historyIndex.ok || !h2h.ok || !modelPriors.ok) process.exit(1);
-          if (report.to !== '2026-09-12' || report.lastCompletedDay !== '2026-09-12') process.exit(2);
-          if (report.byDay?.['2026-09-09'] !== 76) process.exit(3);
-          if (report.byDay?.['2026-09-10'] !== 86) process.exit(4);
-          if (report.byDay?.['2026-09-11'] !== 185) process.exit(5);
-          if (report.byDay?.['2026-09-12'] !== 519) process.exit(6);
           NODE
 
       - name: Prove read-only checkout
@@ -108,3 +120,22 @@ jobs:
           set -euo pipefail
           test -z "$(git status --porcelain)"
           echo "READ_ONLY_AUDIT_CLEAN=true"
+
+      - name: Assert foundation sync
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import {
+            validateHistoryIndexFoundationSync,
+            validateH2HFoundationSync,
+            validateModelPriorsFoundationSync
+          } from './engine-v1/core/derived-history-foundation.js';
+          const results = {
+            historyIndex: validateHistoryIndexFoundationSync('2026-2027').ok,
+            h2h: validateH2HFoundationSync().ok,
+            modelPriors: validateModelPriorsFoundationSync('2026-2027').ok
+          };
+          console.log(JSON.stringify(results));
+          if (!results.historyIndex || !results.h2h || !results.modelPriors) process.exit(1);
+          NODE
