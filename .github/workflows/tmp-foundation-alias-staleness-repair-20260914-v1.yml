@@ -1,0 +1,289 @@
+name: TMP foundation alias staleness repair 2026-09-14 V1
+
+on:
+  push:
+    branches:
+      - fix/20260914-foundation-alias-staleness-repair-v1
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      BASE_SHA: 64c987ae2c6315075d1e4d01a0b78d1a38723e78
+      DAY_KEY: 2026-09-14
+      SEASON: 2026-2027
+      TARGET_MATCH_ID: cid_ned2_jongpsv_jongaz_20260914
+      RELEASE_BRANCH: release/20260914-foundation-alias-staleness-repair-v1
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact base and workflow-only branch delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$BASE_SHA"
+          DELTA="$(git diff --name-only "$BASE_SHA..HEAD")"
+          test "$DELTA" = ".github/workflows/tmp-foundation-alias-staleness-repair-20260914-v1.yml"
+          echo "REPAIR_BASE_VERIFIED=$BASE_SHA"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Capture immutable Value hashes and require stale foundations
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          import {
+            validateHistoryIndexFoundationSync,
+            validateModelPriorsFoundationSync
+          } from './engine-v1/core/derived-history-foundation.js';
+          const sha = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+          const files = [
+            `data/deploy-snapshots/${process.env.DAY_KEY}/value.json`,
+            `data/deploy-snapshots/${process.env.DAY_KEY}/value-audit.json`,
+            `data/value-plans/${process.env.DAY_KEY}/plan-a.json`,
+            `data/value-plans/${process.env.DAY_KEY}/plan-a-audit.json`
+          ];
+          const history = validateHistoryIndexFoundationSync(process.env.SEASON);
+          const priors = validateModelPriorsFoundationSync(process.env.SEASON);
+          const payload = {
+            baseSha: process.env.BASE_SHA,
+            files: Object.fromEntries(files.map(p => [p, sha(p)])),
+            history: { ok: history.ok === true, reason: history.reason || null },
+            priors: { ok: priors.ok === true, reason: priors.reason || null }
+          };
+          if (history.reason !== 'history_index_foundation_stale') throw new Error(`unexpected_history_state:${history.reason}`);
+          if (priors.reason !== 'model_priors_foundation_stale') throw new Error(`unexpected_priors_state:${priors.reason}`);
+          fs.writeFileSync('/tmp/before.json', JSON.stringify(payload, null, 2) + '\n');
+          console.log(JSON.stringify(payload, null, 2));
+          NODE
+
+      - name: Rebuild current-season history indexes
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { rebuildIndexesForSeason } from './engine-v1/jobs/rebuild-indexes-for-season.js';
+          const result = await rebuildIndexesForSeason(process.env.DAY_KEY);
+          console.log(JSON.stringify(result, null, 2));
+          if (result?.ok !== true) process.exit(1);
+          NODE
+
+      - name: Rebuild model priors
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-model-priors.js "$SEASON"
+
+      - name: Require exact healed foundations
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import {
+            validateHistoryIndexFoundationSync,
+            validateModelPriorsFoundationSync
+          } from './engine-v1/core/derived-history-foundation.js';
+          const history = validateHistoryIndexFoundationSync(process.env.SEASON);
+          const priors = validateModelPriorsFoundationSync(process.env.SEASON);
+          const got = {
+            history: {
+              ok: history.ok === true,
+              reason: history.reason || null,
+              sourceSha256: history.artifact?.source?.sha256 || null,
+              outputsSha256: history.artifact?.outputs?.sha256 || null,
+              foundationFingerprint: history.artifact?.foundationFingerprint || null
+            },
+            priors: {
+              ok: priors.ok === true,
+              reason: priors.reason || null,
+              sourceSha256: priors.artifact?.source?.sha256 || null,
+              outputsSha256: priors.artifact?.outputs?.sha256 || null,
+              foundationFingerprint: priors.artifact?.foundationFingerprint || null
+            }
+          };
+          const expected = {
+            history: {
+              sourceSha256: '9de9c63f62dfb515971d1f51b7407f3586682c2b56bd8169880fe13baaf3ad01',
+              outputsSha256: 'fc35b68e43801168d5b360109b612a18caf3f3ae142bd13b26baa91a4c84e2b3',
+              foundationFingerprint: '99bb1f29143c55239288bf468649b912bc9a58d1f113932ab52f5945223d152b'
+            },
+            priors: {
+              sourceSha256: 'cf0aebbbbf1a3d9e3cd5e97db82768f32d7d37c21a36dccc35ba398c1bb39b0f',
+              outputsSha256: '4416cbb6279a3d23334617d61b2d830d029bd9b1f2fb37e6c96a638dd579cc5d',
+              foundationFingerprint: '5797eda8d9d0329f2853c96aa0f56507d5c7711979478964beead89081f6f7e2'
+            }
+          };
+          if (!got.history.ok || !got.priors.ok) throw new Error('foundation_validation_failed_after_rebuild');
+          for (const kind of ['history','priors']) {
+            for (const key of Object.keys(expected[kind])) {
+              if (got[kind][key] !== expected[kind][key]) throw new Error(`${kind}_${key}_mismatch`);
+            }
+          }
+          fs.writeFileSync('/tmp/foundations.json', JSON.stringify(got, null, 2) + '\n');
+          console.log(JSON.stringify(got, null, 2));
+          NODE
+
+      - name: Build healed Value coverage report
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf data/value/_coverage-reports
+          node ./engine-v1/jobs/build-value-coverage-report-day.js "$DAY_KEY"
+
+      - name: Require healed denominator and immutable Value bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          const day = process.env.DAY_KEY;
+          const before = JSON.parse(fs.readFileSync('/tmp/before.json','utf8'));
+          const report = JSON.parse(fs.readFileSync(`data/value/_coverage-reports/${day}.json`,'utf8'));
+          const sha = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+          const after = Object.fromEntries(Object.keys(before.files).map(p => [p, sha(p)]));
+          const immutableParity = Object.keys(before.files).every(p => before.files[p] === after[p]);
+          const target = (report.rows || []).find(row => row.matchId === process.env.TARGET_MATCH_ID) || null;
+          const counts = report.counts || {};
+          if (Number(counts.totalRows) !== 124) throw new Error('unexpected_total_rows');
+          if (Number(counts.detailsFound) !== 124 || Number(counts.intelligenceOk) !== 124) throw new Error('unexpected_detail_or_intelligence_coverage');
+          if (Number(counts.valueReturned) !== 50 || Number(counts.valueNull) !== 74 || Number(counts.valueFailed) !== 0) throw new Error('unexpected_value_coverage');
+          if (report.breakdown?.nullByReason?.minimum_recent_sample !== 74) throw new Error('unexpected_minimum_sample_count');
+          if (!target || target.valueReturned !== true || target.nullReason !== null) throw new Error('target_value_not_healed');
+          if (!immutableParity) throw new Error('frozen_value_bytes_changed');
+          const summary = {
+            ok: true,
+            baseSha: process.env.BASE_SHA,
+            counts,
+            nullByClass: report.breakdown?.nullByClass || {},
+            target: {
+              matchId: target.matchId,
+              leagueSlug: target.leagueSlug,
+              valueReturned: target.valueReturned,
+              confidence: target.valuePreview?.confidence ?? null,
+              over25Score: target.valuePreview?.over25Score ?? null
+            },
+            immutableParity,
+            beforeHashes: before.files,
+            afterHashes: after
+          };
+          fs.writeFileSync('/tmp/validation-summary.json', JSON.stringify(summary, null, 2) + '\n');
+          console.log(JSON.stringify(summary, null, 2));
+          NODE
+
+      - name: Require exact repair write set and stage
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== WORKTREE BEFORE STAGE ==='
+          git status --short
+          BAD="$(git status --short | sed -E 's/^.. //' | grep -Ev '^(data/history-index/foundation/2026-2027\.json|data/model-priors/2026-2027\.json|data/model-priors/foundation/2026-2027\.json|data/value/_coverage-reports/)' || true)"
+          if [ -n "$BAD" ]; then
+            echo "ERROR: unexpected repair write set"
+            echo "$BAD"
+            exit 1
+          fi
+          git add \
+            data/history-index/foundation/2026-2027.json \
+            data/model-priors/2026-2027.json \
+            data/model-priors/foundation/2026-2027.json \
+            data/value/_coverage-reports/2026-09-14.json
+          EXPECTED="$(printf '%s\n' \
+            data/history-index/foundation/2026-2027.json \
+            data/model-priors/2026-2027.json \
+            data/model-priors/foundation/2026-2027.json \
+            data/value/_coverage-reports/2026-09-14.json | sort)"
+          ACTUAL="$(git diff --cached --name-only | sort)"
+          test "$ACTUAL" = "$EXPECTED"
+          git diff --cached --check
+          git diff --cached --binary > /tmp/release.patch
+          printf '%s\n' "$ACTUAL" > /tmp/release-paths.txt
+
+      - name: Require remote main still pinned
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          CURRENT="$(git rev-parse origin/main)"
+          echo "REMOTE_MAIN=$CURRENT"
+          test "$CURRENT" = "$BASE_SHA"
+
+      - name: Build clean derived-only release commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git reset --hard "$BASE_SHA"
+          git apply --index /tmp/release.patch
+          EXPECTED="$(cat /tmp/release-paths.txt)"
+          ACTUAL="$(git diff --cached --name-only | sort)"
+          test "$ACTUAL" = "$EXPECTED"
+          test -z "$(git status --short | grep '^??' || true)"
+          git config user.name "matchlab-repair"
+          git config user.email "matchlab-repair@users.noreply.github.com"
+          git commit -m "Rebuild Value foundations after alias update"
+          test "$(git rev-parse HEAD^)" = "$BASE_SHA"
+          RELEASE_SHA="$(git rev-parse HEAD)"
+          RELEASE_TREE="$(git rev-parse HEAD^{tree})"
+          echo "RELEASE_SHA=$RELEASE_SHA" >> "$GITHUB_ENV"
+          echo "RELEASE_TREE=$RELEASE_TREE" >> "$GITHUB_ENV"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const validation = JSON.parse(fs.readFileSync('/tmp/validation-summary.json','utf8'));
+          const foundations = JSON.parse(fs.readFileSync('/tmp/foundations.json','utf8'));
+          const evidence = {
+            ok: true,
+            baseSha: process.env.BASE_SHA,
+            releaseSha: process.env.RELEASE_SHA || null,
+            releaseTree: process.env.RELEASE_TREE || null,
+            parentExact: true,
+            force: false,
+            paths: fs.readFileSync('/tmp/release-paths.txt','utf8').trim().split(/\r?\n/),
+            foundations,
+            validation
+          };
+          fs.writeFileSync('/tmp/release-evidence.json', JSON.stringify(evidence, null, 2) + '\n');
+          NODE
+
+      - name: Re-pin main and push release branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$BASE_SHA"
+          git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
+          echo "RELEASE_BRANCH_PUSHED=$RELEASE_BRANCH"
+          echo "RELEASE_SHA=$(git rev-parse HEAD)"
+
+      - name: Upload repair evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: foundation-alias-staleness-repair-v1-evidence
+          path: |
+            /tmp/before.json
+            /tmp/foundations.json
+            /tmp/validation-summary.json
+            /tmp/release-paths.txt
+            /tmp/release-evidence.json
+          if-no-files-found: error
