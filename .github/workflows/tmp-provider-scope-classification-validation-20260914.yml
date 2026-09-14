@@ -17,7 +17,7 @@ jobs:
       - name: Checkout isolated patch branch
         uses: actions/checkout@v7
         with:
-          fetch-depth: 1
+          fetch-depth: 6
 
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -32,7 +32,7 @@ jobs:
         run: |
           node --check engine-v1/core/flashscore-competition-identity.js
           node --check engine-v1/tests/flashscore-competition-scope-policy.test.js
-          git diff --check HEAD~3..HEAD
+          git diff --check 36870d57fa27d113bab5f6de44228dabbc8a9d28..HEAD
 
       - name: Run scope and routing tests
         run: |
