@@ -6,8 +6,50 @@ import {
   classifyHistoryRecovery,
   historyRowsEquivalent,
   nextRecoveryState,
-  shouldAttemptVerifiedFinalRecovery
+  shouldAttemptVerifiedFinalRecovery,
+  validateCertifiedHistoryAgainstCanonical
 } from "./autonomous-history-recovery-policy.js";
+
+function canonicalFinal(overrides = {}) {
+  return {
+    canonicalId: "m1",
+    leagueSlug: "x.1",
+    dayKey: "2026-09-13",
+    kickoffUtc: "2026-09-13T18:00:00.000Z",
+    homeTeam: "A",
+    awayTeam: "B",
+    status: "FT",
+    scoreHome: 2,
+    scoreAway: 1,
+    ...overrides
+  };
+}
+
+function certifiedHistory(overrides = {}) {
+  return {
+    id: "m1",
+    dayKey: "2026-09-13",
+    kickoff: "2026-09-13T18:00:00.000Z",
+    leagueSlug: "x.1",
+    homeTeam: "A",
+    awayTeam: "B",
+    scoreHome: 2,
+    scoreAway: 1,
+    status: "FT",
+    outcome: "HOME",
+    source: "verified-final",
+    truthContract: {
+      canonicalIdExact: true,
+      athensDayExact: true,
+      orderedTeamPairMatched: true,
+      canonicalPlayedTerminal: true,
+      exactScoreParity: true,
+      verifiedFinalTruth: true,
+      nullScoreCoercionForbidden: true
+    },
+    ...overrides
+  };
+}
 
 test("healthy build stays non-actionable", () => {
   const classification = classifyHistoryRecovery({
@@ -122,23 +164,70 @@ test("success resets consecutive failure memory", () => {
 });
 
 test("history comparison ignores rebuild timestamps but detects truth changes", () => {
-  const base = [{
-    id: "m1",
-    dayKey: "2026-09-13",
-    kickoff: "2026-09-13T18:00:00.000Z",
-    leagueSlug: "x.1",
-    homeTeam: "A",
-    awayTeam: "B",
-    scoreHome: 2,
-    scoreAway: 1,
-    status: "FT",
-    outcome: "HOME",
-    source: "verified-final",
-    rebuiltAt: 1,
-    truthContract: { verifiedFinalTruth: true }
-  }];
+  const base = [certifiedHistory({ rebuiltAt: 1 })];
   const same = [{ ...base[0], rebuiltAt: 999 }];
   const changed = [{ ...base[0], scoreHome: 3, rebuiltAt: 999 }];
   assert.equal(historyRowsEquivalent(base, same), true);
   assert.equal(historyRowsEquivalent(base, changed), false);
+});
+
+test("strict certified history is reusable recovery memory", () => {
+  const validation = validateCertifiedHistoryAgainstCanonical({
+    dayKey: "2026-09-13",
+    canonicalRows: [canonicalFinal()],
+    historyRows: [certifiedHistory()]
+  });
+  assert.equal(validation.ok, true);
+  assert.equal(validation.integrityBlocked, false);
+
+  const classification = classifyHistoryRecovery({
+    hasCanonical: true,
+    certifiedHistory: validation,
+    readiness: { terminal: 1, open: 0 }
+  });
+  assert.equal(classification.state, "healthy");
+  assert.equal(classification.certifiedHistoryMemory, true);
+});
+
+test("missing certified history row is recoverable rather than silently trusted", () => {
+  const validation = validateCertifiedHistoryAgainstCanonical({
+    dayKey: "2026-09-13",
+    canonicalRows: [canonicalFinal()],
+    historyRows: []
+  });
+  assert.equal(validation.ok, false);
+  assert.equal(validation.recoverable, true);
+  assert.equal(validation.integrityBlocked, false);
+  assert.equal(validation.reasonCounts.certified_history_missing_row, 1);
+});
+
+test("certified history score divergence is an integrity blocker", () => {
+  const validation = validateCertifiedHistoryAgainstCanonical({
+    dayKey: "2026-09-13",
+    canonicalRows: [canonicalFinal({ scoreHome: 3 })],
+    historyRows: [certifiedHistory({ scoreHome: 2 })]
+  });
+  assert.equal(validation.ok, false);
+  assert.equal(validation.integrityBlocked, true);
+  assert.equal(validation.reasonCounts.certified_history_score_mismatch, 1);
+
+  const classification = classifyHistoryRecovery({
+    hasCanonical: true,
+    certifiedHistory: validation
+  });
+  assert.equal(classification.state, "blocked_integrity");
+  assert.equal(classification.immediatelyActionable, true);
+});
+
+test("uncertified legacy history is rebuilt instead of accepted as memory", () => {
+  const row = certifiedHistory({ truthContract: { verifiedFinalTruth: true } });
+  const validation = validateCertifiedHistoryAgainstCanonical({
+    dayKey: "2026-09-13",
+    canonicalRows: [canonicalFinal()],
+    historyRows: [row]
+  });
+  assert.equal(validation.ok, false);
+  assert.equal(validation.integrityBlocked, false);
+  assert.equal(validation.recoverable, true);
+  assert.equal(validation.reasonCounts.certified_history_truth_contract_incomplete, 1);
 });
