@@ -1,0 +1,103 @@
+name: TMP Value foundation sync audit 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-value-foundation-sync
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Verify exact audited parent
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "6f5ce679519521301d652bcafc2fe136679e163a"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Inspect history-index and model-priors foundation gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import {
+            validateHistoryIndexFoundationSync,
+            validateModelPriorsFoundationSync,
+          } from './engine-v1/core/derived-history-foundation.js';
+          import { loadValueIndexes } from './engine-v1/core/value-engine-v1.js';
+
+          const season = '2026-2027';
+          const historyIndexValidation = validateHistoryIndexFoundationSync(season);
+          const modelPriorsValidation = validateModelPriorsFoundationSync(season);
+          const indexes = await loadValueIndexes(season);
+
+          function readJson(file) {
+            try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return null; }
+          }
+          function objectSize(value) {
+            return value && typeof value === 'object' && !Array.isArray(value) ? Object.keys(value).length : 0;
+          }
+
+          const teamForm = readJson(`data/history-index/team-form/${season}.json`);
+          const leagueForm = readJson(`data/history-index/league-form/${season}.json`);
+          const matchups = readJson(`data/history-index/matchups/${season}.json`);
+          const priors = readJson(`data/model-priors/${season}.json`);
+          const history = readJson(`data/history/${season}.json`);
+          const report = readJson(`data/history/${season}.report.json`);
+
+          const historyRows = Array.isArray(history?.days)
+            ? history.days.reduce((n, day) => n + (Array.isArray(day?.rows) ? day.rows.length : 0), 0)
+            : 0;
+
+          const result = {
+            ok: true,
+            season,
+            history: {
+              days: Array.isArray(history?.days) ? history.days.length : 0,
+              rows: historyRows,
+              lastCompletedDay: report?.lastCompletedDay || null,
+              reportTotalMatches: report?.totalMatches ?? null,
+            },
+            historyIndexValidation,
+            modelPriorsValidation,
+            committedArtifacts: {
+              teamFormSize: objectSize(teamForm),
+              leagueFormSize: objectSize(leagueForm),
+              matchupsSize: objectSize(matchups),
+              teamPriorsSize: objectSize(priors?.teamPriors),
+              leaguePriorsSize: objectSize(priors?.leaguePriors),
+              matchupPriorsSize: objectSize(priors?.matchupPriors),
+            },
+            loadedIndexes: {
+              foundationGate: indexes?.foundationGate || null,
+              teamFormSize: objectSize(indexes?.teamForm),
+              leagueFormSize: objectSize(indexes?.leagueForm),
+              matchupsSize: objectSize(indexes?.matchups),
+            },
+          };
+
+          console.log('VALUE_FOUNDATION_SYNC_AUDIT=' + JSON.stringify(result));
+          NODE
+
+      - name: Prove checkout remained read only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --short)"
+          echo "READ_ONLY_CHECKOUT=PASS"
