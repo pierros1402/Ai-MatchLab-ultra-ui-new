@@ -23,6 +23,77 @@ function normalizedPath(value) {
     : "/" + text;
 }
 
+const EXPLICIT_OUT_OF_SCOPE_PATHS = new Map([
+  [
+    "/football/argentina/primera-c/",
+    "out_of_scope_lower_tier_competition"
+  ],
+  [
+    "/football/argentina/torneo-promocional-amateur/",
+    "out_of_scope_lower_tier_competition"
+  ],
+  [
+    "/football/brazil/carioca-b2/",
+    "out_of_scope_regional_competition"
+  ],
+  [
+    "/football/brazil/copa-fmf-mato-grosso/",
+    "out_of_scope_regional_competition"
+  ],
+  [
+    "/football/brazil/serie-c/",
+    "out_of_scope_lower_tier_competition"
+  ],
+  [
+    "/football/england/isthmian-league-premier-division/",
+    "out_of_scope_lower_tier_competition"
+  ],
+  [
+    "/football/england/premier-league-2/",
+    "out_of_scope_youth_or_reserve_competition"
+  ],
+  [
+    "/football/england/professional-development-league/",
+    "out_of_scope_youth_or_reserve_competition"
+  ],
+  [
+    "/football/estonia/esiliiga-b/",
+    "out_of_scope_lower_tier_competition"
+  ],
+  [
+    "/football/india/calcutta-premier-division/",
+    "out_of_scope_regional_competition"
+  ],
+  [
+    "/football/italy/primavera-1/",
+    "out_of_scope_youth_or_reserve_competition"
+  ],
+  [
+    "/football/japan/j3-league/",
+    "out_of_scope_lower_tier_competition"
+  ],
+  [
+    "/football/mexico/liga-premier-serie-a/",
+    "out_of_scope_lower_tier_competition"
+  ],
+  [
+    "/football/ukraine/druha-liga/",
+    "out_of_scope_lower_tier_competition"
+  ],
+  [
+    "/football/ukraine/premier-league-2/",
+    "out_of_scope_youth_or_reserve_competition"
+  ],
+  [
+    "/football/usa/mls-next-pro/",
+    "out_of_scope_lower_tier_competition"
+  ],
+  [
+    "/football/usa/usl-league-one/",
+    "out_of_scope_lower_tier_competition"
+  ]
+]);
+
 function explicitScopeReason({
   leaguePath,
   leagueName
@@ -43,6 +114,56 @@ function explicitScopeReason({
       .test(safeName)
   ) {
     return "out_of_scope_womens_competition";
+  }
+
+  if (
+    /(?:^|[-/])women(?:[-/]|$)/u
+      .test(safePath) ||
+    /\bwomen(?:'s)?\b/u
+      .test(safeName) ||
+    /\bwomens\b/u
+      .test(safeName)
+  ) {
+    return "out_of_scope_womens_competition";
+  }
+
+  if (
+    /(?:^|[-/])u-?\d{2}(?:[-/]|$)/u
+      .test(safePath) ||
+    /(?:^|[-/])youth(?:[-/]|$)/u
+      .test(safePath) ||
+    /(?:^|[-/])reserves?(?:[-/]|$)/u
+      .test(safePath) ||
+    /\bu-?\d{2}\b/u
+      .test(safeName) ||
+    /\bunder[-\s]?\d{2}\b/u
+      .test(safeName) ||
+    /\byouth\b/u
+      .test(safeName) ||
+    /\breserves?\b/u
+      .test(safeName)
+  ) {
+    return "out_of_scope_youth_or_reserve_competition";
+  }
+
+  const explicitPathReason =
+    EXPLICIT_OUT_OF_SCOPE_PATHS.get(
+      safePath
+    );
+
+  if (explicitPathReason) {
+    return explicitPathReason;
+  }
+
+  if (
+    /^\/football\/norway\/division-3-group-\d+\/$/u
+      .test(safePath) ||
+    /^\/football\/russia\/fnl-2-division-b-group-\d+\/$/u
+      .test(safePath) ||
+    /^\/football\/sweden\/division-2-[^/]+\/$/u
+      .test(safePath)
+  ) {
+    return "out_of_scope_lower_tier_competition";
   }
 
   if (
