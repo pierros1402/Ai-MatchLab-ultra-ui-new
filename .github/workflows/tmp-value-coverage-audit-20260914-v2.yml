@@ -1,4 +1,4 @@
-name: TMP Value coverage audit 2026-09-14 V3
+name: TMP Value foundation rebuild simulation 2026-09-14 V4
 
 on:
   push:
@@ -10,12 +10,13 @@ permissions:
   contents: read
 
 jobs:
-  value-coverage-audit:
+  foundation-rebuild-simulation:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     env:
       BASE_SHA: f7a42204e676f0508f14aacc84766cb469400617
       DAY_KEY: 2026-09-14
+      SEASON: 2026-2027
       TARGET_MATCH_ID: cid_ned2_jongpsv_jongaz_20260914
     steps:
       - name: Checkout audit branch
@@ -23,14 +24,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify exact current-main base and workflow-only branch delta
+      - name: Verify exact base and workflow-only branch delta
         shell: bash
         run: |
           set -euo pipefail
           test "$(git merge-base HEAD "$BASE_SHA")" = "$BASE_SHA"
           DELTA="$(git diff --name-only "$BASE_SHA..HEAD")"
           test "$DELTA" = ".github/workflows/tmp-value-coverage-audit-20260914-v2.yml"
-          echo "AUDIT_BASE_VERIFIED=$BASE_SHA"
+          echo "SIMULATION_BASE_VERIFIED=$BASE_SHA"
 
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -44,7 +45,68 @@ jobs:
           npm ci --no-audit --no-fund
           (cd engine-v1 && npm ci --no-audit --no-fund)
 
-      - name: Diagnose Value foundations and one frozen pick
+      - name: Capture immutable Value hashes and stale foundation state
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          import {
+            validateHistoryIndexFoundationSync,
+            validateModelPriorsFoundationSync
+          } from './engine-v1/core/derived-history-foundation.js';
+          const sha = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+          const files = [
+            `data/deploy-snapshots/${process.env.DAY_KEY}/value.json`,
+            `data/deploy-snapshots/${process.env.DAY_KEY}/value-audit.json`,
+            `data/value-plans/${process.env.DAY_KEY}/plan-a.json`,
+            `data/value-plans/${process.env.DAY_KEY}/plan-a-audit.json`
+          ];
+          const history = validateHistoryIndexFoundationSync(process.env.SEASON);
+          const priors = validateModelPriorsFoundationSync(process.env.SEASON);
+          const payload = {
+            files: Object.fromEntries(files.map(p => [p, sha(p)])),
+            historyFoundation: {
+              ok: history.ok === true,
+              reason: history.reason || null,
+              artifactSourceSha256: history.artifact?.source?.sha256 || null,
+              currentSourceSha256: history.current?.source?.sha256 || null,
+              artifactOutputsSha256: history.artifact?.outputs?.sha256 || null,
+              currentOutputsSha256: history.current?.outputs?.sha256 || null
+            },
+            priorsFoundation: {
+              ok: priors.ok === true,
+              reason: priors.reason || null,
+              artifactSourceSha256: priors.artifact?.source?.sha256 || null,
+              currentSourceSha256: priors.current?.source?.sha256 || null,
+              artifactOutputsSha256: priors.artifact?.outputs?.sha256 || null,
+              currentOutputsSha256: priors.current?.outputs?.sha256 || null
+            }
+          };
+          if (history.ok || priors.ok) throw new Error('expected_stale_foundations_not_observed');
+          fs.writeFileSync('/tmp/before.json', JSON.stringify(payload, null, 2) + '\n');
+          console.log(JSON.stringify(payload, null, 2));
+          NODE
+
+      - name: Rebuild current-season history indexes in runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { rebuildIndexesForSeason } from './engine-v1/jobs/rebuild-indexes-for-season.js';
+          const result = await rebuildIndexesForSeason(process.env.DAY_KEY);
+          console.log(JSON.stringify(result, null, 2));
+          if (result?.ok !== true) process.exit(1);
+          NODE
+
+      - name: Rebuild model priors in runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-model-priors.js "$SEASON"
+
+      - name: Require foundations valid after rebuild
         shell: bash
         run: |
           set -euo pipefail
@@ -54,183 +116,123 @@ jobs:
             validateHistoryIndexFoundationSync,
             validateModelPriorsFoundationSync
           } from './engine-v1/core/derived-history-foundation.js';
-          import {
-            loadValueIndexes,
-            loadModelPriors,
-            evaluateMatchValue
-          } from './engine-v1/core/value-engine-v1.js';
-          import { currentSeason } from './engine-v1/core/season.js';
-
-          const season = currentSeason();
-          const day = process.env.DAY_KEY;
-          const targetId = process.env.TARGET_MATCH_ID;
-          const historyFoundation = validateHistoryIndexFoundationSync(season);
-          const priorsFoundation = validateModelPriorsFoundationSync(season);
-          const indexes = await loadValueIndexes(season);
-          const priors = await loadModelPriors(season);
-          const fixturesPayload = JSON.parse(fs.readFileSync(`data/deploy-snapshots/${day}/fixtures.json`, 'utf8'));
-          const fixtures = Array.isArray(fixturesPayload?.fixtures) ? fixturesPayload.fixtures : [];
-          const match = fixtures.find(row => String(row?.canonicalId || row?.matchId || '') === targetId);
-          if (!match) throw new Error(`target_match_missing:${targetId}`);
-          const input = {
-            ...match,
-            matchId: match.matchId || match.canonicalId,
-            dayKey: day,
-            kickoff: match.kickoffUtc || match.kickoff
-          };
-          const result = await evaluateMatchValue(input, {
-            season,
-            indexes,
-            priors,
-            returnNullDiagnostics: true
-          });
-          const diagnostic = {
-            ok: true,
-            baseSha: process.env.BASE_SHA,
-            dayKey: day,
-            season,
-            targetMatchId: targetId,
+          const history = validateHistoryIndexFoundationSync(process.env.SEASON);
+          const priors = validateModelPriorsFoundationSync(process.env.SEASON);
+          const payload = {
             historyFoundation: {
-              ok: historyFoundation.ok === true,
-              reason: historyFoundation.reason || null,
-              artifactSourceSha256: historyFoundation.artifact?.source?.sha256 || null,
-              currentSourceSha256: historyFoundation.current?.source?.sha256 || null,
-              artifactOutputsSha256: historyFoundation.artifact?.outputs?.sha256 || null,
-              currentOutputsSha256: historyFoundation.current?.outputs?.sha256 || null,
-              artifactFoundationFingerprint: historyFoundation.artifact?.foundationFingerprint || null,
-              currentFoundationFingerprint: historyFoundation.current?.foundationFingerprint || null
+              ok: history.ok === true,
+              reason: history.reason || null,
+              sourceSha256: history.artifact?.source?.sha256 || null,
+              outputsSha256: history.artifact?.outputs?.sha256 || null,
+              foundationFingerprint: history.artifact?.foundationFingerprint || null
             },
-            modelPriorsFoundation: {
-              ok: priorsFoundation.ok === true,
-              reason: priorsFoundation.reason || null,
-              artifactSourceSha256: priorsFoundation.artifact?.source?.sha256 || null,
-              currentSourceSha256: priorsFoundation.current?.source?.sha256 || null,
-              artifactOutputsSha256: priorsFoundation.artifact?.outputs?.sha256 || null,
-              currentOutputsSha256: priorsFoundation.current?.outputs?.sha256 || null,
-              artifactFoundationFingerprint: priorsFoundation.artifact?.foundationFingerprint || null,
-              currentFoundationFingerprint: priorsFoundation.current?.foundationFingerprint || null
-            },
-            loaded: {
-              historyFoundationGate: indexes?.foundationGate || null,
-              modelPriorsFoundationGate: priors?.foundationGate || null,
-              teamFormSize: Object.keys(indexes?.teamForm || {}).length,
-              leagueFormSize: Object.keys(indexes?.leagueForm || {}).length,
-              matchupsSize: Object.keys(indexes?.matchups || {}).length,
-              teamPriorsSize: Object.keys(priors?.teamPriors || {}).length,
-              leaguePriorsSize: Object.keys(priors?.leaguePriors || {}).length,
-              matchupPriorsSize: Object.keys(priors?.matchupPriors || {}).length
-            },
-            target: {
-              leagueSlug: match.leagueSlug,
-              homeTeam: match.homeTeam,
-              awayTeam: match.awayTeam,
-              kickoffUtc: match.kickoffUtc || match.kickoff || null,
-              valueReturned: Boolean(result && result.__valueNullDiagnostic !== true),
-              nullReason: result?.__valueNullDiagnostic === true ? result.reason : null,
-              minimumRecentSample: result?.minimumRecentSample || null,
-              resultMeta: result?.meta ? {
-                priorsUsed: result.meta?.priorsUsed ?? null,
-                homePriorSample: result.meta?.priors?.homePriorSample ?? null,
-                awayPriorSample: result.meta?.priors?.awayPriorSample ?? null,
-                homeRawSample: result.meta?.recency?.homeOverall?.rawSample ?? null,
-                awayRawSample: result.meta?.recency?.awayOverall?.rawSample ?? null
-              } : null
+            priorsFoundation: {
+              ok: priors.ok === true,
+              reason: priors.reason || null,
+              sourceSha256: priors.artifact?.source?.sha256 || null,
+              outputsSha256: priors.artifact?.outputs?.sha256 || null,
+              foundationFingerprint: priors.artifact?.foundationFingerprint || null
             }
           };
-          fs.writeFileSync('/tmp/value-foundation-diagnostic.json', JSON.stringify(diagnostic, null, 2) + '\n');
-          console.log(JSON.stringify(diagnostic, null, 2));
+          console.log(JSON.stringify(payload, null, 2));
+          fs.writeFileSync('/tmp/after-foundations.json', JSON.stringify(payload, null, 2) + '\n');
+          if (!history.ok || !priors.ok) process.exit(1);
           NODE
 
-      - name: Build Value coverage report read-only
+      - name: Rebuild Value coverage report after foundation heal
         shell: bash
         run: |
           set -euo pipefail
+          rm -rf data/value/_coverage-reports
           node ./engine-v1/jobs/build-value-coverage-report-day.js "$DAY_KEY"
 
-      - name: Build compact audit summary
+      - name: Inspect healed denominator and frozen target pick
         shell: bash
         run: |
           set -euo pipefail
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           import crypto from 'node:crypto';
+          import { evaluateMatchValue, loadValueIndexes, loadModelPriors } from './engine-v1/core/value-engine-v1.js';
           const day = process.env.DAY_KEY;
-          const reportPath = `data/value/_coverage-reports/${day}.json`;
-          const valuePath = `data/deploy-snapshots/${day}/value.json`;
-          const auditPath = `data/deploy-snapshots/${day}/value-audit.json`;
-          const planAAuditPath = `data/value-plans/${day}/plan-a-audit.json`;
-          const manifestPath = `data/deploy-snapshots/${day}/manifest.json`;
-          const read = p => JSON.parse(fs.readFileSync(p, 'utf8'));
+          const season = process.env.SEASON;
+          const targetId = process.env.TARGET_MATCH_ID;
           const sha = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
-          const report = read(reportPath);
-          const value = read(valuePath);
-          const audit = read(auditPath);
-          const planAAudit = read(planAAuditPath);
-          const manifest = read(manifestPath);
-          const target = (report.rows || []).find(row => row.matchId === process.env.TARGET_MATCH_ID) || null;
+          const before = JSON.parse(fs.readFileSync('/tmp/before.json','utf8'));
+          const report = JSON.parse(fs.readFileSync(`data/value/_coverage-reports/${day}.json`,'utf8'));
+          const fixturesPayload = JSON.parse(fs.readFileSync(`data/deploy-snapshots/${day}/fixtures.json`,'utf8'));
+          const fixtures = Array.isArray(fixturesPayload?.fixtures) ? fixturesPayload.fixtures : [];
+          const match = fixtures.find(row => String(row?.canonicalId || row?.matchId || '') === targetId);
+          if (!match) throw new Error(`target_match_missing:${targetId}`);
+          const indexes = await loadValueIndexes(season);
+          const priors = await loadModelPriors(season);
+          const result = await evaluateMatchValue({
+            ...match,
+            matchId: match.matchId || match.canonicalId,
+            dayKey: day,
+            kickoff: match.kickoffUtc || match.kickoff
+          }, { season, indexes, priors, returnNullDiagnostics: true });
+          const files = Object.keys(before.files);
+          const afterHashes = Object.fromEntries(files.map(p => [p, sha(p)]));
+          const immutableParity = files.every(p => before.files[p] === afterHashes[p]);
+          const targetCoverageRow = (report.rows || []).find(row => row.matchId === targetId) || null;
           const summary = {
             ok: true,
             baseSha: process.env.BASE_SHA,
             dayKey: day,
-            reportSha256: sha(reportPath),
-            source: report.source,
             counts: report.counts,
             nullByReason: report.breakdown?.nullByReason || {},
             nullByClass: report.breakdown?.nullByClass || {},
-            targetCoverageRow: target,
-            publishedPlanA: {
-              count: Number(value.count || 0),
-              matchIds: (value.picks || []).map(p => p.matchId),
-              sha256: sha(valuePath)
+            returnedByLeague: report.breakdown?.returnedByLeague || {},
+            targetCoverageRow,
+            loadedSizes: {
+              teamForm: Object.keys(indexes?.teamForm || {}).length,
+              leagueForm: Object.keys(indexes?.leagueForm || {}).length,
+              matchups: Object.keys(indexes?.matchups || {}).length,
+              teamPriors: Object.keys(priors?.teamPriors || {}).length,
+              leaguePriors: Object.keys(priors?.leaguePriors || {}).length,
+              matchupPriors: Object.keys(priors?.matchupPriors || {}).length
             },
-            diagnosticAudit: {
-              fixtureUniverseCount: Number(audit.fixtureUniverse?.count || 0),
-              evaluatedFixtureCount: Number(audit.evaluationAccounting?.evaluatedFixtureCount || 0),
-              rejectedFixtureCount: Number(audit.evaluationAccounting?.rejectedFixtureCount || 0),
-              approved: Number(audit.universe?.approved || 0),
-              candidateMarkets: Number(audit.universe?.candidateMarkets || 0),
-              unaccountedFixtureCount: Number(audit.evaluationAccounting?.unaccountedFixtureCount || 0),
-              byReason: audit.rejections?.byReason || {},
-              sha256: sha(auditPath)
+            targetDirectEvaluation: {
+              valueReturned: Boolean(result && result.__valueNullDiagnostic !== true),
+              nullReason: result?.__valueNullDiagnostic === true ? result.reason : null,
+              minimumRecentSample: result?.minimumRecentSample || null,
+              valuePreview: result && result.__valueNullDiagnostic !== true ? {
+                confidence: result.confidence ?? null,
+                over25Score: result.over25Score ?? null,
+                homeWinScore: result.homeWinScore ?? null,
+                awayWinScore: result.awayWinScore ?? null
+              } : null
             },
-            immutablePlanAObservation: {
-              count: Number(planAAudit.count || 0),
-              observationSignature: planAAudit.observationSignature || null,
-              generatedAt: planAAudit.generatedAt || null,
-              sha256: sha(planAAuditPath)
-            },
-            manifest: {
-              canonicalFixtureCount: Number(manifest.canonicalFixtureCount || 0),
-              publishedFixtureCount: Number(manifest.publicationUniverse?.publishedFixtureCount || 0),
-              details: Number(manifest.counts?.details || 0),
-              valuePicks: Number(manifest.counts?.valuePicks || 0),
-              frozenReleaseSafe: manifest.valueGate?.frozenReleaseSafe === true,
-              orphanPickCount: Number(manifest.valueGate?.orphanPickCount || 0)
-            }
+            immutableParity,
+            beforeHashes: before.files,
+            afterHashes
           };
-          fs.writeFileSync('/tmp/value-coverage-summary.json', JSON.stringify(summary, null, 2) + '\n');
           console.log(JSON.stringify(summary, null, 2));
+          fs.writeFileSync('/tmp/healed-value-coverage-summary.json', JSON.stringify(summary, null, 2) + '\n');
+          if (!immutableParity) throw new Error('frozen_value_bytes_changed');
           NODE
 
-      - name: Require runner-only write set
+      - name: Record simulation write set only
         shell: bash
         run: |
           set -euo pipefail
-          STATUS="$(git status --short)"
-          echo "$STATUS"
-          BAD="$(printf '%s\n' "$STATUS" | grep -vE '^\?\? data/value/_coverage-reports/$|^\?\? data/value/_coverage-reports/2026-09-14\.json$|^ M data/value/_coverage-reports/2026-09-14\.json$' || true)"
+          git status --short | tee /tmp/write-set.txt
+          BAD="$(git status --short | sed -E 's/^.. //' | grep -Ev '^(data/history-index/(team-form|league-form|matchups|foundation)/2026-2027\.json|data/model-priors/(2026-2027\.json|foundation/2026-2027\.json)|data/value/_coverage-reports/)' || true)"
           if [ -n "$BAD" ]; then
-            echo "ERROR: unexpected runner write set"
+            echo "ERROR: unexpected simulation write set"
             echo "$BAD"
             exit 1
           fi
 
-      - name: Upload Value coverage evidence
+      - name: Upload foundation rebuild simulation evidence
         uses: actions/upload-artifact@v4
         with:
-          name: value-coverage-audit-20260914-v3
+          name: value-foundation-rebuild-simulation-20260914-v4
           path: |
+            /tmp/before.json
+            /tmp/after-foundations.json
+            /tmp/healed-value-coverage-summary.json
+            /tmp/write-set.txt
             data/value/_coverage-reports/2026-09-14.json
-            /tmp/value-coverage-summary.json
-            /tmp/value-foundation-diagnostic.json
           if-no-files-found: error
