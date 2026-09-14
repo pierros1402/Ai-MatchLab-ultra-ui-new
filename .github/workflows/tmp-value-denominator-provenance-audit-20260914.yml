@@ -1,0 +1,231 @@
+name: TMP Value denominator provenance audit 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-value-denominator-provenance
+
+permissions:
+  contents: read
+
+jobs:
+  value-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Verify exact production base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="b07d67b7fbe213d124f25752c6e576dec6d25343"
+          git cat-file -e "${BASE}^{commit}"
+          CHANGED="$(git diff --name-only "$BASE"..HEAD)"
+          test "$CHANGED" = ".github/workflows/tmp-value-denominator-provenance-audit-20260914.yml"
+          echo "VALUE_AUDIT_BASE=$BASE"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Build fresh current-day Value coverage diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-value-coverage-report-day.js 2026-09-14
+          test -f data/value/_coverage-reports/2026-09-14.json
+
+      - name: Analyze denominator provenance and settlement coverage
+        shell: bash
+        env:
+          OUT_FILE: ${{ runner.temp }}/value-denominator-provenance-audit.json
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { buildValueFixtureUniverse } from './engine-v1/core/value-fixture-universe.js';
+
+          const days = ['2026-09-09','2026-09-10','2026-09-11','2026-09-12','2026-09-13','2026-09-14'];
+          const currentDay = '2026-09-14';
+
+          function read(file) {
+            try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return null; }
+          }
+          function countFiles(dir) {
+            try { return fs.readdirSync(dir).filter(n => n.endsWith('.json')).length; } catch { return 0; }
+          }
+          function planInfo(day, fileName) {
+            const file = path.join('data','value-plans',day,fileName);
+            const x = read(file);
+            if (!x) return null;
+            const picks = Array.isArray(x.picks) ? x.picks : [];
+            return {
+              path: file,
+              count: Number(x.count ?? picks.length),
+              picks: picks.length,
+              fixtureUniverse: x.sourceContract?.fixtureUniverse || x.fixtureUniverse || null,
+              generatedAt: x.generatedAt || x.createdAt || x.updatedAt || null
+            };
+          }
+          function comparisonInfo(day) {
+            const file = path.join('data','value-comparison',`${day}.json`);
+            const x = read(file);
+            if (!x) return null;
+            const plans = {};
+            for (const [key, p] of Object.entries(x.plans || {})) {
+              const s = p?.summary || {};
+              plans[key] = {
+                picks: Number(s.picks ?? p?.count ?? 0),
+                settled: Number(s.settled ?? 0),
+                wins: Number(s.wins ?? 0),
+                losses: Number(s.losses ?? 0),
+                voids: Number(s.voids ?? 0),
+                unresolved: Number(s.unresolved ?? 0),
+                unsupported: Number(s.unsupported ?? 0),
+                hitRate: s.hitRate ?? null
+              };
+            }
+            return {
+              path: file,
+              generatedAt: x.generatedAt || null,
+              verifiedFinalResults: Number(x.inputs?.verifiedFinalResults ?? 0),
+              planBMembership: x.inputs?.planBMembership || null,
+              plans
+            };
+          }
+
+          const daily = [];
+          for (const day of days) {
+            const universe = buildValueFixtureUniverse(day);
+            const manifest = read(path.join('data','deploy-snapshots',day,'manifest.json'));
+            const value = read(path.join('data','deploy-snapshots',day,'value.json'));
+            const valueAudit = read(path.join('data','deploy-snapshots',day,'value-audit.json'));
+            const planAAudit = read(path.join('data','value-plans',day,'plan-a-audit.json'));
+            const comparison = comparisonInfo(day);
+            daily.push({
+              day,
+              currentCanonicalValueUniverse: {
+                count: Number(universe?.count || 0),
+                hash: universe?.hash || null,
+                source: universe?.source || null
+              },
+              snapshot: manifest ? {
+                canonicalFixtureCount: Number(manifest.canonicalFixtureCount ?? manifest.counts?.fixtures ?? 0),
+                publishedFixtureCount: Number(manifest.publicationUniverse?.publishedFixtureCount ?? manifest.counts?.fixtures ?? 0),
+                fixtureCount: Number(manifest.counts?.fixtures ?? 0),
+                detailCount: Number(manifest.counts?.details ?? 0),
+                valuePicks: Number(manifest.counts?.valuePicks ?? 0),
+                valueGate: manifest.valueGate || null,
+                generatedAt: manifest.generatedAt || null
+              } : null,
+              frozenPublication: value ? {
+                count: Number(value.count ?? (value.picks || []).length),
+                source: value.source || null,
+                pickIds: (value.picks || []).map(p => p.matchId).filter(Boolean)
+              } : null,
+              valueAudit: valueAudit ? {
+                generatedAt: valueAudit.generatedAt || null,
+                fixtureUniverseCount: Number(valueAudit.fixtureUniverse?.count ?? 0),
+                fixtureUniverseHash: valueAudit.fixtureUniverse?.hash || null,
+                evaluatedFixtureCount: Number(valueAudit.evaluationAccounting?.evaluatedFixtureCount ?? 0),
+                rejectedFixtureCount: Number(valueAudit.evaluationAccounting?.rejectedFixtureCount ?? 0),
+                approved: Number(valueAudit.universe?.approved ?? 0),
+                candidateMarkets: Number(valueAudit.universe?.candidateMarkets ?? 0),
+                unaccountedFixtureCount: Number(valueAudit.evaluationAccounting?.unaccountedFixtureCount ?? 0),
+                duplicateOutcomeCount: Number(valueAudit.evaluationAccounting?.duplicateOutcomeCount ?? 0),
+                rejectionsByReason: valueAudit.rejections?.byReason || {}
+              } : null,
+              planAAudit: planAAudit ? {
+                count: Number(planAAudit.count ?? 0),
+                immutable: planAAudit.immutable === true,
+                observationSignature: planAAudit.observationSignature || null,
+                generatedAt: planAAudit.generatedAt || null
+              } : null,
+              plans: {
+                A: planInfo(day,'plan-a.json'),
+                A2: planInfo(day,'plan-a2.json'),
+                B: planInfo(day,'plan-b.json'),
+                B2: planInfo(day,'plan-b2.json')
+              },
+              finalResultFiles: countFiles(path.join('data','final-results',day)),
+              comparison
+            });
+          }
+
+          const coverage = read('data/value/_coverage-reports/2026-09-14.json');
+          if (!coverage) throw new Error('fresh current-day coverage report missing');
+
+          const universe = buildValueFixtureUniverse(currentDay);
+          const audit = read(`data/deploy-snapshots/${currentDay}/value-audit.json`);
+          const frozen = read(`data/deploy-snapshots/${currentDay}/value.json`);
+          const currentIds = new Set((universe.fixtures || []).map(x => String(x.matchId || x.canonicalId || '')).filter(Boolean));
+          const auditIds = new Set((audit?.fixtureUniverse?.canonicalIds || []).map(String));
+          const removedSinceAudit = [...auditIds].filter(id => !currentIds.has(id)).sort();
+          const addedSinceAudit = [...currentIds].filter(id => !auditIds.has(id)).sort();
+          const frozenPickIds = (frozen?.picks || []).map(p => String(p.matchId || '')).filter(Boolean);
+          const frozenOrphans = frozenPickIds.filter(id => !currentIds.has(id));
+
+          const coverageCounts = coverage.counts || {};
+          const playable = Number(coverage.source?.playable || 0);
+          const detailsFound = Number(coverageCounts.detailsFound || 0);
+          const intelligenceOk = Number(coverageCounts.intelligenceOk || 0);
+          const valueReturned = Number(coverageCounts.valueReturned || 0);
+
+          const summary = {
+            schema: 'ai-matchlab.value-denominator-provenance-audit.v1',
+            baseSha: 'b07d67b7fbe213d124f25752c6e576dec6d25343',
+            currentDay,
+            currentDayDenominators: {
+              currentCanonicalUniverse: Number(universe.count || 0),
+              frozenAuditUniverse: Number(audit?.fixtureUniverse?.count || 0),
+              frozenPublishedPicks: Number(frozen?.count || frozenPickIds.length),
+              auditApproved: Number(audit?.universe?.approved || 0),
+              auditEvaluated: Number(audit?.evaluationAccounting?.evaluatedFixtureCount || 0),
+              auditRejected: Number(audit?.evaluationAccounting?.rejectedFixtureCount || 0),
+              removedSinceFrozenAudit: removedSinceAudit,
+              addedSinceFrozenAudit: addedSinceAudit,
+              frozenOrphanPickIds: frozenOrphans
+            },
+            freshCoverage: {
+              source: coverage.source,
+              counts: coverage.counts,
+              breakdown: coverage.breakdown,
+              detailsCoverageRate: playable ? Number((detailsFound / playable).toFixed(6)) : null,
+              intelligenceCoverageRate: playable ? Number((intelligenceOk / playable).toFixed(6)) : null,
+              valueObjectReturnRate: playable ? Number((valueReturned / playable).toFixed(6)) : null
+            },
+            daily
+          };
+
+          fs.writeFileSync(process.env.OUT_FILE, JSON.stringify(summary, null, 2) + '\n');
+          console.log(JSON.stringify(summary, null, 2));
+          NODE
+
+      - name: Remove generated diagnostic file and require clean checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f data/value/_coverage-reports/2026-09-14.json
+          rmdir data/value/_coverage-reports 2>/dev/null || true
+          test -z "$(git status --porcelain)"
+          echo "READ_ONLY_VALUE_AUDIT=PASS"
+
+      - name: Upload read-only audit evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: value-denominator-provenance-audit-20260914
+          path: ${{ runner.temp }}/value-denominator-provenance-audit.json
+          if-no-files-found: error
+          retention-days: 14
