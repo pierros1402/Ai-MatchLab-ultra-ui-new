@@ -1,0 +1,120 @@
+name: TMP history truth parity audit 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-history-truth-parity-v2
+
+permissions:
+  contents: read
+
+jobs:
+  audit-history-truth-parity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Verify exact audit base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="6f5ce679519521301d652bcafc2fe136679e163a"
+          PARENT="$(git rev-parse HEAD^)"
+          test "$PARENT" = "$BASE"
+          test "$(git diff --name-only "$BASE"..HEAD | wc -l)" -eq 1
+          test "$(git diff --name-only "$BASE"..HEAD)" = ".github/workflows/tmp-history-truth-parity-audit-20260914.yml"
+          echo "AUDIT_BASE_VERIFIED=$BASE"
+
+      - name: Audit 09-12 September history against current truth
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { buildHistoryDayFromTruth } from './engine-v1/jobs/append-finalized-day-to-history.js';
+
+          const history = JSON.parse(fs.readFileSync('./data/history/2026-2027.json', 'utf8'));
+          const committedByDay = new Map((history.days || []).map(day => [day.dayKey, day]));
+          const days = ['2026-09-09','2026-09-10','2026-09-11','2026-09-12'];
+
+          function normalizeRow(row) {
+            const copy = structuredClone(row);
+            delete copy.rebuiltAt;
+            return copy;
+          }
+
+          const summary = [];
+          let failed = false;
+
+          for (const dayKey of days) {
+            const build = buildHistoryDayFromTruth(dayKey);
+            const committedDay = committedByDay.get(dayKey) || null;
+            const builtRows = Array.isArray(build.rows) ? build.rows.map(normalizeRow) : [];
+            const committedRows = Array.isArray(committedDay?.rows) ? committedDay.rows.map(normalizeRow) : [];
+
+            const builtById = new Map(builtRows.map(row => [row.id, row]));
+            const committedById = new Map(committedRows.map(row => [row.id, row]));
+            const missingFromHistory = [...builtById.keys()].filter(id => !committedById.has(id));
+            const extraInHistory = [...committedById.keys()].filter(id => !builtById.has(id));
+            const changedRows = [];
+
+            for (const [id, built] of builtById) {
+              const committed = committedById.get(id);
+              if (!committed) continue;
+              if (JSON.stringify(built) !== JSON.stringify(committed)) changedRows.push(id);
+            }
+
+            const ok = build.ok === true &&
+              Array.isArray(build.errors) && build.errors.length === 0 &&
+              Boolean(committedDay) &&
+              Number(committedDay.matchCount) === builtRows.length &&
+              committedRows.length === builtRows.length &&
+              missingFromHistory.length === 0 &&
+              extraInHistory.length === 0 &&
+              changedRows.length === 0;
+
+            summary.push({
+              dayKey,
+              ok,
+              buildOk: build.ok,
+              reason: build.reason || null,
+              canonicalFixtureCount: build.canonicalFixtureCount,
+              canonicalPlayedFinalCount: build.canonicalPlayedFinalCount,
+              verifiedFinalCount: build.verifiedFinalCount,
+              acceptedRows: build.acceptedRows,
+              committedMatchCount: committedDay?.matchCount ?? null,
+              committedRows: committedRows.length,
+              errorCount: Array.isArray(build.errors) ? build.errors.length : null,
+              errors: build.errors || [],
+              missingFromHistory,
+              extraInHistory,
+              changedRows
+            });
+
+            if (!ok) failed = true;
+          }
+
+          console.log(JSON.stringify({
+            schema: 'ai-matchlab.history-current-truth-parity.audit.v1',
+            baseSha: '6f5ce679519521301d652bcafc2fe136679e163a',
+            ok: !failed,
+            summary
+          }, null, 2));
+
+          if (failed) process.exit(1);
+          NODE
+
+      - name: Prove checkout remained read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          echo "READ_ONLY_WORKTREE_CLEAN=true"
