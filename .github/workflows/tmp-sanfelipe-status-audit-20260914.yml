@@ -1,0 +1,128 @@
+name: TMP San Felipe status audit 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-sanfelipe-status
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Verify exact audited base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="b07d67b7fbe213d124f25752c6e576dec6d25343"
+          test "$(git rev-parse HEAD^)" = "$BASE"
+          CHANGED="$(git diff --name-only "$BASE"..HEAD)"
+          test "$CHANGED" = ".github/workflows/tmp-sanfelipe-status-audit-20260914.yml"
+          echo "AUDIT_BASE_OK=$BASE"
+
+      - name: Scan truth stores for San Felipe San Luis identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          const providerId = 'Khg606iL';
+          const oldCanonicalId = 'cid_chi2_sanfelipe_sanluis_20260909';
+          const roots = [
+            'data/canonical-fixtures',
+            'data/final-results',
+            'data/league-memory/results',
+            'data/result-memory',
+            'data/history',
+            'data/history-archive',
+            'data/expected-matches',
+            'data/verification',
+            'data/identity-recovery',
+            'data/deploy-snapshots'
+          ];
+
+          function norm(s) {
+            return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'');
+          }
+          function walk(dir) {
+            if (!fs.existsSync(dir)) return [];
+            const out = [];
+            for (const ent of fs.readdirSync(dir, {withFileTypes:true})) {
+              const p = path.join(dir, ent.name);
+              if (ent.isDirectory()) out.push(...walk(p));
+              else if (ent.isFile() && ent.name.endsWith('.json')) out.push(p);
+            }
+            return out;
+          }
+
+          const hits = [];
+          for (const root of roots) {
+            for (const file of walk(root)) {
+              let raw;
+              try { raw = fs.readFileSync(file,'utf8'); } catch { continue; }
+              const n = norm(raw);
+              const providerHit = raw.includes(providerId);
+              const oldIdHit = raw.includes(oldCanonicalId);
+              const pairHit = n.includes('sanfelipe') && n.includes('sanluis');
+              if (!(providerHit || oldIdHit || pairHit)) continue;
+
+              let parsed = null;
+              try { parsed = JSON.parse(raw); } catch {}
+              const evidence = [];
+              const stack = [{v: parsed, p: '$'}];
+              let visited = 0;
+              while (stack.length && visited < 200000) {
+                const {v,p} = stack.pop(); visited++;
+                if (!v || typeof v !== 'object') continue;
+                if (Array.isArray(v)) {
+                  for (let i=0;i<v.length;i++) stack.push({v:v[i], p:`${p}[${i}]`});
+                  continue;
+                }
+                const text = JSON.stringify(v);
+                const vn = norm(text);
+                if (text.includes(providerId) || text.includes(oldCanonicalId) || (vn.includes('sanfelipe') && vn.includes('sanluis'))) {
+                  const id = v.canonicalId || v.matchId || v.id || null;
+                  const day = v.dayKey || v.date || null;
+                  const home = v.homeTeam || v.home || v?.teams?.homeTeam || null;
+                  const away = v.awayTeam || v.away || v?.teams?.awayTeam || null;
+                  const status = v.status || v.rawStatus || v.statusType || null;
+                  const sourceId = v.sourceId || v.sourceMatchId || v?.providerIds?.flashscore || v?.providerMatchId || null;
+                  const kickoff = v.kickoffUtc || v.kickoff || v.startUtc || null;
+                  const scoreHome = v.scoreHome ?? v.homeScore ?? v?.finalScore?.home ?? null;
+                  const scoreAway = v.scoreAway ?? v.awayScore ?? v?.finalScore?.away ?? null;
+                  if (id || day || home || away || status || sourceId || kickoff) {
+                    evidence.push({p,id,day,home,away,status,sourceId,kickoff,scoreHome,scoreAway});
+                    if (evidence.length >= 12) break;
+                  }
+                }
+                for (const [k,val] of Object.entries(v)) if (val && typeof val === 'object') stack.push({v:val,p:`${p}.${k}`});
+              }
+              hits.push({file,providerHit,oldIdHit,pairHit,evidence});
+            }
+          }
+
+          hits.sort((a,b)=>a.file.localeCompare(b.file));
+          console.log(JSON.stringify({
+            ok:true,
+            providerId,
+            oldCanonicalId,
+            hitFileCount:hits.length,
+            hits
+          }, null, 2));
+          NODE
+
+      - name: Prove checkout remained clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          echo "READ_ONLY_AUDIT_CLEAN=true"
