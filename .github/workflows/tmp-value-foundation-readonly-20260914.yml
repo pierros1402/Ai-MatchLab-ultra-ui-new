@@ -1,0 +1,159 @@
+name: TMP Value foundation read-only 2026-09-14
+
+on:
+  push:
+    branches:
+      - audit/20260914-value-foundation-readonly
+
+permissions:
+  contents: read
+
+jobs:
+  value-foundation-readonly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BASE_SHA: b07d67b7fbe213d124f25752c6e576dec6d25343
+      SEASON: 2026-2027
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Verify exact audit base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$BASE_SHA"
+          CHANGED="$(git diff --name-only "$BASE_SHA" HEAD)"
+          test "$CHANGED" = ".github/workflows/tmp-value-foundation-readonly-20260914.yml"
+          git fetch origin main --depth=1
+          test "$(git rev-parse origin/main)" = "$BASE_SHA"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Diagnose Value foundations read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import {
+            validateHistoryIndexFoundationSync,
+            validateModelPriorsFoundationSync,
+          } from './engine-v1/core/derived-history-foundation.js';
+
+          const season = process.env.SEASON;
+          const history = validateHistoryIndexFoundationSync(season);
+          const priors = validateModelPriorsFoundationSync(season);
+
+          function memberDiff(stored, current) {
+            const a = new Map((stored?.members || []).map(x => [x.path, x]));
+            const b = new Map((current?.members || []).map(x => [x.path, x]));
+            const changed = [];
+            const added = [];
+            const removed = [];
+            for (const [p, cur] of b) {
+              const old = a.get(p);
+              if (!old) added.push({ path: p, currentSha256: cur.sha256, currentBytes: cur.bytes });
+              else if (old.sha256 !== cur.sha256 || old.bytes !== cur.bytes) {
+                changed.push({ path: p, storedSha256: old.sha256, currentSha256: cur.sha256, storedBytes: old.bytes, currentBytes: cur.bytes });
+              }
+            }
+            for (const [p, old] of a) {
+              if (!b.has(p)) removed.push({ path: p, storedSha256: old.sha256, storedBytes: old.bytes });
+            }
+            return { changedCount: changed.length, addedCount: added.length, removedCount: removed.length, changed: changed.slice(0,100), added: added.slice(0,100), removed: removed.slice(0,100) };
+          }
+
+          function readJson(file) {
+            return JSON.parse(fs.readFileSync(file, 'utf8'));
+          }
+
+          const teamForm = readJson(`data/history-index/team-form/${season}.json`);
+          const leagueForm = readJson(`data/history-index/league-form/${season}.json`);
+          const matchups = readJson(`data/history-index/matchups/${season}.json`);
+          const modelPriors = readJson(`data/model-priors/${season}.json`);
+
+          const targets = ['Jong PSV', 'Jong AZ', 'Maccabi Tel-Aviv', 'Hapoel Tel Aviv'];
+          const canon = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+          function matchingKeys(obj, target) {
+            const t = canon(target);
+            return Object.keys(obj || {}).filter(k => canon(k).includes(t) || t.includes(canon(k))).slice(0,20);
+          }
+
+          const teamPriorObj = modelPriors?.teamPriors || {};
+          const targetEvidence = {};
+          for (const target of targets) {
+            const tf = matchingKeys(teamForm, target);
+            const tp = matchingKeys(teamPriorObj, target);
+            targetEvidence[target] = {
+              teamFormKeys: tf,
+              teamFormEntries: Object.fromEntries(tf.map(k => [k, teamForm[k]])),
+              teamPriorKeys: tp,
+              teamPriorEntries: Object.fromEntries(tp.map(k => [k, teamPriorObj[k]])),
+            };
+          }
+
+          const report = {
+            season,
+            historyIndexValidation: {
+              ok: history.ok,
+              reason: history.reason,
+              storedSourceSha256: history.artifact?.source?.sha256 || null,
+              currentSourceSha256: history.current?.source?.sha256 || null,
+              storedOutputsSha256: history.artifact?.outputs?.sha256 || null,
+              currentOutputsSha256: history.current?.outputs?.sha256 || null,
+              storedFoundationFingerprint: history.artifact?.foundationFingerprint || null,
+              currentFoundationFingerprint: history.current?.foundationFingerprint || null,
+              sourceDiff: memberDiff(history.artifact?.source, history.current?.source),
+              outputDiff: memberDiff(history.artifact?.outputs, history.current?.outputs),
+            },
+            modelPriorsValidation: {
+              ok: priors.ok,
+              reason: priors.reason,
+              storedSourceSha256: priors.artifact?.source?.sha256 || null,
+              currentSourceSha256: priors.current?.source?.sha256 || null,
+              storedOutputsSha256: priors.artifact?.outputs?.sha256 || null,
+              currentOutputsSha256: priors.current?.outputs?.sha256 || null,
+              storedFoundationFingerprint: priors.artifact?.foundationFingerprint || null,
+              currentFoundationFingerprint: priors.current?.foundationFingerprint || null,
+              sourceDiff: memberDiff(priors.artifact?.source, priors.current?.source),
+              outputDiff: memberDiff(priors.artifact?.outputs, priors.current?.outputs),
+            },
+            artifactSizes: {
+              teamFormKeys: Object.keys(teamForm || {}).length,
+              leagueFormKeys: Object.keys(leagueForm || {}).length,
+              matchupKeys: Object.keys(matchups || {}).length,
+              teamPriorKeys: Object.keys(teamPriorObj).length,
+              leaguePriorKeys: Object.keys(modelPriors?.leaguePriors || {}).length,
+              matchupPriorKeys: Object.keys(modelPriors?.matchupPriors || {}).length,
+            },
+            targetEvidence,
+          };
+
+          const out = path.join(process.env.RUNNER_TEMP, 'value-foundation-diagnostic.json');
+          fs.writeFileSync(out, JSON.stringify(report, null, 2) + '\n');
+          console.log(JSON.stringify(report, null, 2));
+          NODE
+
+      - name: Prove repository clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --short)"
+          git fetch origin main --depth=1
+          test "$(git rev-parse origin/main)" = "$BASE_SHA"
+
+      - name: Upload foundation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: value-foundation-readonly-20260914
+          path: ${{ runner.temp }}/value-foundation-diagnostic.json
+          if-no-files-found: error
+          retention-days: 14
