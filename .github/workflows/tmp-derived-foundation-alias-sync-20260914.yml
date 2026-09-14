@@ -1,0 +1,269 @@
+name: TMP derived foundation alias sync 20260914
+
+on:
+  push:
+    branches:
+      - fix/20260914-derived-foundation-alias-sync-v1
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tmp-derived-foundation-alias-sync-20260914
+  cancel-in-progress: false
+
+jobs:
+  rebuild-validate-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout isolated repair branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Verify exact repair base and remote main
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="2d33ae4ff4b8207d136c294104fb366f06dc37ff"
+          test "$(git rev-parse HEAD^)" = "$BASE"
+          REMOTE_MAIN="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          test "$REMOTE_MAIN" = "$BASE"
+          echo "REPAIR_BASE=$BASE" >> "$GITHUB_ENV"
+          echo "REMOTE_MAIN_BEFORE=$REMOTE_MAIN"
+
+      - name: Capture protected bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            git ls-files 'data/history/2026-2027.json' 'data/history/2026-2027.report.json'
+            git ls-files 'data/h2h/**' 'data/h2h-foundation/current.json'
+            git ls-files 'data/team-aliases/afc.champions.json'
+          } | sort -u | while IFS= read -r p; do
+            test -f "$p"
+            sha256sum "$p"
+          done > /tmp/protected.before.sha256
+          test -s /tmp/protected.before.sha256
+          cp /tmp/protected.before.sha256 /tmp/protected.before.evidence.txt
+
+      - name: Require exact source-only drift contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import {
+            validateHistoryIndexFoundationSync,
+            validateH2HFoundationSync,
+            validateModelPriorsFoundationSync
+          } from './engine-v1/core/derived-history-foundation.js';
+
+          const expectedPath = 'team-aliases/afc.champions.json';
+          const expectedBytes = 288;
+          const expectedSha = 'dc407bae8a76765e0b29cff43f78a639f72f3ab1ae9c6994a9beaed80d5cbf70';
+
+          function diffMembers(oldMembers = [], nowMembers = []) {
+            const oldMap = new Map(oldMembers.map(x => [x.path, x]));
+            const nowMap = new Map(nowMembers.map(x => [x.path, x]));
+            const added = [];
+            const removed = [];
+            const changed = [];
+            for (const [path, row] of nowMap) {
+              const old = oldMap.get(path);
+              if (!old) added.push(row);
+              else if (old.sha256 !== row.sha256 || old.bytes !== row.bytes) changed.push({ path, old, row });
+            }
+            for (const [path, row] of oldMap) if (!nowMap.has(path)) removed.push(row);
+            return { added, removed, changed };
+          }
+
+          function assertAliasOnly(label, result) {
+            if (result.ok !== false) throw new Error(`${label}:expected_stale`);
+            if (result.artifact?.outputs?.sha256 !== result.current?.outputs?.sha256) {
+              throw new Error(`${label}:outputs_already_drifted`);
+            }
+            const d = diffMembers(result.artifact?.source?.members, result.current?.source?.members);
+            if (d.removed.length || d.changed.length || d.added.length !== 1) {
+              throw new Error(`${label}:unexpected_source_drift:${JSON.stringify(d)}`);
+            }
+            const row = d.added[0];
+            if (row.path !== expectedPath || row.bytes !== expectedBytes || row.sha256 !== expectedSha) {
+              throw new Error(`${label}:unexpected_added_member:${JSON.stringify(row)}`);
+            }
+          }
+
+          const hi = validateHistoryIndexFoundationSync('2026-2027');
+          const h2h = validateH2HFoundationSync();
+          const mp = validateModelPriorsFoundationSync('2026-2027');
+
+          if (hi.reason !== 'history_index_foundation_stale') throw new Error(`historyIndex:${hi.reason}`);
+          if (mp.reason !== 'model_priors_foundation_stale') throw new Error(`modelPriors:${mp.reason}`);
+          if (h2h.ok !== true) throw new Error(`h2h:${h2h.reason}`);
+          assertAliasOnly('historyIndex', hi);
+          assertAliasOnly('modelPriors', mp);
+
+          console.log(JSON.stringify({
+            exactAliasOnlyDrift: true,
+            historyIndexBefore: hi.artifact?.foundationFingerprint,
+            modelPriorsBefore: mp.artifact?.foundationFingerprint,
+            h2h: h2h.artifact?.foundationFingerprint
+          }, null, 2));
+          NODE
+
+      - name: Rebuild current-season history indexes
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-current-season-indexes.js 2026-2027 2026-09-14
+
+      - name: Rebuild model priors
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-model-priors.js 2026-2027
+
+      - name: Validate all derived foundations
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE' | tee /tmp/foundation-validation.json
+          import fs from 'node:fs';
+          import {
+            validateHistoryIndexFoundationSync,
+            validateH2HFoundationSync,
+            validateModelPriorsFoundationSync
+          } from './engine-v1/core/derived-history-foundation.js';
+
+          const report = JSON.parse(fs.readFileSync('./data/history/2026-2027.report.json', 'utf8'));
+          const hi = validateHistoryIndexFoundationSync('2026-2027');
+          const h2h = validateH2HFoundationSync();
+          const mp = validateModelPriorsFoundationSync('2026-2027');
+          const out = {
+            history: {
+              to: report.to,
+              lastCompletedDay: report.lastCompletedDay,
+              totalMatches: report.totalMatches,
+              byDay: {
+                '2026-09-09': report.byDay?.['2026-09-09'] ?? null,
+                '2026-09-10': report.byDay?.['2026-09-10'] ?? null,
+                '2026-09-11': report.byDay?.['2026-09-11'] ?? null,
+                '2026-09-12': report.byDay?.['2026-09-12'] ?? null
+              }
+            },
+            historyIndex: { ok: hi.ok, reason: hi.reason, foundationFingerprint: hi.artifact?.foundationFingerprint ?? null },
+            h2h: { ok: h2h.ok, reason: h2h.reason, foundationFingerprint: h2h.artifact?.foundationFingerprint ?? null },
+            modelPriors: { ok: mp.ok, reason: mp.reason, foundationFingerprint: mp.artifact?.foundationFingerprint ?? null }
+          };
+          console.log(JSON.stringify(out, null, 2));
+          if (!hi.ok || !h2h.ok || !mp.ok) process.exit(1);
+          if (report.to !== '2026-09-12' || report.lastCompletedDay !== '2026-09-12') process.exit(2);
+          if (report.totalMatches !== 4715) process.exit(3);
+          if (report.byDay?.['2026-09-09'] !== 76) process.exit(4);
+          if (report.byDay?.['2026-09-10'] !== 86) process.exit(5);
+          if (report.byDay?.['2026-09-11'] !== 185) process.exit(6);
+          if (report.byDay?.['2026-09-12'] !== 519) process.exit(7);
+          NODE
+
+      - name: Prove protected history H2H and alias bytes unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            git ls-files 'data/history/2026-2027.json' 'data/history/2026-2027.report.json'
+            git ls-files 'data/h2h/**' 'data/h2h-foundation/current.json'
+            git ls-files 'data/team-aliases/afc.champions.json'
+          } | sort -u | while IFS= read -r p; do
+            test -f "$p"
+            sha256sum "$p"
+          done > /tmp/protected.after.sha256
+          diff -u /tmp/protected.before.sha256 /tmp/protected.after.sha256
+          echo "PROTECTED_BYTES_IDENTICAL=true"
+
+      - name: Enforce exact derived write set
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          CHANGED="$(git diff --name-only | sort)"
+          echo "$CHANGED"
+          test -n "$CHANGED"
+          BAD="$(printf '%s\n' "$CHANGED" | grep -Ev '^data/history-index/(team-form|league-form|matchups|foundation)/2026-2027\.json$|^data/model-priors/(2026-2027\.json|foundation/2026-2027\.json)$' || true)"
+          if [ -n "$BAD" ]; then
+            echo "ERROR: unexpected derived rebuild paths:"
+            echo "$BAD"
+            exit 1
+          fi
+          printf '%s\n' "$CHANGED" > /tmp/changed-paths.txt
+          grep -Fx 'data/history-index/foundation/2026-2027.json' /tmp/changed-paths.txt
+          grep -Fx 'data/model-priors/foundation/2026-2027.json' /tmp/changed-paths.txt
+
+      - name: Require remote main still pinned
+        shell: bash
+        run: |
+          set -euo pipefail
+          REMOTE_MAIN="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          test "$REMOTE_MAIN" = "$REPAIR_BASE"
+          echo "REMOTE_MAIN_AFTER=$REMOTE_MAIN"
+
+      - name: Build clean data-only release commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --binary -- data/history-index data/model-priors > /tmp/derived.patch
+          test -s /tmp/derived.patch
+
+          git reset --hard "$REPAIR_BASE"
+          git apply --index /tmp/derived.patch
+
+          STAGED="$(git diff --cached --name-only | sort)"
+          BAD="$(printf '%s\n' "$STAGED" | grep -Ev '^data/history-index/(team-form|league-form|matchups|foundation)/2026-2027\.json$|^data/model-priors/(2026-2027\.json|foundation/2026-2027\.json)$' || true)"
+          test -z "$BAD"
+          test -n "$STAGED"
+          git diff --cached --check
+
+          git config user.name "matchlab-repair"
+          git config user.email "matchlab-repair@users.noreply.github.com"
+          git commit -m "Refresh derived foundations after AFC alias update"
+          test "$(git rev-parse HEAD^)" = "$REPAIR_BASE"
+          echo "RELEASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "RELEASE_TREE=$(git rev-parse HEAD^{tree})" >> "$GITHUB_ENV"
+
+      - name: Push clean commit to release branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/main | awk '{print $1}')" = "$REPAIR_BASE"
+          git push origin HEAD:refs/heads/release/20260914-derived-foundation-alias-sync-v1
+          echo "RELEASE_BRANCH=release/20260914-derived-foundation-alias-sync-v1"
+
+      - name: Write release evidence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const read = p => { try { return fs.readFileSync(p, 'utf8'); } catch { return null; } };
+          const out = {
+            baseSha: process.env.REPAIR_BASE || null,
+            releaseSha: process.env.RELEASE_SHA || null,
+            releaseTree: process.env.RELEASE_TREE || null,
+            protectedBefore: read('/tmp/protected.before.evidence.txt'),
+            changedPaths: read('/tmp/changed-paths.txt'),
+            validation: read('/tmp/foundation-validation.json')
+          };
+          fs.writeFileSync('/tmp/derived-foundation-release-evidence.json', JSON.stringify(out, null, 2));
+          NODE
+
+      - name: Upload release evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: derived-foundation-alias-sync-release-evidence
+          path: /tmp/derived-foundation-release-evidence.json
+          if-no-files-found: error
