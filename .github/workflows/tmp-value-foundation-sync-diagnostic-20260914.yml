@@ -1,0 +1,250 @@
+name: TMP Value foundation sync diagnostic 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-value-denominator-provenance
+
+permissions:
+  contents: read
+
+jobs:
+  foundation-sync-diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 3
+
+      - name: Verify exact production base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="b07d67b7fbe213d124f25752c6e576dec6d25343"
+          git cat-file -e "${BASE}^{commit}"
+          mapfile -t CHANGED < <(git diff --name-only "$BASE"..HEAD)
+          printf '%s\n' "${CHANGED[@]}"
+          test "${#CHANGED[@]}" -eq 2
+          printf '%s\n' "${CHANGED[@]}" | grep -Fxq '.github/workflows/tmp-value-denominator-provenance-audit-20260914.yml'
+          printf '%s\n' "${CHANGED[@]}" | grep -Fxq '.github/workflows/tmp-value-foundation-sync-diagnostic-20260914.yml'
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Capture foundation state before rebuild
+        shell: bash
+        env:
+          OUT_FILE: ${{ runner.temp }}/foundation-before.json
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import {
+            validateHistoryIndexFoundationSync,
+            validateModelPriorsFoundationSync,
+            validateH2HFoundationSync
+          } from './engine-v1/core/derived-history-foundation.js';
+          import { loadValueIndexes, loadModelPriors } from './engine-v1/core/value-engine-v1.js';
+
+          const season = '2026-2027';
+          const history = validateHistoryIndexFoundationSync(season);
+          const priors = validateModelPriorsFoundationSync(season);
+          const h2h = validateH2HFoundationSync();
+          const indexes = await loadValueIndexes(season);
+          const modelPriors = await loadModelPriors(season);
+          const compact = {
+            schema: 'ai-matchlab.value-foundation-state.v1',
+            phase: 'before',
+            historyIndex: {
+              ok: history.ok,
+              reason: history.reason || null,
+              artifactGeneratedAt: history.artifact?.generatedAt || null,
+              artifactSourceSha256: history.artifact?.source?.sha256 || null,
+              currentSourceSha256: history.current?.source?.sha256 || null,
+              artifactOutputsSha256: history.artifact?.outputs?.sha256 || null,
+              currentOutputsSha256: history.current?.outputs?.sha256 || null
+            },
+            modelPriors: {
+              ok: priors.ok,
+              reason: priors.reason || null,
+              artifactGeneratedAt: priors.artifact?.generatedAt || null,
+              artifactSourceSha256: priors.artifact?.source?.sha256 || null,
+              currentSourceSha256: priors.current?.source?.sha256 || null,
+              artifactOutputsSha256: priors.artifact?.outputs?.sha256 || null,
+              currentOutputsSha256: priors.current?.outputs?.sha256 || null
+            },
+            h2h: {
+              ok: h2h.ok,
+              reason: h2h.reason || null,
+              artifactGeneratedAt: h2h.artifact?.generatedAt || null,
+              artifactSourceSha256: h2h.artifact?.source?.sha256 || null,
+              currentSourceSha256: h2h.current?.source?.sha256 || null
+            },
+            loadedIndexes: {
+              foundationGate: indexes.foundationGate || null,
+              teamFormSize: Object.keys(indexes.teamForm || {}).length,
+              leagueFormSize: Object.keys(indexes.leagueForm || {}).length,
+              matchupSize: Object.keys(indexes.matchups || {}).length
+            },
+            loadedPriors: {
+              foundationGate: modelPriors.foundationGate || null,
+              teamPriorsSize: Object.keys(modelPriors.teamPriors || {}).length,
+              leaguePriorsSize: Object.keys(modelPriors.leaguePriors || {}).length,
+              matchupPriorsSize: Object.keys(modelPriors.matchupPriors || {}).length
+            }
+          };
+          fs.writeFileSync(process.env.OUT_FILE, JSON.stringify(compact, null, 2) + '\n');
+          console.log(JSON.stringify(compact, null, 2));
+          NODE
+
+      - name: Rebuild derived Value foundations in runner only
+        shell: bash
+        env:
+          OUT_FILE: ${{ runner.temp }}/foundation-rebuild.json
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { rebuildIndexesForSeason } from './engine-v1/jobs/rebuild-indexes-for-season.js';
+          import { buildModelPriors } from './engine-v1/jobs/build-model-priors.js';
+
+          const indexes = await rebuildIndexesForSeason('2026-09-14');
+          if (indexes.ok !== true) throw new Error(`history index rebuild failed: ${JSON.stringify(indexes)}`);
+          const priors = await buildModelPriors({ targetSeason: '2026-2027' });
+          if (priors.ok !== true) throw new Error(`model priors rebuild failed: ${JSON.stringify(priors)}`);
+          const out = { indexes, priors };
+          fs.writeFileSync(process.env.OUT_FILE, JSON.stringify(out, null, 2) + '\n');
+          console.log(JSON.stringify({
+            indexes: { ok: indexes.ok, season: indexes.season },
+            priors: {
+              ok: priors.ok,
+              archiveMatches: priors.archiveMatches,
+              teamPriors: priors.teamPriors,
+              leaguePriors: priors.leaguePriors,
+              matchupPriors: priors.matchupPriors,
+              foundationFingerprint: priors.foundationFingerprint
+            }
+          }, null, 2));
+          NODE
+
+      - name: Validate foundations after rebuild
+        shell: bash
+        env:
+          OUT_FILE: ${{ runner.temp }}/foundation-after.json
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import {
+            validateHistoryIndexFoundationSync,
+            validateModelPriorsFoundationSync,
+            validateH2HFoundationSync
+          } from './engine-v1/core/derived-history-foundation.js';
+          import { loadValueIndexes, loadModelPriors } from './engine-v1/core/value-engine-v1.js';
+
+          const season = '2026-2027';
+          const history = validateHistoryIndexFoundationSync(season);
+          const priors = validateModelPriorsFoundationSync(season);
+          const h2h = validateH2HFoundationSync();
+          const indexes = await loadValueIndexes(season);
+          const modelPriors = await loadModelPriors(season);
+          const compact = {
+            schema: 'ai-matchlab.value-foundation-state.v1',
+            phase: 'after',
+            historyIndex: { ok: history.ok, reason: history.reason || null },
+            modelPriors: { ok: priors.ok, reason: priors.reason || null },
+            h2h: { ok: h2h.ok, reason: h2h.reason || null },
+            loadedIndexes: {
+              foundationGate: indexes.foundationGate || null,
+              teamFormSize: Object.keys(indexes.teamForm || {}).length,
+              leagueFormSize: Object.keys(indexes.leagueForm || {}).length,
+              matchupSize: Object.keys(indexes.matchups || {}).length
+            },
+            loadedPriors: {
+              foundationGate: modelPriors.foundationGate || null,
+              teamPriorsSize: Object.keys(modelPriors.teamPriors || {}).length,
+              leaguePriorsSize: Object.keys(modelPriors.leaguePriors || {}).length,
+              matchupPriorsSize: Object.keys(modelPriors.matchupPriors || {}).length
+            }
+          };
+          fs.writeFileSync(process.env.OUT_FILE, JSON.stringify(compact, null, 2) + '\n');
+          console.log(JSON.stringify(compact, null, 2));
+          if (!history.ok || !priors.ok) process.exit(1);
+          NODE
+
+      - name: Build fresh Value coverage after runner-only resync
+        shell: bash
+        env:
+          OUT_FILE: ${{ runner.temp }}/coverage-after.json
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-value-coverage-report-day.js 2026-09-14
+          cp data/value/_coverage-reports/2026-09-14.json "$OUT_FILE"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const x = JSON.parse(fs.readFileSync(process.env.OUT_FILE, 'utf8'));
+          console.log(JSON.stringify({ source: x.source, counts: x.counts, breakdown: x.breakdown }, null, 2));
+          NODE
+
+      - name: Build diagnostic summary
+        shell: bash
+        env:
+          OUT_FILE: ${{ runner.temp }}/value-foundation-sync-diagnostic.json
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const root = process.env.RUNNER_TEMP;
+          const before = JSON.parse(fs.readFileSync(`${root}/foundation-before.json`, 'utf8'));
+          const after = JSON.parse(fs.readFileSync(`${root}/foundation-after.json`, 'utf8'));
+          const coverage = JSON.parse(fs.readFileSync(`${root}/coverage-after.json`, 'utf8'));
+          const rebuild = JSON.parse(fs.readFileSync(`${root}/foundation-rebuild.json`, 'utf8'));
+          const out = {
+            schema: 'ai-matchlab.value-foundation-sync-diagnostic.v1',
+            baseSha: 'b07d67b7fbe213d124f25752c6e576dec6d25343',
+            before,
+            rebuild: {
+              historyIndexesOk: rebuild.indexes?.ok === true,
+              modelPriorsOk: rebuild.priors?.ok === true,
+              archiveMatches: rebuild.priors?.archiveMatches ?? null,
+              teamPriors: rebuild.priors?.teamPriors ?? null,
+              leaguePriors: rebuild.priors?.leaguePriors ?? null,
+              matchupPriors: rebuild.priors?.matchupPriors ?? null
+            },
+            after,
+            coverageAfter: {
+              source: coverage.source,
+              counts: coverage.counts,
+              breakdown: coverage.breakdown
+            }
+          };
+          fs.writeFileSync(process.env.OUT_FILE, JSON.stringify(out, null, 2) + '\n');
+          console.log(JSON.stringify(out, null, 2));
+          NODE
+
+      - name: Restore runner and require no repository mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git reset --hard HEAD
+          git clean -fdx
+          test -z "$(git status --porcelain)"
+          echo "RUNNER_ONLY_FOUNDATION_DIAGNOSTIC=PASS"
+
+      - name: Upload diagnostic evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: value-foundation-sync-diagnostic-20260914
+          path: ${{ runner.temp }}/value-foundation-sync-diagnostic.json
+          if-no-files-found: error
+          retention-days: 14
