@@ -1,0 +1,276 @@
+name: TMP cross-day daily integration 20260914
+
+on:
+  push:
+    branches:
+      - fix/20260914-crossday-daily-integration-v1
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ai-matchlab-data-writer
+  cancel-in-progress: false
+
+jobs:
+  validate-source-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout integration branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact integration base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=0e3cb8164c694ffe9cf37669b7c6d222b4c603c0
+          SOURCE=6273ada79a863dc474caf918a7ee8927f5283667
+          echo "BASE=$BASE" >> "$GITHUB_ENV"
+          echo "SOURCE=$SOURCE" >> "$GITHUB_ENV"
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "$BASE" || {
+            echo "ERROR: remote main moved before source integration"
+            echo "REMOTE_MAIN=$(git rev-parse origin/main)"
+            exit 1
+          }
+          git diff --name-only "$BASE" HEAD | sort > /tmp/preexisting.txt
+          printf '%s\n' '.github/workflows/tmp-crossday-daily-integration-20260914.yml' > /tmp/preexpected.txt
+          diff -u /tmp/preexpected.txt /tmp/preexisting.txt
+          git fetch --no-tags origin "$SOURCE"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npm --prefix engine-v1 ci --no-audit --no-fund
+
+      - name: Materialize validated classifier job and unit test
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p engine-v1/core engine-v1/jobs engine-v1/tests
+          git show "$SOURCE:engine-v1/core/cross-day-provider-reschedule.js" > engine-v1/core/cross-day-provider-reschedule.js
+          git show "$SOURCE:engine-v1/jobs/apply-cross-day-verified-final-supersession.js" > engine-v1/jobs/apply-cross-day-verified-final-supersession.js
+          git show "$SOURCE:engine-v1/tests/cross-day-provider-reschedule.test.js" > engine-v1/tests/cross-day-provider-reschedule.test.js
+          test "$(git hash-object engine-v1/core/cross-day-provider-reschedule.js)" = "$(git rev-parse "$SOURCE:engine-v1/core/cross-day-provider-reschedule.js")"
+          test "$(git hash-object engine-v1/jobs/apply-cross-day-verified-final-supersession.js)" = "$(git rev-parse "$SOURCE:engine-v1/jobs/apply-cross-day-verified-final-supersession.js")"
+          test "$(git hash-object engine-v1/tests/cross-day-provider-reschedule.test.js)" = "$(git rev-parse "$SOURCE:engine-v1/tests/cross-day-provider-reschedule.test.js")"
+          echo 'VALIDATED_SOURCE_MATERIALIZATION=PASS'
+
+      - name: Patch daily cycle and add integration test
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('engine-v1/jobs/run-daily-cycle.js')
+          s = p.read_text(encoding='utf-8')
+
+          import_anchor = 'import { appendFinalizedDayToHistory } from "./append-finalized-day-to-history.js";\n'
+          import_insert = import_anchor + 'import { applyCrossDayVerifiedFinalSupersessionWindow } from "./apply-cross-day-verified-final-supersession.js";\n'
+          if s.count(import_anchor) != 1:
+              raise SystemExit(f'import anchor count={s.count(import_anchor)}')
+          if 'applyCrossDayVerifiedFinalSupersessionWindow' in s:
+              raise SystemExit('cross-day import/call already present unexpectedly')
+          s = s.replace(import_anchor, import_insert, 1)
+
+          state_anchor = '  let historyCatchUp = [];\n  let h2hFoundationRebuild = null;\n'
+          state_insert = '  let historyCatchUp = [];\n  let crossDayVerifiedFinalSupersession = null;\n  let h2hFoundationRebuild = null;\n'
+          if s.count(state_anchor) != 1:
+              raise SystemExit(f'state anchor count={s.count(state_anchor)}')
+          s = s.replace(state_anchor, state_insert, 1)
+
+          catchup_anchor = '    // History catch-up: the append above only ever covers YESTERDAY, and its\n'
+          block = '''    // Cross-day provider reschedule convergence: when the exact same Flashscore\n    // match identity reappears on a later day and that later occurrence has\n    // source-bound verified-final truth, mark ONLY the stale old occurrence as\n    // postponed. Scores are never copied backward. This runs before the D-1..D-7\n    // history catch-up so stale scheduled duplicates cannot keep recent truth open.\n    console.log("[daily-cycle] cross-day-verified-final-supersession:start", {\n      dayKey,\n      daysBack: 7\n    });\n\n    crossDayVerifiedFinalSupersession =\n      applyCrossDayVerifiedFinalSupersessionWindow(dayKey, {\n        daysBack: 7,\n        write: true\n      });\n\n    console.log("[daily-cycle] cross-day-verified-final-supersession:done", {\n      ok: crossDayVerifiedFinalSupersession?.ok === true,\n      dayKey,\n      eligibleCount: crossDayVerifiedFinalSupersession?.eligibleCount ?? 0,\n      mutationCount: crossDayVerifiedFinalSupersession?.mutationCount ?? 0,\n      filesChanged: crossDayVerifiedFinalSupersession?.filesChanged ?? 0,\n      rejectedCount: crossDayVerifiedFinalSupersession?.rejectedCount ?? 0\n    });\n\n    if (crossDayVerifiedFinalSupersession?.ok !== true) {\n      const error = new Error(\n        "cross_day_verified_final_supersession_failed"\n      );\n      error.code = "CROSS_DAY_VERIFIED_FINAL_SUPERSESSION_FAILED";\n      error.dayKey = dayKey;\n      error.details = crossDayVerifiedFinalSupersession;\n      throw error;\n    }\n\n'''
+          if s.count(catchup_anchor) != 1:
+              raise SystemExit(f'catch-up anchor count={s.count(catchup_anchor)}')
+          s = s.replace(catchup_anchor, block + catchup_anchor, 1)
+
+          return_anchor = '    historyAppend,\n    indexesRebuild,\n'
+          return_insert = '    historyAppend,\n    crossDayVerifiedFinalSupersession,\n    indexesRebuild,\n'
+          if s.count(return_anchor) != 1:
+              raise SystemExit(f'return anchor count={s.count(return_anchor)}')
+          s = s.replace(return_anchor, return_insert, 1)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+
+          cat > engine-v1/tests/cross-day-supersession-daily-integration.test.js <<'EOF'
+          import test from "node:test";
+          import assert from "node:assert/strict";
+          import fs from "node:fs";
+
+          const source = fs
+            .readFileSync(
+              new URL("../jobs/run-daily-cycle.js", import.meta.url),
+              "utf8"
+            )
+            .replace(/\r\n/g, "\n");
+
+          test("daily cycle runs verified cross-day supersession before recent history catch-up", () => {
+            const importIndex = source.indexOf(
+              'import { applyCrossDayVerifiedFinalSupersessionWindow } from "./apply-cross-day-verified-final-supersession.js";'
+            );
+            const startIndex = source.indexOf(
+              '[daily-cycle] cross-day-verified-final-supersession:start'
+            );
+            const applyIndex = source.indexOf(
+              'applyCrossDayVerifiedFinalSupersessionWindow(dayKey, {'
+            );
+            const catchUpResetIndex = source.indexOf(
+              '    historyCatchUp = [];'
+            );
+            const catchUpLoopIndex = source.indexOf(
+              '    for (let back = 1; back <= 7; back++) {'
+            );
+            const returnIndex = source.indexOf(
+              '    crossDayVerifiedFinalSupersession,'
+            );
+
+            assert.ok(importIndex >= 0, "cross-day convergence import is missing");
+            assert.ok(startIndex > importIndex, "cross-day convergence marker must be inside runDailyCycle");
+            assert.ok(applyIndex > startIndex, "cross-day convergence call must follow its start marker");
+            assert.ok(catchUpResetIndex > applyIndex, "cross-day convergence must run before history catch-up reset");
+            assert.ok(catchUpLoopIndex > catchUpResetIndex, "history catch-up loop must remain after convergence");
+            assert.ok(returnIndex > catchUpLoopIndex, "daily-cycle result must expose convergence evidence");
+
+            const callSlice = source.slice(applyIndex, catchUpResetIndex);
+            assert.match(callSlice, /daysBack:\s*7/u);
+            assert.match(callSlice, /write:\s*true/u);
+            assert.match(callSlice, /CROSS_DAY_VERIFIED_FINAL_SUPERSESSION_FAILED/u);
+          });
+
+          test("daily integration preserves D-1 through D-7 history retry contract", () => {
+            assert.match(source, /for \(let back = 1; back <= 7; back\+\+\) \{/u);
+            assert.doesNotMatch(source, /for \(let back = 2; back <= 7; back\+\+\) \{/u);
+          });
+          EOF
+
+      - name: Verify source-only write-set
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --name-only "$BASE" | sort > /tmp/source-paths.txt
+          cat > /tmp/expected-source-paths.txt <<'EOF'
+          .github/workflows/tmp-crossday-daily-integration-20260914.yml
+          engine-v1/core/cross-day-provider-reschedule.js
+          engine-v1/jobs/apply-cross-day-verified-final-supersession.js
+          engine-v1/jobs/run-daily-cycle.js
+          engine-v1/tests/cross-day-provider-reschedule.test.js
+          engine-v1/tests/cross-day-supersession-daily-integration.test.js
+          EOF
+          sort -o /tmp/expected-source-paths.txt /tmp/expected-source-paths.txt
+          diff -u /tmp/expected-source-paths.txt /tmp/source-paths.txt
+          if git diff --name-only "$BASE" | grep -q '^data/'; then
+            echo 'ERROR: data mutation detected during source integration'
+            git diff --name-only "$BASE" | grep '^data/'
+            exit 1
+          fi
+          git diff --check "$BASE"
+
+      - name: Syntax and targeted regression suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/core/cross-day-provider-reschedule.js
+          node --check engine-v1/jobs/apply-cross-day-verified-final-supersession.js
+          node --check engine-v1/jobs/run-daily-cycle.js
+          node --check engine-v1/tests/cross-day-provider-reschedule.test.js
+          node --check engine-v1/tests/cross-day-supersession-daily-integration.test.js
+          node --test \
+            engine-v1/tests/cross-day-provider-reschedule.test.js \
+            engine-v1/tests/cross-day-supersession-daily-integration.test.js \
+            engine-v1/tests/daily-history-catchup-h2h-scope.test.js
+
+      - name: Current-data idempotence dry-run
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { applyCrossDayVerifiedFinalSupersessionWindow } from './engine-v1/jobs/apply-cross-day-verified-final-supersession.js';
+          const result = applyCrossDayVerifiedFinalSupersessionWindow(
+            '2026-09-14',
+            { daysBack: 7, now: new Date(), write: false }
+          );
+          console.log(JSON.stringify({
+            ok: result?.ok,
+            eligibleCount: result?.eligibleCount,
+            mutationCount: result?.mutationCount,
+            filesChanged: result?.filesChanged,
+            rejectedCount: result?.rejectedCount
+          }, null, 2));
+          if (result?.ok !== true) throw new Error('idempotence_dry_run_not_ok');
+          if (result.eligibleCount !== 0 || result.mutationCount !== 0 || result.filesChanged !== 0) {
+            throw new Error(`post_repair_not_idempotent:${result.eligibleCount}:${result.mutationCount}:${result.filesChanged}`);
+          }
+          console.log('POST_REPAIR_IDEMPOTENCE=PASS');
+          NODE
+
+      - name: Require remote main still pinned
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "$BASE" || {
+            echo "ERROR: remote main moved during source integration"
+            echo "REMOTE_MAIN=$(git rev-parse origin/main)"
+            exit 1
+          }
+
+      - name: Build clean source-only release commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --binary "$BASE" -- \
+            engine-v1/core/cross-day-provider-reschedule.js \
+            engine-v1/jobs/apply-cross-day-verified-final-supersession.js \
+            engine-v1/jobs/run-daily-cycle.js \
+            engine-v1/tests/cross-day-provider-reschedule.test.js \
+            engine-v1/tests/cross-day-supersession-daily-integration.test.js \
+            > /tmp/source-integration.patch
+          test -s /tmp/source-integration.patch
+
+          git reset --hard "$BASE"
+          git apply --index /tmp/source-integration.patch
+          git diff --cached --name-only | sort > /tmp/release-paths.txt
+          cat > /tmp/expected-release-paths.txt <<'EOF'
+          engine-v1/core/cross-day-provider-reschedule.js
+          engine-v1/jobs/apply-cross-day-verified-final-supersession.js
+          engine-v1/jobs/run-daily-cycle.js
+          engine-v1/tests/cross-day-provider-reschedule.test.js
+          engine-v1/tests/cross-day-supersession-daily-integration.test.js
+          EOF
+          sort -o /tmp/expected-release-paths.txt /tmp/expected-release-paths.txt
+          diff -u /tmp/expected-release-paths.txt /tmp/release-paths.txt
+          git diff --cached --check
+
+          node --check engine-v1/core/cross-day-provider-reschedule.js
+          node --check engine-v1/jobs/apply-cross-day-verified-final-supersession.js
+          node --check engine-v1/jobs/run-daily-cycle.js
+          node --test \
+            engine-v1/tests/cross-day-provider-reschedule.test.js \
+            engine-v1/tests/cross-day-supersession-daily-integration.test.js \
+            engine-v1/tests/daily-history-catchup-h2h-scope.test.js
+
+          git config user.name 'matchlab-repair'
+          git config user.email 'matchlab-repair@users.noreply.github.com'
+          git commit -m 'Integrate verified cross-day reschedule convergence'
+          RELEASE_SHA="$(git rev-parse HEAD)"
+          test "$(git rev-parse HEAD^)" = "$BASE"
+          echo "RELEASE_SHA=$RELEASE_SHA" >> "$GITHUB_ENV"
+          echo "CLEAN_SOURCE_RELEASE_SHA=$RELEASE_SHA"
+
+      - name: Push clean source release branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push origin HEAD:refs/heads/release/20260914-crossday-daily-integration-v1
