@@ -1,0 +1,109 @@
+name: TMP history foundation sync audit 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-history-foundation-sync
+
+permissions:
+  contents: read
+
+jobs:
+  audit-history-foundations:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Verify source pin
+        shell: bash
+        run: |
+          set -euo pipefail
+          PARENT="$(git rev-parse HEAD^)"
+          test "$PARENT" = "2d33ae4ff4b8207d136c294104fb366f06dc37ff"
+          echo "AUDIT_BASE=$PARENT"
+
+      - name: Validate committed history foundations read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import {
+            validateHistoryIndexFoundationSync,
+            validateH2HFoundationSync,
+            validateModelPriorsFoundationSync
+          } from './engine-v1/core/derived-history-foundation.js';
+
+          const report = JSON.parse(fs.readFileSync('./data/history/2026-2027.report.json', 'utf8'));
+          const historyIndex = validateHistoryIndexFoundationSync('2026-2027');
+          const h2h = validateH2HFoundationSync();
+          const modelPriors = validateModelPriorsFoundationSync('2026-2027');
+
+          const out = {
+            historyReport: {
+              to: report.to,
+              lastCompletedDay: report.lastCompletedDay,
+              daysCovered: report.daysCovered,
+              totalMatches: report.totalMatches,
+              selectedDays: {
+                '2026-09-09': report.byDay?.['2026-09-09'] ?? null,
+                '2026-09-10': report.byDay?.['2026-09-10'] ?? null,
+                '2026-09-11': report.byDay?.['2026-09-11'] ?? null,
+                '2026-09-12': report.byDay?.['2026-09-12'] ?? null
+              }
+            },
+            historyIndex: {
+              ok: historyIndex.ok,
+              reason: historyIndex.reason,
+              artifactFoundationFingerprint: historyIndex.artifact?.foundationFingerprint ?? null,
+              currentFoundationFingerprint: historyIndex.current?.foundationFingerprint ?? null,
+              artifactSourceSha256: historyIndex.artifact?.source?.sha256 ?? null,
+              currentSourceSha256: historyIndex.current?.source?.sha256 ?? null,
+              artifactOutputsSha256: historyIndex.artifact?.outputs?.sha256 ?? null,
+              currentOutputsSha256: historyIndex.current?.outputs?.sha256 ?? null
+            },
+            h2h: {
+              ok: h2h.ok,
+              reason: h2h.reason,
+              artifactFoundationFingerprint: h2h.artifact?.foundationFingerprint ?? null,
+              currentFoundationFingerprint: h2h.current?.foundationFingerprint ?? null,
+              artifactSourceSha256: h2h.artifact?.source?.sha256 ?? null,
+              currentSourceSha256: h2h.current?.source?.sha256 ?? null,
+              artifactOutputsSha256: h2h.artifact?.outputs?.sha256 ?? null,
+              currentOutputsSha256: h2h.current?.outputs?.sha256 ?? null
+            },
+            modelPriors: {
+              ok: modelPriors.ok,
+              reason: modelPriors.reason,
+              artifactFoundationFingerprint: modelPriors.artifact?.foundationFingerprint ?? null,
+              currentFoundationFingerprint: modelPriors.current?.foundationFingerprint ?? null,
+              artifactSourceSha256: modelPriors.artifact?.source?.sha256 ?? null,
+              currentSourceSha256: modelPriors.current?.source?.sha256 ?? null,
+              artifactOutputsSha256: modelPriors.artifact?.outputs?.sha256 ?? null,
+              currentOutputsSha256: modelPriors.current?.outputs?.sha256 ?? null
+            }
+          };
+          console.log(JSON.stringify(out, null, 2));
+
+          if (!historyIndex.ok || !h2h.ok || !modelPriors.ok) process.exit(1);
+          if (report.to !== '2026-09-12' || report.lastCompletedDay !== '2026-09-12') process.exit(2);
+          if (report.byDay?.['2026-09-09'] !== 76) process.exit(3);
+          if (report.byDay?.['2026-09-10'] !== 86) process.exit(4);
+          if (report.byDay?.['2026-09-11'] !== 185) process.exit(5);
+          if (report.byDay?.['2026-09-12'] !== 519) process.exit(6);
+          NODE
+
+      - name: Prove read-only checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          echo "READ_ONLY_AUDIT_CLEAN=true"
