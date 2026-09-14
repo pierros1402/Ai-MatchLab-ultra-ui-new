@@ -1,0 +1,89 @@
+name: TMP current-main Value coverage audit 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-value-coverage-current-main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  value-coverage-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Run minimum-sample classification regression
+        run: node --test engine-v1/tests/value-coverage-minimum-sample-classification.test.js
+
+      - name: Build transient 2026-09-14 Value coverage report
+        run: node ./engine-v1/jobs/build-value-coverage-report-day.js 2026-09-14
+
+      - name: Print compact coverage diagnosis
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const file = 'data/value/_coverage-reports/2026-09-14.json';
+          const r = JSON.parse(fs.readFileSync(file, 'utf8'));
+          const rows = Array.isArray(r.rows) ? r.rows : [];
+          const countBy = (items, fn) => {
+            const out = {};
+            for (const item of items) {
+              const k = String(fn(item) ?? 'none');
+              out[k] = (out[k] || 0) + 1;
+            }
+            return Object.fromEntries(Object.entries(out).sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0])));
+          };
+          const total = Number(r?.counts?.totalRows || 0);
+          const returned = Number(r?.counts?.valueReturned || 0);
+          const nullRows = rows.filter(x => x?.nullReason);
+          const rawShortfall = nullRows.filter(x => ['low_recent_sample','low_recent_sample_prior_backed','missing_team_history_and_prior','missing_both_team_history_and_priors'].includes(String(x?.nullClass || '')));
+          const priorBacked = nullRows.filter(x => x?.nullClass === 'low_recent_sample_prior_backed');
+          const noPrior = nullRows.filter(x => ['low_recent_sample','missing_team_history_and_prior','missing_both_team_history_and_priors'].includes(String(x?.nullClass || '')));
+          const minSampleRows = nullRows.filter(x => x?.nullReason === 'minimum_recent_sample');
+          const summary = {
+            ok: r.ok === true,
+            dayKey: r.dayKey,
+            season: r.season,
+            source: r.source,
+            counts: r.counts,
+            valueReturnRate: total ? Number((returned / total).toFixed(4)) : null,
+            minimumSampleRate: total ? Number((minSampleRows.length / total).toFixed(4)) : null,
+            rawShortfallCount: rawShortfall.length,
+            priorBackedRawShortfallCount: priorBacked.length,
+            rawShortfallWithoutPriorCount: noPrior.length,
+            nullByReason: r?.breakdown?.nullByReason || {},
+            nullByClass: r?.breakdown?.nullByClass || {},
+            rawShortfallByLeague: countBy(rawShortfall, x => x?.leagueSlug || 'unknown'),
+            missingDetails: rows.filter(x => !x?.detailsFound).length,
+            intelligenceFailures: rows.filter(x => !x?.intelligenceOk).length,
+            valueErrors: rows.filter(x => x?.valueError).map(x => ({matchId:x.matchId, leagueSlug:x.leagueSlug, error:x.valueError})).slice(0,20)
+          };
+          console.log(JSON.stringify(summary, null, 2));
+          NODE
+
+      - name: Remove transient coverage artifact and prove no repo mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f data/value/_coverage-reports/2026-09-14.json
+          rmdir data/value/_coverage-reports 2>/dev/null || true
+          test -z "$(git status --short)"
+          echo "READ_ONLY_VALUE_COVERAGE_AUDIT=PASS"
