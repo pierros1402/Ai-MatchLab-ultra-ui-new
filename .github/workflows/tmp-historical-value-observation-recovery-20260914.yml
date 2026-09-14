@@ -1,0 +1,173 @@
+name: TMP historical Value observation recovery 20260914
+
+on:
+  push:
+    branches:
+      - fix/20260914-historical-value-observation-recovery-v1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout isolated branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact isolated write set
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=f7a42204e676f0508f14aacc84766cb469400617
+          test "$(git merge-base HEAD "$BASE")" = "$BASE"
+          CHANGED="$(git diff --name-only "$BASE" HEAD)"
+          printf '%s\n' "$CHANGED"
+          BAD="$(printf '%s\n' "$CHANGED" | grep -Ev '^(engine-v1/jobs/recover-historical-value-observations-day\.js|engine-v1/jobs/recover-historical-value-observations-day\.test\.js|\.github/workflows/tmp-historical-value-observation-recovery-20260914\.yml)$' || true)"
+          if [ -n "$BAD" ]; then
+            echo "Unexpected isolated-branch paths:"
+            echo "$BAD"
+            exit 1
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Syntax and unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/jobs/recover-historical-value-observations-day.js
+          node --check engine-v1/jobs/recover-historical-value-observations-day.test.js
+          node --test engine-v1/jobs/recover-historical-value-observations-day.test.js
+
+      - name: Capture protected pre-recovery hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/aiml-recovery-evidence
+          sha256sum \
+            data/deploy-snapshots/2026-09-13/value.json \
+            data/deploy-snapshots/2026-09-13/value-audit.json \
+            data/deploy-snapshots/2026-09-13/manifest.json \
+            > /tmp/aiml-recovery-evidence/protected-before.sha256
+          git ls-tree -r HEAD -- data/canonical-fixtures/2026-09-13 data/final-results/2026-09-13 | sha256sum | awk '{print $1}' > /tmp/aiml-recovery-evidence/truth-tree-before.sha256
+          test ! -e data/value-plans/2026-09-13/plan-a.json
+          test ! -e data/value-plans/2026-09-13/plan-b.json
+          test ! -e data/value-plans/2026-09-13/plan-b2.json
+          test ! -e data/value-comparison/2026-09-13.json
+
+      - name: Recover authentic Plan A and unavailable B/B2 observations
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/recover-historical-value-observations-day.js \
+            --date=2026-09-13 \
+            --write-comparison \
+            | tee /tmp/aiml-recovery-evidence/recovery-result.json
+
+      - name: Verify recovered artifacts and comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs');
+          const day = '2026-09-13';
+          const snap = JSON.parse(fs.readFileSync(`data/deploy-snapshots/${day}/value.json`, 'utf8'));
+          const planA = JSON.parse(fs.readFileSync(`data/value-plans/${day}/plan-a.json`, 'utf8'));
+          const planB = JSON.parse(fs.readFileSync(`data/value-plans/${day}/plan-b.json`, 'utf8'));
+          const planBAudit = JSON.parse(fs.readFileSync(`data/value-plans/${day}/plan-b-audit.json`, 'utf8'));
+          const planB2 = JSON.parse(fs.readFileSync(`data/value-plans/${day}/plan-b2.json`, 'utf8'));
+          const planB2Audit = JSON.parse(fs.readFileSync(`data/value-plans/${day}/plan-b2-audit.json`, 'utf8'));
+          const cmp = JSON.parse(fs.readFileSync(`data/value-comparison/${day}.json`, 'utf8'));
+          const assert = (ok, msg) => { if (!ok) throw new Error(msg); };
+          assert(planA.immutable === true, 'Plan A not immutable');
+          assert(planA.count === 3, 'Plan A count != 3');
+          assert(JSON.stringify(planA.picks) === JSON.stringify(snap.picks), 'Plan A picks differ from authentic release');
+          assert(planA.provenance?.kind === 'authentic_release_observation_recovery', 'Plan A provenance invalid');
+          assert(planA.provenance?.sourceAssessmentFixtureUniverseCount === 454, 'Plan A authentic assessment universe != 454');
+          for (const [label, plan, audit] of [['B', planB, planBAudit], ['B2', planB2, planB2Audit]]) {
+            assert(plan.source === 'historical_missing_observation_recovery_sentinel', `${label} source invalid`);
+            assert(plan.authenticObservationUnavailable === true, `${label} unavailable flag missing`);
+            assert(plan.count === 0 && Array.isArray(plan.picks) && plan.picks.length === 0, `${label} invented picks`);
+            assert(plan.sourceContract?.fixtureUniverse?.count === 418, `${label} recovery universe != 418`);
+            assert(plan.sourceContract?.retrospectiveModelOutputUsed === false, `${label} retrospective output flag invalid`);
+            assert(plan.recoveryContract?.authenticPayloadRecovered === false, `${label} authentic payload flag invalid`);
+            assert(plan.recoveryContract?.retrospectivePredictionGeneration === false, `${label} retrospective generation flag invalid`);
+            assert(plan.recoveryContract?.inventedHistoricalPicks === false, `${label} invented pick flag invalid`);
+            assert(audit.membership?.canonicalFixtures === 418, `${label} audit canonical count != 418`);
+            assert(audit.membership?.assessmentRows === 0, `${label} assessmentRows != 0`);
+            assert(audit.membership?.joinedMatches === 0, `${label} joinedMatches != 0`);
+          }
+          assert(cmp.ok === true, 'comparison not ok');
+          assert(cmp.plans?.A?.summary?.picks === 3, 'comparison Plan A picks != 3');
+          assert(cmp.plans?.A2 === null, 'comparison unexpectedly fabricated A2');
+          assert(cmp.plans?.B?.summary?.picks === 0, 'comparison Plan B picks != 0');
+          assert(cmp.plans?.B2?.summary?.picks === 0, 'comparison Plan B2 picks != 0');
+          assert(!fs.existsSync(`data/value-plans/${day}/plan-a2.json`), 'A2 artifact was fabricated');
+          console.log(JSON.stringify({ok:true, planA:cmp.plans.A.summary, planA2:cmp.plans.A2, planB:cmp.plans.B.summary, planB2:cmp.plans.B2.summary}, null, 2));
+          NODE
+
+      - name: Inspect residual freshness contract without gating
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date=2026-09-13 \
+            | tee /tmp/aiml-recovery-evidence/freshness-output.txt
+          if [ -f data/deploy-snapshots/2026-09-13/freshness-report.json ]; then
+            cp data/deploy-snapshots/2026-09-13/freshness-report.json /tmp/aiml-recovery-evidence/freshness-report.json
+            git restore -- data/deploy-snapshots/2026-09-13/freshness-report.json 2>/dev/null || rm -f data/deploy-snapshots/2026-09-13/freshness-report.json
+          fi
+
+      - name: Prove protected truth and public bytes unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum \
+            data/deploy-snapshots/2026-09-13/value.json \
+            data/deploy-snapshots/2026-09-13/value-audit.json \
+            data/deploy-snapshots/2026-09-13/manifest.json \
+            > /tmp/aiml-recovery-evidence/protected-after.sha256
+          diff -u /tmp/aiml-recovery-evidence/protected-before.sha256 /tmp/aiml-recovery-evidence/protected-after.sha256
+          git ls-tree -r HEAD -- data/canonical-fixtures/2026-09-13 data/final-results/2026-09-13 | sha256sum | awk '{print $1}' > /tmp/aiml-recovery-evidence/truth-tree-after.sha256
+          diff -u /tmp/aiml-recovery-evidence/truth-tree-before.sha256 /tmp/aiml-recovery-evidence/truth-tree-after.sha256
+
+      - name: Verify exact runtime write set
+        shell: bash
+        run: |
+          set -euo pipefail
+          git status --short
+          CHANGED="$(git status --porcelain=v1 | sed -E 's/^.. //')"
+          BAD="$(printf '%s\n' "$CHANGED" | grep -Ev '^(data/value-plans/2026-09-13/|data/value-comparison/2026-09-13\.json$)' || true)"
+          if [ -n "$BAD" ]; then
+            echo "Unexpected recovery runtime writes:"
+            echo "$BAD"
+            exit 1
+          fi
+          test -f data/value-plans/2026-09-13/plan-a.json
+          test -f data/value-plans/2026-09-13/plan-a-audit.json
+          test -f data/value-plans/2026-09-13/plan-b.json
+          test -f data/value-plans/2026-09-13/plan-b-audit.json
+          test -f data/value-plans/2026-09-13/plan-b2.json
+          test -f data/value-plans/2026-09-13/plan-b2-audit.json
+          test -f data/value-comparison/2026-09-13.json
+
+      - name: Upload isolated validation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-value-observation-recovery-20260913-evidence
+          path: /tmp/aiml-recovery-evidence
+          if-no-files-found: error
