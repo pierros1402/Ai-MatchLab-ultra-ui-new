@@ -8,6 +8,7 @@ import { discoverActiveLeagues } from "./discover-active-leagues.js";
 import { monitorActiveLeagues } from "./monitor-active-leagues.js";
 import { finalizeDayIfSafe } from "./finalize-day.js";
 import { appendFinalizedDayToHistory } from "./append-finalized-day-to-history.js";
+import { applyCrossDayVerifiedFinalSupersessionWindow } from "./apply-cross-day-verified-final-supersession.js";
 import { buildHistoryReport } from "./build-history-report.js";
 import { applyResultsTruthToCanonicalDay } from "./apply-results-truth-to-canonical-day.js";
 import {
@@ -749,6 +750,7 @@ export async function runDailyCycle(options = {}) {
   let indexesRebuild = null;
   let catchUpIndexesRebuild = [];
   let historyCatchUp = [];
+  let crossDayVerifiedFinalSupersession = null;
   let h2hFoundationRebuild = null;
 
   console.log("[daily-cycle] standings-build:start", { dayKey });
@@ -1959,6 +1961,41 @@ export async function runDailyCycle(options = {}) {
       }
     }
 
+    // Cross-day provider reschedule convergence: when the exact same Flashscore
+    // match identity reappears on a later day and that later occurrence has
+    // source-bound verified-final truth, mark ONLY the stale old occurrence as
+    // postponed. Scores are never copied backward. This runs before the D-1..D-7
+    // history catch-up so stale scheduled duplicates cannot keep recent truth open.
+    console.log("[daily-cycle] cross-day-verified-final-supersession:start", {
+      dayKey,
+      daysBack: 7
+    });
+
+    crossDayVerifiedFinalSupersession =
+      applyCrossDayVerifiedFinalSupersessionWindow(dayKey, {
+        daysBack: 7,
+        write: true
+      });
+
+    console.log("[daily-cycle] cross-day-verified-final-supersession:done", {
+      ok: crossDayVerifiedFinalSupersession?.ok === true,
+      dayKey,
+      eligibleCount: crossDayVerifiedFinalSupersession?.eligibleCount ?? 0,
+      mutationCount: crossDayVerifiedFinalSupersession?.mutationCount ?? 0,
+      filesChanged: crossDayVerifiedFinalSupersession?.filesChanged ?? 0,
+      rejectedCount: crossDayVerifiedFinalSupersession?.rejectedCount ?? 0
+    });
+
+    if (crossDayVerifiedFinalSupersession?.ok !== true) {
+      const error = new Error(
+        "cross_day_verified_final_supersession_failed"
+      );
+      error.code = "CROSS_DAY_VERIFIED_FINAL_SUPERSESSION_FAILED";
+      error.dayKey = dayKey;
+      error.details = crossDayVerifiedFinalSupersession;
+      throw error;
+    }
+
     // History catch-up: the append above only ever covers YESTERDAY, and its
     // open===0 gate froze whole days out of the season store forever when a
     // single row never terminalized (2026-07-03/04 were lost this way while
@@ -2287,6 +2324,7 @@ export async function runDailyCycle(options = {}) {
     finalizeValueBuild,
     finalize,
     historyAppend,
+    crossDayVerifiedFinalSupersession,
     indexesRebuild,
     catchUpIndexesRebuild,
     h2hFoundationRebuild,
