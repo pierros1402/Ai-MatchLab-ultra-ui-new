@@ -1,0 +1,164 @@
+name: TMP Value coverage denominator audit 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-value-coverage-denominator
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact audited base
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_BASE="0e39fd21b91f556889724edcec575c2ed26eaaae"
+          ACTUAL_PARENT="$(git rev-parse HEAD^)"
+          test "$ACTUAL_PARENT" = "$EXPECTED_BASE"
+          echo "AUDIT_BASE=$EXPECTED_BASE"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Build current Value coverage report
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-value-coverage-report-day.js 2026-09-14
+          test -f data/value/_coverage-reports/2026-09-14.json
+          mkdir -p /tmp/value-coverage-audit
+          cp data/value/_coverage-reports/2026-09-14.json /tmp/value-coverage-audit/value-coverage-report.json
+
+      - name: Build denominator and provenance summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const crypto = require('crypto');
+
+          const day = '2026-09-14';
+          const reportPath = 'data/value/_coverage-reports/2026-09-14.json';
+          const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+          const rows = Array.isArray(report.rows) ? report.rows : [];
+
+          const exists = p => fs.existsSync(p);
+          const countBy = (items, fn) => {
+            const out = {};
+            for (const item of items) {
+              const key = String(fn(item) ?? 'unknown');
+              out[key] = (out[key] || 0) + 1;
+            }
+            return Object.fromEntries(Object.entries(out).sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0])));
+          };
+
+          const provenanceRows = rows.map(row => {
+            const id = String(row.matchId || '');
+            const sourcePath = path.join('data','details',day,`${id}.json`);
+            const snapshotPath = path.join('data','deploy-snapshots',day,'details',`${id}.json`);
+            const sourceExists = !!id && exists(sourcePath);
+            const snapshotExists = !!id && exists(snapshotPath);
+            let detailsProvenance = 'missing';
+            if (sourceExists) detailsProvenance = 'source_details';
+            else if (snapshotExists) detailsProvenance = 'snapshot_details';
+            return {
+              matchId: id,
+              leagueSlug: row.leagueSlug || null,
+              detailsFound: !!row.detailsFound,
+              detailsProvenance,
+              intelligenceOk: !!row.intelligenceOk,
+              valueReturned: !!row.valueReturned,
+              nullReason: row.nullReason || null,
+              nullClass: row.nullClass || null,
+              valueError: row.valueError || null,
+              intelligenceError: row.intelligenceError || null
+            };
+          });
+
+          const fixtureUniverse = report?.source?.fixtureUniverse || {};
+          const summary = {
+            ok: true,
+            auditedBase: '0e39fd21b91f556889724edcec575c2ed26eaaae',
+            dayKey: day,
+            generatedAt: new Date().toISOString(),
+            source: report.source || null,
+            counts: report.counts || null,
+            denominator: {
+              canonicalUniverse: Number(report?.source?.canonicalMatches || 0),
+              sourceMatches: Number(report?.source?.sourceMatches || 0),
+              playable: Number(report?.source?.playable || 0),
+              totalRows: rows.length,
+              fixtureUniverseSource: fixtureUniverse.source || null,
+              fixtureUniverseCount: Number(fixtureUniverse.count || 0),
+              fixtureUniverseHash: fixtureUniverse.hash || null
+            },
+            detailsProvenance: countBy(provenanceRows, r => r.detailsProvenance),
+            valueOutcome: {
+              returned: provenanceRows.filter(r => r.valueReturned).length,
+              null: provenanceRows.filter(r => r.nullReason).length,
+              failed: provenanceRows.filter(r => r.valueError).length
+            },
+            nullByReason: countBy(provenanceRows.filter(r => r.nullReason), r => r.nullReason),
+            nullByClass: countBy(provenanceRows.filter(r => r.nullClass), r => r.nullClass),
+            missingDetailsByLeague: countBy(provenanceRows.filter(r => r.detailsProvenance === 'missing'), r => r.leagueSlug || 'unknown'),
+            valueReturnedByLeague: countBy(provenanceRows.filter(r => r.valueReturned), r => r.leagueSlug || 'unknown'),
+            reportSha256: crypto.createHash('sha256').update(fs.readFileSync(reportPath)).digest('hex'),
+            rows: provenanceRows
+          };
+
+          fs.mkdirSync('/tmp/value-coverage-audit', { recursive: true });
+          fs.writeFileSync('/tmp/value-coverage-audit/value-coverage-summary.json', JSON.stringify(summary, null, 2) + '\n');
+
+          console.log(JSON.stringify({
+            denominator: summary.denominator,
+            counts: summary.counts,
+            detailsProvenance: summary.detailsProvenance,
+            valueOutcome: summary.valueOutcome,
+            nullByReason: summary.nullByReason,
+            nullByClass: summary.nullByClass,
+            missingDetailsByLeague: summary.missingDetailsByLeague
+          }, null, 2));
+          NODE
+
+      - name: Restore clean checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f data/value/_coverage-reports/2026-09-14.json
+          rmdir data/value/_coverage-reports 2>/dev/null || true
+          rmdir data/value 2>/dev/null || true
+          STATUS="$(git status --porcelain)"
+          if [ -n "$STATUS" ]; then
+            echo "ERROR: audit mutated tracked checkout"
+            echo "$STATUS"
+            exit 1
+          fi
+          echo "READ_ONLY_CHECKOUT_CLEAN=true"
+
+      - name: Upload audit evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: value-coverage-denominator-audit-20260914
+          path: /tmp/value-coverage-audit
+          if-no-files-found: error
