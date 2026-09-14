@@ -1,0 +1,129 @@
+name: TMP history quarantine closure audit 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-history-quarantine-closure
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Verify exact audited base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="b07d67b7fbe213d124f25752c6e576dec6d25343"
+          test "$(git rev-parse HEAD^)" = "$BASE"
+          CHANGED="$(git diff --name-only "$BASE"..HEAD)"
+          test "$CHANGED" = ".github/workflows/tmp-history-quarantine-closure-audit-20260914.yml"
+          echo "AUDIT_BASE_OK=$BASE"
+
+      - name: Audit history propagation and quarantine exclusion
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          const readJson = p => JSON.parse(fs.readFileSync(p, 'utf8'));
+          const manifestPath = 'data/competition-routing-quarantine/2026-09-12/manifest.json';
+          const historyPath = 'data/history/2026-2027.json';
+          const reportPath = 'data/history/2026-2027.report.json';
+
+          const manifest = readJson(manifestPath);
+          const candidates = Array.isArray(manifest.candidates) ? manifest.candidates : [];
+          const ids = [...new Set(candidates.map(r => String(r?.canonicalId || '').trim()).filter(Boolean))].sort();
+          if (manifest?.summary?.candidateCount !== 69) throw new Error(`manifest candidateCount=${manifest?.summary?.candidateCount}`);
+          if (ids.length !== 69) throw new Error(`unique candidate IDs=${ids.length}`);
+
+          const history = readJson(historyPath);
+          const report = readJson(reportPath);
+          const days = new Map((Array.isArray(history.days) ? history.days : []).map(d => [String(d.dayKey || ''), d]));
+          const expected = {
+            '2026-09-09': 76,
+            '2026-09-10': 86,
+            '2026-09-11': 185,
+            '2026-09-12': 519,
+          };
+
+          for (const [day, count] of Object.entries(expected)) {
+            const bucket = days.get(day);
+            if (!bucket) throw new Error(`missing history day ${day}`);
+            const rows = Array.isArray(bucket.rows) ? bucket.rows : [];
+            if (rows.length !== count) throw new Error(`history ${day} rows=${rows.length}, expected=${count}`);
+            if (Number(bucket.matchCount) !== count) throw new Error(`history ${day} matchCount=${bucket.matchCount}, expected=${count}`);
+            if (Number(report?.byDay?.[day]) !== count) throw new Error(`report ${day}=${report?.byDay?.[day]}, expected=${count}`);
+          }
+
+          if (String(report.lastCompletedDay || '') !== '2026-09-12') throw new Error(`lastCompletedDay=${report.lastCompletedDay}`);
+          if (String(report.to || '') !== '2026-09-12') throw new Error(`report.to=${report.to}`);
+
+          const candidateSet = new Set(ids);
+          const historyHits = [];
+          for (const d of history.days || []) {
+            for (const row of d.rows || []) {
+              const id = String(row?.id || row?.matchId || row?.canonicalId || '').trim();
+              if (candidateSet.has(id)) historyHits.push({ day: d.dayKey, id });
+            }
+          }
+          if (historyHits.length) throw new Error(`candidate IDs present in history: ${JSON.stringify(historyHits.slice(0, 20))}`);
+
+          function walk(dir) {
+            if (!fs.existsSync(dir)) return [];
+            const out = [];
+            for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+              const p = path.join(dir, ent.name);
+              if (ent.isDirectory()) out.push(...walk(p));
+              else if (ent.isFile() && ent.name.endsWith('.json')) out.push(p);
+            }
+            return out;
+          }
+
+          const indexHits = [];
+          for (const file of walk('data/history-index')) {
+            const raw = fs.readFileSync(file, 'utf8');
+            for (const id of ids) {
+              if (raw.includes(id)) indexHits.push({ file, id });
+            }
+          }
+          if (indexHits.length) throw new Error(`candidate IDs present in history-index: ${JSON.stringify(indexHits.slice(0, 20))}`);
+
+          const finalHits = [];
+          for (const day of ['2026-09-10','2026-09-11','2026-09-12','2026-09-13']) {
+            const dir = path.join('data/final-results', day);
+            if (!fs.existsSync(dir)) continue;
+            for (const name of fs.readdirSync(dir).filter(n => n.endsWith('.json'))) {
+              const id = name.replace(/\.json$/u, '');
+              if (candidateSet.has(id)) finalHits.push({ day, id });
+            }
+          }
+          if (finalHits.length) throw new Error(`candidate IDs present in active final-results: ${JSON.stringify(finalHits)}`);
+
+          console.log(JSON.stringify({
+            ok: true,
+            base: 'b07d67b7fbe213d124f25752c6e576dec6d25343',
+            quarantineCandidateIds: ids.length,
+            historyDays: expected,
+            reportLastCompletedDay: report.lastCompletedDay,
+            historyCandidateHits: historyHits.length,
+            historyIndexCandidateHits: indexHits.length,
+            activeFinalResultCandidateHits: finalHits.length,
+          }, null, 2));
+          NODE
+
+      - name: Prove checkout remained clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          echo "READ_ONLY_AUDIT_CLEAN=true"
