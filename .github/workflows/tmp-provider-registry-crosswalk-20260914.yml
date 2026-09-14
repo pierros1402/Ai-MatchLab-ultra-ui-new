@@ -1,0 +1,76 @@
+name: TMP provider registry crosswalk 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-provider-registry-crosswalk
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  registry-crosswalk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Crosswalk provider candidates against declared coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { LEAGUES_COVERAGE } from './workers/_shared/leagues-coverage.js';
+          import { leagueName } from './workers/_shared/leagues-registry.js';
+          import { resolveSlugFromPath, resolveSlug } from './engine-v1/odds/flashscore-league-map.js';
+          import { resolveFlashscoreCompetitionIdentity } from './engine-v1/core/flashscore-competition-identity.js';
+
+          const norm = v => String(v || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+          const readiness = JSON.parse(fs.readFileSync('data/coverage-readiness/2026-09-14.json','utf8'));
+          const rows = readiness?.activeCompetitionCompleteness?.providerCandidates || [];
+          if (rows.length !== 52) throw new Error(`Expected 52 candidates, got ${rows.length}`);
+
+          const declared = LEAGUES_COVERAGE.filter(x => x?.type === 'league');
+          const out = rows.map((x, index) => {
+            const country = x.providerCountry || '';
+            const sameCountry = declared.filter(e => norm(e.country) === norm(country)).map(e => ({
+              slug: e.slug,
+              country: e.country,
+              registryName: leagueName(e.slug)
+            }));
+            const row = {
+              country,
+              leagueName: x.providerName || '',
+              leaguePath: x.providerPath || ''
+            };
+            const identity = resolveFlashscoreCompetitionIdentity(row);
+            return {
+              n: index + 1,
+              providerCountry: country,
+              providerName: x.providerName || null,
+              providerPath: x.providerPath || null,
+              exactPathSlug: resolveSlugFromPath(x.providerPath || ''),
+              heuristicSlug: resolveSlug(country, x.providerName || ''),
+              identity: {
+                ok: identity?.ok ?? null,
+                status: identity?.status ?? null,
+                canonicalSlug: identity?.canonicalSlug ?? null,
+                reasonCode: identity?.reasonCode ?? identity?.reason ?? null
+              },
+              declaredSameCountry: sameCountry
+            };
+          });
+          console.log(JSON.stringify({count: out.length, rows: out}, null, 2));
+          NODE
+
+      - name: Prove read-only checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --short)"
+          echo "READ_ONLY_PROVIDER_REGISTRY_CROSSWALK=PASS"
