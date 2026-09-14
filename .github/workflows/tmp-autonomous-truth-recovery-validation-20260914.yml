@@ -1,0 +1,95 @@
+name: TMP autonomous truth recovery validation 20260914
+
+on:
+  push:
+    branches:
+      - feat/autonomous-truth-recovery-20260914
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout validation branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: |
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Syntax checks
+        run: |
+          node --check engine-v1/core/autonomous-history-recovery-policy.js
+          node --check engine-v1/jobs/run-autonomous-truth-recovery.js
+          node --check engine-v1/core/autonomous-history-recovery-policy.test.js
+
+      - name: Targeted policy tests
+        run: node --test engine-v1/core/autonomous-history-recovery-policy.test.js
+
+      - name: Run isolated real recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          DAY="$(TZ=Europe/Athens date +%F)"
+          node ./engine-v1/jobs/run-autonomous-truth-recovery.js "$DAY" --days-back=7 | tee /tmp/autonomous-recovery.log
+
+      - name: Verify recovery contract and write boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs');
+          const p = 'data/autonomous-recovery/history/latest.json';
+          if (!fs.existsSync(p)) throw new Error('latest recovery report missing');
+          const r = JSON.parse(fs.readFileSync(p, 'utf8'));
+          if (r.schema !== 'ai-matchlab.autonomous-history-recovery.v1') throw new Error('unexpected recovery schema');
+          if (!Array.isArray(r.days) || r.days.length !== 7) throw new Error(`expected 7 recovery days, got ${r.days?.length}`);
+          if (Number(r.blockedIntegrityCount || 0) !== 0) throw new Error(`integrity blockers in validation: ${r.blockedIntegrityCount}`);
+
+          const history = JSON.parse(fs.readFileSync('data/history/2026-2027.report.json', 'utf8'));
+          for (const day of ['2026-09-09','2026-09-10','2026-09-11','2026-09-12']) {
+            if (!Number(history.byDay?.[day] || 0)) throw new Error(`history regression: ${day} missing`);
+          }
+          console.log(JSON.stringify({
+            recovery: {
+              operationalDayKey: r.operationalDayKey,
+              healthyCount: r.healthyCount,
+              repairedCount: r.repairedCount,
+              pendingCount: r.pendingCount,
+              blockedIntegrityCount: r.blockedIntegrityCount,
+              actionableCount: r.actionableCount,
+              changedHistory: r.changedHistory
+            },
+            history: {
+              lastCompletedDay: history.lastCompletedDay,
+              sep09: history.byDay['2026-09-09'],
+              sep10: history.byDay['2026-09-10'],
+              sep11: history.byDay['2026-09-11'],
+              sep12: history.byDay['2026-09-12']
+            }
+          }, null, 2));
+          NODE
+
+          CHANGED="$(git status --short | sed -E 's/^.. //' || true)"
+          if [ -n "$CHANGED" ]; then
+            BAD="$(printf '%s\n' "$CHANGED" | grep -Ev '^(data/canonical-fixtures/|data/final-results/|data/final-result-conflicts/|data/value-comparison/|data/system-health/|data/history/|data/history-index/|data/h2h/|data/h2h-foundation/|data/model-priors/|data/autonomous-recovery/history/)' || true)"
+            if [ -n "$BAD" ]; then
+              echo "ERROR: recovery wrote outside allowed data boundary"
+              echo "$BAD"
+              exit 1
+            fi
+          fi
+
+          echo "=== VALIDATION WRITE SET ==="
+          git status --short
