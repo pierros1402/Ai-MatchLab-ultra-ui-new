@@ -1,0 +1,145 @@
+name: TMP Value coverage raw-sample classifier V2
+on:
+  push:
+    branches: [fix/20260914-value-coverage-raw-sample-classifier-v2]
+permissions:
+  contents: write
+concurrency:
+  group: tmp-value-coverage-raw-sample-classifier-v2-20260914
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASE_SHA: 5d22620c20cbe9a184fa6bc1f5b4cb02b7834ee1
+      RELEASE_BRANCH: release/20260914-value-coverage-raw-sample-classifier-v2
+      DAY_KEY: 2026-09-14
+    steps:
+      - uses: actions/checkout@v7
+        with: {fetch-depth: 0}
+      - name: Verify exact base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$BASE_SHA"
+      - uses: actions/setup-node@v7
+        with: {node-version: "24"}
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+      - name: Apply raw-sample classifier patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('engine-v1/jobs/build-value-coverage-report-day.js')
+          s=p.read_text(encoding='utf-8')
+          reps=[
+            ('function classifyMinimumSample(sample) {','export function classifyMinimumSample(sample) {'),
+            ('  const homeBelowMin = safeNumber(sample?.homeBlendedSample, 0) < minRequired;','  const homeBelowMin = safeNumber(sample?.homeRawSample, 0) < minRequired;'),
+            ('  const awayBelowMin = safeNumber(sample?.awayBlendedSample, 0) < minRequired;','  const awayBelowMin = safeNumber(sample?.awayRawSample, 0) < minRequired;')]
+          for old,new in reps:
+            if s.count(old)!=1: raise SystemExit(f'anchor count != 1: {old}')
+            s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          cat > engine-v1/tests/value-coverage-minimum-sample-classification.test.js <<'EOF'
+          import test from "node:test";
+          import assert from "node:assert/strict";
+          import { classifyMinimumSample } from "../jobs/build-value-coverage-report-day.js";
+
+          test("raw current-season sample gate drives coverage classification", () => {
+            assert.equal(classifyMinimumSample({minRequiredRecentMatches:3,homeRawSample:2,awayRawSample:3,homeBlendedSample:5,awayBlendedSample:6,homePriorSample:166,awayPriorSample:159}),"low_recent_sample_prior_backed");
+          });
+          test("blended samples cannot hide raw shortfall", () => {
+            assert.equal(classifyMinimumSample({minRequiredRecentMatches:3,homeRawSample:2,awayRawSample:3,homeBlendedSample:8,awayBlendedSample:9,homePriorSample:0,awayPriorSample:0}),"low_recent_sample");
+          });
+          test("missing raw history remains explicit", () => {
+            assert.equal(classifyMinimumSample({minRequiredRecentMatches:3,homeRawSample:0,awayRawSample:0,homeBlendedSample:0,awayBlendedSample:0,homePriorSample:0,awayPriorSample:0}),"missing_both_team_history_and_priors");
+            assert.equal(classifyMinimumSample({minRequiredRecentMatches:3,homeRawSample:0,awayRawSample:4,homeBlendedSample:0,awayBlendedSample:4,homePriorSample:0,awayPriorSample:0}),"missing_team_history_and_prior");
+          });
+          test("satisfied raw gate uses fallback only outside real minimum-sample nulls", () => {
+            assert.equal(classifyMinimumSample({minRequiredRecentMatches:3,homeRawSample:3,awayRawSample:3,homeBlendedSample:3,awayBlendedSample:3,homePriorSample:0,awayPriorSample:0}),"unknown_minimum_sample_null");
+          });
+          EOF
+          node --check engine-v1/jobs/build-value-coverage-report-day.js
+          node --check engine-v1/tests/value-coverage-minimum-sample-classification.test.js
+          git diff --check
+      - name: Targeted regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test engine-v1/tests/value-coverage-minimum-sample-classification.test.js engine-v1/tests/value-coverage-canonical-universe.test.js engine-v1/tests/value-coverage-evidence-persistence.test.js engine-v1/tests/value-evidence-daily-persistence-contract.test.js engine-v1/tests/value-contract-hardening.test.js | tee "$RUNNER_TEMP/targeted.tap"
+      - name: Recompute exact 14 September coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-value-coverage-report-day.js "$DAY_KEY" | tee "$RUNNER_TEMP/coverage-build.log"
+          node <<'NODE'
+          const fs=require('fs');
+          const day=process.env.DAY_KEY;
+          const r=JSON.parse(fs.readFileSync(`data/value/_coverage-reports/${day}.json`,'utf8'));
+          const c=r.counts||{}, cls=r.breakdown?.nullByClass||{};
+          const expected={totalRows:126,detailsFound:126,intelligenceOk:126,valueReturned:50,valueNull:76,valueFailed:0,minimumRecentSampleNull:76};
+          for(const [k,v] of Object.entries(expected)) if(Number(c[k])!==v) throw new Error(`${k}: expected ${v}, got ${c[k]}`);
+          if(Number(cls.unknown_minimum_sample_null||0)!==0) throw new Error(`unknown classifications remain: ${cls.unknown_minimum_sample_null}`);
+          if(Object.values(cls).reduce((a,n)=>a+Number(n||0),0)!==76) throw new Error('null class denominator mismatch');
+          const expectedClasses={low_recent_sample_prior_backed:51,low_recent_sample:18,missing_team_history_and_prior:5,missing_both_team_history_and_priors:2};
+          for(const [k,v] of Object.entries(expectedClasses)) if(Number(cls[k]||0)!==v) throw new Error(`${k}: expected ${v}, got ${cls[k]}`);
+          const persisted=JSON.parse(fs.readFileSync(`data/coverage-readiness/${day}.json`,'utf8'));
+          const old=persisted.valueCoverageEvidence?.counts||{};
+          const out={dayKey:day,currentCounts:c,nullByClass:cls,persistedPreFixCounts:old,persistedEvidenceWasStale:Number(old.totalRows)!==Number(c.totalRows)||Number(old.valueReturned)!==Number(c.valueReturned),rawGateAligned:true};
+          fs.writeFileSync(process.env.RUNNER_TEMP+'/coverage-summary.json',JSON.stringify(out,null,2)+'\n');
+          console.log(JSON.stringify(out,null,2));
+          NODE
+      - name: Full engine regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test engine-v1/tests/*.test.js | tee "$RUNNER_TEMP/full-engine.tap"
+      - name: Require main pinned
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$BASE_SHA"
+      - name: Build clean release commit
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC=engine-v1/jobs/build-value-coverage-report-day.js
+          TST=engine-v1/tests/value-coverage-minimum-sample-classification.test.js
+          export GIT_INDEX_FILE="$RUNNER_TEMP/release-index"
+          rm -f "$GIT_INDEX_FILE"
+          git read-tree "$BASE_SHA^{tree}"
+          git add "$SRC" "$TST"
+          ACTUAL="$(git diff --cached --name-only "$BASE_SHA" | sort)"
+          EXPECTED="$(printf '%s\n%s\n' "$SRC" "$TST" | sort)"
+          test "$ACTUAL" = "$EXPECTED"
+          TREE="$(git write-tree)"
+          COMMIT="$(printf '%s\n' 'Align Value coverage diagnostics with raw sample gate' | git commit-tree "$TREE" -p "$BASE_SHA")"
+          echo "commit=$COMMIT" >> "$GITHUB_OUTPUT"
+          echo "RELEASE_COMMIT=$COMMIT"
+          git diff-tree --no-commit-id --name-status -r "$COMMIT"
+      - name: Push release branch only
+        env: {RELEASE_COMMIT: "${{ steps.release.outputs.commit }}"}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push origin "$RELEASE_COMMIT:refs/heads/$RELEASE_BRANCH"
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: value-coverage-raw-sample-classifier-v2-evidence
+          path: |
+            ${{ runner.temp }}/coverage-summary.json
+            ${{ runner.temp }}/coverage-build.log
+            ${{ runner.temp }}/targeted.tap
+            ${{ runner.temp }}/full-engine.tap
+          if-no-files-found: error
