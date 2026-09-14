@@ -1,0 +1,132 @@
+name: TMP Value evidence materialization V2
+on:
+  push:
+    branches: [fix/20260914-value-evidence-materialization-v2]
+permissions:
+  contents: write
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASE_SHA: 36870d57fa27d113bab5f6de44228dabbc8a9d28
+      DAY_KEY: 2026-09-14
+      RELEASE_BRANCH: release/20260914-value-evidence-materialization-v2
+    steps:
+      - uses: actions/checkout@v7
+        with: {fetch-depth: 0}
+      - name: Verify exact base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$BASE_SHA"
+      - uses: actions/setup-node@v7
+        with: {node-version: "24"}
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+      - name: Materialize four-plan settlement evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-four-plan-settlement-bundle-day.js --date "$DAY_KEY" | tee "$RUNNER_TEMP/settlement-bundle.log"
+          node ./engine-v1/jobs/build-value-settlement-statistics-range.js --start "$DAY_KEY" --end "$DAY_KEY" --output "data/football-truth/_settlement-statistics/value-settlement-statistics-${DAY_KEY}_to_${DAY_KEY}.json" | tee "$RUNNER_TEMP/settlement-statistics.log"
+      - name: Materialize Value coverage and readiness evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-value-coverage-report-day.js "$DAY_KEY" | tee "$RUNNER_TEMP/value-coverage.log"
+          node ./engine-v1/jobs/build-league-gap-report-day.js "$DAY_KEY" | tee "$RUNNER_TEMP/coverage-readiness.log"
+      - name: Validate materialized evidence contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs=require('fs');
+          const day=process.env.DAY_KEY;
+          const read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
+          const bundle=read(`data/football-truth/_diagnostics/value-settlement-daily-cycle/${day}.four-plan-settlement-bundle.json`);
+          const summary=read(`data/football-truth/_settlement-summaries/${day}.value-settlement-summary.json`);
+          const stats=read(`data/football-truth/_settlement-statistics/value-settlement-statistics-${day}_to_${day}.json`);
+          const coverage=read(`data/value/_coverage-reports/${day}.json`);
+          const readiness=read(`data/coverage-readiness/${day}.json`);
+          if(bundle.ok!==true || bundle.guarantees?.fourPlanComplete!==true) throw new Error('four-plan bundle incomplete');
+          const plans=[...(bundle.presentPlans||[])].sort().join(',');
+          if(plans!=='A,A2,B,B2') throw new Error(`present plans mismatch: ${plans}`);
+          if(summary.ok!==true || Number(summary.summary?.planCount)!==4) throw new Error('four-plan summary invalid');
+          if(stats.ok!==true) throw new Error('settlement statistics invalid');
+          const c=coverage.counts||{};
+          const expected={totalRows:126,detailsFound:126,intelligenceOk:126,valueReturned:50,valueNull:76,valueFailed:0,minimumRecentSampleNull:76};
+          for(const [k,v] of Object.entries(expected)) if(Number(c[k])!==v) throw new Error(`coverage ${k}: expected ${v}, got ${c[k]}`);
+          const cls=coverage.breakdown?.nullByClass||{};
+          const expectedCls={low_recent_sample_prior_backed:51,low_recent_sample:18,missing_team_history_and_prior:5,missing_both_team_history_and_priors:2};
+          for(const [k,v] of Object.entries(expectedCls)) if(Number(cls[k]||0)!==v) throw new Error(`class ${k}: expected ${v}, got ${cls[k]}`);
+          if(Number(cls.unknown_minimum_sample_null||0)!==0) throw new Error('unknown minimum-sample rows remain');
+          const ev=readiness.valueSettlementEvidence||{};
+          for(const key of ['bundle','summary','statistics']) {
+            if(ev[key]?.present!==true || ev[key]?.payload?.ok!==true) throw new Error(`readiness settlement evidence missing/not ok: ${key}`);
+          }
+          const vc=readiness.valueCoverageEvidence?.counts||{};
+          for(const [k,v] of Object.entries(expected)) if(Number(vc[k])!==v) throw new Error(`readiness coverage ${k}: expected ${v}, got ${vc[k]}`);
+          const out={dayKey:day,coverage:c,nullByClass:cls,bundleAggregate:bundle.aggregate,summary:summary.summary,statistics:stats.summary||stats.total||null,valueSettlementEvidencePresent:true};
+          fs.writeFileSync(process.env.RUNNER_TEMP+'/materialization-summary.json',JSON.stringify(out,null,2)+'\n');
+          console.log(JSON.stringify(out,null,2));
+          NODE
+      - name: Enforce evidence-only write set
+        shell: bash
+        run: |
+          set -euo pipefail
+          git status --short
+          BAD="$(git status --porcelain=v1 | sed -E 's/^.. //' | grep -Ev '^(data/football-truth/_diagnostics/value-settlement-daily-cycle/2026-09-14\.|data/football-truth/_settlement-summaries/2026-09-14\.|data/football-truth/_settlement-statistics/value-settlement-statistics-2026-09-14_to_2026-09-14\.json$|data/value/_coverage-reports/2026-09-14\.json$|data/coverage-readiness/2026-09-14\.json$)' || true)"
+          if [ -n "$BAD" ]; then echo "Unexpected writes:"; echo "$BAD"; exit 1; fi
+          if git status --porcelain=v1 | sed -E 's/^.. //' | grep -Eq '^(data/value/2026-09-14\.json|data/value-plans/|data/canonical-fixtures/|data/deploy-snapshots/)'; then echo 'Authoritative/Value publication write detected'; exit 1; fi
+      - name: Require main pinned
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$BASE_SHA"
+      - name: Build clean evidence-only release commit
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "matchlab-value-evidence"
+          git config user.email "matchlab-value-evidence@users.noreply.github.com"
+          export GIT_INDEX_FILE="$RUNNER_TEMP/release-index"
+          rm -f "$GIT_INDEX_FILE"
+          git read-tree "$BASE_SHA^{tree}"
+          git add data/football-truth/_diagnostics/value-settlement-daily-cycle/2026-09-14.*.json || true
+          git add data/football-truth/_settlement-summaries/2026-09-14.*.json || true
+          git add data/football-truth/_settlement-statistics/value-settlement-statistics-2026-09-14_to_2026-09-14.json
+          git add data/value/_coverage-reports/2026-09-14.json
+          git add data/coverage-readiness/2026-09-14.json
+          STAGED="$(git diff --cached --name-only "$BASE_SHA")"
+          test -n "$STAGED"
+          BAD="$(printf '%s\n' "$STAGED" | grep -Ev '^(data/football-truth/_diagnostics/value-settlement-daily-cycle/2026-09-14\.|data/football-truth/_settlement-summaries/2026-09-14\.|data/football-truth/_settlement-statistics/value-settlement-statistics-2026-09-14_to_2026-09-14\.json$|data/value/_coverage-reports/2026-09-14\.json$|data/coverage-readiness/2026-09-14\.json$)' || true)"
+          if [ -n "$BAD" ]; then echo "$BAD"; exit 1; fi
+          TREE="$(git write-tree)"
+          COMMIT="$(printf '%s\n' 'Materialize current Value coverage and settlement evidence' | git commit-tree "$TREE" -p "$BASE_SHA")"
+          echo "commit=$COMMIT" >> "$GITHUB_OUTPUT"
+          echo "RELEASE_COMMIT=$COMMIT"
+          git diff-tree --no-commit-id --name-status -r "$COMMIT"
+      - name: Push release branch only
+        env: {RELEASE_COMMIT: "${{ steps.release.outputs.commit }}"}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push origin "$RELEASE_COMMIT:refs/heads/$RELEASE_BRANCH"
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: value-evidence-materialization-v2
+          path: |
+            ${{ runner.temp }}/materialization-summary.json
+            ${{ runner.temp }}/settlement-bundle.log
+            ${{ runner.temp }}/settlement-statistics.log
+            ${{ runner.temp }}/value-coverage.log
+            ${{ runner.temp }}/coverage-readiness.log
+          if-no-files-found: error
