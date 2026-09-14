@@ -16,18 +16,20 @@ jobs:
       - name: Checkout audit branch
         uses: actions/checkout@v7
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
-      - name: Verify exact pinned base
+      - name: Verify exact pinned base and audit-only branch diff
         shell: bash
         run: |
           set -euo pipefail
           EXPECTED_BASE="2d33ae4ff4b8207d136c294104fb366f06dc37ff"
-          ACTUAL_BASE="$(git rev-parse HEAD^)"
-          test "$ACTUAL_BASE" = "$EXPECTED_BASE"
-          CHANGED="$(git diff --name-only HEAD^ HEAD)"
-          test "$CHANGED" = ".github/workflows/tmp-value-coverage-provenance-audit-20260914.yml"
-          echo "AUDIT_BASE=$ACTUAL_BASE"
+          git cat-file -e "${EXPECTED_BASE}^{commit}"
+          MERGE_BASE="$(git merge-base HEAD "$EXPECTED_BASE")"
+          test "$MERGE_BASE" = "$EXPECTED_BASE"
+          CHANGED="$(git diff --name-only "$EXPECTED_BASE" HEAD | sort)"
+          ALLOWED="$(printf '%s\n' '.github/workflows/tmp-value-coverage-provenance-audit-20260914.yml' 'tmp/value-coverage-provenance-audit-trigger-20260914.txt' | sort)"
+          test "$CHANGED" = "$ALLOWED"
+          echo "AUDIT_BASE=$EXPECTED_BASE"
 
       - name: Setup Node
         uses: actions/setup-node@v7
