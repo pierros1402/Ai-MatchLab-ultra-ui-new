@@ -2,13 +2,16 @@
   "dayKey": "2026-09-12",
   "leagueSlug": "caf.confed",
   "leagueName": "CAF Confederation Cup",
-  "updatedAt": "2026-09-13T14:38:32.382Z",
+  "updatedAt": "2026-09-14T10:49:03.844Z",
   "count": 17,
   "sourceMeta": {
     "acquisitionProvider": "espn",
     "requestedLeagueSlug": "caf.confed",
     "requestedDayKey": "2026-09-12",
-    "mergedAt": "2026-09-13T14:38:32.377Z"
+    "mergedAt": "2026-09-13T14:38:32.377Z",
+    "crossDayVerifiedFinalSupersessionAt": "2026-09-14T10:49:03.844Z",
+    "crossDayVerifiedFinalSupersessionRows": 1,
+    "crossDayVerifiedFinalSupersessionPolicy": "cross-day-provider-verified-final-v1"
   },
   "fixtures": [
     {
@@ -182,12 +185,78 @@
       "scoreAway": null,
       "penalties": null,
       "decidedBy": null,
-      "status": "STATUS_SCHEDULED",
-      "rawStatus": "STATUS_SCHEDULED",
+      "status": "STATUS_POSTPONED",
+      "rawStatus": "STATUS_POSTPONED",
       "minute": null,
       "venue": null,
       "firstSeenAt": "2026-09-09T21:48:51.370Z",
-      "lastSeenAt": "2026-09-10T11:53:18.762Z"
+      "lastSeenAt": "2026-09-10T11:53:18.762Z",
+      "statusType": "STATUS_POSTPONED",
+      "statusCorrection": {
+        "schema": "ai-matchlab.cross-day-verified-final-supersession.v1",
+        "correctedAt": "2026-09-14T10:49:03.844Z",
+        "decisionId": "cross-day-verified-final-xz8taFAd-cid_cafconfed_inaterougemad_redarrowszam_20260912-v1",
+        "policyVersion": "cross-day-provider-verified-final-v1",
+        "correctedFrom": {
+          "status": "STATUS_SCHEDULED",
+          "statusType": null,
+          "rawStatus": "STATUS_SCHEDULED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "correctedTo": {
+          "status": "STATUS_POSTPONED",
+          "statusType": "STATUS_POSTPONED",
+          "rawStatus": "STATUS_POSTPONED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "reason": "verified_cross_day_provider_reschedule",
+        "decisionBasis": "exact_provider_identity_cross_day_supersession_with_verified_final",
+        "providerEvidence": {
+          "provider": "flashscore",
+          "providerMatchId": "xz8taFAd",
+          "supersededCanonicalId": "cid_cafconfed_inaterougemad_redarrowszam_20260912",
+          "supersededDayKey": "2026-09-12",
+          "supersededKickoffUtc": "2026-09-12T14:30:00.000Z",
+          "evidenceCanonicalId": "cid_cafconfed_inaterougemad_redarrowszam_20260913",
+          "evidenceDayKey": "2026-09-13",
+          "evidenceKickoffUtc": "2026-09-13T11:00:00.000Z",
+          "evidenceHomeTeam": "Inate Rouge (Mad)",
+          "evidenceAwayTeam": "Red Arrows (Zam)",
+          "verifiedFinalArtifact": "data/final-results/2026-09-13/cid_cafconfed_inaterougemad_redarrowszam_20260913.json",
+          "verifiedFinalVerdict": "verified_final_result",
+          "verifiedFinalTruth": true,
+          "verifiedFinalScoreHome": 0,
+          "verifiedFinalScoreAway": 2
+        },
+        "guarantees": {
+          "flashscoreProviderOnly": true,
+          "exactProviderIdentity": true,
+          "sameLeague": true,
+          "exactNormalizedOrderedTeamPair": true,
+          "uniqueLatestObservation": true,
+          "strictlyNewerKickoff": true,
+          "minimumKickoffShiftRequired": true,
+          "strictlyNewerObservation": true,
+          "nonOverlappingObservationWindows": true,
+          "oldKickoffPastGraceRequired": true,
+          "oldOccurrenceScorelessScheduledOnly": true,
+          "playedFinalNeverSuperseded": true,
+          "existingExplicitNonPlayedNeverSuperseded": true,
+          "exactVerifiedFinalArtifact": true,
+          "exactVerifiedFinalFlashscoreProviderIdentity": true,
+          "verifiedFinalScoreParity": true,
+          "verifiedFinalTeamPairParity": true,
+          "oldOccurrenceHasNoActiveFinalResult": true,
+          "oldOccurrenceAbsentFromHistory": true,
+          "oldOccurrenceHasNoOfficialValuePick": true,
+          "oldOccurrenceScoreRemainsNull": true,
+          "scoreNeverCopiedBackward": true
+        }
+      }
     },
     {
       "canonicalId": "cid_cafconfed_eastendlionssie_academiefadivo_20260912",
