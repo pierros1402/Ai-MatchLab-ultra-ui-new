@@ -1,0 +1,155 @@
+name: TMP cross-day verified-final source validation 20260914
+
+on:
+  push:
+    branches:
+      - fix/20260914-crossday-verified-final-supersession-v1
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout implementation branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Verify exact source-only boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=add96e5ad981d43a1034e70e1260e6e4fb413b2d
+          git fetch --no-tags --depth=1 origin "$BASE"
+          git diff --name-only "$BASE" HEAD | sort > /tmp/changed.txt
+          cat > /tmp/expected.txt <<'EOF'
+          .github/workflows/tmp-crossday-verified-final-source-validation-20260914.yml
+          engine-v1/core/cross-day-provider-reschedule.js
+          engine-v1/jobs/apply-cross-day-verified-final-supersession.js
+          engine-v1/tests/cross-day-provider-reschedule.test.js
+          EOF
+          sort -o /tmp/expected.txt /tmp/expected.txt
+          echo '=== CHANGED ==='
+          cat /tmp/changed.txt
+          diff -u /tmp/expected.txt /tmp/changed.txt
+          echo "SOURCE_ONLY_BASE=$BASE"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npm --prefix engine-v1 ci --no-audit --no-fund
+
+      - name: Syntax checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/core/cross-day-provider-reschedule.js
+          node --check engine-v1/jobs/apply-cross-day-verified-final-supersession.js
+          node --check engine-v1/tests/cross-day-provider-reschedule.test.js
+
+      - name: Classifier unit tests
+        shell: bash
+        run: node --test engine-v1/tests/cross-day-provider-reschedule.test.js
+
+      - name: Current-data verified-final dry-run impact gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import {
+            buildCrossDayVerifiedFinalSupersessionPlan,
+            applyCrossDayVerifiedFinalSupersessionWindow
+          } from './engine-v1/jobs/apply-cross-day-verified-final-supersession.js';
+
+          const now = new Date('2026-09-14T12:00:00.000Z');
+          const expected = [
+            'cid_fro1_abargir_toftir_20260911',
+            'cid_kos2_ferizaj_istogu_20260911',
+            'cid_kos2_ferizaj_istogu_20260912'
+          ].sort();
+
+          const plan = buildCrossDayVerifiedFinalSupersessionPlan(
+            '2026-09-14',
+            { daysBack: 7, now }
+          );
+          if (plan?.ok !== true) throw new Error(`plan_not_ok:${plan?.reason || 'unknown'}`);
+
+          const actual = plan.eligible.map(row => row.canonicalId).sort();
+          console.log(JSON.stringify({
+            ok: plan.ok,
+            window: plan.window,
+            groupsScanned: plan.groupsScanned,
+            eligibleCount: plan.eligibleCount,
+            eligibleIds: actual,
+            rejectedCount: plan.rejectedCount,
+            rejectedSample: plan.rejected.slice(0, 20),
+            evidence: plan.eligible.map(row => ({
+              canonicalId: row.canonicalId,
+              dayKey: row.dayKey,
+              providerIdentity: row.providerIdentity,
+              evidenceCanonicalId: row.decision?.evidence?.canonicalId || null,
+              evidenceDayKey: row.decision?.evidence?.dayKey || null,
+              verifiedFinalArtifact: row.evidenceFinal?.fileRelative || null,
+              verifiedFinalVerdict: row.evidenceFinal?.verdict || null,
+              verifiedFinalScore: [row.evidenceFinal?.scoreHome, row.evidenceFinal?.scoreAway]
+            }))
+          }, null, 2));
+
+          if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+            throw new Error(`eligible_id_set_mismatch:${actual.join(',')}`);
+          }
+          if (actual.includes('cid_chi2_sanfelipe_sanluis_20260909')) {
+            throw new Error('san_felipe_must_remain_unclassified');
+          }
+          for (const row of plan.eligible) {
+            if (row.evidenceFinal?.ok !== true) throw new Error(`verified_final_gate_missing:${row.canonicalId}`);
+            if (row.evidenceFinal?.verdict !== 'verified_final_result') throw new Error(`unexpected_verified_final_verdict:${row.canonicalId}:${row.evidenceFinal?.verdict}`);
+            if (!String(row.evidenceFinal?.fileRelative || '').startsWith('data/final-results/2026-09-13/')) {
+              throw new Error(`unexpected_evidence_artifact:${row.canonicalId}`);
+            }
+          }
+
+          const dry = applyCrossDayVerifiedFinalSupersessionWindow(
+            '2026-09-14',
+            { daysBack: 7, now, write: false }
+          );
+          if (dry?.ok !== true) throw new Error('dry_apply_not_ok');
+          if (dry.mutationCount !== 3) throw new Error(`dry_mutation_count:${dry.mutationCount}`);
+          if (dry.filesChanged !== 0 || dry.writtenFiles.length !== 0) throw new Error('dry_run_wrote_files');
+          if (dry.guarantees?.scoreNeverCopiedBackward !== true) throw new Error('score_copy_guard_missing');
+          if (dry.mutations.some(row => row.toStatus !== 'STATUS_POSTPONED')) throw new Error('unexpected_target_status');
+          console.log('CURRENT_DATA_EXACT_THREE_ELIGIBLE=PASS');
+          NODE
+
+      - name: San Felipe remains unresolved under production verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/san-felipe.log"
+          node ./engine-v1/jobs/export-verified-final-results-day.js \
+            --date=2026-09-09 \
+            --all-fixtures \
+            --offsets=-7,-6,-5,-4,-3,-2,-1,0 \
+            > "$OUT" 2>&1
+          grep -q 'cid_chi2_sanfelipe_sanluis_20260909' "$OUT"
+          grep -q '"reason": "no_exact_flashscore_match"' "$OUT"
+          grep -q '"canonicalFallbackReason": "canonical_flashscore_status_not_terminal"' "$OUT"
+          echo 'SAN_FELIPE_REMAINS_UNRESOLVED=PASS'
+
+      - name: Prove validation stayed read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          STATUS="$(git status --porcelain)"
+          test -z "$STATUS" || { echo "$STATUS"; exit 1; }
+          echo 'CROSSDAY_SOURCE_VALIDATION_READ_ONLY=PASS'
