@@ -1,0 +1,361 @@
+name: TMP Value foundation rebuild 2026-09-14
+
+on:
+  push:
+    branches:
+      - fix/20260914-value-foundation-rebuild-v1
+
+permissions:
+  contents: write
+
+jobs:
+  repair-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      BASE_SHA: b07d67b7fbe213d124f25752c6e576dec6d25343
+      DAY_KEY: 2026-09-14
+      SEASON: 2026-2027
+      RELEASE_BRANCH: release/20260914-value-foundation-rebuild-v1
+    steps:
+      - name: Checkout isolated repair branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Verify exact repair base and remote pin
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$BASE_SHA"
+          CHANGED="$(git diff --name-only "$BASE_SHA" HEAD)"
+          test "$CHANGED" = ".github/workflows/tmp-value-foundation-rebuild-20260914.yml"
+          git fetch origin main --depth=1
+          test "$(git rev-parse origin/main)" = "$BASE_SHA"
+          test ! -e "data/details/${DAY_KEY}"
+          echo "VALUE_FOUNDATION_REPAIR_BASE_OK=$BASE_SHA"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Prove exact stale-foundation root cause
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import {
+            validateHistoryIndexFoundationSync,
+            validateModelPriorsFoundationSync,
+          } from './engine-v1/core/derived-history-foundation.js';
+
+          const season = process.env.SEASON;
+          const expectedAdded = ['team-aliases/afc.champions.json'];
+
+          function classify(validation) {
+            const stored = new Map((validation?.artifact?.source?.members || []).map(x => [x.path, x]));
+            const current = new Map((validation?.current?.source?.members || []).map(x => [x.path, x]));
+            const added = [...current.keys()].filter(p => !stored.has(p)).sort();
+            const removed = [...stored.keys()].filter(p => !current.has(p)).sort();
+            const changed = [...current.keys()].filter(p => {
+              if (!stored.has(p)) return false;
+              const a = stored.get(p); const b = current.get(p);
+              return a.sha256 !== b.sha256 || a.bytes !== b.bytes;
+            }).sort();
+            return { added, removed, changed };
+          }
+
+          const h = validateHistoryIndexFoundationSync(season);
+          const p = validateModelPriorsFoundationSync(season);
+          if (h.ok || h.reason !== 'history_index_foundation_stale') throw new Error(`unexpected_history_foundation_state:${h.reason}`);
+          if (p.ok || p.reason !== 'model_priors_foundation_stale') throw new Error(`unexpected_priors_foundation_state:${p.reason}`);
+          if (h.artifact?.outputs?.sha256 !== h.current?.outputs?.sha256) throw new Error('history_outputs_already_changed');
+          if (p.artifact?.outputs?.sha256 !== p.current?.outputs?.sha256) throw new Error('prior_outputs_already_changed');
+          const hd = classify(h); const pd = classify(p);
+          if (JSON.stringify(hd.added) !== JSON.stringify(expectedAdded) || hd.removed.length || hd.changed.length) throw new Error(`unexpected_history_source_diff:${JSON.stringify(hd)}`);
+          if (JSON.stringify(pd.added) !== JSON.stringify(expectedAdded) || pd.removed.length || pd.changed.length) throw new Error(`unexpected_prior_source_diff:${JSON.stringify(pd)}`);
+          console.log(JSON.stringify({ history: { reason:h.reason, diff:hd }, priors:{ reason:p.reason, diff:pd } }, null, 2));
+          NODE
+
+      - name: Capture protected Value and shadow bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            for p in \
+              "data/value/${DAY_KEY}.json" \
+              "data/value/_audit/${DAY_KEY}.json" \
+              "data/value-comparison/${DAY_KEY}.json" \
+              "data/deploy-snapshots/${DAY_KEY}/value.json" \
+              "data/deploy-snapshots/${DAY_KEY}/value-audit.json" \
+              "data/deploy-snapshots/${DAY_KEY}/plan-c-shadow.json" \
+              "data/plan-c-shadow/${DAY_KEY}.json" \
+              "data/plan-c-shadow/_audit/${DAY_KEY}.json"; do
+              test ! -f "$p" || sha256sum "$p"
+            done
+            if [ -d "data/value-plans/${DAY_KEY}" ]; then
+              find "data/value-plans/${DAY_KEY}" -type f -name '*.json' -print0 | sort -z | xargs -0 -r sha256sum
+            fi
+          } | sort > "$RUNNER_TEMP/protected.before"
+          cat "$RUNNER_TEMP/protected.before"
+
+      - name: Rebuild current-season history indexes from current truth
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-current-season-indexes.js "$SEASON" "$DAY_KEY"
+
+      - name: Rebuild model priors from current archive and aliases
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-model-priors.js "$SEASON"
+
+      - name: Require repaired foundations valid and populated
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import {
+            validateHistoryIndexFoundationSync,
+            validateModelPriorsFoundationSync,
+          } from './engine-v1/core/derived-history-foundation.js';
+          const season = process.env.SEASON;
+          const h = validateHistoryIndexFoundationSync(season);
+          const p = validateModelPriorsFoundationSync(season);
+          if (!h.ok) throw new Error(`history_foundation_not_ready:${h.reason}`);
+          if (!p.ok) throw new Error(`priors_foundation_not_ready:${p.reason}`);
+          const tf = JSON.parse(fs.readFileSync(`data/history-index/team-form/${season}.json`, 'utf8'));
+          const priors = JSON.parse(fs.readFileSync(`data/model-priors/${season}.json`, 'utf8'));
+          const checks = [
+            ['Jong PSV','ned.2'], ['Jong AZ','ned.2'],
+            ['Maccabi Tel-Aviv','isr.1'], ['Hapoel Tel Aviv','isr.1']
+          ];
+          function findForm(name) {
+            const target = String(name).toLowerCase().replace(/[^a-z0-9]+/g,'');
+            return Object.entries(tf).find(([k]) => String(k).toLowerCase().replace(/[^a-z0-9]+/g,'') === target) || null;
+          }
+          for (const [name, slug] of checks) {
+            const form = findForm(name);
+            if (!form || Number(form[1]?.total?.played || 0) < 3) throw new Error(`missing_recent_form:${name}`);
+            const prior = priors?.teamPriors?.[`${slug}::${name}`];
+            if (!prior || Number(prior.sample || 0) <= 0) throw new Error(`missing_prior:${slug}:${name}`);
+          }
+          console.log(JSON.stringify({
+            historyFoundation: h.artifact?.foundationFingerprint,
+            priorsFoundation: p.artifact?.foundationFingerprint,
+            teamFormKeys: Object.keys(tf).length,
+            teamPriorKeys: Object.keys(priors?.teamPriors || {}).length,
+          }, null, 2));
+          NODE
+
+      - name: Rebuild current-day Details on repaired foundations
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
+
+      - name: Re-export snapshot preserving frozen Value
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY" --no-update-latest --replace-details --preserve-value --no-build-missing-details --fail-on-missing-details
+          node ./engine-v1/jobs/verify-details-value-mirror-day.js --date="$DAY_KEY" --gate
+
+      - name: Refresh invariant and Value coverage evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY"
+          node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" --gate
+          node ./engine-v1/jobs/build-value-coverage-report-day.js "$DAY_KEY"
+
+      - name: Require Value denominator recovered
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const day = process.env.DAY_KEY;
+          const r = JSON.parse(fs.readFileSync(`data/value/_coverage-reports/${day}.json`, 'utf8'));
+          if (r?.source?.inputSource !== 'canonical_fixtures') throw new Error('coverage_not_canonical');
+          if (Number(r?.source?.snapshotFallbackMatches || 0) !== 0) throw new Error('snapshot_fallback_nonzero');
+          if (Number(r?.counts?.totalRows || -1) !== Number(r?.source?.playable || -2)) throw new Error('denominator_mismatch');
+          if (Number(r?.counts?.detailsFound || -1) !== Number(r?.counts?.totalRows || -2)) throw new Error('details_coverage_not_complete');
+          if (Number(r?.counts?.intelligenceOk || -1) !== Number(r?.counts?.totalRows || -2)) throw new Error('intelligence_coverage_not_complete');
+          if (Number(r?.counts?.valueFailed || 0) !== 0) throw new Error('value_evaluation_errors_present');
+          if (Number(r?.counts?.valueReturned || 0) <= 0) throw new Error('value_denominator_still_zero');
+
+          const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'');
+          function findPair(home, away) {
+            return (Array.isArray(r.rows) ? r.rows : []).find(x => norm(x.homeTeam) === norm(home) && norm(x.awayTeam) === norm(away));
+          }
+          for (const [home, away] of [
+            ['Jong PSV','Jong AZ'],
+            ['Maccabi Tel-Aviv','Hapoel Tel Aviv']
+          ]) {
+            const row = findPair(home, away);
+            if (!row) throw new Error(`coverage_row_missing:${home}:${away}`);
+            const m = row.minimumSample || {};
+            if (Number(m.homeRawSample || 0) < 3 || Number(m.awayRawSample || 0) < 3) throw new Error(`recent_sample_not_recovered:${home}:${away}`);
+            if (Number(m.homePriorSample || 0) <= 0 || Number(m.awayPriorSample || 0) <= 0) throw new Error(`prior_sample_not_recovered:${home}:${away}`);
+            if (row.valueReturned !== true) throw new Error(`value_not_returned_for_frozen_pick_pair:${home}:${away}`);
+          }
+          const summary = {
+            source: r.source,
+            counts: r.counts,
+            nullByReason: r.breakdown?.nullByReason || {},
+            nullByClass: r.breakdown?.nullByClass || {},
+          };
+          fs.writeFileSync(`${process.env.RUNNER_TEMP}/value-coverage-after.json`, JSON.stringify(summary, null, 2) + '\n');
+          console.log(JSON.stringify(summary, null, 2));
+          NODE
+
+      - name: Refresh strict publication evidence and gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date="$DAY_KEY"
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date="$DAY_KEY" --gate
+          node ./engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY" --gate
+          node ./engine-v1/jobs/check-value-artifact-gate.js --date="$DAY_KEY"
+          node ./engine-v1/jobs/verify-daily-publish-contract.js --date="$DAY_KEY" --prepublish --gate
+          node ./engine-v1/jobs/promote-deploy-snapshot-latest-day.js --date="$DAY_KEY"
+          node ./engine-v1/jobs/verify-daily-publish-contract.js --date="$DAY_KEY" --gate
+
+      - name: Prove frozen Value and shadow bytes unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            for p in \
+              "data/value/${DAY_KEY}.json" \
+              "data/value/_audit/${DAY_KEY}.json" \
+              "data/value-comparison/${DAY_KEY}.json" \
+              "data/deploy-snapshots/${DAY_KEY}/value.json" \
+              "data/deploy-snapshots/${DAY_KEY}/value-audit.json" \
+              "data/deploy-snapshots/${DAY_KEY}/plan-c-shadow.json" \
+              "data/plan-c-shadow/${DAY_KEY}.json" \
+              "data/plan-c-shadow/_audit/${DAY_KEY}.json"; do
+              test ! -f "$p" || sha256sum "$p"
+            done
+            if [ -d "data/value-plans/${DAY_KEY}" ]; then
+              find "data/value-plans/${DAY_KEY}" -type f -name '*.json' -print0 | sort -z | xargs -0 -r sha256sum
+            fi
+          } | sort > "$RUNNER_TEMP/protected.after"
+          diff -u "$RUNNER_TEMP/protected.before" "$RUNNER_TEMP/protected.after"
+
+      - name: Remove transient source Details and verify write set
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "data/details/${DAY_KEY}"
+          git diff --check
+          STATUS="$(git status --short --untracked-files=all)"
+          echo "$STATUS"
+          BAD="$(printf '%s\n' "$STATUS" | sed -E 's/^.. //' | grep -Ev '^(data/history-index/(team-form|league-form|matchups|foundation)/2026-2027\.json|data/model-priors/(2026-2027\.json|foundation/2026-2027\.json)|data/deploy-snapshots/2026-09-14/|data/deploy-snapshots/latest\.json|data/foundation-integrity/(2026-09-14\.json|latest\.json)|data/value/_coverage-reports/2026-09-14\.json)$' || true)"
+          if [ -n "$BAD" ]; then
+            echo "Unexpected repair paths:"
+            echo "$BAD"
+            exit 1
+          fi
+          test -n "$STATUS"
+
+      - name: Require remote main still pinned
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          test "$(git rev-parse origin/main)" = "$BASE_SHA"
+
+      - name: Build clean data-only release commit
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "matchlab-repair"
+          git config user.email "matchlab-repair@users.noreply.github.com"
+          TMP_INDEX="$(mktemp)"
+          rm -f "$TMP_INDEX"
+          export GIT_INDEX_FILE="$TMP_INDEX"
+          git read-tree "$BASE_SHA"
+          git add -A -- \
+            data/history-index/team-form/2026-2027.json \
+            data/history-index/league-form/2026-2027.json \
+            data/history-index/matchups/2026-2027.json \
+            data/history-index/foundation/2026-2027.json \
+            data/model-priors/2026-2027.json \
+            data/model-priors/foundation/2026-2027.json \
+            "data/deploy-snapshots/${DAY_KEY}" \
+            data/deploy-snapshots/latest.json \
+            "data/foundation-integrity/${DAY_KEY}.json" \
+            data/foundation-integrity/latest.json \
+            "data/value/_coverage-reports/${DAY_KEY}.json"
+          TREE="$(git write-tree)"
+          COMMIT="$(printf '%s\n' 'Repair Value derived foundation after AFC alias update' | git commit-tree "$TREE" -p "$BASE_SHA")"
+          unset GIT_INDEX_FILE
+          rm -f "$TMP_INDEX"
+          PATHS="$(git diff --name-only "$BASE_SHA" "$COMMIT")"
+          echo "$PATHS"
+          BAD="$(printf '%s\n' "$PATHS" | grep -Ev '^(data/history-index/(team-form|league-form|matchups|foundation)/2026-2027\.json|data/model-priors/(2026-2027\.json|foundation/2026-2027\.json)|data/deploy-snapshots/2026-09-14/|data/deploy-snapshots/latest\.json|data/foundation-integrity/(2026-09-14\.json|latest\.json)|data/value/_coverage-reports/2026-09-14\.json)$' || true)"
+          if [ -n "$BAD" ]; then
+            echo "Unexpected release commit paths:"
+            echo "$BAD"
+            exit 1
+          fi
+          for p in \
+            "data/value/${DAY_KEY}.json" \
+            "data/value/_audit/${DAY_KEY}.json" \
+            "data/value-comparison/${DAY_KEY}.json" \
+            "data/deploy-snapshots/${DAY_KEY}/value.json" \
+            "data/deploy-snapshots/${DAY_KEY}/value-audit.json" \
+            "data/deploy-snapshots/${DAY_KEY}/plan-c-shadow.json" \
+            "data/plan-c-shadow/${DAY_KEY}.json" \
+            "data/plan-c-shadow/_audit/${DAY_KEY}.json"; do
+            if git diff --name-only "$BASE_SHA" "$COMMIT" -- "$p" | grep -q .; then
+              echo "Protected path changed in release commit: $p"
+              exit 1
+            fi
+          done
+          if git diff --name-only "$BASE_SHA" "$COMMIT" -- "data/value-plans/${DAY_KEY}" | grep -q .; then
+            echo "Protected value-plans changed in release commit"
+            exit 1
+          fi
+          echo "release_sha=$COMMIT" >> "$GITHUB_OUTPUT"
+          printf '%s\n' "$COMMIT" > "$RUNNER_TEMP/release-sha.txt"
+          printf '%s\n' "$PATHS" > "$RUNNER_TEMP/release-paths.txt"
+          git show --stat --oneline "$COMMIT"
+
+      - name: Push clean commit to release branch only
+        shell: bash
+        env:
+          RELEASE_SHA: ${{ steps.release.outputs.release_sha }}
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          test "$(git rev-parse origin/main)" = "$BASE_SHA"
+          git push origin "${RELEASE_SHA}:refs/heads/${RELEASE_BRANCH}"
+
+      - name: Upload repair evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: value-foundation-rebuild-20260914-evidence
+          path: |
+            ${{ runner.temp }}/protected.before
+            ${{ runner.temp }}/protected.after
+            ${{ runner.temp }}/value-coverage-after.json
+            ${{ runner.temp }}/release-sha.txt
+            ${{ runner.temp }}/release-paths.txt
+            data/value/_coverage-reports/2026-09-14.json
+            data/foundation-integrity/2026-09-14.json
+          if-no-files-found: error
+          retention-days: 14
