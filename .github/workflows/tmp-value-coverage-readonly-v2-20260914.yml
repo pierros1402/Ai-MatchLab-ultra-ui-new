@@ -1,0 +1,133 @@
+name: TMP Value coverage read-only V2 2026-09-14
+
+on:
+  push:
+    branches:
+      - audit/20260914-value-coverage-readonly-v2
+
+permissions:
+  contents: read
+
+jobs:
+  value-coverage-readonly-v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASE_SHA: b07d67b7fbe213d124f25752c6e576dec6d25343
+      DAY_KEY: 2026-09-14
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Verify exact audit base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$BASE_SHA"
+          CHANGED="$(git diff --name-only "$BASE_SHA" HEAD)"
+          test "$CHANGED" = ".github/workflows/tmp-value-coverage-readonly-v2-20260914.yml"
+          git fetch origin main --depth=1
+          test "$(git rev-parse origin/main)" = "$BASE_SHA"
+          echo "VALUE_COVERAGE_AUDIT_BASE_OK=$BASE_SHA"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Build Value coverage report read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-value-coverage-report-day.js "$DAY_KEY"
+          test -f "data/value/_coverage-reports/${DAY_KEY}.json"
+
+      - name: Build diagnostic summaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const day = process.env.DAY_KEY;
+          const file = `data/value/_coverage-reports/${day}.json`;
+          const r = JSON.parse(fs.readFileSync(file, 'utf8'));
+          const summary = {
+            ok: r.ok,
+            dayKey: r.dayKey,
+            season: r.season,
+            generatedAt: r.generatedAt,
+            source: r.source,
+            counts: r.counts,
+            nullByReason: r.breakdown?.nullByReason || {},
+            nullByClass: r.breakdown?.nullByClass || {},
+            nullByLeague: r.breakdown?.nullByLeague || {},
+            returnedByLeague: r.breakdown?.returnedByLeague || {}
+          };
+          fs.writeFileSync('value-coverage-summary.json', JSON.stringify(summary, null, 2) + '\n');
+
+          const sampleRows = (Array.isArray(r.rows) ? r.rows : []).slice(0, 20).map(x => ({
+            matchId: x.matchId,
+            leagueSlug: x.leagueSlug,
+            homeTeam: x.homeTeam,
+            awayTeam: x.awayTeam,
+            detailsFound: x.detailsFound,
+            intelligenceOk: x.intelligenceOk,
+            valueReturned: x.valueReturned,
+            valueError: x.valueError,
+            nullReason: x.nullReason,
+            nullClass: x.nullClass,
+            minimumSample: x.minimumSample
+          }));
+          fs.writeFileSync('value-coverage-sample-rows.json', JSON.stringify(sampleRows, null, 2) + '\n');
+          console.log(JSON.stringify(summary, null, 2));
+
+          if (r?.source?.inputSource !== 'canonical_fixtures') throw new Error('coverage_not_canonical');
+          if (Number(r?.source?.snapshotFallbackMatches || 0) !== 0) throw new Error('snapshot_fallback_nonzero');
+          if (Number(r?.source?.sourceMatches || -1) !== Number(r?.source?.fixtureUniverse?.count || -2)) {
+            throw new Error('fixture_universe_count_mismatch');
+          }
+          if (!String(r?.source?.fixtureUniverse?.hash || '').trim()) throw new Error('fixture_universe_hash_missing');
+          if (Number(r?.counts?.totalRows || -1) !== Number(r?.source?.playable || -2)) {
+            throw new Error('playable_denominator_mismatch');
+          }
+          NODE
+
+      - name: Prove repository not mutated outside diagnostic artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          STATUS="$(git status --short --untracked-files=all)"
+          echo "$STATUS"
+          BAD="$(printf '%s\n' "$STATUS" | grep -vE '^\?\? (data/value/_coverage-reports/2026-09-14\.json|value-coverage-summary\.json|value-coverage-sample-rows\.json)$' || true)"
+          if [ -n "$BAD" ]; then
+            echo "Unexpected worktree mutation:"
+            echo "$BAD"
+            exit 1
+          fi
+
+      - name: Recheck remote main pin
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          test "$(git rev-parse origin/main)" = "$BASE_SHA"
+
+      - name: Upload Value coverage evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: value-coverage-readonly-v2-20260914
+          path: |
+            data/value/_coverage-reports/2026-09-14.json
+            value-coverage-summary.json
+            value-coverage-sample-rows.json
+          if-no-files-found: error
+          retention-days: 14
