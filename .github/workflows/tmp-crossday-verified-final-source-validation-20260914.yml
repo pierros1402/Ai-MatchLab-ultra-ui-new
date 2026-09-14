@@ -73,7 +73,13 @@ jobs:
 
           const now = new Date('2026-09-14T12:00:00.000Z');
           const expected = [
+            'cid_cafconfed_inaterougemad_redarrowszam_20260912',
+            'cid_engfa_bishopauckland_emley_20260908',
+            'cid_engfa_exmouthtown_banbury_20260908',
+            'cid_engfa_whyteleafe_crowborough_20260908',
             'cid_fro1_abargir_toftir_20260911',
+            'cid_fro2_hbtorshavn2_tbtvoroyri_20260912',
+            'cid_fro2_suduroy_sandur_20260912',
             'cid_kos2_ferizaj_istogu_20260911',
             'cid_kos2_ferizaj_istogu_20260912'
           ].sort();
@@ -114,8 +120,10 @@ jobs:
           for (const row of plan.eligible) {
             if (row.evidenceFinal?.ok !== true) throw new Error(`verified_final_gate_missing:${row.canonicalId}`);
             if (row.evidenceFinal?.verdict !== 'verified_final_result') throw new Error(`unexpected_verified_final_verdict:${row.canonicalId}:${row.evidenceFinal?.verdict}`);
-            if (!String(row.evidenceFinal?.fileRelative || '').startsWith('data/final-results/2026-09-13/')) {
-              throw new Error(`unexpected_evidence_artifact:${row.canonicalId}`);
+            const evidenceDayKey = String(row.decision?.evidence?.dayKey || '');
+            const expectedPrefix = `data/final-results/${evidenceDayKey}/`;
+            if (!evidenceDayKey || !String(row.evidenceFinal?.fileRelative || '').startsWith(expectedPrefix)) {
+              throw new Error(`unexpected_evidence_artifact:${row.canonicalId}:${row.evidenceFinal?.fileRelative || 'none'}`);
             }
           }
 
@@ -124,11 +132,11 @@ jobs:
             { daysBack: 7, now, write: false }
           );
           if (dry?.ok !== true) throw new Error('dry_apply_not_ok');
-          if (dry.mutationCount !== 3) throw new Error(`dry_mutation_count:${dry.mutationCount}`);
+          if (dry.mutationCount !== 9) throw new Error(`dry_mutation_count:${dry.mutationCount}`);
           if (dry.filesChanged !== 0 || dry.writtenFiles.length !== 0) throw new Error('dry_run_wrote_files');
           if (dry.guarantees?.scoreNeverCopiedBackward !== true) throw new Error('score_copy_guard_missing');
           if (dry.mutations.some(row => row.toStatus !== 'STATUS_POSTPONED')) throw new Error('unexpected_target_status');
-          console.log('CURRENT_DATA_EXACT_THREE_ELIGIBLE=PASS');
+          console.log('CURRENT_DATA_EXACT_NINE_ELIGIBLE=PASS');
           NODE
 
       - name: San Felipe remains unresolved under production verifier
