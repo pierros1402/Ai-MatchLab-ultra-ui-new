@@ -1,0 +1,182 @@
+name: TMP cross-day supersession current-main V2 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-crossday-supersession-current-main-v2
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Verify exact current-main base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=add96e5ad981d43a1034e70e1260e6e4fb413b2d
+          AUDIT_PATH=.github/workflows/tmp-crossday-supersession-current-main-v2-20260914.yml
+          git fetch --no-tags --depth=1 origin "$BASE"
+          CHANGED="$(git diff --name-only "$BASE" HEAD)"
+          printf '%s\n' "$CHANGED"
+          test "$CHANGED" = "$AUDIT_PATH"
+          echo "AUDIT_BASE=$BASE"
+          echo "AUDIT_HEAD=$(git rev-parse HEAD)"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npm --prefix engine-v1 ci --no-audit --no-fund
+
+      - name: Load validated classifier read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin 8c3df626b7c88c2d158fb0e4164e579dcfcd3dae
+          git show 8c3df626b7c88c2d158fb0e4164e579dcfcd3dae:engine-v1/core/cross-day-provider-reschedule.js > "$RUNNER_TEMP/cross-day-provider-reschedule.mjs"
+          node --check "$RUNNER_TEMP/cross-day-provider-reschedule.mjs"
+          HASH="$(sha256sum "$RUNNER_TEMP/cross-day-provider-reschedule.mjs" | awk '{print $1}')"
+          test "$HASH" = "14b3fcdaeb722d67c3cb905249035ff92e79319c9fc6ec684fd771a342c1715a"
+          echo "CLASSIFIER_SHA256=$HASH"
+
+      - name: Audit exact-provider supersession and dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { pathToFileURL } from 'node:url';
+          const classifierPath = path.join(process.env.RUNNER_TEMP, 'cross-day-provider-reschedule.mjs');
+          const { classifyCrossDayProviderRescheduleGroup } = await import(pathToFileURL(classifierPath));
+
+          const BASE='add96e5ad981d43a1034e70e1260e6e4fb413b2d';
+          const targets={
+            ab:{providerId:'bR8MdXt2', evidenceId:'cid_fro1_abargir_toftir_20260913', superseded:['cid_fro1_abargir_toftir_20260911'], score:[1,1]},
+            ferizaj:{providerId:'OtToQ8QO', evidenceId:'cid_kos2_ferizaj_istogu_20260913', superseded:['cid_kos2_ferizaj_istogu_20260911','cid_kos2_ferizaj_istogu_20260912'], score:[2,0]},
+            sanFelipe:{providerId:'Khg606iL', canonicalId:'cid_chi2_sanfelipe_sanluis_20260909'}
+          };
+          const failures=[];
+          const readJson=f=>JSON.parse(fs.readFileSync(f,'utf8'));
+          const rowsOf=p=>Array.isArray(p)?p:(Array.isArray(p?.fixtures)?p.fixtures:(Array.isArray(p?.matches)?p.matches:(Array.isArray(p?.rows)?p.rows:[])));
+          const providerId=r=>String(r?.sourceMatchId||r?.sourceId||r?.providerMatchId||r?.providerIds?.flashscore||'').trim();
+          function walk(dir,fn){if(!fs.existsSync(dir))return;for(const e of fs.readdirSync(dir,{withFileTypes:true})){const p=path.join(dir,e.name);e.isDirectory()?walk(p,fn):fn(p);}}
+
+          const canonical=[];
+          walk('data/canonical-fixtures',file=>{if(!file.endsWith('.json'))return;let p;try{p=readJson(file)}catch{return}for(const r of rowsOf(p))canonical.push({...r,__file:file});});
+          const groups={};
+          for(const [name,t] of Object.entries(targets)) groups[name]=canonical.filter(r=>providerId(r)===t.providerId);
+
+          const decisions={};
+          for(const name of ['ab','ferizaj']){
+            const t=targets[name];
+            const d=classifyCrossDayProviderRescheduleGroup(groups[name],{asOfMs:Date.parse('2026-09-14T12:00:00Z')});
+            decisions[name]=d;
+            if(d?.ok!==true)failures.push(`${name}:classifier_not_ok:${d?.reason||'unknown'}`);
+            if(d?.evidence?.canonicalId!==t.evidenceId)failures.push(`${name}:evidence_mismatch`);
+            const actual=[...(d?.superseded||[])].map(x=>x.canonicalId).sort();
+            const expected=[...t.superseded].sort();
+            if(JSON.stringify(actual)!==JSON.stringify(expected))failures.push(`${name}:superseded_mismatch:${actual.join(',')}`);
+            if(d?.guarantees?.exactProviderIdentity!==true||d?.guarantees?.oldOccurrenceScorelessScheduledOnly!==true||d?.guarantees?.playedFinalNeverSuperseded!==true)failures.push(`${name}:guarantees_missing`);
+          }
+          const san=classifyCrossDayProviderRescheduleGroup(groups.sanFelipe,{asOfMs:Date.parse('2026-09-14T12:00:00Z')});
+          decisions.sanFelipe=san;
+          if(groups.sanFelipe.length!==1)failures.push(`sanFelipe:occurrence_count:${groups.sanFelipe.length}`);
+          if(groups.sanFelipe[0]?.canonicalId!==targets.sanFelipe.canonicalId)failures.push('sanFelipe:canonical_id_mismatch');
+          if(san?.ok===true)failures.push('sanFelipe:must_remain_unclassified');
+
+          const verifiedFinals={};
+          for(const name of ['ab','ferizaj']){
+            const t=targets[name];
+            const file=`data/final-results/2026-09-13/${t.evidenceId}.json`;
+            if(!fs.existsSync(file)){failures.push(`${name}:verified_final_missing`);continue;}
+            const r=readJson(file);
+            verifiedFinals[name]={file,matchId:r.matchId,verifiedFinalTruth:r.verifiedFinalTruth,score:[r.scoreHome,r.scoreAway],providerMatchId:r?.sources?.[0]?.providerMatchId||null,verdict:r.finalTruthVerdict||r.verdict||null};
+            if(r.verifiedFinalTruth!==true)failures.push(`${name}:verified_final_not_true`);
+            if(r.matchId!==t.evidenceId)failures.push(`${name}:verified_final_id_mismatch`);
+            if(String(r?.sources?.[0]?.providerMatchId||'')!==t.providerId)failures.push(`${name}:verified_final_provider_mismatch`);
+            if(Number(r.scoreHome)!==t.score[0]||Number(r.scoreAway)!==t.score[1])failures.push(`${name}:verified_final_score_mismatch`);
+          }
+
+          const oldIds=[...targets.ab.superseded,...targets.ferizaj.superseded];
+          const activeFinalHits=[],historyHits=[],officialPickHits=[],historicalAuditHits=[],observationHits=[];
+          walk('data/final-results',file=>{if(!file.endsWith('.json'))return;const s=fs.readFileSync(file,'utf8');for(const id of oldIds)if(s.includes(id))activeFinalHits.push({id,file});});
+          walk('data/history',file=>{if(!file.endsWith('.json'))return;const s=fs.readFileSync(file,'utf8');for(const id of oldIds)if(s.includes(id))historyHits.push({id,file});});
+
+          if(fs.existsSync('data/value')){
+            for(const name of fs.readdirSync('data/value')){
+              if(!/^\d{4}-\d{2}-\d{2}\.json$/.test(name))continue;
+              const file=path.join('data/value',name),s=fs.readFileSync(file,'utf8');
+              for(const id of oldIds)if(s.includes(id))officialPickHits.push({id,file});
+            }
+          }
+          walk('data/deploy-snapshots',file=>{
+            const base=path.basename(file);
+            if(base!=='value.json'&&base!=='value-audit.json')return;
+            const s=fs.readFileSync(file,'utf8');
+            for(const id of oldIds)if(s.includes(id)){
+              if(base==='value.json')officialPickHits.push({id,file}); else historicalAuditHits.push({id,file});
+            }
+          });
+          walk('data/value/_audit',file=>{if(!file.endsWith('.json'))return;const s=fs.readFileSync(file,'utf8');for(const id of oldIds)if(s.includes(id))historicalAuditHits.push({id,file});});
+          for(const root of ['data/value-plans','data/value-comparison'])walk(root,file=>{if(!file.endsWith('.json'))return;const s=fs.readFileSync(file,'utf8');for(const id of oldIds)if(s.includes(id))observationHits.push({id,file});});
+
+          if(activeFinalHits.length)failures.push(`superseded_active_final_hits:${activeFinalHits.length}`);
+          if(historyHits.length)failures.push(`superseded_history_hits:${historyHits.length}`);
+          if(officialPickHits.length)failures.push(`superseded_official_pick_hits:${officialPickHits.length}`);
+
+          const result={ok:failures.length===0,auditBase:BASE,providerOccurrenceCounts:Object.fromEntries(Object.entries(groups).map(([k,v])=>[k,v.length])),providerOccurrences:Object.fromEntries(Object.entries(groups).map(([k,v])=>[k,v.map(r=>({canonicalId:r.canonicalId,dayKey:r.dayKey,kickoffUtc:r.kickoffUtc,status:r.status,scoreHome:r.scoreHome,scoreAway:r.scoreAway,file:r.__file}))])),decisions,verifiedFinals,dependencyAudit:{activeFinalHits,historyHits,officialPickHits,historicalAuditHitCount:historicalAuditHits.length,historicalAuditHitSample:historicalAuditHits.slice(0,20),observationHitCount:observationHits.length,observationHitSample:observationHits.slice(0,20)},failures};
+          const out=path.join(process.env.RUNNER_TEMP,'crossday-current-main-v2.json');
+          fs.writeFileSync(out,JSON.stringify(result,null,2)+'\n');
+          console.log(JSON.stringify(result,null,2));
+          if(!result.ok)process.exit(1);
+          NODE
+
+      - name: Fresh production verifier dry-run for San Felipe
+        shell: bash
+        run: |
+          set -u
+          OUT="$RUNNER_TEMP/san-felipe-verifier.log"
+          set +e
+          node ./engine-v1/jobs/export-verified-final-results-day.js \
+            --date=2026-09-09 \
+            --all-fixtures \
+            --offsets=-7,-6,-5,-4,-3,-2,-1,0 \
+            >"$OUT" 2>&1
+          RC=$?
+          set -e
+          echo "SAN_FELIPE_DRY_RUN_RC=$RC"
+          grep -E -C 8 'cid_chi2_sanfelipe_sanluis_20260909|San Felipe|San Luis|Khg606iL|no_exact_flashscore_match|canonical_flashscore_status_not_terminal' "$OUT" || true
+          tail -n 80 "$OUT" || true
+
+      - name: Prove repository remained read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          STATUS="$(git status --porcelain)"
+          test -z "$STATUS" || { echo "$STATUS"; exit 1; }
+          echo "CROSSDAY_CURRENT_MAIN_V2_READ_ONLY=PASS"
+
+      - name: Upload audit evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: crossday-current-main-v2-20260914
+          path: |
+            ${{ runner.temp }}/crossday-current-main-v2.json
+            ${{ runner.temp }}/san-felipe-verifier.log
+          if-no-files-found: error
