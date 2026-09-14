@@ -41,7 +41,7 @@ test("scheduled full publication is tomorrow-only and cannot consume midnight", 
   const timeoutMinutes = Number(timeoutMatch[2]);
 
   assert.equal(cutoffMinutes, 1330);
-  assert.equal(manualTimeoutMinutes, 180);
+  assert.equal(manualTimeoutMinutes, 300);
   assert.equal(timeoutMinutes, 100);
   assert.ok(
     cutoffMinutes + timeoutMinutes < 1440,
