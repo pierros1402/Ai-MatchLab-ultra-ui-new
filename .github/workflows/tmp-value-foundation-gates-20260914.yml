@@ -1,0 +1,65 @@
+name: TMP Value foundation gates 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-value-foundation-gates-current-main
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      - name: Verify exact base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=bee1afa9b45551af7e5c1ab05b99d4d3fb6418db
+          test "$(git rev-parse HEAD^)" = "$BASE"
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: Inspect foundation gates read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import {
+            validateHistoryIndexFoundationSync,
+            validateModelPriorsFoundationSync,
+            validateH2HFoundationSync
+          } from './engine-v1/core/derived-history-foundation.js';
+          const compact = x => ({
+            ok:x?.ok===true,
+            reason:x?.reason||null,
+            generatedAt:x?.artifact?.generatedAt||null,
+            storedSource:x?.artifact?.source?.sha256||null,
+            currentSource:x?.current?.source?.sha256||null,
+            sourceMatch:!!x?.artifact?.source?.sha256 && x.artifact.source.sha256===x?.current?.source?.sha256,
+            storedOutputs:x?.artifact?.outputs?.sha256||null,
+            currentOutputs:x?.current?.outputs?.sha256||null,
+            outputsMatch:!!x?.artifact?.outputs?.sha256 && x.artifact.outputs.sha256===x?.current?.outputs?.sha256,
+            storedFoundation:x?.artifact?.foundationFingerprint||null,
+            currentFoundation:x?.current?.foundationFingerprint||null
+          });
+          const teamForm=JSON.parse(fs.readFileSync('./data/history-index/team-form/2026-2027.json','utf8'));
+          const leagueForm=JSON.parse(fs.readFileSync('./data/history-index/league-form/2026-2027.json','utf8'));
+          const priors=JSON.parse(fs.readFileSync('./data/model-priors/2026-2027.json','utf8'));
+          console.log(JSON.stringify({
+            historyIndex:compact(validateHistoryIndexFoundationSync('2026-2027')),
+            modelPriors:compact(validateModelPriorsFoundationSync('2026-2027')),
+            h2h:compact(validateH2HFoundationSync()),
+            payloadSizes:{teamForm:Object.keys(teamForm||{}).length,leagueForm:Object.keys(leagueForm||{}).length,teamPriors:Object.keys(priors?.teamPriors||{}).length,leaguePriors:Object.keys(priors?.leaguePriors||{}).length,matchupPriors:Object.keys(priors?.matchupPriors||{}).length}
+          },null,2));
+          NODE
+      - name: Prove read-only tracked state
+        run: test -z "$(git status --short --untracked-files=no)"
