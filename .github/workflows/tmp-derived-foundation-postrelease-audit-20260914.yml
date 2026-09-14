@@ -1,0 +1,80 @@
+name: TMP derived foundation postrelease audit 20260914
+
+on:
+  push:
+    branches:
+      - audit/20260914-derived-foundation-postrelease
+
+permissions:
+  contents: read
+
+jobs:
+  validate-postrelease:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Verify released main pin
+        shell: bash
+        run: |
+          set -euo pipefail
+          REMOTE_MAIN="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          test "$REMOTE_MAIN" = "539b91ad6242610969d8d67565e52235900d62c3"
+          echo "POSTRELEASE_MAIN=$REMOTE_MAIN"
+
+      - name: Validate history and all derived foundations
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import {
+            validateHistoryIndexFoundationSync,
+            validateH2HFoundationSync,
+            validateModelPriorsFoundationSync
+          } from './engine-v1/core/derived-history-foundation.js';
+
+          const report = JSON.parse(fs.readFileSync('./data/history/2026-2027.report.json', 'utf8'));
+          const hi = validateHistoryIndexFoundationSync('2026-2027');
+          const h2h = validateH2HFoundationSync();
+          const mp = validateModelPriorsFoundationSync('2026-2027');
+          const out = {
+            history: {
+              to: report.to,
+              lastCompletedDay: report.lastCompletedDay,
+              totalMatches: report.totalMatches,
+              byDay: {
+                '2026-09-09': report.byDay?.['2026-09-09'] ?? null,
+                '2026-09-10': report.byDay?.['2026-09-10'] ?? null,
+                '2026-09-11': report.byDay?.['2026-09-11'] ?? null,
+                '2026-09-12': report.byDay?.['2026-09-12'] ?? null
+              }
+            },
+            historyIndex: { ok: hi.ok, reason: hi.reason, fingerprint: hi.artifact?.foundationFingerprint ?? null },
+            h2h: { ok: h2h.ok, reason: h2h.reason, fingerprint: h2h.artifact?.foundationFingerprint ?? null },
+            modelPriors: { ok: mp.ok, reason: mp.reason, fingerprint: mp.artifact?.foundationFingerprint ?? null }
+          };
+          console.log(JSON.stringify(out, null, 2));
+          if (!hi.ok || !h2h.ok || !mp.ok) process.exit(1);
+          if (report.to !== '2026-09-12' || report.lastCompletedDay !== '2026-09-12') process.exit(2);
+          if (report.totalMatches !== 4715) process.exit(3);
+          if (report.byDay?.['2026-09-09'] !== 76) process.exit(4);
+          if (report.byDay?.['2026-09-10'] !== 86) process.exit(5);
+          if (report.byDay?.['2026-09-11'] !== 185) process.exit(6);
+          if (report.byDay?.['2026-09-12'] !== 519) process.exit(7);
+          NODE
+
+      - name: Prove read-only checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          echo "POSTRELEASE_READ_ONLY_CLEAN=true"
