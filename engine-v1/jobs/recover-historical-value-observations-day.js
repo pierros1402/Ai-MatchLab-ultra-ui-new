@@ -48,9 +48,13 @@ function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
 
-function writeJsonPretty(filePath, payload) {
+function writeJsonPrettyExclusive(filePath, payload) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+  fs.writeFileSync(
+    filePath,
+    `${JSON.stringify(payload, null, 2)}\n`,
+    { encoding: "utf8", flag: "wx" }
+  );
 }
 
 function sha256File(filePath) {
@@ -354,6 +358,12 @@ function anyExist(paths) {
   return paths.some(file => fs.existsSync(file));
 }
 
+function removeCreated(paths) {
+  for (const file of [...paths].reverse()) {
+    fs.rmSync(file, { force: true });
+  }
+}
+
 export function recoverHistoricalValueObservationsAtPaths({
   dayKey,
   currentAthensDay,
@@ -413,13 +423,15 @@ export function recoverHistoricalValueObservationsAtPaths({
       sourcePath: snapshotValueFile,
       observationFile: planAObservationFile,
       auditFile: planAObservationAuditFile,
-      provenance: {
-        kind: "authentic_release_observation_recovery"
-      },
+      provenance: { kind: "authentic_release_observation_recovery" },
       frozenAt: recoveredAt
     });
     if (!planAProbe.ok || planAProbe.conflict === true) {
-      return { ok: false, reason: "existing_plan_a_recovery_conflicts_with_authentic_release", planAProbe };
+      return {
+        ok: false,
+        reason: "existing_plan_a_recovery_conflicts_with_authentic_release",
+        planAProbe
+      };
     }
 
     const planB = readJson(planBFile);
@@ -441,7 +453,12 @@ export function recoverHistoricalValueObservationsAtPaths({
       fixtureUniverse: evidence.currentUniverse
     });
     if (!bOk || !b2Ok) {
-      return { ok: false, reason: "existing_recovery_sentinel_mismatch", planB: bOk, planB2: b2Ok };
+      return {
+        ok: false,
+        reason: "existing_recovery_sentinel_mismatch",
+        planB: bOk,
+        planB2: b2Ok
+      };
     }
     return {
       ok: true,
@@ -455,96 +472,82 @@ export function recoverHistoricalValueObservationsAtPaths({
     return { ok: false, reason: "partial_recovery_artifacts_exist_refusing_overwrite" };
   }
 
-  const targetDir = path.dirname(planAObservationFile);
-  const stagingDir = path.join(
-    targetDir,
-    `.historical-value-observation-recovery-${process.pid}-${Date.now()}`
-  );
-  fs.mkdirSync(stagingDir, { recursive: true });
-
-  const staged = {
-    planA: path.join(stagingDir, "plan-a.json"),
-    planAAudit: path.join(stagingDir, "plan-a-audit.json"),
-    planB: path.join(stagingDir, "plan-b.json"),
-    planBAudit: path.join(stagingDir, "plan-b-audit.json"),
-    planB2: path.join(stagingDir, "plan-b2.json"),
-    planB2Audit: path.join(stagingDir, "plan-b2-audit.json")
-  };
-
-  const planARecovery = ensurePlanAObservationAtPaths({
-    dayKey: day,
-    sourcePayload: snapshotValue,
-    sourcePath: snapshotValueFile,
-    observationFile: staged.planA,
-    auditFile: staged.planAAudit,
-    frozenAt: recoveredAt,
-    provenance: {
-      kind: "authentic_release_observation_recovery",
-      recoveryReason: "missing_immutable_plan_a_observation_store",
-      authenticPayloadRecovered: true,
-      sourceValueAuditPath: snapshotValueAuditFile,
-      sourceValueSha256: evidence.valueHash,
-      sourceValueAuditSha256: evidence.valueAuditHash,
-      sourceAssessmentFixtureUniverseCount: evidence.historicalPlanAUniverse.count,
-      sourceAssessmentFixtureUniverseHash: evidence.historicalPlanAUniverse.hash,
-      retrospectivePredictionGeneration: false
-    }
-  });
-
-  if (!planARecovery.ok || planARecovery.created !== true) {
-    fs.rmSync(stagingDir, { recursive: true, force: true });
-    return { ok: false, reason: "plan_a_authentic_release_recovery_failed", planARecovery };
-  }
-
-  for (const spec of PLAN_SPECS) {
-    const { plan, audit } = buildUnavailableObservation({
+  const generated = PLAN_SPECS.map(spec => {
+    const artifacts = buildUnavailableObservation({
       dayKey: day,
       spec,
       fixtureUniverse: evidence.currentUniverse,
       recoveredAt
     });
-    const planPath = spec.planId === "plan-b" ? staged.planB : staged.planB2;
-    const auditPath = spec.planId === "plan-b" ? staged.planBAudit : staged.planB2Audit;
-    writeJsonPretty(planPath, plan);
-    writeJsonPretty(auditPath, audit);
-    if (!isHistoricalUnavailableObservationSentinel({
+    const valid = isHistoricalUnavailableObservationSentinel({
       dayKey: day,
-      plan,
-      audit,
+      plan: artifacts.plan,
+      audit: artifacts.audit,
       spec,
       fixtureUniverse: evidence.currentUniverse
-    })) {
-      fs.rmSync(stagingDir, { recursive: true, force: true });
-      return { ok: false, reason: `generated_${spec.planId}_sentinel_failed_self_validation` };
-    }
+    });
+    return { spec, ...artifacts, valid };
+  });
+  const invalid = generated.find(entry => entry.valid !== true);
+  if (invalid) {
+    return {
+      ok: false,
+      reason: `generated_${invalid.spec.planId}_sentinel_failed_self_validation`
+    };
   }
 
-  const moves = [
-    [staged.planA, planAObservationFile],
-    [staged.planAAudit, planAObservationAuditFile],
-    [staged.planB, planBFile],
-    [staged.planBAudit, planBAuditFile],
-    [staged.planB2, planB2File],
-    [staged.planB2Audit, planB2AuditFile]
-  ];
-  const moved = [];
+  const created = [];
+  let planARecovery = null;
   try {
-    fs.mkdirSync(targetDir, { recursive: true });
-    for (const [source, target] of moves) {
-      if (fs.existsSync(target)) throw new Error(`target_appeared_during_recovery:${target}`);
-      fs.renameSync(source, target);
-      moved.push(target);
+    planARecovery = ensurePlanAObservationAtPaths({
+      dayKey: day,
+      sourcePayload: snapshotValue,
+      sourcePath: snapshotValueFile,
+      observationFile: planAObservationFile,
+      auditFile: planAObservationAuditFile,
+      frozenAt: recoveredAt,
+      provenance: {
+        kind: "authentic_release_observation_recovery",
+        recoveryReason: "missing_immutable_plan_a_observation_store",
+        authenticPayloadRecovered: true,
+        sourceValueAuditPath: snapshotValueAuditFile,
+        sourceValueSha256: evidence.valueHash,
+        sourceValueAuditSha256: evidence.valueAuditHash,
+        sourceAssessmentFixtureUniverseCount: evidence.historicalPlanAUniverse.count,
+        sourceAssessmentFixtureUniverseHash: evidence.historicalPlanAUniverse.hash,
+        retrospectivePredictionGeneration: false
+      }
+    });
+
+    if (!planARecovery.ok || planARecovery.created !== true) {
+      if (planARecovery?.created === true) {
+        removeCreated([planAObservationFile, planAObservationAuditFile]);
+      }
+      return {
+        ok: false,
+        reason: "plan_a_authentic_release_recovery_failed",
+        planARecovery
+      };
+    }
+    created.push(planAObservationFile, planAObservationAuditFile);
+
+    for (const entry of generated) {
+      const isB = entry.spec.planId === "plan-b";
+      const planFile = isB ? planBFile : planB2File;
+      const auditFile = isB ? planBAuditFile : planB2AuditFile;
+      writeJsonPrettyExclusive(planFile, entry.plan);
+      created.push(planFile);
+      writeJsonPrettyExclusive(auditFile, entry.audit);
+      created.push(auditFile);
     }
   } catch (error) {
-    for (const target of moved.reverse()) fs.rmSync(target, { force: true });
-    fs.rmSync(stagingDir, { recursive: true, force: true });
+    removeCreated(created);
     return {
       ok: false,
       reason: "recovery_commit_failed_rolled_back",
       error: error?.message || String(error)
     };
   }
-  fs.rmSync(stagingDir, { recursive: true, force: true });
 
   return {
     ok: true,
