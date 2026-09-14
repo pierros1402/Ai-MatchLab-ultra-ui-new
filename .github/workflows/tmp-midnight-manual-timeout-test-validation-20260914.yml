@@ -1,0 +1,50 @@
+name: TMP midnight manual timeout test validation 20260914
+
+on:
+  push:
+    branches:
+      - fix/20260914-midnight-manual-timeout-test
+
+permissions:
+  contents: read
+
+jobs:
+  validate-timeout-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BASE_SHA: 9e801fa4ad4adda3e9c0b73fe42b97fa4fac2cc3
+      CANDIDATE_SHA: 48a97ff6afe51be083f429dcfaaacf45c9e21e19
+    steps:
+      - name: Checkout validation branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify candidate lineage and write set
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$CANDIDATE_SHA"
+          test "$(git rev-parse ${CANDIDATE_SHA}^)" = "$BASE_SHA"
+          CHANGED="$(git diff --name-only "$BASE_SHA".."$CANDIDATE_SHA")"
+          test "$CHANGED" = "engine-v1/tests/midnight-release-deadline-contract.test.js"
+          git diff --check "$BASE_SHA".."$CANDIDATE_SHA"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npm ci --prefix engine-v1 --no-audit --no-fund
+
+      - name: Targeted timeout contract
+        run: node --test engine-v1/tests/midnight-release-deadline-contract.test.js
+
+      - name: Full engine regression
+        run: node --test engine-v1/tests/*.test.js
