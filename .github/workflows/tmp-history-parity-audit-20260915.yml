@@ -1,0 +1,120 @@
+name: TMP history parity audit current-main 20260915
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - audit/20260915-history-parity-current-main
+    paths:
+      - ".github/workflows/tmp-history-parity-audit-20260915.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit-history-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact source base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="00097c36ca858f6262322736a382f2619d59875a"
+          PARENT="$(git rev-parse HEAD^)"
+          test "$PARENT" = "$BASE"
+          echo "AUDIT_BASE=$BASE"
+          echo "AUDIT_HEAD=$(git rev-parse HEAD)"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          (cd engine-v1 && npm ci --no-audit --no-fund)
+
+      - name: Build read-only history parity report
+        shell: bash
+        env:
+          OUT_FILE: ${{ runner.temp }}/history-parity-current-main.json
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { buildHistoryDayFromTruth } from "./engine-v1/jobs/append-finalized-day-to-history.js";
+
+          const days = [
+            "2026-09-09",
+            "2026-09-10",
+            "2026-09-11",
+            "2026-09-12",
+            "2026-09-13",
+            "2026-09-14"
+          ];
+
+          const historyReport = JSON.parse(
+            fs.readFileSync("data/history/2026-2027.report.json", "utf8")
+          );
+
+          const results = days.map(dayKey => {
+            const build = buildHistoryDayFromTruth(dayKey);
+            const byReason = {};
+            for (const error of Array.isArray(build?.errors) ? build.errors : []) {
+              const reason = String(error?.reason || "unknown");
+              byReason[reason] = Number(byReason[reason] || 0) + 1;
+            }
+            return {
+              dayKey,
+              committedHistoryRows: Number(historyReport?.byDay?.[dayKey] || 0),
+              ok: build?.ok === true,
+              reason: build?.reason || null,
+              canonicalFixtureCount: Number(build?.canonicalFixtureCount || 0),
+              canonicalPlayedFinalCount: Number(build?.canonicalPlayedFinalCount || 0),
+              verifiedFinalCount: Number(build?.verifiedFinalCount || 0),
+              acceptedRows: Number(build?.acceptedRows || 0),
+              errorCount: Array.isArray(build?.errors) ? build.errors.length : 0,
+              byReason,
+              errors: Array.isArray(build?.errors) ? build.errors : []
+            };
+          });
+
+          const payload = {
+            schema: "ai-matchlab.history-parity-current-main-audit.v1",
+            auditBase: "00097c36ca858f6262322736a382f2619d59875a",
+            historyReport: {
+              generatedAt: historyReport?.generatedAt || null,
+              to: historyReport?.to || null,
+              lastCompletedDay: historyReport?.lastCompletedDay || null,
+              totalMatches: Number(historyReport?.totalMatches || 0),
+              missingDays: historyReport?.missingDays || []
+            },
+            results
+          };
+
+          fs.writeFileSync(process.env.OUT_FILE, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+          console.log(JSON.stringify(payload, null, 2));
+          NODE
+
+      - name: Prove repository remained read only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          echo "READ_ONLY_CHECK=PASS"
+
+      - name: Upload audit evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: history-parity-current-main-20260915
+          path: ${{ runner.temp }}/history-parity-current-main.json
+          if-no-files-found: error
