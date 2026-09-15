@@ -1,4 +1,4 @@
-name: TMP verified-final canonical convergence 20260915
+name: TMP verified final canonical convergence
 
 on:
   workflow_dispatch:
@@ -6,13 +6,13 @@ on:
     branches:
       - fix/20260915-verified-final-canonical-convergence
     paths:
-      - ".github/workflows/tmp-verified-final-canonical-convergence-20260915.yml"
+      - .github/workflows/tmp-verified-final-canonical-convergence-20260915.yml
 
 permissions:
   contents: write
 
 jobs:
-  validate-and-build-release:
+  validate:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -22,669 +22,54 @@ jobs:
       RELEASE_BRANCH: release/20260915-verified-final-canonical-convergence-v1
       TMP_WORKFLOW: .github/workflows/tmp-verified-final-canonical-convergence-20260915.yml
     steps:
-      - name: Checkout isolated branch
+      - name: Checkout
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - name: Verify exact isolated baseline
+      - name: Verify branch scope
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "$BASE_SHA"
-          test "$(git diff --name-only "$BASE_SHA"..HEAD | wc -l | tr -d ' ')" = "1"
-          test "$(git diff --name-only "$BASE_SHA"..HEAD)" = "$TMP_WORKFLOW"
-          echo "BASE_VERIFIED=$BASE_SHA"
+          BAD="$(git diff --name-only "$BASE_SHA"..HEAD | grep -Ev '^(\.github/workflows/tmp-verified-final-canonical-convergence-20260915\.yml|engine-v1/jobs/promote-verified-final-truth-to-canonical-day\.js|engine-v1/tests/verified-final-canonical-convergence\.test\.js|engine-v1/tests/daily-history-verified-final-convergence\.test\.js)$' || true)"
+          if [ -n "$BAD" ]; then echo "$BAD"; exit 1; fi
 
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
           node-version: "24"
 
-      - name: Install dependencies
+      - name: Install
         shell: bash
         run: |
           set -euo pipefail
           npm ci --no-audit --no-fund
           (cd engine-v1 && npm ci --no-audit --no-fund)
 
-      - name: Materialize generic verified-final canonical convergence patch
+      - name: Wire convergence into recent history catch-up
         shell: bash
         run: |
           set -euo pipefail
-
-          cat > engine-v1/jobs/promote-verified-final-truth-to-canonical-day.js <<'EOF'
-          import fs from "node:fs";
-          import path from "node:path";
-          import { pathToFileURL } from "node:url";
-
-          import { athensDayFromKickoff } from "../core/daykey.js";
-          import { sameTeamName } from "../core/fixture-dedup.js";
-          import {
-            classifyMatchState,
-            MATCH_STATE_CLASS
-          } from "../core/non-played-state.js";
-          import { assertCanonicalStatusCoherence } from "../core/canonical-status-coherence.js";
-          import { resolveDataPath } from "../storage/data-root.js";
-
-          const VERIFIED_FINAL_VERDICTS = new Set([
-            "verified_final_result",
-            "verified_final_result_truth",
-            "manual_two_source_final_score_validated",
-            "manual_official_url_validated"
-          ]);
-
-          function clean(value) {
-            return String(value ?? "").trim();
-          }
-
-          function strictScore(value) {
-            if (value === null || value === undefined) return null;
-            if (typeof value === "string" && value.trim() === "") return null;
-            const parsed = Number(value);
-            return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
-          }
-
-          function finalScoreOf(row) {
-            const homeCandidates = [
-              row?.homeScore,
-              row?.scoreHome,
-              row?.finalScore?.homeScore,
-              row?.finalScore?.home
-            ].filter(value => value !== undefined && value !== null && !(typeof value === "string" && value.trim() === ""));
-            const awayCandidates = [
-              row?.awayScore,
-              row?.scoreAway,
-              row?.finalScore?.awayScore,
-              row?.finalScore?.away
-            ].filter(value => value !== undefined && value !== null && !(typeof value === "string" && value.trim() === ""));
-
-            if (!homeCandidates.length || !awayCandidates.length) return null;
-            const home = homeCandidates.map(strictScore);
-            const away = awayCandidates.map(strictScore);
-            if (home.some(value => value === null) || away.some(value => value === null)) return null;
-            if (new Set(home).size !== 1 || new Set(away).size !== 1) return null;
-            return { home: home[0], away: away[0] };
-          }
-
-          function verdictsOf(row) {
-            return [
-              row?.finalTruthVerdict,
-              row?.verdict,
-              row?.verification?.finalTruthVerdict,
-              row?.verification?.verdict,
-              row?.verification?.state,
-              row?.settlement?.finalTruthVerdict,
-              row?.settlement?.state
-            ].map(value => clean(value).toLowerCase()).filter(Boolean);
-          }
-
-          function hasVerifiedFinalVerdict(row) {
-            return row?.verifiedFinalTruth === true && verdictsOf(row).some(value => VERIFIED_FINAL_VERDICTS.has(value));
-          }
-
-          function kickoffOf(row) {
-            return clean(row?.kickoffUtc || row?.kickoff || row?.startUtc || row?.startTime);
-          }
-
-          function dayOf(row) {
-            const explicit = clean(row?.dayKey || row?.date);
-            if (/^\d{4}-\d{2}-\d{2}$/u.test(explicit)) return explicit;
-            const kickoff = kickoffOf(row);
-            if (!kickoff) return "";
-            try {
-              return athensDayFromKickoff(new Date(kickoff).toISOString());
-            } catch {
-              return "";
-            }
-          }
-
-          function teamMatches(slug, left, right) {
-            return sameTeamName(slug, left, right) || sameTeamName(slug, right, left);
-          }
-
-          export function exactProviderIdsOf(row) {
-            const ids = [];
-            const push = value => {
-              const normalized = clean(value);
-              if (normalized && !ids.includes(normalized)) ids.push(normalized);
-            };
-
-            push(row?.providerMatchId);
-            push(row?.sourceId);
-            push(row?.sourceMatchId);
-            if (/^\d+$/u.test(clean(row?.matchId))) push(row?.matchId);
-
-            if (row?.providerIds && typeof row.providerIds === "object") {
-              for (const value of Object.values(row.providerIds)) {
-                if (Array.isArray(value)) {
-                  for (const item of value) push(item);
-                } else {
-                  push(value);
-                }
-              }
-            }
-
-            return ids;
-          }
-
-          function evidenceProviderId(row) {
-            return clean(row?.providerMatchId || row?.sourceId || row?.sourceMatchId || row?.matchId);
-          }
-
-          export function evaluateVerifiedFinalCanonicalConvergence({
-            canonicalRow,
-            finalResultRow,
-            finalResultPath = null,
-            dayKey
-          } = {}) {
-            const expectedDay = clean(dayKey);
-            if (!/^\d{4}-\d{2}-\d{2}$/u.test(expectedDay)) {
-              return { ok: false, reason: "invalid_day_key" };
-            }
-
-            const canonicalId = clean(canonicalRow?.canonicalId || canonicalRow?.matchId);
-            const finalId = clean(finalResultRow?.matchId);
-            if (!canonicalId || !finalId || canonicalId !== finalId) {
-              return { ok: false, reason: "exact_canonical_id_required" };
-            }
-
-            if (!hasVerifiedFinalVerdict(finalResultRow)) {
-              return { ok: false, reason: "verified_final_contract_required" };
-            }
-
-            if (dayOf(canonicalRow) !== expectedDay || dayOf(finalResultRow) !== expectedDay) {
-              return { ok: false, reason: "athens_day_mismatch" };
-            }
-
-            const canonicalState = classifyMatchState(canonicalRow);
-            if (canonicalState === MATCH_STATE_CLASS.PLAYED_FINAL) {
-              return { ok: false, reason: "canonical_already_played_final", canonicalState };
-            }
-            if (canonicalState !== MATCH_STATE_CLASS.PRE_KICKOFF_SCHEDULED) {
-              return { ok: false, reason: "canonical_state_not_eligible", canonicalState };
-            }
-
-            if (
-              canonicalRow?.scoreHome !== null && canonicalRow?.scoreHome !== undefined ||
-              canonicalRow?.scoreAway !== null && canonicalRow?.scoreAway !== undefined
-            ) {
-              return { ok: false, reason: "canonical_pre_terminal_score_present", canonicalState };
-            }
-
-            const score = finalScoreOf(finalResultRow);
-            if (!score) {
-              return { ok: false, reason: "verified_final_numeric_score_required", canonicalState };
-            }
-
-            const slug = clean(canonicalRow?.leagueSlug || finalResultRow?.leagueSlug);
-            if (
-              !teamMatches(slug, canonicalRow?.homeTeam, finalResultRow?.homeTeam) ||
-              !teamMatches(slug, canonicalRow?.awayTeam, finalResultRow?.awayTeam)
-            ) {
-              return { ok: false, reason: "ordered_team_identity_mismatch", canonicalState };
-            }
-
-            const canonicalProviderIds = exactProviderIdsOf(canonicalRow);
-            if (!canonicalProviderIds.length) {
-              return { ok: false, reason: "canonical_exact_provider_identity_required", canonicalState };
-            }
-
-            const sourceRows = Array.isArray(finalResultRow?.sources) ? finalResultRow.sources : [];
-            const matchedSources = sourceRows.filter(source => {
-              const providerId = evidenceProviderId(source);
-              return providerId && canonicalProviderIds.includes(providerId);
-            });
-
-            if (!matchedSources.length) {
-              return {
-                ok: false,
-                reason: "exact_provider_id_intersection_required",
-                canonicalState,
-                canonicalProviderIds
-              };
-            }
-
-            const matchedProviderIds = [];
-            for (const source of matchedSources) {
-              const providerId = evidenceProviderId(source);
-              if (!matchedProviderIds.includes(providerId)) matchedProviderIds.push(providerId);
-
-              if (source?.finished !== true && source?.playedFinal !== true) {
-                return { ok: false, reason: "matched_provider_explicit_final_required", canonicalState, matchedProviderIds };
-              }
-
-              const sourceHome = strictScore(source?.scoreHome);
-              const sourceAway = strictScore(source?.scoreAway);
-              if (sourceHome === null || sourceAway === null || sourceHome !== score.home || sourceAway !== score.away) {
-                return { ok: false, reason: "matched_provider_score_mismatch", canonicalState, matchedProviderIds };
-              }
-
-              if (dayOf(source) !== expectedDay) {
-                return { ok: false, reason: "matched_provider_day_mismatch", canonicalState, matchedProviderIds };
-              }
-            }
-
-            matchedProviderIds.sort();
-
-            const promotedAt = new Date().toISOString();
-            const nextRow = {
-              ...canonicalRow,
-              status: "FT",
-              statusType: "STATUS_FINAL",
-              rawStatus: "STATUS_FULL_TIME",
-              operationalState: "TERMINAL_CONFIRMED",
-              minute: "FT",
-              scoreHome: score.home,
-              scoreAway: score.away,
-              penalties: finalResultRow?.penalties ?? canonicalRow?.penalties ?? null,
-              decidedBy: finalResultRow?.decidedBy ?? canonicalRow?.decidedBy ?? null,
-              lastSeenAt: promotedAt,
-              authoritativeTerminalWriteback: {
-                schema: "ai-matchlab.authoritative-terminal-writeback.v1",
-                promotedAt,
-                provider: "verified-final-result",
-                providerMatchId: matchedProviderIds[0],
-                dayKey: expectedDay,
-                identityContract: {
-                  exactCanonicalId: true,
-                  exactProviderId: true,
-                  providerIdSetIntersection: true,
-                  athensDay: true,
-                  orderedTeamPair: true,
-                  explicitTerminalStatus: true,
-                  numericScore: true,
-                  heuristicIdentity: false
-                },
-                observation: {
-                  status: "FT",
-                  statusType: "STATUS_FINAL",
-                  rawStatus: "STATUS_FULL_TIME",
-                  scoreHome: score.home,
-                  scoreAway: score.away
-                }
-              },
-              verifiedFinalCanonicalConvergence: {
-                schema: "ai-matchlab.verified-final-canonical-convergence.v1",
-                promotedAt,
-                verifiedFinalArtifact: finalResultPath,
-                verifiedFinalVerdict: clean(finalResultRow?.finalTruthVerdict || finalResultRow?.verdict),
-                matchedProviderIds,
-                scoreKey: `${score.home}-${score.away}`,
-                guarantees: {
-                  exactCanonicalId: true,
-                  exactProviderIdIntersection: true,
-                  sameAthensDay: true,
-                  orderedTeamPair: true,
-                  verifiedFinalTruth: true,
-                  matchedProviderExplicitFinal: true,
-                  exactScoreParity: true,
-                  canonicalScheduledOnly: true,
-                  protectedNonPlayedStateNeverOverwritten: true,
-                  heuristicIdentity: false,
-                  elapsedTimeInference: false
-                }
-              }
-            };
-
-            return {
-              ok: true,
-              reason: null,
-              canonicalState,
-              matchedProviderIds,
-              score,
-              row: nextRow
-            };
-          }
-
-          function readJson(file) {
-            return JSON.parse(fs.readFileSync(file, "utf8"));
-          }
-
-          function writeJsonAtomic(file, payload) {
-            const temp = `${file}.tmp-${process.pid}-${Date.now()}`;
-            fs.writeFileSync(temp, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
-            fs.renameSync(temp, file);
-          }
-
-          export function promoteVerifiedFinalTruthToCanonicalDay(dayKey, { write = true } = {}) {
-            const expectedDay = clean(dayKey);
-            const report = {
-              ok: true,
-              schema: "ai-matchlab.verified-final-canonical-convergence-report.v1",
-              dayKey: expectedDay,
-              generatedAt: new Date().toISOString(),
-              scannedFinalResults: 0,
-              eligibleCanonicalRows: 0,
-              promotedRows: 0,
-              unchangedRows: 0,
-              rejectedRows: 0,
-              byReason: {},
-              promoted: [],
-              readErrors: []
-            };
-
-            if (!/^\d{4}-\d{2}-\d{2}$/u.test(expectedDay)) {
-              return { ...report, ok: false, reason: "invalid_day_key" };
-            }
-
-            const canonicalDir = resolveDataPath("canonical-fixtures", expectedDay);
-            const finalDir = resolveDataPath("final-results", expectedDay);
-            if (!fs.existsSync(canonicalDir)) return { ...report, ok: false, reason: "canonical_day_missing" };
-            if (!fs.existsSync(finalDir)) return { ...report, ok: true, reason: "final_results_day_missing" };
-
-            const canonicalById = new Map();
-            const duplicateCanonicalIds = new Set();
-            const payloads = new Map();
-
-            for (const name of fs.readdirSync(canonicalDir).filter(name => name.endsWith(".json")).sort()) {
-              const file = path.join(canonicalDir, name);
-              let payload;
-              try {
-                payload = readJson(file);
-              } catch (error) {
-                report.readErrors.push({ path: file, reason: error?.message || String(error) });
-                continue;
-              }
-              if (!payload || !Array.isArray(payload.fixtures)) continue;
-              payloads.set(file, payload);
-              for (let index = 0; index < payload.fixtures.length; index++) {
-                const row = payload.fixtures[index];
-                const id = clean(row?.canonicalId || row?.matchId);
-                if (!id) continue;
-                if (canonicalById.has(id)) {
-                  duplicateCanonicalIds.add(id);
-                  canonicalById.delete(id);
-                  continue;
-                }
-                if (!duplicateCanonicalIds.has(id)) canonicalById.set(id, { file, index, row });
-              }
-            }
-
-            const changedFiles = new Set();
-            for (const name of fs.readdirSync(finalDir).filter(name => name.endsWith(".json")).sort()) {
-              const file = path.join(finalDir, name);
-              let finalResult;
-              try {
-                finalResult = readJson(file);
-              } catch (error) {
-                report.readErrors.push({ path: file, reason: error?.message || String(error) });
-                continue;
-              }
-              report.scannedFinalResults++;
-              const id = clean(finalResult?.matchId);
-              if (!id) {
-                report.rejectedRows++;
-                report.byReason.verified_final_match_id_required = Number(report.byReason.verified_final_match_id_required || 0) + 1;
-                continue;
-              }
-              if (duplicateCanonicalIds.has(id)) {
-                report.rejectedRows++;
-                report.byReason.canonical_identity_duplicate = Number(report.byReason.canonical_identity_duplicate || 0) + 1;
-                continue;
-              }
-              const target = canonicalById.get(id);
-              if (!target) {
-                report.unchangedRows++;
-                continue;
-              }
-
-              const state = classifyMatchState(target.row);
-              if (state === MATCH_STATE_CLASS.PLAYED_FINAL) {
-                report.unchangedRows++;
-                continue;
-              }
-              report.eligibleCanonicalRows++;
-
-              const result = evaluateVerifiedFinalCanonicalConvergence({
-                canonicalRow: target.row,
-                finalResultRow: finalResult,
-                finalResultPath: path.relative(process.cwd(), file).replaceAll(path.sep, "/"),
-                dayKey: expectedDay
-              });
-
-              if (!result.ok) {
-                report.rejectedRows++;
-                report.byReason[result.reason] = Number(report.byReason[result.reason] || 0) + 1;
-                continue;
-              }
-
-              const payload = payloads.get(target.file);
-              payload.fixtures[target.index] = result.row;
-              payload.updatedAt = report.generatedAt;
-              payload.sourceMeta = {
-                ...(payload.sourceMeta && typeof payload.sourceMeta === "object" ? payload.sourceMeta : {}),
-                verifiedFinalCanonicalConvergence: {
-                  schema: report.schema,
-                  convergedAt: report.generatedAt,
-                  exactCanonicalIdRequired: true,
-                  exactProviderIdIntersectionRequired: true,
-                  heuristicIdentity: false
-                }
-              };
-              changedFiles.add(target.file);
-              report.promotedRows++;
-              report.promoted.push({
-                matchId: id,
-                leagueSlug: result.row?.leagueSlug || null,
-                homeTeam: result.row?.homeTeam || null,
-                awayTeam: result.row?.awayTeam || null,
-                score: `${result.score.home}-${result.score.away}`,
-                matchedProviderIds: result.matchedProviderIds,
-                verifiedFinalArtifact: path.relative(process.cwd(), file).replaceAll(path.sep, "/")
-              });
-            }
-
-            if (report.readErrors.length) {
-              report.ok = false;
-              report.reason = "artifact_read_error";
-              return report;
-            }
-
-            if (write) {
-              for (const file of [...changedFiles].sort()) {
-                const payload = payloads.get(file);
-                assertCanonicalStatusCoherence(payload, { path: file });
-                writeJsonAtomic(file, payload);
-              }
-            }
-
-            return report;
-          }
-
-          const entryUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;
-          if (entryUrl === import.meta.url) {
-            const dayKey = process.argv.find(arg => arg.startsWith("--date="))?.split("=")[1]
-              || process.argv.slice(2).find(arg => /^\d{4}-\d{2}-\d{2}$/u.test(arg));
-            const dryRun = process.argv.includes("--dry-run");
-            const report = promoteVerifiedFinalTruthToCanonicalDay(dayKey, { write: !dryRun });
-            console.log(JSON.stringify(report, null, 2));
-            if (!report.ok) process.exitCode = 1;
-          }
-          EOF
-
-          cat > engine-v1/tests/verified-final-canonical-convergence.test.js <<'EOF'
-          import test from "node:test";
-          import assert from "node:assert/strict";
-          import {
-            evaluateVerifiedFinalCanonicalConvergence,
-            exactProviderIdsOf
-          } from "../jobs/promote-verified-final-truth-to-canonical-day.js";
-
-          const dayKey = "2026-09-13";
-
-          function canonical(overrides = {}) {
-            return {
-              canonicalId: "cid_cafconfed_rukinzo_durbancity_20260913",
-              matchId: "cid_cafconfed_rukinzo_durbancity_20260913",
-              source: "espn",
-              sourceId: "401905970",
-              sourceMatchId: "401905970",
-              providerIds: { flashscore: "CKnH1EV1", espn: "401905970" },
-              leagueSlug: "caf.confed",
-              dayKey,
-              kickoffUtc: "2026-09-13T13:00:00.000Z",
-              homeTeam: "Rukinzo",
-              awayTeam: "Durban City",
-              status: "PRE",
-              rawStatus: "STATUS_SCHEDULED",
-              minute: "0'",
-              scoreHome: null,
-              scoreAway: null,
-              ...overrides
-            };
-          }
-
-          function finalResult(overrides = {}) {
-            return {
-              schema: "ai-matchlab.verified-final-result.v1",
-              verifiedFinalTruth: true,
-              dayKey,
-              matchId: "cid_cafconfed_rukinzo_durbancity_20260913",
-              leagueSlug: "caf.confed",
-              homeTeam: "Rukinzo",
-              awayTeam: "Durban City",
-              homeScore: 1,
-              awayScore: 2,
-              scoreHome: 1,
-              scoreAway: 2,
-              kickoffUtc: "2026-09-13T13:00:00.000Z",
-              finalTruthVerdict: "verified_final_result",
-              sources: [{
-                provider: "flashscore",
-                providerMatchId: "CKnH1EV1",
-                finished: true,
-                playedFinal: true,
-                home: "Rukinzo (Bur)",
-                away: "Durban City (Rsa)",
-                scoreHome: 1,
-                scoreAway: 2,
-                kickoffUtc: "2026-09-13T13:00:00.000Z"
-              }],
-              ...overrides
-            };
-          }
-
-          test("collects exact provider identities from primary and providerIds fields", () => {
-            assert.deepEqual(exactProviderIdsOf(canonical()), ["401905970", "CKnH1EV1"]);
-          });
-
-          test("promotes a scheduled canonical row from verified final truth using exact cross-provider identity", () => {
-            const result = evaluateVerifiedFinalCanonicalConvergence({
-              canonicalRow: canonical(),
-              finalResultRow: finalResult(),
-              finalResultPath: "data/final-results/2026-09-13/example.json",
-              dayKey
-            });
-            assert.equal(result.ok, true);
-            assert.equal(result.row.status, "FT");
-            assert.equal(result.row.scoreHome, 1);
-            assert.equal(result.row.scoreAway, 2);
-            assert.deepEqual(result.matchedProviderIds, ["CKnH1EV1"]);
-            assert.equal(result.row.verifiedFinalCanonicalConvergence.guarantees.heuristicIdentity, false);
-            assert.equal(result.row.verifiedFinalCanonicalConvergence.guarantees.elapsedTimeInference, false);
-          });
-
-          test("rejects when no exact provider identity intersects", () => {
-            const result = evaluateVerifiedFinalCanonicalConvergence({
-              canonicalRow: canonical({ providerIds: { espn: "401905970" } }),
-              finalResultRow: finalResult(),
-              dayKey
-            });
-            assert.equal(result.ok, false);
-            assert.equal(result.reason, "exact_provider_id_intersection_required");
-          });
-
-          test("never overwrites explicit postponed or other protected non-played state", () => {
-            const result = evaluateVerifiedFinalCanonicalConvergence({
-              canonicalRow: canonical({ status: "STATUS_POSTPONED", rawStatus: "STATUS_POSTPONED", minute: null }),
-              finalResultRow: finalResult(),
-              dayKey
-            });
-            assert.equal(result.ok, false);
-            assert.equal(result.reason, "canonical_state_not_eligible");
-          });
-
-          test("rejects team, day, score and source-score inconsistencies", () => {
-            const team = evaluateVerifiedFinalCanonicalConvergence({ canonicalRow: canonical(), finalResultRow: finalResult({ awayTeam: "Wrong Team" }), dayKey });
-            assert.equal(team.reason, "ordered_team_identity_mismatch");
-
-            const day = evaluateVerifiedFinalCanonicalConvergence({ canonicalRow: canonical(), finalResultRow: finalResult({ dayKey: "2026-09-14", kickoffUtc: "2026-09-14T13:00:00.000Z" }), dayKey });
-            assert.equal(day.reason, "athens_day_mismatch");
-
-            const missingScore = finalResult({ homeScore: null, scoreHome: null });
-            delete missingScore.finalScore;
-            const score = evaluateVerifiedFinalCanonicalConvergence({ canonicalRow: canonical(), finalResultRow: missingScore, dayKey });
-            assert.equal(score.reason, "verified_final_numeric_score_required");
-
-            const sourceMismatch = finalResult({ sources: [{ providerMatchId: "CKnH1EV1", finished: true, playedFinal: true, scoreHome: 9, scoreAway: 9, kickoffUtc: "2026-09-13T13:00:00.000Z" }] });
-            const source = evaluateVerifiedFinalCanonicalConvergence({ canonicalRow: canonical(), finalResultRow: sourceMismatch, dayKey });
-            assert.equal(source.reason, "matched_provider_score_mismatch");
-          });
-          EOF
-
-          cat > engine-v1/tests/daily-history-verified-final-convergence.test.js <<'EOF'
-          import test from "node:test";
-          import assert from "node:assert/strict";
-          import fs from "node:fs";
-          import path from "node:path";
-          import { fileURLToPath } from "node:url";
-
-          const here = path.dirname(fileURLToPath(import.meta.url));
-          const source = fs.readFileSync(path.resolve(here, "../jobs/run-daily-cycle.js"), "utf8");
-
-          test("recent history catch-up imports verified-final canonical convergence", () => {
-            assert.match(source, /import\s+\{\s*promoteVerifiedFinalTruthToCanonicalDay\s*\}\s+from\s+"\.\/promote-verified-final-truth-to-canonical-day\.js";/u);
-          });
-
-          test("recent history catch-up converges verified-final nonterminal contradictions before parity summary and append", () => {
-            const refresh = source.indexOf("historyTruthRefreshStatus = historyTruthRefresh?.status ?? null");
-            const convergence = source.indexOf("promoteVerifiedFinalTruthToCanonicalDay(day, { write: true })");
-            const summary = source.indexOf("const historyParitySummary = summarizeHistoryTruthParity(historyParity)");
-            const append = source.indexOf("append = await appendFinalizedDayToHistory(day)");
-            assert.ok(refresh >= 0);
-            assert.ok(convergence > refresh);
-            assert.ok(summary > convergence);
-            assert.ok(append > summary);
-          });
-
-          test("convergence reruns canonical sync, readiness and history parity before append", () => {
-            assert.match(source, /verifiedFinalCanonicalConvergence\?\.promotedRows[\s\S]*syncCanonicalFixturesToJsonDbDay\(day\)[\s\S]*readiness\s*=\s*auditFinalizationReadinessDay\(day\)[\s\S]*historyParity\s*=\s*buildHistoryDayFromTruth\(day\)/u);
-          });
-          EOF
-
           python - <<'PY'
           from pathlib import Path
-
-          p = Path("engine-v1/jobs/run-daily-cycle.js")
-          s = p.read_text(encoding="utf-8")
-
-          import_anchor = 'import { applyResultsTruthToCanonicalDay } from "./apply-results-truth-to-canonical-day.js";\n'
-          if s.count(import_anchor) != 1:
-              raise SystemExit(f"import anchor count != 1: {s.count(import_anchor)}")
-          s = s.replace(
-              import_anchor,
-              import_anchor + 'import { promoteVerifiedFinalTruthToCanonicalDay } from "./promote-verified-final-truth-to-canonical-day.js";\n',
-              1,
-          )
-
-          readiness_old = '''        const sweep = applyResultsTruthToCanonicalDay(day);
+          p=Path('engine-v1/jobs/run-daily-cycle.js')
+          s=p.read_text(encoding='utf-8')
+          a='import { applyResultsTruthToCanonicalDay } from "./apply-results-truth-to-canonical-day.js";\n'
+          if s.count(a)!=1: raise SystemExit(f'import anchor count {s.count(a)}')
+          s=s.replace(a,a+'import { promoteVerifiedFinalTruthToCanonicalDay } from "./promote-verified-final-truth-to-canonical-day.js";\n',1)
+          old='''        const sweep = applyResultsTruthToCanonicalDay(day);
           syncCanonicalFixturesToJsonDbDay(day);
           const readiness = auditFinalizationReadinessDay(day);
 '''
-          readiness_new = '''        const sweep = applyResultsTruthToCanonicalDay(day);
+          new='''        const sweep = applyResultsTruthToCanonicalDay(day);
           syncCanonicalFixturesToJsonDbDay(day);
           let readiness = auditFinalizationReadinessDay(day);
 '''
-          if s.count(readiness_old) != 1:
-              raise SystemExit(f"readiness anchor count != 1: {s.count(readiness_old)}")
-          s = s.replace(readiness_old, readiness_new, 1)
-
-          summary_anchor = '        const historyParitySummary = summarizeHistoryTruthParity(historyParity);\n'
-          if s.count(summary_anchor) != 1:
-              raise SystemExit(f"summary anchor count != 1: {s.count(summary_anchor)}")
-
-          convergence_block = '''        let verifiedFinalCanonicalConvergence = null;
+          if s.count(old)!=1: raise SystemExit(f'readiness anchor count {s.count(old)}')
+          s=s.replace(old,new,1)
+          anchor='        const historyParitySummary = summarizeHistoryTruthParity(historyParity);\n'
+          if s.count(anchor)!=1: raise SystemExit(f'summary anchor count {s.count(anchor)}')
+          block='''        let verifiedFinalCanonicalConvergence = null;
           let verifiedFinalCanonicalConvergenceAttempted = false;
 
           if (
@@ -712,13 +97,12 @@ jobs:
           }
 
 '''
-          s = s.replace(summary_anchor, convergence_block + summary_anchor, 1)
-
-          push_anchor = '''          historyTruthRefreshAttempted,
+          s=s.replace(anchor,block+anchor,1)
+          old2='''          historyTruthRefreshAttempted,
           historyTruthRefreshStatus,
           historyParity: historyParitySummary,
 '''
-          push_replacement = '''          historyTruthRefreshAttempted,
+          new2='''          historyTruthRefreshAttempted,
           historyTruthRefreshStatus,
           verifiedFinalCanonicalConvergenceAttempted,
           verifiedFinalCanonicalConvergenceOk:
@@ -731,297 +115,152 @@ jobs:
             verifiedFinalCanonicalConvergence?.byReason || {},
           historyParity: historyParitySummary,
 '''
-          if s.count(push_anchor) != 1:
-              raise SystemExit(f"history diagnostics anchor count != 1: {s.count(push_anchor)}")
-          s = s.replace(push_anchor, push_replacement, 1)
-
-          p.write_text(s, encoding="utf-8", newline="\n")
+          if s.count(old2)!=1: raise SystemExit(f'diagnostics anchor count {s.count(old2)}')
+          s=s.replace(old2,new2,1)
+          p.write_text(s,encoding='utf-8')
           PY
-
           node --check engine-v1/jobs/promote-verified-final-truth-to-canonical-day.js
           node --check engine-v1/jobs/run-daily-cycle.js
           node --check engine-v1/tests/verified-final-canonical-convergence.test.js
           node --check engine-v1/tests/daily-history-verified-final-convergence.test.js
           git diff --check
 
-      - name: Run targeted convergence tests
+      - name: Targeted tests
         shell: bash
         run: |
           set -euo pipefail
-          node --test \
-            engine-v1/tests/verified-final-canonical-convergence.test.js \
-            engine-v1/tests/daily-history-verified-final-convergence.test.js \
-            engine-v1/tests/history-truth-convergence.test.js \
-            engine-v1/tests/daily-history-catchup-h2h-scope.test.js \
-            engine-v1/tests/daily-terminal-writeback-order.test.js \
-            engine-v1/tests/non-played-state-contract.test.js
+          node --test engine-v1/tests/verified-final-canonical-convergence.test.js engine-v1/tests/daily-history-verified-final-convergence.test.js engine-v1/tests/history-truth-convergence.test.js engine-v1/tests/daily-history-catchup-h2h-scope.test.js engine-v1/tests/daily-terminal-writeback-order.test.js engine-v1/tests/non-played-state-contract.test.js
 
-      - name: Run full engine regression
+      - name: Full engine regression
         shell: bash
         run: |
           set -euo pipefail
           node --test engine-v1/tests/*.test.js
 
-      - name: Capture protected Value hashes and pre-repair parity
+      - name: Protect Value and verify pre-state
         shell: bash
         run: |
           set -euo pipefail
-          {
-            git ls-files 'data/value/**' 'data/value-plans/**' 'data/value-comparison/**' \
-              'data/deploy-snapshots/*/value.json' 'data/deploy-snapshots/*/value-audit.json' || true
-          } | sort -u | while read -r f; do
-            test -n "$f" && sha256sum "$f"
-          done > "$RUNNER_TEMP/value-before.sha256"
-
+          git ls-files 'data/value/**' 'data/value-plans/**' 'data/value-comparison/**' 'data/deploy-snapshots/*/value.json' 'data/deploy-snapshots/*/value-audit.json' | sort -u | while read -r f; do test -n "$f" && sha256sum "$f"; done > /tmp/value-before.sha256
           node --input-type=module <<'NODE'
-          import { buildHistoryDayFromTruth } from "./engine-v1/jobs/append-finalized-day-to-history.js";
-          const r = buildHistoryDayFromTruth("2026-09-13");
-          const errors = Array.isArray(r.errors) ? r.errors : [];
-          if (r.ok !== false) throw new Error(`expected pre-repair parity failure: ${JSON.stringify(r)}`);
-          if (errors.length !== 1) throw new Error(`expected exactly one parity error: ${JSON.stringify(errors)}`);
-          const e = errors[0];
-          if (e.reason !== "verified_final_canonical_nonterminal" || e.matchId !== "cid_cafconfed_rukinzo_durbancity_20260913") {
-            throw new Error(`unexpected pre-repair blocker: ${JSON.stringify(e)}`);
+          import { buildHistoryDayFromTruth } from './engine-v1/jobs/append-finalized-day-to-history.js';
+          const r=buildHistoryDayFromTruth('2026-09-13');
+          const e=Array.isArray(r.errors)?r.errors:[];
+          if(r.ok!==false||r.acceptedRows!==410||e.length!==1||e[0].reason!=='verified_final_canonical_nonterminal'||e[0].matchId!=='cid_cafconfed_rukinzo_durbancity_20260913') throw new Error(JSON.stringify(r));
+          console.log(JSON.stringify({acceptedRows:r.acceptedRows,error:e[0]},null,2));
+          NODE
+
+      - name: Apply convergence and close parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          node engine-v1/jobs/promote-verified-final-truth-to-canonical-day.js --date="$REPAIR_DAY" --dry-run > /tmp/convergence-dry.json
+          node engine-v1/jobs/promote-verified-final-truth-to-canonical-day.js --date="$REPAIR_DAY" > /tmp/convergence-write.json
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { buildHistoryDayFromTruth } from './engine-v1/jobs/append-finalized-day-to-history.js';
+          for(const f of ['/tmp/convergence-dry.json','/tmp/convergence-write.json']){
+            const x=JSON.parse(fs.readFileSync(f,'utf8'));
+            if(x.ok!==true||x.promotedRows!==1||x.promoted?.[0]?.matchId!=='cid_cafconfed_rukinzo_durbancity_20260913'||x.promoted?.[0]?.score!=='1-2') throw new Error(JSON.stringify(x));
           }
-          if (Number(r.acceptedRows) !== 410) throw new Error(`expected 410 accepted rows before repair: ${r.acceptedRows}`);
-          console.log(JSON.stringify({ ok: true, acceptedRows: r.acceptedRows, blocker: e }, null, 2));
+          const r=buildHistoryDayFromTruth('2026-09-13');
+          if(r.ok!==true||r.acceptedRows!==411||r.canonicalPlayedFinalCount!==411||r.verifiedFinalCount!==411) throw new Error(JSON.stringify(r));
           NODE
 
-      - name: Apply exact verified-final canonical convergence for 2026-09-13
-        shell: bash
-        run: |
-          set -euo pipefail
-          node ./engine-v1/jobs/promote-verified-final-truth-to-canonical-day.js --date="$REPAIR_DAY" --dry-run > "$RUNNER_TEMP/convergence-dry-run.json"
-          node - <<'NODE'
-          const fs = require('fs');
-          const r = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + '/convergence-dry-run.json','utf8'));
-          if (r.ok !== true || r.promotedRows !== 1) throw new Error(`unexpected dry-run: ${JSON.stringify(r)}`);
-          if (r.promoted?.[0]?.matchId !== 'cid_cafconfed_rukinzo_durbancity_20260913') throw new Error(`unexpected promoted row: ${JSON.stringify(r.promoted)}`);
-          if (r.promoted?.[0]?.score !== '1-2') throw new Error(`unexpected score: ${JSON.stringify(r.promoted)}`);
-          NODE
-
-          node ./engine-v1/jobs/promote-verified-final-truth-to-canonical-day.js --date="$REPAIR_DAY" > "$RUNNER_TEMP/convergence-write.json"
-          node - <<'NODE'
-          const fs = require('fs');
-          const r = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + '/convergence-write.json','utf8'));
-          if (r.ok !== true || r.promotedRows !== 1 || r.rejectedRows !== 0) throw new Error(`unexpected write result: ${JSON.stringify(r)}`);
-          NODE
-
-      - name: Prove 2026-09-13 history parity closes
+      - name: Rebuild history derived foundations
         shell: bash
         run: |
           set -euo pipefail
           node --input-type=module <<'NODE'
-          import { buildHistoryDayFromTruth } from "./engine-v1/jobs/append-finalized-day-to-history.js";
-          const r = buildHistoryDayFromTruth("2026-09-13");
-          if (r.ok !== true) throw new Error(`post-convergence parity failed: ${JSON.stringify(r)}`);
-          if (Number(r.acceptedRows) !== 411 || Number(r.canonicalPlayedFinalCount) !== 411 || Number(r.verifiedFinalCount) !== 411) {
-            throw new Error(`unexpected post-convergence counts: ${JSON.stringify(r)}`);
-          }
-          console.log(JSON.stringify({ ok: true, acceptedRows: r.acceptedRows }, null, 2));
+          import { appendFinalizedDayToHistory } from './engine-v1/jobs/append-finalized-day-to-history.js';
+          import { buildHistoryReport } from './engine-v1/jobs/build-history-report.js';
+          import { rebuildIndexesForSeason } from './engine-v1/jobs/rebuild-indexes-for-season.js';
+          import { rebuildH2HFoundationFromCurrentHistory } from './engine-v1/jobs/rebuild-h2h-foundation-from-current-history.js';
+          import { buildStandingsDay } from './engine-v1/jobs/build-standings-day.js';
+          import { auditStandingsFoundation } from './engine-v1/jobs/audit-standings-foundation.js';
+          import { buildModelPriors } from './engine-v1/jobs/build-model-priors.js';
+          import { validateHistoryIndexFoundationSync, validateH2HFoundationSync, validateModelPriorsFoundationSync } from './engine-v1/core/derived-history-foundation.js';
+          const season='2026-2027';
+          const a=await appendFinalizedDayToHistory('2026-09-13');
+          if(a?.ok!==true||a?.rowsWritten!==411) throw new Error('append:'+JSON.stringify(a));
+          const report=buildHistoryReport(season);
+          if(report?.byDay?.['2026-09-13']!==411) throw new Error('report:'+JSON.stringify(report));
+          const idx=await rebuildIndexesForSeason('2026-09-13');
+          const idxv=validateHistoryIndexFoundationSync(season);
+          if(idx?.ok!==true||idxv?.ok!==true) throw new Error('indexes:'+JSON.stringify({idx,idxv}));
+          const h=rebuildH2HFoundationFromCurrentHistory();
+          const hv=validateH2HFoundationSync();
+          if(h?.ok!==true||hv?.ok!==true) throw new Error('h2h:'+JSON.stringify({h,hv}));
+          const st=await buildStandingsDay('2026-09-15',[],{season});
+          const sta=auditStandingsFoundation({season});
+          if(st?.ok!==true||sta?.ok!==true) throw new Error('standings:'+JSON.stringify({st,sta}));
+          const mp=await buildModelPriors({targetSeason:season});
+          const mpv=validateModelPriorsFoundationSync(season);
+          if(mp?.ok!==true||mpv?.ok!==true) throw new Error('priors:'+JSON.stringify({mp,mpv}));
+          console.log(JSON.stringify({historyRows:a.rowsWritten,indexes:idx.ok,h2h:h.ok,standings:st.ok,priors:mp.ok},null,2));
           NODE
 
-      - name: Append repaired day and rebuild all history-derived foundations
+      - name: Final invariants
         shell: bash
         run: |
           set -euo pipefail
+          git ls-files 'data/value/**' 'data/value-plans/**' 'data/value-comparison/**' 'data/deploy-snapshots/*/value.json' 'data/deploy-snapshots/*/value-audit.json' | sort -u | while read -r f; do test -n "$f" && sha256sum "$f"; done > /tmp/value-after.sha256
+          diff -u /tmp/value-before.sha256 /tmp/value-after.sha256
           node --input-type=module <<'NODE'
-          import { appendFinalizedDayToHistory } from "./engine-v1/jobs/append-finalized-day-to-history.js";
-          import { buildHistoryReport } from "./engine-v1/jobs/build-history-report.js";
-          import { rebuildIndexesForSeason } from "./engine-v1/jobs/rebuild-indexes-for-season.js";
-          import { rebuildH2HFoundationFromCurrentHistory } from "./engine-v1/jobs/rebuild-h2h-foundation-from-current-history.js";
-          import { buildStandingsDay } from "./engine-v1/jobs/build-standings-day.js";
-          import { auditStandingsFoundation } from "./engine-v1/jobs/audit-standings-foundation.js";
-          import { buildModelPriors } from "./engine-v1/jobs/build-model-priors.js";
-          import {
-            validateHistoryIndexFoundationSync,
-            validateH2HFoundationSync,
-            validateModelPriorsFoundationSync
-          } from "./engine-v1/core/derived-history-foundation.js";
-
-          const day = "2026-09-13";
-          const season = "2026-2027";
-          const append = await appendFinalizedDayToHistory(day);
-          if (append?.ok !== true || append?.rowsWritten !== 411) throw new Error(`history append failed: ${JSON.stringify(append)}`);
-
-          const report = buildHistoryReport();
-          if (Number(report?.byDay?.[day] || 0) !== 411) throw new Error(`history report missing repaired day: ${JSON.stringify(report)}`);
-
-          const indexes = await rebuildIndexesForSeason(day);
-          if (indexes?.ok !== true) throw new Error(`history indexes rebuild failed: ${JSON.stringify(indexes)}`);
-          const indexValidation = validateHistoryIndexFoundationSync(season);
-          if (indexValidation?.ok !== true) throw new Error(`history index foundation invalid: ${JSON.stringify(indexValidation)}`);
-
-          const h2h = rebuildH2HFoundationFromCurrentHistory();
-          if (h2h?.ok !== true || h2h?.validation?.ok !== true) throw new Error(`h2h rebuild failed: ${JSON.stringify(h2h)}`);
-          const h2hValidation = validateH2HFoundationSync();
-          if (h2hValidation?.ok !== true) throw new Error(`h2h foundation invalid: ${JSON.stringify(h2hValidation)}`);
-
-          const standings = await buildStandingsDay("2026-09-15", [], { season });
-          const standingsAudit = auditStandingsFoundation({ season });
-          if (standings?.ok !== true || standingsAudit?.ok !== true) throw new Error(`standings foundation failed: ${JSON.stringify({standings, standingsAudit})}`);
-
-          const priors = await buildModelPriors({ targetSeason: season });
-          const priorsValidation = validateModelPriorsFoundationSync(season);
-          if (priors?.ok !== true || priorsValidation?.ok !== true) throw new Error(`model priors foundation failed: ${JSON.stringify({priors, priorsValidation})}`);
-
-          console.log(JSON.stringify({
-            appendRows: append.rowsWritten,
-            historyReportRows: report.byDay[day],
-            indexesOk: indexes.ok,
-            indexValidationOk: indexValidation.ok,
-            h2hOk: h2h.ok,
-            standingsOk: standings.ok,
-            standingsAuditOk: standingsAudit.ok,
-            modelPriorsOk: priors.ok,
-            modelPriorsValidationOk: priorsValidation.ok
-          }, null, 2));
+          import fs from 'node:fs';
+          import { buildHistoryDayFromTruth } from './engine-v1/jobs/append-finalized-day-to-history.js';
+          const c=JSON.parse(fs.readFileSync('data/canonical-fixtures/2026-09-13/caf.confed.json','utf8'));
+          const row=c.fixtures.find(x=>x.canonicalId==='cid_cafconfed_rukinzo_durbancity_20260913');
+          if(!row||row.status!=='FT'||row.scoreHome!==1||row.scoreAway!==2) throw new Error(JSON.stringify(row));
+          if(row?.verifiedFinalCanonicalConvergence?.guarantees?.heuristicIdentity!==false||row?.verifiedFinalCanonicalConvergence?.guarantees?.elapsedTimeInference!==false) throw new Error('unsafe guarantees');
+          const p=buildHistoryDayFromTruth('2026-09-13');
+          if(p.ok!==true||p.acceptedRows!==411) throw new Error(JSON.stringify(p));
+          const r=JSON.parse(fs.readFileSync('data/history/2026-2027.report.json','utf8'));
+          if(r.byDay?.['2026-09-13']!==411) throw new Error(JSON.stringify(r.byDay));
           NODE
-
-      - name: Verify Value bytes unchanged and repaired state exact
-        shell: bash
-        run: |
-          set -euo pipefail
-          {
-            git ls-files 'data/value/**' 'data/value-plans/**' 'data/value-comparison/**' \
-              'data/deploy-snapshots/*/value.json' 'data/deploy-snapshots/*/value-audit.json' || true
-          } | sort -u | while read -r f; do
-            test -n "$f" && sha256sum "$f"
-          done > "$RUNNER_TEMP/value-after.sha256"
-          diff -u "$RUNNER_TEMP/value-before.sha256" "$RUNNER_TEMP/value-after.sha256"
-
-          node --input-type=module <<'NODE'
-          import fs from "node:fs";
-          import { buildHistoryDayFromTruth } from "./engine-v1/jobs/append-finalized-day-to-history.js";
-          const canonical = JSON.parse(fs.readFileSync("data/canonical-fixtures/2026-09-13/caf.confed.json","utf8"));
-          const row = canonical.fixtures.find(x => x.canonicalId === "cid_cafconfed_rukinzo_durbancity_20260913");
-          if (!row || row.status !== "FT" || row.scoreHome !== 1 || row.scoreAway !== 2) throw new Error(`canonical convergence missing: ${JSON.stringify(row)}`);
-          if (row?.verifiedFinalCanonicalConvergence?.guarantees?.heuristicIdentity !== false) throw new Error("heuristicIdentity guarantee missing");
-          if (row?.verifiedFinalCanonicalConvergence?.guarantees?.elapsedTimeInference !== false) throw new Error("elapsedTimeInference guarantee missing");
-          const parity = buildHistoryDayFromTruth("2026-09-13");
-          if (parity.ok !== true || parity.acceptedRows !== 411) throw new Error(`final parity failed: ${JSON.stringify(parity)}`);
-          const report = JSON.parse(fs.readFileSync("data/history/2026-2027.report.json","utf8"));
-          if (report.byDay?.["2026-09-13"] !== 411) throw new Error(`report count mismatch: ${JSON.stringify(report.byDay)}`);
-          NODE
-
-      - name: Verify exact write set
-        shell: bash
-        run: |
-          set -euo pipefail
           git diff --check
-          git status --short
-          CHANGED="$(git status --porcelain | sed -E 's/^.. //' | sed -E 's#^"|"$##' | sort -u)"
-          BAD="$(printf '%s\n' "$CHANGED" | grep -Ev '^(\.github/workflows/tmp-verified-final-canonical-convergence-20260915\.yml$|engine-v1/jobs/promote-verified-final-truth-to-canonical-day\.js$|engine-v1/jobs/run-daily-cycle\.js$|engine-v1/tests/verified-final-canonical-convergence\.test\.js$|engine-v1/tests/daily-history-verified-final-convergence\.test\.js$|data/canonical-fixtures/2026-09-13/caf\.confed\.json$|data/history/2026-2027(\.report)?\.json$|data/history-index/|data/h2h/|data/h2h-foundation/|data/standings/|data/model-priors/)' || true)"
-          if [ -n "$BAD" ]; then
-            echo "Unexpected changed paths:"
-            echo "$BAD"
-            exit 1
-          fi
 
-      - name: Require remote main still pinned
+      - name: Verify write set and pin main
         shell: bash
         run: |
           set -euo pipefail
+          BAD="$(git status --porcelain | sed -E 's/^.. //' | sed -E 's#^"|"$##' | grep -Ev '^(\.github/workflows/tmp-verified-final-canonical-convergence-20260915\.yml$|engine-v1/jobs/promote-verified-final-truth-to-canonical-day\.js$|engine-v1/jobs/run-daily-cycle\.js$|engine-v1/tests/verified-final-canonical-convergence\.test\.js$|engine-v1/tests/daily-history-verified-final-convergence\.test\.js$|data/canonical-fixtures/2026-09-13/caf\.confed\.json$|data/history/2026-2027(\.report)?\.json$|data/history-index/|data/h2h/|data/h2h-foundation/|data/standings/|data/model-priors/)' || true)"
+          if [ -n "$BAD" ]; then echo "$BAD"; exit 1; fi
           REMOTE="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
-          echo "REMOTE_MAIN=$REMOTE"
           test "$REMOTE" = "$BASE_SHA"
 
-      - name: Build clean code plus truth release commit
+      - name: Build clean release
         shell: bash
         run: |
           set -euo pipefail
           git reset --mixed "$BASE_SHA"
           rm -f "$TMP_WORKFLOW"
-          git add \
-            engine-v1/jobs/promote-verified-final-truth-to-canonical-day.js \
-            engine-v1/jobs/run-daily-cycle.js \
-            engine-v1/tests/verified-final-canonical-convergence.test.js \
-            engine-v1/tests/daily-history-verified-final-convergence.test.js \
-            data/canonical-fixtures/2026-09-13/caf.confed.json \
-            data/history/2026-2027.json \
-            data/history/2026-2027.report.json \
-            data/history-index \
-            data/h2h \
-            data/h2h-foundation \
-            data/standings \
-            data/model-priors
-
-          BAD="$(git diff --cached --name-only | grep -Ev '^(engine-v1/jobs/promote-verified-final-truth-to-canonical-day\.js$|engine-v1/jobs/run-daily-cycle\.js$|engine-v1/tests/verified-final-canonical-convergence\.test\.js$|engine-v1/tests/daily-history-verified-final-convergence\.test\.js$|data/canonical-fixtures/2026-09-13/caf\.confed\.json$|data/history/2026-2027(\.report)?\.json$|data/history-index/|data/h2h/|data/h2h-foundation/|data/standings/|data/model-priors/)' || true)"
-          if [ -n "$BAD" ]; then
-            echo "Unexpected staged paths:"
-            echo "$BAD"
-            exit 1
-          fi
+          git add engine-v1/jobs/promote-verified-final-truth-to-canonical-day.js engine-v1/jobs/run-daily-cycle.js engine-v1/tests/verified-final-canonical-convergence.test.js engine-v1/tests/daily-history-verified-final-convergence.test.js data/canonical-fixtures/2026-09-13/caf.confed.json data/history/2026-2027.json data/history/2026-2027.report.json data/history-index data/h2h data/h2h-foundation data/standings data/model-priors
           test -z "$(git diff --cached --name-only | grep -E '^(data/value/|data/value-plans/|data/value-comparison/|data/deploy-snapshots/.*/value(-audit)?\.json$)' || true)"
           git diff --cached --check
-
-          git config user.name "matchlab-repair"
-          git config user.email "matchlab-repair@users.noreply.github.com"
+          git config user.name matchlab-repair
+          git config user.email matchlab-repair@users.noreply.github.com
           git commit -m "Converge verified final truth into recent history"
           RELEASE_SHA="$(git rev-parse HEAD)"
           test "$(git rev-parse HEAD^)" = "$BASE_SHA"
-          echo "RELEASE_SHA=$RELEASE_SHA" | tee "$RUNNER_TEMP/release.env"
-          echo "RELEASE_TREE=$(git rev-parse HEAD^{tree})" >> "$RUNNER_TEMP/release.env"
-          git diff-tree --no-commit-id --name-status -r "$RELEASE_SHA" > "$RUNNER_TEMP/release-paths.txt"
-
-      - name: Push clean release branch only
-        shell: bash
-        run: |
-          set -euo pipefail
-          source "$RUNNER_TEMP/release.env"
+          echo "RELEASE_SHA=$RELEASE_SHA" > /tmp/release.env
+          echo "RELEASE_TREE=$(git rev-parse HEAD^{tree})" >> /tmp/release.env
+          git diff-tree --no-commit-id --name-status -r "$RELEASE_SHA" > /tmp/release-paths.txt
           REMOTE="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
           test "$REMOTE" = "$BASE_SHA"
           git push origin "$RELEASE_SHA:refs/heads/$RELEASE_BRANCH"
 
-      - name: Write and upload release evidence
+      - name: Evidence
         shell: bash
         run: |
           set -euo pipefail
-          source "$RUNNER_TEMP/release.env"
-          python - <<'PY'
-          import json, os, pathlib, subprocess
-          temp = pathlib.Path(os.environ['RUNNER_TEMP'])
-          env = {}
-          for line in (temp/'release.env').read_text().splitlines():
-              if '=' in line:
-                  k,v=line.split('=',1); env[k]=v
-          paths=(temp/'release-paths.txt').read_text().splitlines()
-          payload={
-              'schema':'ai-matchlab.verified-final-canonical-convergence-release.v1',
-              'baseSha':os.environ['BASE_SHA'],
-              'releaseSha':env['RELEASE_SHA'],
-              'releaseTree':env['RELEASE_TREE'],
-              'repairDay':os.environ['REPAIR_DAY'],
-              'repairedMatchId':'cid_cafconfed_rukinzo_durbancity_20260913',
-              'historyRowsWritten':411,
-              'guarantees':{
-                  'exactCanonicalId':True,
-                  'exactProviderIdIntersection':True,
-                  'sameAthensDay':True,
-                  'orderedTeamPair':True,
-                  'verifiedFinalTruth':True,
-                  'heuristicIdentity':False,
-                  'elapsedTimeInference':False,
-                  'protectedNonPlayedNeverOverwritten':True,
-                  'valueArtifactsByteIdentical':True,
-                  'mainUpdatedByWorkflow':False
-              },
-              'changedPaths':paths
-          }
-          (temp/'verified-final-canonical-convergence-release.json').write_text(json.dumps(payload,indent=2)+'\n')
-          PY
-          cat "$RUNNER_TEMP/verified-final-canonical-convergence-release.json"
+          source /tmp/release.env
+          printf '{"baseSha":"%s","releaseSha":"%s","releaseTree":"%s","repairDay":"%s","historyRows":411,"exactProviderIdentity":true,"heuristicIdentity":false,"elapsedTimeInference":false,"valueBytesUnchanged":true,"mainUpdatedByWorkflow":false}\n' "$BASE_SHA" "$RELEASE_SHA" "$RELEASE_TREE" "$REPAIR_DAY" > /tmp/release-evidence.json
+          cat /tmp/release-evidence.json
 
-      - name: Upload release evidence
+      - name: Upload evidence
         uses: actions/upload-artifact@v4
         with:
           name: verified-final-canonical-convergence-release-20260915
-          path: |
-            ${{ runner.temp }}/verified-final-canonical-convergence-release.json
-            ${{ runner.temp }}/release.env
-            ${{ runner.temp }}/release-paths.txt
-            ${{ runner.temp }}/convergence-dry-run.json
-            ${{ runner.temp }}/convergence-write.json
-            ${{ runner.temp }}/value-before.sha256
-            ${{ runner.temp }}/value-after.sha256
+          path: /tmp/release-evidence.json
           if-no-files-found: error
