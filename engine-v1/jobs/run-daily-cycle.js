@@ -18,6 +18,7 @@ import {
 import { applyCrossDayVerifiedFinalSupersessionWindow } from "./apply-cross-day-verified-final-supersession.js";
 import { buildHistoryReport } from "./build-history-report.js";
 import { applyResultsTruthToCanonicalDay } from "./apply-results-truth-to-canonical-day.js";
+import { promoteVerifiedFinalTruthToCanonicalDay } from "./promote-verified-final-truth-to-canonical-day.js";
 import {
   rebuildIndexesForSeason,
   collectIndexRebuildTargets,
@@ -2053,7 +2054,7 @@ export async function runDailyCycle(options = {}) {
 
         const sweep = applyResultsTruthToCanonicalDay(day);
         syncCanonicalFixturesToJsonDbDay(day);
-        const readiness = auditFinalizationReadinessDay(day);
+        let readiness = auditFinalizationReadinessDay(day);
 
         // History owns its own final-truth convergence. Missing verified-final
         // evidence is refreshed independently of Value. Structural conflicts
@@ -2070,6 +2071,33 @@ export async function runDailyCycle(options = {}) {
             -back
           );
           historyTruthRefreshStatus = historyTruthRefresh?.status ?? null;
+          historyParity = buildHistoryDayFromTruth(day);
+        }
+
+        let verifiedFinalCanonicalConvergence = null;
+        let verifiedFinalCanonicalConvergenceAttempted = false;
+
+        if (
+          Array.isArray(historyParity?.errors) &&
+          historyParity.errors.some(error =>
+            error?.reason === "verified_final_canonical_nonterminal"
+          )
+        ) {
+          verifiedFinalCanonicalConvergenceAttempted = true;
+          verifiedFinalCanonicalConvergence =
+            promoteVerifiedFinalTruthToCanonicalDay(day, { write: true });
+
+          if (verifiedFinalCanonicalConvergence?.ok !== true) {
+            throw new Error(
+              `verified_final_canonical_convergence_failed:${day}:${verifiedFinalCanonicalConvergence?.reason || "unknown"}`
+            );
+          }
+
+          if (Number(verifiedFinalCanonicalConvergence?.promotedRows || 0) > 0) {
+            syncCanonicalFixturesToJsonDbDay(day);
+            readiness = auditFinalizationReadinessDay(day);
+          }
+
           historyParity = buildHistoryDayFromTruth(day);
         }
 
@@ -2136,6 +2164,15 @@ export async function runDailyCycle(options = {}) {
           resettled,
           historyTruthRefreshAttempted,
           historyTruthRefreshStatus,
+          verifiedFinalCanonicalConvergenceAttempted,
+          verifiedFinalCanonicalConvergenceOk:
+            verifiedFinalCanonicalConvergence?.ok ?? null,
+          verifiedFinalCanonicalPromotedRows:
+            verifiedFinalCanonicalConvergence?.promotedRows ?? 0,
+          verifiedFinalCanonicalRejectedRows:
+            verifiedFinalCanonicalConvergence?.rejectedRows ?? 0,
+          verifiedFinalCanonicalByReason:
+            verifiedFinalCanonicalConvergence?.byReason || {},
           historyParity: historyParitySummary,
           appended: !!append?.ok,
           appendedRows: append?.rowsWritten ?? 0,
