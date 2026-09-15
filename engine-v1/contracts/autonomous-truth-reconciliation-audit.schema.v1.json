@@ -1,0 +1,346 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ai-matchlab.autonomous-truth-reconciliation-audit.v1",
+  "title": "AI MatchLab Autonomous Truth Reconciliation Audit V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "auditVersion",
+    "dayKey",
+    "generatedAt",
+    "role",
+    "auditState",
+    "input",
+    "authority",
+    "summary",
+    "anomalies",
+    "auditFingerprint",
+    "provenance"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ai-matchlab.autonomous-truth-reconciliation-audit.v1"
+    },
+    "auditVersion": {
+      "const": "1.0.0"
+    },
+    "dayKey": {
+      "type": "string",
+      "pattern": "^20[0-9]{2}-[0-9]{2}-[0-9]{2}$"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "role": {
+      "const": "derived_diagnostic_control_plane"
+    },
+    "auditState": {
+      "enum": [
+        "CLEAR",
+        "OBSERVATION_GAPS",
+        "RECONCILIATION_REQUIRED",
+        "BLOCKED"
+      ]
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ledgerSchema",
+        "ledgerVersion",
+        "ledgerState",
+        "truthFingerprint",
+        "downstreamOverallState"
+      ],
+      "properties": {
+        "ledgerSchema": {
+          "const": "ai-matchlab.day-truth-ledger.v1"
+        },
+        "ledgerVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ledgerState": {
+          "enum": [
+            "EMPTY",
+            "OPEN",
+            "INCOMPLETE",
+            "CLOSED",
+            "CONFLICT"
+          ]
+        },
+        "truthFingerprint": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "downstreamOverallState": {
+          "enum": [
+            "NOT_OBSERVED",
+            "PARTIALLY_OBSERVED",
+            "CONVERGED",
+            "INCOMPLETE",
+            "CONFLICT"
+          ]
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceTruth",
+        "diagnosisOnly",
+        "canonicalWriteAuthorized",
+        "verifiedFinalWriteAuthorized",
+        "historyWriteAuthorized",
+        "settlementWriteAuthorized",
+        "publicationWriteAuthorized",
+        "repairAuthorized",
+        "workflowMutationAuthorized"
+      ],
+      "properties": {
+        "sourceTruth": {
+          "const": "day_truth_ledger_v1"
+        },
+        "diagnosisOnly": {
+          "const": true
+        },
+        "canonicalWriteAuthorized": {
+          "const": false
+        },
+        "verifiedFinalWriteAuthorized": {
+          "const": false
+        },
+        "historyWriteAuthorized": {
+          "const": false
+        },
+        "settlementWriteAuthorized": {
+          "const": false
+        },
+        "publicationWriteAuthorized": {
+          "const": false
+        },
+        "repairAuthorized": {
+          "const": false
+        },
+        "workflowMutationAuthorized": {
+          "const": false
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "anomalyCount",
+        "blockingCount",
+        "reconciliationRequiredCount",
+        "observationGapCount",
+        "diagnosticOnlyCount",
+        "errorCount",
+        "warningCount",
+        "infoCount",
+        "fixtureScopedCount",
+        "dayScopedCount",
+        "downstreamScopedCount"
+      ],
+      "properties": {
+        "anomalyCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blockingCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reconciliationRequiredCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "observationGapCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "diagnosticOnlyCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "errorCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "warningCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "infoCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fixtureScopedCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "dayScopedCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "downstreamScopedCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "anomalies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/anomaly"
+      }
+    },
+    "auditFingerprint": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inputSchema",
+        "inputTruthFingerprint",
+        "diagnosticContract"
+      ],
+      "properties": {
+        "inputSchema": {
+          "const": "ai-matchlab.day-truth-ledger.v1"
+        },
+        "inputTruthFingerprint": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "diagnosticContract": {
+          "const": "ledger_bound_deterministic_read_only_audit"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "anomaly": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "anomalyId",
+        "scope",
+        "canonicalId",
+        "category",
+        "reasonCode",
+        "severity",
+        "impact",
+        "message",
+        "evidence",
+        "details"
+      ],
+      "properties": {
+        "anomalyId": {
+          "type": "string",
+          "pattern": "^atra_v1_[0-9a-f]{24}$"
+        },
+        "scope": {
+          "enum": [
+            "fixture",
+            "day",
+            "downstream"
+          ]
+        },
+        "canonicalId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "category": {
+          "enum": [
+            "TRUTH",
+            "EVIDENCE",
+            "DOWNSTREAM",
+            "OBSERVABILITY",
+            "DIAGNOSTIC"
+          ]
+        },
+        "reasonCode": {
+          "enum": [
+            "FIXTURE_TRUTH_CONFLICT",
+            "FIXTURE_TRUTH_UNRESOLVED",
+            "PLAYED_TERMINAL_PENDING_VERIFIED_FINAL",
+            "VERIFIED_FINAL_MISSING_CANONICAL_ID",
+            "ORPHAN_VERIFIED_FINAL",
+            "DUPLICATE_VERIFIED_FINAL_EVIDENCE",
+            "LEDGER_CONFLICT_WITHOUT_DIAGNOSTIC",
+            "LEDGER_INCOMPLETE_WITHOUT_DIAGNOSTIC",
+            "HISTORY_NOT_OBSERVED",
+            "HISTORY_INCOMPLETE",
+            "HISTORY_CONFLICT",
+            "SETTLEMENT_NOT_OBSERVED",
+            "SETTLEMENT_UNRESOLVED",
+            "SETTLEMENT_CONFLICT",
+            "PUBLICATION_NOT_OBSERVED",
+            "PUBLICATION_INCOMPLETE",
+            "PUBLICATION_CONFLICT",
+            "DOWNSTREAM_CONFLICT_WITHOUT_COMPONENT",
+            "DOWNSTREAM_INCOMPLETE_WITHOUT_COMPONENT",
+            "SYSTEM_HEALTH_NOT_OBSERVED",
+            "SYSTEM_HEALTH_WARNING_SIGNAL",
+            "SYSTEM_HEALTH_ERROR_SIGNAL",
+            "SYSTEM_HEALTH_UNKNOWN_SIGNAL"
+          ]
+        },
+        "severity": {
+          "enum": [
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "impact": {
+          "enum": [
+            "DIAGNOSTIC_ONLY",
+            "OBSERVATION_GAP",
+            "RECONCILIATION_REQUIRED",
+            "BLOCKING_CONFLICT"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "truthFingerprint",
+            "refs"
+          ],
+          "properties": {
+            "truthFingerprint": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "refs": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "details": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}

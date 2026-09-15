@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ai-matchlab.autonomous-truth-reconciliation-primary-evidence.v1",
+  "title": "AI MatchLab Autonomous Truth Reconciliation Primary Evidence V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "version",
+    "dayKey",
+    "role",
+    "source",
+    "authority",
+    "summary",
+    "findings",
+    "evidenceFingerprint"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ai-matchlab.autonomous-truth-reconciliation-primary-evidence.v1"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "dayKey": {
+      "type": "string"
+    },
+    "role": {
+      "const": "derived_primary_truth_evidence"
+    },
+    "source": {
+      "type": "object"
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "diagnosisOnly",
+        "filesystemWriteAuthorized",
+        "repairAuthorized",
+        "workflowMutationAuthorized"
+      ],
+      "properties": {
+        "diagnosisOnly": {
+          "const": true
+        },
+        "filesystemWriteAuthorized": {
+          "const": false
+        },
+        "repairAuthorized": {
+          "const": false
+        },
+        "workflowMutationAuthorized": {
+          "const": false
+        }
+      }
+    },
+    "summary": {
+      "type": "object"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/finding"
+      }
+    },
+    "evidenceFingerprint": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "$defs": {
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "findingId",
+        "component",
+        "reasonCode",
+        "severity",
+        "impact",
+        "canonicalId",
+        "observedFixtureId",
+        "evidenceRefs",
+        "details"
+      ],
+      "properties": {
+        "findingId": {
+          "type": "string",
+          "pattern": "^atrp_v1_[0-9a-f]{24}$"
+        },
+        "component": {
+          "enum": [
+            "truth",
+            "verified_final"
+          ]
+        },
+        "reasonCode": {
+          "enum": [
+            "TRUTH_CONFLICT_CANONICAL_FIXTURE",
+            "TRUTH_CONFLICT_OBSERVED_FIXTURE",
+            "VERIFIED_FINAL_PENDING_CANONICAL_FIXTURE",
+            "VERIFIED_FINAL_PENDING_OBSERVED_FIXTURE",
+            "VERIFIED_FINAL_DUPLICATE_CANONICAL_FIXTURE",
+            "VERIFIED_FINAL_DUPLICATE_OBSERVED_FIXTURE",
+            "VERIFIED_FINAL_ORPHAN_OBSERVED_FIXTURE",
+            "VERIFIED_FINAL_ORPHAN_CANONICAL_CONTRADICTION",
+            "VERIFIED_FINAL_ORPHAN_MISSING_FIXTURE_ID"
+          ]
+        },
+        "severity": {
+          "enum": [
+            "warning",
+            "error"
+          ]
+        },
+        "impact": {
+          "enum": [
+            "RECONCILIATION_REQUIRED",
+            "BLOCKING_CONFLICT"
+          ]
+        },
+        "canonicalId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "observedFixtureId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "details": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}

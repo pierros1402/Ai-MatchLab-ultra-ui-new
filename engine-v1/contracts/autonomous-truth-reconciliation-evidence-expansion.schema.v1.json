@@ -1,0 +1,214 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ai-matchlab.autonomous-truth-reconciliation-evidence-expansion.v1",
+  "title": "AI MatchLab Autonomous Truth Reconciliation Evidence Expansion V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "version",
+    "dayKey",
+    "role",
+    "source",
+    "authority",
+    "summary",
+    "findings",
+    "evidenceFingerprint"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ai-matchlab.autonomous-truth-reconciliation-evidence-expansion.v1"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "dayKey": {
+      "type": "string",
+      "pattern": "^20[0-9]{2}-[0-9]{2}-[0-9]{2}$"
+    },
+    "role": {
+      "const": "derived_diagnostic_evidence_expansion"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ledgerSchema",
+        "auditSchema",
+        "truthFingerprint",
+        "auditFingerprint"
+      ],
+      "properties": {
+        "ledgerSchema": {
+          "const": "ai-matchlab.day-truth-ledger.v1"
+        },
+        "auditSchema": {
+          "const": "ai-matchlab.autonomous-truth-reconciliation-audit.v1"
+        },
+        "truthFingerprint": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "auditFingerprint": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "diagnosisOnly",
+        "filesystemWriteAuthorized",
+        "repairAuthorized",
+        "workflowMutationAuthorized"
+      ],
+      "properties": {
+        "diagnosisOnly": {
+          "const": true
+        },
+        "filesystemWriteAuthorized": {
+          "const": false
+        },
+        "repairAuthorized": {
+          "const": false
+        },
+        "workflowMutationAuthorized": {
+          "const": false
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "findingCount",
+        "blockingCount",
+        "reconciliationRequiredCount",
+        "canonicalIdentityCount",
+        "observedIdentityCount",
+        "countOnlyFindingCount"
+      ],
+      "properties": {
+        "findingCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blockingCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reconciliationRequiredCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "canonicalIdentityCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "observedIdentityCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "countOnlyFindingCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/finding"
+      }
+    },
+    "evidenceFingerprint": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "$defs": {
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "findingId",
+        "component",
+        "reasonCode",
+        "severity",
+        "impact",
+        "canonicalId",
+        "observedFixtureId",
+        "evidenceRefs",
+        "details"
+      ],
+      "properties": {
+        "findingId": {
+          "type": "string",
+          "pattern": "^atre_v1_[0-9a-f]{24}$"
+        },
+        "component": {
+          "enum": [
+            "history",
+            "settlement",
+            "publication"
+          ]
+        },
+        "reasonCode": {
+          "enum": [
+            "HISTORY_MISSING_ELIGIBLE_FIXTURE",
+            "HISTORY_UNEXPECTED_FIXTURE",
+            "HISTORY_DUPLICATE_FIXTURE",
+            "HISTORY_INVALID_TRUTH_CONTRACT_FIXTURE",
+            "HISTORY_STRUCTURAL_ISSUE",
+            "SETTLEMENT_ORPHAN_FIXTURE",
+            "SETTLEMENT_INCOMPATIBLE_TRUTH",
+            "SETTLEMENT_STRUCTURALLY_INVALID_ROW",
+            "SETTLEMENT_STRUCTURAL_ISSUE",
+            "SETTLEMENT_UNRESOLVED_COUNT_ONLY",
+            "PUBLICATION_MISSING_CANONICAL_FIXTURE",
+            "PUBLICATION_EXTRA_FIXTURE",
+            "PUBLICATION_DUPLICATE_FIXTURE"
+          ]
+        },
+        "severity": {
+          "enum": [
+            "warning",
+            "error"
+          ]
+        },
+        "impact": {
+          "enum": [
+            "RECONCILIATION_REQUIRED",
+            "BLOCKING_CONFLICT"
+          ]
+        },
+        "canonicalId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "observedFixtureId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "details": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}
