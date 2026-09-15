@@ -2,13 +2,56 @@
   "dayKey": "2026-09-15",
   "leagueSlug": "bra.2",
   "leagueName": "Brazil Serie B",
-  "updatedAt": "2026-09-15T18:16:37.024Z",
+  "updatedAt": "2026-09-15T18:56:17.133Z",
   "count": 3,
   "sourceMeta": {
-    "acquisitionProvider": "flashscore",
+    "acquisitionProvider": "espn_direct_league_status",
     "requestedLeagueSlug": "bra.2",
-    "requestedDayKey": "2026-09-30",
-    "mergedAt": "2026-09-15T18:16:37.024Z"
+    "requestedDayKey": "2026-09-15",
+    "providerFetchSlugs": [
+      "bra.2"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 3,
+      "matches": 3,
+      "fetches": [
+        {
+          "providerSlug": "bra.2",
+          "dayKey": "2026-09-14",
+          "ok": true,
+          "events": 3,
+          "matched": 3
+        }
+      ]
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-09-15T18:56:17.133Z",
+    "mode": "targeted_live_status_refresh",
+    "authoritativeTerminalOverlayPromotion": {
+      "schema": "ai-matchlab.authoritative-terminal-overlay-promotion.v1",
+      "promotedAt": "2026-09-15T18:56:42.568Z",
+      "exactProviderIdOnly": true,
+      "orderedTeamIdentityRequired": true,
+      "athensDayRequired": true,
+      "explicitTerminalStatusRequired": true,
+      "numericScoreRequired": true,
+      "heuristicIdentity": false
+    }
   },
   "fixtures": [
     {
@@ -31,18 +74,42 @@
       "awayTeam": "São Bernardo",
       "venue": "Estádio Raimundo Sampaio (Independência)",
       "firstSeenAt": "2026-09-02T04:35:14.296Z",
-      "lastSeenAt": "2026-09-15T18:16:37.020Z",
+      "lastSeenAt": "2026-09-15T18:56:17.133Z",
       "canonicalAliases": [
         "cid_bra2_americamg_saobernardo_20260915"
       ],
       "providerLeagueSlug": "bra.2",
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
-      "scoreHome": null,
-      "scoreAway": null,
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+4'",
+      "scoreHome": 0,
+      "scoreAway": 2,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
       "penalties": null,
-      "decidedBy": null
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-09-15T18:56:42.568Z",
+        "provider": "espn",
+        "providerMatchId": "401860335",
+        "dayKey": "2026-09-15",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 0,
+          "scoreAway": 2
+        }
+      }
     },
     {
       "canonicalId": "cid_bra2_botafogosp_goias_20260915",
@@ -64,15 +131,39 @@
       "awayTeam": "Goiás",
       "venue": "Estádio Santa Cruz",
       "firstSeenAt": "2026-09-02T04:35:14.297Z",
-      "lastSeenAt": "2026-09-15T18:16:37.021Z",
+      "lastSeenAt": "2026-09-15T18:56:17.133Z",
       "providerLeagueSlug": "bra.2",
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
-      "scoreHome": null,
-      "scoreAway": null,
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+6'",
+      "scoreHome": 1,
+      "scoreAway": 3,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
       "penalties": null,
-      "decidedBy": null
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-09-15T18:56:42.568Z",
+        "provider": "espn",
+        "providerMatchId": "401860332",
+        "dayKey": "2026-09-15",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 1,
+          "scoreAway": 3
+        }
+      }
     },
     {
       "canonicalId": "cid_bra2_avai_vilanova_20260915",
@@ -94,15 +185,39 @@
       "awayTeam": "Vila Nova",
       "venue": "Estádio da Ressacada",
       "firstSeenAt": "2026-09-02T04:35:14.297Z",
-      "lastSeenAt": "2026-09-15T18:16:37.022Z",
+      "lastSeenAt": "2026-09-15T18:56:17.133Z",
       "providerLeagueSlug": "bra.2",
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
-      "scoreHome": null,
-      "scoreAway": null,
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+5'",
+      "scoreHome": 1,
+      "scoreAway": 1,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
       "penalties": null,
-      "decidedBy": null
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-09-15T18:56:42.568Z",
+        "provider": "espn",
+        "providerMatchId": "401860333",
+        "dayKey": "2026-09-15",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 1,
+          "scoreAway": 1
+        }
+      }
     }
   ]
 }

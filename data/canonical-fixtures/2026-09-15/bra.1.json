@@ -2,13 +2,56 @@
   "dayKey": "2026-09-15",
   "leagueSlug": "bra.1",
   "leagueName": "Brazil Serie A",
-  "updatedAt": "2026-09-15T18:16:36.231Z",
+  "updatedAt": "2026-09-15T18:56:17.065Z",
   "count": 1,
   "sourceMeta": {
-    "acquisitionProvider": "flashscore",
+    "acquisitionProvider": "espn_direct_league_status",
     "requestedLeagueSlug": "bra.1",
-    "requestedDayKey": "2026-09-30",
-    "mergedAt": "2026-09-15T18:16:36.231Z"
+    "requestedDayKey": "2026-09-15",
+    "providerFetchSlugs": [
+      "bra.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 1,
+      "matches": 1,
+      "fetches": [
+        {
+          "providerSlug": "bra.1",
+          "dayKey": "2026-09-14",
+          "ok": true,
+          "events": 1,
+          "matched": 1
+        }
+      ]
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-09-15T18:56:17.065Z",
+    "mode": "targeted_live_status_refresh",
+    "authoritativeTerminalOverlayPromotion": {
+      "schema": "ai-matchlab.authoritative-terminal-overlay-promotion.v1",
+      "promotedAt": "2026-09-15T18:56:42.568Z",
+      "exactProviderIdOnly": true,
+      "orderedTeamIdentityRequired": true,
+      "athensDayRequired": true,
+      "explicitTerminalStatusRequired": true,
+      "numericScoreRequired": true,
+      "heuristicIdentity": false
+    }
   },
   "fixtures": [
     {
@@ -31,15 +74,39 @@
       "awayTeam": "Remo",
       "venue": "Arena Fonte Nova",
       "firstSeenAt": "2026-09-02T04:35:11.844Z",
-      "lastSeenAt": "2026-09-15T18:16:36.230Z",
+      "lastSeenAt": "2026-09-15T18:56:17.065Z",
       "providerLeagueSlug": "bra.1",
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
-      "scoreHome": null,
-      "scoreAway": null,
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+7'",
+      "scoreHome": 2,
+      "scoreAway": 1,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
       "penalties": null,
-      "decidedBy": null
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-09-15T18:56:42.568Z",
+        "provider": "espn",
+        "providerMatchId": "401841230",
+        "dayKey": "2026-09-15",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 2,
+          "scoreAway": 1
+        }
+      }
     }
   ]
 }

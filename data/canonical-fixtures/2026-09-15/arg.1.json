@@ -2,13 +2,56 @@
   "dayKey": "2026-09-15",
   "leagueSlug": "arg.1",
   "leagueName": "Argentina Primera División",
-  "updatedAt": "2026-09-15T18:16:34.302Z",
+  "updatedAt": "2026-09-15T18:56:16.928Z",
   "count": 3,
   "sourceMeta": {
-    "acquisitionProvider": "flashscore",
+    "acquisitionProvider": "espn_direct_league_status",
     "requestedLeagueSlug": "arg.1",
-    "requestedDayKey": "2026-09-30",
-    "mergedAt": "2026-09-15T18:16:34.302Z"
+    "requestedDayKey": "2026-09-15",
+    "providerFetchSlugs": [
+      "arg.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 3,
+      "matches": 3,
+      "fetches": [
+        {
+          "providerSlug": "arg.1",
+          "dayKey": "2026-09-14",
+          "ok": true,
+          "events": 3,
+          "matched": 3
+        }
+      ]
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-09-15T18:56:16.928Z",
+    "mode": "targeted_live_status_refresh",
+    "authoritativeTerminalOverlayPromotion": {
+      "schema": "ai-matchlab.authoritative-terminal-overlay-promotion.v1",
+      "promotedAt": "2026-09-15T18:56:42.568Z",
+      "exactProviderIdOnly": true,
+      "orderedTeamIdentityRequired": true,
+      "athensDayRequired": true,
+      "explicitTerminalStatusRequired": true,
+      "numericScoreRequired": true,
+      "heuristicIdentity": false
+    }
   },
   "fixtures": [
     {
@@ -31,13 +74,39 @@
       "awayTeam": "Barracas Central",
       "venue": "Florencio Solá",
       "firstSeenAt": "2026-09-02T04:35:09.086Z",
-      "lastSeenAt": "2026-09-15T18:16:34.300Z",
+      "lastSeenAt": "2026-09-15T18:56:16.927Z",
       "providerLeagueSlug": "arg.1",
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
-      "scoreHome": null,
-      "scoreAway": null
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+4'",
+      "scoreHome": 1,
+      "scoreAway": 1,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
+      "penalties": null,
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-09-15T18:56:42.568Z",
+        "provider": "espn",
+        "providerMatchId": "401841558",
+        "dayKey": "2026-09-15",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 1,
+          "scoreAway": 1
+        }
+      }
     },
     {
       "canonicalId": "cid_arg1_deportivoriestra_lanus_20260915",
@@ -59,16 +128,42 @@
       "awayTeam": "Lanús",
       "venue": "Guillermo Laza",
       "firstSeenAt": "2026-09-02T04:35:09.086Z",
-      "lastSeenAt": "2026-09-15T18:16:34.301Z",
+      "lastSeenAt": "2026-09-15T18:56:16.927Z",
       "canonicalAliases": [
         "cid_arg1_depriestra_lanus_20260915"
       ],
       "providerLeagueSlug": "arg.1",
-      "status": "FIRST_HALF",
-      "rawStatus": "STATUS_FIRST_HALF",
-      "minute": "1'",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+8'",
       "scoreHome": 0,
-      "scoreAway": 0
+      "scoreAway": 3,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
+      "penalties": null,
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-09-15T18:56:42.568Z",
+        "provider": "espn",
+        "providerMatchId": "401841555",
+        "dayKey": "2026-09-15",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 0,
+          "scoreAway": 3
+        }
+      }
     },
     {
       "canonicalId": "cid_arg1_institutocordoba_estudiantesriocuarto_20260915",
@@ -90,16 +185,42 @@
       "awayTeam": "Estudiantes de Río Cuarto",
       "venue": "Monumental Presidente Perón",
       "firstSeenAt": "2026-09-02T04:35:09.087Z",
-      "lastSeenAt": "2026-09-15T18:16:34.302Z",
+      "lastSeenAt": "2026-09-15T18:56:16.928Z",
       "canonicalAliases": [
         "cid_arg1_instituto_estudiantesriocuarto_20260915"
       ],
       "providerLeagueSlug": "arg.1",
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
-      "scoreHome": null,
-      "scoreAway": null
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+6'",
+      "scoreHome": 2,
+      "scoreAway": 1,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
+      "penalties": null,
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-09-15T18:56:42.568Z",
+        "provider": "espn",
+        "providerMatchId": "401841566",
+        "dayKey": "2026-09-15",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 2,
+          "scoreAway": 1
+        }
+      }
     }
   ]
 }
