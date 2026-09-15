@@ -1,0 +1,88 @@
+name: TMP history 2026-09-13 truth parity audit
+
+on:
+  push:
+    branches:
+      - audit/20260915-history-20260913-truth-parity
+
+permissions:
+  contents: read
+
+jobs:
+  audit-history-truth-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact audit branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify audit base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='98079ea81426d0cd4491c7ae0aaca717676d7d5c'
+          PARENT="$(git rev-parse HEAD^)"
+          test "$PARENT" = "$BASE"
+          echo "AUDIT_BASE=$BASE"
+          echo "AUDIT_HEAD=$(git rev-parse HEAD)"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Evaluate 2026-09-13 history truth parity read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE' | tee /tmp/history-20260913-truth-parity.json
+          import { buildHistoryDayFromTruth } from './engine-v1/jobs/append-finalized-day-to-history.js';
+
+          const dayKey = '2026-09-13';
+          const result = buildHistoryDayFromTruth(dayKey);
+          const byReason = {};
+          for (const error of result.errors || []) {
+            const reason = String(error?.reason || 'unknown');
+            byReason[reason] = (byReason[reason] || 0) + 1;
+          }
+          const payload = {
+            dayKey,
+            ok: result.ok === true,
+            reason: result.reason || null,
+            season: result.season || null,
+            canonicalFixtureCount: result.canonicalFixtureCount ?? null,
+            canonicalPlayedFinalCount: result.canonicalPlayedFinalCount ?? null,
+            verifiedFinalCount: result.verifiedFinalCount ?? null,
+            acceptedRows: result.acceptedRows ?? null,
+            errorCount: Array.isArray(result.errors) ? result.errors.length : 0,
+            errorsByReason: byReason,
+            errors: result.errors || []
+          };
+          console.log(JSON.stringify(payload, null, 2));
+          NODE
+
+      - name: Prove repository stayed clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          STATUS="$(git status --porcelain --untracked-files=all)"
+          if [ -n "$STATUS" ]; then
+            echo "ERROR: read-only audit dirtied repository"
+            echo "$STATUS"
+            exit 1
+          fi
+          echo 'READ_ONLY_CHECKOUT_CLEAN=true'
+
+      - name: Upload diagnostic evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: history-20260913-truth-parity-audit
+          path: /tmp/history-20260913-truth-parity.json
+          if-no-files-found: error
+          retention-days: 14
