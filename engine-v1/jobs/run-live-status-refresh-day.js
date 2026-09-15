@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 
 import { ESPN_BASE, leagueName } from "../config.js";
 import { normalizeFixture } from "../core/normalize.js";
+import { isPlayedFinal } from "../core/non-played-state.js";
 import { buildCanonicalId } from "../core/canonical-id.js";
 import { dedupeLeagueDayFixtures } from "../core/fixture-dedup.js";
 import { mergeMonotonicStatusObservation } from "../core/canonical-status-monotonicity.js";
@@ -245,7 +246,7 @@ function statusBucket(row) {
 }
 
 function isFinalLike(row) {
-  return /\b(FT|FULL_TIME|STATUS_FULL_TIME|FINAL|STATUS_FINAL|STATUS_FINAL_AET|AET|POST)\b/i.test(statusBucket(row));
+  return isPlayedFinal(row);
 }
 
 function isRefreshCandidate(row, now = new Date(), options = {}) {

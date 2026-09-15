@@ -9,6 +9,17 @@ export const MATCH_STATE_CLASS = Object.freeze({
   UNKNOWN: "UNKNOWN"
 });
 
+export const OPERATIONAL_MATCH_STATE = Object.freeze({
+  SCHEDULED: "SCHEDULED",
+  LIVE: "LIVE",
+  PLAYED_TERMINAL: "PLAYED_TERMINAL",
+  NON_PLAYED_TERMINAL: "NON_PLAYED_TERMINAL",
+  INTERRUPTED: "INTERRUPTED",
+  DELAYED: "DELAYED",
+  CONFLICT: "CONFLICT",
+  UNRESOLVED: "UNRESOLVED"
+});
+
 const PRE_KICKOFF_SCHEDULED_TOKENS = new Set([
   "PRE",
   "PRE_KICKOFF",
@@ -56,6 +67,8 @@ const PLAYED_FINAL_TOKENS = new Set([
   "FT",
   "FINAL",
   "FULL_TIME",
+  "COMPLETE",
+  "STATUS_COMPLETE",
   "STATUS_FINAL",
   "STATUS_FULL_TIME",
   "STATUS_FINAL_AET",
@@ -68,9 +81,25 @@ const PLAYED_FINAL_TOKENS = new Set([
   "AET",
   "PEN",
   "AFTER_EXTRA_TIME",
-  "AFTER_PENALTIES",
-  "TERMINAL_CONFIRMED",
-  "TERMINAL"
+  "AFTER_PENALTIES"
+]);
+
+const LIVE_TOKENS = new Set([
+  "LIVE",
+  "STATUS_LIVE",
+  "STALE_LIVE",
+  "FIRST_HALF",
+  "STATUS_FIRST_HALF",
+  "SECOND_HALF",
+  "STATUS_SECOND_HALF",
+  "HALF_TIME",
+  "HALFTIME",
+  "STATUS_HALFTIME",
+  "STATUS_HALF_TIME",
+  "IN_PROGRESS",
+  "STATUS_IN_PROGRESS",
+  "EXTRA_TIME",
+  "STATUS_EXTRA_TIME"
 ]);
 
 function cleanToken(value) {
@@ -131,11 +160,14 @@ export function classifyMatchState(row) {
   }
 
   if (
-    tokens.some(token => PLAYED_FINAL_TOKENS.has(token)) ||
-    Number(row?.finalized) === 1 ||
-    cleanToken(row?.state) === "FINAL"
+    tokens.some(
+      token =>
+        PLAYED_FINAL_TOKENS.has(token)
+    )
   ) {
-    matchedClasses.push(MATCH_STATE_CLASS.PLAYED_FINAL);
+    matchedClasses.push(
+      MATCH_STATE_CLASS.PLAYED_FINAL
+    );
   }
 
   if (matchedClasses.length > 1) {
@@ -143,6 +175,70 @@ export function classifyMatchState(row) {
   }
 
   return matchedClasses[0] || MATCH_STATE_CLASS.UNKNOWN;
+}
+
+export function classifyOperationalMatchState(row) {
+  const truthState = classifyMatchState(row);
+
+  switch (truthState) {
+    case MATCH_STATE_CLASS.PRE_KICKOFF_SCHEDULED:
+      return OPERATIONAL_MATCH_STATE.SCHEDULED;
+
+    case MATCH_STATE_CLASS.PRE_KICKOFF_NON_PLAYED:
+    case MATCH_STATE_CLASS.RESULT_INVALIDATED:
+      return OPERATIONAL_MATCH_STATE.NON_PLAYED_TERMINAL;
+
+    case MATCH_STATE_CLASS.PLAY_INTERRUPTED:
+      return OPERATIONAL_MATCH_STATE.INTERRUPTED;
+
+    case MATCH_STATE_CLASS.TEMPORARY_DELAY:
+      return OPERATIONAL_MATCH_STATE.DELAYED;
+
+    case MATCH_STATE_CLASS.PLAYED_FINAL:
+      return OPERATIONAL_MATCH_STATE.PLAYED_TERMINAL;
+
+    case MATCH_STATE_CLASS.CONFLICT:
+      return OPERATIONAL_MATCH_STATE.CONFLICT;
+
+    case MATCH_STATE_CLASS.UNKNOWN:
+    default:
+      break;
+  }
+
+  const tokens = matchStateTokens(row);
+
+  if (tokens.some(token => LIVE_TOKENS.has(token))) {
+    return OPERATIONAL_MATCH_STATE.LIVE;
+  }
+
+  return OPERATIONAL_MATCH_STATE.UNRESOLVED;
+}
+
+export function isOperationallyClosed(row) {
+  const state = classifyOperationalMatchState(row);
+
+  return (
+    state === OPERATIONAL_MATCH_STATE.PLAYED_TERMINAL ||
+    state === OPERATIONAL_MATCH_STATE.NON_PLAYED_TERMINAL
+  );
+}
+
+export function isPlayedFinal(row) {
+  return classifyMatchState(row) === MATCH_STATE_CLASS.PLAYED_FINAL;
+}
+
+export function isNonPlayedTerminal(row) {
+  return (
+    classifyOperationalMatchState(row) ===
+    OPERATIONAL_MATCH_STATE.NON_PLAYED_TERMINAL
+  );
+}
+
+export function isOperationalLive(row) {
+  return (
+    classifyOperationalMatchState(row) ===
+    OPERATIONAL_MATCH_STATE.LIVE
+  );
 }
 
 export function isPreKickoffNonPlayed(row) {

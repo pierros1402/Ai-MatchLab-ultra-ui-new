@@ -241,6 +241,16 @@ test(
         operationalState:
           "TERMINAL_CONFIRMED"
       }),
+      false
+    );
+
+    assert.equal(
+      isTerminalHistoryRow({
+        status: "FT",
+        rawStatus: "STATUS_FINAL",
+        operationalState:
+          "TERMINAL_CONFIRMED"
+      }),
       true
     );
 

@@ -3,9 +3,15 @@ import assert from "node:assert/strict";
 
 import {
   MATCH_STATE_CLASS,
+  OPERATIONAL_MATCH_STATE,
   classifyMatchState,
+  classifyOperationalMatchState,
   hasMatchStateConflict,
   hasPreKickoffNonPlayedDisplayViolation,
+  isNonPlayedTerminal,
+  isOperationalLive,
+  isOperationallyClosed,
+  isPlayedFinal,
   isPreKickoffNonPlayed,
   isValueSettlementVoidState,
   isVerifiedFinalVetoState,
@@ -53,6 +59,131 @@ test("provider-independent match-state taxonomy stays fail-closed", () => {
   assert.equal(
     classifyMatchState({ status: "STATUS_SCHEDULED", statusType: "FINAL" }),
     MATCH_STATE_CLASS.CONFLICT
+  );
+});
+
+test("unified operational match-state contract preserves truth precedence", () => {
+  assert.equal(
+    classifyOperationalMatchState({ status: "PRE" }),
+    OPERATIONAL_MATCH_STATE.SCHEDULED
+  );
+
+  assert.equal(
+    classifyOperationalMatchState({ status: "LIVE" }),
+    OPERATIONAL_MATCH_STATE.LIVE
+  );
+
+  assert.equal(
+    classifyOperationalMatchState({
+      operationalState: "STALE_LIVE"
+    }),
+    OPERATIONAL_MATCH_STATE.LIVE
+  );
+
+  assert.equal(
+    classifyOperationalMatchState({
+      status: "COMPLETE"
+    }),
+    OPERATIONAL_MATCH_STATE.PLAYED_TERMINAL
+  );
+
+  assert.equal(
+    classifyOperationalMatchState({
+      status: "LIVE",
+      rawStatus: "STATUS_DELAYED"
+    }),
+    OPERATIONAL_MATCH_STATE.DELAYED
+  );
+
+  assert.equal(
+    classifyOperationalMatchState({
+      status: "SPECIAL",
+      rawStatus: "STATUS_SUSPENDED"
+    }),
+    OPERATIONAL_MATCH_STATE.INTERRUPTED
+  );
+
+  assert.equal(
+    classifyOperationalMatchState({
+      status: "SPECIAL",
+      rawStatus: "STATUS_POSTPONED"
+    }),
+    OPERATIONAL_MATCH_STATE.NON_PLAYED_TERMINAL
+  );
+
+  assert.equal(
+    classifyOperationalMatchState({
+      status: "FT",
+      rawStatus: "STATUS_FINAL_PEN"
+    }),
+    OPERATIONAL_MATCH_STATE.PLAYED_TERMINAL
+  );
+
+  assert.equal(
+    classifyOperationalMatchState({
+      status: "FT",
+      rawStatus: "STATUS_POSTPONED"
+    }),
+    OPERATIONAL_MATCH_STATE.CONFLICT
+  );
+
+  assert.equal(
+    classifyOperationalMatchState({ status: "SPECIAL" }),
+    OPERATIONAL_MATCH_STATE.UNRESOLVED
+  );
+});
+
+test("unified operational predicates separate closure from played-final truth", () => {
+  const postponed = {
+    status: "SPECIAL",
+    rawStatus: "STATUS_POSTPONED"
+  };
+
+  const finalPen = {
+    status: "FT",
+    rawStatus: "STATUS_FINAL_PEN",
+    scoreHome: 1,
+    scoreAway: 1
+  };
+
+  const suspended = {
+    status: "SPECIAL",
+    rawStatus: "STATUS_SUSPENDED"
+  };
+
+  const delayedLive = {
+    status: "LIVE",
+    rawStatus: "STATUS_DELAYED"
+  };
+
+  const live = {
+    status: "LIVE"
+  };
+
+  assert.equal(isOperationallyClosed(postponed), true);
+  assert.equal(isNonPlayedTerminal(postponed), true);
+  assert.equal(isPlayedFinal(postponed), false);
+
+  assert.equal(isOperationallyClosed(finalPen), true);
+  assert.equal(isNonPlayedTerminal(finalPen), false);
+  assert.equal(isPlayedFinal(finalPen), true);
+
+  assert.equal(isOperationallyClosed(suspended), false);
+  assert.equal(isPlayedFinal(suspended), false);
+
+  assert.equal(isOperationallyClosed(delayedLive), false);
+  assert.equal(isOperationalLive(delayedLive), false);
+  assert.equal(isPlayedFinal(delayedLive), false);
+
+  assert.equal(isOperationalLive(live), true);
+  assert.equal(isOperationallyClosed(live), false);
+
+  assert.equal(
+    isPlayedFinal({
+      status: "SPECIAL",
+      rawStatus: "SUSPENDED"
+    }),
+    false
   );
 });
 
@@ -452,3 +583,128 @@ test("verified-final exporter vetoes every non-final canonical state", () => {
     false
   );
 });
+
+
+test(
+  "generic terminal and lifecycle markers are metadata, never standalone played-final truth",
+  () => {
+    assert.equal(
+      classifyMatchState({
+        operationalState:
+          "TERMINAL_CONFIRMED"
+      }),
+      MATCH_STATE_CLASS.UNKNOWN
+    );
+
+    assert.equal(
+      classifyOperationalMatchState({
+        operationalState:
+          "TERMINAL_CONFIRMED"
+      }),
+      OPERATIONAL_MATCH_STATE.UNRESOLVED
+    );
+
+    assert.equal(
+      classifyMatchState({
+        status: "TERMINAL"
+      }),
+      MATCH_STATE_CLASS.UNKNOWN
+    );
+
+    assert.equal(
+      classifyMatchState({
+        finalized: 1,
+        state: "final"
+      }),
+      MATCH_STATE_CLASS.UNKNOWN
+    );
+
+    assert.equal(
+      classifyOperationalMatchState({
+        finalized: 1,
+        state: "final"
+      }),
+      OPERATIONAL_MATCH_STATE.UNRESOLVED
+    );
+  }
+);
+
+test(
+  "day lifecycle finalization cannot turn non-played truth into played-final truth",
+  () => {
+    const postponed = {
+      status: "SPECIAL",
+      rawStatus:
+        "STATUS_POSTPONED",
+      operationalState:
+        "SPECIAL",
+      finalized: 1,
+      state: "final"
+    };
+
+    assert.equal(
+      classifyMatchState(
+        postponed
+      ),
+      MATCH_STATE_CLASS
+        .PRE_KICKOFF_NON_PLAYED
+    );
+
+    assert.equal(
+      classifyOperationalMatchState(
+        postponed
+      ),
+      OPERATIONAL_MATCH_STATE
+        .NON_PLAYED_TERMINAL
+    );
+
+    assert.equal(
+      isPlayedFinal(
+        postponed
+      ),
+      false
+    );
+  }
+);
+
+test(
+  "generic terminal metadata remains compatible when explicit played-final truth exists",
+  () => {
+    const finalRow = {
+      status: "FT",
+      rawStatus:
+        "STATUS_FINAL",
+      statusType:
+        "STATUS_FINAL",
+      operationalState:
+        "TERMINAL_CONFIRMED",
+      finalized: 1,
+      state: "final",
+      scoreHome: 2,
+      scoreAway: 1
+    };
+
+    assert.equal(
+      classifyMatchState(
+        finalRow
+      ),
+      MATCH_STATE_CLASS
+        .PLAYED_FINAL
+    );
+
+    assert.equal(
+      classifyOperationalMatchState(
+        finalRow
+      ),
+      OPERATIONAL_MATCH_STATE
+        .PLAYED_TERMINAL
+    );
+
+    assert.equal(
+      isPlayedFinal(
+        finalRow
+      ),
+      true
+    );
+  }
+);

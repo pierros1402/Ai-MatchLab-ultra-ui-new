@@ -18,6 +18,10 @@ import {
 import {
   resolveVerifiedFlashscoreNonPlayedDecision
 } from "../source-discovery/flashscore-nonplayed-decisions.js";
+import {
+  OPERATIONAL_MATCH_STATE,
+  classifyOperationalMatchState
+} from "./non-played-state.js";
 
 const SOURCE_PROFILE = {
   espn: {
@@ -44,14 +48,6 @@ const SOURCE_PROFILE = {
     scoreReliability: 0.50
   }
 };
-
-const TERMINAL_STATUSES = [
-  "FT"
-];
-
-const LIVE_STATUSES = [
-  "LIVE"
-];
 
 const SOURCE_WEIGHTS = {
   espn: 1.0,
@@ -89,47 +85,95 @@ function byNewest(a, b) {
   return Number(b?.ts || 0) - Number(a?.ts || 0);
 }
 
-function isTerminal(status) {
-  const s = String(status || "").toUpperCase();
+function stateInput(
+  value,
+  rawStatus = null
+) {
+  if (
+    value &&
+    typeof value === "object"
+  ) {
+    return value;
+  }
 
-  return (
-    TERMINAL_STATUSES.includes(s) ||
-    s.includes("FINAL") ||
-    s.includes("FULL_TIME") ||
-    s.includes("AET") ||
-    s.includes("PEN")
+  return {
+    status: value,
+    rawStatus
+  };
+}
+
+export function classifyReconciledStatusSemantics(
+  value,
+  rawStatus = null
+) {
+  return classifyOperationalMatchState(
+    stateInput(
+      value,
+      rawStatus
+    )
   );
 }
 
-function isLive(status) {
-  const s = String(status || "").toUpperCase();
-
+function isTerminal(
+  value,
+  rawStatus = null
+) {
   return (
-    LIVE_STATUSES.includes(s) ||
-    s.includes("IN_PROGRESS") ||
-    s.includes("FIRST_HALF") ||
-    s.includes("SECOND_HALF") ||
-    s.includes("HALF_TIME") ||
-    s === "LIVE"
+    classifyReconciledStatusSemantics(
+      value,
+      rawStatus
+    ) ===
+    OPERATIONAL_MATCH_STATE
+      .PLAYED_TERMINAL
   );
 }
 
-function isPre(status) {
-  return !isLive(status) && !isTerminal(status);
+function isLive(
+  value,
+  rawStatus = null
+) {
+  return (
+    classifyReconciledStatusSemantics(
+      value,
+      rawStatus
+    ) ===
+    OPERATIONAL_MATCH_STATE.LIVE
+  );
 }
 
-function isSpecialStatus(rawStatus, status) {
-  const s1 = String(status || "").toUpperCase();
-  const s2 = String(rawStatus || "").toUpperCase();
+function isPre(
+  value,
+  rawStatus = null
+) {
+  return (
+    classifyReconciledStatusSemantics(
+      value,
+      rawStatus
+    ) ===
+    OPERATIONAL_MATCH_STATE.SCHEDULED
+  );
+}
+
+function isSpecialStatus(
+  rawStatus,
+  status
+) {
+  const state =
+    classifyReconciledStatusSemantics(
+      status,
+      rawStatus
+    );
 
   return (
-    s1 === "SPECIAL" ||
-    s1.includes("POSTPONED") ||
-    s1.includes("CANCELED") ||
-    s1.includes("ABANDONED") ||
-    s2.includes("POSTPONED") ||
-    s2.includes("CANCELED") ||
-    s2.includes("ABANDONED")
+    state ===
+      OPERATIONAL_MATCH_STATE
+        .NON_PLAYED_TERMINAL ||
+    state ===
+      OPERATIONAL_MATCH_STATE
+        .INTERRUPTED ||
+    state ===
+      OPERATIONAL_MATCH_STATE
+        .DELAYED
   );
 }
 
@@ -487,8 +531,8 @@ function pickStatusWeighted(observations, existing, reliabilityDb = {}) {
     const sourceWeight = sourceWeightForRow(row);
     const freshness = Number(row?.ts || 0) / 1e13;
 
-    const terminalBonus = isTerminal(row?.status) ? 1000 : 0;
-    const liveBonus = isLive(row?.status) ? 500 : 100;
+    const terminalBonus = isTerminal(row) ? 1000 : 0;
+    const liveBonus = isLive(row) ? 500 : 100;
 
     const effectiveStatusReliability = getEffectiveReliability(
       source,
@@ -532,10 +576,10 @@ function pickStatusWeighted(observations, existing, reliabilityDb = {}) {
       );
   } else if (
     existing?.status &&
-    isTerminal(existing.status)
+    isTerminal(existing)
   ) {
     const terminalObs = Array.from(latestPerSource.values())
-      .filter(row => isTerminal(row?.status))
+      .filter(row => isTerminal(row))
       .sort((a, b) => {
         const sa = canonicalSource(a?.source);
         const sb = canonicalSource(b?.source);
@@ -667,7 +711,7 @@ function pickScoreWeighted(observations, existing, chosenStatus, reliabilityDb =
 
   let source = best?.source || null;
 
-  if (existing && isTerminal(existing.status) && isTerminal(chosenStatus)) {
+  if (existing && isTerminal(existing) && isTerminal(chosenStatus)) {
     const prevHome = safeNum(existing.scoreHome, 0);
     const prevAway = safeNum(existing.scoreAway, 0);
 
@@ -729,7 +773,7 @@ function pickMinute(observations, existing, chosenStatus, reliabilityDb = {}) {
   }
 
   const ranked = observations
-    .filter(x => isLive(x.status))
+    .filter(x => isLive(x))
     .sort((a, b) => {
       const aParsed = parseMinute(a.minute);
       const bParsed = parseMinute(b.minute);
@@ -883,7 +927,7 @@ function computeDisagreement(rows) {
   // Από εδώ και κάτω εξετάζουμε μόνο minute-only divergence.
   // Αν status + score συμφωνούν και το ματς είναι live, μικρές αποκλίσεις minute
   // δεν πρέπει να βαφτίζονται full disagreement.
-  const liveLike = latest.some(row => isLive(row?.status));
+  const liveLike = latest.some(row => isLive(row));
   if (!liveLike) {
     return false;
   }
@@ -1195,7 +1239,33 @@ function resolveOperationalState({
       ? now - kickoffMs
       : null;
 
-  if (isSpecialStatus(newestRawStatus, chosenStatus)) {
+  const unifiedState =
+    classifyReconciledStatusSemantics(
+      chosenStatus,
+      newestRawStatus
+    );
+
+  if (
+    unifiedState ===
+      OPERATIONAL_MATCH_STATE.CONFLICT ||
+    unifiedState ===
+      OPERATIONAL_MATCH_STATE.UNRESOLVED
+  ) {
+    return {
+      operationalState: "UNKNOWN",
+      isDisplayLive: false,
+      isDisplayPre: false,
+      isDisplayFinal: false,
+      terminalConfidence: 0
+    };
+  }
+
+  if (
+    isSpecialStatus(
+      newestRawStatus,
+      chosenStatus
+    )
+  ) {
     return {
       operationalState: "SPECIAL",
       isDisplayLive: false,

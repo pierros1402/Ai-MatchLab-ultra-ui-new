@@ -27,7 +27,10 @@
 
 import { ESPN_BASE, leagueName } from "../config.js";
 import { normalizeFixture, normalizeTeamKey } from "./normalize.js";
-import { STATUS_RANK, statusRankFromParts } from "./display-contract.js";
+import {
+  OPERATIONAL_MATCH_STATE,
+  classifyOperationalMatchState
+} from "./non-played-state.js";
 import { getFlashscoreLiveIndex } from "../odds/flashscore-live-overlay.js";
 
 // Only bother verifying once a match is past any normal length — below this it is
@@ -52,11 +55,19 @@ function minutesSinceKickoff(kickoffUtc, now) {
   return (now - ts) / 60000;
 }
 
-const FINAL_RE = /\b(FT|FULL_TIME|STATUS_FULL_TIME|FINAL|STATUS_FINAL|AET|PEN|POST)\b/i;
-const LIVE_RE = /\b(LIVE|FIRST_HALF|SECOND_HALF|HALF_TIME|IN_PROGRESS|STATUS_IN_PROGRESS)\b/i;
+export function classifyVerifierObservation(row) {
+  const state =
+    classifyOperationalMatchState(row);
 
-function espnStatusBlob(row) {
-  return [row?.status, row?.statusType, row?.rawStatus].filter(Boolean).join(" ").toUpperCase();
+  return {
+    operationalState: state,
+    finished:
+      state ===
+      OPERATIONAL_MATCH_STATE.PLAYED_TERMINAL,
+    live:
+      state ===
+      OPERATIONAL_MATCH_STATE.LIVE
+  };
 }
 
 async function fetchEspnLeagueIndex(slug, dayKey, externalSignal = null) {
@@ -91,15 +102,28 @@ async function fetchEspnLeagueIndex(slug, dayKey, externalSignal = null) {
       for (const event of Array.isArray(json?.events) ? json.events : []) {
         const n = normalizeFixture(event, slug);
         if (!n) continue;
-        const blob = espnStatusBlob(n);
-        const key = pairKey(n.homeTeam, n.awayTeam);
-        if (!byPair.has(key)) byPair.set(key, []);
+        const state =
+          classifyVerifierObservation(n);
+
+        const key =
+          pairKey(
+            n.homeTeam,
+            n.awayTeam
+          );
+
+        if (!byPair.has(key)) {
+          byPair.set(key, []);
+        }
+
         byPair.get(key).push({
-          kickoffTs: n.kickoffUtc ? new Date(n.kickoffUtc).getTime() : NaN,
+          kickoffTs:
+            n.kickoffUtc
+              ? new Date(n.kickoffUtc).getTime()
+              : NaN,
           scoreHome: n.scoreHome,
           scoreAway: n.scoreAway,
-          finished: FINAL_RE.test(blob),
-          live: LIVE_RE.test(blob),
+          finished: state.finished,
+          live: state.live,
         });
       }
     } else {
@@ -144,11 +168,24 @@ function fsRowToObservation(row) {
   };
 }
 
-function isStuckLive(m, now) {
-  const rank = statusRankFromParts(m?.status, m?.rawStatus, m?.statusType, m?.statusName);
-  if (rank !== STATUS_RANK.LIVE) return false;
-  const elapsed = minutesSinceKickoff(m?.kickoffUtc, now);
-  return elapsed != null && elapsed >= STUCK_TRIGGER_MIN;
+export function isStuckLiveCandidate(m, now) {
+  if (
+    classifyOperationalMatchState(m) !==
+    OPERATIONAL_MATCH_STATE.LIVE
+  ) {
+    return false;
+  }
+
+  const elapsed =
+    minutesSinceKickoff(
+      m?.kickoffUtc,
+      now
+    );
+
+  return (
+    elapsed != null &&
+    elapsed >= STUCK_TRIGGER_MIN
+  );
 }
 
 /**
@@ -166,7 +203,16 @@ export async function verifyStuckLiveFinals(matches, dayKey, options = {}) {
   if (signal?.aborted) return list;
 
   const stuckIdx = [];
-  for (let i = 0; i < list.length; i++) if (isStuckLive(list[i], now)) stuckIdx.push(i);
+  for (let i = 0; i < list.length; i++) {
+    if (
+      isStuckLiveCandidate(
+        list[i],
+        now
+      )
+    ) {
+      stuckIdx.push(i);
+    }
+  }
   if (!stuckIdx.length) return list; // nothing stuck → zero extra work
 
   // Flashscore index (shared cache). May be null if the feed is unavailable.

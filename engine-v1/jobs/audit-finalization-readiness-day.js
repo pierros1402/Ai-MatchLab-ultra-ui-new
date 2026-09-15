@@ -2,6 +2,10 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import { resolveDataPath } from "../storage/data-root.js";
+import {
+  OPERATIONAL_MATCH_STATE,
+  classifyOperationalMatchState
+} from "../core/non-played-state.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -50,22 +54,34 @@ function scoreAway(row) {
   return row?.scoreAway ?? row?.awayScore ?? null;
 }
 
+function strictScore(value) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === "" ||
+    (
+      typeof value === "string" &&
+      value.trim() === ""
+    )
+  ) {
+    return null;
+  }
+
+  const score = Number(value);
+
+  return (
+    Number.isInteger(score) &&
+    score >= 0
+  )
+    ? score
+    : null;
+}
+
 function hasFiniteScore(row) {
-  return Number.isFinite(Number(scoreHome(row))) && Number.isFinite(Number(scoreAway(row)));
-}
-
-function isTerminal(row) {
-  return /\b(FT|FULL_TIME|STATUS_FULL_TIME|FINAL|STATUS_FINAL|STATUS_FINAL_AET|AET|PEN|POSTPONED|CANCELLED|CANCELED|ABANDONED|WO|WALKOVER)\b/i.test(statusBucket(row));
-}
-
-function isOpenLike(row) {
-  if (isTerminal(row)) return false;
-
-  const bucket = statusBucket(row);
-
-  if (!bucket) return true;
-
-  return /\b(PRE|SCHEDULED|STATUS_SCHEDULED|UNKNOWN|STALE|LIVE|FIRST_HALF|SECOND_HALF|HALF_TIME|IN_PROGRESS|STATUS_IN_PROGRESS|EXTRA_TIME)\b/i.test(bucket);
+  return (
+    strictScore(scoreHome(row)) !== null &&
+    strictScore(scoreAway(row)) !== null
+  );
 }
 
 function teamName(row, side) {
@@ -121,7 +137,11 @@ function readJsonDbRows(dayKey) {
   };
 }
 
-function summarizeRows(dayKey, rows, sourceMeta = {}) {
+export function summarizeFinalizationReadinessRows(
+  dayKey,
+  rows,
+  sourceMeta = {}
+) {
   const statusCounts = {};
   const openByStatus = {};
   const openByLeague = {};
@@ -130,10 +150,15 @@ function summarizeRows(dayKey, rows, sourceMeta = {}) {
   const seen = new Set();
 
   let terminal = 0;
+  let playedTerminal = 0;
+  let nonPlayedTerminal = 0;
   let terminalWithScore = 0;
   let terminalMissingScore = 0;
   let open = 0;
   let unknown = 0;
+  let conflict = 0;
+
+  const operationalStateCounts = {};
 
   const openFixtures = [];
   const terminalMissingScoreFixtures = [];
@@ -148,18 +173,27 @@ function summarizeRows(dayKey, rows, sourceMeta = {}) {
     const bucket = statusBucket(row) || "UNKNOWN";
     statusCounts[bucket] = (statusCounts[bucket] || 0) + 1;
 
-    const terminalLike = isTerminal(row);
-    const openLike = isOpenLike(row);
+    const operationalState =
+      classifyOperationalMatchState(row);
+
+    operationalStateCounts[operationalState] =
+      (operationalStateCounts[operationalState] || 0) + 1;
+
     const hasScore = hasFiniteScore(row);
 
-    if (terminalLike) {
+    if (
+      operationalState ===
+      OPERATIONAL_MATCH_STATE.PLAYED_TERMINAL
+    ) {
       terminal += 1;
+      playedTerminal += 1;
 
       if (hasScore) {
         terminalWithScore += 1;
       } else {
         terminalMissingScore += 1;
-        missingScoreByStatus[bucket] = (missingScoreByStatus[bucket] || 0) + 1;
+        missingScoreByStatus[bucket] =
+          (missingScoreByStatus[bucket] || 0) + 1;
 
         terminalMissingScoreFixtures.push({
           id,
@@ -175,32 +209,38 @@ function summarizeRows(dayKey, rows, sourceMeta = {}) {
       continue;
     }
 
-    if (openLike) {
-      open += 1;
-      openByStatus[bucket] = (openByStatus[bucket] || 0) + 1;
-
-      const league = leagueOf(row) || "unknown";
-      openByLeague[league] = (openByLeague[league] || 0) + 1;
-
-      openFixtures.push({
-        id,
-        league,
-        home: teamName(row, "home"),
-        away: teamName(row, "away"),
-        status: bucket,
-        scoreHome: scoreHome(row),
-        scoreAway: scoreAway(row)
-      });
-
+    if (
+      operationalState ===
+      OPERATIONAL_MATCH_STATE.NON_PLAYED_TERMINAL
+    ) {
+      terminal += 1;
+      nonPlayedTerminal += 1;
       continue;
     }
 
-    unknown += 1;
     open += 1;
-    openByStatus[bucket] = (openByStatus[bucket] || 0) + 1;
+
+    if (
+      operationalState ===
+      OPERATIONAL_MATCH_STATE.UNRESOLVED
+    ) {
+      unknown += 1;
+    }
+
+    if (
+      operationalState ===
+      OPERATIONAL_MATCH_STATE.CONFLICT
+    ) {
+      conflict += 1;
+    }
+
+    openByStatus[bucket] =
+      (openByStatus[bucket] || 0) + 1;
 
     const league = leagueOf(row) || "unknown";
-    openByLeague[league] = (openByLeague[league] || 0) + 1;
+
+    openByLeague[league] =
+      (openByLeague[league] || 0) + 1;
 
     openFixtures.push({
       id,
@@ -208,6 +248,7 @@ function summarizeRows(dayKey, rows, sourceMeta = {}) {
       home: teamName(row, "home"),
       away: teamName(row, "away"),
       status: bucket,
+      operationalState,
       scoreHome: scoreHome(row),
       scoreAway: scoreAway(row)
     });
@@ -227,10 +268,14 @@ function summarizeRows(dayKey, rows, sourceMeta = {}) {
     sourceExists: Boolean(sourceMeta.exists),
     fixtures: rows.length,
     terminal,
+    playedTerminal,
+    nonPlayedTerminal,
     terminalWithScore,
     terminalMissingScore,
     open,
     unknown,
+    conflict,
+    operationalStateCounts,
     duplicateIdCount: duplicateIds.length,
     safeToFinalizeStats,
     statusCounts,
@@ -256,7 +301,12 @@ export function auditFinalizationReadinessDay(dayKey, options = {}) {
         ? canonical
         : jsonDb;
 
-  const summary = summarizeRows(dayKey, selected.rows, selected);
+  const summary =
+    summarizeFinalizationReadinessRows(
+      dayKey,
+      selected.rows,
+      selected
+    );
 
   return {
     ...summary,
