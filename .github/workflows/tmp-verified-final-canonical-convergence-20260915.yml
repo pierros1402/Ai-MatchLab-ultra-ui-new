@@ -33,6 +33,31 @@ jobs:
           npm ci --no-audit --no-fund
           (cd engine-v1 && npm ci --no-audit --no-fund)
 
+      - name: Fix temporary report readback assertion
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('tools/tmp-verified-final-canonical-convergence-20260915.sh')
+          s=p.read_text(encoding='utf-8')
+          old_import="import { appendFinalizedDayToHistory } from './engine-v1/jobs/append-finalized-day-to-history.js';"
+          new_import="import fs from 'node:fs';\n"+old_import
+          if s.count(old_import)!=1:
+              raise SystemExit(f'append import anchor count {s.count(old_import)}')
+          s=s.replace(old_import,new_import,1)
+          old="""const report=buildHistoryReport(season);
+          if(report?.byDay?.['2026-09-13']!==411) throw new Error('report:'+JSON.stringify(report));"""
+          new="""const reportSummary=buildHistoryReport(season);
+          if(reportSummary?.ok!==true) throw new Error('report-summary:'+JSON.stringify(reportSummary));
+          const report=JSON.parse(fs.readFileSync('data/history/2026-2027.report.json','utf8'));
+          if(report?.byDay?.['2026-09-13']!==411) throw new Error('report:'+JSON.stringify(report));"""
+          if s.count(old)!=1:
+              raise SystemExit(f'report assertion anchor count {s.count(old)}')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+
       - name: Run isolated convergence transaction
         shell: bash
         run: bash tools/tmp-verified-final-canonical-convergence-20260915.sh
