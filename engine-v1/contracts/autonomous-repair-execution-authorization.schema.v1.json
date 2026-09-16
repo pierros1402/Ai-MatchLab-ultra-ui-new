@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ai-matchlab.autonomous-repair-execution-authorization.v1",
+  "title": "AI MatchLab Autonomous Repair Execution Authorization V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "version",
+    "dayKey",
+    "generatedAt",
+    "role",
+    "requestFingerprint",
+    "planFingerprint",
+    "verificationFingerprint",
+    "authorizationFingerprint",
+    "authorizationState",
+    "authorizationBasis",
+    "operationScope",
+    "safety",
+    "authority"
+  ],
+  "properties": {
+    "schema": {"const": "ai-matchlab.autonomous-repair-execution-authorization.v1"},
+    "version": {"const": "1.0.0"},
+    "dayKey": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+    "generatedAt": {"type": "string", "minLength": 1},
+    "role": {"const": "externally_issued_bounded_execution_authorization"},
+    "requestFingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "planFingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "verificationFingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "authorizationFingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "authorizationState": {"enum": ["AUTHORIZED", "DENIED"]},
+    "authorizationBasis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "issuerId", "decisionFingerprint"],
+      "properties": {
+        "source": {"const": "external_control_plane"},
+        "issuerId": {"type": "string", "minLength": 1},
+        "decisionFingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "operationScope": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["operationId", "targetPath", "mutationMode", "preimageFingerprint"],
+        "properties": {
+          "operationId": {"type": "string", "pattern": "^arpo_v1_[0-9a-f]{24}$"},
+          "targetPath": {"type": "string", "minLength": 1},
+          "mutationMode": {"enum": ["CREATE", "REPLACE"]},
+          "preimageFingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "exactRequestScopeOnly",
+        "preimageReverificationRequired",
+        "atomicWriteRequired",
+        "postWriteAuditRequired",
+        "rollbackRequired",
+        "singleUseEnforcementRequiredByExecutor"
+      ],
+      "properties": {
+        "exactRequestScopeOnly": {"const": true},
+        "preimageReverificationRequired": {"const": true},
+        "atomicWriteRequired": {"const": true},
+        "postWriteAuditRequired": {"const": true},
+        "rollbackRequired": {"const": true},
+        "singleUseEnforcementRequiredByExecutor": {"const": true}
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifactReadOnly",
+        "authorizationGranted",
+        "filesystemWriteAuthorized",
+        "repairAuthorized",
+        "executionAuthorized",
+        "rollbackExecutionAuthorized",
+        "workflowMutationAuthorized"
+      ],
+      "properties": {
+        "artifactReadOnly": {"const": true},
+        "authorizationGranted": {"type": "boolean"},
+        "filesystemWriteAuthorized": {"type": "boolean"},
+        "repairAuthorized": {"type": "boolean"},
+        "executionAuthorized": {"type": "boolean"},
+        "rollbackExecutionAuthorized": {"type": "boolean"},
+        "workflowMutationAuthorized": {"const": false}
+      }
+    }
+  }
+}
