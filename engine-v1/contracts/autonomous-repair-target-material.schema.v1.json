@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ai-matchlab.autonomous-repair-target-material.v1",
+  "title": "AI MatchLab Autonomous Repair Target Material Catalog V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "version",
+    "dayKey",
+    "generatedAt",
+    "role",
+    "catalogFingerprint",
+    "summary",
+    "materials",
+    "authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ai-matchlab.autonomous-repair-target-material.v1"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "dayKey": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "generatedAt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "role": {
+      "const": "derived_read_only_target_material_catalog"
+    },
+    "catalogFingerprint": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "materialCount",
+        "totalContentBytes"
+      ],
+      "properties": {
+        "materialCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "totalContentBytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "materials": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "candidateDecisionId",
+          "repairClass",
+          "canonicalId",
+          "targetPath",
+          "sources",
+          "provenanceFingerprint",
+          "contentEncoding",
+          "contentSha256",
+          "contentBytes",
+          "contentBase64",
+          "materialFingerprint"
+        ],
+        "properties": {
+          "candidateDecisionId": {
+            "type": "string",
+            "pattern": "^arpd_v1_[0-9a-f]{24}$"
+          },
+          "repairClass": {
+            "enum": [
+              "ACQUIRE_VERIFIED_FINAL_EVIDENCE",
+              "REBUILD_HISTORY_ELIGIBLE_ROW",
+              "REBUILD_PUBLICATION_CANONICAL_ROW"
+            ]
+          },
+          "canonicalId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "targetPath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sources": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "ref",
+                "sha256",
+                "bytes"
+              ],
+              "properties": {
+                "ref": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "bytes": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "provenanceFingerprint": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "contentEncoding": {
+            "const": "base64"
+          },
+          "contentSha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "contentBytes": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "contentBase64": {
+            "type": "string",
+            "minLength": 1
+          },
+          "materialFingerprint": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "readOnly",
+        "filesystemWriteAuthorized",
+        "repairAuthorized",
+        "executionAuthorized",
+        "rollbackExecutionAuthorized",
+        "workflowMutationAuthorized",
+        "authorizationGranted"
+      ],
+      "properties": {
+        "readOnly": {
+          "const": true
+        },
+        "filesystemWriteAuthorized": {
+          "const": false
+        },
+        "repairAuthorized": {
+          "const": false
+        },
+        "executionAuthorized": {
+          "const": false
+        },
+        "rollbackExecutionAuthorized": {
+          "const": false
+        },
+        "workflowMutationAuthorized": {
+          "const": false
+        },
+        "authorizationGranted": {
+          "const": false
+        }
+      }
+    }
+  }
+}
