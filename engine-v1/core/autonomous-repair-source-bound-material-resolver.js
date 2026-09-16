@@ -8,6 +8,12 @@ import {
   validateAutonomousRepairTargetMaterialCatalog
 } from "./autonomous-repair-target-material.js";
 
+import {
+  AUTONOMOUS_REPAIR_PUBLICATION_COUPLED_MATERIAL_SCHEMA,
+  AUTONOMOUS_REPAIR_PUBLICATION_COUPLED_MATERIAL_VERSION,
+  validateAutonomousRepairPublicationCoupledMaterialBundle
+} from "./autonomous-repair-publication-coupled-materializer.js";
+
 export const AUTONOMOUS_REPAIR_SOURCE_BOUND_MATERIAL_RESOLUTION_SCHEMA =
   "ai-matchlab.autonomous-repair-source-bound-material-resolution.v1";
 
@@ -122,13 +128,19 @@ export const AUTONOMOUS_REPAIR_MATERIAL_PRODUCER_POLICY =
 
     REBUILD_PUBLICATION_CANONICAL_ROW: {
       supported:
-        false,
+        true,
 
-      blocker:
-        "PUBLICATION_REPAIR_REQUIRES_COUPLED_RELEASE_ARTIFACTS",
+      contractId:
+        "publication-coupled-materializer-v1",
+
+      sourcePath:
+        "engine-v1/core/autonomous-repair-publication-coupled-materializer.js",
 
       sourceDigestMode:
         "lf_normalized_sha256",
+
+      normalizedSourceSha256:
+        "effb5639d48bd08e88a57f1baa69e5cc290cf14b1b9fcf54fa4c1ce5b9306f2a",
 
       dependencies: [
         {
@@ -147,10 +159,31 @@ export const AUTONOMOUS_REPAIR_MATERIAL_PRODUCER_POLICY =
         },
         {
           sourcePath:
-            "engine-v1/jobs/export-deploy-snapshot-day.js",
+            "engine-v1/jobs/p0c-p4-build-deploy-snapshot-details.js",
 
           normalizedSourceSha256:
-            "babe9f0a35a75aad0f29c44dc75b9f58aa9426f3a9737627adcb87072d054b62"
+            "ad02d716813f046f1b8ea161a543417013db7361e709f1a60114b8fbfb5a0529"
+        },
+        {
+          sourcePath:
+            "engine-v1/jobs/p0c-p4-build-deploy-snapshot-manifest.js",
+
+          normalizedSourceSha256:
+            "031e13a57e0f142ec8c5628baeadcd9c7e4d70d6f99ac82eee0fd57895a9919c"
+        },
+        {
+          sourcePath:
+            "engine-v1/core/deploy-snapshot-release-contract.js",
+
+          normalizedSourceSha256:
+            "b8ed6d6fe2dc16dc8ed7cc4f59cd2b9b43f5feb0bac90886f97973e655a057b3"
+        },
+        {
+          sourcePath:
+            "engine-v1/value/plan-c-shadow-export.js",
+
+          normalizedSourceSha256:
+            "ecc6f6ec91cc895b63fb7cba6a90532cb17c0782fb6b214eff235277d2b94581"
         }
       ]
     }
@@ -1133,6 +1166,598 @@ function validateHistoryMaterial({
   };
 }
 
+
+function publicationBundleMutationByRole(
+  bundle,
+  role
+) {
+  const rows =
+    Array.isArray(
+      bundle?.mutations
+    )
+      ? bundle.mutations.filter(
+          row =>
+            clean(
+              row?.role
+            ) ===
+              role
+        )
+      : [];
+
+  return rows.length ===
+    1
+    ? rows[0]
+    : null;
+}
+
+function publicationBundleContainsCanonicalId(
+  bundle,
+  canonicalId
+) {
+  const fixtureMutation =
+    publicationBundleMutationByRole(
+      bundle,
+      "DERIVED_FIXTURES"
+    );
+
+  if (
+    !fixtureMutation ||
+    fixtureMutation.action !==
+      "write" ||
+    !clean(
+      fixtureMutation.contentBase64
+    )
+  ) {
+    return false;
+  }
+
+  let payload;
+
+  try {
+    payload =
+      JSON.parse(
+        Buffer.from(
+          fixtureMutation.contentBase64,
+          "base64"
+        ).toString(
+          "utf8"
+        )
+      );
+  }
+  catch {
+    return false;
+  }
+
+  const fixtures =
+    Array.isArray(
+      payload?.fixtures
+    )
+      ? payload.fixtures
+      : [];
+
+  return fixtures.some(
+    row =>
+      clean(
+        row?.canonicalId ||
+        row?.matchId ||
+        row?.id
+      ) ===
+        canonicalId
+  );
+}
+
+function publicationBundleSourceRefs(
+  bundle
+) {
+  const refs = [
+    {
+      ref:
+        `data/deploy-snapshots/${bundle.dayKey}/manifest.json`,
+
+      sha256:
+        clean(
+          bundle
+            ?.sourceManifest
+            ?.contentSha256
+        ).toLowerCase(),
+
+      bytes:
+        bundle
+          ?.sourceManifest
+          ?.contentBytes
+    },
+
+    ...(
+      Array.isArray(
+        bundle?.immutableBindings
+      )
+        ? bundle.immutableBindings.map(
+            row => ({
+              ref:
+                clean(
+                  row.targetPath
+                ),
+
+              sha256:
+                clean(
+                  row.contentSha256
+                ).toLowerCase(),
+
+              bytes:
+                row.contentBytes
+            })
+          )
+        : []
+    )
+  ];
+
+  return refs
+    .filter(
+      row =>
+        clean(
+          row.ref
+        ) &&
+        validSha(
+          row.sha256
+        ) &&
+        Number.isSafeInteger(
+          row.bytes
+        ) &&
+        row.bytes >=
+          0
+    )
+    .sort(
+      (
+        left,
+        right
+      ) =>
+        left.ref.localeCompare(
+          right.ref
+        )
+    );
+}
+
+function publicationStateMap(
+  targetState
+) {
+  const value =
+    targetState
+      ?.byTargetPath;
+
+  if (
+    !value ||
+    typeof value !==
+      "object" ||
+    Array.isArray(
+      value
+    )
+  ) {
+    return null;
+  }
+
+  return value;
+}
+
+function validatePublicationTargetState(
+  row,
+  state,
+  immutable = false
+) {
+  if (
+    !state ||
+    typeof state !==
+      "object" ||
+    Array.isArray(
+      state
+    ) ||
+    typeof state.targetExists !==
+      "boolean"
+  ) {
+    return false;
+  }
+
+  const currentSha256 =
+    state.currentSha256 ===
+      null
+      ? null
+      : clean(
+          state.currentSha256
+        ).toLowerCase();
+
+  if (
+    state.targetExists ===
+      true &&
+    !validSha(
+      currentSha256
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    state.targetExists ===
+      false &&
+    currentSha256 !==
+      null
+  ) {
+    return false;
+  }
+
+  if (
+    immutable
+  ) {
+    return (
+      state.targetExists ===
+        true &&
+      currentSha256 ===
+        clean(
+          row.contentSha256
+        ).toLowerCase()
+    );
+  }
+
+  if (
+    row.action ===
+      "delete"
+  ) {
+    return (
+      state.targetExists ===
+        true &&
+      validSha(
+        currentSha256
+      )
+    );
+  }
+
+  return row.action ===
+    "write";
+}
+
+function validatePublicationMaterial({
+  dayKey,
+  candidate,
+  materialization,
+  targetState
+}) {
+  const validation =
+    validateAutonomousRepairPublicationCoupledMaterialBundle(
+      materialization
+    );
+
+  if (
+    !validation?.ok
+  ) {
+    return {
+      ok:
+        false,
+
+      code:
+        "PUBLICATION_COUPLED_BUNDLE_INVALID"
+    };
+  }
+
+  if (
+    materialization.schema !==
+      AUTONOMOUS_REPAIR_PUBLICATION_COUPLED_MATERIAL_SCHEMA ||
+    materialization.version !==
+      AUTONOMOUS_REPAIR_PUBLICATION_COUPLED_MATERIAL_VERSION ||
+    clean(
+      materialization.dayKey
+    ) !==
+      dayKey
+  ) {
+    return {
+      ok:
+        false,
+
+      code:
+        "PUBLICATION_COUPLED_BUNDLE_CONTRACT_MISMATCH"
+    };
+  }
+
+  const canonicalId =
+    clean(
+      candidate
+        ?.diagnosis
+        ?.canonicalId
+    );
+
+  if (
+    !canonicalId ||
+    !publicationBundleContainsCanonicalId(
+      materialization,
+      canonicalId
+    )
+  ) {
+    return {
+      ok:
+        false,
+
+      code:
+        "PUBLICATION_COUPLED_FIXTURE_MEMBERSHIP_MISSING"
+    };
+  }
+
+  const manifestMutation =
+    publicationBundleMutationByRole(
+      materialization,
+      "DERIVED_MANIFEST"
+    );
+
+  if (
+    !manifestMutation ||
+    manifestMutation.action !==
+      "write" ||
+    !clean(
+      manifestMutation.contentBase64
+    ) ||
+    manifestMutation.targetPath !==
+      materialization
+        ?.manifest
+        ?.targetPath ||
+    manifestMutation.contentSha256 !==
+      materialization
+        ?.manifest
+        ?.contentSha256 ||
+    manifestMutation.contentBytes !==
+      materialization
+        ?.manifest
+        ?.contentBytes
+  ) {
+    return {
+      ok:
+        false,
+
+      code:
+        "PUBLICATION_MANIFEST_ANCHOR_INVALID"
+    };
+  }
+
+  const byTargetPath =
+    publicationStateMap(
+      targetState
+    );
+
+  if (
+    !byTargetPath
+  ) {
+    return {
+      ok:
+        false,
+
+      code:
+        "PUBLICATION_TARGET_STATE_MAP_REQUIRED",
+      targetPath:
+        manifestMutation.targetPath
+    };
+  }
+
+  const sourceManifestState =
+    byTargetPath[
+      manifestMutation.targetPath
+    ];
+
+  if (
+    !sourceManifestState ||
+    sourceManifestState.targetExists !==
+      true ||
+    clean(
+      sourceManifestState.currentSha256
+    ).toLowerCase() !==
+      clean(
+        materialization
+          ?.sourceManifest
+          ?.contentSha256
+      ).toLowerCase()
+  ) {
+    return {
+      ok:
+        false,
+
+      code:
+        "PUBLICATION_SOURCE_MANIFEST_PREIMAGE_MISMATCH",
+      targetPath:
+        manifestMutation.targetPath
+    };
+  }
+
+  const mutations =
+    materialization.mutations;
+
+  const immutableBindings =
+    materialization.immutableBindings;
+
+  const unsupportedMutation =
+    mutations.find(
+      row =>
+        row.action !==
+          "write"
+    );
+
+  if (
+    unsupportedMutation
+  ) {
+    return {
+      ok:
+        false,
+
+      code:
+        "PUBLICATION_DELETE_TARGET_UNSUPPORTED_BY_PLAN_V1",
+      targetPath:
+        unsupportedMutation.targetPath
+    };
+  }
+
+  const expectedPaths =
+    [
+      ...mutations.map(
+        row =>
+          row.targetPath
+      ),
+      ...immutableBindings.map(
+        row =>
+          row.targetPath
+      )
+    ].sort();
+
+  const suppliedPaths =
+    Object.keys(
+      byTargetPath
+    ).sort();
+
+  if (
+    JSON.stringify(
+      expectedPaths
+    ) !==
+    JSON.stringify(
+      suppliedPaths
+    )
+  ) {
+    return {
+      ok:
+        false,
+
+      code:
+        "PUBLICATION_TARGET_STATE_SET_MISMATCH",
+      targetPath:
+        manifestMutation.targetPath
+    };
+  }
+
+  for (
+    const row of
+      mutations
+  ) {
+    if (
+      !validatePublicationTargetState(
+        row,
+        byTargetPath[
+          row.targetPath
+        ],
+        false
+      )
+    ) {
+      return {
+        ok:
+          false,
+
+        code:
+          "PUBLICATION_MUTATION_TARGET_STATE_INVALID",
+        targetPath:
+          row.targetPath
+      };
+    }
+  }
+
+  for (
+    const row of
+      immutableBindings
+  ) {
+    if (
+      !validatePublicationTargetState(
+        row,
+        byTargetPath[
+          row.targetPath
+        ],
+        true
+      )
+    ) {
+      return {
+        ok:
+          false,
+
+        code:
+          "PUBLICATION_IMMUTABLE_BINDING_STATE_MISMATCH",
+        targetPath:
+          row.targetPath
+      };
+    }
+  }
+
+  const expectedProducer =
+    AUTONOMOUS_REPAIR_MATERIAL_PRODUCER_POLICY
+      .REBUILD_PUBLICATION_CANONICAL_ROW;
+
+  return {
+    ok:
+      true,
+
+    targetPath:
+      manifestMutation.targetPath,
+
+    sourceRefs:
+      publicationBundleSourceRefs(
+        materialization
+      ),
+
+    contentBase64:
+      manifestMutation.contentBase64,
+
+    producer: {
+      contractId:
+        expectedProducer.contractId,
+
+      sourcePath:
+        expectedProducer.sourcePath,
+
+      sourceDigestMode:
+        expectedProducer.sourceDigestMode,
+
+      normalizedSourceSha256:
+        expectedProducer.normalizedSourceSha256
+    },
+
+    producerProofBuilder:
+      "buildAutonomousRepairPublicationCoupledMaterialBundle",
+
+    publicationBundle:
+      materialization,
+
+    publicationTargetStates:
+      byTargetPath
+  };
+}
+
+function publicationTargets(
+  bundle,
+  byTargetPath
+) {
+  return bundle.mutations.map(
+    row => {
+      const state =
+        byTargetPath[
+          row.targetPath
+        ];
+
+      return {
+        targetPath:
+          row.targetPath,
+
+        targetExists:
+          state.targetExists,
+
+        currentSha256:
+          state.currentSha256,
+
+        plannedAction:
+          row.action,
+
+        plannedContentSha256:
+          row.contentSha256,
+
+        plannedContentBytes:
+          row.contentBytes,
+
+        publicationRole:
+          row.role,
+
+        publicationBundleFingerprint:
+          bundle.bundleFingerprint
+      };
+    }
+  );
+}
+
 function semanticMaterialCatalog(
   catalog
 ) {
@@ -1513,20 +2138,6 @@ export function buildAutonomousRepairSourceBoundMaterialResolution({
       continue;
     }
 
-    if (
-      repairClass ===
-        "REBUILD_PUBLICATION_CANONICAL_ROW"
-    ) {
-      blockers.push(
-        blocker(
-          "PUBLICATION_REPAIR_REQUIRES_COUPLED_RELEASE_ARTIFACTS",
-          candidate
-        )
-      );
-
-      continue;
-    }
-
     const materialization =
       materializationsByDecisionId[
         candidateDecisionId
@@ -1569,11 +2180,19 @@ export function buildAutonomousRepairSourceBoundMaterialResolution({
             candidate,
             materialization
           })
-        : validateHistoryMaterial({
-            candidate,
-            materialization,
-            targetState
-          });
+        : repairClass ===
+            "REBUILD_PUBLICATION_CANONICAL_ROW"
+          ? validatePublicationMaterial({
+              dayKey,
+              candidate,
+              materialization,
+              targetState
+            })
+          : validateHistoryMaterial({
+              candidate,
+              materialization,
+              targetState
+            });
 
     if (!checked.ok) {
       blockers.push(
@@ -1608,7 +2227,15 @@ export function buildAutonomousRepairSourceBoundMaterialResolution({
       producer:
         checked.producer,
       producerProofBuilder:
-        checked.producerProofBuilder
+        checked.producerProofBuilder,
+
+      publicationBundle:
+        checked.publicationBundle ||
+        null,
+
+      publicationTargetStates:
+        checked.publicationTargetStates ||
+        null
     });
   }
 
@@ -1639,24 +2266,79 @@ export function buildAutonomousRepairSourceBoundMaterialResolution({
         timestamp
     });
 
+  const metaByDecisionId =
+    new Map(
+      resolvedMeta.map(
+        meta => [
+          meta.candidateDecisionId,
+          meta
+        ]
+      )
+    );
+
+  const catalogTargetStatesByDecisionId =
+    Object.fromEntries(
+      candidateDecisionIds.map(
+        candidateDecisionId => {
+          const meta =
+            metaByDecisionId.get(
+              candidateDecisionId
+            );
+
+          if (
+            meta?.repairClass ===
+              "REBUILD_PUBLICATION_CANONICAL_ROW"
+          ) {
+            return [
+              candidateDecisionId,
+              meta.publicationTargetStates[
+                meta.targetPath
+              ]
+            ];
+          }
+
+          return [
+            candidateDecisionId,
+            targetStatesByDecisionId[
+              candidateDecisionId
+            ]
+          ];
+        }
+      )
+    );
+
   const flatTargets =
     deriveAutonomousRepairTargetsByDecisionId({
       catalog:
         materialCatalog,
-      targetStatesByDecisionId
+      targetStatesByDecisionId:
+        catalogTargetStatesByDecisionId
     });
 
   const targetsByDecisionId =
     Object.fromEntries(
       candidateDecisionIds.map(
-        candidateDecisionId => [
-          candidateDecisionId,
-          [
-            flatTargets[
+        candidateDecisionId => {
+          const meta =
+            metaByDecisionId.get(
               candidateDecisionId
-            ]
-          ]
-        ]
+            );
+
+          return [
+            candidateDecisionId,
+            meta?.repairClass ===
+              "REBUILD_PUBLICATION_CANONICAL_ROW"
+              ? publicationTargets(
+                  meta.publicationBundle,
+                  meta.publicationTargetStates
+                )
+              : [
+                  flatTargets[
+                    candidateDecisionId
+                  ]
+                ]
+          ];
+        }
       )
     );
 
@@ -1697,6 +2379,47 @@ export function buildAutonomousRepairSourceBoundMaterialResolution({
           flatTargets[
             candidateDecisionId
           ];
+
+        if (
+          meta.repairClass ===
+            "REBUILD_PUBLICATION_CANONICAL_ROW"
+        ) {
+          return {
+            candidateDecisionId,
+            repairClass:
+              material.repairClass,
+            canonicalId:
+              material.canonicalId,
+            targetPath:
+              material.targetPath,
+            producerContractId:
+              meta.producer.contractId,
+            producerPath:
+              meta.producer.sourcePath,
+            producerNormalizedSourceSha256:
+              meta.producer.normalizedSourceSha256,
+            producerProofBuilder:
+              meta.producerProofBuilder,
+            materialFingerprint:
+              material.materialFingerprint,
+            contentSha256:
+              material.contentSha256,
+            contentBytes:
+              material.contentBytes,
+            targetExists:
+              target.targetExists,
+            currentSha256:
+              target.currentSha256,
+            publicationBundleFingerprint:
+              meta.publicationBundle.bundleFingerprint,
+            publicationTargetCount:
+              meta.publicationBundle.mutations.length,
+            immutableBindingCount:
+              meta.publicationBundle.immutableBindings.length,
+            publicationBundle:
+              meta.publicationBundle
+          };
+        }
 
         return {
           candidateDecisionId,
@@ -1935,6 +2658,139 @@ export function validateAutonomousRepairSourceBoundMaterialResolution(
         materialById.get(
           candidateDecisionId
         );
+
+      if (
+        resolution?.repairClass ===
+          "REBUILD_PUBLICATION_CANONICAL_ROW"
+      ) {
+        const bundle =
+          resolution.publicationBundle;
+
+        const validation =
+          validateAutonomousRepairPublicationCoupledMaterialBundle(
+            bundle
+          );
+
+        const manifestMutation =
+          publicationBundleMutationByRole(
+            bundle,
+            "DERIVED_MANIFEST"
+          );
+
+        if (
+          !validation?.ok ||
+          !material ||
+          !manifestMutation ||
+          !Array.isArray(
+            targets
+          ) ||
+          targets.length !==
+            bundle.mutations.length ||
+          material.targetPath !==
+            manifestMutation.targetPath ||
+          material.contentSha256 !==
+            manifestMutation.contentSha256 ||
+          material.contentBytes !==
+            manifestMutation.contentBytes ||
+          resolution.targetPath !==
+            material.targetPath ||
+          resolution.materialFingerprint !==
+            material.materialFingerprint ||
+          resolution.contentSha256 !==
+            material.contentSha256 ||
+          resolution.contentBytes !==
+            material.contentBytes ||
+          resolution.publicationBundleFingerprint !==
+            bundle.bundleFingerprint ||
+          resolution.publicationTargetCount !==
+            bundle.mutations.length ||
+          resolution.immutableBindingCount !==
+            bundle.immutableBindings.length ||
+          bundle.mutations.some(
+            row =>
+              row.action !==
+                "write"
+          ) ||
+          !publicationBundleContainsCanonicalId(
+            bundle,
+            resolution.canonicalId
+          )
+        ) {
+          throw new Error(
+            "autonomous_repair_source_bound_material_publication_resolution_binding_mismatch"
+          );
+        }
+
+        for (
+          let index = 0;
+          index <
+            bundle.mutations.length;
+          index +=
+            1
+        ) {
+          const mutation =
+            bundle.mutations[index];
+
+          const publicationTarget =
+            targets[index];
+
+          if (
+            !publicationTarget ||
+            publicationTarget.targetPath !==
+              mutation.targetPath ||
+            publicationTarget.plannedAction !==
+              mutation.action ||
+            publicationTarget.plannedContentSha256 !==
+              mutation.contentSha256 ||
+            publicationTarget.plannedContentBytes !==
+              mutation.contentBytes ||
+            publicationTarget.publicationRole !==
+              mutation.role ||
+            publicationTarget.publicationBundleFingerprint !==
+              bundle.bundleFingerprint ||
+            typeof publicationTarget.targetExists !==
+              "boolean" ||
+            (
+              publicationTarget.targetExists ===
+                true &&
+              !validSha(
+                publicationTarget.currentSha256
+              )
+            ) ||
+            (
+              publicationTarget.targetExists ===
+                false &&
+              publicationTarget.currentSha256 !==
+                null
+            )
+          ) {
+            throw new Error(
+              "autonomous_repair_source_bound_material_publication_target_binding_mismatch"
+            );
+          }
+        }
+
+        const manifestTarget =
+          targets.find(
+            row =>
+              row.targetPath ===
+                manifestMutation.targetPath
+          );
+
+        if (
+          !manifestTarget ||
+          resolution.targetExists !==
+            manifestTarget.targetExists ||
+          resolution.currentSha256 !==
+            manifestTarget.currentSha256
+        ) {
+          throw new Error(
+            "autonomous_repair_source_bound_material_publication_anchor_state_mismatch"
+          );
+        }
+
+        continue;
+      }
 
       if (
         !Array.isArray(

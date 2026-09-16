@@ -16,6 +16,14 @@ import {
   validateAutonomousRepairSourceBoundMaterialResolution
 } from "./autonomous-repair-source-bound-material-resolver.js";
 
+import {
+  computeDeploySnapshotManifestHash
+} from "./deploy-snapshot-release-contract.js";
+
+import {
+  buildAutonomousRepairPublicationCoupledMaterialBundle
+} from "./autonomous-repair-publication-coupled-materializer.js";
+
 const S =
   AUTONOMOUS_REPAIR_SOURCE_BOUND_MATERIAL_STATE;
 
@@ -391,7 +399,14 @@ test(
       AUTONOMOUS_REPAIR_MATERIAL_PRODUCER_POLICY
         .REBUILD_PUBLICATION_CANONICAL_ROW
         .supported,
-      false
+      true
+    );
+
+    assert.equal(
+      AUTONOMOUS_REPAIR_MATERIAL_PRODUCER_POLICY
+        .REBUILD_PUBLICATION_CANONICAL_ROW
+        .normalizedSourceSha256,
+      "effb5639d48bd08e88a57f1baa69e5cc290cf14b1b9fcf54fa4c1ce5b9306f2a"
     );
   }
 );
@@ -886,7 +901,7 @@ test(
 );
 
 test(
-  "publication repair remains blocked until coupled release artifacts are materialized",
+  "publication repair remains blocked when coupled release materialization is missing",
   () => {
     const row =
       candidate({
@@ -911,7 +926,7 @@ test(
 
     assert.equal(
       artifact.blockers[0].code,
-      "PUBLICATION_REPAIR_REQUIRES_COUPLED_RELEASE_ARTIFACTS"
+      "MATERIALIZATION_MISSING"
     );
 
     assert.equal(
@@ -1129,5 +1144,1145 @@ test(
         forbidden
       );
     }
+  }
+);
+
+
+const PUBLICATION_ID =
+  "cid_test_home_away_20260916";
+
+function publicationPrettyBytes(
+  value
+) {
+  return Buffer.from(
+    `${JSON.stringify(
+      value,
+      null,
+      2
+    )}\n`,
+    "utf8"
+  );
+}
+
+function publicationOverlay() {
+  return {
+    resolveEvidenceFixtureId(
+      value
+    ) {
+      const text =
+        String(
+          value ?? ""
+        ).trim();
+
+      return {
+        ok:
+          true,
+
+        managed:
+          false,
+
+        sourceFixtureId:
+          text,
+
+        resolvedFixtureId:
+          text,
+
+        sourceRole:
+          "unmanaged"
+      };
+    }
+  };
+}
+
+function publicationSourceManifest() {
+  const manifest = {
+    ok:
+      true,
+
+    date:
+      "2026-09-16",
+
+    generatedAt:
+      "2026-09-16T09:00:00.000Z",
+
+    startedAt:
+      "2026-09-16T08:59:00.000Z",
+
+    source:
+      "local_canonical_export",
+
+    version:
+      "deploy-snapshot-v2",
+
+    fixturesSource:
+      "canonical",
+
+    files: {
+      fixtures:
+        "fixtures.json",
+
+      value:
+        "value.json",
+
+      valueAudit:
+        null,
+
+      detailsDir:
+        "details"
+    },
+
+    fileHashes: {
+      "fixtures.json":
+        "0".repeat(
+          64
+        ),
+
+      "value.json":
+        "1".repeat(
+          64
+        )
+    },
+
+    counts: {
+      fixtures:
+        1,
+
+      valuePicks:
+        0,
+
+      details:
+        1,
+
+      detailsMatchedToFixtures:
+        1,
+
+      orphanDetailsRemoved:
+        0,
+
+      detailsMissingForFixtures:
+        0
+    },
+
+    valueGate: {
+      fixtures:
+        1,
+
+      valuePicks:
+        0,
+
+      valueSource:
+        "local_value_file",
+
+      valueFreshAgainstCanonical:
+        null,
+
+      ok:
+        true
+    },
+
+    fixturesByLeague: {
+      "test.1":
+        1
+    },
+
+    coverage:
+      {},
+
+    sizes: {
+      fixturesMb:
+        0,
+
+      valueMb:
+        0,
+
+      detailsTotalMb:
+        0,
+
+      largestDetail: {
+        file:
+          null,
+
+        bytes:
+          0,
+
+        mb:
+          0
+      }
+    },
+
+    details:
+      []
+  };
+
+  manifest.hash =
+    computeDeploySnapshotManifestHash(
+      manifest
+    );
+
+  return manifest;
+}
+
+function publicationFixtureRow() {
+  return {
+    canonicalId:
+      PUBLICATION_ID,
+
+    matchId:
+      PUBLICATION_ID,
+
+    dayKey:
+      "2026-09-16",
+
+    leagueSlug:
+      "test.1",
+
+    status:
+      "PRE",
+
+    rawStatus:
+      "SCHEDULED",
+
+    minute:
+      "",
+
+    scoreHome:
+      null,
+
+    scoreAway:
+      null
+  };
+}
+
+function publicationFixtureUniverse() {
+  const rows = [
+    publicationFixtureRow()
+  ];
+
+  return {
+    source:
+      "canonical_with_runtime_overlay",
+
+    canonicalFixtureCount:
+      rows.length,
+
+    sourceFixtureJsonCount:
+      rows.length,
+
+    fixtureJsonCount:
+      rows.length,
+
+    snapshotRescuedCount:
+      0,
+
+    snapshotRescuedLeagues:
+      [],
+
+    runtimeOverlayCount:
+      0,
+
+    runtimeOnlyExcludedCount:
+      0,
+
+    runtimeOnlyExcludedIds:
+      [],
+
+    outsideTargetDayRuntimeCount:
+      0,
+
+    outsideTargetDayRuntimeIds:
+      [],
+
+    ambiguousRuntimeCount:
+      0,
+
+    ambiguousCanonicalAliasCount:
+      0,
+
+    fixtures:
+      rows
+  };
+}
+
+function publicationDetailPayload() {
+  return {
+    matchId:
+      PUBLICATION_ID,
+
+    basic: {
+      canonicalId:
+        PUBLICATION_ID,
+
+      matchId:
+        PUBLICATION_ID
+    },
+
+    valueSummary: {
+      count:
+        0,
+
+      picks:
+        []
+    },
+
+    meta: {
+      valueSynced:
+        false
+    }
+  };
+}
+
+function publicationBundle({
+  detailInventoryPaths = [
+    `data/deploy-snapshots/2026-09-16/details/${PUBLICATION_ID}.json`
+  ]
+} = {}) {
+  return buildAutonomousRepairPublicationCoupledMaterialBundle({
+    dayKey:
+      "2026-09-16",
+
+    sourceManifestBytes:
+      publicationPrettyBytes(
+        publicationSourceManifest()
+      ),
+
+    fixtureUniverse:
+      publicationFixtureUniverse(),
+
+    fixturesAll: {
+      matches:
+        []
+    },
+
+    detailInventoryPaths,
+
+    sourceDetails: [
+      {
+        path:
+          `data/details/2026-09-16/${PUBLICATION_ID}.json`,
+
+        detail:
+          publicationDetailPayload()
+      }
+    ],
+
+    existingDeployDetails:
+      [],
+
+    preserveExistingDetails:
+      true,
+
+    overlay:
+      publicationOverlay(),
+
+    valueBytes:
+      publicationPrettyBytes({
+        ok:
+          true,
+
+        date:
+          "2026-09-16",
+
+        source:
+          "local_value_file",
+
+        count:
+          0,
+
+        picks:
+          []
+      }),
+
+    valueAuditBytes:
+      null,
+
+    planCSourceBytes:
+      null,
+
+    planCSourceMissing:
+      false,
+
+    buildTimestamp:
+      "2026-09-16T12:00:00.000Z"
+  });
+}
+
+function publicationTargetState(
+  bundle
+) {
+  const byTargetPath =
+    {};
+
+  for (
+    const row of
+      bundle.mutations
+  ) {
+    byTargetPath[
+      row.targetPath
+    ] = {
+      targetExists:
+        true,
+
+      currentSha256:
+        row.targetPath ===
+          bundle.manifest.targetPath
+          ? bundle.sourceManifest.contentSha256
+          : "e".repeat(
+              64
+            )
+    };
+  }
+
+  for (
+    const row of
+      bundle.immutableBindings
+  ) {
+    byTargetPath[
+      row.targetPath
+    ] = {
+      targetExists:
+        true,
+
+      currentSha256:
+        row.contentSha256
+    };
+  }
+
+  return {
+    byTargetPath
+  };
+}
+
+test(
+  "publication coupled bundle resolves to a multi-target plan-native target array",
+  () => {
+    const row =
+      candidate({
+        repairClass:
+          "REBUILD_PUBLICATION_CANONICAL_ROW",
+
+        canonicalId:
+          PUBLICATION_ID
+      });
+
+    const bundle =
+      publicationBundle();
+
+    const artifact =
+      buildAutonomousRepairSourceBoundMaterialResolution({
+        policy:
+          policy({
+            candidates: [
+              row
+            ]
+          }),
+
+        materializationsByDecisionId: {
+          [row.policyDecisionId]:
+            bundle
+        },
+
+        targetStatesByDecisionId: {
+          [row.policyDecisionId]:
+            publicationTargetState(
+              bundle
+            )
+        },
+
+        generatedAt:
+          "2026-09-16T12:05:00.000Z"
+      });
+
+    assert.equal(
+      artifact.state,
+      S.RESOLVED
+    );
+
+    assert.equal(
+      artifact.materialCatalog
+        .materials
+        .length,
+      1
+    );
+
+    assert.equal(
+      artifact.materialCatalog
+        .materials[0]
+        .targetPath,
+      bundle.manifest.targetPath
+    );
+
+    assert.equal(
+      artifact.targetsByDecisionId[
+        row.policyDecisionId
+      ].length,
+      bundle.mutations.length
+    );
+
+    assert.deepEqual(
+      artifact.targetsByDecisionId[
+        row.policyDecisionId
+      ].map(
+        target =>
+          target.targetPath
+      ),
+      bundle.mutations.map(
+        mutation =>
+          mutation.targetPath
+      )
+    );
+
+    assert.equal(
+      artifact.resolutions[0]
+        .publicationBundleFingerprint,
+      bundle.bundleFingerprint
+    );
+
+    assert.equal(
+      artifact.resolutions[0]
+        .publicationTargetCount,
+      bundle.mutations.length
+    );
+
+    assert.deepEqual(
+      artifact.resolutions[0]
+        .publicationBundle,
+      bundle
+    );
+
+    assert.equal(
+      artifact.authority
+        .filesystemWriteAuthorized,
+      false
+    );
+
+    assert.equal(
+      validateAutonomousRepairSourceBoundMaterialResolution(
+        artifact
+      ),
+      true
+    );
+  }
+);
+
+test(
+  "publication resolver fails closed when the exact coupled target-state set is incomplete",
+  () => {
+    const row =
+      candidate({
+        repairClass:
+          "REBUILD_PUBLICATION_CANONICAL_ROW",
+
+        canonicalId:
+          PUBLICATION_ID
+      });
+
+    const bundle =
+      publicationBundle();
+
+    const state =
+      publicationTargetState(
+        bundle
+      );
+
+    delete state.byTargetPath[
+      bundle.mutations[0].targetPath
+    ];
+
+    const artifact =
+      buildAutonomousRepairSourceBoundMaterialResolution({
+        policy:
+          policy({
+            candidates: [
+              row
+            ]
+          }),
+
+        materializationsByDecisionId: {
+          [row.policyDecisionId]:
+            bundle
+        },
+
+        targetStatesByDecisionId: {
+          [row.policyDecisionId]:
+            state
+        }
+      });
+
+    assert.equal(
+      artifact.state,
+      S.BLOCKED
+    );
+
+    assert.equal(
+      artifact.blockers[0].code,
+      "PUBLICATION_TARGET_STATE_SET_MISMATCH"
+    );
+
+    assert.equal(
+      artifact.materialCatalog,
+      null
+    );
+  }
+);
+
+test(
+  "publication resolver binds frozen immutable artifacts to their exact current hashes",
+  () => {
+    const row =
+      candidate({
+        repairClass:
+          "REBUILD_PUBLICATION_CANONICAL_ROW",
+
+        canonicalId:
+          PUBLICATION_ID
+      });
+
+    const bundle =
+      publicationBundle();
+
+    const state =
+      publicationTargetState(
+        bundle
+      );
+
+    const frozenValue =
+      bundle.immutableBindings.find(
+        binding =>
+          binding.role ===
+            "IMMUTABLE_FROZEN_VALUE"
+      );
+
+    state.byTargetPath[
+      frozenValue.targetPath
+    ].currentSha256 =
+      "f".repeat(
+        64
+      );
+
+    const artifact =
+      buildAutonomousRepairSourceBoundMaterialResolution({
+        policy:
+          policy({
+            candidates: [
+              row
+            ]
+          }),
+
+        materializationsByDecisionId: {
+          [row.policyDecisionId]:
+            bundle
+        },
+
+        targetStatesByDecisionId: {
+          [row.policyDecisionId]:
+            state
+        }
+      });
+
+    assert.equal(
+      artifact.state,
+      S.BLOCKED
+    );
+
+    assert.equal(
+      artifact.blockers[0].code,
+      "PUBLICATION_IMMUTABLE_BINDING_STATE_MISMATCH"
+    );
+  }
+);
+
+test(
+  "publication resolver rejects coupled bundle tampering and canonical membership drift",
+  () => {
+    const row =
+      candidate({
+        repairClass:
+          "REBUILD_PUBLICATION_CANONICAL_ROW",
+
+        canonicalId:
+          PUBLICATION_ID
+      });
+
+    const bundle =
+      publicationBundle();
+
+    const tampered =
+      structuredClone(
+        bundle
+      );
+
+    tampered.mutations[0]
+      .contentBytes +=
+        1;
+
+    const tamperedArtifact =
+      buildAutonomousRepairSourceBoundMaterialResolution({
+        policy:
+          policy({
+            candidates: [
+              row
+            ]
+          }),
+
+        materializationsByDecisionId: {
+          [row.policyDecisionId]:
+            tampered
+        },
+
+        targetStatesByDecisionId: {
+          [row.policyDecisionId]:
+            publicationTargetState(
+              bundle
+            )
+        }
+      });
+
+    assert.equal(
+      tamperedArtifact.state,
+      S.BLOCKED
+    );
+
+    assert.equal(
+      tamperedArtifact.blockers[0].code,
+      "PUBLICATION_COUPLED_BUNDLE_INVALID"
+    );
+
+    const wrongCandidate =
+      candidate({
+        token:
+          "7",
+
+        repairClass:
+          "REBUILD_PUBLICATION_CANONICAL_ROW",
+
+        canonicalId:
+          "cid_not_in_publication_bundle_20260916"
+      });
+
+    const membershipArtifact =
+      buildAutonomousRepairSourceBoundMaterialResolution({
+        policy:
+          policy({
+            candidates: [
+              wrongCandidate
+            ]
+          }),
+
+        materializationsByDecisionId: {
+          [wrongCandidate.policyDecisionId]:
+            bundle
+        },
+
+        targetStatesByDecisionId: {
+          [wrongCandidate.policyDecisionId]:
+            publicationTargetState(
+              bundle
+            )
+        }
+      });
+
+    assert.equal(
+      membershipArtifact.state,
+      S.BLOCKED
+    );
+
+    assert.equal(
+      membershipArtifact.blockers[0].code,
+      "PUBLICATION_COUPLED_FIXTURE_MEMBERSHIP_MISSING"
+    );
+  }
+);
+
+test(
+  "publication resolver validator rejects multi-target binding tampering",
+  () => {
+    const row =
+      candidate({
+        repairClass:
+          "REBUILD_PUBLICATION_CANONICAL_ROW",
+
+        canonicalId:
+          PUBLICATION_ID
+      });
+
+    const bundle =
+      publicationBundle();
+
+    const artifact =
+      buildAutonomousRepairSourceBoundMaterialResolution({
+        policy:
+          policy({
+            candidates: [
+              row
+            ]
+          }),
+
+        materializationsByDecisionId: {
+          [row.policyDecisionId]:
+            bundle
+        },
+
+        targetStatesByDecisionId: {
+          [row.policyDecisionId]:
+            publicationTargetState(
+              bundle
+            )
+        }
+      });
+
+    artifact.targetsByDecisionId[
+      row.policyDecisionId
+    ][0].plannedContentBytes +=
+      1;
+
+    assert.throws(
+      () =>
+        validateAutonomousRepairSourceBoundMaterialResolution(
+          artifact
+        ),
+      /publication_target_binding_mismatch|resolution_fingerprint_mismatch/u
+    );
+  }
+);
+
+test(
+  "publication resolver fails closed when the coupled bundle requires a delete unsupported by Plan V1",
+  () => {
+    const row =
+      candidate({
+        repairClass:
+          "REBUILD_PUBLICATION_CANONICAL_ROW",
+
+        canonicalId:
+          PUBLICATION_ID
+      });
+
+    const orphanId =
+      "cid_orphan_publication_20260916";
+
+    const bundle =
+      publicationBundle({
+        detailInventoryPaths: [
+          `data/deploy-snapshots/2026-09-16/details/${PUBLICATION_ID}.json`,
+          `data/deploy-snapshots/2026-09-16/details/${orphanId}.json`
+        ]
+      });
+
+    assert.equal(
+      bundle.mutations.some(
+        mutation =>
+          mutation.action ===
+            "delete"
+      ),
+      true
+    );
+
+    const artifact =
+      buildAutonomousRepairSourceBoundMaterialResolution({
+        policy:
+          policy({
+            candidates: [
+              row
+            ]
+          }),
+
+        materializationsByDecisionId: {
+          [row.policyDecisionId]:
+            bundle
+        },
+
+        targetStatesByDecisionId: {
+          [row.policyDecisionId]:
+            publicationTargetState(
+              bundle
+            )
+        }
+      });
+
+    assert.equal(
+      artifact.state,
+      S.BLOCKED
+    );
+
+    assert.equal(
+      artifact.blockers[0].code,
+      "PUBLICATION_DELETE_TARGET_UNSUPPORTED_BY_PLAN_V1"
+    );
+
+    assert.equal(
+      artifact.materialCatalog,
+      null
+    );
+  }
+);
+
+test(
+  "publication multi-target descriptors remain Plan V1 write-descriptor compatible",
+  () => {
+    const row =
+      candidate({
+        repairClass:
+          "REBUILD_PUBLICATION_CANONICAL_ROW",
+
+        canonicalId:
+          PUBLICATION_ID
+      });
+
+    const bundle =
+      publicationBundle();
+
+    const artifact =
+      buildAutonomousRepairSourceBoundMaterialResolution({
+        policy:
+          policy({
+            candidates: [
+              row
+            ]
+          }),
+
+        materializationsByDecisionId: {
+          [row.policyDecisionId]:
+            bundle
+        },
+
+        targetStatesByDecisionId: {
+          [row.policyDecisionId]:
+            publicationTargetState(
+              bundle
+            )
+        }
+      });
+
+    const targets =
+      artifact.targetsByDecisionId[
+        row.policyDecisionId
+      ];
+
+    assert.equal(
+      targets.length >
+        1,
+      true
+    );
+
+    for (
+      const target of
+        targets
+    ) {
+      assert.equal(
+        target.plannedAction,
+        "write"
+      );
+
+      assert.match(
+        target.plannedContentSha256,
+        /^[0-9a-f]{64}$/u
+      );
+
+      assert.equal(
+        Number.isSafeInteger(
+          target.plannedContentBytes
+        ),
+        true
+      );
+
+      assert.equal(
+        target.plannedContentBytes >=
+          0,
+        true
+      );
+    }
+  }
+);
+
+test(
+  "publication resolver binds the exact source manifest bytes to the current manifest preimage",
+  () => {
+    const row =
+      candidate({
+        repairClass:
+          "REBUILD_PUBLICATION_CANONICAL_ROW",
+
+        canonicalId:
+          PUBLICATION_ID
+      });
+
+    const bundle =
+      publicationBundle();
+
+    const state =
+      publicationTargetState(
+        bundle
+      );
+
+    state.byTargetPath[
+      bundle.manifest.targetPath
+    ].currentSha256 =
+      "d".repeat(
+        64
+      );
+
+    const artifact =
+      buildAutonomousRepairSourceBoundMaterialResolution({
+        policy:
+          policy({
+            candidates: [
+              row
+            ]
+          }),
+
+        materializationsByDecisionId: {
+          [row.policyDecisionId]:
+            bundle
+        },
+
+        targetStatesByDecisionId: {
+          [row.policyDecisionId]:
+            state
+        }
+      });
+
+    assert.equal(
+      artifact.state,
+      S.BLOCKED
+    );
+
+    assert.equal(
+      artifact.blockers[0].code,
+      "PUBLICATION_SOURCE_MANIFEST_PREIMAGE_MISMATCH"
+    );
+
+    assert.equal(
+      artifact.materialCatalog,
+      null
+    );
+  }
+);
+
+
+test(
+  "source-bound material resolution schema distinguishes ordinary and coupled publication resolutions",
+  () => {
+    const schemaPath =
+      fileURLToPath(
+        new URL(
+          "../contracts/autonomous-repair-source-bound-material-resolution.schema.v1.json",
+          import.meta.url
+        )
+      );
+
+    const schema =
+      JSON.parse(
+        fs.readFileSync(
+          schemaPath,
+          "utf8"
+        )
+      );
+
+    const resolutionItems =
+      schema?.properties
+        ?.resolutions
+        ?.items;
+
+    assert.equal(
+      Array.isArray(
+        resolutionItems?.oneOf
+      ),
+      true
+    );
+
+    assert.equal(
+      resolutionItems.oneOf.length,
+      2
+    );
+
+    const ordinary =
+      resolutionItems.oneOf[0];
+
+    const publication =
+      resolutionItems.oneOf[1];
+
+    assert.equal(
+      ordinary.additionalProperties,
+      false
+    );
+
+    assert.equal(
+      ordinary.required.includes(
+        "publicationBundleFingerprint"
+      ),
+      false
+    );
+
+    assert.equal(
+      publication.additionalProperties,
+      false
+    );
+
+    for (
+      const field of [
+        "publicationBundleFingerprint",
+        "publicationTargetCount",
+        "immutableBindingCount",
+        "publicationBundle"
+      ]
+    ) {
+      assert.equal(
+        publication.required.includes(
+          field
+        ),
+        true
+      );
+    }
+
+    assert.deepEqual(
+      publication.properties
+        .publicationBundleFingerprint,
+      {
+        type:
+          "string",
+        pattern:
+          "^[0-9a-f]{64}$"
+      }
+    );
+
+    assert.deepEqual(
+      publication.properties
+        .publicationTargetCount,
+      {
+        type:
+          "integer",
+        minimum:
+          1
+      }
+    );
+
+    assert.deepEqual(
+      publication.properties
+        .immutableBindingCount,
+      {
+        type:
+          "integer",
+        minimum:
+          1
+      }
+    );
+
+    assert.deepEqual(
+      publication.properties
+        .publicationBundle,
+      {
+        type:
+          "object"
+      }
+    );
+
+    assert.deepEqual(
+      schema?.properties
+        ?.targetsByDecisionId,
+      {
+        type:
+          "object"
+      }
+    );
   }
 );

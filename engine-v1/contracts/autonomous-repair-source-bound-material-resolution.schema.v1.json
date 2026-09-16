@@ -107,71 +107,161 @@
     "resolutions": {
       "type": "array",
       "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "candidateDecisionId",
-          "repairClass",
-          "canonicalId",
-          "targetPath",
-          "producerContractId",
-          "producerPath",
-          "producerNormalizedSourceSha256",
-          "producerProofBuilder",
-          "materialFingerprint",
-          "contentSha256",
-          "contentBytes",
-          "targetExists",
-          "currentSha256"
-        ],
-        "properties": {
-          "candidateDecisionId": {
-            "type": "string"
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "candidateDecisionId",
+              "repairClass",
+              "canonicalId",
+              "targetPath",
+              "producerContractId",
+              "producerPath",
+              "producerNormalizedSourceSha256",
+              "producerProofBuilder",
+              "materialFingerprint",
+              "contentSha256",
+              "contentBytes",
+              "targetExists",
+              "currentSha256"
+            ],
+            "properties": {
+              "candidateDecisionId": {
+                "type": "string"
+              },
+              "repairClass": {
+                "type": "string"
+              },
+              "canonicalId": {
+                "type": "string"
+              },
+              "targetPath": {
+                "type": "string"
+              },
+              "producerContractId": {
+                "type": "string"
+              },
+              "producerPath": {
+                "type": "string"
+              },
+              "producerNormalizedSourceSha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "producerProofBuilder": {
+                "type": "string"
+              },
+              "materialFingerprint": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contentSha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contentBytes": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "targetExists": {
+                "type": "boolean"
+              },
+              "currentSha256": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
           },
-          "repairClass": {
-            "type": "string"
-          },
-          "canonicalId": {
-            "type": "string"
-          },
-          "targetPath": {
-            "type": "string"
-          },
-          "producerContractId": {
-            "type": "string"
-          },
-          "producerPath": {
-            "type": "string"
-          },
-          "producerNormalizedSourceSha256": {
-            "type": "string",
-            "pattern": "^[0-9a-f]{64}$"
-          },
-          "producerProofBuilder": {
-            "type": "string"
-          },
-          "materialFingerprint": {
-            "type": "string",
-            "pattern": "^[0-9a-f]{64}$"
-          },
-          "contentSha256": {
-            "type": "string",
-            "pattern": "^[0-9a-f]{64}$"
-          },
-          "contentBytes": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "targetExists": {
-            "type": "boolean"
-          },
-          "currentSha256": {
-            "type": [
-              "string",
-              "null"
-            ]
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "candidateDecisionId",
+              "repairClass",
+              "canonicalId",
+              "targetPath",
+              "producerContractId",
+              "producerPath",
+              "producerNormalizedSourceSha256",
+              "producerProofBuilder",
+              "materialFingerprint",
+              "contentSha256",
+              "contentBytes",
+              "targetExists",
+              "currentSha256",
+              "publicationBundleFingerprint",
+              "publicationTargetCount",
+              "immutableBindingCount",
+              "publicationBundle"
+            ],
+            "properties": {
+              "candidateDecisionId": {
+                "type": "string"
+              },
+              "repairClass": {
+                "type": "string"
+              },
+              "canonicalId": {
+                "type": "string"
+              },
+              "targetPath": {
+                "type": "string"
+              },
+              "producerContractId": {
+                "type": "string"
+              },
+              "producerPath": {
+                "type": "string"
+              },
+              "producerNormalizedSourceSha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "producerProofBuilder": {
+                "type": "string"
+              },
+              "materialFingerprint": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contentSha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contentBytes": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "targetExists": {
+                "type": "boolean"
+              },
+              "currentSha256": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "publicationBundleFingerprint": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "publicationTargetCount": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "immutableBindingCount": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "publicationBundle": {
+                "type": "object"
+              }
+            }
           }
-        }
+        ]
       }
     },
     "materialCatalog": {

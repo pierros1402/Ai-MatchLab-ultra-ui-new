@@ -6,6 +6,10 @@ import {
   computeDeploySnapshotManifestHash,
   validateDeploySnapshotManifest,
 } from "../core/deploy-snapshot-release-contract.js";
+import {
+  PLAN_C_SHADOW_AUDIT_SCHEMA,
+  validatePlanCShadowExportPayload,
+} from "../value/plan-c-shadow-export.js";
 
 export const P0C_P4_DEPLOY_SNAPSHOT_MANIFEST_SCHEMA =
   "ai-matchlab.p0c-p4-deploy-snapshot-manifest.v1";
@@ -746,6 +750,8 @@ export function buildP0CP4DeploySnapshotManifest({
   fixturesOutput,
   valueOutput,
   valueAuditOutput = null,
+  planCShadowOutput = null,
+  planCShadowAuditOutput = null,
   detailOutputs,
   completeDayDetailSet,
   overlay,
@@ -804,12 +810,56 @@ export function buildP0CP4DeploySnapshotManifest({
     );
   }
 
+  const planCShadowName =
+    clean(sourceDocument?.files?.planCShadow);
+  const planCShadowAuditName =
+    clean(sourceDocument?.files?.planCShadowAudit);
+  const planCDeclared =
+    Boolean(planCShadowName || planCShadowAuditName);
+
+  if (
+    Boolean(planCShadowName) !==
+      Boolean(planCShadowAuditName)
+  ) {
+    throw new Error(
+      "p0c_p4_deploy_manifest_plan_c_pair_incomplete",
+    );
+  }
+
+  if (
+    planCDeclared &&
+    (
+      planCShadowName !== "plan-c-shadow.json" ||
+      planCShadowAuditName !== "plan-c-shadow-audit.json"
+    )
+  ) {
+    throw new Error(
+      "p0c_p4_deploy_manifest_plan_c_file_name_invalid",
+    );
+  }
+
+  if (
+    !planCDeclared &&
+    (
+      planCShadowOutput !== null ||
+      planCShadowAuditOutput !== null
+    )
+  ) {
+    throw new Error(
+      "p0c_p4_deploy_manifest_plan_c_output_unexpected",
+    );
+  }
+
   const fixturePath =
     `data/deploy-snapshots/${normalizedDayKey}/fixtures.json`;
   const valuePath =
     `data/deploy-snapshots/${normalizedDayKey}/value.json`;
   const valueAuditPath =
     `data/deploy-snapshots/${normalizedDayKey}/value-audit.json`;
+  const planCShadowPath =
+    `data/deploy-snapshots/${normalizedDayKey}/plan-c-shadow.json`;
+  const planCShadowAuditPath =
+    `data/deploy-snapshots/${normalizedDayKey}/plan-c-shadow-audit.json`;
 
   const fixturesArtifact = normalizedFixedOutput({
     row: fixturesOutput,
@@ -827,6 +877,18 @@ export function buildP0CP4DeploySnapshotManifest({
     required: false,
     allowDelete: true,
     label: "value_audit",
+  });
+  const planCShadowArtifact = normalizedFixedOutput({
+    row: planCShadowOutput,
+    expectedPath: planCShadowPath,
+    required: planCDeclared,
+    label: "plan_c_shadow",
+  });
+  const planCShadowAuditArtifact = normalizedFixedOutput({
+    row: planCShadowAuditOutput,
+    expectedPath: planCShadowAuditPath,
+    required: planCDeclared,
+    label: "plan_c_shadow_audit",
   });
 
   const fixturesDocument = parseJsonObject(
@@ -864,6 +926,51 @@ export function buildP0CP4DeploySnapshotManifest({
     ) {
       throw new Error(
         "p0c_p4_deploy_manifest_value_audit_day_mismatch",
+      );
+    }
+  }
+
+  let planCValidation = null;
+  if (planCDeclared) {
+    const planCDocument = parseJsonObject(
+      planCShadowArtifact.buffer,
+      "plan_c_shadow",
+    );
+    planCValidation = validatePlanCShadowExportPayload(
+      planCDocument,
+      normalizedDayKey,
+    );
+    if (!planCValidation.ok) {
+      throw new Error(
+        `p0c_p4_deploy_manifest_plan_c_shadow_invalid:${planCValidation.errors.join(",")}`,
+      );
+    }
+
+    const planCAuditDocument = parseJsonObject(
+      planCShadowAuditArtifact.buffer,
+      "plan_c_shadow_audit",
+    );
+    if (
+      planCAuditDocument.schema !==
+        PLAN_C_SHADOW_AUDIT_SCHEMA ||
+      planCAuditDocument.ok !== true ||
+      clean(planCAuditDocument.date) !==
+        normalizedDayKey ||
+      planCAuditDocument.mode !==
+        "SHADOW" ||
+      planCAuditDocument.productionEligible !==
+        false ||
+      planCAuditDocument.officialPlansUnaffected !==
+        true ||
+      planCAuditDocument.available !==
+        (planCDocument.available === true) ||
+      Number(planCAuditDocument.count) !==
+        Number(planCValidation.count) ||
+      Number(planCAuditDocument.pickCount) !==
+        Number(planCValidation.pickCount)
+    ) {
+      throw new Error(
+        "p0c_p4_deploy_manifest_plan_c_shadow_audit_invalid",
       );
     }
   }
@@ -1009,6 +1116,12 @@ export function buildP0CP4DeploySnapshotManifest({
         valueAuditPresent
           ? "value-audit.json"
           : null,
+      ...(planCDeclared
+        ? {
+            planCShadow: "plan-c-shadow.json",
+            planCShadowAudit: "plan-c-shadow-audit.json",
+          }
+        : {}),
       detailsDir: "details",
     },
     fileHashes: {
@@ -1025,11 +1138,29 @@ export function buildP0CP4DeploySnapshotManifest({
             ),
           }
         : {}),
+      ...(planCDeclared
+        ? {
+            "plan-c-shadow.json": canonicalBufferSha256(
+              planCShadowArtifact.buffer,
+            ),
+            "plan-c-shadow-audit.json": canonicalBufferSha256(
+              planCShadowAuditArtifact.buffer,
+            ),
+          }
+        : {}),
     },
     counts: {
       ...(overlaidSource.counts || {}),
       fixtures: fixtures.length,
       valuePicks: picks.length,
+      ...(planCDeclared
+        ? {
+            planCShadowPredictions:
+              planCValidation.count,
+            planCShadowPicks:
+              planCValidation.pickCount,
+          }
+        : {}),
       details: detailSummaries.length,
       detailsMatchedToFixtures: detailSummaries.length,
       orphanDetailsRemoved: orphanDetailsRemoved.length,
@@ -1044,6 +1175,12 @@ export function buildP0CP4DeploySnapshotManifest({
       ...(overlaidSource.sizes || {}),
       fixturesMb: mb(fixturesArtifact.buffer.length),
       valueMb: mb(valueArtifact.buffer.length),
+      ...(planCDeclared
+        ? {
+            planCShadowMb:
+              mb(planCShadowArtifact.buffer.length),
+          }
+        : {}),
       detailsTotalMb: mb(totalDetailBytes),
       largestDetail,
     },
@@ -1108,6 +1245,11 @@ export function buildP0CP4DeploySnapshotManifest({
       fixedOutputFamilies: normalizedFamilies,
       fixtureCount: fixtures.length,
       valuePickCount: picks.length,
+      planCShadowBound: planCDeclared,
+      planCShadowPredictionCount:
+        planCValidation?.count ?? 0,
+      planCShadowPickCount:
+        planCValidation?.pickCount ?? 0,
       detailWriteCount: details.writes.length,
       detailDeleteCount: details.deletes.length,
       orphanDetailsRemovedCount:
