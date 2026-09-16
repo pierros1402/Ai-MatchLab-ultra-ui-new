@@ -1,0 +1,260 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ai-matchlab.autonomous-repair-source-bound-material-resolution.v1",
+  "title": "AI MatchLab Autonomous Repair Source-Bound Material Resolution V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "version",
+    "dayKey",
+    "generatedAt",
+    "role",
+    "bindings",
+    "resolutionFingerprint",
+    "state",
+    "summary",
+    "candidateDecisionIds",
+    "resolutions",
+    "materialCatalog",
+    "targetsByDecisionId",
+    "blockers",
+    "authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ai-matchlab.autonomous-repair-source-bound-material-resolution.v1"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "dayKey": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "generatedAt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "role": {
+      "const": "derived_read_only_source_bound_material_resolution"
+    },
+    "bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policyFingerprint",
+        "producerPolicyFingerprint"
+      ],
+      "properties": {
+        "policyFingerprint": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "producerPolicyFingerprint": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "resolutionFingerprint": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "state": {
+      "enum": [
+        "NO_CANDIDATES",
+        "RESOLVED",
+        "BLOCKED"
+      ]
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidateCount",
+        "resolvedCount",
+        "targetCount",
+        "blockerCount"
+      ],
+      "properties": {
+        "candidateCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "resolvedCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "targetCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blockerCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "candidateDecisionIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^arpd_v1_[0-9a-f]{24}$"
+      },
+      "uniqueItems": true
+    },
+    "resolutions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "candidateDecisionId",
+          "repairClass",
+          "canonicalId",
+          "targetPath",
+          "producerContractId",
+          "producerPath",
+          "producerNormalizedSourceSha256",
+          "producerProofBuilder",
+          "materialFingerprint",
+          "contentSha256",
+          "contentBytes",
+          "targetExists",
+          "currentSha256"
+        ],
+        "properties": {
+          "candidateDecisionId": {
+            "type": "string"
+          },
+          "repairClass": {
+            "type": "string"
+          },
+          "canonicalId": {
+            "type": "string"
+          },
+          "targetPath": {
+            "type": "string"
+          },
+          "producerContractId": {
+            "type": "string"
+          },
+          "producerPath": {
+            "type": "string"
+          },
+          "producerNormalizedSourceSha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "producerProofBuilder": {
+            "type": "string"
+          },
+          "materialFingerprint": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "contentSha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "contentBytes": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "targetExists": {
+            "type": "boolean"
+          },
+          "currentSha256": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "materialCatalog": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "targetsByDecisionId": {
+      "type": "object"
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "candidateDecisionId",
+          "repairClass",
+          "targetPath"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1
+          },
+          "candidateDecisionId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "repairClass": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "targetPath": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "readOnly",
+        "filesystemWriteAuthorized",
+        "repairAuthorized",
+        "executionAuthorized",
+        "rollbackExecutionAuthorized",
+        "workflowMutationAuthorized",
+        "authorizationGranted"
+      ],
+      "properties": {
+        "readOnly": {
+          "const": true
+        },
+        "filesystemWriteAuthorized": {
+          "const": false
+        },
+        "repairAuthorized": {
+          "const": false
+        },
+        "executionAuthorized": {
+          "const": false
+        },
+        "rollbackExecutionAuthorized": {
+          "const": false
+        },
+        "workflowMutationAuthorized": {
+          "const": false
+        },
+        "authorizationGranted": {
+          "const": false
+        }
+      }
+    }
+  }
+}
