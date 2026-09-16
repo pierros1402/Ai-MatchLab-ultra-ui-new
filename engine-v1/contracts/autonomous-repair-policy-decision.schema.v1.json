@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ai-matchlab.autonomous-repair-policy-decision.v1",
+  "title": "AI MatchLab Autonomous Repair Policy Decision V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "version",
+    "policyDecisionId",
+    "role",
+    "classification",
+    "policyReason",
+    "repairClass",
+    "candidateEligible",
+    "diagnosis",
+    "evidence",
+    "authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ai-matchlab.autonomous-repair-policy-decision.v1"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "policyDecisionId": {
+      "type": "string",
+      "pattern": "^arpd_v1_[0-9a-f]{24}$"
+    },
+    "role": {
+      "const": "derived_repair_policy_decision"
+    },
+    "classification": {
+      "enum": [
+        "OBSERVATION_ONLY",
+        "ELIGIBLE_REPAIR_CANDIDATE",
+        "QUARANTINE",
+        "HARD_BLOCK"
+      ]
+    },
+    "policyReason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repairClass": {
+      "enum": [
+        null,
+        "ACQUIRE_VERIFIED_FINAL_EVIDENCE",
+        "REBUILD_HISTORY_ELIGIBLE_ROW",
+        "REBUILD_PUBLICATION_CANONICAL_ROW"
+      ]
+    },
+    "candidateEligible": {
+      "type": "boolean"
+    },
+    "diagnosis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceLayer",
+        "sourceId",
+        "reasonCode",
+        "impact",
+        "canonicalId",
+        "observedFixtureId"
+      ],
+      "properties": {
+        "sourceLayer": {
+          "enum": [
+            "audit",
+            "downstream",
+            "primary"
+          ]
+        },
+        "sourceId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reasonCode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "impact": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "canonicalId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "observedFixtureId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonicalMembershipVerified",
+        "truthStateCompatible",
+        "verifiedFinalAccepted",
+        "historyEligible",
+        "requiresIndependentVerification",
+        "destructiveMutationRequired"
+      ],
+      "properties": {
+        "canonicalMembershipVerified": {
+          "type": "boolean"
+        },
+        "truthStateCompatible": {
+          "type": "boolean"
+        },
+        "verifiedFinalAccepted": {
+          "type": "boolean"
+        },
+        "historyEligible": {
+          "type": "boolean"
+        },
+        "requiresIndependentVerification": {
+          "const": true
+        },
+        "destructiveMutationRequired": {
+          "type": "boolean"
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidateSelectionOnly",
+        "filesystemWriteAuthorized",
+        "repairAuthorized",
+        "executionAuthorized",
+        "workflowMutationAuthorized"
+      ],
+      "properties": {
+        "candidateSelectionOnly": {
+          "const": true
+        },
+        "filesystemWriteAuthorized": {
+          "const": false
+        },
+        "repairAuthorized": {
+          "const": false
+        },
+        "executionAuthorized": {
+          "const": false
+        },
+        "workflowMutationAuthorized": {
+          "const": false
+        }
+      }
+    }
+  }
+}

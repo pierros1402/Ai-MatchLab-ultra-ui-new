@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ai-matchlab.autonomous-repair-authorization-gate.v1",
+  "title": "AI MatchLab Autonomous Repair Authorization Request Gate V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "version",
+    "dayKey",
+    "generatedAt",
+    "role",
+    "policyFingerprint",
+    "gateFingerprint",
+    "gateState",
+    "gateReason",
+    "candidateDecisionIds",
+    "diagnosticBlockers",
+    "verification",
+    "authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ai-matchlab.autonomous-repair-authorization-gate.v1"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "dayKey": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "generatedAt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "role": {
+      "const": "derived_repair_authorization_request_gate"
+    },
+    "policyFingerprint": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "gateFingerprint": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "gateState": {
+      "enum": [
+        "NOT_REQUESTABLE_NO_CANDIDATES",
+        "REQUEST_ELIGIBLE",
+        "DENIED_POLICY_QUARANTINED",
+        "DENIED_POLICY_BLOCKED",
+        "DENIED_CANDIDATE_INTEGRITY",
+        "DENIED_DIAGNOSTIC_BLOCKER",
+        "DENIED_VERIFICATION_REQUIRED",
+        "DENIED_VERIFICATION_MISMATCH"
+      ]
+    },
+    "gateReason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "candidateDecisionIds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^arpd_v1_[0-9a-f]{24}$"
+      }
+    },
+    "diagnosticBlockers": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provided",
+        "artifactValid",
+        "verifierKind",
+        "verificationFingerprint",
+        "policyFingerprintMatches",
+        "candidateSetMatches"
+      ],
+      "properties": {
+        "provided": {
+          "type": "boolean"
+        },
+        "artifactValid": {
+          "type": "boolean"
+        },
+        "verifierKind": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "verificationFingerprint": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "policyFingerprintMatches": {
+          "type": "boolean"
+        },
+        "candidateSetMatches": {
+          "type": "boolean"
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authorizationRequestEligible",
+        "authorizationGranted",
+        "filesystemWriteAuthorized",
+        "repairAuthorized",
+        "executionAuthorized",
+        "workflowMutationAuthorized"
+      ],
+      "properties": {
+        "authorizationRequestEligible": {
+          "type": "boolean"
+        },
+        "authorizationGranted": {
+          "const": false
+        },
+        "filesystemWriteAuthorized": {
+          "const": false
+        },
+        "repairAuthorized": {
+          "const": false
+        },
+        "executionAuthorized": {
+          "const": false
+        },
+        "workflowMutationAuthorized": {
+          "const": false
+        }
+      }
+    }
+  }
+}

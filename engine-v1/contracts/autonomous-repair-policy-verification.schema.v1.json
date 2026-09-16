@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ai-matchlab.autonomous-repair-policy-verification.v1",
+  "title": "AI MatchLab Autonomous Repair Policy Independent Verification V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "version",
+    "dayKey",
+    "generatedAt",
+    "role",
+    "verifierKind",
+    "bindings",
+    "verificationFingerprint",
+    "expectedPolicyState",
+    "actualPolicyState",
+    "semanticDecisionCount",
+    "candidateDecisionIds",
+    "mismatchReasons",
+    "verified",
+    "authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ai-matchlab.autonomous-repair-policy-verification.v1"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "dayKey": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "generatedAt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "role": {
+      "const": "independent_repair_policy_verification"
+    },
+    "verifierKind": {
+      "const": "independent_repair_policy_verifier"
+    },
+    "bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "truthFingerprint",
+        "auditFingerprint",
+        "downstreamEvidenceFingerprint",
+        "primaryEvidenceFingerprint",
+        "policyFingerprint"
+      ],
+      "properties": {
+        "truthFingerprint": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "auditFingerprint": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "downstreamEvidenceFingerprint": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "primaryEvidenceFingerprint": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "policyFingerprint": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "verificationFingerprint": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "expectedPolicyState": {
+      "enum": [
+        "CLEAR",
+        "OBSERVATION_ONLY",
+        "CANDIDATES_PRESENT",
+        "QUARANTINED",
+        "BLOCKED"
+      ]
+    },
+    "actualPolicyState": {
+      "type": "string",
+      "minLength": 1
+    },
+    "semanticDecisionCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "candidateDecisionIds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^arpd_v1_[0-9a-f]{24}$"
+      }
+    },
+    "mismatchReasons": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "verified": {
+      "type": "boolean"
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "filesystemWriteAuthorized",
+        "repairAuthorized",
+        "executionAuthorized",
+        "workflowMutationAuthorized",
+        "authorizationGranted"
+      ],
+      "properties": {
+        "filesystemWriteAuthorized": {
+          "const": false
+        },
+        "repairAuthorized": {
+          "const": false
+        },
+        "executionAuthorized": {
+          "const": false
+        },
+        "workflowMutationAuthorized": {
+          "const": false
+        },
+        "authorizationGranted": {
+          "const": false
+        }
+      }
+    }
+  }
+}
