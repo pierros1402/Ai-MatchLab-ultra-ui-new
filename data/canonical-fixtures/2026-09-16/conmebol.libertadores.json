@@ -2,13 +2,56 @@
   "dayKey": "2026-09-16",
   "leagueSlug": "conmebol.libertadores",
   "leagueName": "Copa Libertadores",
-  "updatedAt": "2026-09-16T18:16:14.406Z",
+  "updatedAt": "2026-09-16T19:00:52.859Z",
   "count": 1,
   "sourceMeta": {
-    "acquisitionProvider": "flashscore",
+    "acquisitionProvider": "espn_direct_league_status",
     "requestedLeagueSlug": "conmebol.libertadores",
-    "requestedDayKey": "2026-10-01",
-    "mergedAt": "2026-09-16T18:16:14.406Z"
+    "requestedDayKey": "2026-09-16",
+    "providerFetchSlugs": [
+      "conmebol.libertadores"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 1,
+      "matches": 1,
+      "fetches": [
+        {
+          "providerSlug": "conmebol.libertadores",
+          "dayKey": "2026-09-15",
+          "ok": true,
+          "events": 1,
+          "matched": 1
+        }
+      ]
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-09-16T19:00:52.859Z",
+    "mode": "targeted_live_status_refresh",
+    "authoritativeTerminalOverlayPromotion": {
+      "schema": "ai-matchlab.authoritative-terminal-overlay-promotion.v1",
+      "promotedAt": "2026-09-16T19:01:20.382Z",
+      "exactProviderIdOnly": true,
+      "orderedTeamIdentityRequired": true,
+      "athensDayRequired": true,
+      "explicitTerminalStatusRequired": true,
+      "numericScoreRequired": true,
+      "heuristicIdentity": false
+    }
   },
   "fixtures": [
     {
@@ -31,18 +74,42 @@
       "awayTeam": "Fluminense",
       "venue": "Ciudad de Vicente López",
       "firstSeenAt": "2026-09-03T17:55:44.627Z",
-      "lastSeenAt": "2026-09-16T18:16:14.404Z",
+      "lastSeenAt": "2026-09-16T19:00:52.858Z",
       "canonicalAliases": [
         "cid_conmebollibertadores_platensearg_fluminensebra_20260916"
       ],
       "providerLeagueSlug": "conmebol.libertadores",
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
-      "scoreHome": null,
-      "scoreAway": null,
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+6'",
+      "scoreHome": 2,
+      "scoreAway": 1,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
       "penalties": null,
-      "decidedBy": null
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-09-16T19:01:20.382Z",
+        "provider": "espn",
+        "providerMatchId": "401912517",
+        "dayKey": "2026-09-16",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 2,
+          "scoreAway": 1
+        }
+      }
     }
   ]
 }
