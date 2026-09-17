@@ -1,0 +1,323 @@
+{
+  "schema": "ai-matchlab.identity-recovery-window.v1",
+  "runDayKey": "2026-09-18",
+  "source": "raw_canonical_fixtures_pre_dedup",
+  "window": {
+    "daysBack": 1,
+    "daysForward": 14
+  },
+  "sourceLatestUpdatedAt": "2026-09-17T18:21:03.087Z",
+  "resolver": {
+    "schema": "ai-matchlab.production-identity-resolver-runtime.v2",
+    "extensionLedgerSha256": "85f47c17184558234abd65154eb38c45b672c011e2a78f7924d839e2eb865427",
+    "effectiveCounts": {
+      "identityBindings": 119,
+      "retainedFixtureIds": 88,
+      "suppressedFixtureAliases": 88,
+      "sourceFixtureIds": 176
+    }
+  },
+  "status": "REVIEW_REQUIRED",
+  "promotionPolicy": {
+    "broadFuzzyAllowed": false,
+    "unresolvedTwoSidedAutoPromotionAllowed": false,
+    "independentConfirmationRequiredForTwoSidedUnknown": true
+  },
+  "summary": {
+    "scannedDays": 16,
+    "scannedLeagueFiles": 348,
+    "inputRows": 1205,
+    "autoPromotable": 0,
+    "pendingIndependentConfirmation": 1,
+    "ambiguous": 0,
+    "conflictRejected": 2,
+    "alreadyManagedPairs": 0,
+    "independentConfirmed": 0,
+    "independentConfirmationRetryPending": 1
+  },
+  "targetDays": [
+    {
+      "dayKey": "2026-09-17",
+      "leagueFiles": 33,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "conmebol.libertadores",
+          "inputRows": 3,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [
+            {
+              "leagueSlug": "conmebol.libertadores",
+              "kickoffUtc": "2026-09-16T22:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "ImQ1OI8k",
+                "canonicalId": "cid_conmebollibertadores_lduquitoecu_palmeirasbra_20260917",
+                "kickoffUtc": "2026-09-16T22:00:00.000Z",
+                "homeTeam": "LDU Quito (Ecu)",
+                "awayTeam": "Palmeiras (Bra)"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401912525",
+                "canonicalId": "cid_conmebollibertadores_ligaquito_palmeiras_20260917",
+                "kickoffUtc": "2026-09-16T22:00Z",
+                "homeTeam": "Liga de Quito",
+                "awayTeam": "Palmeiras"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "away": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "stableSides": 0,
+                "conflict": false
+              },
+              "recoveryStatus": "PENDING_INDEPENDENT_CONFIRMATION",
+              "promotionAuthorized": false,
+              "requiresIndependentConfirmation": true,
+              "independentConfirmation": {
+                "status": "PENDING_RETRY",
+                "source": "api_football",
+                "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
+                "oddsUsed": false,
+                "attempts": 1,
+                "lastAttemptAt": "2026-09-17T18:21:03.338Z",
+                "retryable": true,
+                "providerStatus": "MISSING_API_KEY",
+                "evaluationStatus": null,
+                "thirdSourceKickoffRows": 0
+              }
+            }
+          ],
+          "ambiguous": [],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 1,
+            "ambiguous": 0,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
+    },
+    {
+      "dayKey": "2026-09-18",
+      "leagueFiles": 88,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-19",
+      "leagueFiles": 123,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "esp.2",
+          "inputRows": 6,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [],
+          "conflictRejected": [
+            {
+              "leagueSlug": "esp.2",
+              "kickoffUtc": "2026-09-19T12:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "6BJuXAxA",
+                "canonicalId": "cid_esp2_realsociedadb_mallorca_20260919",
+                "kickoffUtc": "2026-09-19T12:00:00.000Z",
+                "homeTeam": "Real Sociedad B",
+                "awayTeam": "Mallorca"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401883167",
+                "canonicalId": "cid_esp2_realsociedadii_mallorca_20260919",
+                "kickoffUtc": "2026-09-19T12:00Z",
+                "homeTeam": "Real Sociedad II",
+                "awayTeam": "Mallorca"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "SQUAD_CONFLICT",
+                  "stable": false,
+                  "conflict": true
+                },
+                "away": {
+                  "kind": "NORMALIZED_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": null,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null,
+                  "productionIdentityComplete": false
+                },
+                "stableSides": 1,
+                "conflict": true
+              },
+              "recoveryStatus": "REJECTED_IDENTITY_CONFLICT",
+              "promotionAuthorized": false
+            }
+          ],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 0,
+            "conflictRejected": 1,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "ger.1",
+          "inputRows": 6,
+          "temporalCrossProviderPairs": 4,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [],
+          "conflictRejected": [
+            {
+              "leagueSlug": "ger.1",
+              "kickoffUtc": "2026-09-19T13:30:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "YgibJeK7",
+                "canonicalId": "cid_ger1_bmonchengladbach_mainz_20260919",
+                "kickoffUtc": "2026-09-19T13:30:00.000Z",
+                "homeTeam": "B. Monchengladbach",
+                "awayTeam": "Mainz"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401884786",
+                "canonicalId": "cid_ger1_borussiamonchengladbach_mainz_20260919",
+                "kickoffUtc": "2026-09-19T13:30Z",
+                "homeTeam": "Borussia Mönchengladbach",
+                "awayTeam": "Mainz"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "SQUAD_CONFLICT",
+                  "stable": false,
+                  "conflict": true
+                },
+                "away": {
+                  "kind": "NORMALIZED_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": null,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null,
+                  "productionIdentityComplete": false
+                },
+                "stableSides": 1,
+                "conflict": true
+              },
+              "recoveryStatus": "REJECTED_IDENTITY_CONFLICT",
+              "promotionAuthorized": false
+            }
+          ],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 0,
+            "conflictRejected": 1,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
+    },
+    {
+      "dayKey": "2026-09-20",
+      "leagueFiles": 34,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-21",
+      "leagueFiles": 9,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-22",
+      "leagueFiles": 7,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-23",
+      "leagueFiles": 4,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-24",
+      "leagueFiles": 2,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-25",
+      "leagueFiles": 6,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-26",
+      "leagueFiles": 12,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-27",
+      "leagueFiles": 9,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-28",
+      "leagueFiles": 7,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-29",
+      "leagueFiles": 3,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-30",
+      "leagueFiles": 4,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-01",
+      "leagueFiles": 2,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-02",
+      "leagueFiles": 5,
+      "recoveryLeagueReports": []
+    }
+  ],
+  "independentConfirmation": {
+    "source": "api_football",
+    "evidenceEndpoint": "fixtures",
+    "oddsAllowed": false,
+    "fuzzyMatchingAllowed": false,
+    "runAt": "2026-09-17T18:21:03.338Z",
+    "attempts": [
+      {
+        "dayKey": "2026-09-17",
+        "leagueSlug": "conmebol.libertadores",
+        "key": "cid_conmebollibertadores_lduquitoecu_palmeirasbra_20260917|cid_conmebollibertadores_ligaquito_palmeiras_20260917",
+        "status": "PENDING_RETRY",
+        "providerStatus": "MISSING_API_KEY",
+        "evaluationStatus": null
+      }
+    ]
+  }
+}
