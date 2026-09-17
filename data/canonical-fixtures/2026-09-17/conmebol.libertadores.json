@@ -2,13 +2,65 @@
   "dayKey": "2026-09-17",
   "leagueSlug": "conmebol.libertadores",
   "leagueName": "Copa Libertadores",
-  "updatedAt": "2026-09-17T18:20:28.742Z",
+  "updatedAt": "2026-09-17T19:20:37.601Z",
   "count": 3,
   "sourceMeta": {
-    "acquisitionProvider": "flashscore",
+    "acquisitionProvider": "espn_direct_league_status",
     "requestedLeagueSlug": "conmebol.libertadores",
-    "requestedDayKey": "2026-10-02",
-    "mergedAt": "2026-09-17T18:20:28.741Z"
+    "requestedDayKey": "2026-09-17",
+    "providerFetchSlugs": [
+      "conmebol.libertadores"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 2,
+      "matches": 2,
+      "fetches": [
+        {
+          "providerSlug": "conmebol.libertadores",
+          "dayKey": "2026-09-16",
+          "ok": true,
+          "events": 2,
+          "matched": 2
+        }
+      ]
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-09-17T19:20:35.745Z",
+    "mode": "targeted_live_status_refresh",
+    "flashscoreFinalRefresh": {
+      "matchedBy": "exact_source_id",
+      "requestedDayKey": "2026-09-17",
+      "offsets": [
+        0
+      ],
+      "changedRows": 1,
+      "mergedAt": "2026-09-17T19:20:37.601Z"
+    },
+    "authoritativeTerminalOverlayPromotion": {
+      "schema": "ai-matchlab.authoritative-terminal-overlay-promotion.v1",
+      "promotedAt": "2026-09-17T19:20:54.428Z",
+      "exactProviderIdOnly": true,
+      "orderedTeamIdentityRequired": true,
+      "athensDayRequired": true,
+      "explicitTerminalStatusRequired": true,
+      "numericScoreRequired": true,
+      "heuristicIdentity": false
+    }
   },
   "fixtures": [
     {
@@ -28,16 +80,15 @@
       "kickoffUtc": "2026-09-16T22:00:00.000Z",
       "homeTeam": "LDU Quito (Ecu)",
       "awayTeam": "Palmeiras (Bra)",
-      "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null,
-      "status": "STATUS_SCHEDULED",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": null,
       "venue": null,
       "firstSeenAt": "2026-09-14T21:04:21.355Z",
-      "lastSeenAt": "2026-09-17T18:20:28.740Z"
+      "lastSeenAt": "2026-09-17T19:20:37.601Z",
+      "status": "FT",
+      "statusType": "STATUS_FINAL",
+      "rawStatus": "STATUS_FINAL",
+      "minute": "FT",
+      "scoreHome": 3,
+      "scoreAway": 3
     },
     {
       "canonicalId": "cid_conmebollibertadores_ligaquito_palmeiras_20260917",
@@ -56,17 +107,41 @@
       "kickoffUtc": "2026-09-16T22:00Z",
       "homeTeam": "Liga de Quito",
       "awayTeam": "Palmeiras",
-      "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null,
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
       "venue": "Rodrigo Paz Delgado",
       "firstSeenAt": "2026-09-03T17:55:44.676Z",
-      "lastSeenAt": "2026-09-16T18:16:52.640Z",
-      "providerLeagueSlug": "conmebol.libertadores"
+      "lastSeenAt": "2026-09-17T19:20:35.744Z",
+      "providerLeagueSlug": "conmebol.libertadores",
+      "status": "FT",
+      "rawStatus": "STATUS_FINAL_PEN",
+      "minute": "96'",
+      "scoreHome": 3,
+      "scoreAway": 2,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
+      "penalties": null,
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-09-17T19:20:54.428Z",
+        "provider": "espn",
+        "providerMatchId": "401912525",
+        "dayKey": "2026-09-17",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FINAL_PEN",
+          "scoreHome": 3,
+          "scoreAway": 2
+        }
+      }
     },
     {
       "canonicalId": "cid_conmebollibertadores_corinthians_estudianteslaplata_20260917",
@@ -88,18 +163,42 @@
       "awayTeam": "Estudiantes de La Plata",
       "venue": "Neo Química Arena",
       "firstSeenAt": "2026-09-03T17:55:44.677Z",
-      "lastSeenAt": "2026-09-17T18:20:28.740Z",
+      "lastSeenAt": "2026-09-17T19:20:35.744Z",
       "canonicalAliases": [
         "cid_conmebollibertadores_corinthiansbra_estudianteslparg_20260917"
       ],
       "providerLeagueSlug": "conmebol.libertadores",
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
-      "scoreHome": null,
-      "scoreAway": null,
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+13'",
+      "scoreHome": 0,
+      "scoreAway": 1,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
       "penalties": null,
-      "decidedBy": null
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-09-17T19:20:54.428Z",
+        "provider": "espn",
+        "providerMatchId": "401912540",
+        "dayKey": "2026-09-17",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 0,
+          "scoreAway": 1
+        }
+      }
     }
   ]
 }

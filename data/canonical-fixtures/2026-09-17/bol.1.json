@@ -2,13 +2,56 @@
   "dayKey": "2026-09-17",
   "leagueSlug": "bol.1",
   "leagueName": "Bol 1",
-  "updatedAt": "2026-09-17T18:21:01.864Z",
+  "updatedAt": "2026-09-17T19:20:35.421Z",
   "count": 2,
   "sourceMeta": {
-    "acquisitionProvider": "flashscore",
+    "acquisitionProvider": "espn_direct_league_status",
     "requestedLeagueSlug": "bol.1",
-    "requestedDayKey": "2026-10-02",
-    "mergedAt": "2026-09-17T18:21:01.864Z"
+    "requestedDayKey": "2026-09-17",
+    "providerFetchSlugs": [
+      "bol.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 2,
+      "matches": 2,
+      "fetches": [
+        {
+          "providerSlug": "bol.1",
+          "dayKey": "2026-09-16",
+          "ok": true,
+          "events": 3,
+          "matched": 2
+        }
+      ]
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-09-17T19:20:35.421Z",
+    "mode": "targeted_live_status_refresh",
+    "authoritativeTerminalOverlayPromotion": {
+      "schema": "ai-matchlab.authoritative-terminal-overlay-promotion.v1",
+      "promotedAt": "2026-09-17T19:20:54.428Z",
+      "exactProviderIdOnly": true,
+      "orderedTeamIdentityRequired": true,
+      "athensDayRequired": true,
+      "explicitTerminalStatusRequired": true,
+      "numericScoreRequired": true,
+      "heuristicIdentity": false
+    }
   },
   "fixtures": [
     {
@@ -32,14 +75,38 @@
       "awayTeam": "Always Ready",
       "venue": "Estadio Víctor Agustín Ugarte",
       "firstSeenAt": "2026-09-14T21:04:50.579Z",
-      "lastSeenAt": "2026-09-17T18:21:01.821Z",
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
-      "scoreHome": null,
-      "scoreAway": null,
+      "lastSeenAt": "2026-09-17T19:20:35.421Z",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+4'",
+      "scoreHome": 0,
+      "scoreAway": 4,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
       "penalties": null,
-      "decidedBy": null
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-09-17T19:20:54.428Z",
+        "provider": "espn",
+        "providerMatchId": "401906477",
+        "dayKey": "2026-09-17",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 0,
+          "scoreAway": 4
+        }
+      }
     },
     {
       "canonicalId": "cid_bol1_blooming_universitariovinto_20260917",
@@ -62,14 +129,38 @@
       "awayTeam": "Universitario de Vinto",
       "venue": "Estadio Ramón Tahuichi",
       "firstSeenAt": "2026-09-14T21:04:50.579Z",
-      "lastSeenAt": "2026-09-17T18:21:01.822Z",
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
-      "scoreHome": null,
-      "scoreAway": null,
+      "lastSeenAt": "2026-09-17T19:20:35.421Z",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+10'",
+      "scoreHome": 1,
+      "scoreAway": 1,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
       "penalties": null,
-      "decidedBy": null
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-09-17T19:20:54.428Z",
+        "provider": "espn",
+        "providerMatchId": "401906476",
+        "dayKey": "2026-09-17",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 1,
+          "scoreAway": 1
+        }
+      }
     }
   ]
 }

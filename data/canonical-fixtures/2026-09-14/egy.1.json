@@ -2,7 +2,7 @@
   "dayKey": "2026-09-14",
   "leagueSlug": "egy.1",
   "leagueName": "Egyptian Premier League",
-  "updatedAt": "2026-09-14T21:10:27.438Z",
+  "updatedAt": "2026-09-17T19:21:46.435Z",
   "count": 3,
   "sourceMeta": {
     "acquisitionProvider": "flashscore",
@@ -17,7 +17,10 @@
       ],
       "changedRows": 2,
       "mergedAt": "2026-09-14T21:10:27.438Z"
-    }
+    },
+    "crossDayVerifiedFinalSupersessionAt": "2026-09-17T19:21:46.435Z",
+    "crossDayVerifiedFinalSupersessionRows": 1,
+    "crossDayVerifiedFinalSupersessionPolicy": "cross-day-provider-verified-final-v1"
   },
   "fixtures": [
     {
@@ -95,12 +98,78 @@
       "scoreAway": null,
       "penalties": null,
       "decidedBy": null,
-      "status": "STATUS_SCHEDULED",
-      "rawStatus": "STATUS_SCHEDULED",
+      "status": "STATUS_POSTPONED",
+      "rawStatus": "STATUS_POSTPONED",
       "minute": null,
       "venue": null,
       "firstSeenAt": "2026-09-11T22:01:56.262Z",
-      "lastSeenAt": "2026-09-13T20:06:47.752Z"
+      "lastSeenAt": "2026-09-13T20:06:47.752Z",
+      "statusType": "STATUS_POSTPONED",
+      "statusCorrection": {
+        "schema": "ai-matchlab.cross-day-verified-final-supersession.v1",
+        "correctedAt": "2026-09-17T19:21:46.435Z",
+        "decisionId": "cross-day-verified-final-xzpE0KFr-cid_egy1_zed_alqanah_20260914-v1",
+        "policyVersion": "cross-day-provider-verified-final-v1",
+        "correctedFrom": {
+          "status": "STATUS_SCHEDULED",
+          "statusType": null,
+          "rawStatus": "STATUS_SCHEDULED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "correctedTo": {
+          "status": "STATUS_POSTPONED",
+          "statusType": "STATUS_POSTPONED",
+          "rawStatus": "STATUS_POSTPONED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "reason": "verified_cross_day_provider_reschedule",
+        "decisionBasis": "exact_provider_identity_cross_day_supersession_with_verified_final",
+        "providerEvidence": {
+          "provider": "flashscore",
+          "providerMatchId": "xzpE0KFr",
+          "supersededCanonicalId": "cid_egy1_zed_alqanah_20260914",
+          "supersededDayKey": "2026-09-14",
+          "supersededKickoffUtc": "2026-09-14T17:00:00.000Z",
+          "evidenceCanonicalId": "cid_egy1_zed_alqanah_20260917",
+          "evidenceDayKey": "2026-09-17",
+          "evidenceKickoffUtc": "2026-09-17T14:00:00.000Z",
+          "evidenceHomeTeam": "ZED",
+          "evidenceAwayTeam": "Al Qanah",
+          "verifiedFinalArtifact": "data/final-results/2026-09-17/cid_egy1_zed_alqanah_20260917.json",
+          "verifiedFinalVerdict": "verified_final_result",
+          "verifiedFinalTruth": true,
+          "verifiedFinalScoreHome": 2,
+          "verifiedFinalScoreAway": 1
+        },
+        "guarantees": {
+          "flashscoreProviderOnly": true,
+          "exactProviderIdentity": true,
+          "sameLeague": true,
+          "exactNormalizedOrderedTeamPair": true,
+          "uniqueLatestObservation": true,
+          "strictlyNewerKickoff": true,
+          "minimumKickoffShiftRequired": true,
+          "strictlyNewerObservation": true,
+          "nonOverlappingObservationWindows": true,
+          "oldKickoffPastGraceRequired": true,
+          "oldOccurrenceScorelessScheduledOnly": true,
+          "playedFinalNeverSuperseded": true,
+          "existingExplicitNonPlayedNeverSuperseded": true,
+          "exactVerifiedFinalArtifact": true,
+          "exactVerifiedFinalFlashscoreProviderIdentity": true,
+          "verifiedFinalScoreParity": true,
+          "verifiedFinalTeamPairParity": true,
+          "oldOccurrenceHasNoActiveFinalResult": true,
+          "oldOccurrenceAbsentFromHistory": true,
+          "oldOccurrenceHasNoOfficialValuePick": true,
+          "oldOccurrenceScoreRemainsNull": true,
+          "scoreNeverCopiedBackward": true
+        }
+      }
     }
   ]
 }
