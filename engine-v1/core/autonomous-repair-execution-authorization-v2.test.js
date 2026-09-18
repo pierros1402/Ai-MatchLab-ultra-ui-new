@@ -652,11 +652,11 @@ test(
 );
 
 test(
-  "production pinned key registry starts empty and therefore fails closed",
+  "production pinned key registry contains one provisioned key and rejects an unrelated signer",
   () => {
     assert.equal(
       AUTONOMOUS_REPAIR_AUTHORIZATION_TRUSTED_PUBLIC_KEYS.length,
-      0
+      1
     );
 
     const {

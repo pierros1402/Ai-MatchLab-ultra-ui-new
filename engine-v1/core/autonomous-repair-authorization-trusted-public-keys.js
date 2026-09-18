@@ -4,7 +4,14 @@ import {
 } from "node:crypto";
 
 export const AUTONOMOUS_REPAIR_AUTHORIZATION_TRUSTED_PUBLIC_KEYS =
-  Object.freeze([]);
+  Object.freeze([
+  Object.freeze({
+  "issuerId": "ai-matchlab-external-control-plane-v1",
+  "keyId": "arkey_v1_de8bc22cf27bb19fcf3bc731",
+  "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAboGA9sFdicqv3B4MbpveTuQY6OI4nz2SiFWjezZvp2M=\n-----END PUBLIC KEY-----\n",
+  "publicKeySpkiSha256": "de8bc22cf27bb19fcf3bc7319f0d09a371374005dcab6223c719bc119e96bc58"
+})
+]);
 
 const VALID_KEY_ID =
   /^arkey_v1_[a-z0-9][a-z0-9._-]{0,63}$/u;

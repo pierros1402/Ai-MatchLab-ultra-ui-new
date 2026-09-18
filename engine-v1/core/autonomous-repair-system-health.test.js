@@ -82,7 +82,7 @@ test(
 
     assert.equal(
       facts.code,
-      AUTONOMOUS_REPAIR_SYSTEM_HEALTH_CODE.NO_PINNED_TRUST
+      AUTONOMOUS_REPAIR_SYSTEM_HEALTH_CODE.PRODUCTION_KERNEL_DISABLED
     );
 
     assert.equal(
@@ -92,7 +92,7 @@ test(
 
     assert.equal(
       facts.readiness.trustedKeyCount,
-      0
+      1
     );
 
     assert.equal(

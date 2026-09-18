@@ -238,11 +238,11 @@ function productionOptions() {
 }
 
 test(
-  "production readiness is fail-closed while the pinned trusted-key registry is empty",
+  "production readiness remains fail-closed after one public key is pinned because the production kernel is disabled",
   () => {
     assert.equal(
       AUTONOMOUS_REPAIR_AUTHORIZATION_TRUSTED_PUBLIC_KEYS.length,
-      0
+      1
     );
 
     const readiness =
@@ -250,12 +250,12 @@ test(
 
     assert.equal(
       readiness.state,
-      AUTONOMOUS_REPAIR_PRODUCTION_EXECUTION_STATE.BLOCKED_NO_PINNED_TRUST
+      AUTONOMOUS_REPAIR_PRODUCTION_EXECUTION_STATE.BLOCKED_PRODUCTION_KERNEL_NOT_ENABLED
     );
 
     assert.equal(
       readiness.trustedKeyCount,
-      0
+      1
     );
 
     assert.equal(
