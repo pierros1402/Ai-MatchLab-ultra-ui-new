@@ -207,6 +207,35 @@
     </div>`;
   }
 
+  function renderAutonomousRepairSummary(report) {
+    const repair = report?.autonomousRepair;
+    if (!repair || typeof repair !== "object") return "";
+
+    const readiness = repair.readiness || {};
+    const authority = repair.authority || {};
+    const mode = String(repair.mode || "OBSERVABILITY_ONLY");
+    const status = String(repair.status || "UNKNOWN");
+    const code = String(repair.code || "UNKNOWN");
+    const executionAvailable = repair.executionAvailable === true;
+    const kernelEnabled = readiness.productionKernelEnabled === true;
+    const trustedKeyCount = Number.isFinite(Number(readiness.trustedKeyCount))
+      ? Number(readiness.trustedKeyCount)
+      : 0;
+    const workflowMutationAuthorized = authority.workflowMutationAuthorized === true;
+    const boundaryPreserved =
+      !executionAvailable &&
+      !kernelEnabled &&
+      !workflowMutationAuthorized;
+
+    return `<div style="margin-top:10px;padding:8px 10px;border-radius:6px;background:rgba(14,116,144,.10);border:1px solid rgba(56,189,248,.24);font-size:11px;color:#cbd5e1;">
+      <div style="font-weight:700;color:#7dd3fc;margin-bottom:4px;">Autonomous repair · observability</div>
+      <div>Mode: <b>${esc(mode)}</b> · status: <b>${esc(status)}</b></div>
+      <div>Readiness: <b>${esc(code)}</b> · execution available: <b>${esc(executionAvailable)}</b></div>
+      <div>Trusted keys: <b>${esc(trustedKeyCount)}</b> · production kernel: <b>${esc(kernelEnabled)}</b> · workflow mutation: <b>${esc(workflowMutationAuthorized)}</b></div>
+      <div>Authority boundary: <b>${boundaryPreserved ? "preserved" : "review required"}</b></div>
+    </div>`;
+  }
+
   function renderReport(report) {
     if (!report) return `<p style="color:#94a3b8;font-size:13px;">Could not load report.</p>`;
 
@@ -265,7 +294,7 @@
       <div style="font-size:11px;color:#94a3b8;margin-top:3px;">Errors: <b>${esc(counts.error || 0)}</b> ┬╖ Warnings: <b>${esc(counts.warning || 0)}</b> ┬╖ Info: <b>${esc(counts.info || 0)}</b></div>
     </div>`;
 
-    return `${header}<div>${rows.join("")}</div>${renderValueSummary(report)}${renderArtifacts(report)}
+    return `${header}<div>${rows.join("")}</div>${renderValueSummary(report)}${renderAutonomousRepairSummary(report)}${renderArtifacts(report)}
       <div style="margin-top:12px;font-size:11px;color:#64748b;">Last check: ${formatTime(report.checkedAt)} ┬╖ Day: ${esc(report.dayKey || "έΑΦ")} ┬╖ Manifest: ${esc(report.manifestGeneratedAt || "έΑΦ")}</div>`;
   }
 

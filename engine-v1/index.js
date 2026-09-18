@@ -72,6 +72,9 @@ import {
 import {
   reconcilePublicSystemHealth
 } from "./system-health/public-mirror-policy.js";
+import {
+  buildAutonomousRepairSystemHealthFacts
+} from "./core/autonomous-repair-system-health.js";
 import 'dotenv/config';
 
 const app = express();
@@ -2341,7 +2344,13 @@ app.get("/system-health-alerts", (req, res) => {
 app.get("/system-health", (req, res) => {
   try {
     const day = String(req.query.day || athensDayKey()).slice(0, 10);
-    res.json(buildSystemHealthReport(day));
+    const report = buildSystemHealthReport(day);
+    const autonomousRepair = buildAutonomousRepairSystemHealthFacts();
+
+    res.json({
+      ...report,
+      autonomousRepair
+    });
   } catch (err) {
     res.status(500).json({
       ok: false,

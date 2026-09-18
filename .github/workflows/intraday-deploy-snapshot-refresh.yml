@@ -1007,6 +1007,29 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: node ./engine-v1/jobs/sync-system-health-github-issue.js --date="$DAY_KEY"
 
+      - name: Report autonomous repair readiness
+        if: always() && env.SKIP_BUILD != 'true'
+        continue-on-error: true
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE' >> "$GITHUB_STEP_SUMMARY"
+          import { buildAutonomousRepairSystemHealthFacts } from "./engine-v1/core/autonomous-repair-system-health.js";
+          const facts = buildAutonomousRepairSystemHealthFacts();
+          const readiness = facts.readiness || {};
+          const authority = facts.authority || {};
+          console.log("### Autonomous repair readiness");
+          console.log("");
+          console.log(`- Mode: ${facts.mode}`);
+          console.log(`- Status: ${facts.status}`);
+          console.log(`- Code: ${facts.code}`);
+          console.log(`- Execution available: ${facts.executionAvailable === true}`);
+          console.log(`- Trusted public keys: ${Number(readiness.trustedKeyCount || 0)}`);
+          console.log(`- Production kernel enabled: ${readiness.productionKernelEnabled === true}`);
+          console.log(`- Workflow mutation authorized: ${authority.workflowMutationAuthorized === true}`);
+          console.log("");
+          console.log("Reporting only. This step grants no repair, replay, filesystem, or deployment authority.");
+          NODE
+
       - name: Detect material intraday snapshot changes
         if: env.SKIP_BUILD != 'true'
         shell: bash
