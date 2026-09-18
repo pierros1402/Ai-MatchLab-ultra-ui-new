@@ -2,13 +2,56 @@
   "dayKey": "2026-09-18",
   "leagueSlug": "bol.1",
   "leagueName": "Bol 1",
-  "updatedAt": "2026-09-18T17:48:11.964Z",
+  "updatedAt": "2026-09-18T18:51:18.738Z",
   "count": 2,
   "sourceMeta": {
-    "acquisitionProvider": "flashscore",
+    "acquisitionProvider": "espn_direct_league_status",
     "requestedLeagueSlug": "bol.1",
-    "requestedDayKey": "2026-10-03",
-    "mergedAt": "2026-09-18T17:48:11.964Z"
+    "requestedDayKey": "2026-09-18",
+    "providerFetchSlugs": [
+      "bol.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 2,
+      "matches": 2,
+      "fetches": [
+        {
+          "providerSlug": "bol.1",
+          "dayKey": "2026-09-17",
+          "ok": true,
+          "events": 2,
+          "matched": 2
+        }
+      ]
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-09-18T18:51:18.738Z",
+    "mode": "targeted_live_status_refresh",
+    "authoritativeTerminalOverlayPromotion": {
+      "schema": "ai-matchlab.authoritative-terminal-overlay-promotion.v1",
+      "promotedAt": "2026-09-18T18:51:47.778Z",
+      "exactProviderIdOnly": true,
+      "orderedTeamIdentityRequired": true,
+      "athensDayRequired": true,
+      "explicitTerminalStatusRequired": true,
+      "numericScoreRequired": true,
+      "heuristicIdentity": false
+    }
   },
   "fixtures": [
     {
@@ -32,17 +75,41 @@
       "awayTeam": "Oriente Petrolero",
       "venue": "Estadio IV Centenário",
       "firstSeenAt": "2026-09-16T18:16:52.044Z",
-      "lastSeenAt": "2026-09-18T17:48:11.960Z",
+      "lastSeenAt": "2026-09-18T18:51:18.738Z",
       "canonicalAliases": [
         "cid_bol1_tomayapo_orientepetrolero_20260918"
       ],
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
-      "scoreHome": null,
-      "scoreAway": null,
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+6'",
+      "scoreHome": 0,
+      "scoreAway": 2,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
       "penalties": null,
-      "decidedBy": null
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-09-18T18:51:47.778Z",
+        "provider": "espn",
+        "providerMatchId": "401906475",
+        "dayKey": "2026-09-18",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 0,
+          "scoreAway": 2
+        }
+      }
     },
     {
       "canonicalId": "cid_bol1_bolivar_gvsanjose_20260918",
@@ -65,14 +132,38 @@
       "awayTeam": "GV San José",
       "venue": "Estadio Hernando Siles",
       "firstSeenAt": "2026-09-16T18:16:52.045Z",
-      "lastSeenAt": "2026-09-18T17:48:11.961Z",
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
-      "scoreHome": null,
-      "scoreAway": null,
+      "lastSeenAt": "2026-09-18T18:51:18.738Z",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+9'",
+      "scoreHome": 4,
+      "scoreAway": 2,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
       "penalties": null,
-      "decidedBy": null
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-09-18T18:51:47.778Z",
+        "provider": "espn",
+        "providerMatchId": "401906474",
+        "dayKey": "2026-09-18",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 4,
+          "scoreAway": 2
+        }
+      }
     }
   ]
 }
