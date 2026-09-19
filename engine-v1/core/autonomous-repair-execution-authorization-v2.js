@@ -61,6 +61,65 @@ const SUPPORTED_REPAIR_CLASSES =
     "REBUILD_PUBLICATION_CANONICAL_ROW"
   ]);
 
+const SUPPORTED_SIGNATURE_ALGORITHMS =
+  Object.freeze([
+    "Ed25519",
+    "ECDSA_P256_SHA256"
+  ]);
+
+function trustedKeySignatureProfile(
+  publicKeyPem
+) {
+  const keyObject =
+    createPublicKey(
+      publicKeyPem
+    );
+
+  if (
+    keyObject.asymmetricKeyType ===
+      "ed25519"
+  ) {
+    return {
+      algorithm:
+        "Ed25519",
+
+      verifyAlgorithm:
+        null,
+
+      key:
+        keyObject
+    };
+  }
+
+  if (
+    keyObject.asymmetricKeyType ===
+      "ec" &&
+    keyObject.asymmetricKeyDetails?.namedCurve ===
+      "prime256v1"
+  ) {
+    return {
+      algorithm:
+        "ECDSA_P256_SHA256",
+
+      verifyAlgorithm:
+        "sha256",
+
+      key:
+        {
+          key:
+            keyObject,
+
+          dsaEncoding:
+            "der"
+        }
+    };
+  }
+
+  throw new Error(
+    "autonomous_repair_execution_authorization_v2_trusted_key_signature_profile_unsupported"
+  );
+}
+
 function clean(value) {
   return String(value ?? "").trim();
 }
@@ -649,8 +708,9 @@ export function validateAutonomousRepairExecutionAuthorizationV2Artifact(
         "value"
       ]
     ) ||
-    artifact.signature.algorithm !==
-      "Ed25519" ||
+    !SUPPORTED_SIGNATURE_ALGORITHMS.includes(
+      artifact.signature.algorithm
+    ) ||
     artifact.signature.encoding !==
       "base64" ||
     !canonicalBase64(
@@ -706,6 +766,20 @@ export function verifyAutonomousRepairExecutionAuthorizationV2AgainstTrustedKeyR
     );
   }
 
+  const signatureProfile =
+    trustedKeySignatureProfile(
+      trustedKeyRecord.publicKeyPem
+    );
+
+  if (
+    authorization.signature.algorithm !==
+      signatureProfile.algorithm
+  ) {
+    throw new Error(
+      "autonomous_repair_execution_authorization_v2_signature_algorithm_key_mismatch"
+    );
+  }
+
   const signature =
     Buffer.from(
       authorization.signature.value,
@@ -714,13 +788,11 @@ export function verifyAutonomousRepairExecutionAuthorizationV2AgainstTrustedKeyR
 
   const verified =
     verifySignature(
-      null,
+      signatureProfile.verifyAlgorithm,
       autonomousRepairExecutionAuthorizationV2SigningBytes(
         authorization
       ),
-      createPublicKey(
-        trustedKeyRecord.publicKeyPem
-      ),
+      signatureProfile.key,
       signature
     );
 
