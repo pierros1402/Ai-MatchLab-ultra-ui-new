@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-09-20",
-  "generatedAt": "2026-09-20T20:44:57.443Z",
+  "generatedAt": "2026-09-20T21:40:01.843Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,9 +18,14 @@
   "inputs": {
     "fixturesPath": "data/canonical-fixtures/2026-09-20",
     "finalResultsDir": "data/final-results/2026-09-20",
-    "verifiedFinalResults": 0,
+    "verifiedFinalResults": 376,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-09-20",
-    "canonicalContradictionsRejected": [],
+    "canonicalContradictionsRejected": [
+      {
+        "matchId": "cid_arg2_deportivomaipu_gimnasiayesgrimajujuy_20260920",
+        "reason": "canonical_identity_ambiguous"
+      }
+    ],
     "canonicalIdentityAmbiguities": [
       "cid_arg2_deportivomaipu_gimnasiayesgrimajujuy_20260920"
     ],
@@ -57,56 +62,56 @@
       "summary": {
         "picks": 15,
         "uniqueMatches": 14,
-        "settled": 0,
-        "wins": 0,
-        "losses": 0,
+        "settled": 15,
+        "wins": 9,
+        "losses": 6,
         "voids": 0,
-        "unresolved": 15,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": null,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 0.6,
+        "oddsAvailable": 13,
+        "averageOdds": 1.6,
+        "totalStake": 13,
+        "totalReturn": 11.25,
+        "profit": -1.75,
+        "roi": -0.1346
       },
       "marketSummary": [
         {
           "market": "1X2",
           "picks": 2,
           "uniqueMatches": 2,
-          "settled": 0,
-          "wins": 0,
+          "settled": 2,
+          "wins": 2,
           "losses": 0,
           "voids": 0,
-          "unresolved": 2,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "hitRate": 1,
+          "oddsAvailable": 2,
+          "averageOdds": 1.865,
+          "totalStake": 2,
+          "totalReturn": 3.73,
+          "profit": 1.73,
+          "roi": 0.865
         },
         {
           "market": "Over / Under 2.5",
           "picks": 13,
           "uniqueMatches": 13,
-          "settled": 0,
-          "wins": 0,
-          "losses": 0,
+          "settled": 13,
+          "wins": 7,
+          "losses": 6,
           "voids": 0,
-          "unresolved": 13,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "hitRate": 0.5385,
+          "oddsAvailable": 11,
+          "averageOdds": 1.5518,
+          "totalStake": 11,
+          "totalReturn": 7.52,
+          "profit": -3.48,
+          "roi": -0.3164
         }
       ],
       "picks": [
@@ -130,11 +135,75 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.53,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 1,
+            "scoreKey": "0-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-20T21:38:15.258Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401878375",
+                "canonicalId": "cid_sco1_celtic_rangers_20260920",
+                "leagueName": "Scottish Premiership",
+                "home": "Celtic",
+                "away": "Rangers",
+                "scoreHome": 0,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-20T11:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-20T21:34:58.438Z",
+                "scoreKey": "0-1",
+                "homeTeam": "Celtic",
+                "awayTeam": "Rangers",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_sco1_celtic_rangers_20260920"
+                  ],
+                  "sourceFixtureId": "cid_sco1_celtic_rangers_20260920",
+                  "resolvedFixtureId": "cid_sco1_celtic_rangers_20260920",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Celtic",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Rangers",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "dlEIBMJU",
+                "country": "Scotland",
+                "leagueName": "Premiership",
+                "leaguePath": "/football/scotland/premiership/",
+                "home": "Celtic",
+                "away": "Rangers",
+                "scoreHome": 0,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-20T11:00:00.000Z",
+                "scoreKey": "0-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -156,11 +225,44 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.4,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 3,
+            "scoreKey": "1-3"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:33.060Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "EgxNBdhI",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Switzerland",
+                "leagueName": "Super League",
+                "leaguePath": "/football/switzerland/super-league/",
+                "home": "Basel",
+                "away": "St. Gallen",
+                "scoreHome": 1,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-09-20T14:30:00.000Z",
+                "scoreKey": "1-3"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -182,11 +284,75 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.59,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 2,
+            "scoreKey": "0-2"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-20T21:38:06.624Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "761818",
+                "canonicalId": "cid_usa1_montreal_columbuscrew_20260920",
+                "leagueName": "MLS",
+                "home": "CF Montréal",
+                "away": "Columbus Crew",
+                "scoreHome": 0,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-09-19T23:30Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-20T19:39:22.527Z",
+                "scoreKey": "0-2",
+                "homeTeam": "CF Montréal",
+                "awayTeam": "Columbus Crew",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_usa1_montreal_columbuscrew_20260920"
+                  ],
+                  "sourceFixtureId": "cid_usa1_montreal_columbuscrew_20260920",
+                  "resolvedFixtureId": "cid_usa1_montreal_columbuscrew_20260920",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "CF Montréal",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Columbus Crew",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "lSiOIXLj",
+                "country": "USA",
+                "leagueName": "MLS",
+                "leaguePath": "/football/usa/mls/",
+                "home": "CF Montreal",
+                "away": "Columbus Crew",
+                "scoreHome": 0,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-09-19T23:30:00.000Z",
+                "scoreKey": "0-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -208,11 +374,75 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.56,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 0,
+            "scoreKey": "0-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-20T21:38:07.676Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "761822",
+                "canonicalId": "cid_usa1_dallas_austin_20260920",
+                "leagueName": "MLS",
+                "home": "FC Dallas",
+                "away": "Austin FC",
+                "scoreHome": 0,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-09-20T00:30Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-20T19:39:22.532Z",
+                "scoreKey": "0-0",
+                "homeTeam": "FC Dallas",
+                "awayTeam": "Austin FC",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_usa1_dallas_austin_20260920"
+                  ],
+                  "sourceFixtureId": "cid_usa1_dallas_austin_20260920",
+                  "resolvedFixtureId": "cid_usa1_dallas_austin_20260920",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "FC Dallas",
+                  "homeGlobalClubId": "gcid_29fd67ffa9fb94cc103b572d",
+                  "awaySourceAlias": "Austin FC",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "pOOFaRr3",
+                "country": "USA",
+                "leagueName": "MLS",
+                "leaguePath": "/football/usa/mls/",
+                "home": "FC Dallas",
+                "away": "Austin FC",
+                "scoreHome": 0,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-09-20T00:30:00.000Z",
+                "scoreKey": "0-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -234,11 +464,44 @@
           "aiFairOdds": 1.53,
           "oddsDecimal": 1.44,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 2,
+            "scoreKey": "3-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:41.224Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "jwki6M3B",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Estonia",
+                "leagueName": "Meistriliiga",
+                "leaguePath": "/football/estonia/meistriliiga/",
+                "home": "Flora",
+                "away": "Parnu JK Vaprus",
+                "scoreHome": 3,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-09-20T16:00:00.000Z",
+                "scoreKey": "3-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -260,11 +523,75 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.36,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 0,
+            "scoreKey": "2-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-20T21:38:25.229Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401884788",
+                "canonicalId": "cid_ger1_bayerleverkusen_rbleipzig_20260920",
+                "leagueName": "Bundesliga",
+                "home": "Bayer Leverkusen",
+                "away": "RB Leipzig",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-09-20T13:30Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-20T21:34:26.847Z",
+                "scoreKey": "2-0",
+                "homeTeam": "Bayer Leverkusen",
+                "awayTeam": "RB Leipzig",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_ger1_bayerleverkusen_rbleipzig_20260920"
+                  ],
+                  "sourceFixtureId": "cid_ger1_bayerleverkusen_rbleipzig_20260920",
+                  "resolvedFixtureId": "cid_ger1_bayerleverkusen_rbleipzig_20260920",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Bayer Leverkusen",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "RB Leipzig",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "fqjrNwLr",
+                "country": "Germany",
+                "leagueName": "Bundesliga",
+                "leaguePath": "/football/germany/bundesliga/",
+                "home": "Bayer Leverkusen",
+                "away": "RB Leipzig",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-09-20T13:30:00.000Z",
+                "scoreKey": "2-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -286,11 +613,75 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.72,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 0,
+            "scoreKey": "0-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-20T21:38:23.287Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401879273",
+                "canonicalId": "cid_eng1_leedsunited_crystalpalace_20260920",
+                "leagueName": "Premier League",
+                "home": "Leeds United",
+                "away": "Crystal Palace",
+                "scoreHome": 0,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-09-20T13:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-20T21:34:04.034Z",
+                "scoreKey": "0-0",
+                "homeTeam": "Leeds United",
+                "awayTeam": "Crystal Palace",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_eng1_leedsunited_crystalpalace_20260920"
+                  ],
+                  "sourceFixtureId": "cid_eng1_leedsunited_crystalpalace_20260920",
+                  "resolvedFixtureId": "cid_eng1_leedsunited_crystalpalace_20260920",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Leeds United",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Crystal Palace",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "n99y8wpe",
+                "country": "England",
+                "leagueName": "Premier League",
+                "leaguePath": "/football/england/premier-league/",
+                "home": "Leeds",
+                "away": "Crystal Palace",
+                "scoreHome": 0,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-09-20T13:00:00.000Z",
+                "scoreKey": "0-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -312,11 +703,62 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.52,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 4,
+            "awayScore": 1,
+            "scoreKey": "4-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_espn_terminal_final",
+            "method": "canonical_espn_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:42.840Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401874495",
+                "canonicalId": "cid_den1_viborgff_nordsjlland_20260920",
+                "leagueName": "Danish Superliga",
+                "home": "Viborg FF",
+                "away": "FC Nordsjælland",
+                "scoreHome": 4,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-20T16:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-20T21:35:12.689Z",
+                "scoreKey": "4-1",
+                "homeTeam": "Viborg FF",
+                "awayTeam": "FC Nordsjælland",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_den1_viborgff_nordsjlland_20260920"
+                  ],
+                  "sourceFixtureId": "cid_den1_viborgff_nordsjlland_20260920",
+                  "resolvedFixtureId": "cid_den1_viborgff_nordsjlland_20260920",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Viborg FF",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "FC Nordsjælland",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -338,11 +780,75 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.54,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 3,
+            "scoreKey": "0-3"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-20T21:38:09.656Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "761825",
+                "canonicalId": "cid_usa1_realsaltlake_vancouverwhitecaps_20260920",
+                "leagueName": "MLS",
+                "home": "Real Salt Lake",
+                "away": "Vancouver Whitecaps",
+                "scoreHome": 0,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-09-20T01:30Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-20T19:39:22.540Z",
+                "scoreKey": "0-3",
+                "homeTeam": "Real Salt Lake",
+                "awayTeam": "Vancouver Whitecaps",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_usa1_realsaltlake_vancouverwhitecaps_20260920"
+                  ],
+                  "sourceFixtureId": "cid_usa1_realsaltlake_vancouverwhitecaps_20260920",
+                  "resolvedFixtureId": "cid_usa1_realsaltlake_vancouverwhitecaps_20260920",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Real Salt Lake",
+                  "homeGlobalClubId": "gcid_f09dae21ee601890355315e5",
+                  "awaySourceAlias": "Vancouver Whitecaps",
+                  "awayGlobalClubId": "gcid_d885ef64b524dd7690fbbd41",
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "C0wJvFrA",
+                "country": "USA",
+                "leagueName": "MLS",
+                "leaguePath": "/football/usa/mls/",
+                "home": "Real Salt Lake",
+                "away": "Vancouver Whitecaps",
+                "scoreHome": 0,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-09-20T01:30:00.000Z",
+                "scoreKey": "0-3"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -364,11 +870,75 @@
           "aiFairOdds": null,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 2,
+            "scoreKey": "2-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-20T21:38:46.715Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401888288",
+                "canonicalId": "cid_tur1_goztepe_caykurrizespor_20260920",
+                "leagueName": "Süper Lig",
+                "home": "Goztepe",
+                "away": "Caykur Rizespor",
+                "scoreHome": 2,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-09-20T17:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-20T21:35:07.837Z",
+                "scoreKey": "2-2",
+                "homeTeam": "Goztepe",
+                "awayTeam": "Caykur Rizespor",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_tur1_goztepe_caykurrizespor_20260920"
+                  ],
+                  "sourceFixtureId": "cid_tur1_goztepe_caykurrizespor_20260920",
+                  "resolvedFixtureId": "cid_tur1_goztepe_caykurrizespor_20260920",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Goztepe",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Caykur Rizespor",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "tbTXXHM9",
+                "country": "Turkey",
+                "leagueName": "Super Lig",
+                "leaguePath": "/football/turkey/super-lig/",
+                "home": "Goztepe",
+                "away": "Rizespor",
+                "scoreHome": 2,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-09-20T17:00:00.000Z",
+                "scoreKey": "2-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -390,11 +960,44 @@
           "aiFairOdds": 1.98,
           "oddsDecimal": 1.46,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 2,
+            "scoreKey": "3-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:41.224Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "jwki6M3B",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Estonia",
+                "leagueName": "Meistriliiga",
+                "leaguePath": "/football/estonia/meistriliiga/",
+                "home": "Flora",
+                "away": "Parnu JK Vaprus",
+                "scoreHome": 3,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-09-20T16:00:00.000Z",
+                "scoreKey": "3-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -416,11 +1019,44 @@
           "aiFairOdds": 1.51,
           "oddsDecimal": 1.62,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 2,
+            "scoreKey": "3-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:41.400Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "Wzkl9u1f",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Georgia",
+                "leagueName": "Crystalbet Erovnuli Liga",
+                "leaguePath": "/football/georgia/crystalbet-erovnuli-liga/",
+                "home": "Dinamo Batumi",
+                "away": "Torpedo Kutaisi",
+                "scoreHome": 3,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-09-20T16:00:00.000Z",
+                "scoreKey": "3-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -442,11 +1078,75 @@
           "aiFairOdds": null,
           "oddsDecimal": 2.27,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 2,
+            "scoreKey": "1-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-20T21:38:06.493Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "761819",
+                "canonicalId": "cid_usa1_dcunited_charlotte_20260920",
+                "leagueName": "MLS",
+                "home": "D.C. United",
+                "away": "Charlotte FC",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-09-19T23:30Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-20T19:39:22.528Z",
+                "scoreKey": "1-2",
+                "homeTeam": "D.C. United",
+                "awayTeam": "Charlotte FC",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_usa1_dcunited_charlotte_20260920"
+                  ],
+                  "sourceFixtureId": "cid_usa1_dcunited_charlotte_20260920",
+                  "resolvedFixtureId": "cid_usa1_dcunited_charlotte_20260920",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "D.C. United",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Charlotte FC",
+                  "awayGlobalClubId": "gcid_fb7ce17f6d50ad4d2da58a9b",
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "QJikq6bM",
+                "country": "USA",
+                "leagueName": "MLS",
+                "leaguePath": "/football/usa/mls/",
+                "home": "DC United",
+                "away": "Charlotte",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-09-19T23:30:00.000Z",
+                "scoreKey": "1-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -468,11 +1168,44 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.79,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 0,
+            "scoreKey": "0-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:39.143Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "4CncdeL0",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Slovenia",
+                "leagueName": "Prva liga",
+                "leaguePath": "/football/slovenia/prva-liga/",
+                "home": "Mura",
+                "away": "Celje",
+                "scoreHome": 0,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-09-20T15:30:00.000Z",
+                "scoreKey": "0-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -494,11 +1227,44 @@
           "aiFairOdds": 1.65,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 2,
+            "scoreKey": "1-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:35.182Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "UkXb9Yqe",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Georgia",
+                "leagueName": "Crystalbet Erovnuli Liga 2",
+                "leaguePath": "/football/georgia/crystalbet-erovnuli-liga-2/",
+                "home": "Bolnisi",
+                "away": "Dusheti",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-09-20T15:00:00.000Z",
+                "scoreKey": "1-2"
+              }
+            ]
+          }
         }
       ]
     },
@@ -516,56 +1282,56 @@
       "summary": {
         "picks": 15,
         "uniqueMatches": 14,
-        "settled": 0,
-        "wins": 0,
-        "losses": 0,
+        "settled": 15,
+        "wins": 9,
+        "losses": 6,
         "voids": 0,
-        "unresolved": 15,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": null,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 0.6,
+        "oddsAvailable": 13,
+        "averageOdds": 1.6,
+        "totalStake": 13,
+        "totalReturn": 11.25,
+        "profit": -1.75,
+        "roi": -0.1346
       },
       "marketSummary": [
         {
           "market": "1X2",
           "picks": 2,
           "uniqueMatches": 2,
-          "settled": 0,
-          "wins": 0,
+          "settled": 2,
+          "wins": 2,
           "losses": 0,
           "voids": 0,
-          "unresolved": 2,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "hitRate": 1,
+          "oddsAvailable": 2,
+          "averageOdds": 1.865,
+          "totalStake": 2,
+          "totalReturn": 3.73,
+          "profit": 1.73,
+          "roi": 0.865
         },
         {
           "market": "Over / Under 2.5",
           "picks": 13,
           "uniqueMatches": 13,
-          "settled": 0,
-          "wins": 0,
-          "losses": 0,
+          "settled": 13,
+          "wins": 7,
+          "losses": 6,
           "voids": 0,
-          "unresolved": 13,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "hitRate": 0.5385,
+          "oddsAvailable": 11,
+          "averageOdds": 1.5518,
+          "totalStake": 11,
+          "totalReturn": 7.52,
+          "profit": -3.48,
+          "roi": -0.3164
         }
       ],
       "picks": [
@@ -589,11 +1355,75 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.53,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 1,
+            "scoreKey": "0-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-20T21:38:15.258Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401878375",
+                "canonicalId": "cid_sco1_celtic_rangers_20260920",
+                "leagueName": "Scottish Premiership",
+                "home": "Celtic",
+                "away": "Rangers",
+                "scoreHome": 0,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-20T11:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-20T21:34:58.438Z",
+                "scoreKey": "0-1",
+                "homeTeam": "Celtic",
+                "awayTeam": "Rangers",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_sco1_celtic_rangers_20260920"
+                  ],
+                  "sourceFixtureId": "cid_sco1_celtic_rangers_20260920",
+                  "resolvedFixtureId": "cid_sco1_celtic_rangers_20260920",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Celtic",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Rangers",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "dlEIBMJU",
+                "country": "Scotland",
+                "leagueName": "Premiership",
+                "leaguePath": "/football/scotland/premiership/",
+                "home": "Celtic",
+                "away": "Rangers",
+                "scoreHome": 0,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-20T11:00:00.000Z",
+                "scoreKey": "0-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -615,11 +1445,44 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.4,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 3,
+            "scoreKey": "1-3"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:33.060Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "EgxNBdhI",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Switzerland",
+                "leagueName": "Super League",
+                "leaguePath": "/football/switzerland/super-league/",
+                "home": "Basel",
+                "away": "St. Gallen",
+                "scoreHome": 1,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-09-20T14:30:00.000Z",
+                "scoreKey": "1-3"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -641,11 +1504,75 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.59,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 2,
+            "scoreKey": "0-2"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-20T21:38:06.624Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "761818",
+                "canonicalId": "cid_usa1_montreal_columbuscrew_20260920",
+                "leagueName": "MLS",
+                "home": "CF Montréal",
+                "away": "Columbus Crew",
+                "scoreHome": 0,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-09-19T23:30Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-20T19:39:22.527Z",
+                "scoreKey": "0-2",
+                "homeTeam": "CF Montréal",
+                "awayTeam": "Columbus Crew",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_usa1_montreal_columbuscrew_20260920"
+                  ],
+                  "sourceFixtureId": "cid_usa1_montreal_columbuscrew_20260920",
+                  "resolvedFixtureId": "cid_usa1_montreal_columbuscrew_20260920",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "CF Montréal",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Columbus Crew",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "lSiOIXLj",
+                "country": "USA",
+                "leagueName": "MLS",
+                "leaguePath": "/football/usa/mls/",
+                "home": "CF Montreal",
+                "away": "Columbus Crew",
+                "scoreHome": 0,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-09-19T23:30:00.000Z",
+                "scoreKey": "0-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -667,11 +1594,75 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.56,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 0,
+            "scoreKey": "0-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-20T21:38:07.676Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "761822",
+                "canonicalId": "cid_usa1_dallas_austin_20260920",
+                "leagueName": "MLS",
+                "home": "FC Dallas",
+                "away": "Austin FC",
+                "scoreHome": 0,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-09-20T00:30Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-20T19:39:22.532Z",
+                "scoreKey": "0-0",
+                "homeTeam": "FC Dallas",
+                "awayTeam": "Austin FC",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_usa1_dallas_austin_20260920"
+                  ],
+                  "sourceFixtureId": "cid_usa1_dallas_austin_20260920",
+                  "resolvedFixtureId": "cid_usa1_dallas_austin_20260920",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "FC Dallas",
+                  "homeGlobalClubId": "gcid_29fd67ffa9fb94cc103b572d",
+                  "awaySourceAlias": "Austin FC",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "pOOFaRr3",
+                "country": "USA",
+                "leagueName": "MLS",
+                "leaguePath": "/football/usa/mls/",
+                "home": "FC Dallas",
+                "away": "Austin FC",
+                "scoreHome": 0,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-09-20T00:30:00.000Z",
+                "scoreKey": "0-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -693,11 +1684,44 @@
           "aiFairOdds": 1.53,
           "oddsDecimal": 1.44,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 2,
+            "scoreKey": "3-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:41.224Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "jwki6M3B",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Estonia",
+                "leagueName": "Meistriliiga",
+                "leaguePath": "/football/estonia/meistriliiga/",
+                "home": "Flora",
+                "away": "Parnu JK Vaprus",
+                "scoreHome": 3,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-09-20T16:00:00.000Z",
+                "scoreKey": "3-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -719,11 +1743,75 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.36,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 0,
+            "scoreKey": "2-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-20T21:38:25.229Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401884788",
+                "canonicalId": "cid_ger1_bayerleverkusen_rbleipzig_20260920",
+                "leagueName": "Bundesliga",
+                "home": "Bayer Leverkusen",
+                "away": "RB Leipzig",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-09-20T13:30Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-20T21:34:26.847Z",
+                "scoreKey": "2-0",
+                "homeTeam": "Bayer Leverkusen",
+                "awayTeam": "RB Leipzig",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_ger1_bayerleverkusen_rbleipzig_20260920"
+                  ],
+                  "sourceFixtureId": "cid_ger1_bayerleverkusen_rbleipzig_20260920",
+                  "resolvedFixtureId": "cid_ger1_bayerleverkusen_rbleipzig_20260920",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Bayer Leverkusen",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "RB Leipzig",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "fqjrNwLr",
+                "country": "Germany",
+                "leagueName": "Bundesliga",
+                "leaguePath": "/football/germany/bundesliga/",
+                "home": "Bayer Leverkusen",
+                "away": "RB Leipzig",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-09-20T13:30:00.000Z",
+                "scoreKey": "2-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -745,11 +1833,75 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.72,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 0,
+            "scoreKey": "0-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-20T21:38:23.287Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401879273",
+                "canonicalId": "cid_eng1_leedsunited_crystalpalace_20260920",
+                "leagueName": "Premier League",
+                "home": "Leeds United",
+                "away": "Crystal Palace",
+                "scoreHome": 0,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-09-20T13:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-20T21:34:04.034Z",
+                "scoreKey": "0-0",
+                "homeTeam": "Leeds United",
+                "awayTeam": "Crystal Palace",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_eng1_leedsunited_crystalpalace_20260920"
+                  ],
+                  "sourceFixtureId": "cid_eng1_leedsunited_crystalpalace_20260920",
+                  "resolvedFixtureId": "cid_eng1_leedsunited_crystalpalace_20260920",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Leeds United",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Crystal Palace",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "n99y8wpe",
+                "country": "England",
+                "leagueName": "Premier League",
+                "leaguePath": "/football/england/premier-league/",
+                "home": "Leeds",
+                "away": "Crystal Palace",
+                "scoreHome": 0,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-09-20T13:00:00.000Z",
+                "scoreKey": "0-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -771,11 +1923,62 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.52,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 4,
+            "awayScore": 1,
+            "scoreKey": "4-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_espn_terminal_final",
+            "method": "canonical_espn_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:42.840Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401874495",
+                "canonicalId": "cid_den1_viborgff_nordsjlland_20260920",
+                "leagueName": "Danish Superliga",
+                "home": "Viborg FF",
+                "away": "FC Nordsjælland",
+                "scoreHome": 4,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-20T16:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-20T21:35:12.689Z",
+                "scoreKey": "4-1",
+                "homeTeam": "Viborg FF",
+                "awayTeam": "FC Nordsjælland",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_den1_viborgff_nordsjlland_20260920"
+                  ],
+                  "sourceFixtureId": "cid_den1_viborgff_nordsjlland_20260920",
+                  "resolvedFixtureId": "cid_den1_viborgff_nordsjlland_20260920",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Viborg FF",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "FC Nordsjælland",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -797,11 +2000,75 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.54,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 3,
+            "scoreKey": "0-3"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-20T21:38:09.656Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "761825",
+                "canonicalId": "cid_usa1_realsaltlake_vancouverwhitecaps_20260920",
+                "leagueName": "MLS",
+                "home": "Real Salt Lake",
+                "away": "Vancouver Whitecaps",
+                "scoreHome": 0,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-09-20T01:30Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-20T19:39:22.540Z",
+                "scoreKey": "0-3",
+                "homeTeam": "Real Salt Lake",
+                "awayTeam": "Vancouver Whitecaps",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_usa1_realsaltlake_vancouverwhitecaps_20260920"
+                  ],
+                  "sourceFixtureId": "cid_usa1_realsaltlake_vancouverwhitecaps_20260920",
+                  "resolvedFixtureId": "cid_usa1_realsaltlake_vancouverwhitecaps_20260920",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Real Salt Lake",
+                  "homeGlobalClubId": "gcid_f09dae21ee601890355315e5",
+                  "awaySourceAlias": "Vancouver Whitecaps",
+                  "awayGlobalClubId": "gcid_d885ef64b524dd7690fbbd41",
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "C0wJvFrA",
+                "country": "USA",
+                "leagueName": "MLS",
+                "leaguePath": "/football/usa/mls/",
+                "home": "Real Salt Lake",
+                "away": "Vancouver Whitecaps",
+                "scoreHome": 0,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-09-20T01:30:00.000Z",
+                "scoreKey": "0-3"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -823,11 +2090,75 @@
           "aiFairOdds": null,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 2,
+            "scoreKey": "2-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-20T21:38:46.715Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401888288",
+                "canonicalId": "cid_tur1_goztepe_caykurrizespor_20260920",
+                "leagueName": "Süper Lig",
+                "home": "Goztepe",
+                "away": "Caykur Rizespor",
+                "scoreHome": 2,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-09-20T17:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-20T21:35:07.837Z",
+                "scoreKey": "2-2",
+                "homeTeam": "Goztepe",
+                "awayTeam": "Caykur Rizespor",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_tur1_goztepe_caykurrizespor_20260920"
+                  ],
+                  "sourceFixtureId": "cid_tur1_goztepe_caykurrizespor_20260920",
+                  "resolvedFixtureId": "cid_tur1_goztepe_caykurrizespor_20260920",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Goztepe",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Caykur Rizespor",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "tbTXXHM9",
+                "country": "Turkey",
+                "leagueName": "Super Lig",
+                "leaguePath": "/football/turkey/super-lig/",
+                "home": "Goztepe",
+                "away": "Rizespor",
+                "scoreHome": 2,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-09-20T17:00:00.000Z",
+                "scoreKey": "2-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -849,11 +2180,44 @@
           "aiFairOdds": 1.98,
           "oddsDecimal": 1.46,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 2,
+            "scoreKey": "3-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:41.224Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "jwki6M3B",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Estonia",
+                "leagueName": "Meistriliiga",
+                "leaguePath": "/football/estonia/meistriliiga/",
+                "home": "Flora",
+                "away": "Parnu JK Vaprus",
+                "scoreHome": 3,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-09-20T16:00:00.000Z",
+                "scoreKey": "3-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -875,11 +2239,44 @@
           "aiFairOdds": 1.51,
           "oddsDecimal": 1.62,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 2,
+            "scoreKey": "3-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:41.400Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "Wzkl9u1f",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Georgia",
+                "leagueName": "Crystalbet Erovnuli Liga",
+                "leaguePath": "/football/georgia/crystalbet-erovnuli-liga/",
+                "home": "Dinamo Batumi",
+                "away": "Torpedo Kutaisi",
+                "scoreHome": 3,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-09-20T16:00:00.000Z",
+                "scoreKey": "3-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -901,11 +2298,75 @@
           "aiFairOdds": null,
           "oddsDecimal": 2.27,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 2,
+            "scoreKey": "1-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-20T21:38:06.493Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "761819",
+                "canonicalId": "cid_usa1_dcunited_charlotte_20260920",
+                "leagueName": "MLS",
+                "home": "D.C. United",
+                "away": "Charlotte FC",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-09-19T23:30Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-09-20T19:39:22.528Z",
+                "scoreKey": "1-2",
+                "homeTeam": "D.C. United",
+                "awayTeam": "Charlotte FC",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_usa1_dcunited_charlotte_20260920"
+                  ],
+                  "sourceFixtureId": "cid_usa1_dcunited_charlotte_20260920",
+                  "resolvedFixtureId": "cid_usa1_dcunited_charlotte_20260920",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "D.C. United",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Charlotte FC",
+                  "awayGlobalClubId": "gcid_fb7ce17f6d50ad4d2da58a9b",
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "QJikq6bM",
+                "country": "USA",
+                "leagueName": "MLS",
+                "leaguePath": "/football/usa/mls/",
+                "home": "DC United",
+                "away": "Charlotte",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-09-19T23:30:00.000Z",
+                "scoreKey": "1-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -927,11 +2388,44 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.79,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 0,
+            "scoreKey": "0-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:39.143Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "4CncdeL0",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Slovenia",
+                "leagueName": "Prva liga",
+                "leaguePath": "/football/slovenia/prva-liga/",
+                "home": "Mura",
+                "away": "Celje",
+                "scoreHome": 0,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-09-20T15:30:00.000Z",
+                "scoreKey": "0-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -953,11 +2447,44 @@
           "aiFairOdds": 1.65,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 2,
+            "scoreKey": "1-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:35.182Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "UkXb9Yqe",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Georgia",
+                "leagueName": "Crystalbet Erovnuli Liga 2",
+                "leaguePath": "/football/georgia/crystalbet-erovnuli-liga-2/",
+                "home": "Bolnisi",
+                "away": "Dusheti",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-09-20T15:00:00.000Z",
+                "scoreKey": "1-2"
+              }
+            ]
+          }
         }
       ]
     },
@@ -975,56 +2502,56 @@
       "summary": {
         "picks": 4,
         "uniqueMatches": 2,
-        "settled": 0,
-        "wins": 0,
+        "settled": 4,
+        "wins": 4,
         "losses": 0,
         "voids": 0,
-        "unresolved": 4,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": null,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 1,
+        "oddsAvailable": 2,
+        "averageOdds": 1.405,
+        "totalStake": 2,
+        "totalReturn": 2.81,
+        "profit": 0.81,
+        "roi": 0.405
       },
       "marketSummary": [
         {
           "market": "BTTS",
           "picks": 2,
           "uniqueMatches": 2,
-          "settled": 0,
-          "wins": 0,
+          "settled": 2,
+          "wins": 2,
           "losses": 0,
           "voids": 0,
-          "unresolved": 2,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "hitRate": 1,
+          "oddsAvailable": 1,
+          "averageOdds": 1.63,
+          "totalStake": 1,
+          "totalReturn": 1.63,
+          "profit": 0.63,
+          "roi": 0.63
         },
         {
           "market": "OU25",
           "picks": 2,
           "uniqueMatches": 2,
-          "settled": 0,
-          "wins": 0,
+          "settled": 2,
+          "wins": 2,
           "losses": 0,
           "voids": 0,
-          "unresolved": 2,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "hitRate": 1,
+          "oddsAvailable": 1,
+          "averageOdds": 1.18,
+          "totalStake": 1,
+          "totalReturn": 1.18,
+          "profit": 0.18,
+          "roi": 0.18
         }
       ],
       "picks": [
@@ -1048,11 +2575,44 @@
           "aiFairOdds": 1.22,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 5,
+            "awayScore": 1,
+            "scoreKey": "5-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:35.931Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "29MLO5HF",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Kongsvinger",
+                "away": "Hodd",
+                "scoreHome": 5,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-20T15:00:00.000Z",
+                "scoreKey": "5-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1074,11 +2634,44 @@
           "aiFairOdds": 1.24,
           "oddsDecimal": 1.18,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 4,
+            "scoreKey": "1-4"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:36.108Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "byGUMqnS",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Lyn",
+                "away": "Ranheim",
+                "scoreHome": 1,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-09-20T15:00:00.000Z",
+                "scoreKey": "1-4"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1100,11 +2693,44 @@
           "aiFairOdds": 1.26,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 5,
+            "awayScore": 1,
+            "scoreKey": "5-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:35.931Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "29MLO5HF",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Kongsvinger",
+                "away": "Hodd",
+                "scoreHome": 5,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-20T15:00:00.000Z",
+                "scoreKey": "5-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1126,11 +2752,44 @@
           "aiFairOdds": 1.29,
           "oddsDecimal": 1.63,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 4,
+            "scoreKey": "1-4"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:36.108Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "byGUMqnS",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Lyn",
+                "away": "Ranheim",
+                "scoreHome": 1,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-09-20T15:00:00.000Z",
+                "scoreKey": "1-4"
+              }
+            ]
+          }
         }
       ]
     },
@@ -1148,56 +2807,56 @@
       "summary": {
         "picks": 4,
         "uniqueMatches": 2,
-        "settled": 0,
-        "wins": 0,
+        "settled": 4,
+        "wins": 4,
         "losses": 0,
         "voids": 0,
-        "unresolved": 4,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": null,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 1,
+        "oddsAvailable": 2,
+        "averageOdds": 1.405,
+        "totalStake": 2,
+        "totalReturn": 2.81,
+        "profit": 0.81,
+        "roi": 0.405
       },
       "marketSummary": [
         {
           "market": "BTTS",
           "picks": 2,
           "uniqueMatches": 2,
-          "settled": 0,
-          "wins": 0,
+          "settled": 2,
+          "wins": 2,
           "losses": 0,
           "voids": 0,
-          "unresolved": 2,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "hitRate": 1,
+          "oddsAvailable": 1,
+          "averageOdds": 1.63,
+          "totalStake": 1,
+          "totalReturn": 1.63,
+          "profit": 0.63,
+          "roi": 0.63
         },
         {
           "market": "OU25",
           "picks": 2,
           "uniqueMatches": 2,
-          "settled": 0,
-          "wins": 0,
+          "settled": 2,
+          "wins": 2,
           "losses": 0,
           "voids": 0,
-          "unresolved": 2,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "hitRate": 1,
+          "oddsAvailable": 1,
+          "averageOdds": 1.18,
+          "totalStake": 1,
+          "totalReturn": 1.18,
+          "profit": 0.18,
+          "roi": 0.18
         }
       ],
       "picks": [
@@ -1221,11 +2880,44 @@
           "aiFairOdds": 1.22,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 5,
+            "awayScore": 1,
+            "scoreKey": "5-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:35.931Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "29MLO5HF",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Kongsvinger",
+                "away": "Hodd",
+                "scoreHome": 5,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-20T15:00:00.000Z",
+                "scoreKey": "5-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1247,11 +2939,44 @@
           "aiFairOdds": 1.24,
           "oddsDecimal": 1.18,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 4,
+            "scoreKey": "1-4"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:36.108Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "byGUMqnS",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Lyn",
+                "away": "Ranheim",
+                "scoreHome": 1,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-09-20T15:00:00.000Z",
+                "scoreKey": "1-4"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1273,11 +2998,44 @@
           "aiFairOdds": 1.26,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 5,
+            "awayScore": 1,
+            "scoreKey": "5-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:35.931Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "29MLO5HF",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Kongsvinger",
+                "away": "Hodd",
+                "scoreHome": 5,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-20T15:00:00.000Z",
+                "scoreKey": "5-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1299,21 +3057,54 @@
           "aiFairOdds": 1.29,
           "oddsDecimal": 1.63,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 4,
+            "scoreKey": "1-4"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-09-20T21:38:36.108Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "byGUMqnS",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Lyn",
+                "away": "Ranheim",
+                "scoreHome": 1,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-09-20T15:00:00.000Z",
+                "scoreKey": "1-4"
+              }
+            ]
+          }
         }
       ]
     }
   },
   "comparison": {
     "pickDeltaPlanBMinusPlanA": -11,
-    "settledDeltaPlanBMinusPlanA": 0,
-    "winsDeltaPlanBMinusPlanA": 0,
-    "lossesDeltaPlanBMinusPlanA": 0,
-    "hitRateDeltaPlanBMinusPlanA": null,
-    "roiDeltaPlanBMinusPlanA": null
+    "settledDeltaPlanBMinusPlanA": -11,
+    "winsDeltaPlanBMinusPlanA": -5,
+    "lossesDeltaPlanBMinusPlanA": -6,
+    "hitRateDeltaPlanBMinusPlanA": 0.4,
+    "roiDeltaPlanBMinusPlanA": 0.5396
   }
 }
