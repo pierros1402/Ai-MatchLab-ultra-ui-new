@@ -265,3 +265,109 @@ test("persisted coverage reports one hundred percent only when every required el
     100
   );
 });
+
+
+test("persisted coverage normalizes source fixture ids before required-coverage comparison", () => {
+  const aliases = new Map([
+    ["source-required-a", "required-a"],
+    ["required-a", "required-a"]
+  ]);
+
+  const result = assertPersistedAssessmentPostcondition(
+    {
+      matches: [{
+        matchId: "source-required-a",
+        aiAssessment: {
+          markets: {
+            OU25: {
+              probs: { over: 0.61, under: 0.39 }
+            }
+          }
+        }
+      }]
+    },
+    "2026-09-20",
+    {
+      canonicalFixtureCount: 1,
+      canonicalFixtureIds: ["required-a"],
+      requiredAssessmentFixtureIds: ["required-a"],
+      fixtureIdResolver: value => ({
+        ok: true,
+        resolvedFixtureId: aliases.get(value) || value
+      })
+    }
+  );
+
+  assert.equal(result.requiredAssessmentRows, 1);
+  assert.equal(result.requiredAssessmentRowsPresent, 1);
+  assert.equal(result.missingRequiredAssessmentRows, 0);
+  assert.equal(result.assessmentCoverageOfRequiredPct, 100);
+});
+
+test("persisted coverage normalizes required source ids into canonical universe", () => {
+  const aliases = new Map([
+    ["source-required-a", "required-a"],
+    ["required-a", "required-a"]
+  ]);
+
+  const result = assertPersistedAssessmentPostcondition(
+    {
+      matches: [{
+        canonicalId: "required-a",
+        aiAssessment: {
+          markets: {
+            BTTS: {
+              probs: { yes: 0.54, no: 0.46 }
+            }
+          }
+        }
+      }]
+    },
+    "2026-09-20",
+    {
+      canonicalFixtureCount: 1,
+      canonicalFixtureIds: ["required-a"],
+      requiredAssessmentFixtureIds: ["source-required-a"],
+      fixtureIdResolver: value => ({
+        ok: true,
+        resolvedFixtureId: aliases.get(value) || value
+      })
+    }
+  );
+
+  assert.equal(result.requiredAssessmentRows, 1);
+  assert.equal(result.missingRequiredAssessmentRows, 0);
+});
+
+test("persisted coverage fails closed when fixture identity normalization has no resolved id", () => {
+  assert.throws(
+    () => assertPersistedAssessmentPostcondition(
+      {
+        matches: [{
+          matchId: "source-required-a",
+          aiAssessment: {
+            markets: {
+              OU25: {
+                probs: { over: 0.6, under: 0.4 }
+              }
+            }
+          }
+        }]
+      },
+      "2026-09-20",
+      {
+        canonicalFixtureCount: 1,
+        canonicalFixtureIds: ["required-a"],
+        requiredAssessmentFixtureIds: ["required-a"],
+        fixtureIdResolver: () => ({
+          ok: false,
+          resolvedFixtureId: null
+        })
+      }
+    ),
+    error =>
+      error?.code ===
+        "persisted_assessment_fixture_identity_resolution_failed" &&
+      error?.sourceFixtureId === "required-a"
+  );
+});

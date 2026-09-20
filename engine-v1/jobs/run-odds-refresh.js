@@ -16,6 +16,9 @@ import {
 import { exportOddsSnapshotDay } from "./export-odds-snapshot-day.js";
 import { exportFixturesSnapshotDay } from "./export-fixtures-snapshot-day.js";
 import { oddsUpdateDecision, kickoffToUtcMs } from "../odds/odds-schedule.js";
+import {
+  resolveProductionEvidenceFixtureIdReadView
+} from "../core/production-evidence-identity-overlay.js";
 
 function readExistingSnapshot(dayKey) {
   try {
@@ -41,7 +44,8 @@ export function assertPersistedAssessmentPostcondition(
   {
     canonicalFixtureCount = 0,
     canonicalFixtureIds = [],
-    requiredAssessmentFixtureIds = []
+    requiredAssessmentFixtureIds = [],
+    fixtureIdResolver = value => value
   } = {}
 ) {
   const summary =
@@ -63,12 +67,38 @@ export function assertPersistedAssessmentPostcondition(
         ).length > 0
     );
 
+  const normalizeFixtureId = value => {
+    const sourceId = String(value || "").trim();
+    if (!sourceId) return "";
+
+    const result = fixtureIdResolver(sourceId);
+    const resolvedId = String(
+      (typeof result === "string"
+        ? result
+        : result?.resolvedFixtureId) || ""
+    ).trim();
+
+    if (!resolvedId) {
+      const error = new Error(
+        `persisted_assessment_fixture_identity_resolution_failed:${dayKey}:${sourceId}`
+      );
+      error.code =
+        "persisted_assessment_fixture_identity_resolution_failed";
+      error.dayKey = dayKey;
+      error.sourceFixtureId = sourceId;
+      throw error;
+    }
+
+    return resolvedId;
+  };
+
   const idOf = row =>
-    String(
+    normalizeFixtureId(
+      row?.productionIdentityBinding?.resolvedFixtureId ||
       row?.canonicalId ||
       row?.matchId ||
       ""
-    ).trim();
+    );
 
   const canonicalSet =
     new Set(
@@ -76,7 +106,7 @@ export function assertPersistedAssessmentPostcondition(
         ? canonicalFixtureIds
         : []
       )
-        .map(value => String(value || "").trim())
+        .map(normalizeFixtureId)
         .filter(Boolean)
     );
 
@@ -86,7 +116,7 @@ export function assertPersistedAssessmentPostcondition(
         ? requiredAssessmentFixtureIds
         : []
       )
-        .map(value => String(value || "").trim())
+        .map(normalizeFixtureId)
         .filter(Boolean)
     );
 
@@ -322,7 +352,13 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
 
         requiredAssessmentFixtureIds:
           canonicalSupplement
-            .modelEvidenceEligibleFixtureIds
+            .modelEvidenceEligibleFixtureIds,
+
+        fixtureIdResolver: value =>
+          resolveProductionEvidenceFixtureIdReadView(
+            value,
+            { allowUnmanaged: true }
+          )
       }
     );
 
