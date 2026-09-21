@@ -17,6 +17,10 @@ import {
 import { buildCanonicalId } from "../core/canonical-id.js";
 import { canonicalEspnLeagueSlug } from "../core/espn-league-identity.js";
 import { dedupeLeagueDayFixtures } from "../core/fixture-dedup.js";
+import {
+  applyProductionIdentityMembershipGate,
+  repositoryFixtureIdForRow
+} from "../core/day-fixture-universe.js";
 import { getProductionIdentityResolver } from "../core/production-identity-resolver-runtime.js";
 import { registerMatch } from "../storage/canonical-match-registry.js";
 import { shiftDay, athensDayKey } from "../core/daykey.js";
@@ -458,9 +462,12 @@ function writeCanonicalLeague(dayKey, slug, fixtures, meta = {}) {
 
   // Collapse cross-source duplicates (same real match under two canonical IDs
   // because providers spell the teams differently) before persisting.
+  const identityResolver =
+    getProductionIdentityResolver();
+
   const deduped = dedupeLeagueDayFixtures(fixtures, {
     slug,
-    identityResolver: getProductionIdentityResolver()
+    identityResolver
   });
   if (deduped.removed.length) {
     console.log("[fixture-acquisition] cross_source_duplicates_merged", {
@@ -470,7 +477,71 @@ function writeCanonicalLeague(dayKey, slug, fixtures, meta = {}) {
     });
   }
 
-  const cleanFixtures = deduped.rows
+  // Identity-lineage suppression is separate from cross-source deduplication.
+  // Use the existing production membership gate for the decision, but persist
+  // original deduped rows so this narrow write-path fix does not convert a
+  // read-time identity overlay into canonical source-truth mutation.
+  const membershipGate =
+    applyProductionIdentityMembershipGate(
+      deduped.rows,
+      { resolver: identityResolver }
+    );
+
+  if (
+    membershipGate.diagnostics
+      .suppressedWithoutRetainedTarget > 0
+  ) {
+    throw new Error(
+      `canonical_acquisition_suppressed_without_retained_target:${membershipGate.diagnostics.suppressedWithoutTargetFixtureIds.join(",")}`
+    );
+  }
+
+  const allowedRepositoryFixtureIds =
+    new Set(
+      membershipGate.rows
+        .map(row =>
+          repositoryFixtureIdForRow(row)
+        )
+        .filter(Boolean)
+    );
+
+  const membershipFilteredRows =
+    deduped.rows.filter(row => {
+      const repositoryFixtureId =
+        repositoryFixtureIdForRow(row);
+
+      return (
+        !repositoryFixtureId ||
+        allowedRepositoryFixtureIds.has(
+          repositoryFixtureId
+        )
+      );
+    });
+
+  if (
+    membershipFilteredRows.length !==
+    membershipGate.rows.length
+  ) {
+    throw new Error(
+      "canonical_acquisition_membership_filter_cardinality_mismatch"
+    );
+  }
+
+  if (
+    membershipGate.diagnostics
+      .managedSuppressedRows > 0
+  ) {
+    console.log(
+      "[fixture-acquisition] production_identity_membership_suppressed",
+      {
+        dayKey,
+        slug,
+        diagnostics: membershipGate.diagnostics
+      }
+    );
+  }
+
+  const cleanFixtures = membershipFilteredRows
     .filter(Boolean)
     .map(row => sanitizePreKickoffNonPlayed(row))
     .sort((a, b) => {

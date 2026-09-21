@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 
 import {
   mergeCanonicalFixtures,
@@ -113,3 +114,74 @@ test("serialized supplemental fixture preserves ESPN provider league slug", () =
   assert.equal(row.providerLeagueSlug, "uefa.europa.conf_qual");
   assert.equal(row.leagueSlug, "uefa.europa.conf");
 });
+
+
+test(
+  "canonical acquisition write applies identity membership suppression after dedupe",
+  () => {
+    const source =
+      fs.readFileSync(
+        new URL(
+          "./run-fixture-acquisition-chunk.js",
+          import.meta.url
+        ),
+        "utf8"
+      );
+
+    const start =
+      source.indexOf(
+        "function writeCanonicalLeague("
+      );
+
+    const end =
+      source.indexOf(
+        "const EXPLICIT_FINAL_STATUS_TOKENS",
+        start
+      );
+
+    assert.ok(start >= 0);
+    assert.ok(end > start);
+
+    const body = source.slice(start, end);
+
+    const dedupeAt =
+      body.indexOf(
+        "dedupeLeagueDayFixtures("
+      );
+
+    const membershipAt =
+      body.indexOf(
+        "applyProductionIdentityMembershipGate("
+      );
+
+    const filterAt =
+      body.indexOf(
+        "const membershipFilteredRows ="
+      );
+
+    const persistAt =
+      body.indexOf(
+        "const cleanFixtures = membershipFilteredRows"
+      );
+
+    assert.ok(dedupeAt >= 0);
+    assert.ok(membershipAt > dedupeAt);
+    assert.ok(filterAt > membershipAt);
+    assert.ok(persistAt > filterAt);
+
+    assert.match(
+      body,
+      /suppressedWithoutRetainedTarget/
+    );
+
+    assert.match(
+      body,
+      /canonical_acquisition_suppressed_without_retained_target/
+    );
+
+    assert.doesNotMatch(
+      body,
+      /const cleanFixtures = membershipGate\.rows/
+    );
+  }
+);
