@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-23",
-  "generatedAt": "2026-09-22T22:58:49.136Z",
+  "generatedAt": "2026-09-22T23:13:29.465Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "d954ee61a9fa665ca1f087a029ffcb6a19847900b5e4b45ceee0e172e052734f",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "5f15ce0476a5cf9fa7bfc6a539d576997d2d6a676f82501d6960ac8543db46c5",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 17,
-    "playedTerminal": 2,
+    "playedTerminal": 3,
     "nonPlayedTerminal": 0,
-    "scheduled": 14,
-    "live": 1,
+    "scheduled": 12,
+    "live": 2,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 3,
     "acceptedVerifiedFinalArtifacts": 3,
-    "convergedPlayedFinal": 2,
+    "convergedPlayedFinal": 3,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
     "openRows": 14,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 2,
-    "scoredSettlementEligible": 2,
+    "historyEligible": 3,
+    "scoredSettlementEligible": 3,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -53,7 +53,7 @@
         "statusType": null,
         "rawStatus": "STATUS_FIRST_HALF",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -95,14 +95,14 @@
       "homeTeam": "Independiente Medellín",
       "awayTeam": "Jaguares de Córdoba",
       "kickoffUtc": "2026-09-22T23:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -116,7 +116,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -193,14 +193,14 @@
       "homeTeam": "Atletico F.C.",
       "awayTeam": "Tigres FC",
       "kickoffUtc": "2026-09-22T21:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 0,
+        "scoreAway": 3
       },
       "verifiedFinal": {
         "present": true,
@@ -210,14 +210,14 @@
         "dayKey": "2026-09-23",
         "scoreHome": 0,
         "scoreAway": 3,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -877,9 +877,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_col2_atletico_tigres_20260923"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -1008,7 +1006,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 7450,
+            "count": 7452,
             "informational": true
           }
         },
@@ -3693,15 +3691,16 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "d954ee61a9fa665ca1f087a029ffcb6a19847900b5e4b45ceee0e172e052734f",
+      "truthFingerprint": "5f15ce0476a5cf9fa7bfc6a539d576997d2d6a676f82501d6960ac8543db46c5",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 2,
+        "expectedEligibleRows": 3,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
+          "cid_col2_atletico_tigres_20260923",
           "cid_col2_indvalledelcauca_interpalmira_20260923",
           "cid_col2_realsantander_orsomarso_20260923"
         ],
