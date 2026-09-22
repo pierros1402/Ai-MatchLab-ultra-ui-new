@@ -962,7 +962,7 @@ jobs:
         shell: bash
         run: |
           SHADOW_REMOTE_HEAD="$(git ls-remote origin refs/heads/main 2>/dev/null | awk 'NR==1 {print $1}' || true)"
-          node ./engine-v1/jobs/run-checkpoint-aware-targeted-repair-shadow-day.js             --date="$DAY_KEY"             --remote-head="${SHADOW_REMOTE_HEAD}"
+          node ./engine-v1/jobs/run-checkpoint-aware-targeted-repair-shadow-day.js             --context=daily             --date="$DAY_KEY"             --remote-head="${SHADOW_REMOTE_HEAD}"
 
       # The Day Truth Ledger is a derived control-plane artifact. Build it only
       # after canonical/history/Value/publication/System Health observations have

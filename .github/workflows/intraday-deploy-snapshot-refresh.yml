@@ -956,7 +956,7 @@ jobs:
           # Observation-only controller shadow. It emits logs only and cannot
           # authorize writes, commits, pushes, deploys, or repair execution.
           SHADOW_REMOTE_HEAD="$(git ls-remote origin refs/heads/main 2>/dev/null | awk 'NR==1 {print $1}' || true)"
-          if ! node ./engine-v1/jobs/run-checkpoint-aware-targeted-repair-shadow-day.js             --date="${DAY_KEY}"             --remote-head="${SHADOW_REMOTE_HEAD}"; then
+          if ! node ./engine-v1/jobs/run-checkpoint-aware-targeted-repair-shadow-day.js             --context=intraday             --date="${DAY_KEY}"             --remote-head="${SHADOW_REMOTE_HEAD}"; then
             echo "SHADOW_OBSERVATION_FAILED_NON_BLOCKING=true"
           fi
 

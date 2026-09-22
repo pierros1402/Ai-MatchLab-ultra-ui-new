@@ -25,6 +25,16 @@ export const CHECKPOINT_AWARE_TARGETED_REPAIR_SHADOW_UNWIRED_FAILURE_CLASSES =
     "CANONICAL_SUPPRESSED_ALIAS_PRESENT"
   ]);
 
+export const CHECKPOINT_AWARE_TARGETED_REPAIR_SHADOW_CONTEXT =
+  Object.freeze({
+    DAILY:
+      "daily",
+    INTRADAY:
+      "intraday",
+    STATIC:
+      "static"
+  });
+
 const SHA_RE =
   /^[0-9a-f]{40}$/u;
 
@@ -92,13 +102,230 @@ function freshnessReasons(
   );
 }
 
+export function evaluatePublishedDetailsParity({
+  manifest = null,
+  fixtures = null,
+  detailFiles = null,
+  observationAvailable = true,
+  reason = null
+} = {}) {
+  if (
+    observationAvailable !==
+      true
+  ) {
+    return {
+      observationAvailable:
+        false,
+      ok:
+        null,
+      reason:
+        text(reason) ||
+        "published_snapshot_unavailable",
+      violations:
+        [],
+      counts: {
+        fixtures:
+          null,
+        publishedFixtureIds:
+          null,
+        detailFiles:
+          null
+      }
+    };
+  }
+
+  const fixtureRows =
+    Array.isArray(fixtures)
+      ? fixtures
+      : [];
+
+  const publishedIds =
+    fixtureRows
+      .map(
+        fixture =>
+          text(
+            fixture?.canonicalId ||
+            fixture?.matchId
+          )
+      )
+      .filter(Boolean);
+
+  const publishedIdSet =
+    new Set(
+      publishedIds
+    );
+
+  const normalizedDetailFiles =
+    (
+      Array.isArray(detailFiles)
+        ? detailFiles
+        : []
+    )
+      .map(
+        file =>
+          text(file)
+            .replace(
+              /\.json$/u,
+              ""
+            )
+      )
+      .filter(Boolean)
+      .sort();
+
+  const detailSet =
+    new Set(
+      normalizedDetailFiles
+    );
+
+  const violations = [];
+
+  const duplicatePublishedIds =
+    publishedIds.filter(
+      (id, index) =>
+        publishedIds.indexOf(id) !==
+          index
+    );
+
+  if (
+    duplicatePublishedIds.length >
+      0
+  ) {
+    violations.push({
+      code:
+        "published_fixture_identity_not_unique",
+      count:
+        new Set(
+          duplicatePublishedIds
+        ).size
+    });
+  }
+
+  const detailsWithoutFixture =
+    [
+      ...detailSet
+    ]
+      .filter(
+        id =>
+          !publishedIdSet.has(
+            id
+          )
+      )
+      .sort();
+
+  const fixturesWithoutDetail =
+    [
+      ...publishedIdSet
+    ]
+      .filter(
+        id =>
+          !detailSet.has(
+            id
+          )
+      )
+      .sort();
+
+  if (
+    detailsWithoutFixture.length >
+      0 ||
+    fixturesWithoutDetail.length >
+      0
+  ) {
+    violations.push({
+      code:
+        "published_details_fixtures_not_bijective",
+      publishedFixtures:
+        publishedIdSet.size,
+      detailFiles:
+        detailSet.size,
+      detailsWithoutFixture,
+      fixturesWithoutDetail
+    });
+  }
+
+  const manifestMissingDetails =
+    Array.isArray(
+      manifest
+        ?.detailsMissingForFixtures
+    )
+      ? manifest
+          .detailsMissingForFixtures
+          .map(text)
+          .filter(Boolean)
+      : [];
+
+  if (
+    manifestMissingDetails.length >
+      0
+  ) {
+    violations.push({
+      code:
+        "manifest_reports_fixtures_missing_details",
+      count:
+        manifestMissingDetails.length,
+      fixtures:
+        manifestMissingDetails
+    });
+  }
+
+  const manifestDetailCount =
+    Number(
+      manifest
+        ?.counts
+        ?.details
+    );
+
+  if (
+    !Number.isFinite(
+      manifestDetailCount
+    ) ||
+    manifestDetailCount !==
+      detailSet.size ||
+    manifestDetailCount !==
+      publishedIdSet.size
+  ) {
+    violations.push({
+      code:
+        "manifest_published_detail_count_mismatch",
+      manifestDetails:
+        Number.isFinite(
+          manifestDetailCount
+        )
+          ? manifestDetailCount
+          : null,
+      publishedFixtures:
+        publishedIdSet.size,
+      detailFiles:
+        detailSet.size
+    });
+  }
+
+  return {
+    observationAvailable:
+      true,
+    ok:
+      violations.length === 0,
+    reason:
+      null,
+    violations,
+    counts: {
+      fixtures:
+        fixtureRows.length,
+      publishedFixtureIds:
+        publishedIdSet.size,
+      detailFiles:
+        detailSet.size
+    }
+  };
+}
+
 export function collectCheckpointAwareTargetedRepairShadowSignals({
   dayKey,
   currentDayKey,
   manifest = null,
   freshness = null,
   buildReport = null,
-  detailsMirror = null
+  detailsMirror = null,
+  publishedDetailsParity = null
 } = {}) {
   const signals = [];
   const seen =
@@ -165,6 +392,69 @@ export function collectCheckpointAwareTargetedRepairShadowSignals({
     }
   }
 
+  if (
+    publishedDetailsParity
+      ?.observationAvailable ===
+        true &&
+    publishedDetailsParity
+      ?.ok ===
+        false
+  ) {
+    const parityCodes =
+      [
+        ...new Set(
+          (
+            publishedDetailsParity
+              ?.violations || []
+          )
+            .map(
+              violation =>
+                text(
+                  violation?.code
+                )
+            )
+            .filter(Boolean)
+        )
+      ]
+        .sort();
+
+    addUniqueSignal(
+      signals,
+      seen,
+      "published_details_parity_failure:" +
+        (
+          parityCodes.join(",") ||
+          "unknown"
+        )
+    );
+  }
+
+  if (
+    detailsMirror
+      ?.observationAvailable ===
+        false
+  ) {
+    return signals;
+  }
+
+  const mirrorReadError =
+    text(
+      detailsMirror
+        ?.readError
+    );
+
+  if (
+    mirrorReadError
+  ) {
+    addUniqueSignal(
+      signals,
+      seen,
+      "details_value_mirror_observation_failed"
+    );
+
+    return signals;
+  }
+
   const mirrorViolations =
     Array.isArray(
       detailsMirror?.violations
@@ -172,19 +462,49 @@ export function collectCheckpointAwareTargetedRepairShadowSignals({
       ? detailsMirror.violations
       : [];
 
+  const mirrorCodes =
+    [
+      ...new Set(
+        mirrorViolations
+          .map(
+            violation =>
+              text(
+                violation?.code
+              )
+          )
+          .filter(Boolean)
+      )
+    ]
+      .sort();
+
   if (
-    mirrorViolations.some(
-      violation =>
-        text(
-          violation?.code
-        ) ===
-          "source_detail_extra_file"
+    mirrorCodes.includes(
+      "source_detail_extra_file"
     )
   ) {
     addUniqueSignal(
       signals,
       seen,
       "source_detail_extra_file"
+    );
+  }
+
+  const unclassifiedMirrorCodes =
+    mirrorCodes.filter(
+      code =>
+        code !==
+          "source_detail_extra_file"
+    );
+
+  if (
+    unclassifiedMirrorCodes
+      .length > 0
+  ) {
+    addUniqueSignal(
+      signals,
+      seen,
+      "details_value_mirror_unclassified_violation:" +
+        unclassifiedMirrorCodes.join(",")
     );
   }
 
@@ -199,7 +519,8 @@ export function buildCheckpointAwareTargetedRepairShadow({
   manifest = null,
   freshness = null,
   buildReport = null,
-  detailsMirror = null
+  detailsMirror = null,
+  publishedDetailsParity = null
 } = {}) {
   const signals =
     collectCheckpointAwareTargetedRepairShadowSignals({
@@ -208,7 +529,8 @@ export function buildCheckpointAwareTargetedRepairShadow({
       manifest,
       freshness,
       buildReport,
-      detailsMirror
+      detailsMirror,
+      publishedDetailsParity
     });
 
   const normalizedRemoteHead =

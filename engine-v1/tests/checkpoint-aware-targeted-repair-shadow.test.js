@@ -3,10 +3,16 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 
 import {
+  CHECKPOINT_AWARE_TARGETED_REPAIR_SHADOW_CONTEXT,
   CHECKPOINT_AWARE_TARGETED_REPAIR_SHADOW_UNWIRED_FAILURE_CLASSES,
   buildCheckpointAwareTargetedRepairShadow,
-  collectCheckpointAwareTargetedRepairShadowSignals
+  collectCheckpointAwareTargetedRepairShadowSignals,
+  evaluatePublishedDetailsParity
 } from "../core/checkpoint-aware-targeted-repair-shadow.js";
+
+import {
+  observeDetailsMirrorForShadow
+} from "../jobs/run-checkpoint-aware-targeted-repair-shadow-day.js";
 
 const DAY =
   "2026-09-22";
@@ -313,6 +319,295 @@ test(
 );
 
 test(
+  "published fixture/detail bijection is mandatory and exact",
+  () => {
+    const ok =
+      evaluatePublishedDetailsParity({
+        manifest: {
+          counts: {
+            details:
+              2
+          },
+          detailsMissingForFixtures:
+            []
+        },
+        fixtures: [
+          {
+            canonicalId:
+              "cid_a"
+          },
+          {
+            canonicalId:
+              "cid_b"
+          }
+        ],
+        detailFiles: [
+          "cid_a.json",
+          "cid_b.json"
+        ]
+      });
+
+    assert.equal(
+      ok.observationAvailable,
+      true
+    );
+
+    assert.equal(
+      ok.ok,
+      true
+    );
+
+    assert.deepEqual(
+      ok.counts,
+      {
+        fixtures:
+          2,
+        publishedFixtureIds:
+          2,
+        detailFiles:
+          2
+      }
+    );
+
+    const broken =
+      evaluatePublishedDetailsParity({
+        manifest: {
+          counts: {
+            details:
+              1
+          },
+          detailsMissingForFixtures: [
+            "cid_b"
+          ]
+        },
+        fixtures: [
+          {
+            canonicalId:
+              "cid_a"
+          },
+          {
+            canonicalId:
+              "cid_b"
+          }
+        ],
+        detailFiles: [
+          "cid_a.json"
+        ]
+      });
+
+    assert.equal(
+      broken.ok,
+      false
+    );
+
+    assert.deepEqual(
+      broken
+        .violations
+        .map(
+          row =>
+            row.code
+        ),
+      [
+        "published_details_fixtures_not_bijective",
+        "manifest_reports_fixtures_missing_details",
+        "manifest_published_detail_count_mismatch"
+      ]
+    );
+  }
+);
+
+test(
+  "real published-details parity failure becomes fail-closed quarantine",
+  () => {
+    const parity =
+      evaluatePublishedDetailsParity({
+        manifest: {
+          counts: {
+            details:
+              0
+          },
+          detailsMissingForFixtures:
+            []
+        },
+        fixtures: [
+          {
+            canonicalId:
+              "cid_a"
+          }
+        ],
+        detailFiles:
+          []
+      });
+
+    const x =
+      buildCheckpointAwareTargetedRepairShadow({
+        dayKey:
+          DAY,
+        currentDayKey:
+          DAY,
+        generatedAt:
+          AT,
+        remoteHead:
+          HEAD,
+        manifest:
+          {},
+        freshness:
+          {},
+        buildReport:
+          {},
+        detailsMirror: {
+          observationAvailable:
+            false
+        },
+        publishedDetailsParity:
+          parity
+      });
+
+    assert.equal(
+      x.controllerDecision
+        .decisionState,
+      "FAIL_CLOSED_QUARANTINE"
+    );
+
+    assert.equal(
+      x.controllerDecision
+        .quarantineReason,
+      "unknown_actionable_failure_signal"
+    );
+
+    assert.match(
+      x.signals[0],
+      /^published_details_parity_failure:/u
+    );
+  }
+);
+
+test(
+  "daily context requires the source details tree",
+  () => {
+    const observation =
+      observeDetailsMirrorForShadow({
+        dayKey:
+          DAY,
+        context:
+          CHECKPOINT_AWARE_TARGETED_REPAIR_SHADOW_CONTEXT.DAILY,
+        dataPath:
+          () =>
+            "__definitely_missing_daily_details_tree__"
+      });
+
+    assert.equal(
+      observation
+        .sourceDetailsAvailable,
+      false
+    );
+
+    assert.equal(
+      observation
+        .detailsMirror
+        .observationAvailable,
+      true
+    );
+
+    assert.equal(
+      observation
+        .detailsMirror
+        .ok,
+      false
+    );
+
+    assert.deepEqual(
+      observation
+        .detailsMirror
+        .violations,
+      [
+        {
+          code:
+            "source_details_tree_missing_in_daily_context"
+        }
+      ]
+    );
+
+    const x =
+      buildCheckpointAwareTargetedRepairShadow({
+        dayKey:
+          DAY,
+        currentDayKey:
+          DAY,
+        generatedAt:
+          AT,
+        remoteHead:
+          HEAD,
+        manifest:
+          {},
+        freshness:
+          {},
+        buildReport:
+          {},
+        detailsMirror:
+          observation
+            .detailsMirror,
+        publishedDetailsParity: {
+          observationAvailable:
+            true,
+          ok:
+            true,
+          violations:
+            []
+        }
+      });
+
+    assert.equal(
+      x.controllerDecision
+        .decisionState,
+      "FAIL_CLOSED_QUARANTINE"
+    );
+  }
+);
+
+test(
+  "intraday and static contexts do not require ephemeral source details",
+  () => {
+    for (
+      const context of [
+        CHECKPOINT_AWARE_TARGETED_REPAIR_SHADOW_CONTEXT.INTRADAY,
+        CHECKPOINT_AWARE_TARGETED_REPAIR_SHADOW_CONTEXT.STATIC
+      ]
+    ) {
+      const observation =
+        observeDetailsMirrorForShadow({
+          dayKey:
+            DAY,
+          context,
+          dataPath:
+            () =>
+              "__definitely_missing_non_daily_details_tree__"
+        });
+
+      assert.equal(
+        observation
+          .sourceDetailsAvailable,
+        false
+      );
+
+      assert.equal(
+        observation
+          .detailsMirror
+          .observationAvailable,
+        false
+      );
+
+      assert.equal(
+        observation
+          .detailsMirror
+          .ok,
+        null
+      );
+    }
+  }
+);
+
+test(
   "daily and intraday workflows observe shadow decisions without granting execution authority",
   () => {
     const daily =
@@ -349,8 +644,18 @@ test(
     );
 
     assert.match(
+      daily,
+      /--context=daily/u
+    );
+
+    assert.match(
       intraday,
       /run-checkpoint-aware-targeted-repair-shadow-day\.js/u
+    );
+
+    assert.match(
+      intraday,
+      /--context=intraday/u
     );
 
     assert.match(

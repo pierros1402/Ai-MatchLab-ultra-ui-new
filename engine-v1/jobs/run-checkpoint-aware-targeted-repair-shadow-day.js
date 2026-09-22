@@ -7,7 +7,9 @@ import {
 } from "../storage/data-root.js";
 
 import {
-  buildCheckpointAwareTargetedRepairShadow
+  CHECKPOINT_AWARE_TARGETED_REPAIR_SHADOW_CONTEXT,
+  buildCheckpointAwareTargetedRepairShadow,
+  evaluatePublishedDetailsParity
 } from "../core/checkpoint-aware-targeted-repair-shadow.js";
 
 import {
@@ -82,9 +84,232 @@ export function athensCalendarDayKey(
   ].join("-");
 }
 
+export function observePublishedDetailsParityForShadow({
+  dayKey,
+  dataPath =
+    resolveDataPath
+} = {}) {
+  const snapshotDir =
+    dataPath(
+      "deploy-snapshots",
+      dayKey
+    );
+
+  const manifest =
+    readJsonSafe(
+      path.join(
+        snapshotDir,
+        "manifest.json"
+      )
+    );
+
+  if (!manifest) {
+    return evaluatePublishedDetailsParity({
+      observationAvailable:
+        false,
+      reason:
+        "published_manifest_unavailable"
+    });
+  }
+
+  const fixturesPayload =
+    readJsonSafe(
+      path.join(
+        snapshotDir,
+        "fixtures.json"
+      )
+    );
+
+  const fixtures =
+    Array.isArray(
+      fixturesPayload?.fixtures
+    )
+      ? fixturesPayload.fixtures
+      : (
+          Array.isArray(
+            fixturesPayload
+          )
+            ? fixturesPayload
+            : null
+        );
+
+  if (
+    !Array.isArray(
+      fixtures
+    )
+  ) {
+    return evaluatePublishedDetailsParity({
+      manifest,
+      fixtures:
+        [],
+      detailFiles:
+        [],
+      observationAvailable:
+        true
+    });
+  }
+
+  const detailsDir =
+    path.join(
+      snapshotDir,
+      "details"
+    );
+
+  const detailFiles =
+    fs.existsSync(
+      detailsDir
+    )
+      ? fs
+          .readdirSync(
+            detailsDir
+          )
+          .filter(
+            name =>
+              name.endsWith(
+                ".json"
+              )
+          )
+          .sort()
+      : [];
+
+  return evaluatePublishedDetailsParity({
+    manifest,
+    fixtures,
+    detailFiles,
+    observationAvailable:
+      true
+  });
+}
+
+export function observeDetailsMirrorForShadow({
+  dayKey,
+  context,
+  dataPath =
+    resolveDataPath,
+  verifyDetailsMirror =
+    verifyDetailsValueMirrorDay
+} = {}) {
+  const normalizedContext =
+    String(
+      context || ""
+    )
+      .trim()
+      .toLowerCase();
+
+  const sourceDetailsDir =
+    dataPath(
+      "details",
+      dayKey
+    );
+
+  const sourceDetailsAvailable =
+    fs.existsSync(
+      sourceDetailsDir
+    );
+
+  if (
+    normalizedContext ===
+      CHECKPOINT_AWARE_TARGETED_REPAIR_SHADOW_CONTEXT.DAILY &&
+    !sourceDetailsAvailable
+  ) {
+    return {
+      sourceDetailsAvailable:
+        false,
+
+      detailsMirror: {
+        observationAvailable:
+          true,
+        ok:
+          false,
+        violations: [
+          {
+            code:
+              "source_details_tree_missing_in_daily_context"
+          }
+        ],
+        reason:
+          "daily_source_details_required",
+        readError:
+          null
+      }
+    };
+  }
+
+  if (
+    normalizedContext !==
+      CHECKPOINT_AWARE_TARGETED_REPAIR_SHADOW_CONTEXT.DAILY
+  ) {
+    return {
+      sourceDetailsAvailable,
+
+      detailsMirror: {
+        observationAvailable:
+          false,
+        ok:
+          null,
+        violations:
+          [],
+        reason:
+          sourceDetailsAvailable
+            ? "source_mirror_not_required_for_context"
+            : "source_details_tree_unavailable_for_context",
+        readError:
+          null
+      }
+    };
+  }
+
+  try {
+    const result =
+      verifyDetailsMirror(
+        dayKey
+      );
+
+    return {
+      sourceDetailsAvailable:
+        true,
+
+      detailsMirror: {
+        ...result,
+        observationAvailable:
+          true,
+        reason:
+          null,
+        readError:
+          null
+      }
+    };
+  }
+  catch (error) {
+    return {
+      sourceDetailsAvailable:
+        true,
+
+      detailsMirror: {
+        observationAvailable:
+          true,
+        ok:
+          false,
+        violations:
+          [],
+        reason:
+          "details_mirror_verifier_error",
+        readError:
+          String(
+            error?.message ||
+            error ||
+            "unknown_details_mirror_error"
+          )
+      }
+    };
+  }
+}
+
 export function runCheckpointAwareTargetedRepairShadowDay({
   dayKey,
   remoteHead,
+  context =
+    CHECKPOINT_AWARE_TARGETED_REPAIR_SHADOW_CONTEXT.STATIC,
   generatedAt =
     new Date().toISOString(),
   now =
@@ -120,23 +345,41 @@ export function runCheckpointAwareTargetedRepairShadowDay({
       )
     );
 
-  let detailsMirror = null;
-  let detailsMirrorReadError = null;
+  const normalizedContext =
+    String(
+      context || ""
+    )
+      .trim()
+      .toLowerCase();
 
-  try {
-    detailsMirror =
-      verifyDetailsValueMirrorDay(
-        dayKey
-      );
+  if (
+    !Object.values(
+      CHECKPOINT_AWARE_TARGETED_REPAIR_SHADOW_CONTEXT
+    )
+      .includes(
+        normalizedContext
+      )
+  ) {
+    throw new Error(
+      `invalid_shadow_context:${normalizedContext || "missing"}`
+    );
   }
-  catch (error) {
-    detailsMirrorReadError =
-      String(
-        error?.message ||
-        error ||
-        "unknown_details_mirror_error"
-      );
-  }
+
+  const publishedDetailsParity =
+    observePublishedDetailsParityForShadow({
+      dayKey
+    });
+
+  const detailsObservation =
+    observeDetailsMirrorForShadow({
+      dayKey,
+      context:
+        normalizedContext
+    });
+
+  const detailsMirror =
+    detailsObservation
+      .detailsMirror;
 
   const shadow =
     buildCheckpointAwareTargetedRepairShadow({
@@ -150,11 +393,41 @@ export function runCheckpointAwareTargetedRepairShadowDay({
       manifest,
       freshness,
       buildReport,
-      detailsMirror
+      detailsMirror,
+      publishedDetailsParity
     });
 
   return {
     ...shadow,
+
+    context:
+      normalizedContext,
+
+    productionDetailsContract: {
+      publishedFixtureDetailBijectionRequired:
+        true,
+
+      sourceDetailsRequired:
+        normalizedContext ===
+          CHECKPOINT_AWARE_TARGETED_REPAIR_SHADOW_CONTEXT.DAILY,
+
+      publishedDetailsParity
+    },
+
+    observationCapabilities: {
+      detailsValueMirrorSourceTree:
+        detailsObservation
+          .sourceDetailsAvailable,
+
+      temporarilyUnobservableFailureClasses:
+        detailsMirror
+          .observationAvailable ===
+            true
+          ? []
+          : [
+              "DETAILS_VALUE_MIRROR_SOURCE_DETAIL_EXTRA_FILE"
+            ]
+    },
 
     inputDiagnostics: {
       manifestPresent:
@@ -172,16 +445,46 @@ export function runCheckpointAwareTargetedRepairShadowDay({
           buildReport
         ),
 
-      detailsMirrorEvaluated:
-        Boolean(
-          detailsMirror
-        ),
+      sourceDetailsAvailable:
+        detailsObservation
+          .sourceDetailsAvailable,
 
-      detailsMirrorOk:
-        detailsMirror?.ok ??
+      publishedDetailsParityObservationAvailable:
+        publishedDetailsParity
+          .observationAvailable ===
+            true,
+
+      publishedDetailsParityOk:
+        publishedDetailsParity
+          .ok ??
         null,
 
-      detailsMirrorReadError
+      detailsMirrorObservationAvailable:
+        detailsMirror
+          .observationAvailable ===
+            true,
+
+      detailsMirrorEvaluated:
+        detailsMirror
+          .observationAvailable ===
+            true &&
+        !detailsMirror
+          .readError,
+
+      detailsMirrorOk:
+        detailsMirror
+          .ok ??
+        null,
+
+      detailsMirrorObservationReason:
+        detailsMirror
+          .reason ??
+        null,
+
+      detailsMirrorReadError:
+        detailsMirror
+          .readError ??
+        null
     }
   };
 }
@@ -241,13 +544,19 @@ if (
       "remote-head"
     );
 
+  const context =
+    parseArg(
+      "context"
+    ) ||
+    CHECKPOINT_AWARE_TARGETED_REPAIR_SHADOW_CONTEXT.STATIC;
+
   if (
     !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/u.test(
       dayKey
     )
   ) {
     console.error(
-      "Usage: node engine-v1/jobs/run-checkpoint-aware-targeted-repair-shadow-day.js --date=YYYY-MM-DD [--remote-head=<40-char-sha>]"
+      "Usage: node engine-v1/jobs/run-checkpoint-aware-targeted-repair-shadow-day.js --date=YYYY-MM-DD [--remote-head=<40-char-sha>] [--context=daily|intraday|static]"
     );
 
     process.exit(1);
@@ -256,7 +565,8 @@ if (
   const report =
     runCheckpointAwareTargetedRepairShadowDay({
       dayKey,
-      remoteHead
+      remoteHead,
+      context
     });
 
   console.log(
