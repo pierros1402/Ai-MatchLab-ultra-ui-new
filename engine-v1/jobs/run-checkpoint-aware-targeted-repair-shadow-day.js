@@ -9,8 +9,18 @@ import {
 import {
   CHECKPOINT_AWARE_TARGETED_REPAIR_SHADOW_CONTEXT,
   buildCheckpointAwareTargetedRepairShadow,
+  evaluateCanonicalSuppressedAliasObservation,
   evaluatePublishedDetailsParity
 } from "../core/checkpoint-aware-targeted-repair-shadow.js";
+
+import {
+  applyProductionIdentityMembershipGate,
+  canonicalFixturesForDay
+} from "../core/day-fixture-universe.js";
+
+import {
+  getProductionIdentityResolver
+} from "../core/production-identity-resolver-runtime.js";
 
 import {
   verifyDetailsValueMirrorDay
@@ -82,6 +92,141 @@ export function athensCalendarDayKey(
     values.month,
     values.day
   ].join("-");
+}
+
+export function observeCanonicalSuppressedAliasForShadow({
+  dayKey,
+  dataPath =
+    resolveDataPath,
+  resolverFactory =
+    getProductionIdentityResolver,
+  canonicalRowsForDay =
+    canonicalFixturesForDay,
+  membershipGate =
+    applyProductionIdentityMembershipGate
+} = {}) {
+  const canonicalDir =
+    dataPath(
+      "canonical-fixtures",
+      dayKey
+    );
+
+  if (
+    !fs.existsSync(
+      canonicalDir
+    )
+  ) {
+    return evaluateCanonicalSuppressedAliasObservation({
+      observationAvailable:
+        false,
+      reason:
+        "canonical_fixture_directory_unavailable"
+    });
+  }
+
+  try {
+    const resolver =
+      resolverFactory();
+
+    const rawSuppressedFixtureIds = [];
+
+    for (
+      const file of
+        fs
+          .readdirSync(
+            canonicalDir
+          )
+          .filter(
+            name =>
+              name.endsWith(
+                ".json"
+              )
+          )
+          .sort()
+    ) {
+      const slug =
+        path.basename(
+          file,
+          ".json"
+        );
+
+      const payload =
+        readJsonSafe(
+          path.join(
+            canonicalDir,
+            file
+          ),
+          null
+        );
+
+      const rows =
+        Array.isArray(
+          payload?.fixtures
+        )
+          ? payload.fixtures
+          : [];
+
+      const rawGate =
+        membershipGate(
+          rows.map(
+            row => ({
+              ...row,
+              leagueSlug:
+                row?.leagueSlug ||
+                slug
+            })
+          ),
+          {
+            resolver
+          }
+        );
+
+      rawSuppressedFixtureIds.push(
+        ...(
+          rawGate
+            ?.diagnostics
+            ?.suppressedFixtureIds ||
+          []
+        )
+      );
+    }
+
+    const canonicalRows =
+      canonicalRowsForDay(
+        dayKey
+      );
+
+    const fixedPoint =
+      membershipGate(
+        canonicalRows,
+        {
+          resolver
+        }
+      );
+
+    return evaluateCanonicalSuppressedAliasObservation({
+      observationAvailable:
+        true,
+      rawSuppressedFixtureIds,
+      postGateSuppressedFixtureIds:
+        fixedPoint
+          ?.diagnostics
+          ?.suppressedFixtureIds ||
+        []
+    });
+  }
+  catch (error) {
+    return evaluateCanonicalSuppressedAliasObservation({
+      observationAvailable:
+        true,
+      readError:
+        String(
+          error?.message ||
+          error ||
+          "unknown_canonical_suppressed_alias_observation_error"
+        )
+    });
+  }
 }
 
 export function observePublishedDetailsParityForShadow({
@@ -365,6 +510,11 @@ export function runCheckpointAwareTargetedRepairShadowDay({
     );
   }
 
+  const canonicalSuppressedAliasObservation =
+    observeCanonicalSuppressedAliasForShadow({
+      dayKey
+    });
+
   const publishedDetailsParity =
     observePublishedDetailsParityForShadow({
       dayKey
@@ -394,7 +544,8 @@ export function runCheckpointAwareTargetedRepairShadowDay({
       freshness,
       buildReport,
       detailsMirror,
-      publishedDetailsParity
+      publishedDetailsParity,
+      canonicalSuppressedAliasObservation
     });
 
   return {
@@ -414,19 +565,39 @@ export function runCheckpointAwareTargetedRepairShadowDay({
       publishedDetailsParity
     },
 
+    productionIdentityContract: {
+      suppressedAliasesMustNotSurviveCanonicalMembershipGate:
+        true,
+
+      canonicalSuppressedAliasObservation
+    },
+
     observationCapabilities: {
       detailsValueMirrorSourceTree:
         detailsObservation
           .sourceDetailsAvailable,
 
-      temporarilyUnobservableFailureClasses:
-        detailsMirror
-          .observationAvailable ===
-            true
-          ? []
-          : [
-              "DETAILS_VALUE_MIRROR_SOURCE_DETAIL_EXTRA_FILE"
-            ]
+      temporarilyUnobservableFailureClasses: [
+        ...(
+          detailsMirror
+            .observationAvailable ===
+              true
+            ? []
+            : [
+                "DETAILS_VALUE_MIRROR_SOURCE_DETAIL_EXTRA_FILE"
+              ]
+        ),
+
+        ...(
+          canonicalSuppressedAliasObservation
+            .observationAvailable ===
+              true
+            ? []
+            : [
+                "CANONICAL_SUPPRESSED_ALIAS_PRESENT"
+              ]
+        )
+      ]
     },
 
     inputDiagnostics: {
@@ -448,6 +619,31 @@ export function runCheckpointAwareTargetedRepairShadowDay({
       sourceDetailsAvailable:
         detailsObservation
           .sourceDetailsAvailable,
+
+      canonicalSuppressedAliasObservationAvailable:
+        canonicalSuppressedAliasObservation
+          .observationAvailable ===
+            true,
+
+      canonicalSuppressedAliasObservationOk:
+        canonicalSuppressedAliasObservation
+          .ok ??
+        null,
+
+      canonicalRawSuppressedAliasCount:
+        canonicalSuppressedAliasObservation
+          .rawSuppressedAliasCount ??
+        null,
+
+      canonicalPostGateSuppressedAliasCount:
+        canonicalSuppressedAliasObservation
+          .postGateSuppressedAliasCount ??
+        null,
+
+      canonicalSuppressedAliasReadError:
+        canonicalSuppressedAliasObservation
+          .readError ??
+        null,
 
       publishedDetailsParityObservationAvailable:
         publishedDetailsParity

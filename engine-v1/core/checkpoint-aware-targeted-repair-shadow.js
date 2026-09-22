@@ -17,13 +17,12 @@ export const CHECKPOINT_AWARE_TARGETED_REPAIR_SHADOW_WIRED_FAILURE_CLASSES =
     "VALUE_PLAN_COMPARISON_STALE_AGAINST_CANONICAL",
     "DETAILS_VALUE_MIRROR_SOURCE_DETAIL_EXTRA_FILE",
     "LIVE_STATUS_STALE_OPEN_EXACT_PROVIDER_IDS",
+    "CANONICAL_SUPPRESSED_ALIAS_PRESENT",
     "CURRENT_DAY_PUBLICATION_POINTER_OR_ARTIFACT_MISSING"
   ]);
 
 export const CHECKPOINT_AWARE_TARGETED_REPAIR_SHADOW_UNWIRED_FAILURE_CLASSES =
-  Object.freeze([
-    "CANONICAL_SUPPRESSED_ALIAS_PRESENT"
-  ]);
+  Object.freeze([]);
 
 export const CHECKPOINT_AWARE_TARGETED_REPAIR_SHADOW_CONTEXT =
   Object.freeze({
@@ -318,6 +317,97 @@ export function evaluatePublishedDetailsParity({
   };
 }
 
+export function evaluateCanonicalSuppressedAliasObservation({
+  observationAvailable = true,
+  rawSuppressedFixtureIds = [],
+  postGateSuppressedFixtureIds = [],
+  readError = null,
+  reason = null
+} = {}) {
+  const normalizeIds =
+    values =>
+      [
+        ...new Set(
+          (
+            Array.isArray(values)
+              ? values
+              : []
+          )
+            .map(text)
+            .filter(Boolean)
+        )
+      ]
+        .sort();
+
+  const rawIds =
+    normalizeIds(
+      rawSuppressedFixtureIds
+    );
+
+  const leakedIds =
+    normalizeIds(
+      postGateSuppressedFixtureIds
+    );
+
+  const normalizedReadError =
+    text(
+      readError
+    );
+
+  if (
+    observationAvailable !==
+      true
+  ) {
+    return {
+      observationAvailable:
+        false,
+      ok:
+        null,
+      reason:
+        text(reason) ||
+        "canonical_identity_observation_unavailable",
+      readError:
+        normalizedReadError ||
+        null,
+      rawSuppressedFixtureIds:
+        rawIds,
+      postGateSuppressedFixtureIds:
+        leakedIds,
+      rawSuppressedAliasCount:
+        rawIds.length,
+      postGateSuppressedAliasCount:
+        leakedIds.length
+    };
+  }
+
+  return {
+    observationAvailable:
+      true,
+    ok:
+      !normalizedReadError &&
+      leakedIds.length === 0,
+    reason:
+      normalizedReadError
+        ? "canonical_suppressed_alias_observation_failed"
+        : (
+            leakedIds.length > 0
+              ? "canonical_suppressed_alias_present_after_membership_gate"
+              : null
+          ),
+    readError:
+      normalizedReadError ||
+      null,
+    rawSuppressedFixtureIds:
+      rawIds,
+    postGateSuppressedFixtureIds:
+      leakedIds,
+    rawSuppressedAliasCount:
+      rawIds.length,
+    postGateSuppressedAliasCount:
+      leakedIds.length
+  };
+}
+
 export function collectCheckpointAwareTargetedRepairShadowSignals({
   dayKey,
   currentDayKey,
@@ -325,7 +415,8 @@ export function collectCheckpointAwareTargetedRepairShadowSignals({
   freshness = null,
   buildReport = null,
   detailsMirror = null,
-  publishedDetailsParity = null
+  publishedDetailsParity = null,
+  canonicalSuppressedAliasObservation = null
 } = {}) {
   const signals = [];
   const seen =
@@ -388,6 +479,44 @@ export function collectCheckpointAwareTargetedRepairShadowSignals({
         signals,
         seen,
         raw
+      );
+    }
+  }
+
+  if (
+    canonicalSuppressedAliasObservation
+      ?.observationAvailable ===
+        true
+  ) {
+    const canonicalReadError =
+      text(
+        canonicalSuppressedAliasObservation
+          ?.readError
+      );
+
+    if (
+      canonicalReadError
+    ) {
+      addUniqueSignal(
+        signals,
+        seen,
+        "canonical_suppressed_alias_observation_failed"
+      );
+    }
+    else if (
+      canonicalSuppressedAliasObservation
+        ?.ok ===
+          false &&
+      Number(
+        canonicalSuppressedAliasObservation
+          ?.postGateSuppressedAliasCount ||
+        0
+      ) > 0
+    ) {
+      addUniqueSignal(
+        signals,
+        seen,
+        "canonical_suppressed_alias_present"
       );
     }
   }
@@ -520,7 +649,8 @@ export function buildCheckpointAwareTargetedRepairShadow({
   freshness = null,
   buildReport = null,
   detailsMirror = null,
-  publishedDetailsParity = null
+  publishedDetailsParity = null,
+  canonicalSuppressedAliasObservation = null
 } = {}) {
   const signals =
     collectCheckpointAwareTargetedRepairShadowSignals({
@@ -530,7 +660,8 @@ export function buildCheckpointAwareTargetedRepairShadow({
       freshness,
       buildReport,
       detailsMirror,
-      publishedDetailsParity
+      publishedDetailsParity,
+      canonicalSuppressedAliasObservation
     });
 
   const normalizedRemoteHead =

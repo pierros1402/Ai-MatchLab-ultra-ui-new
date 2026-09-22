@@ -7,10 +7,12 @@ import {
   CHECKPOINT_AWARE_TARGETED_REPAIR_SHADOW_UNWIRED_FAILURE_CLASSES,
   buildCheckpointAwareTargetedRepairShadow,
   collectCheckpointAwareTargetedRepairShadowSignals,
+  evaluateCanonicalSuppressedAliasObservation,
   evaluatePublishedDetailsParity
 } from "../core/checkpoint-aware-targeted-repair-shadow.js";
 
 import {
+  observeCanonicalSuppressedAliasForShadow,
   observeDetailsMirrorForShadow
 } from "../jobs/run-checkpoint-aware-targeted-repair-shadow-day.js";
 
@@ -99,7 +101,7 @@ test(
 );
 
 test(
-  "shadow extraction covers five observable controller classes and quarantines conflicting classes",
+  "shadow extraction exposes all six controller routes and quarantines conflicting classes",
   () => {
     const x =
       buildCheckpointAwareTargetedRepairShadow({
@@ -159,7 +161,7 @@ test(
     assert.equal(
       x.routeCoverage
         .wiredCount,
-      5
+      6
     );
 
     assert.equal(
@@ -170,9 +172,7 @@ test(
 
     assert.deepEqual(
       CHECKPOINT_AWARE_TARGETED_REPAIR_SHADOW_UNWIRED_FAILURE_CLASSES,
-      [
-        "CANONICAL_SUPPRESSED_ALIAS_PRESENT"
-      ]
+      []
     );
 
     assert.equal(
@@ -604,6 +604,227 @@ test(
         null
       );
     }
+  }
+);
+
+test(
+  "raw suppressed aliases are informational when canonical membership gate reaches a clean fixed point",
+  () => {
+    const observation =
+      evaluateCanonicalSuppressedAliasObservation({
+        observationAvailable:
+          true,
+        rawSuppressedFixtureIds: [
+          "old_a",
+          "old_b"
+        ],
+        postGateSuppressedFixtureIds:
+          []
+      });
+
+    assert.equal(
+      observation.ok,
+      true
+    );
+
+    assert.equal(
+      observation
+        .rawSuppressedAliasCount,
+      2
+    );
+
+    assert.equal(
+      observation
+        .postGateSuppressedAliasCount,
+      0
+    );
+
+    const x =
+      buildCheckpointAwareTargetedRepairShadow({
+        dayKey:
+          DAY,
+        currentDayKey:
+          DAY,
+        generatedAt:
+          AT,
+        remoteHead:
+          HEAD,
+        manifest:
+          {},
+        freshness:
+          {},
+        buildReport:
+          {},
+        detailsMirror: {
+          observationAvailable:
+            false
+        },
+        publishedDetailsParity: {
+          observationAvailable:
+            true,
+          ok:
+            true,
+          violations:
+            []
+        },
+        canonicalSuppressedAliasObservation:
+          observation
+      });
+
+    assert.equal(
+      x.controllerDecision
+        .decisionState,
+      "NO_REPAIR_REQUIRED"
+    );
+
+    assert.deepEqual(
+      x.signals,
+      []
+    );
+  }
+);
+
+test(
+  "suppressed alias surviving canonical membership gate routes to bounded resolver suppression only",
+  () => {
+    const observation =
+      evaluateCanonicalSuppressedAliasObservation({
+        observationAvailable:
+          true,
+        rawSuppressedFixtureIds: [
+          "old_a"
+        ],
+        postGateSuppressedFixtureIds: [
+          "old_a"
+        ]
+      });
+
+    const x =
+      buildCheckpointAwareTargetedRepairShadow({
+        dayKey:
+          DAY,
+        currentDayKey:
+          DAY,
+        generatedAt:
+          AT,
+        remoteHead:
+          HEAD,
+        manifest:
+          {},
+        freshness:
+          {},
+        buildReport:
+          {},
+        detailsMirror: {
+          observationAvailable:
+            false
+        },
+        publishedDetailsParity: {
+          observationAvailable:
+            true,
+          ok:
+            true,
+          violations:
+            []
+        },
+        canonicalSuppressedAliasObservation:
+          observation
+      });
+
+    assert.deepEqual(
+      x.signals,
+      [
+        "canonical_suppressed_alias_present"
+      ]
+    );
+
+    assert.equal(
+      x.controllerDecision
+        .decisionState,
+      "BOUNDED_REPAIR_PLAN"
+    );
+
+    assert.equal(
+      x.controllerDecision
+        .failureClass,
+      "CANONICAL_SUPPRESSED_ALIAS_PRESENT"
+    );
+
+    assert.equal(
+      x.controllerDecision
+        .repairUnit,
+      "resolver_membership_gate_suppression_only"
+    );
+
+    assert.equal(
+      x.controllerDecision
+        .resumeCheckpoint,
+      "canonical_semantic_reverification_then_downstream"
+    );
+  }
+);
+
+test(
+  "canonical suppressed-alias observer failure is actionable and fails closed",
+  () => {
+    const observation =
+      evaluateCanonicalSuppressedAliasObservation({
+        observationAvailable:
+          true,
+        readError:
+          "resolver_runtime_unavailable"
+      });
+
+    const x =
+      buildCheckpointAwareTargetedRepairShadow({
+        dayKey:
+          DAY,
+        currentDayKey:
+          DAY,
+        generatedAt:
+          AT,
+        remoteHead:
+          HEAD,
+        manifest:
+          {},
+        freshness:
+          {},
+        buildReport:
+          {},
+        detailsMirror: {
+          observationAvailable:
+            false
+        },
+        publishedDetailsParity: {
+          observationAvailable:
+            true,
+          ok:
+            true,
+          violations:
+            []
+        },
+        canonicalSuppressedAliasObservation:
+          observation
+      });
+
+    assert.deepEqual(
+      x.signals,
+      [
+        "canonical_suppressed_alias_observation_failed"
+      ]
+    );
+
+    assert.equal(
+      x.controllerDecision
+        .decisionState,
+      "FAIL_CLOSED_QUARANTINE"
+    );
+
+    assert.equal(
+      x.controllerDecision
+        .quarantineReason,
+      "unknown_actionable_failure_signal"
+    );
   }
 );
 
