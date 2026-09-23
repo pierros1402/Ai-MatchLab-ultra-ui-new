@@ -1,0 +1,358 @@
+import path from "node:path";
+import {
+  fileURLToPath
+} from "node:url";
+
+import {
+  buildCheckpointAwareValueComparisonRuntimeIdentitiesAclPostActivationVerification
+} from "../core/checkpoint-aware-targeted-value-comparison-production-runtime-identities-acl-post-activation-verification.js";
+
+const DAY_RE =
+  /^\d{4}-\d{2}-\d{2}$/u;
+
+const SHA_RE =
+  /^[0-9a-f]{40}$/u;
+
+function clean(value) {
+  return String(
+    value ?? ""
+  ).trim();
+}
+
+function parseArg(name) {
+  const prefix =
+    `--${name}=`;
+
+  const value =
+    process.argv
+      .slice(2)
+      .find(
+        arg =>
+          arg.startsWith(
+            prefix
+          )
+      );
+
+  return value
+    ? value
+        .slice(
+          prefix.length
+        )
+        .trim()
+    : "";
+}
+
+function parseBase64Json(
+  value,
+  label
+) {
+  const input =
+    clean(
+      value
+    );
+
+  if (
+    !input
+  ) {
+    throw new Error(
+      `value_comparison_runtime_post_activation_${label}_missing`
+    );
+  }
+
+  try {
+    return JSON.parse(
+      Buffer.from(
+        input,
+        "base64"
+      )
+        .toString(
+          "utf8"
+        )
+    );
+  }
+  catch {
+    throw new Error(
+      `value_comparison_runtime_post_activation_${label}_invalid`
+    );
+  }
+}
+
+export function runCheckpointAwareValueComparisonRuntimeIdentitiesAclPostActivationVerificationDay({
+  dayKey,
+  remoteHead,
+  computerName,
+  humanControllerAccount,
+  humanControllerSid,
+  authorizationDeliveryAccountName,
+  controllerRuntimeAccountName,
+  expectedAuthorizationDeliverySid,
+  expectedControllerRuntimeSid,
+  machineRoot,
+  authorizationInbox,
+  externalStateRoot,
+  identityEvidence,
+  aclEvidence,
+  generatedAt =
+    new Date().toISOString()
+} = {}) {
+  const day =
+    clean(
+      dayKey
+    );
+
+  const head =
+    clean(
+      remoteHead
+    )
+      .toLowerCase();
+
+  if (
+    !DAY_RE.test(
+      day
+    )
+  ) {
+    throw new Error(
+      "value_comparison_runtime_post_activation_day_invalid"
+    );
+  }
+
+  if (
+    !SHA_RE.test(
+      head
+    )
+  ) {
+    throw new Error(
+      "value_comparison_runtime_post_activation_remote_head_invalid"
+    );
+  }
+
+  const verification =
+    buildCheckpointAwareValueComparisonRuntimeIdentitiesAclPostActivationVerification({
+      dayKey:
+        day,
+
+      remoteHead:
+        head,
+
+      computerName,
+
+      humanControllerAccount,
+
+      humanControllerSid,
+
+      authorizationDeliveryAccountName,
+
+      controllerRuntimeAccountName,
+
+      expectedAuthorizationDeliverySid,
+
+      expectedControllerRuntimeSid,
+
+      machineRoot,
+
+      authorizationInbox,
+
+      externalStateRoot,
+
+      identityEvidence,
+
+      aclEvidence
+    });
+
+  return {
+    schema:
+      "ai-matchlab.checkpoint-aware-value-comparison-runtime-identities-acl-post-activation-verification-day.v1",
+
+    mode:
+      "READ_ONLY_PRODUCTION_RUNTIME_IDENTITIES_ACL_POST_ACTIVATION_VERIFICATION",
+
+    dayKey:
+      day,
+
+    generatedAt,
+
+    remoteHead:
+      head,
+
+    verification,
+
+    safety: {
+      repositoryWritePerformed:
+        false,
+
+      localAccountCreated:
+        false,
+
+      localAccountEnabled:
+        false,
+
+      localAccountModified:
+        false,
+
+      localGroupMembershipModified:
+        false,
+
+      aclMutationPerformed:
+        false,
+
+      authorizationArtifactCreated:
+        false,
+
+      replayConsumptionPerformed:
+        false,
+
+      productionRealRootAdapterConstructed:
+        false,
+
+      signerUse:
+        false,
+
+      privateKeyRead:
+        false,
+
+      productionKernelInvoked:
+        false,
+
+      productionKernelEnabled:
+        false,
+
+      repairExecutionAuthority:
+        false,
+
+      commitPerformed:
+        false,
+
+      pushPerformed:
+        false,
+
+      deployPerformed:
+        false
+    }
+  };
+}
+
+const isCli =
+  process.argv[1] &&
+  fileURLToPath(
+    import.meta.url
+  ) ===
+    path.resolve(
+      process.argv[1]
+    );
+
+if (
+  isCli
+) {
+  try {
+    const result =
+      runCheckpointAwareValueComparisonRuntimeIdentitiesAclPostActivationVerificationDay({
+        dayKey:
+          parseArg(
+            "date"
+          ),
+
+        remoteHead:
+          parseArg(
+            "remote-head"
+          ),
+
+        computerName:
+          parseArg(
+            "computer-name"
+          ),
+
+        humanControllerAccount:
+          parseArg(
+            "human-controller-account"
+          ),
+
+        humanControllerSid:
+          parseArg(
+            "human-controller-sid"
+          ),
+
+        authorizationDeliveryAccountName:
+          parseArg(
+            "authorization-delivery-account-name"
+          ),
+
+        controllerRuntimeAccountName:
+          parseArg(
+            "controller-runtime-account-name"
+          ),
+
+        expectedAuthorizationDeliverySid:
+          parseArg(
+            "authorization-delivery-sid"
+          ),
+
+        expectedControllerRuntimeSid:
+          parseArg(
+            "controller-runtime-sid"
+          ),
+
+        machineRoot:
+          parseArg(
+            "machine-root"
+          ),
+
+        authorizationInbox:
+          parseArg(
+            "authorization-inbox"
+          ),
+
+        externalStateRoot:
+          parseArg(
+            "external-state-root"
+          ),
+
+        identityEvidence:
+          parseBase64Json(
+            parseArg(
+              "identity-evidence-base64"
+            ),
+            "identity_evidence"
+          ),
+
+        aclEvidence:
+          parseBase64Json(
+            parseArg(
+              "acl-evidence-base64"
+            ),
+            "acl_evidence"
+          )
+      });
+
+    console.log(
+      JSON.stringify(
+        result,
+        null,
+        2
+      )
+    );
+  }
+  catch (
+    error
+  ) {
+    console.error(
+      JSON.stringify(
+        {
+          ok:
+            false,
+
+          reason:
+            String(
+              error?.message ||
+              error ||
+              "unknown_value_comparison_runtime_post_activation_error"
+            )
+        },
+        null,
+        2
+      )
+    );
+
+    process.exitCode =
+      1;
+  }
+}
