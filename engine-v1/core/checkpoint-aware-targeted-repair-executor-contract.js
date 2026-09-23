@@ -41,6 +41,12 @@ export const CANONICAL_SUPPRESSED_ALIAS_FAILURE_CLASS =
 export const CANONICAL_SUPPRESSED_ALIAS_REPAIR_UNIT =
   "resolver_membership_gate_suppression_only";
 
+export const LIVE_STATUS_STALE_OPEN_FAILURE_CLASS =
+  "LIVE_STATUS_STALE_OPEN_EXACT_PROVIDER_IDS";
+
+export const LIVE_STATUS_STALE_OPEN_REPAIR_UNIT =
+  "exact_provider_evidence_all_or_nothing_targeted_terminal_repair";
+
 const DAY_RE =
   /^\d{4}-\d{2}-\d{2}$/u;
 
@@ -225,12 +231,19 @@ export function buildCheckpointAwareTargetedRepairExecutorContract({
     decision.repairUnit ===
       CANONICAL_SUPPRESSED_ALIAS_REPAIR_UNIT;
 
+  const isLiveStatusStaleOpenRoute =
+    decision.failureClass ===
+      LIVE_STATUS_STALE_OPEN_FAILURE_CLASS &&
+    decision.repairUnit ===
+      LIVE_STATUS_STALE_OPEN_REPAIR_UNIT;
+
   if (
     !isValueComparisonRoute &&
     !isPublicationInspectionRoute &&
     !isDetailsOrphanRoute &&
     !isFreshnessCoverageRoute &&
-    !isCanonicalSuppressionRoute
+    !isCanonicalSuppressionRoute &&
+    !isLiveStatusStaleOpenRoute
   ) {
     throw new Error(
       `checkpoint_executor_route_not_implemented:${text(decision.failureClass)}:${text(decision.repairUnit)}`
@@ -243,7 +256,8 @@ export function buildCheckpointAwareTargetedRepairExecutorContract({
         isValueComparisonRoute ||
         isDetailsOrphanRoute ||
         isFreshnessCoverageRoute ||
-        isCanonicalSuppressionRoute
+        isCanonicalSuppressionRoute ||
+        isLiveStatusStaleOpenRoute
       ) &&
       decisionState ===
         "BOUNDED_REPAIR_PLAN"
@@ -278,7 +292,8 @@ export function buildCheckpointAwareTargetedRepairExecutorContract({
           isValueComparisonRoute ||
           isDetailsOrphanRoute ||
           isFreshnessCoverageRoute ||
-          isCanonicalSuppressionRoute
+          isCanonicalSuppressionRoute ||
+          isLiveStatusStaleOpenRoute
         ) &&
         requiredBeforeBoundedExecution ===
           true
@@ -302,6 +317,179 @@ export function buildCheckpointAwareTargetedRepairExecutorContract({
     text(
       decision.dayKey
     );
+
+  if (
+    isLiveStatusStaleOpenRoute
+  ) {
+    const liveStatusArtifact = {
+      schema:
+        CHECKPOINT_AWARE_TARGETED_REPAIR_EXECUTOR_CONTRACT_SCHEMA,
+
+      version:
+        "1.5.0",
+
+      role:
+        "read_only_bounded_repair_executor_contract",
+
+      mode:
+        CHECKPOINT_AWARE_TARGETED_REPAIR_EXECUTOR_MODE,
+
+      dayKey,
+
+      sourceDecision: {
+        decisionFingerprint:
+          text(
+            decision
+              .decisionFingerprint
+          ),
+        decisionState:
+          decision
+            .decisionState,
+        failureClass:
+          decision
+            .failureClass,
+        repairUnit:
+          decision
+            .repairUnit,
+        resumeCheckpoint:
+          decision
+            .resumeCheckpoint
+      },
+
+      repairContract: {
+        exactRepairUnit:
+          LIVE_STATUS_STALE_OPEN_REPAIR_UNIT,
+
+        purpose:
+          "plan_exact_provider_terminal_writeback_only_when_every_stale_open_candidate_has_valid_authoritative_terminal_evidence",
+
+        planner: {
+          runner:
+            "engine-v1/jobs/run-checkpoint-aware-targeted-live-terminal-repair-dry-run-day.js",
+
+          completenessObserver:
+            "engine-v1/core/live-status-completeness.js",
+
+          exactWritebackGate:
+            "engine-v1/core/authoritative-terminal-writeback.js",
+
+          providerIdentityAuthority:
+            "liveStatusCompleteness.staleOpenFixtures.providerId",
+
+          hardFailureSuffixIsProviderIdentityAuthority:
+            false,
+
+          evidenceAcquisitionAdapterStatus:
+            "DEDICATED_ADAPTER_REQUIRED_BEFORE_MUTABLE_EXECUTION",
+
+          currentBroadLiveRefreshJobAuthorized:
+            false
+        },
+
+        allowedRepositoryOutputsAfterFutureAuthorization:
+          [],
+
+        outputScope:
+          "DYNAMIC_EXACT_CANONICAL_PARTITIONS_PLUS_RUNTIME_CANONICAL_SYNC_ONLY_AFTER_ALL_EVIDENCE_VALIDATES",
+
+        futureOperation:
+          "ALL_OR_NOTHING_EXACT_PROVIDER_TERMINAL_WRITEBACK",
+
+        forbiddenOperations: [
+          "heuristic_final_promotion",
+          "elapsed_time_final_promotion",
+          "partial_terminal_writeback",
+          "unverified_status_write",
+          "fuzzy_identity_match",
+          "cross_day_terminal_promotion",
+          "score_fabrication",
+          "append_new_fixtures",
+          "broad_live_status_refresh_write",
+          "full_daily_cycle",
+          "workflow_mutation",
+          "commit",
+          "push",
+          "deploy"
+        ],
+
+        dryRun: {
+          readOnly:
+            true,
+
+          currentPersistedEvidenceOnly:
+            true,
+
+          providerNetworkFetch:
+            false,
+
+          allOrNothingEvaluation:
+            true,
+
+          repositoryMutation:
+            false,
+
+          runner:
+            "engine-v1/jobs/run-checkpoint-aware-targeted-live-terminal-repair-dry-run-day.js"
+        },
+
+        postconditionsForFutureMutableExecution: [
+          "every_stale_candidate_has_exact_provider_id",
+          "every_terminal_observation_matches_exact_provider_id",
+          "every_terminal_observation_matches_athens_day",
+          "every_terminal_observation_matches_ordered_team_identity",
+          "every_terminal_observation_has_explicit_terminal_status",
+          "every_terminal_observation_has_numeric_score",
+          "no_partial_writeback",
+          "canonical_runtime_sync_completed",
+          "snapshot_reexport_completed",
+          "downstream_gates_reverified",
+          "remote_head_race_guard_clean"
+        ]
+      },
+
+      authority: {
+        planningOnly:
+          true,
+        dryRunAuthorized:
+          true,
+        repositoryWriteAuthorized:
+          false,
+        filesystemRepositoryWriteAuthorized:
+          false,
+        repairExecutionAuthorized:
+          false,
+        mutableExecutionAuthorized:
+          false,
+        signerUseAuthorized:
+          false,
+        commitAuthorized:
+          false,
+        pushAuthorized:
+          false,
+        deployAuthorized:
+          false,
+        workflowMutationAuthorized:
+          false,
+        externalAuthorizationV2RequiredBeforeMutableExecution:
+          true
+      },
+
+      existingAutonomousRepairPlanCompatibility: {
+        reusedAsMutableExecutionPlan:
+          false,
+
+        reason:
+          "stale_open_terminal_repair_requires_exact_provider_evidence_and_an_all_or_nothing_transaction;_the_broad_live_refresh_writer_is_not_authorized_for_this_route"
+      }
+    };
+
+    liveStatusArtifact.contractFingerprint =
+      checkpointAwareTargetedRepairExecutorContractFingerprint(
+        liveStatusArtifact
+      );
+
+    return liveStatusArtifact;
+  }
 
   if (
     isCanonicalSuppressionRoute

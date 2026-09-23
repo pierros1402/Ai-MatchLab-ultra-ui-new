@@ -19,6 +19,8 @@ import {
   FRESHNESS_COVERAGE_REPAIR_UNIT,
   CANONICAL_SUPPRESSED_ALIAS_FAILURE_CLASS,
   CANONICAL_SUPPRESSED_ALIAS_REPAIR_UNIT,
+  LIVE_STATUS_STALE_OPEN_FAILURE_CLASS,
+  LIVE_STATUS_STALE_OPEN_REPAIR_UNIT,
   VALUE_COMPARISON_REPAIR_UNIT,
   VALUE_COMPARISON_STALE_FAILURE_CLASS,
   buildCheckpointAwareTargetedRepairExecutorContract,
@@ -46,6 +48,10 @@ import {
   classifyCheckpointAwareCanonicalSuppressionPlan
 } from "../core/checkpoint-aware-targeted-canonical-suppression-plan.js";
 
+import {
+  classifyCheckpointAwareTargetedLiveTerminalRepairPlan
+} from "../core/checkpoint-aware-targeted-live-terminal-repair-plan.js";
+
 const DAY =
   "2026-09-22";
 
@@ -67,6 +73,22 @@ function publicationDecision() {
       HEAD,
     signals: [
       "current_manifest_missing"
+    ]
+  });
+}
+
+function liveStatusDecision() {
+  return buildCheckpointAwareTargetedRepairControllerDecision({
+    dayKey:
+      DAY,
+    generatedAt:
+      AT,
+    expectedRemoteHead:
+      HEAD,
+    observedRemoteHead:
+      HEAD,
+    signals: [
+      "live_status_stale_open_exact_provider_ids:401841449"
     ]
   });
 }
@@ -268,22 +290,15 @@ test(
 );
 
 test(
-  "unimplemented bounded route fails closed instead of borrowing another executor",
+  "forged unimplemented bounded route fails closed instead of borrowing another executor",
   () => {
-    const decision =
-      buildCheckpointAwareTargetedRepairControllerDecision({
-        dayKey:
-          DAY,
-        generatedAt:
-          AT,
-        expectedRemoteHead:
-          HEAD,
-        observedRemoteHead:
-          HEAD,
-        signals: [
-          "live_status_stale_open_exact_provider_ids:provider-123"
-        ]
-      });
+    const decision = {
+      ...comparisonDecision(),
+      failureClass:
+        "FORGED_UNIMPLEMENTED_FAILURE_CLASS",
+      repairUnit:
+        "forged_unimplemented_repair_unit"
+    };
 
     assert.throws(
       () =>
@@ -723,6 +738,548 @@ test(
         ),
         false,
         `publication inspector must not contain ${forbidden}`
+      );
+    }
+  }
+);
+
+test(
+  "live stale-open route maps to all-or-nothing exact-provider terminal contract",
+  () => {
+    const contract =
+      buildCheckpointAwareTargetedRepairExecutorContract({
+        decision:
+          liveStatusDecision()
+      });
+
+    assert.equal(
+      contract.mode,
+      CHECKPOINT_AWARE_TARGETED_REPAIR_EXECUTOR_MODE
+    );
+
+    assert.equal(
+      contract
+        .sourceDecision
+        .failureClass,
+      LIVE_STATUS_STALE_OPEN_FAILURE_CLASS
+    );
+
+    assert.equal(
+      contract
+        .sourceDecision
+        .repairUnit,
+      LIVE_STATUS_STALE_OPEN_REPAIR_UNIT
+    );
+
+    assert.equal(
+      contract
+        .repairContract
+        .futureOperation,
+      "ALL_OR_NOTHING_EXACT_PROVIDER_TERMINAL_WRITEBACK"
+    );
+
+    assert.equal(
+      contract
+        .authority
+        .mutableExecutionAuthorized,
+      false
+    );
+  }
+);
+
+test(
+  "live terminal contract forbids heuristic partial broad and unverified writes",
+  () => {
+    const contract =
+      buildCheckpointAwareTargetedRepairExecutorContract({
+        decision:
+          liveStatusDecision()
+      });
+
+    assert.equal(
+      contract
+        .repairContract
+        .planner
+        .currentBroadLiveRefreshJobAuthorized,
+      false
+    );
+
+    assert.equal(
+      contract
+        .repairContract
+        .planner
+        .hardFailureSuffixIsProviderIdentityAuthority,
+      false
+    );
+
+    for (
+      const forbidden of [
+        "heuristic_final_promotion",
+        "elapsed_time_final_promotion",
+        "partial_terminal_writeback",
+        "unverified_status_write",
+        "fuzzy_identity_match",
+        "cross_day_terminal_promotion",
+        "score_fabrication",
+        "broad_live_status_refresh_write",
+        "full_daily_cycle"
+      ]
+    ) {
+      assert.equal(
+        contract
+          .repairContract
+          .forbiddenOperations
+          .includes(
+            forbidden
+          ),
+        true
+      );
+    }
+  }
+);
+
+test(
+  "live terminal planner converts a clean completeness observation into no action",
+  () => {
+    const plan =
+      classifyCheckpointAwareTargetedLiveTerminalRepairPlan({
+        dayKey:
+          DAY,
+
+        completeness: {
+          ok:
+            true,
+          staleOpenCount:
+            0,
+          staleOpenFixtures:
+            []
+        },
+
+        canonicalRows:
+          [],
+
+        evidenceRows:
+          []
+      });
+
+    assert.equal(
+      plan.planState,
+      "NO_REPAIR_REQUIRED"
+    );
+  }
+);
+
+test(
+  "live terminal planner waits all-or-nothing when any stale candidate lacks exact terminal evidence",
+  () => {
+    const canonicalRows = [
+      {
+        canonicalId:
+          "cid_a",
+        matchId:
+          "cid_a",
+        source:
+          "espn",
+        sourceId:
+          "401841449",
+        leagueSlug:
+          "test.1",
+        kickoffUtc:
+          "2026-09-22T12:00:00.000Z",
+        homeTeam:
+          "Home A",
+        awayTeam:
+          "Away A",
+        status:
+          "LIVE",
+        statusType:
+          "STATUS_IN_PROGRESS",
+        rawStatus:
+          "STATUS_IN_PROGRESS"
+      },
+      {
+        canonicalId:
+          "cid_b",
+        matchId:
+          "cid_b",
+        source:
+          "espn",
+        sourceId:
+          "401841450",
+        leagueSlug:
+          "test.1",
+        kickoffUtc:
+          "2026-09-22T14:00:00.000Z",
+        homeTeam:
+          "Home B",
+        awayTeam:
+          "Away B",
+        status:
+          "LIVE",
+        statusType:
+          "STATUS_IN_PROGRESS",
+        rawStatus:
+          "STATUS_IN_PROGRESS"
+      }
+    ];
+
+    const completeness = {
+      ok:
+        false,
+      staleOpenCount:
+        2,
+      staleOpenFixtures: [
+        {
+          canonicalId:
+            "cid_a",
+          providerId:
+            "401841449",
+          source:
+            "espn",
+          leagueSlug:
+            "test.1",
+          kickoffUtc:
+            "2026-09-22T12:00:00.000Z",
+          classification:
+            "stale_open_exact_provider_id"
+        },
+        {
+          canonicalId:
+            "cid_b",
+          providerId:
+            "401841450",
+          source:
+            "espn",
+          leagueSlug:
+            "test.1",
+          kickoffUtc:
+            "2026-09-22T14:00:00.000Z",
+          classification:
+            "stale_open_exact_provider_id"
+        }
+      ]
+    };
+
+    const evidenceRows = [
+      {
+        providerMatchId:
+          "401841449",
+        source:
+          "reconciled",
+        kickoffUtc:
+          "2026-09-22T12:00:00.000Z",
+        homeTeam:
+          "Home A",
+        awayTeam:
+          "Away A",
+        status:
+          "FT",
+        statusType:
+          "STATUS_FINAL",
+        rawStatus:
+          "STATUS_FULL_TIME",
+        scoreHome:
+          2,
+        scoreAway:
+          1
+      }
+    ];
+
+    const plan =
+      classifyCheckpointAwareTargetedLiveTerminalRepairPlan({
+        dayKey:
+          DAY,
+        completeness,
+        canonicalRows,
+        evidenceRows
+      });
+
+    assert.equal(
+      plan.planState,
+      "WAITING_FOR_COMPLETE_EXACT_PROVIDER_EVIDENCE"
+    );
+
+    assert.equal(
+      plan.exactTerminalReadyCount,
+      1
+    );
+
+    assert.equal(
+      plan.missingEvidenceCount,
+      1
+    );
+
+    assert.equal(
+      plan
+        .safety
+        .partialWritebackAuthorized,
+      false
+    );
+  }
+);
+
+test(
+  "live terminal planner becomes ready only when every stale candidate passes the authoritative writeback gate",
+  () => {
+    const canonicalRows = [
+      {
+        canonicalId:
+          "cid_test",
+        matchId:
+          "cid_test",
+        source:
+          "espn",
+        sourceId:
+          "401841449",
+        leagueSlug:
+          "test.1",
+        kickoffUtc:
+          "2026-09-22T12:00:00.000Z",
+        homeTeam:
+          "Home Club",
+        awayTeam:
+          "Away Club",
+        status:
+          "LIVE",
+        statusType:
+          "STATUS_IN_PROGRESS",
+        rawStatus:
+          "STATUS_IN_PROGRESS"
+      }
+    ];
+
+    const plan =
+      classifyCheckpointAwareTargetedLiveTerminalRepairPlan({
+        dayKey:
+          DAY,
+
+        completeness: {
+          ok:
+            false,
+          staleOpenCount:
+            1,
+          staleOpenFixtures: [
+            {
+              canonicalId:
+                "cid_test",
+              providerId:
+                "401841449",
+              source:
+                "espn",
+              leagueSlug:
+                "test.1",
+              kickoffUtc:
+                "2026-09-22T12:00:00.000Z",
+              classification:
+                "stale_open_exact_provider_id"
+            }
+          ]
+        },
+
+        canonicalRows,
+
+        evidenceRows: [
+          {
+            providerMatchId:
+              "401841449",
+            source:
+              "reconciled",
+            kickoffUtc:
+              "2026-09-22T12:00:00.000Z",
+            homeTeam:
+              "Home Club",
+            awayTeam:
+              "Away Club",
+            status:
+              "FT",
+            statusType:
+              "STATUS_FINAL",
+            rawStatus:
+              "STATUS_FULL_TIME",
+            scoreHome:
+              3,
+            scoreAway:
+              0
+          }
+        ]
+      });
+
+    assert.equal(
+      plan.planState,
+      "EXACT_TERMINAL_REPAIR_PLAN"
+    );
+
+    assert.equal(
+      plan.allOrNothingReady,
+      true
+    );
+
+    assert.equal(
+      plan.exactTerminalReadyCount,
+      1
+    );
+
+    assert.deepEqual(
+      plan.candidates[0].terminalDecision,
+      {
+        providerMatchId:
+          "401841449",
+        scoreHome:
+          3,
+        scoreAway:
+          0,
+        dayKey:
+          DAY
+      }
+    );
+
+    assert.equal(
+      plan
+        .futureExecutionScope
+        .partialWritebackAuthorized,
+      false
+    );
+  }
+);
+
+test(
+  "live terminal planner fails closed on exact-provider evidence with wrong ordered team identity",
+  () => {
+    const plan =
+      classifyCheckpointAwareTargetedLiveTerminalRepairPlan({
+        dayKey:
+          DAY,
+
+        completeness: {
+          ok:
+            false,
+          staleOpenCount:
+            1,
+          staleOpenFixtures: [
+            {
+              canonicalId:
+                "cid_test",
+              providerId:
+                "401841449",
+              source:
+                "espn",
+              leagueSlug:
+                "test.1",
+              kickoffUtc:
+                "2026-09-22T12:00:00.000Z",
+              classification:
+                "stale_open_exact_provider_id"
+            }
+          ]
+        },
+
+        canonicalRows: [
+          {
+            canonicalId:
+              "cid_test",
+            matchId:
+              "cid_test",
+            source:
+              "espn",
+            sourceId:
+              "401841449",
+            leagueSlug:
+              "test.1",
+            kickoffUtc:
+              "2026-09-22T12:00:00.000Z",
+            homeTeam:
+              "Home Club",
+            awayTeam:
+              "Away Club",
+            status:
+              "LIVE",
+            statusType:
+              "STATUS_IN_PROGRESS",
+            rawStatus:
+              "STATUS_IN_PROGRESS"
+          }
+        ],
+
+        evidenceRows: [
+          {
+            providerMatchId:
+              "401841449",
+            source:
+              "reconciled",
+            kickoffUtc:
+              "2026-09-22T12:00:00.000Z",
+            homeTeam:
+              "Away Club",
+            awayTeam:
+              "Home Club",
+            status:
+              "FT",
+            statusType:
+              "STATUS_FINAL",
+            rawStatus:
+              "STATUS_FULL_TIME",
+            scoreHome:
+              1,
+            scoreAway:
+              2
+          }
+        ]
+      });
+
+    assert.equal(
+      plan.planState,
+      "FAIL_CLOSED_LIVE_STATUS_STATE"
+    );
+
+    assert.equal(
+      plan.reason,
+      "exact_provider_evidence_contract_violation"
+    );
+
+    assert.equal(
+      plan
+        .fatalEvidenceErrors[0]
+        .rejectionReason,
+      "ordered_team_identity_mismatch"
+    );
+  }
+);
+
+test(
+  "live terminal dry-run runner contains no provider fetch writer workflow signer commit push or deploy machinery",
+  () => {
+    const source =
+      fs.readFileSync(
+        new URL(
+          "../jobs/run-checkpoint-aware-targeted-live-terminal-repair-dry-run-day.js",
+          import.meta.url
+        ),
+        "utf8"
+      );
+
+    for (
+      const forbidden of [
+        "fetch(",
+        "writeFileSync",
+        "renameSync",
+        "rmSync",
+        "unlinkSync",
+        "child_process",
+        "gh workflow",
+        "workflow_dispatch",
+        "git push",
+        "git commit",
+        "privateKey",
+        "sign(",
+        "RENDER_"
+      ]
+    ) {
+      assert.equal(
+        source.includes(
+          forbidden
+        ),
+        false,
+        `live terminal dry-run runner must not contain ${forbidden}`
       );
     }
   }
