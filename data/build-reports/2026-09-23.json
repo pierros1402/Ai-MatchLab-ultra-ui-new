@@ -1,8 +1,8 @@
 {
-  "ok": true,
+  "ok": false,
   "schema": "ai-matchlab.day-build-report.v1",
   "dayKey": "2026-09-23",
-  "generatedAt": "2026-09-22T18:43:15.072Z",
+  "generatedAt": "2026-09-23T19:33:54.182Z",
   "universe": {
     "expected": null,
     "canonical": 17,
@@ -565,17 +565,23 @@
     }
   },
   "freshness": {
-    "ok": true,
-    "manifestGeneratedAt": "2026-09-22T18:41:13.402Z",
-    "reasons": [],
-    "staleInputs": []
+    "ok": false,
+    "manifestGeneratedAt": "2026-09-23T19:23:03.940Z",
+    "reasons": [
+      "snapshot_stale_against_canonical",
+      "snapshot_value_stale_against_canonical",
+      "value_plan_comparison_stale_against_canonical"
+    ],
+    "staleInputs": [
+      "canonical-fixtures/2026-09-23/sco.challenge.json"
+    ]
   },
   "invariant": {
     "ok": true,
     "blocked": 0,
     "warnings": 1,
     "autoFixed": 0,
-    "checkedAt": "2026-09-22T18:41:13.753Z"
+    "checkedAt": "2026-09-23T19:23:03.942Z"
   },
   "value": {
     "source": "canonical_fixtures",
@@ -600,7 +606,7 @@
     }
   },
   "settlement": {
-    "generatedAt": "2026-09-22T18:40:25.739Z",
+    "generatedAt": "2026-09-23T19:22:54.578Z",
     "requiredPlans": [
       "A",
       "A2",
@@ -650,16 +656,21 @@
   },
   "foundationIntegrity": {
     "schema": "ai-matchlab.foundation-integrity.v1",
-    "generatedAt": "2026-09-22T18:42:43.262Z",
+    "generatedAt": "2026-09-23T19:33:53.938Z",
     "season": "2026-2027",
     "modelReady": true,
-    "publicationReady": true,
-    "blocked": [],
+    "publicationReady": false,
+    "blocked": [
+      {
+        "component": "details",
+        "reason": "details_foundation_not_ready"
+      }
+    ],
     "warnings": [
       {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 7436,
+        "count": 7670,
         "informational": true
       },
       {
@@ -692,10 +703,13 @@
     "supersededOpenCanonicalIds": [],
     "supersededOpenFixtures": []
   },
-  "hardFailures": [],
+  "hardFailures": [
+    "foundation_publication_not_ready",
+    "snapshot_stale"
+  ],
   "warnings": [
     "acquisition_skipped_slugs:bol.copa,concacaf.nations.league,eng.fa_qual,eng.w.league_cup,global.gulf_cup,uefa.w.europa,uefa.wchampions,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1"
   ],
-  "clean": true,
+  "clean": false,
   "cleanStrict": false
 }
