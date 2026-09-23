@@ -129,6 +129,66 @@ test("intraday workflow hard-fails before staging on invariant or value failure"
     /invariant\.blocked\.length > 0/
   );
 });
+test("intraday settlement refresh rebuilds and stages cumulative Value comparison", () => {
+  const workflow = fs.readFileSync(
+    new URL(
+      "../../.github/workflows/intraday-deploy-snapshot-refresh.yml",
+      import.meta.url
+    ),
+    "utf8"
+  );
+
+  const settlementStep = workflow.match(
+    /- name: Refresh value plan comparison settlement[\s\S]*?(?=\n      - name: Refresh and enforce intraday foundation health)/
+  )?.[0];
+
+  assert.ok(
+    settlementStep,
+    "intraday Value comparison settlement step is missing"
+  );
+
+  const dayBuilder =
+    "build-value-plan-comparison-day.js --date=\"$DAY_KEY\" --write";
+
+  const cumulativeBuilder =
+    "build-value-comparison-cumulative.js --write";
+
+  assert.match(
+    settlementStep,
+    /build-value-plan-comparison-day\.js --date="\$DAY_KEY" --write/
+  );
+
+  assert.match(
+    settlementStep,
+    /build-value-comparison-cumulative\.js --write/
+  );
+
+  assert.ok(
+    settlementStep.indexOf(dayBuilder) <
+      settlementStep.indexOf(cumulativeBuilder),
+    "cumulative comparison must rebuild after the day comparison"
+  );
+
+  const stagingStep = workflow.match(
+    /- name: Stage allowed generated files only[\s\S]*?(?=\n      - name: Sync System Health GitHub issue)/
+  )?.[0];
+
+  assert.ok(
+    stagingStep,
+    "intraday staging step is missing"
+  );
+
+  assert.match(
+    stagingStep,
+    /test -e "data\/value-comparison\/cumulative\.json" && git add "data\/value-comparison\/cumulative\.json"/
+  );
+
+  assert.match(
+    stagingStep,
+    /data\/value-comparison\/\(\$\{DAY_KEY\}\\\.json\|cumulative\\\.json\)\$/
+  );
+});
+
 test("intraday self-heals a missing Value baseline before publication", () => {
   const workflow = fs.readFileSync(
     new URL(

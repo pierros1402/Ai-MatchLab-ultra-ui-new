@@ -901,6 +901,11 @@ jobs:
             echo "No value comparison artifact for ${DAY_KEY}; skipping settlement comparison rebuild."
           fi
 
+          # The cumulative rollup is derived from all day-comparison artifacts.
+          # Intraday settlement may change a day artifact after the last Daily
+          # cumulative build, so refresh the rollup in the same bounded step.
+          node ./engine-v1/jobs/build-value-comparison-cumulative.js --write
+
       - name: Refresh and enforce intraday foundation health
         if: env.SKIP_BUILD != 'true'
         shell: bash
@@ -988,6 +993,7 @@ jobs:
           test -d "data/final-results/${DAY_KEY}" && git add "data/final-results/${DAY_KEY}/"
           test -f "data/final-result-conflicts/${DAY_KEY}.json" && git add "data/final-result-conflicts/${DAY_KEY}.json"
           test -e "data/value-comparison/${DAY_KEY}.json" && git add "data/value-comparison/${DAY_KEY}.json"
+          test -e "data/value-comparison/cumulative.json" && git add "data/value-comparison/cumulative.json"
 
           STAGED="$(git diff --cached --name-only || true)"
           echo "Staged files:"
@@ -997,7 +1003,7 @@ jobs:
             node engine-v1/jobs/guard-staged-data-boundary.js \
               --label=intraday-deploy-snapshot-refresh \
               --dayKey="${DAY_KEY}" \
-              --allow="^(data/canonical-fixtures/${DAY_KEY}/[^/]+\.json$|data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/foundation-integrity/${DAY_KEY}\.json$|data/foundation-integrity/latest\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/day-truth-ledger/${DAY_KEY}\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-plans/${DAY_KEY}/|data/final-results/${DAY_KEY}/|data/final-result-conflicts/${DAY_KEY}\.json$|data/value-comparison/${DAY_KEY}\.json$)"
+              --allow="^(data/canonical-fixtures/${DAY_KEY}/[^/]+\.json$|data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/foundation-integrity/${DAY_KEY}\.json$|data/foundation-integrity/latest\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/day-truth-ledger/${DAY_KEY}\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-plans/${DAY_KEY}/|data/final-results/${DAY_KEY}/|data/final-result-conflicts/${DAY_KEY}\.json$|data/value-comparison/(${DAY_KEY}\.json|cumulative\.json)$)"
 
             BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/canonical-fixtures/|data/deploy-snapshots/|data/build-reports/|data/foundation-integrity/|data/system-health/|data/day-truth-ledger/|data/value/|data/value-plans/|data/final-results/|data/final-result-conflicts/|data/value-comparison/)' || true)"
             if [ -n "$BAD" ]; then
