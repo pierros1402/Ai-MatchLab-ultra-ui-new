@@ -29,6 +29,12 @@ export const DETAILS_ORPHAN_FAILURE_CLASS =
 export const DETAILS_ORPHAN_REPAIR_UNIT =
   "remove_only_verified_orphan_derived_detail_files";
 
+export const FRESHNESS_COVERAGE_FAILURE_CLASS =
+  "ARTIFACT_FRESHNESS_COVERAGE_READINESS_AFTER_MANIFEST";
+
+export const FRESHNESS_COVERAGE_REPAIR_UNIT =
+  "rebuild_coverage_readiness_then_manifest_only_reexport_preserving_value_and_details";
+
 const DAY_RE =
   /^\d{4}-\d{2}-\d{2}$/u;
 
@@ -201,10 +207,17 @@ export function buildCheckpointAwareTargetedRepairExecutorContract({
     decision.repairUnit ===
       DETAILS_ORPHAN_REPAIR_UNIT;
 
+  const isFreshnessCoverageRoute =
+    decision.failureClass ===
+      FRESHNESS_COVERAGE_FAILURE_CLASS &&
+    decision.repairUnit ===
+      FRESHNESS_COVERAGE_REPAIR_UNIT;
+
   if (
     !isValueComparisonRoute &&
     !isPublicationInspectionRoute &&
-    !isDetailsOrphanRoute
+    !isDetailsOrphanRoute &&
+    !isFreshnessCoverageRoute
   ) {
     throw new Error(
       `checkpoint_executor_route_not_implemented:${text(decision.failureClass)}:${text(decision.repairUnit)}`
@@ -215,7 +228,8 @@ export function buildCheckpointAwareTargetedRepairExecutorContract({
     (
       (
         isValueComparisonRoute ||
-        isDetailsOrphanRoute
+        isDetailsOrphanRoute ||
+        isFreshnessCoverageRoute
       ) &&
       decisionState ===
         "BOUNDED_REPAIR_PLAN"
@@ -248,7 +262,8 @@ export function buildCheckpointAwareTargetedRepairExecutorContract({
       (
         (
           isValueComparisonRoute ||
-          isDetailsOrphanRoute
+          isDetailsOrphanRoute ||
+          isFreshnessCoverageRoute
         ) &&
         requiredBeforeBoundedExecution ===
           true
@@ -272,6 +287,173 @@ export function buildCheckpointAwareTargetedRepairExecutorContract({
     text(
       decision.dayKey
     );
+
+  if (
+    isFreshnessCoverageRoute
+  ) {
+    const freshnessArtifact = {
+      schema:
+        CHECKPOINT_AWARE_TARGETED_REPAIR_EXECUTOR_CONTRACT_SCHEMA,
+
+      version:
+        "1.3.0",
+
+      role:
+        "read_only_bounded_repair_executor_contract",
+
+      mode:
+        CHECKPOINT_AWARE_TARGETED_REPAIR_EXECUTOR_MODE,
+
+      dayKey,
+
+      sourceDecision: {
+        decisionFingerprint:
+          text(
+            decision
+              .decisionFingerprint
+          ),
+        decisionState:
+          decision
+            .decisionState,
+        failureClass:
+          decision
+            .failureClass,
+        repairUnit:
+          decision
+            .repairUnit,
+        resumeCheckpoint:
+          decision
+            .resumeCheckpoint
+      },
+
+      repairContract: {
+        exactRepairUnit:
+          FRESHNESS_COVERAGE_REPAIR_UNIT,
+
+        purpose:
+          "plan_only_the_coverage_readiness_newer_than_manifest_repair_without_rebuilding_value_or_details",
+
+        planner: {
+          runner:
+            "engine-v1/jobs/run-checkpoint-aware-targeted-freshness-coverage-readiness-dry-run-day.js",
+
+          sourceReport:
+            `data/deploy-snapshots/${dayKey}/freshness-report.json`,
+
+          existingCoverageReadinessProducer:
+            "engine-v1/jobs/build-league-gap-report-day.js",
+
+          manifestOnlyAdapterStatus:
+            "DEDICATED_ADAPTER_REQUIRED_BEFORE_MUTABLE_EXECUTION",
+
+          currentFullSnapshotExporterAuthorized:
+            false
+        },
+
+        allowedRepositoryOutputsAfterFutureAuthorization: [
+          `data/coverage-readiness/${dayKey}.json`,
+          `data/deploy-snapshots/${dayKey}/manifest.json`,
+          `data/deploy-snapshots/${dayKey}/freshness-report.json`
+        ],
+
+        outputScope:
+          "EXACT_THREE_PATHS_ONLY",
+
+        mustRemainByteIdentical: [
+          `data/deploy-snapshots/${dayKey}/value.json`,
+          `data/deploy-snapshots/${dayKey}/value-audit.json`,
+          `data/deploy-snapshots/${dayKey}/details/*.json`
+        ],
+
+        forbiddenOperations: [
+          "build_details",
+          "refresh_value_artifacts",
+          "rebuild_value_model",
+          "replace_snapshot_details",
+          "rewrite_snapshot_value",
+          "full_snapshot_reexport",
+          "promote_latest_pointer",
+          "full_daily_cycle",
+          "workflow_mutation",
+          "commit",
+          "push",
+          "deploy"
+        ],
+
+        dryRun: {
+          readOnly:
+            true,
+
+          exactFreshnessClassification:
+            true,
+
+          preservationHashesCaptured:
+            true,
+
+          repositoryMutation:
+            false,
+
+          runner:
+            "engine-v1/jobs/run-checkpoint-aware-targeted-freshness-coverage-readiness-dry-run-day.js"
+        },
+
+        postconditionsForFutureMutableExecution: [
+          "coverage_readiness_is_only_input_newer_than_manifest",
+          "no_stale_derived_artifacts",
+          "no_missing_required_artifacts",
+          "four_plan_contract_complete",
+          "snapshot_value_bytes_unchanged",
+          "snapshot_value_audit_bytes_unchanged",
+          "all_snapshot_detail_bytes_unchanged",
+          "artifact_freshness_reverified",
+          "resume_from_artifact_freshness_gate",
+          "remote_head_race_guard_clean"
+        ]
+      },
+
+      authority: {
+        planningOnly:
+          true,
+        dryRunAuthorized:
+          true,
+        repositoryWriteAuthorized:
+          false,
+        filesystemRepositoryWriteAuthorized:
+          false,
+        repairExecutionAuthorized:
+          false,
+        mutableExecutionAuthorized:
+          false,
+        signerUseAuthorized:
+          false,
+        commitAuthorized:
+          false,
+        pushAuthorized:
+          false,
+        deployAuthorized:
+          false,
+        workflowMutationAuthorized:
+          false,
+        externalAuthorizationV2RequiredBeforeMutableExecution:
+          true
+      },
+
+      existingAutonomousRepairPlanCompatibility: {
+        reusedAsMutableExecutionPlan:
+          false,
+
+        reason:
+          "freshness_repair_requires_a_manifest_only_adapter_that_preserves_value_and_detail_bytes;_the_current_full_snapshot_exporter_is_not_authorized_for_this_bounded_route"
+      }
+    };
+
+    freshnessArtifact.contractFingerprint =
+      checkpointAwareTargetedRepairExecutorContractFingerprint(
+        freshnessArtifact
+      );
+
+    return freshnessArtifact;
+  }
 
   if (
     isDetailsOrphanRoute

@@ -15,6 +15,8 @@ import {
   CURRENT_DAY_PUBLICATION_REPAIR_UNIT,
   DETAILS_ORPHAN_FAILURE_CLASS,
   DETAILS_ORPHAN_REPAIR_UNIT,
+  FRESHNESS_COVERAGE_FAILURE_CLASS,
+  FRESHNESS_COVERAGE_REPAIR_UNIT,
   VALUE_COMPARISON_REPAIR_UNIT,
   VALUE_COMPARISON_STALE_FAILURE_CLASS,
   buildCheckpointAwareTargetedRepairExecutorContract,
@@ -33,6 +35,10 @@ import {
 import {
   buildCheckpointAwareTargetedDetailsOrphanCleanupPlan
 } from "../core/checkpoint-aware-targeted-details-orphan-cleanup-plan.js";
+
+import {
+  classifyCheckpointAwareFreshnessCoverageReadinessPlan
+} from "../core/checkpoint-aware-targeted-freshness-coverage-readiness-plan.js";
 
 const DAY =
   "2026-09-22";
@@ -55,6 +61,22 @@ function publicationDecision() {
       HEAD,
     signals: [
       "current_manifest_missing"
+    ]
+  });
+}
+
+function freshnessCoverageDecision() {
+  return buildCheckpointAwareTargetedRepairControllerDecision({
+    dayKey:
+      DAY,
+    generatedAt:
+      AT,
+    expectedRemoteHead:
+      HEAD,
+    observedRemoteHead:
+      HEAD,
+    signals: [
+      "snapshot_stale_against_coverage_readiness"
     ]
   });
 }
@@ -679,6 +701,360 @@ test(
         ),
         false,
         `publication inspector must not contain ${forbidden}`
+      );
+    }
+  }
+);
+
+test(
+  "coverage-readiness freshness route maps to exact dry-run planner contract",
+  () => {
+    const contract =
+      buildCheckpointAwareTargetedRepairExecutorContract({
+        decision:
+          freshnessCoverageDecision()
+      });
+
+    assert.equal(
+      contract.mode,
+      CHECKPOINT_AWARE_TARGETED_REPAIR_EXECUTOR_MODE
+    );
+
+    assert.equal(
+      contract
+        .sourceDecision
+        .failureClass,
+      FRESHNESS_COVERAGE_FAILURE_CLASS
+    );
+
+    assert.equal(
+      contract
+        .sourceDecision
+        .repairUnit,
+      FRESHNESS_COVERAGE_REPAIR_UNIT
+    );
+
+    assert.equal(
+      contract
+        .repairContract
+        .planner
+        .currentFullSnapshotExporterAuthorized,
+      false
+    );
+
+    assert.equal(
+      contract
+        .authority
+        .mutableExecutionAuthorized,
+      false
+    );
+  }
+);
+
+test(
+  "coverage-readiness contract permits only readiness manifest and freshness outputs while preserving value and details",
+  () => {
+    const contract =
+      buildCheckpointAwareTargetedRepairExecutorContract({
+        decision:
+          freshnessCoverageDecision()
+      });
+
+    assert.deepEqual(
+      contract
+        .repairContract
+        .allowedRepositoryOutputsAfterFutureAuthorization,
+      [
+        `data/coverage-readiness/${DAY}.json`,
+        `data/deploy-snapshots/${DAY}/manifest.json`,
+        `data/deploy-snapshots/${DAY}/freshness-report.json`
+      ]
+    );
+
+    assert.equal(
+      contract
+        .repairContract
+        .mustRemainByteIdentical
+        .includes(
+          `data/deploy-snapshots/${DAY}/value.json`
+        ),
+      true
+    );
+
+    assert.equal(
+      contract
+        .repairContract
+        .mustRemainByteIdentical
+        .includes(
+          `data/deploy-snapshots/${DAY}/details/*.json`
+        ),
+      true
+    );
+
+    for (
+      const forbidden of [
+        "build_details",
+        "refresh_value_artifacts",
+        "rebuild_value_model",
+        "full_snapshot_reexport",
+        "promote_latest_pointer",
+        "full_daily_cycle"
+      ]
+    ) {
+      assert.equal(
+        contract
+          .repairContract
+          .forbiddenOperations
+          .includes(
+            forbidden
+          ),
+        true
+      );
+    }
+  }
+);
+
+test(
+  "coverage-readiness planner accepts only the exact newer-than-manifest freshness condition",
+  () => {
+    const plan =
+      classifyCheckpointAwareFreshnessCoverageReadinessPlan({
+        dayKey:
+          DAY,
+
+        freshness: {
+          ok:
+            false,
+
+          manifestGeneratedAt:
+            "2026-09-22T10:00:00.000Z",
+
+          reasons: [
+            "snapshot_stale_against_coverage_readiness"
+          ],
+
+          staleInputs: [
+            {
+              kind:
+                "coverage_readiness",
+              artifact:
+                `coverage-readiness/${DAY}.json`,
+              at:
+                "2026-09-22T10:05:00.000Z",
+              staleReason:
+                "snapshot_stale_against_coverage_readiness",
+              newerThanManifestMs:
+                300000
+            }
+          ],
+
+          staleDerivedArtifacts:
+            [],
+
+          missingRequiredArtifacts:
+            [],
+
+          fourPlanContract: {
+            complete:
+              true
+          }
+        }
+      });
+
+    assert.equal(
+      plan.planState,
+      "EXACT_COVERAGE_READINESS_REPAIR_PLAN"
+    );
+
+    assert.equal(
+      plan
+        .futureExecutionRecipe[1]
+        .producer,
+      "DEDICATED_MANIFEST_ONLY_ADAPTER_REQUIRED"
+    );
+
+    assert.equal(
+      plan
+        .futureExecutionRecipe[1]
+        .fullSnapshotExporterAuthorized,
+      false
+    );
+  }
+);
+
+test(
+  "coverage-readiness planner fails closed on mixed freshness causes or stale derived artifacts",
+  () => {
+    for (
+      const freshness of [
+        {
+          ok:
+            false,
+
+          reasons: [
+            "snapshot_stale_against_coverage_readiness",
+            "snapshot_stale_against_canonical"
+          ],
+
+          staleInputs: [
+            {
+              kind:
+                "coverage_readiness",
+              artifact:
+                `coverage-readiness/${DAY}.json`,
+              staleReason:
+                "snapshot_stale_against_coverage_readiness",
+              newerThanManifestMs:
+                1000
+            },
+            {
+              kind:
+                "canonical_fixtures",
+              artifact:
+                `canonical-fixtures/${DAY}/x.json`,
+              staleReason:
+                "snapshot_stale_against_canonical",
+              newerThanManifestMs:
+                1000
+            }
+          ],
+
+          staleDerivedArtifacts:
+            [],
+
+          missingRequiredArtifacts:
+            [],
+
+          fourPlanContract: {
+            complete:
+              true
+          }
+        },
+        {
+          ok:
+            false,
+
+          reasons: [
+            "snapshot_stale_against_coverage_readiness"
+          ],
+
+          staleInputs: [
+            {
+              kind:
+                "coverage_readiness",
+              artifact:
+                `coverage-readiness/${DAY}.json`,
+              staleReason:
+                "snapshot_stale_against_coverage_readiness",
+              newerThanManifestMs:
+                1000
+            }
+          ],
+
+          staleDerivedArtifacts: [
+            {
+              kind:
+                "value_plan_comparison"
+            }
+          ],
+
+          missingRequiredArtifacts:
+            [],
+
+          fourPlanContract: {
+            complete:
+              true
+          }
+        }
+      ]
+    ) {
+      const plan =
+        classifyCheckpointAwareFreshnessCoverageReadinessPlan({
+          dayKey:
+            DAY,
+          freshness
+        });
+
+      assert.equal(
+        plan.planState,
+        "FAIL_CLOSED_FRESHNESS_STATE"
+      );
+    }
+  }
+);
+
+test(
+  "coverage-readiness planner converts an already healthy freshness report into no action",
+  () => {
+    const plan =
+      classifyCheckpointAwareFreshnessCoverageReadinessPlan({
+        dayKey:
+          DAY,
+
+        freshness: {
+          ok:
+            true,
+
+          reasons:
+            [],
+
+          staleInputs:
+            [],
+
+          staleDerivedArtifacts:
+            [],
+
+          missingRequiredArtifacts:
+            [],
+
+          fourPlanContract: {
+            complete:
+              true
+          }
+        }
+      });
+
+    assert.equal(
+      plan.planState,
+      "NO_REPAIR_REQUIRED"
+    );
+  }
+);
+
+test(
+  "coverage-readiness dry-run runner contains no writer workflow signer commit push or deploy machinery",
+  () => {
+    const source =
+      fs.readFileSync(
+        new URL(
+          "../jobs/run-checkpoint-aware-targeted-freshness-coverage-readiness-dry-run-day.js",
+          import.meta.url
+        ),
+        "utf8"
+      );
+
+    for (
+      const forbidden of [
+        "writeFileSync",
+        "renameSync",
+        "rmSync",
+        "unlinkSync",
+        "child_process",
+        "gh workflow",
+        "workflow_dispatch",
+        "git push",
+        "git commit",
+        "privateKey",
+        "sign(",
+        "RENDER_"
+      ]
+    ) {
+      assert.equal(
+        source.includes(
+          forbidden
+        ),
+        false,
+        `freshness dry-run runner must not contain ${forbidden}`
       );
     }
   }
