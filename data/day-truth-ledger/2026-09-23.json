@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-23",
-  "generatedAt": "2026-09-23T00:34:58.574Z",
+  "generatedAt": "2026-09-23T00:50:35.622Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "bba82471a8f22e84c02d62772907fc3721059d6709a8b3a42a6d4f7cddf192c5",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "d6b817c5a94e5e94c85cb862c2c0ac36dcc5745a2d8007ec4693276c52fbb4b6",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 17,
-    "playedTerminal": 3,
+    "playedTerminal": 4,
     "nonPlayedTerminal": 0,
     "scheduled": 12,
-    "live": 2,
+    "live": 1,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 4,
     "acceptedVerifiedFinalArtifacts": 4,
-    "convergedPlayedFinal": 3,
+    "convergedPlayedFinal": 4,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
     "openRows": 13,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 3,
-    "scoredSettlementEligible": 3,
+    "historyEligible": 4,
+    "scoredSettlementEligible": 4,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -46,12 +46,12 @@
       "homeTeam": "Criciuma",
       "awayTeam": "Operario-PR",
       "kickoffUtc": "2026-09-22T22:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 0,
         "scoreAway": 2
       },
@@ -66,11 +66,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -877,9 +877,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_bra2_criciuma_operariopr_20260923"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -3693,15 +3691,16 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "bba82471a8f22e84c02d62772907fc3721059d6709a8b3a42a6d4f7cddf192c5",
+      "truthFingerprint": "d6b817c5a94e5e94c85cb862c2c0ac36dcc5745a2d8007ec4693276c52fbb4b6",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 3,
+        "expectedEligibleRows": 4,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
+          "cid_bra2_criciuma_operariopr_20260923",
           "cid_col2_atletico_tigres_20260923",
           "cid_col2_indvalledelcauca_interpalmira_20260923",
           "cid_col2_realsantander_orsomarso_20260923"
