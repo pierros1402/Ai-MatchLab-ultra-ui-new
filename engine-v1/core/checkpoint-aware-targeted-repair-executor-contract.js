@@ -35,6 +35,12 @@ export const FRESHNESS_COVERAGE_FAILURE_CLASS =
 export const FRESHNESS_COVERAGE_REPAIR_UNIT =
   "rebuild_coverage_readiness_then_manifest_only_reexport_preserving_value_and_details";
 
+export const CANONICAL_SUPPRESSED_ALIAS_FAILURE_CLASS =
+  "CANONICAL_SUPPRESSED_ALIAS_PRESENT";
+
+export const CANONICAL_SUPPRESSED_ALIAS_REPAIR_UNIT =
+  "resolver_membership_gate_suppression_only";
+
 const DAY_RE =
   /^\d{4}-\d{2}-\d{2}$/u;
 
@@ -213,11 +219,18 @@ export function buildCheckpointAwareTargetedRepairExecutorContract({
     decision.repairUnit ===
       FRESHNESS_COVERAGE_REPAIR_UNIT;
 
+  const isCanonicalSuppressionRoute =
+    decision.failureClass ===
+      CANONICAL_SUPPRESSED_ALIAS_FAILURE_CLASS &&
+    decision.repairUnit ===
+      CANONICAL_SUPPRESSED_ALIAS_REPAIR_UNIT;
+
   if (
     !isValueComparisonRoute &&
     !isPublicationInspectionRoute &&
     !isDetailsOrphanRoute &&
-    !isFreshnessCoverageRoute
+    !isFreshnessCoverageRoute &&
+    !isCanonicalSuppressionRoute
   ) {
     throw new Error(
       `checkpoint_executor_route_not_implemented:${text(decision.failureClass)}:${text(decision.repairUnit)}`
@@ -229,7 +242,8 @@ export function buildCheckpointAwareTargetedRepairExecutorContract({
       (
         isValueComparisonRoute ||
         isDetailsOrphanRoute ||
-        isFreshnessCoverageRoute
+        isFreshnessCoverageRoute ||
+        isCanonicalSuppressionRoute
       ) &&
       decisionState ===
         "BOUNDED_REPAIR_PLAN"
@@ -263,7 +277,8 @@ export function buildCheckpointAwareTargetedRepairExecutorContract({
         (
           isValueComparisonRoute ||
           isDetailsOrphanRoute ||
-          isFreshnessCoverageRoute
+          isFreshnessCoverageRoute ||
+          isCanonicalSuppressionRoute
         ) &&
         requiredBeforeBoundedExecution ===
           true
@@ -287,6 +302,165 @@ export function buildCheckpointAwareTargetedRepairExecutorContract({
     text(
       decision.dayKey
     );
+
+  if (
+    isCanonicalSuppressionRoute
+  ) {
+    const canonicalSuppressionArtifact = {
+      schema:
+        CHECKPOINT_AWARE_TARGETED_REPAIR_EXECUTOR_CONTRACT_SCHEMA,
+
+      version:
+        "1.4.0",
+
+      role:
+        "read_only_bounded_repair_executor_contract",
+
+      mode:
+        CHECKPOINT_AWARE_TARGETED_REPAIR_EXECUTOR_MODE,
+
+      dayKey,
+
+      sourceDecision: {
+        decisionFingerprint:
+          text(
+            decision
+              .decisionFingerprint
+          ),
+        decisionState:
+          decision
+            .decisionState,
+        failureClass:
+          decision
+            .failureClass,
+        repairUnit:
+          decision
+            .repairUnit,
+        resumeCheckpoint:
+          decision
+            .resumeCheckpoint
+      },
+
+      repairContract: {
+        exactRepairUnit:
+          CANONICAL_SUPPRESSED_ALIAS_REPAIR_UNIT,
+
+        purpose:
+          "plan_resolver_membership_suppression_only_without_mutating_canonical_source_truth",
+
+        planner: {
+          runner:
+            "engine-v1/jobs/run-checkpoint-aware-targeted-canonical-suppression-dry-run-day.js",
+
+          observer:
+            "observeCanonicalSuppressedAliasForShadow",
+
+          membershipGate:
+            "applyProductionIdentityMembershipGate",
+
+          resolver:
+            "getProductionIdentityResolverRuntime",
+
+          failedConsumerTargetStatus:
+            "REQUIRED_BEFORE_MUTABLE_EXECUTION"
+        },
+
+        allowedRepositoryOutputsAfterFutureAuthorization:
+          [],
+
+        outputScope:
+          "NO_REPOSITORY_OUTPUTS_UNTIL_FAILED_CONSUMER_TARGET_IDENTIFIED",
+
+        futureOperation:
+          "IN_MEMORY_RESOLVER_MEMBERSHIP_SUPPRESSION_ONLY",
+
+        forbiddenOperations: [
+          "delete_canonical_fixture_source_row",
+          "rewrite_canonical_fixture_partition",
+          "retarget_identity_resolver_ledger",
+          "rewrite_identity_ledger",
+          "rewrite_history",
+          "rebuild_value_model",
+          "rebuild_details",
+          "full_daily_cycle",
+          "workflow_mutation",
+          "commit",
+          "push",
+          "deploy"
+        ],
+
+        dryRun: {
+          readOnly:
+            true,
+
+          exactLeakedFixtureIdEnumeration:
+            true,
+
+          productionResolverClassificationRequired:
+            true,
+
+          repositoryMutation:
+            false,
+
+          runner:
+            "engine-v1/jobs/run-checkpoint-aware-targeted-canonical-suppression-dry-run-day.js"
+        },
+
+        postconditionsForFutureMutableExecution: [
+          "exact_failed_consumer_identified",
+          "every_leaked_fixture_id_resolves_as_suppressed_lineage_alias",
+          "canonical_source_truth_bytes_unchanged",
+          "identity_resolver_ledger_bytes_unchanged",
+          "post_gate_suppressed_alias_count_zero",
+          "canonical_semantic_fixed_point_reverified",
+          "resume_from_canonical_semantic_reverification_then_downstream",
+          "remote_head_race_guard_clean"
+        ]
+      },
+
+      authority: {
+        planningOnly:
+          true,
+        dryRunAuthorized:
+          true,
+        repositoryWriteAuthorized:
+          false,
+        filesystemRepositoryWriteAuthorized:
+          false,
+        repairExecutionAuthorized:
+          false,
+        mutableExecutionAuthorized:
+          false,
+        signerUseAuthorized:
+          false,
+        commitAuthorized:
+          false,
+        pushAuthorized:
+          false,
+        deployAuthorized:
+          false,
+        workflowMutationAuthorized:
+          false,
+        externalAuthorizationV2RequiredBeforeMutableExecution:
+          true
+      },
+
+      existingAutonomousRepairPlanCompatibility: {
+        reusedAsMutableExecutionPlan:
+          false,
+
+        reason:
+          "canonical_identity_suppression_is_a_projection_only_repair_and_must_not_mutate_source_truth_or_identity_ledgers"
+      }
+    };
+
+    canonicalSuppressionArtifact.contractFingerprint =
+      checkpointAwareTargetedRepairExecutorContractFingerprint(
+        canonicalSuppressionArtifact
+      );
+
+    return canonicalSuppressionArtifact;
+  }
 
   if (
     isFreshnessCoverageRoute

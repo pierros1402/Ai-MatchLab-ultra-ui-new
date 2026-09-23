@@ -17,6 +17,8 @@ import {
   DETAILS_ORPHAN_REPAIR_UNIT,
   FRESHNESS_COVERAGE_FAILURE_CLASS,
   FRESHNESS_COVERAGE_REPAIR_UNIT,
+  CANONICAL_SUPPRESSED_ALIAS_FAILURE_CLASS,
+  CANONICAL_SUPPRESSED_ALIAS_REPAIR_UNIT,
   VALUE_COMPARISON_REPAIR_UNIT,
   VALUE_COMPARISON_STALE_FAILURE_CLASS,
   buildCheckpointAwareTargetedRepairExecutorContract,
@@ -40,6 +42,10 @@ import {
   classifyCheckpointAwareFreshnessCoverageReadinessPlan
 } from "../core/checkpoint-aware-targeted-freshness-coverage-readiness-plan.js";
 
+import {
+  classifyCheckpointAwareCanonicalSuppressionPlan
+} from "../core/checkpoint-aware-targeted-canonical-suppression-plan.js";
+
 const DAY =
   "2026-09-22";
 
@@ -61,6 +67,22 @@ function publicationDecision() {
       HEAD,
     signals: [
       "current_manifest_missing"
+    ]
+  });
+}
+
+function canonicalSuppressionDecision() {
+  return buildCheckpointAwareTargetedRepairControllerDecision({
+    dayKey:
+      DAY,
+    generatedAt:
+      AT,
+    expectedRemoteHead:
+      HEAD,
+    observedRemoteHead:
+      HEAD,
+    signals: [
+      "canonical_suppressed_alias_present"
     ]
   });
 }
@@ -246,7 +268,7 @@ test(
 );
 
 test(
-  "unimplemented bounded route fails closed instead of borrowing the value comparison executor",
+  "unimplemented bounded route fails closed instead of borrowing another executor",
   () => {
     const decision =
       buildCheckpointAwareTargetedRepairControllerDecision({
@@ -259,7 +281,7 @@ test(
         observedRemoteHead:
           HEAD,
         signals: [
-          "canonical_suppressed_alias_present"
+          "live_status_stale_open_exact_provider_ids:provider-123"
         ]
       });
 
@@ -701,6 +723,292 @@ test(
         ),
         false,
         `publication inspector must not contain ${forbidden}`
+      );
+    }
+  }
+);
+
+test(
+  "canonical suppressed-alias route maps to projection-only dry-run contract",
+  () => {
+    const contract =
+      buildCheckpointAwareTargetedRepairExecutorContract({
+        decision:
+          canonicalSuppressionDecision()
+      });
+
+    assert.equal(
+      contract.mode,
+      CHECKPOINT_AWARE_TARGETED_REPAIR_EXECUTOR_MODE
+    );
+
+    assert.equal(
+      contract
+        .sourceDecision
+        .failureClass,
+      CANONICAL_SUPPRESSED_ALIAS_FAILURE_CLASS
+    );
+
+    assert.equal(
+      contract
+        .sourceDecision
+        .repairUnit,
+      CANONICAL_SUPPRESSED_ALIAS_REPAIR_UNIT
+    );
+
+    assert.deepEqual(
+      contract
+        .repairContract
+        .allowedRepositoryOutputsAfterFutureAuthorization,
+      []
+    );
+
+    assert.equal(
+      contract
+        .repairContract
+        .futureOperation,
+      "IN_MEMORY_RESOLVER_MEMBERSHIP_SUPPRESSION_ONLY"
+    );
+  }
+);
+
+test(
+  "canonical suppression contract forbids source-truth and resolver-ledger mutation",
+  () => {
+    const contract =
+      buildCheckpointAwareTargetedRepairExecutorContract({
+        decision:
+          canonicalSuppressionDecision()
+      });
+
+    assert.equal(
+      contract
+        .authority
+        .mutableExecutionAuthorized,
+      false
+    );
+
+    assert.equal(
+      contract
+        .repairContract
+        .planner
+        .failedConsumerTargetStatus,
+      "REQUIRED_BEFORE_MUTABLE_EXECUTION"
+    );
+
+    for (
+      const forbidden of [
+        "delete_canonical_fixture_source_row",
+        "rewrite_canonical_fixture_partition",
+        "retarget_identity_resolver_ledger",
+        "rewrite_identity_ledger",
+        "rewrite_history",
+        "full_daily_cycle"
+      ]
+    ) {
+      assert.equal(
+        contract
+          .repairContract
+          .forbiddenOperations
+          .includes(
+            forbidden
+          ),
+        true
+      );
+    }
+  }
+);
+
+test(
+  "canonical suppression planner treats raw aliases removed by the membership gate as already healthy",
+  () => {
+    const plan =
+      classifyCheckpointAwareCanonicalSuppressionPlan({
+        dayKey:
+          DAY,
+
+        observation: {
+          observationAvailable:
+            true,
+          ok:
+            true,
+          readError:
+            null,
+          rawSuppressedFixtureIds: [
+            "suppressed-a"
+          ],
+          postGateSuppressedFixtureIds:
+            [],
+          rawSuppressedAliasCount:
+            1,
+          postGateSuppressedAliasCount:
+            0
+        }
+      });
+
+    assert.equal(
+      plan.planState,
+      "NO_REPAIR_REQUIRED"
+    );
+
+    assert.equal(
+      plan.reason,
+      "raw_suppressed_aliases_removed_before_effective_canonical_universe"
+    );
+  }
+);
+
+test(
+  "canonical suppression planner produces an exact projection plan only for resolver-confirmed suppressed aliases",
+  () => {
+    const resolver = {
+      resolveFixtureId(
+        fixtureId
+      ) {
+        return {
+          ok:
+            true,
+          sourceRole:
+            "suppressed_lineage_alias",
+          resolvedFixtureId:
+            `retained-${fixtureId}`
+        };
+      }
+    };
+
+    const plan =
+      classifyCheckpointAwareCanonicalSuppressionPlan({
+        dayKey:
+          DAY,
+
+        observation: {
+          observationAvailable:
+            true,
+          ok:
+            false,
+          readError:
+            null,
+          rawSuppressedFixtureIds: [
+            "suppressed-a"
+          ],
+          postGateSuppressedFixtureIds: [
+            "suppressed-a"
+          ]
+        },
+
+        resolver
+      });
+
+    assert.equal(
+      plan.planState,
+      "EXACT_SUPPRESSION_PROJECTION_PLAN"
+    );
+
+    assert.equal(
+      plan.resolutionEvidence.length,
+      1
+    );
+
+    assert.equal(
+      plan
+        .resolutionEvidence[0]
+        .sourceRole,
+      "suppressed_lineage_alias"
+    );
+
+    assert.equal(
+      plan
+        .futureExecutionRecipe[1]
+        .sourceTruthMutation,
+      false
+    );
+  }
+);
+
+test(
+  "canonical suppression planner fails closed when a leaked id is not a suppressed lineage alias",
+  () => {
+    const resolver = {
+      resolveFixtureId() {
+        return {
+          ok:
+            true,
+          sourceRole:
+            "retained",
+          resolvedFixtureId:
+            "retained-id"
+        };
+      }
+    };
+
+    const plan =
+      classifyCheckpointAwareCanonicalSuppressionPlan({
+        dayKey:
+          DAY,
+
+        observation: {
+          observationAvailable:
+            true,
+          ok:
+            false,
+          readError:
+            null,
+          rawSuppressedFixtureIds:
+            [],
+          postGateSuppressedFixtureIds: [
+            "unexpected-id"
+          ]
+        },
+
+        resolver
+      });
+
+    assert.equal(
+      plan.planState,
+      "FAIL_CLOSED_IDENTITY_STATE"
+    );
+
+    assert.equal(
+      plan.reason,
+      "leaked_fixture_id_not_classified_as_suppressed_lineage_alias"
+    );
+  }
+);
+
+test(
+  "canonical suppression dry-run runner contains no source mutation signer workflow commit push or deploy machinery",
+  () => {
+    const source =
+      fs.readFileSync(
+        new URL(
+          "../jobs/run-checkpoint-aware-targeted-canonical-suppression-dry-run-day.js",
+          import.meta.url
+        ),
+        "utf8"
+      );
+
+    for (
+      const forbidden of [
+        "writeFileSync",
+        "renameSync",
+        "rmSync",
+        "unlinkSync",
+        "child_process",
+        "gh workflow",
+        "workflow_dispatch",
+        "git push",
+        "git commit",
+        "privateKey",
+        "sign(",
+        "RENDER_"
+      ]
+    ) {
+      assert.equal(
+        source.includes(
+          forbidden
+        ),
+        false,
+        `canonical suppression dry-run runner must not contain ${forbidden}`
       );
     }
   }
