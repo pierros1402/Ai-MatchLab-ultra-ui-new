@@ -23,6 +23,12 @@ export const CURRENT_DAY_PUBLICATION_REPAIR_UNIT =
 export const CHECKPOINT_AWARE_TARGETED_PUBLICATION_INSPECTION_MODE =
   "READ_ONLY_INSPECTION";
 
+export const DETAILS_ORPHAN_FAILURE_CLASS =
+  "DETAILS_VALUE_MIRROR_SOURCE_DETAIL_EXTRA_FILE";
+
+export const DETAILS_ORPHAN_REPAIR_UNIT =
+  "remove_only_verified_orphan_derived_detail_files";
+
 const DAY_RE =
   /^\d{4}-\d{2}-\d{2}$/u;
 
@@ -189,9 +195,16 @@ export function buildCheckpointAwareTargetedRepairExecutorContract({
     decision.repairUnit ===
       CURRENT_DAY_PUBLICATION_REPAIR_UNIT;
 
+  const isDetailsOrphanRoute =
+    decision.failureClass ===
+      DETAILS_ORPHAN_FAILURE_CLASS &&
+    decision.repairUnit ===
+      DETAILS_ORPHAN_REPAIR_UNIT;
+
   if (
     !isValueComparisonRoute &&
-    !isPublicationInspectionRoute
+    !isPublicationInspectionRoute &&
+    !isDetailsOrphanRoute
   ) {
     throw new Error(
       `checkpoint_executor_route_not_implemented:${text(decision.failureClass)}:${text(decision.repairUnit)}`
@@ -200,7 +213,10 @@ export function buildCheckpointAwareTargetedRepairExecutorContract({
 
   const routeStateValid =
     (
-      isValueComparisonRoute &&
+      (
+        isValueComparisonRoute ||
+        isDetailsOrphanRoute
+      ) &&
       decisionState ===
         "BOUNDED_REPAIR_PLAN"
     ) ||
@@ -230,7 +246,10 @@ export function buildCheckpointAwareTargetedRepairExecutorContract({
         false &&
     (
       (
-        isValueComparisonRoute &&
+        (
+          isValueComparisonRoute ||
+          isDetailsOrphanRoute
+        ) &&
         requiredBeforeBoundedExecution ===
           true
       ) ||
@@ -253,6 +272,169 @@ export function buildCheckpointAwareTargetedRepairExecutorContract({
     text(
       decision.dayKey
     );
+
+  if (
+    isDetailsOrphanRoute
+  ) {
+    const detailsOrphanArtifact = {
+      schema:
+        CHECKPOINT_AWARE_TARGETED_REPAIR_EXECUTOR_CONTRACT_SCHEMA,
+
+      version:
+        "1.2.0",
+
+      role:
+        "read_only_bounded_repair_executor_contract",
+
+      mode:
+        CHECKPOINT_AWARE_TARGETED_REPAIR_EXECUTOR_MODE,
+
+      dayKey,
+
+      sourceDecision: {
+        decisionFingerprint:
+          text(
+            decision
+              .decisionFingerprint
+          ),
+        decisionState:
+          decision
+            .decisionState,
+        failureClass:
+          decision
+            .failureClass,
+        repairUnit:
+          decision
+            .repairUnit,
+        resumeCheckpoint:
+          decision
+            .resumeCheckpoint
+      },
+
+      repairContract: {
+        exactRepairUnit:
+          DETAILS_ORPHAN_REPAIR_UNIT,
+
+        purpose:
+          "plan_deletion_of_only_hash_bound_source_detail_files_proven_extra_against_the_published_fixture_universe",
+
+        planner: {
+          runner:
+            "engine-v1/jobs/run-checkpoint-aware-targeted-details-orphan-cleanup-dry-run-day.js",
+
+          verifier:
+            "engine-v1/jobs/verify-details-value-mirror-day.js",
+
+          requiredObservationContext:
+            "daily_source_details_tree",
+
+          repositoryMutationDuringDryRun:
+            false
+        },
+
+        allowedRepositoryOperationAfterFutureAuthorization:
+          "DELETE_ONLY",
+
+        allowedRepositoryDeletionScopeAfterFutureAuthorization:
+          `data/details/${dayKey}/<VERIFIED_HASH_BOUND_ORPHAN>.json`,
+
+        outputScope:
+          "DYNAMIC_EXACT_HASH_BOUND_CANDIDATE_PATHS_ONLY",
+
+        explicitlyForbiddenDeletionScopes: [
+          `data/deploy-snapshots/${dayKey}/details/`,
+          "data/canonical-fixtures/",
+          "data/value/",
+          "data/value-plans/",
+          "data/final-results/"
+        ],
+
+        forbiddenOperations: [
+          "delete_snapshot_detail",
+          "delete_expected_fixture_detail",
+          "delete_without_candidate_sha256_match",
+          "full_details_rebuild",
+          "value_rebuild",
+          "canonical_truth_mutation",
+          "final_result_truth_mutation",
+          "full_daily_cycle",
+          "workflow_mutation",
+          "commit",
+          "push",
+          "deploy"
+        ],
+
+        dryRun: {
+          readOnly:
+            true,
+
+          exactCandidateEnumeration:
+            true,
+
+          sha256BindingRequired:
+            true,
+
+          filesystemDeletion:
+            false,
+
+          runner:
+            "engine-v1/jobs/run-checkpoint-aware-targeted-details-orphan-cleanup-dry-run-day.js"
+        },
+
+        postconditionsForFutureMutableExecution: [
+          "candidate_path_is_under_source_details_day_only",
+          "candidate_sha256_matches_predelete_plan",
+          "candidate_remains_absent_from_fixture_expected_detail_set",
+          "no_non_extra_details_mirror_violations_exist",
+          "details_value_mirror_gate_reverified",
+          "resume_from_details_value_mirror_gate",
+          "remote_head_race_guard_clean"
+        ]
+      },
+
+      authority: {
+        planningOnly:
+          true,
+        dryRunAuthorized:
+          true,
+        repositoryWriteAuthorized:
+          false,
+        filesystemRepositoryWriteAuthorized:
+          false,
+        repairExecutionAuthorized:
+          false,
+        mutableExecutionAuthorized:
+          false,
+        signerUseAuthorized:
+          false,
+        commitAuthorized:
+          false,
+        pushAuthorized:
+          false,
+        deployAuthorized:
+          false,
+        workflowMutationAuthorized:
+          false,
+        externalAuthorizationV2RequiredBeforeMutableExecution:
+          true
+      },
+
+      existingAutonomousRepairPlanCompatibility: {
+        reusedAsMutableExecutionPlan:
+          false,
+
+        reason:
+          "details_orphan_cleanup_requires_dynamic_exact_hash_bound_delete_candidates_and_must_not_borrow_broader_legacy_mutation_authority"
+      }
+    };
+
+    detailsOrphanArtifact.contractFingerprint =
+      checkpointAwareTargetedRepairExecutorContractFingerprint(
+        detailsOrphanArtifact
+      );
+
+    return detailsOrphanArtifact;
+  }
 
   if (
     isPublicationInspectionRoute

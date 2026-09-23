@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 import {
   buildCheckpointAwareTargetedRepairControllerDecision
@@ -11,6 +13,8 @@ import {
   CHECKPOINT_AWARE_TARGETED_REPAIR_EXECUTOR_MODE,
   CURRENT_DAY_PUBLICATION_FAILURE_CLASS,
   CURRENT_DAY_PUBLICATION_REPAIR_UNIT,
+  DETAILS_ORPHAN_FAILURE_CLASS,
+  DETAILS_ORPHAN_REPAIR_UNIT,
   VALUE_COMPARISON_REPAIR_UNIT,
   VALUE_COMPARISON_STALE_FAILURE_CLASS,
   buildCheckpointAwareTargetedRepairExecutorContract,
@@ -25,6 +29,10 @@ import {
   compareValueComparisonRepairCandidateSemantics,
   normalizeValueComparisonRepairSemanticPayload
 } from "../jobs/run-checkpoint-aware-targeted-value-comparison-repair-dry-run-day.js";
+
+import {
+  buildCheckpointAwareTargetedDetailsOrphanCleanupPlan
+} from "../core/checkpoint-aware-targeted-details-orphan-cleanup-plan.js";
 
 const DAY =
   "2026-09-22";
@@ -47,6 +55,29 @@ function publicationDecision() {
       HEAD,
     signals: [
       "current_manifest_missing"
+    ]
+  });
+}
+
+function detailsOrphanDecision() {
+  return buildCheckpointAwareTargetedRepairControllerDecision({
+    dayKey:
+      DAY,
+    generatedAt:
+      AT,
+    expectedRemoteHead:
+      HEAD,
+    observedRemoteHead:
+      HEAD,
+    signals: [
+      {
+        code:
+          "details_value_mirror_violation",
+        details: {
+          violationCode:
+            "source_detail_extra_file"
+        }
+      }
     ]
   });
 }
@@ -648,6 +679,398 @@ test(
         ),
         false,
         `publication inspector must not contain ${forbidden}`
+      );
+    }
+  }
+);
+
+test(
+  "details orphan route maps to exact dry-run-only hash-bound deletion contract",
+  () => {
+    const contract =
+      buildCheckpointAwareTargetedRepairExecutorContract({
+        decision:
+          detailsOrphanDecision()
+      });
+
+    assert.equal(
+      contract.mode,
+      CHECKPOINT_AWARE_TARGETED_REPAIR_EXECUTOR_MODE
+    );
+
+    assert.equal(
+      contract
+        .sourceDecision
+        .failureClass,
+      DETAILS_ORPHAN_FAILURE_CLASS
+    );
+
+    assert.equal(
+      contract
+        .sourceDecision
+        .repairUnit,
+      DETAILS_ORPHAN_REPAIR_UNIT
+    );
+
+    assert.equal(
+      contract
+        .repairContract
+        .allowedRepositoryOperationAfterFutureAuthorization,
+      "DELETE_ONLY"
+    );
+
+    assert.equal(
+      contract
+        .repairContract
+        .outputScope,
+      "DYNAMIC_EXACT_HASH_BOUND_CANDIDATE_PATHS_ONLY"
+    );
+  }
+);
+
+test(
+  "details orphan contract forbids snapshot deletion rebuilds and broad mutation",
+  () => {
+    const contract =
+      buildCheckpointAwareTargetedRepairExecutorContract({
+        decision:
+          detailsOrphanDecision()
+      });
+
+    assert.equal(
+      contract
+        .authority
+        .mutableExecutionAuthorized,
+      false
+    );
+
+    for (
+      const forbidden of [
+        "delete_snapshot_detail",
+        "delete_expected_fixture_detail",
+        "delete_without_candidate_sha256_match",
+        "full_details_rebuild",
+        "value_rebuild",
+        "full_daily_cycle",
+        "commit",
+        "push",
+        "deploy"
+      ]
+    ) {
+      assert.equal(
+        contract
+          .repairContract
+          .forbiddenOperations
+          .includes(
+            forbidden
+          ),
+        true
+      );
+    }
+  }
+);
+
+test(
+  "details orphan planner returns only exact hash-bound source extras and performs no deletion",
+  () => {
+    const root =
+      fs.mkdtempSync(
+        path.join(
+          os.tmpdir(),
+          "aiml-details-orphan-plan-"
+        )
+      );
+
+    try {
+      const expectedFile =
+        "cid_expected.json";
+
+      const orphanFile =
+        "cid_orphan.json";
+
+      fs.writeFileSync(
+        path.join(
+          root,
+          expectedFile
+        ),
+        JSON.stringify({
+          canonicalId:
+            "cid_expected"
+        }),
+        "utf8"
+      );
+
+      fs.writeFileSync(
+        path.join(
+          root,
+          orphanFile
+        ),
+        JSON.stringify({
+          canonicalId:
+            "cid_orphan"
+        }),
+        "utf8"
+      );
+
+      const plan =
+        buildCheckpointAwareTargetedDetailsOrphanCleanupPlan({
+          dayKey:
+            DAY,
+
+          sourceDir:
+            root,
+
+          fixtures: [
+            {
+              canonicalId:
+                "cid_expected"
+            }
+          ],
+
+          mirrorReport: {
+            ok:
+              false,
+
+            counts: {
+              fixtures:
+                1
+            },
+
+            violations: [
+              {
+                code:
+                  "source_detail_extra_file",
+                file:
+                  orphanFile
+              }
+            ]
+          }
+        });
+
+      assert.equal(
+        plan.planState,
+        "EXACT_ORPHAN_CLEANUP_PLAN"
+      );
+
+      assert.equal(
+        plan.candidateCount,
+        1
+      );
+
+      assert.equal(
+        plan.candidates[0].relativePath,
+        `data/details/${DAY}/${orphanFile}`
+      );
+
+      assert.match(
+        plan.candidates[0].sha256,
+        /^[0-9a-f]{64}$/u
+      );
+
+      assert.equal(
+        fs.existsSync(
+          path.join(
+            root,
+            orphanFile
+          )
+        ),
+        true,
+        "dry-run planner must not delete the orphan"
+      );
+
+      assert.equal(
+        fs.existsSync(
+          path.join(
+            root,
+            expectedFile
+          )
+        ),
+        true,
+        "dry-run planner must not touch expected details"
+      );
+    }
+    finally {
+      fs.rmSync(
+        root,
+        {
+          recursive:
+            true,
+          force:
+            true
+        }
+      );
+    }
+  }
+);
+
+test(
+  "details orphan planner fails closed when extra-file evidence is mixed with any other mirror violation",
+  () => {
+    const root =
+      fs.mkdtempSync(
+        path.join(
+          os.tmpdir(),
+          "aiml-details-orphan-mixed-"
+        )
+      );
+
+    try {
+      fs.writeFileSync(
+        path.join(
+          root,
+          "cid_orphan.json"
+        ),
+        "{}",
+        "utf8"
+      );
+
+      const plan =
+        buildCheckpointAwareTargetedDetailsOrphanCleanupPlan({
+          dayKey:
+            DAY,
+
+          sourceDir:
+            root,
+
+          fixtures:
+            [],
+
+          mirrorReport: {
+            ok:
+              false,
+
+            counts: {
+              fixtures:
+                0
+            },
+
+            violations: [
+              {
+                code:
+                  "source_detail_extra_file",
+                file:
+                  "cid_orphan.json"
+              },
+              {
+                code:
+                  "source_detail_missing_file",
+                file:
+                  "cid_missing.json"
+              }
+            ]
+          }
+        });
+
+      assert.equal(
+        plan.planState,
+        "FAIL_CLOSED_MIRROR_STATE"
+      );
+
+      assert.equal(
+        plan.reason,
+        "mixed_details_mirror_violations"
+      );
+
+      assert.equal(
+        plan.candidateCount,
+        0
+      );
+    }
+    finally {
+      fs.rmSync(
+        root,
+        {
+          recursive:
+            true,
+          force:
+            true
+        }
+      );
+    }
+  }
+);
+
+test(
+  "details orphan planner treats absent source tree as no-action rather than inventing a deletion",
+  () => {
+    const missing =
+      path.join(
+        os.tmpdir(),
+        `aiml-details-orphan-missing-${process.pid}-${Date.now()}`
+      );
+
+    const plan =
+      buildCheckpointAwareTargetedDetailsOrphanCleanupPlan({
+        dayKey:
+          DAY,
+
+        sourceDir:
+          missing,
+
+        fixtures:
+          [],
+
+        mirrorReport: {
+          ok:
+            false,
+
+          violations: [
+            {
+              code:
+                "source_detail_extra_file",
+              file:
+                "cid_orphan.json"
+            }
+          ]
+        }
+      });
+
+    assert.equal(
+      plan.planState,
+      "SOURCE_TREE_UNAVAILABLE_NO_ACTION"
+    );
+
+    assert.deepEqual(
+      plan.candidates,
+      []
+    );
+  }
+);
+
+test(
+  "details orphan dry-run runner contains no deletion signer workflow push commit or deploy machinery",
+  () => {
+    const source =
+      fs.readFileSync(
+        new URL(
+          "../jobs/run-checkpoint-aware-targeted-details-orphan-cleanup-dry-run-day.js",
+          import.meta.url
+        ),
+        "utf8"
+      );
+
+    for (
+      const forbidden of [
+        "rmSync",
+        "unlinkSync",
+        "writeFileSync",
+        "renameSync",
+        "child_process",
+        "gh workflow",
+        "workflow_dispatch",
+        "git push",
+        "git commit",
+        "privateKey",
+        "sign(",
+        "RENDER_"
+      ]
+    ) {
+      assert.equal(
+        source.includes(
+          forbidden
+        ),
+        false,
+        `details orphan dry-run runner must not contain ${forbidden}`
       );
     }
   }
