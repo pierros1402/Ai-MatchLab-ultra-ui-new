@@ -7,12 +7,19 @@ import {
 } from "../core/checkpoint-aware-targeted-repair-controller.js";
 
 import {
+  CHECKPOINT_AWARE_TARGETED_PUBLICATION_INSPECTION_MODE,
   CHECKPOINT_AWARE_TARGETED_REPAIR_EXECUTOR_MODE,
+  CURRENT_DAY_PUBLICATION_FAILURE_CLASS,
+  CURRENT_DAY_PUBLICATION_REPAIR_UNIT,
   VALUE_COMPARISON_REPAIR_UNIT,
   VALUE_COMPARISON_STALE_FAILURE_CLASS,
   buildCheckpointAwareTargetedRepairExecutorContract,
   checkpointAwareTargetedRepairExecutorContractFingerprint
 } from "../core/checkpoint-aware-targeted-repair-executor-contract.js";
+
+import {
+  classifyCheckpointAwareTargetedPublicationInspection
+} from "../core/checkpoint-aware-targeted-publication-inspection.js";
 
 import {
   compareValueComparisonRepairCandidateSemantics,
@@ -27,6 +34,22 @@ const AT =
 
 const HEAD =
   "d42d365f77fd2f58e4f659dee2e72b9eeef2ea69";
+
+function publicationDecision() {
+  return buildCheckpointAwareTargetedRepairControllerDecision({
+    dayKey:
+      DAY,
+    generatedAt:
+      AT,
+    expectedRemoteHead:
+      HEAD,
+    observedRemoteHead:
+      HEAD,
+    signals: [
+      "current_manifest_missing"
+    ]
+  });
+}
 
 function comparisonDecision() {
   return buildCheckpointAwareTargetedRepairControllerDecision({
@@ -373,6 +396,260 @@ test(
         "$.plans.A.summary.picks"
       ]
     );
+  }
+);
+
+test(
+  "current-day publication decision maps to read-only inspection with zero output authority",
+  () => {
+    const contract =
+      buildCheckpointAwareTargetedRepairExecutorContract({
+        decision:
+          publicationDecision()
+      });
+
+    assert.equal(
+      contract.mode,
+      CHECKPOINT_AWARE_TARGETED_PUBLICATION_INSPECTION_MODE
+    );
+
+    assert.equal(
+      contract
+        .sourceDecision
+        .failureClass,
+      CURRENT_DAY_PUBLICATION_FAILURE_CLASS
+    );
+
+    assert.equal(
+      contract
+        .sourceDecision
+        .repairUnit,
+      CURRENT_DAY_PUBLICATION_REPAIR_UNIT
+    );
+
+    assert.deepEqual(
+      contract
+        .repairContract
+        .allowedRepositoryOutputsAfterFutureAuthorization,
+      []
+    );
+
+    assert.equal(
+      contract
+        .authority
+        .broadDailyDispatchAuthorized,
+      false
+    );
+
+    assert.equal(
+      contract
+        .authority
+        .mutableExecutionAuthorized,
+      false
+    );
+  }
+);
+
+test(
+  "healthy publication recheck converts a stale missing-artifact trigger into no action",
+  () => {
+    const inspection =
+      classifyCheckpointAwareTargetedPublicationInspection({
+        dayKey:
+          DAY,
+        prepublish: {
+          ok:
+            true,
+          blocked:
+            []
+        },
+        final: {
+          ok:
+            true,
+          blocked:
+            []
+        }
+      });
+
+    assert.equal(
+      inspection
+        .inspectionState,
+      "STALE_TRIGGER_NO_ACTION"
+    );
+
+    assert.equal(
+      inspection
+        .firstFailedGate,
+      null
+    );
+
+    assert.equal(
+      inspection
+        .broadDailyDispatchAuthorized,
+      false
+    );
+  }
+);
+
+test(
+  "missing current manifest routes to snapshot verification instead of full Daily dispatch",
+  () => {
+    const inspection =
+      classifyCheckpointAwareTargetedPublicationInspection({
+        dayKey:
+          DAY,
+        prepublish: {
+          ok:
+            false,
+          blocked: [
+            {
+              code:
+                "required_artifact_missing",
+              artifact:
+                "manifest"
+            }
+          ]
+        },
+        final: {
+          ok:
+            false,
+          blocked:
+            []
+        }
+      });
+
+    assert.equal(
+      inspection
+        .inspectionState,
+      "ROUTE_TO_FAILED_GATE"
+    );
+
+    assert.equal(
+      inspection
+        .firstFailedGate,
+      "SNAPSHOT_VERIFICATION_GATE"
+    );
+
+    assert.equal(
+      inspection
+        .primaryBlocker
+        .artifact,
+      "manifest"
+    );
+  }
+);
+
+test(
+  "healthy prepublish with missing latest pointer routes only to latest pointer gate",
+  () => {
+    const inspection =
+      classifyCheckpointAwareTargetedPublicationInspection({
+        dayKey:
+          DAY,
+        prepublish: {
+          ok:
+            true,
+          blocked:
+            []
+        },
+        final: {
+          ok:
+            false,
+          blocked: [
+            {
+              code:
+                "latest_missing"
+            }
+          ]
+        }
+      });
+
+    assert.equal(
+      inspection
+        .inspectionState,
+      "ROUTE_TO_FAILED_GATE"
+    );
+
+    assert.equal(
+      inspection
+        .firstFailedGate,
+      "LATEST_POINTER_GATE"
+    );
+  }
+);
+
+test(
+  "unknown publication blocker fails closed instead of guessing a repair gate",
+  () => {
+    const inspection =
+      classifyCheckpointAwareTargetedPublicationInspection({
+        dayKey:
+          DAY,
+        prepublish: {
+          ok:
+            false,
+          blocked: [
+            {
+              code:
+                "future_unknown_publication_failure"
+            }
+          ]
+        },
+        final: {
+          ok:
+            false,
+          blocked:
+            []
+        }
+      });
+
+    assert.equal(
+      inspection
+        .inspectionState,
+      "FAIL_CLOSED_QUARANTINE"
+    );
+
+    assert.equal(
+      inspection
+        .broadDailyDispatchAuthorized,
+      false
+    );
+  }
+);
+
+test(
+  "publication inspection runner contains no workflow dispatch signer push deploy or repository write machinery",
+  () => {
+    const source =
+      fs.readFileSync(
+        new URL(
+          "../jobs/run-checkpoint-aware-targeted-publication-inspection-day.js",
+          import.meta.url
+        ),
+        "utf8"
+      );
+
+    for (
+      const forbidden of [
+        "child_process",
+        "gh workflow",
+        "workflow_dispatch",
+        "git push",
+        "git commit",
+        "writeFileSync",
+        "privateKey",
+        "sign(",
+        "RENDER_"
+      ]
+    ) {
+      assert.equal(
+        source.includes(
+          forbidden
+        ),
+        false,
+        `publication inspector must not contain ${forbidden}`
+      );
+    }
   }
 );
 

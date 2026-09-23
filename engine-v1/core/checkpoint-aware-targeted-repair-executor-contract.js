@@ -14,6 +14,15 @@ export const VALUE_COMPARISON_STALE_FAILURE_CLASS =
 export const VALUE_COMPARISON_REPAIR_UNIT =
   "rebuild_day_value_comparison_and_cumulative_only";
 
+export const CURRENT_DAY_PUBLICATION_FAILURE_CLASS =
+  "CURRENT_DAY_PUBLICATION_POINTER_OR_ARTIFACT_MISSING";
+
+export const CURRENT_DAY_PUBLICATION_REPAIR_UNIT =
+  "inspect_existing_day_artifacts_and_route_to_exact_failed_gate";
+
+export const CHECKPOINT_AWARE_TARGETED_PUBLICATION_INSPECTION_MODE =
+  "READ_ONLY_INSPECTION";
+
 const DAY_RE =
   /^\d{4}-\d{2}-\d{2}$/u;
 
@@ -149,35 +158,91 @@ export function buildCheckpointAwareTargetedRepairExecutorContract({
     decision
   );
 
+  const decisionState =
+    text(
+      decision.decisionState
+    );
+
   if (
-    decision.decisionState !==
-      "BOUNDED_REPAIR_PLAN"
+    ![
+      "BOUNDED_REPAIR_PLAN",
+      "READ_ONLY_INSPECTION_PLAN"
+    ]
+      .includes(
+        decisionState
+      )
   ) {
     throw new Error(
-      `checkpoint_executor_decision_state_not_requestable:${text(decision.decisionState) || "missing"}`
+      `checkpoint_executor_decision_state_not_requestable:${decisionState || "missing"}`
     );
   }
 
+  const isValueComparisonRoute =
+    decision.failureClass ===
+      VALUE_COMPARISON_STALE_FAILURE_CLASS &&
+    decision.repairUnit ===
+      VALUE_COMPARISON_REPAIR_UNIT;
+
+  const isPublicationInspectionRoute =
+    decision.failureClass ===
+      CURRENT_DAY_PUBLICATION_FAILURE_CLASS &&
+    decision.repairUnit ===
+      CURRENT_DAY_PUBLICATION_REPAIR_UNIT;
+
   if (
-    decision.failureClass !==
-      VALUE_COMPARISON_STALE_FAILURE_CLASS ||
-    decision.repairUnit !==
-      VALUE_COMPARISON_REPAIR_UNIT
+    !isValueComparisonRoute &&
+    !isPublicationInspectionRoute
   ) {
     throw new Error(
       `checkpoint_executor_route_not_implemented:${text(decision.failureClass)}:${text(decision.repairUnit)}`
     );
   }
 
+  const routeStateValid =
+    (
+      isValueComparisonRoute &&
+      decisionState ===
+        "BOUNDED_REPAIR_PLAN"
+    ) ||
+    (
+      isPublicationInspectionRoute &&
+      decisionState ===
+        "READ_ONLY_INSPECTION_PLAN"
+    );
+
   if (
+    !routeStateValid
+  ) {
+    throw new Error(
+      `checkpoint_executor_decision_state_not_requestable:${decisionState || "missing"}`
+    );
+  }
+
+  const requiredBeforeBoundedExecution =
     decision
       ?.executionAuthorization
-      ?.requiredBeforeBoundedExecution !==
-        true ||
+      ?.requiredBeforeBoundedExecution;
+
+  const authorizationBoundaryValid =
     decision
       ?.executionAuthorization
-      ?.authorizationGrantedByThisDecision !==
-        false
+      ?.authorizationGrantedByThisDecision ===
+        false &&
+    (
+      (
+        isValueComparisonRoute &&
+        requiredBeforeBoundedExecution ===
+          true
+      ) ||
+      (
+        isPublicationInspectionRoute &&
+        requiredBeforeBoundedExecution ===
+          false
+      )
+    );
+
+  if (
+    !authorizationBoundaryValid
   ) {
     throw new Error(
       "checkpoint_executor_authorization_boundary_invalid"
@@ -188,6 +253,138 @@ export function buildCheckpointAwareTargetedRepairExecutorContract({
     text(
       decision.dayKey
     );
+
+  if (
+    isPublicationInspectionRoute
+  ) {
+    const publicationArtifact = {
+      schema:
+        CHECKPOINT_AWARE_TARGETED_REPAIR_EXECUTOR_CONTRACT_SCHEMA,
+
+      version:
+        "1.1.0",
+
+      role:
+        "read_only_bounded_repair_executor_contract",
+
+      mode:
+        CHECKPOINT_AWARE_TARGETED_PUBLICATION_INSPECTION_MODE,
+
+      dayKey,
+
+      sourceDecision: {
+        decisionFingerprint:
+          text(
+            decision
+              .decisionFingerprint
+          ),
+        decisionState:
+          decision
+            .decisionState,
+        failureClass:
+          decision
+            .failureClass,
+        repairUnit:
+          decision
+            .repairUnit,
+        resumeCheckpoint:
+          decision
+            .resumeCheckpoint
+      },
+
+      repairContract: {
+        exactRepairUnit:
+          CURRENT_DAY_PUBLICATION_REPAIR_UNIT,
+
+        purpose:
+          "inspect_persisted_current_day_publication_and_route_to_the_first_exact_failed_gate_without_mutation",
+
+        inspector: {
+          runner:
+            "engine-v1/jobs/run-checkpoint-aware-targeted-publication-inspection-day.js",
+
+          persistedArtifactsOnly:
+            true,
+
+          sourceDetailsTreeRequired:
+            false
+        },
+
+        allowedRepositoryOutputsAfterFutureAuthorization:
+          [],
+
+        outputScope:
+          "NO_REPOSITORY_OUTPUTS",
+
+        forbiddenOperations: [
+          "write_publication_artifact",
+          "promote_latest_pointer",
+          "rebuild_value_model",
+          "rebuild_details",
+          "mutate_canonical_fixture_truth",
+          "mutate_final_result_truth",
+          "dispatch_daily_workflow",
+          "full_daily_cycle",
+          "workflow_mutation",
+          "commit",
+          "push",
+          "deploy"
+        ],
+
+        postconditions: [
+          "publication_state_reobserved_from_persisted_artifacts",
+          "first_failed_gate_classified_or_fail_closed_quarantine",
+          "healthy_recheck_causes_no_action",
+          "broad_daily_dispatch_remains_unauthorized"
+        ]
+      },
+
+      authority: {
+        planningOnly:
+          true,
+        readOnlyInspectionAuthorized:
+          true,
+        dryRunAuthorized:
+          false,
+        repositoryWriteAuthorized:
+          false,
+        filesystemRepositoryWriteAuthorized:
+          false,
+        repairExecutionAuthorized:
+          false,
+        mutableExecutionAuthorized:
+          false,
+        signerUseAuthorized:
+          false,
+        commitAuthorized:
+          false,
+        pushAuthorized:
+          false,
+        deployAuthorized:
+          false,
+        workflowMutationAuthorized:
+          false,
+        broadDailyDispatchAuthorized:
+          false,
+        externalAuthorizationV2RequiredBeforeMutableExecution:
+          true
+      },
+
+      existingAutonomousRepairPlanCompatibility: {
+        reusedAsMutableExecutionPlan:
+          false,
+        reason:
+          "publication_inspection_is_read_only_and_must_not_inherit_legacy_broad_daily_recovery_authority"
+      }
+    };
+
+    publicationArtifact.contractFingerprint =
+      checkpointAwareTargetedRepairExecutorContractFingerprint(
+        publicationArtifact
+      );
+
+    return publicationArtifact;
+  }
 
   const artifact = {
     schema:
