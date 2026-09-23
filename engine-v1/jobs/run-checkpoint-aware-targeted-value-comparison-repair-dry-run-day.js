@@ -121,6 +121,265 @@ function sha256File(file) {
     );
 }
 
+export function normalizeValueComparisonRepairSemanticPayload({
+  payload,
+  kind,
+  dayKey
+} = {}) {
+  if (
+    !payload ||
+    typeof payload !==
+      "object"
+  ) {
+    return payload ?? null;
+  }
+
+  const normalized =
+    structuredClone(
+      payload
+    );
+
+  if (
+    kind ===
+      "day" &&
+    normalized?.inputs &&
+    typeof normalized.inputs ===
+      "object"
+  ) {
+    normalized.inputs.outputPath =
+      `data/value-comparison/${dayKey}.json`;
+  }
+
+  if (
+    kind ===
+      "cumulative" &&
+    normalized
+      ?.historicalStatisticsCorrection &&
+    typeof normalized
+      .historicalStatisticsCorrection ===
+        "object" &&
+    normalized
+      .historicalStatisticsCorrection
+      .ledgerPath
+  ) {
+    normalized
+      .historicalStatisticsCorrection
+      .ledgerPath =
+        "data/value-comparison/historical-exclusions.json";
+  }
+
+  return normalized;
+}
+
+function semanticDiffPaths(
+  left,
+  right,
+  prefix =
+    "$"
+) {
+  if (
+    Object.is(
+      left,
+      right
+    )
+  ) {
+    return [];
+  }
+
+  const leftArray =
+    Array.isArray(
+      left
+    );
+
+  const rightArray =
+    Array.isArray(
+      right
+    );
+
+  if (
+    leftArray !==
+      rightArray
+  ) {
+    return [
+      prefix
+    ];
+  }
+
+  if (
+    leftArray &&
+    rightArray
+  ) {
+    const max =
+      Math.max(
+        left.length,
+        right.length
+      );
+
+    const out = [];
+
+    for (
+      let index = 0;
+      index < max;
+      index += 1
+    ) {
+      out.push(
+        ...semanticDiffPaths(
+          left[index],
+          right[index],
+          `${prefix}[${index}]`
+        )
+      );
+    }
+
+    return out;
+  }
+
+  const leftObject =
+    Boolean(
+      left &&
+      typeof left ===
+        "object"
+    );
+
+  const rightObject =
+    Boolean(
+      right &&
+      typeof right ===
+        "object"
+    );
+
+  if (
+    leftObject !==
+      rightObject
+  ) {
+    return [
+      prefix
+    ];
+  }
+
+  if (
+    leftObject &&
+    rightObject
+  ) {
+    const keys =
+      [
+        ...new Set([
+          ...Object.keys(
+            left
+          ),
+          ...Object.keys(
+            right
+          )
+        ])
+      ]
+        .sort();
+
+    const out = [];
+
+    for (
+      const key of
+        keys
+    ) {
+      out.push(
+        ...semanticDiffPaths(
+          left[key],
+          right[key],
+          `${prefix}.${key}`
+        )
+      );
+    }
+
+    return out;
+  }
+
+  return [
+    prefix
+  ];
+}
+
+export function compareValueComparisonRepairCandidateSemantics({
+  production,
+  candidate,
+  kind,
+  dayKey
+} = {}) {
+  const normalizedProduction =
+    normalizeValueComparisonRepairSemanticPayload({
+      payload:
+        production,
+      kind,
+      dayKey
+    });
+
+  const normalizedCandidate =
+    normalizeValueComparisonRepairSemanticPayload({
+      payload:
+        candidate,
+      kind,
+      dayKey
+    });
+
+  const stableProduction =
+    stableValue(
+      normalizedProduction
+    );
+
+  const stableCandidate =
+    stableValue(
+      normalizedCandidate
+    );
+
+  const productionSemanticSha256 =
+    production
+      ? sha256Json(
+          normalizedProduction
+        )
+      : null;
+
+  const candidateSemanticSha256 =
+    candidate
+      ? sha256Json(
+          normalizedCandidate
+        )
+      : null;
+
+  const diffPaths =
+    production
+      ? semanticDiffPaths(
+          stableProduction,
+          stableCandidate
+        )
+      : [
+          "$"
+        ];
+
+  return {
+    productionSemanticSha256,
+    candidateSemanticSha256,
+    semanticChange:
+      !production ||
+      productionSemanticSha256 !==
+        candidateSemanticSha256,
+    semanticDiffPaths:
+      diffPaths,
+    provenanceNormalization: {
+      kind,
+      normalizedFields:
+        kind ===
+          "day"
+          ? [
+              "$.inputs.outputPath"
+            ]
+          : kind ===
+              "cumulative"
+            ? [
+                "$.historicalStatisticsCorrection.ledgerPath"
+              ]
+            : []
+    }
+  };
+}
+
 function copyComparisonInputs({
   sourceDir,
   targetDir
@@ -298,6 +557,11 @@ export function runCheckpointAwareTargetedValueComparisonRepairDryRunDay({
           tempComparisonDir,
         output:
           candidateCumulativeFile,
+        historicalExclusionsFile:
+          path.join(
+            productionDir,
+            "historical-exclusions.json"
+          ),
         requireHistoricalExclusions:
           true,
         requireImmutablePlanA:
@@ -332,6 +596,30 @@ export function runCheckpointAwareTargetedValueComparisonRepairDryRunDay({
       readJsonSafe(
         candidateCumulativeFile
       );
+
+    const daySemantic =
+      compareValueComparisonRepairCandidateSemantics({
+        production:
+          productionDay,
+        candidate:
+          candidateDay,
+        kind:
+          "day",
+        dayKey:
+          normalizedDay
+      });
+
+    const cumulativeSemantic =
+      compareValueComparisonRepairCandidateSemantics({
+        production:
+          productionCumulative,
+        candidate:
+          candidateCumulative,
+        kind:
+          "cumulative",
+        dayKey:
+          normalizedDay
+      });
 
     report = {
       schema:
@@ -368,25 +656,20 @@ export function runCheckpointAwareTargetedValueComparisonRepairDryRunDay({
               candidateDayFile
             ),
           productionSemanticSha256:
-            productionDay
-              ? sha256Json(
-                  productionDay
-                )
-              : null,
+            daySemantic
+              .productionSemanticSha256,
           candidateSemanticSha256:
-            candidateDay
-              ? sha256Json(
-                  candidateDay
-                )
-              : null,
+            daySemantic
+              .candidateSemanticSha256,
           semanticChange:
-            !productionDay ||
-            sha256Json(
-              productionDay
-            ) !==
-            sha256Json(
-              candidateDay
-            )
+            daySemantic
+              .semanticChange,
+          semanticDiffPaths:
+            daySemantic
+              .semanticDiffPaths,
+          provenanceNormalization:
+            daySemantic
+              .provenanceNormalization
         },
 
         cumulative: {
@@ -403,25 +686,20 @@ export function runCheckpointAwareTargetedValueComparisonRepairDryRunDay({
               candidateCumulativeFile
             ),
           productionSemanticSha256:
-            productionCumulative
-              ? sha256Json(
-                  productionCumulative
-                )
-              : null,
+            cumulativeSemantic
+              .productionSemanticSha256,
           candidateSemanticSha256:
-            candidateCumulative
-              ? sha256Json(
-                  candidateCumulative
-                )
-              : null,
+            cumulativeSemantic
+              .candidateSemanticSha256,
           semanticChange:
-            !productionCumulative ||
-            sha256Json(
-              productionCumulative
-            ) !==
-            sha256Json(
-              candidateCumulative
-            )
+            cumulativeSemantic
+              .semanticChange,
+          semanticDiffPaths:
+            cumulativeSemantic
+              .semanticDiffPaths,
+          provenanceNormalization:
+            cumulativeSemantic
+              .provenanceNormalization
         }
       },
 

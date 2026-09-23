@@ -14,6 +14,11 @@ import {
   checkpointAwareTargetedRepairExecutorContractFingerprint
 } from "../core/checkpoint-aware-targeted-repair-executor-contract.js";
 
+import {
+  compareValueComparisonRepairCandidateSemantics,
+  normalizeValueComparisonRepairSemanticPayload
+} from "../jobs/run-checkpoint-aware-targeted-value-comparison-repair-dry-run-day.js";
+
 const DAY =
   "2026-09-22";
 
@@ -217,6 +222,156 @@ test(
       checkpointAwareTargetedRepairExecutorContractFingerprint(
         a
       )
+    );
+  }
+);
+
+test(
+  "semantic normalization removes temp-path provenance from day and cumulative candidates",
+  () => {
+    const day =
+      normalizeValueComparisonRepairSemanticPayload({
+        payload: {
+          generatedAt:
+            "2026-09-23T03:00:00.000Z",
+          inputs: {
+            outputPath:
+              "../Users/pierr/AppData/Local/Temp/x/value-comparison/2026-09-23.json"
+          },
+          plans: {
+            A: {
+              summary: {
+                picks:
+                  1
+              }
+            }
+          }
+        },
+        kind:
+          "day",
+        dayKey:
+          "2026-09-23"
+      });
+
+    assert.equal(
+      day.inputs.outputPath,
+      "data/value-comparison/2026-09-23.json"
+    );
+
+    const cumulative =
+      normalizeValueComparisonRepairSemanticPayload({
+        payload: {
+          historicalStatisticsCorrection: {
+            ledgerPath:
+              "../Users/pierr/AppData/Local/Temp/x/value-comparison/historical-exclusions.json"
+          }
+        },
+        kind:
+          "cumulative",
+        dayKey:
+          "2026-09-23"
+      });
+
+    assert.equal(
+      cumulative
+        .historicalStatisticsCorrection
+        .ledgerPath,
+      "data/value-comparison/historical-exclusions.json"
+    );
+  }
+);
+
+test(
+  "semantic comparator ignores generatedAt and temp provenance but still detects real payload changes",
+  () => {
+    const production = {
+      generatedAt:
+        "2026-09-23T02:00:00.000Z",
+      inputs: {
+        outputPath:
+          "data/value-comparison/2026-09-23.json"
+      },
+      plans: {
+        A: {
+          summary: {
+            picks:
+              1
+          }
+        }
+      }
+    };
+
+    const candidateProvenanceOnly = {
+      generatedAt:
+        "2026-09-23T03:00:00.000Z",
+      inputs: {
+        outputPath:
+          "../Temp/value-comparison/2026-09-23.json"
+      },
+      plans: {
+        A: {
+          summary: {
+            picks:
+              1
+          }
+        }
+      }
+    };
+
+    const same =
+      compareValueComparisonRepairCandidateSemantics({
+        production,
+        candidate:
+          candidateProvenanceOnly,
+        kind:
+          "day",
+        dayKey:
+          "2026-09-23"
+      });
+
+    assert.equal(
+      same.semanticChange,
+      false
+    );
+
+    assert.deepEqual(
+      same.semanticDiffPaths,
+      []
+    );
+
+    const candidateRealChange =
+      structuredClone(
+        candidateProvenanceOnly
+      );
+
+    candidateRealChange
+      .plans
+      .A
+      .summary
+      .picks =
+        2;
+
+    const changed =
+      compareValueComparisonRepairCandidateSemantics({
+        production,
+        candidate:
+          candidateRealChange,
+        kind:
+          "day",
+        dayKey:
+          "2026-09-23"
+      });
+
+    assert.equal(
+      changed.semanticChange,
+      true
+    );
+
+    assert.deepEqual(
+      changed.semanticDiffPaths,
+      [
+        "$.plans.A.summary.picks"
+      ]
     );
   }
 );
