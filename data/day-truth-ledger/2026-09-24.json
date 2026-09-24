@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-24",
-  "generatedAt": "2026-09-24T02:15:27.461Z",
+  "generatedAt": "2026-09-24T02:30:18.027Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "66358a652c93966afac8e85acf6b3e1682aae6e9aea9e6a7ff598297cfacb82f",
+  "truthFingerprint": "aa147b0c572f54ea7c9f24ee1a9e9c7fcb4ee63669ebd584fd9caf176c53af41",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 37,
-    "playedTerminal": 0,
+    "playedTerminal": 1,
     "nonPlayedTerminal": 1,
     "scheduled": 31,
-    "live": 5,
+    "live": 4,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 0,
-    "acceptedVerifiedFinalArtifacts": 0,
-    "convergedPlayedFinal": 0,
+    "verifiedFinalArtifacts": 1,
+    "acceptedVerifiedFinalArtifacts": 1,
+    "convergedPlayedFinal": 1,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 36,
+    "openRows": 35,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 0,
-    "scoredSettlementEligible": 0,
+    "historyEligible": 1,
+    "scoredSettlementEligible": 1,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -487,31 +487,31 @@
       "homeTeam": "América de Cali",
       "awayTeam": "Águilas Doradas",
       "kickoffUtc": "2026-09-24T00:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-24",
+        "scoreHome": 1,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1323,10 +1323,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 1,
+        "rawStatus": "STATUS_IN_PROGRESS",
+        "scoreHome": 2,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -1372,9 +1372,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -1813,9 +1813,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -4065,15 +4065,17 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "66358a652c93966afac8e85acf6b3e1682aae6e9aea9e6a7ff598297cfacb82f",
+      "truthFingerprint": "aa147b0c572f54ea7c9f24ee1a9e9c7fcb4ee63669ebd584fd9caf176c53af41",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 0,
+        "expectedEligibleRows": 1,
         "persistedRows": 0,
-        "missingEligibleFixtureIds": [],
+        "missingEligibleFixtureIds": [
+          "cid_col1_americacali_aguilasdoradas_20260924"
+        ],
         "unexpectedFixtureIds": [],
         "duplicateFixtureIds": [],
         "invalidTruthContractFixtureIds": [],
@@ -4132,7 +4134,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-09-24",
-      "fileCount": 0,
+      "fileCount": 1,
       "authority": "scored_final_evidence"
     },
     "downstream": {
