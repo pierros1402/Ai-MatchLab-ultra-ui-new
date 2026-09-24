@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-24",
-  "generatedAt": "2026-09-24T03:28:19.448Z",
+  "generatedAt": "2026-09-24T03:38:41.911Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "5c8802ad8d388e244389a0aa0a7e6c3bd34566f5edd0da82660bc74279bc5d82",
+  "truthFingerprint": "3e98561dfafb4108659edc2f3807666eb7f9849307d8f7e1a859796c9d0fe121",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 37,
-    "playedTerminal": 3,
+    "playedTerminal": 4,
     "nonPlayedTerminal": 1,
     "scheduled": 31,
-    "live": 2,
+    "live": 1,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 3,
-    "acceptedVerifiedFinalArtifacts": 3,
-    "convergedPlayedFinal": 3,
+    "verifiedFinalArtifacts": 4,
+    "acceptedVerifiedFinalArtifacts": 4,
+    "convergedPlayedFinal": 4,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 33,
+    "openRows": 32,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 3,
-    "scoredSettlementEligible": 3,
+    "historyEligible": 4,
+    "scoredSettlementEligible": 4,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -885,7 +885,7 @@
         "status": "SECOND_HALF",
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 2,
+        "scoreHome": 3,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -1810,31 +1810,31 @@
       "homeTeam": "Seattle Sounders FC",
       "awayTeam": "Real Salt Lake",
       "kickoffUtc": "2026-09-24T01:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 2,
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-24",
+        "scoreHome": 2,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4065,18 +4065,19 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "5c8802ad8d388e244389a0aa0a7e6c3bd34566f5edd0da82660bc74279bc5d82",
+      "truthFingerprint": "3e98561dfafb4108659edc2f3807666eb7f9849307d8f7e1a859796c9d0fe121",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 3,
+        "expectedEligibleRows": 4,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_col1_americacali_aguilasdoradas_20260924",
           "cid_slv1_alianza_fuertesanfrancisco_20260924",
-          "cid_slv1_luisangelfirpo_cacahuatique_20260924"
+          "cid_slv1_luisangelfirpo_cacahuatique_20260924",
+          "cid_usa1_seattlesounders_realsaltlake_20260924"
         ],
         "unexpectedFixtureIds": [],
         "duplicateFixtureIds": [],
@@ -4136,7 +4137,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-09-24",
-      "fileCount": 3,
+      "fileCount": 4,
       "authority": "scored_final_evidence"
     },
     "downstream": {
