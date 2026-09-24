@@ -1,24 +1,24 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-09-24",
-  "generatedAt": "2026-09-23T17:49:52.692Z",
+  "generatedAt": "2026-09-24T17:27:46.729Z",
   "severity": "warning",
   "issueCounts": {
     "error": 0,
-    "warning": 4,
+    "warning": 6,
     "info": 10
   },
   "alert": true,
   "alertCounts": {
     "error": 0,
-    "warning": 1,
+    "warning": 3,
     "info": 0
   },
-  "activeIssueCount": 14,
-  "actionableIssueCount": 4,
-  "newIssueCount": 4,
-  "newActionableIssueCount": 1,
-  "resolvedIssueCount": 4,
+  "activeIssueCount": 16,
+  "actionableIssueCount": 6,
+  "newIssueCount": 6,
+  "newActionableIssueCount": 3,
+  "resolvedIssueCount": 9,
   "persistentIssueCount": 10,
   "activeIssues": [
     {
@@ -34,6 +34,30 @@
         "drop": 11,
         "reason": "canonical_fixture_count_below_static_floor",
         "effectiveFloorMet": true
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-09-24.json",
+        "at": "2026-09-24T17:18:28.548Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -8414
       }
     },
     {
@@ -814,6 +838,30 @@
   "actionableIssues": [
     {
       "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-09-24.json",
+        "at": "2026-09-24T17:18:28.548Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -8414
+      }
+    },
+    {
+      "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
       "message": "Acquisition skipped slugs during fixture acquisition.",
@@ -1312,6 +1360,19 @@
   ],
   "newIssues": [
     {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-09-24.json",
+        "at": "2026-09-24T17:18:28.548Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -8414
+      }
+    },
+    {
       "severity": "info",
       "source": "freshness-report",
       "type": "skipped_freshness_input",
@@ -1334,7 +1395,24 @@
         "artifact": "value-plans/2026-09-24/plan-b.json",
         "at": null,
         "staleReason": "plan_b_stale_against_canonical",
-        "preservation": null,
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-09-24",
+          "currentAthensDay": "2026-09-24",
+          "fixtureCount": 37,
+          "frozenHash": "f5676ba5950e0bc7ea4f5f8227ef57d9f476db13b9c1d3ddda2d899a39cf8256",
+          "currentHash": "f5676ba5950e0bc7ea4f5f8227ef57d9f476db13b9c1d3ddda2d899a39cf8256",
+          "strictFrozenParity": true,
+          "membershipParity": true,
+          "descriptorDrift": false,
+          "publicationMembershipPreserved": false,
+          "authorizedShrink": false,
+          "removedFixtureIds": [],
+          "deferredCurrentFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "exact_current_frozen_membership"
+        },
         "skipped": "artifact_missing_or_no_timestamp"
       }
     },
@@ -1348,7 +1426,24 @@
         "artifact": "value-plans/2026-09-24/plan-b2.json",
         "at": null,
         "staleReason": "plan_b2_stale_against_canonical",
-        "preservation": null,
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-09-24",
+          "currentAthensDay": "2026-09-24",
+          "fixtureCount": 37,
+          "frozenHash": "f5676ba5950e0bc7ea4f5f8227ef57d9f476db13b9c1d3ddda2d899a39cf8256",
+          "currentHash": "f5676ba5950e0bc7ea4f5f8227ef57d9f476db13b9c1d3ddda2d899a39cf8256",
+          "strictFrozenParity": true,
+          "membershipParity": true,
+          "descriptorDrift": false,
+          "publicationMembershipPreserved": false,
+          "authorizedShrink": false,
+          "removedFixtureIds": [],
+          "deferredCurrentFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "exact_current_frozen_membership"
+        },
         "skipped": "artifact_missing_or_no_timestamp"
       }
     },
@@ -1373,9 +1468,33 @@
         "raw": "acquisition_skipped_slugs:caf.nations_qual,concacaf.nations.league,eng.fa_qual,eng.w.league_cup,global.gulf_cup,uefa.euro_u21_qual,uefa.w.europa,uefa.wchampions,usa.ncaa.m.1,usa.ncaa.w.1",
         "contextOnly": false
       }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
+      }
     }
   ],
   "newActionableIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-09-24.json",
+        "at": "2026-09-24T17:18:28.548Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -8414
+      }
+    },
     {
       "severity": "warning",
       "source": "build-report",
@@ -1397,9 +1516,33 @@
         "raw": "acquisition_skipped_slugs:caf.nations_qual,concacaf.nations.league,eng.fa_qual,eng.w.league_cup,global.gulf_cup,uefa.euro_u21_qual,uefa.w.europa,uefa.wchampions,usa.ncaa.m.1,usa.ncaa.w.1",
         "contextOnly": false
       }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
+      }
     }
   ],
   "resolvedIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-09-23.json",
+        "at": "2026-09-23T20:58:18.121Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -8310
+      }
+    },
     {
       "severity": "info",
       "source": "freshness-report",
@@ -1476,6 +1619,38 @@
       }
     },
     {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_publication_not_ready",
+      "details": {
+        "failure": "foundation_publication_not_ready"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -1496,6 +1671,16 @@
         "raw": "acquisition_skipped_slugs:bol.copa,concacaf.nations.league,eng.fa_qual,eng.w.league_cup,global.gulf_cup,uefa.w.europa,uefa.wchampions,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
         "contextOnly": false
       }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
     }
   ],
   "persistentIssues": [
@@ -1515,6 +1700,17 @@
       }
     },
     {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
       "severity": "info",
       "source": "foundation-integrity",
       "type": "age_expired_results_rows_present",
@@ -1522,7 +1718,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 7622,
+        "count": 8378,
         "informational": true
       }
     },
@@ -1551,17 +1747,6 @@
       }
     },
     {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
-      "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
-      }
-    },
-    {
       "severity": "info",
       "source": "competition-admission",
       "type": "competition_admission_active",
@@ -1575,10 +1760,10 @@
           "slv.1"
         ],
         "summary": {
-          "evidenceSlugCount": 33,
+          "evidenceSlugCount": 25,
           "admittedCount": 5,
           "pendingCount": 0,
-          "rejectedCount": 28,
+          "rejectedCount": 25,
           "alreadyDeclaredCount": 0
         }
       }
@@ -1604,10 +1789,7 @@
           "esp.w.1",
           "fifa.friendly",
           "fifa.friendly.w",
-          "fifa.intercontinental_cup",
-          "fra.w.1",
           "global.gulf_cup",
-          "global.u20.intercontinental_cup",
           "ned.w.1",
           "uefa.euro_u21_qual",
           "uefa.w.europa",
@@ -1620,10 +1802,10 @@
           "usa.w.usl.1"
         ],
         "summary": {
-          "evidenceSlugCount": 33,
+          "evidenceSlugCount": 25,
           "admittedCount": 5,
           "pendingCount": 0,
-          "rejectedCount": 28,
+          "rejectedCount": 25,
           "alreadyDeclaredCount": 0
         }
       }

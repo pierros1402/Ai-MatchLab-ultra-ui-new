@@ -1,25 +1,25 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-09-23",
-  "generatedAt": "2026-09-23T19:33:54.428Z",
+  "generatedAt": "2026-09-24T17:27:46.535Z",
   "severity": "error",
   "issueCounts": {
     "error": 4,
-    "warning": 3,
+    "warning": 5,
     "info": 10
   },
   "alert": true,
   "alertCounts": {
     "error": 4,
-    "warning": 1,
+    "warning": 3,
     "info": 0
   },
-  "activeIssueCount": 17,
-  "actionableIssueCount": 7,
-  "newIssueCount": 8,
-  "newActionableIssueCount": 5,
+  "activeIssueCount": 19,
+  "actionableIssueCount": 9,
+  "newIssueCount": 11,
+  "newActionableIssueCount": 7,
   "resolvedIssueCount": 5,
-  "persistentIssueCount": 9,
+  "persistentIssueCount": 8,
   "activeIssues": [
     {
       "severity": "info",
@@ -34,6 +34,30 @@
         "drop": 31,
         "reason": "canonical_fixture_count_below_static_floor",
         "effectiveFloorMet": true
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-09-23.json",
+        "at": "2026-09-23T20:58:18.121Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -8310
       }
     },
     {
@@ -1037,6 +1061,30 @@
   ],
   "actionableIssues": [
     {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-09-23.json",
+        "at": "2026-09-23T20:58:18.121Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -8310
+      }
+    },
+    {
       "severity": "error",
       "source": "foundation-integrity",
       "type": "foundation_publication_not_ready",
@@ -1760,6 +1808,45 @@
   "newIssues": [
     {
       "severity": "info",
+      "source": "invariant-report",
+      "type": "coverage_floor_drop",
+      "message": "Canonical fixtures are below static floor but meet the effective floor.",
+      "details": {
+        "type": "coverage_floor_drop",
+        "staticFloor": 45,
+        "effectiveFloor": 14,
+        "actualFixtures": 17,
+        "drop": 31,
+        "reason": "canonical_fixture_count_below_static_floor",
+        "effectiveFloorMet": true
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-09-23.json",
+        "at": "2026-09-23T20:58:18.121Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -8310
+      }
+    },
+    {
+      "severity": "info",
       "source": "freshness-report",
       "type": "skipped_freshness_input",
       "message": "Freshness report skipped an optional/missing input.",
@@ -1900,6 +1987,30 @@
   ],
   "newActionableIssues": [
     {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-09-23.json",
+        "at": "2026-09-23T20:58:18.121Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -8310
+      }
+    },
+    {
       "severity": "error",
       "source": "foundation-integrity",
       "type": "foundation_publication_not_ready",
@@ -1972,7 +2083,7 @@
       "message": "Freshness report skipped an optional/missing input.",
       "details": {
         "kind": "expected_matches",
-        "artifact": "expected-matches/2026-09-24.json",
+        "artifact": "expected-matches/2026-09-22.json",
         "at": null,
         "staleReason": "snapshot_stale_against_expected_matches",
         "skipped": "artifact_missing_or_no_timestamp"
@@ -1985,10 +2096,27 @@
       "message": "Freshness report skipped an optional/missing input.",
       "details": {
         "kind": "plan_b",
-        "artifact": "value-plans/2026-09-24/plan-b.json",
+        "artifact": "value-plans/2026-09-22/plan-b.json",
         "at": null,
         "staleReason": "plan_b_stale_against_canonical",
-        "preservation": null,
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-09-22",
+          "currentAthensDay": "2026-09-22",
+          "fixtureCount": 82,
+          "frozenHash": "6601dbda49d751c581b5e378c9f286cc392a0f139d278a4ba23450b7aa676a4d",
+          "currentHash": "6601dbda49d751c581b5e378c9f286cc392a0f139d278a4ba23450b7aa676a4d",
+          "strictFrozenParity": true,
+          "membershipParity": true,
+          "descriptorDrift": false,
+          "publicationMembershipPreserved": false,
+          "authorizedShrink": false,
+          "removedFixtureIds": [],
+          "deferredCurrentFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "exact_current_frozen_membership"
+        },
         "skipped": "artifact_missing_or_no_timestamp"
       }
     },
@@ -1999,10 +2127,27 @@
       "message": "Freshness report skipped an optional/missing input.",
       "details": {
         "kind": "plan_b2",
-        "artifact": "value-plans/2026-09-24/plan-b2.json",
+        "artifact": "value-plans/2026-09-22/plan-b2.json",
         "at": null,
         "staleReason": "plan_b2_stale_against_canonical",
-        "preservation": null,
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-09-22",
+          "currentAthensDay": "2026-09-22",
+          "fixtureCount": 82,
+          "frozenHash": "6601dbda49d751c581b5e378c9f286cc392a0f139d278a4ba23450b7aa676a4d",
+          "currentHash": "6601dbda49d751c581b5e378c9f286cc392a0f139d278a4ba23450b7aa676a4d",
+          "strictFrozenParity": true,
+          "membershipParity": true,
+          "descriptorDrift": false,
+          "publicationMembershipPreserved": false,
+          "authorizedShrink": false,
+          "removedFixtureIds": [],
+          "deferredCurrentFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "exact_current_frozen_membership"
+        },
         "skipped": "artifact_missing_or_no_timestamp"
       }
     },
@@ -2013,18 +2158,15 @@
       "message": "Acquisition skipped slugs during fixture acquisition.",
       "details": {
         "slugs": [
-          "caf.nations_qual",
-          "concacaf.nations.league",
+          "bol.copa",
+          "col.copa",
           "eng.fa_qual",
-          "eng.w.league_cup",
-          "global.gulf_cup",
-          "uefa.euro_u21_qual",
-          "uefa.w.europa",
           "uefa.wchampions",
           "usa.ncaa.m.1",
-          "usa.ncaa.w.1"
+          "usa.ncaa.w.1",
+          "usa.w.usl.1"
         ],
-        "raw": "acquisition_skipped_slugs:caf.nations_qual,concacaf.nations.league,eng.fa_qual,eng.w.league_cup,global.gulf_cup,uefa.euro_u21_qual,uefa.w.europa,uefa.wchampions,usa.ncaa.m.1,usa.ncaa.w.1",
+        "raw": "acquisition_skipped_slugs:bol.copa,col.copa,eng.fa_qual,uefa.wchampions,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
         "contextOnly": false
       }
     },
@@ -2041,21 +2183,6 @@
     }
   ],
   "persistentIssues": [
-    {
-      "severity": "info",
-      "source": "invariant-report",
-      "type": "coverage_floor_drop",
-      "message": "Canonical fixtures are below static floor but meet the effective floor.",
-      "details": {
-        "type": "coverage_floor_drop",
-        "staticFloor": 45,
-        "effectiveFloor": 14,
-        "actualFixtures": 17,
-        "drop": 31,
-        "reason": "canonical_fixture_count_below_static_floor",
-        "effectiveFloorMet": true
-      }
-    },
     {
       "severity": "info",
       "source": "foundation-integrity",
