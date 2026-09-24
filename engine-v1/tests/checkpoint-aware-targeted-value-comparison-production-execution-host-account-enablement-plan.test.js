@@ -867,3 +867,67 @@ test(
     }
   }
 );
+
+test(
+  "R33 source-binds the stable production controller task action while the kernel remains disabled",
+  () => {
+    const result =
+      build();
+
+    const action =
+      result.selectedExecutionHost
+        .taskAction;
+
+    assert.equal(
+      action.taskExecutable.resolution,
+      "PROCESS_EXEC_PATH_AT_ACTIVATION_PRECHECK"
+    );
+
+    assert.equal(
+      action.taskExecutable.runtimeKind,
+      "NODE"
+    );
+
+    assert.deepEqual(
+      action.taskArguments,
+      [
+        "jobs/run-checkpoint-aware-targeted-value-comparison-production-controller.js"
+      ]
+    );
+
+    assert.equal(
+      action.taskWorkingDirectory.resolution,
+      "CANONICAL_ENGINE_V1_ROOT_AT_ACTIVATION_PRECHECK"
+    );
+
+    assert.equal(
+      action.taskWorkingDirectory.repositoryRelativePath,
+      "engine-v1"
+    );
+
+    assert.equal(
+      action.wrapperRepositoryRelativePath,
+      "engine-v1/jobs/run-checkpoint-aware-targeted-value-comparison-production-controller.js"
+    );
+
+    assert.equal(
+      action.shell,
+      false
+    );
+
+    assert.equal(
+      action.expectedBlockedExitCode,
+      78
+    );
+
+    assert.equal(
+      action.productionKernelMustRemainDisabled,
+      true
+    );
+
+    assert.equal(
+      action.repairExecutionAuthorized,
+      false
+    );
+  }
+);

@@ -7,6 +7,10 @@ import {
   checkpointAwareValueComparisonRuntimeIdentitiesAclPostActivationFingerprint
 } from "./checkpoint-aware-targeted-value-comparison-production-runtime-identities-acl-post-activation-verification.js";
 
+import {
+  CHECKPOINT_AWARE_VALUE_COMPARISON_PRODUCTION_CONTROLLER_TASK_ACTION_CONTRACT
+} from "./checkpoint-aware-targeted-value-comparison-production-controller-task-action-contract.js";
+
 export const CHECKPOINT_AWARE_VALUE_COMPARISON_PRODUCTION_EXECUTION_HOST_ACCOUNT_ENABLEMENT_PLAN_SCHEMA =
   "ai-matchlab.checkpoint-aware-value-comparison-production-execution-host-account-enablement-plan.v1";
 
@@ -786,6 +790,38 @@ export function buildCheckpointAwareValueComparisonProductionExecutionHostAccoun
 
       taskName:
         "ValueComparisonProductionController",
+
+      taskAction: {
+        taskExecutable:
+          CHECKPOINT_AWARE_VALUE_COMPARISON_PRODUCTION_CONTROLLER_TASK_ACTION_CONTRACT
+            .taskExecutable,
+
+        taskArguments:
+          CHECKPOINT_AWARE_VALUE_COMPARISON_PRODUCTION_CONTROLLER_TASK_ACTION_CONTRACT
+            .taskArguments,
+
+        taskWorkingDirectory:
+          CHECKPOINT_AWARE_VALUE_COMPARISON_PRODUCTION_CONTROLLER_TASK_ACTION_CONTRACT
+            .taskWorkingDirectory,
+
+        wrapperRepositoryRelativePath:
+          CHECKPOINT_AWARE_VALUE_COMPARISON_PRODUCTION_CONTROLLER_TASK_ACTION_CONTRACT
+            .wrapperRepositoryRelativePath,
+
+        shell:
+          CHECKPOINT_AWARE_VALUE_COMPARISON_PRODUCTION_CONTROLLER_TASK_ACTION_CONTRACT
+            .shell,
+
+        expectedBlockedExitCode:
+          CHECKPOINT_AWARE_VALUE_COMPARISON_PRODUCTION_CONTROLLER_TASK_ACTION_CONTRACT
+            .expectedBlockedExitCode,
+
+        productionKernelMustRemainDisabled:
+          true,
+
+        repairExecutionAuthorized:
+          false
+      },
 
       principal:
         controllerAccount,
