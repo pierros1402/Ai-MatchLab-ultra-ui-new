@@ -1,0 +1,282 @@
+{
+  "schema": "ai-matchlab.identity-recovery-window.v1",
+  "runDayKey": "2026-09-26",
+  "source": "raw_canonical_fixtures_pre_dedup",
+  "window": {
+    "daysBack": 1,
+    "daysForward": 14
+  },
+  "sourceLatestUpdatedAt": "2026-09-25T18:04:45.693Z",
+  "resolver": {
+    "schema": "ai-matchlab.production-identity-resolver-runtime.v2",
+    "extensionLedgerSha256": "f67d46e1dd79fc3f6ec243209d6fbe04cf688de966eeb4080cb8c6866369f25f",
+    "effectiveCounts": {
+      "identityBindings": 124,
+      "retainedFixtureIds": 91,
+      "suppressedFixtureAliases": 91,
+      "sourceFixtureIds": 182
+    }
+  },
+  "status": "REVIEW_REQUIRED",
+  "promotionPolicy": {
+    "broadFuzzyAllowed": false,
+    "unresolvedTwoSidedAutoPromotionAllowed": false,
+    "independentConfirmationRequiredForTwoSidedUnknown": true
+  },
+  "summary": {
+    "scannedDays": 16,
+    "scannedLeagueFiles": 233,
+    "inputRows": 890,
+    "autoPromotable": 0,
+    "pendingIndependentConfirmation": 1,
+    "ambiguous": 1,
+    "conflictRejected": 1,
+    "alreadyManagedPairs": 0,
+    "independentConfirmed": 0,
+    "independentConfirmationRetryPending": 1
+  },
+  "targetDays": [
+    {
+      "dayKey": "2026-09-25",
+      "leagueFiles": 27,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-26",
+      "leagueFiles": 48,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "esp.2",
+          "inputRows": 6,
+          "temporalCrossProviderPairs": 3,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [],
+          "conflictRejected": [
+            {
+              "leagueSlug": "esp.2",
+              "kickoffUtc": "2026-09-26T12:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "rB3DoAi3",
+                "canonicalId": "cid_esp2_ceuta_realsociedadb_20260926",
+                "kickoffUtc": "2026-09-26T12:00:00.000Z",
+                "homeTeam": "Ceuta",
+                "awayTeam": "Real Sociedad B"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401883166",
+                "canonicalId": "cid_esp2_ceuta_realsociedadii_20260926",
+                "kickoffUtc": "2026-09-26T12:00Z",
+                "homeTeam": "Ceuta",
+                "awayTeam": "Real Sociedad II"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "NORMALIZED_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": null,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null,
+                  "productionIdentityComplete": false
+                },
+                "away": {
+                  "kind": "SQUAD_CONFLICT",
+                  "stable": false,
+                  "conflict": true
+                },
+                "stableSides": 1,
+                "conflict": true
+              },
+              "recoveryStatus": "REJECTED_IDENTITY_CONFLICT",
+              "promotionAuthorized": false
+            }
+          ],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 0,
+            "conflictRejected": 1,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
+    },
+    {
+      "dayKey": "2026-09-27",
+      "leagueFiles": 34,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "esp.copa_del_rey",
+          "inputRows": 7,
+          "temporalCrossProviderPairs": 3,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [
+            {
+              "leagueSlug": "esp.copa_del_rey",
+              "kickoffUtc": "2026-09-27T14:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "MPEM2vom",
+                "canonicalId": "cid_espcopadelrey_elespinarsantrafel_prat_20260927",
+                "kickoffUtc": "2026-09-27T14:00:00.000Z",
+                "homeTeam": "El Espinar Sant Rafel",
+                "awayTeam": "Prat"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401918754",
+                "canonicalId": "cid_espcopadelrey_sanrafael_aeprat_20260927",
+                "kickoffUtc": "2026-09-27T14:00Z",
+                "homeTeam": "CF San Rafael",
+                "awayTeam": "AE Prat"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "away": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "stableSides": 0,
+                "conflict": false
+              },
+              "recoveryStatus": "PENDING_INDEPENDENT_CONFIRMATION",
+              "promotionAuthorized": false,
+              "requiresIndependentConfirmation": true,
+              "independentConfirmation": {
+                "status": "PENDING_RETRY",
+                "source": "api_football",
+                "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
+                "oddsUsed": false,
+                "attempts": 1,
+                "lastAttemptAt": "2026-09-25T18:04:45.947Z",
+                "retryable": true,
+                "providerStatus": "MISSING_API_KEY",
+                "evaluationStatus": null,
+                "thirdSourceKickoffRows": 0
+              }
+            }
+          ],
+          "ambiguous": [
+            {
+              "leagueSlug": "esp.copa_del_rey",
+              "kickoffUtc": "2026-09-27T10:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_espcopadelrey_auriense_sanjose_20260927",
+                "cid_espcopadelrey_auriensecentedacademy_sanjose_20260927",
+                "cid_espcopadelrey_sportinghortaleza_atleticounionguimar_20260927"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 1,
+            "ambiguous": 1,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
+    },
+    {
+      "dayKey": "2026-09-28",
+      "leagueFiles": 8,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-29",
+      "leagueFiles": 5,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-09-30",
+      "leagueFiles": 4,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-01",
+      "leagueFiles": 2,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-02",
+      "leagueFiles": 6,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-03",
+      "leagueFiles": 18,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-04",
+      "leagueFiles": 10,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-05",
+      "leagueFiles": 5,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-06",
+      "leagueFiles": 4,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-07",
+      "leagueFiles": 2,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-08",
+      "leagueFiles": 5,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-09",
+      "leagueFiles": 22,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-10",
+      "leagueFiles": 33,
+      "recoveryLeagueReports": []
+    }
+  ],
+  "independentConfirmation": {
+    "source": "api_football",
+    "evidenceEndpoint": "fixtures",
+    "oddsAllowed": false,
+    "fuzzyMatchingAllowed": false,
+    "runAt": "2026-09-25T18:04:45.948Z",
+    "attempts": [
+      {
+        "dayKey": "2026-09-27",
+        "leagueSlug": "esp.copa_del_rey",
+        "key": "cid_espcopadelrey_elespinarsantrafel_prat_20260927|cid_espcopadelrey_sanrafael_aeprat_20260927",
+        "status": "PENDING_RETRY",
+        "providerStatus": "MISSING_API_KEY",
+        "evaluationStatus": null
+      }
+    ]
+  }
+}
