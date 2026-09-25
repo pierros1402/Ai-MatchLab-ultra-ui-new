@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-25",
-  "generatedAt": "2026-09-25T16:21:45.948Z",
+  "generatedAt": "2026-09-25T16:34:18.326Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "a5e8dc85fd80e4e7eb16497e4f73ca08e7d0209d5b3849bd1c807c8467d636ac",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "df5d5f097501c981cb091dab35e451c3272621f1726c1314f746bcb6386c9f7d",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,9 +17,9 @@
   },
   "summary": {
     "canonicalRows": 69,
-    "playedTerminal": 19,
+    "playedTerminal": 20,
     "nonPlayedTerminal": 0,
-    "scheduled": 48,
+    "scheduled": 47,
     "live": 2,
     "interrupted": 0,
     "delayed": 0,
@@ -27,16 +27,16 @@
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 20,
     "acceptedVerifiedFinalArtifacts": 20,
-    "convergedPlayedFinal": 19,
+    "convergedPlayedFinal": 20,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
     "openRows": 49,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 19,
-    "scoredSettlementEligible": 19,
+    "historyEligible": 20,
+    "scoredSettlementEligible": 20,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -2594,14 +2594,14 @@
       "homeTeam": "Pohronie",
       "awayTeam": "I. Bratislava",
       "kickoffUtc": "2026-09-25T14:30:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 0,
+        "scoreAway": 3
       },
       "verifiedFinal": {
         "present": true,
@@ -2611,14 +2611,14 @@
         "dayKey": "2026-09-25",
         "scoreHome": 0,
         "scoreAway": 3,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2698,7 +2698,7 @@
         "status": "FIRST_HALF",
         "statusType": null,
         "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -3425,9 +3425,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_svk2_pohronie_ibratislava_20260925"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -3545,7 +3543,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 9034,
+            "count": 9062,
             "informational": true
           }
         },
@@ -6223,13 +6221,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "a5e8dc85fd80e4e7eb16497e4f73ca08e7d0209d5b3849bd1c807c8467d636ac",
+      "truthFingerprint": "df5d5f097501c981cb091dab35e451c3272621f1726c1314f746bcb6386c9f7d",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 19,
+        "expectedEligibleRows": 20,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_blr2_lida_smorgon_20260925",
@@ -6250,6 +6248,7 @@
           "cid_idn2_balikpapan_dejan_20260925",
           "cid_mex2_alebrijesoaxaca_atleticolapaz_20260925",
           "cid_mex2_mineroszacatecas_piratas_20260925",
+          "cid_svk2_pohronie_ibratislava_20260925",
           "cid_svn2_jadrandekani_ilirija_20260925"
         ],
         "unexpectedFixtureIds": [],
