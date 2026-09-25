@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-25",
-  "generatedAt": "2026-09-25T16:04:27.679Z",
+  "generatedAt": "2026-09-25T16:21:45.948Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "1399656dd1e0ccabb29980443285bf366e6322a0c315a45f319352260915f008",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "a5e8dc85fd80e4e7eb16497e4f73ca08e7d0209d5b3849bd1c807c8467d636ac",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -25,14 +25,14 @@
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 19,
-    "acceptedVerifiedFinalArtifacts": 19,
+    "verifiedFinalArtifacts": 20,
+    "acceptedVerifiedFinalArtifacts": 20,
     "convergedPlayedFinal": 19,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 50,
+    "openRows": 49,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 19,
@@ -2604,18 +2604,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-25",
+        "scoreHome": 0,
+        "scoreAway": 3,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -3425,7 +3425,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_svk2_pohronie_ibratislava_20260925"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -3543,7 +3545,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 9032,
+            "count": 9034,
             "informational": true
           }
         },
@@ -6221,7 +6223,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "1399656dd1e0ccabb29980443285bf366e6322a0c315a45f319352260915f008",
+      "truthFingerprint": "a5e8dc85fd80e4e7eb16497e4f73ca08e7d0209d5b3849bd1c807c8467d636ac",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -6308,7 +6310,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-09-25",
-      "fileCount": 19,
+      "fileCount": 20,
       "authority": "scored_final_evidence"
     },
     "downstream": {
