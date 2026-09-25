@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-25",
-  "generatedAt": "2026-09-25T16:50:26.553Z",
+  "generatedAt": "2026-09-25T17:04:12.431Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "c4ad477b5bf5f029410938c3bdc80b9759208b0cc95caea1c90b0a0f7e179459",
+  "truthFingerprint": "1e4a2da9cfbad955a9e3fede9d9277e974e35517639ab0b1cf9c7a9a9dbfd3c0",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 69,
-    "playedTerminal": 20,
+    "playedTerminal": 21,
     "nonPlayedTerminal": 0,
-    "scheduled": 47,
+    "scheduled": 46,
     "live": 2,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 20,
-    "acceptedVerifiedFinalArtifacts": 20,
-    "convergedPlayedFinal": 20,
+    "verifiedFinalArtifacts": 21,
+    "acceptedVerifiedFinalArtifacts": 21,
+    "convergedPlayedFinal": 21,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 49,
+    "openRows": 48,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 20,
-    "scoredSettlementEligible": 20,
+    "historyEligible": 21,
+    "scoredSettlementEligible": 21,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -536,31 +536,31 @@
       "homeTeam": "Niger",
       "awayTeam": "Lesotho",
       "kickoffUtc": "2026-09-25T15:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-25",
+        "scoreHome": 2,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2695,9 +2695,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -3543,7 +3543,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 9062,
+            "count": 9094,
             "informational": true
           }
         },
@@ -6221,18 +6221,19 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "c4ad477b5bf5f029410938c3bdc80b9759208b0cc95caea1c90b0a0f7e179459",
+      "truthFingerprint": "1e4a2da9cfbad955a9e3fede9d9277e974e35517639ab0b1cf9c7a9a9dbfd3c0",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 20,
+        "expectedEligibleRows": 21,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_blr2_lida_smorgon_20260925",
           "cid_blr2_slonim_bate2_20260925",
           "cid_cafnations_mozambique_senegal_20260925",
+          "cid_cafnations_niger_lesotho_20260925",
           "cid_cafnations_sudan_ethiopia_20260925",
           "cid_cafnations_tanzania_guineabissau_20260925",
           "cid_chn2_wuxiwugou_guangxihengchen_20260925",
@@ -6309,7 +6310,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-09-25",
-      "fileCount": 20,
+      "fileCount": 21,
       "authority": "scored_final_evidence"
     },
     "downstream": {
