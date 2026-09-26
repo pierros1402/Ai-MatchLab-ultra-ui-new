@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-26",
-  "generatedAt": "2026-09-26T01:09:13.027Z",
+  "generatedAt": "2026-09-26T01:31:00.716Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "f16e83d83495c3069fd70a09581f02c65bd558a9ef415842c1f541ea66e6e75b",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "21273b1387dd5e70f7b606663e0f216d8aa83dd6fd89a5ee54c803f5dbbe1ff2",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -19,20 +19,20 @@
     "canonicalRows": 218,
     "playedTerminal": 4,
     "nonPlayedTerminal": 6,
-    "scheduled": 205,
-    "live": 3,
+    "scheduled": 204,
+    "live": 4,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 4,
-    "acceptedVerifiedFinalArtifacts": 4,
+    "verifiedFinalArtifacts": 5,
+    "acceptedVerifiedFinalArtifacts": 5,
     "convergedPlayedFinal": 4,
     "convergedNonPlayedTerminal": 6,
     "pendingVerifiedFinal": 0,
-    "openRows": 208,
+    "openRows": 207,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 4,
@@ -938,18 +938,18 @@
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-26",
+        "scoreHome": 2,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1467,14 +1467,14 @@
       "homeTeam": "Once Caldas",
       "awayTeam": "Atlético Bucaramanga",
       "kickoffUtc": "2026-09-26T01:15Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -1488,7 +1488,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -5442,8 +5442,8 @@
         "status": "FIRST_HALF",
         "statusType": null,
         "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
-        "scoreAway": 0
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -5537,9 +5537,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_IN_PROGRESS",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -10726,7 +10726,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_bra2_vilanova_londrina_20260926"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -10862,7 +10864,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 9214,
+            "count": 9216,
             "informational": true
           }
         },
@@ -13767,7 +13769,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "f16e83d83495c3069fd70a09581f02c65bd558a9ef415842c1f541ea66e6e75b",
+      "truthFingerprint": "21273b1387dd5e70f7b606663e0f216d8aa83dd6fd89a5ee54c803f5dbbe1ff2",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -13839,7 +13841,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-09-26",
-      "fileCount": 4,
+      "fileCount": 5,
       "authority": "scored_final_evidence"
     },
     "downstream": {
