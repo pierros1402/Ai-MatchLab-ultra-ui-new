@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-26",
-  "generatedAt": "2026-09-26T02:46:08.783Z",
+  "generatedAt": "2026-09-26T03:06:37.518Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "c9fee5751adf616727beaad822034b0e9ea5de52f8a7c67491df5a3c741b15fa",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "74e4c5cb60b784b2d87b0af7b04edee3a0d76656b81b1fde97277861ad192cdf",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 218,
-    "playedTerminal": 7,
+    "playedTerminal": 8,
     "nonPlayedTerminal": 6,
-    "scheduled": 202,
+    "scheduled": 201,
     "live": 3,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 7,
-    "acceptedVerifiedFinalArtifacts": 7,
-    "convergedPlayedFinal": 7,
+    "verifiedFinalArtifacts": 11,
+    "acceptedVerifiedFinalArtifacts": 11,
+    "convergedPlayedFinal": 8,
     "convergedNonPlayedTerminal": 6,
     "pendingVerifiedFinal": 0,
-    "openRows": 205,
+    "openRows": 201,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 3,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 7,
-    "scoredSettlementEligible": 7,
+    "historyEligible": 8,
+    "scoredSettlementEligible": 8,
     "voidSettlementEligible": 6
   },
   "fixtures": [
@@ -1470,9 +1470,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_IN_PROGRESS",
         "scoreHome": 1,
         "scoreAway": 3
       },
@@ -5443,21 +5443,21 @@
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 3,
-        "scoreAway": 1
+        "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-26",
+        "scoreHome": 4,
+        "scoreAway": 2,
+        "scoreParity": false
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -5544,18 +5544,18 @@
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-26",
+        "scoreHome": 1,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -6759,31 +6759,31 @@
       "homeTeam": "Carlos Mannucci",
       "awayTeam": "U. San Martin",
       "kickoffUtc": "2026-09-26T01:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 7,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-26",
+        "scoreHome": 7,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -9513,18 +9513,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-26",
+        "scoreHome": 1,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -10726,7 +10726,11 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_mex1_atlante_monterrey_20260926",
+      "cid_mex2_correcaminosuat_jaibabrava_20260926",
+      "cid_usa2_elpaso_tulsa_20260926"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -13767,13 +13771,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "c9fee5751adf616727beaad822034b0e9ea5de52f8a7c67491df5a3c741b15fa",
+      "truthFingerprint": "74e4c5cb60b784b2d87b0af7b04edee3a0d76656b81b1fde97277861ad192cdf",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 7,
+        "expectedEligibleRows": 8,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_bra2_novorizontino_saobernardo_20260926",
@@ -13781,6 +13785,7 @@
           "cid_col1_boyacachico_deportivopasto_20260926",
           "cid_ecu2_elnacional_cumbaya_20260926",
           "cid_par1_nacionalasuncion_sportivoameliano_20260926",
+          "cid_per2_carlosmannucci_usanmartin_20260926",
           "cid_usa2_hartfordathletic_louisvillecity_20260926",
           "cid_usa2_sportingjax_loudoun_20260926"
         ],
@@ -13842,7 +13847,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-09-26",
-      "fileCount": 7,
+      "fileCount": 11,
       "authority": "scored_final_evidence"
     },
     "downstream": {
