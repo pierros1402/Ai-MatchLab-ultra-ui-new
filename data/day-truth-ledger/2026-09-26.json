@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-26",
-  "generatedAt": "2026-09-26T15:04:38.916Z",
+  "generatedAt": "2026-09-26T15:24:36.753Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "dff8c74e2ca86df8e0a0718d297a4604dc5787edca44bae0252e648959277e10",
+  "truthFingerprint": "60c22e1fdaf068047b819290c6ea1294ab853764753b407a5d0e25bd8b633651",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 218,
-    "playedTerminal": 53,
+    "playedTerminal": 55,
     "nonPlayedTerminal": 6,
-    "scheduled": 113,
+    "scheduled": 111,
     "live": 46,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 54,
-    "acceptedVerifiedFinalArtifacts": 54,
-    "convergedPlayedFinal": 53,
+    "verifiedFinalArtifacts": 64,
+    "acceptedVerifiedFinalArtifacts": 64,
+    "convergedPlayedFinal": 55,
     "convergedNonPlayedTerminal": 6,
     "pendingVerifiedFinal": 0,
-    "openRows": 158,
+    "openRows": 148,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 9,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 53,
-    "scoredSettlementEligible": 53,
+    "historyEligible": 55,
+    "scoredSettlementEligible": 55,
     "voidSettlementEligible": 6
   },
   "fixtures": [
@@ -399,18 +399,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-26",
+        "scoreHome": 0,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -497,18 +497,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-26",
+        "scoreHome": 1,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1124,14 +1124,14 @@
       "homeTeam": "South Africa",
       "awayTeam": "Guinea",
       "kickoffUtc": "2026-09-26T13:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": true,
@@ -1141,14 +1141,14 @@
         "dayKey": "2026-09-26",
         "scoreHome": 2,
         "scoreAway": 1,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1862,9 +1862,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 1
       },
@@ -2058,9 +2058,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -2107,10 +2107,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -2156,11 +2156,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -2205,9 +2205,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -2254,11 +2254,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 2,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -2352,9 +2352,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 2
       },
@@ -2401,9 +2401,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -2548,9 +2548,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 1
       },
@@ -2597,9 +2597,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 1
       },
@@ -2646,9 +2646,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 1
       },
@@ -2695,9 +2695,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -2744,9 +2744,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -2793,10 +2793,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 4,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 5,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -2842,10 +2842,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 1,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 2,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -2891,11 +2891,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -2940,11 +2940,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
-        "scoreAway": 1
+        "scoreAway": 3
       },
       "verifiedFinal": {
         "present": false,
@@ -2989,9 +2989,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 2,
         "scoreAway": 1
       },
@@ -3038,9 +3038,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -3087,10 +3087,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 2,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 3,
         "scoreAway": 1
       },
       "verifiedFinal": {
@@ -3136,11 +3136,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_IN_PROGRESS",
         "scoreHome": 0,
-        "scoreAway": 1
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -3185,11 +3185,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -3234,11 +3234,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
-        "scoreAway": 1
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -3283,10 +3283,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 2,
+        "rawStatus": "STATUS_IN_PROGRESS",
+        "scoreHome": 3,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -3332,9 +3332,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 2,
         "scoreAway": 1
       },
@@ -3528,9 +3528,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
         "scoreAway": 2
       },
@@ -5691,18 +5691,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-26",
+        "scoreHome": 3,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -5730,31 +5730,31 @@
       "homeTeam": "Jedinstvo",
       "awayTeam": "Budva",
       "kickoffUtc": "2026-09-26T13:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-26",
+        "scoreHome": 2,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -5932,7 +5932,7 @@
         "status": "FIRST_HALF",
         "statusType": null,
         "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 1,
+        "scoreHome": 2,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -6958,11 +6958,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 3,
-        "scoreAway": 0
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 4,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -7007,11 +7007,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 0,
-        "scoreAway": 1
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -7056,9 +7056,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 2,
         "scoreAway": 0
       },
@@ -7105,10 +7105,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 2,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 3,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -7154,10 +7154,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 2,
         "scoreAway": 1
       },
       "verifiedFinal": {
@@ -7203,10 +7203,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
         "scoreAway": 1
       },
       "verifiedFinal": {
@@ -7252,11 +7252,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
-        "scoreAway": 1
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -7301,9 +7301,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 3
       },
@@ -7350,9 +7350,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 2,
         "scoreAway": 1
       },
@@ -7399,9 +7399,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 2
       },
@@ -7448,9 +7448,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 2,
         "scoreAway": 0
       },
@@ -7497,10 +7497,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -7546,9 +7546,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 3,
         "scoreAway": 3
       },
@@ -7595,9 +7595,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 2,
         "scoreAway": 0
       },
@@ -7644,9 +7644,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 1
       },
@@ -7693,9 +7693,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_IN_PROGRESS",
         "scoreHome": 0,
         "scoreAway": 1
       },
@@ -7791,10 +7791,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 6,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 8,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -7840,10 +7840,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 2,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 3,
         "scoreAway": 2
       },
       "verifiedFinal": {
@@ -7994,18 +7994,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-26",
+        "scoreHome": 1,
+        "scoreAway": 4,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -8043,18 +8043,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-26",
+        "scoreHome": 4,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -8092,18 +8092,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-26",
+        "scoreHome": 3,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -9359,11 +9359,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -10003,18 +10003,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-26",
+        "scoreHome": 1,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -10052,18 +10052,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-26",
+        "scoreHome": 3,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -10150,18 +10150,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-26",
+        "scoreHome": 2,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -10727,7 +10727,15 @@
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
     "conflictFixtureIds": [
-      "cid_cafnations_southafrica_guinea_20260926"
+      "cid_bih2_hadzici_travnik_20260926",
+      "cid_bih2_nkvitez_capljina_20260926",
+      "cid_mne2_grbalj_rudar_20260926",
+      "cid_svk2_lehotapv_galanta_20260926",
+      "cid_svk2_povazskabystrica_mfkbytca_20260926",
+      "cid_svk2_samorin_zvolen_20260926",
+      "cid_wal1_colwynbay_haverfordwest_20260926",
+      "cid_wal1_flint_ammanford_20260926",
+      "cid_wal1_penybont_airbus_20260926"
     ],
     "pendingVerifiedFinalFixtureIds": []
   },
@@ -10864,7 +10872,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 9292,
+            "count": 9296,
             "informational": true
           }
         },
@@ -11006,8 +11014,8 @@
             "overdue": false,
             "settlementSource": "value-comparison",
             "picks": 9,
-            "settled": 0,
-            "unresolved": 9
+            "settled": 2,
+            "unresolved": 7
           }
         },
         {
@@ -11022,8 +11030,8 @@
             "overdue": false,
             "settlementSource": "value-comparison",
             "picks": 9,
-            "settled": 0,
-            "unresolved": 9
+            "settled": 2,
+            "unresolved": 7
           }
         },
         {
@@ -11768,19 +11776,19 @@
               "summary": {
                 "picks": 9,
                 "uniqueMatches": 9,
-                "settled": 0,
-                "wins": 0,
-                "losses": 0,
+                "settled": 2,
+                "wins": 1,
+                "losses": 1,
                 "voids": 0,
-                "unresolved": 9,
+                "unresolved": 7,
                 "unsupported": 0,
-                "hitRate": null,
-                "oddsAvailable": 0,
-                "averageOdds": null,
-                "totalStake": null,
-                "totalReturn": null,
-                "profit": null,
-                "roi": null
+                "hitRate": 0.5,
+                "oddsAvailable": 2,
+                "averageOdds": 1.825,
+                "totalStake": 2,
+                "totalReturn": 1.83,
+                "profit": -0.17,
+                "roi": -0.085
               }
             },
             "planA2": {
@@ -11788,19 +11796,19 @@
               "summary": {
                 "picks": 9,
                 "uniqueMatches": 9,
-                "settled": 0,
-                "wins": 0,
-                "losses": 0,
+                "settled": 2,
+                "wins": 1,
+                "losses": 1,
                 "voids": 0,
-                "unresolved": 9,
+                "unresolved": 7,
                 "unsupported": 0,
-                "hitRate": null,
-                "oddsAvailable": 0,
-                "averageOdds": null,
-                "totalStake": null,
-                "totalReturn": null,
-                "profit": null,
-                "roi": null
+                "hitRate": 0.5,
+                "oddsAvailable": 2,
+                "averageOdds": 1.825,
+                "totalStake": 2,
+                "totalReturn": 1.83,
+                "profit": -0.17,
+                "roi": -0.085
               }
             },
             "planB": {
@@ -13769,13 +13777,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "dff8c74e2ca86df8e0a0718d297a4604dc5787edca44bae0252e648959277e10",
+      "truthFingerprint": "60c22e1fdaf068047b819290c6ea1294ab853764753b407a5d0e25bd8b633651",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 53,
+        "expectedEligibleRows": 55,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_blr2_nivadolbizno_volnapinsk_20260926",
@@ -13788,6 +13796,7 @@
           "cid_bul2_lokgorna_marek_20260926",
           "cid_bul2_rilskisportist_pirinblagoevgrad_20260926",
           "cid_cafnations_kenya_eritrea_20260926",
+          "cid_cafnations_southafrica_guinea_20260926",
           "cid_can1_cavalry_supraduquebec_20260926",
           "cid_chn2_nantongzhiyun_changchunyatai_20260926",
           "cid_col1_boyacachico_deportivopasto_20260926",
@@ -13816,6 +13825,7 @@
           "cid_mex1_tijuana_atlas_20260926",
           "cid_mex2_correcaminosuat_jaibabrava_20260926",
           "cid_mne2_berane_podgorica_20260926",
+          "cid_mne2_jedinstvo_budva_20260926",
           "cid_mne2_kompodgorica_iskra_20260926",
           "cid_par1_nacionalasuncion_sportivoameliano_20260926",
           "cid_per2_carlosmannucci_usanmartin_20260926",
@@ -13890,7 +13900,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-09-26",
-      "fileCount": 54,
+      "fileCount": 64,
       "authority": "scored_final_evidence"
     },
     "downstream": {
