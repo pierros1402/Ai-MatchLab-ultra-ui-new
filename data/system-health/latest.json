@@ -1,96 +1,26 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
-  "dayKey": "2026-09-26",
-  "generatedAt": "2026-09-26T20:02:01.580Z",
-  "severity": "error",
+  "dayKey": "2026-09-27",
+  "generatedAt": "2026-09-26T18:56:58.512Z",
+  "severity": "warning",
   "issueCounts": {
-    "error": 4,
-    "warning": 8,
-    "info": 9
+    "error": 0,
+    "warning": 4,
+    "info": 11
   },
-  "alert": false,
+  "alert": true,
   "alertCounts": {
     "error": 0,
-    "warning": 0,
+    "warning": 1,
     "info": 0
   },
-  "activeIssueCount": 21,
-  "actionableIssueCount": 12,
-  "newIssueCount": 0,
-  "newActionableIssueCount": 0,
-  "resolvedIssueCount": 2,
-  "persistentIssueCount": 21,
+  "activeIssueCount": 15,
+  "actionableIssueCount": 4,
+  "newIssueCount": 4,
+  "newActionableIssueCount": 1,
+  "resolvedIssueCount": 6,
+  "persistentIssueCount": 11,
   "activeIssues": [
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
-      "details": {
-        "reasons": [
-          "plan_a2_stale_against_canonical",
-          "plan_a2_audit_stale_against_canonical",
-          "plan_b_audit_stale_against_canonical",
-          "plan_b2_audit_stale_against_canonical"
-        ]
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2",
-        "artifact": "value-plans/2026-09-26/plan-a2.json",
-        "at": 1790363344258,
-        "staleReason": "plan_a2_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -92694143
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2_audit",
-        "artifact": "value-plans/2026-09-26/plan-a2-audit.json",
-        "at": "2026-09-25T19:09:04.260Z",
-        "staleReason": "plan_a2_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -92694141
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b_audit",
-        "artifact": "value-plans/2026-09-26/plan-b-audit.json",
-        "at": "2026-09-25T19:04:57.333Z",
-        "staleReason": "plan_b_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -92941068
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b2_audit",
-        "artifact": "value-plans/2026-09-26/plan-b2-audit.json",
-        "at": "2026-09-25T19:09:05.271Z",
-        "staleReason": "plan_b2_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -92693130
-      }
-    },
     {
       "severity": "info",
       "source": "freshness-report",
@@ -98,7 +28,7 @@
       "message": "Freshness report skipped an optional/missing input.",
       "details": {
         "kind": "expected_matches",
-        "artifact": "expected-matches/2026-09-26.json",
+        "artifact": "expected-matches/2026-09-27.json",
         "at": null,
         "staleReason": "snapshot_stale_against_expected_matches",
         "skipped": "artifact_missing_or_no_timestamp"
@@ -111,10 +41,30 @@
       "message": "Freshness report skipped an optional/missing input.",
       "details": {
         "kind": "plan_b",
-        "artifact": "value-plans/2026-09-26/plan-b.json",
+        "artifact": "value-plans/2026-09-27/plan-b.json",
         "at": null,
         "staleReason": "plan_b_stale_against_canonical",
-        "preservation": null,
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-09-27",
+          "currentAthensDay": "2026-09-27",
+          "fixtureCount": 155,
+          "frozenHash": "878ea2cbc8470385c995b6fc64751508bdebc163f3fe468487370aa297b17663",
+          "currentHash": "c4a79967c269ed8aaa2c4061c61e2b6b167a20b193e7215a51fb9e9e3191835c",
+          "strictFrozenParity": true,
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": true,
+          "removedFixtureIds": [
+            "cid_arg2_almirantebrown_acassuso_20260927",
+            "cid_arg2_gimnasiayesgrimajujuy_sanmartintucuman_20260927"
+          ],
+          "deferredCurrentFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "persisted_authoritative_prune_ledger"
+        },
         "skipped": "artifact_missing_or_no_timestamp"
       }
     },
@@ -125,25 +75,31 @@
       "message": "Freshness report skipped an optional/missing input.",
       "details": {
         "kind": "plan_b2",
-        "artifact": "value-plans/2026-09-26/plan-b2.json",
+        "artifact": "value-plans/2026-09-27/plan-b2.json",
         "at": null,
         "staleReason": "plan_b2_stale_against_canonical",
-        "preservation": null,
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-09-27",
+          "currentAthensDay": "2026-09-27",
+          "fixtureCount": 155,
+          "frozenHash": "878ea2cbc8470385c995b6fc64751508bdebc163f3fe468487370aa297b17663",
+          "currentHash": "c4a79967c269ed8aaa2c4061c61e2b6b167a20b193e7215a51fb9e9e3191835c",
+          "strictFrozenParity": true,
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": true,
+          "removedFixtureIds": [
+            "cid_arg2_almirantebrown_acassuso_20260927",
+            "cid_arg2_gimnasiayesgrimajujuy_sanmartintucuman_20260927"
+          ],
+          "deferredCurrentFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "persisted_authoritative_prune_ledger"
+        },
         "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "foundation_publication_not_ready",
-      "message": "Publication foundation is not ready.",
-      "details": {
-        "blocked": [
-          {
-            "component": "details",
-            "reason": "details_foundation_not_ready"
-          }
-        ]
       }
     },
     {
@@ -183,24 +139,6 @@
       }
     },
     {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "foundation_publication_not_ready",
-      "details": {
-        "failure": "foundation_publication_not_ready"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
-      }
-    },
-    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -210,7 +148,6 @@
           "arg.supercopa.internacional",
           "bol.copa",
           "caf.nations_qual",
-          "col.copa",
           "concacaf.nations.league",
           "eng.w.1",
           "esp.w.1",
@@ -222,18 +159,19 @@
           "usa.ncaa.w.1",
           "usa.w.usl.1"
         ],
-        "raw": "acquisition_skipped_slugs:arg.supercopa.internacional,bol.copa,caf.nations_qual,col.copa,concacaf.nations.league,eng.w.1,esp.w.1,global.gulf_cup,ned.w.1,uefa.euro_u21_qual,uefa.w.europa,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
+        "raw": "acquisition_skipped_slugs:arg.supercopa.internacional,bol.copa,caf.nations_qual,concacaf.nations.league,eng.w.1,esp.w.1,global.gulf_cup,ned.w.1,uefa.euro_u21_qual,uefa.w.europa,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
         "contextOnly": false
       }
     },
     {
-      "severity": "error",
+      "severity": "warning",
       "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
       "details": {
-        "clean": false,
-        "cleanStrict": false
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     },
     {
@@ -250,10 +188,10 @@
           "slv.1"
         ],
         "summary": {
-          "evidenceSlugCount": 26,
+          "evidenceSlugCount": 27,
           "admittedCount": 5,
           "pendingCount": 0,
-          "rejectedCount": 26,
+          "rejectedCount": 27,
           "alreadyDeclaredCount": 0
         }
       }
@@ -266,6 +204,7 @@
       "details": {
         "rejectedSlugs": [
           "arg.3",
+          "arg.copa",
           "arg.supercopa.internacional",
           "bol.copa",
           "caf.nations_qual",
@@ -293,12 +232,44 @@
           "usa.w.usl.1"
         ],
         "summary": {
-          "evidenceSlugCount": 26,
+          "evidenceSlugCount": 27,
           "admittedCount": 5,
           "pendingCount": 0,
-          "rejectedCount": 26,
+          "rejectedCount": 27,
           "alreadyDeclaredCount": 0
         }
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_a_unresolved_settlement",
+      "message": "Plan A picks are still unresolved.",
+      "details": {
+        "dayKey": "2026-09-27",
+        "todayDayKey": "2026-09-27",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 2,
+        "settled": 0,
+        "unresolved": 2
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_a2_unresolved_settlement",
+      "message": "Plan A2 picks are still unresolved.",
+      "details": {
+        "dayKey": "2026-09-27",
+        "todayDayKey": "2026-09-27",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 2,
+        "settled": 0,
+        "unresolved": 2
       }
     },
     {
@@ -307,8 +278,8 @@
       "type": "active_competition_scope_unresolved",
       "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
       "details": {
-        "dayKey": "2026-09-26",
-        "count": 233,
+        "dayKey": "2026-09-27",
+        "count": 219,
         "competitions": [
           {
             "providerCompetitionId": "CMsJoR6L",
@@ -316,34 +287,20 @@
             "providerCountry": "Algeria",
             "providerName": "Ligue 2",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 15,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "0IjTK2oC",
-              "0pVDOpnm",
-              "2iGfJkA7",
-              "4YV0Z105",
-              "8AYLMOGa",
-              "CvT8SgmL",
-              "ER7QkNpn",
-              "GzInLBue",
-              "MiBYm1Fb",
-              "OfUpwp1t",
-              "Uc8tsg2E",
-              "WKXhyOVh",
-              "YVlyJtGO",
-              "bFXGVJaU",
-              "jkU8XuVH"
+              "rNJvNXAr"
             ]
           },
           {
-            "providerCompetitionId": "fHKtJ7km",
-            "providerPath": "/football/argentina/international-super-cup/",
+            "providerCompetitionId": "67tiEYre",
+            "providerPath": "/football/argentina/copa-argentina/",
             "providerCountry": "Argentina",
-            "providerName": "International Super Cup",
+            "providerName": "Copa Argentina",
             "reasonCode": "unmapped_provider_competition",
             "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "ULtcNL8L"
+              "zcbjKO7E"
             ]
           },
           {
@@ -352,15 +309,11 @@
             "providerCountry": "Argentina",
             "providerName": "Primera B",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 7,
+            "targetDayFixtureCount": 3,
             "targetDaySourceIds": [
-              "0WdcoTv3",
-              "CCeMqG3b",
-              "Gp2DoxZo",
-              "WvLmVGl5",
-              "Yqe5q79F",
-              "pOEANPnd",
-              "xbB2PoIq"
+              "46YfTfJH",
+              "I9bUsfYA",
+              "hnB6sovS"
             ]
           },
           {
@@ -369,15 +322,45 @@
             "providerCountry": "Argentina",
             "providerName": "Primera C",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 7,
+            "targetDayFixtureCount": 3,
             "targetDaySourceIds": [
-              "G4SzeIzQ",
-              "IDjTc3d5",
-              "MTopbCjl",
-              "QwfydsRH",
-              "bPVakdbm",
-              "ptfs2Zsg",
-              "zVQOqhSO"
+              "CSeZ3eDt",
+              "j9w1fUkD",
+              "lYbC1oct"
+            ]
+          },
+          {
+            "providerCompetitionId": "8GrEGw7F",
+            "providerPath": "/football/argentina/torneo-federal/",
+            "providerCountry": "Argentina",
+            "providerName": "Torneo Federal - Additional match",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "6mgEfRi4"
+            ]
+          },
+          {
+            "providerCompetitionId": "8GrEGw7F",
+            "providerPath": "/football/argentina/torneo-federal/",
+            "providerCountry": "Argentina",
+            "providerName": "Torneo Federal - Play Offs",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "6qTrSNn2",
+              "fmb3nhYG"
+            ]
+          },
+          {
+            "providerCompetitionId": "Uc8bs2C5",
+            "providerPath": "/football/argentina/torneo-promocional-amateur/",
+            "providerCountry": "Argentina",
+            "providerName": "Torneo Promocional Amateur - Promotion",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "hGeyAvgM"
             ]
           },
           {
@@ -388,32 +371,20 @@
             "reasonCode": "unmapped_provider_competition",
             "targetDayFixtureCount": 2,
             "targetDaySourceIds": [
-              "2s1n3QKk",
-              "hl90CUc3"
-            ]
-          },
-          {
-            "providerCompetitionId": "SSSnG4Vr",
-            "providerPath": "/football/asia/asian-games/",
-            "providerCountry": "Asia",
-            "providerName": "Asian Games - Play Offs",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "Qgq74bvh",
-              "YadLteno"
+              "0vrzEsZ7",
+              "lIklNoCL"
             ]
           },
           {
             "providerCompetitionId": "QyhgY0uA",
             "providerPath": "/football/asia/fifa-asean-cup/",
             "providerCountry": "Asia",
-            "providerName": "FIFA ASEAN Cup - Division 1",
+            "providerName": "FIFA ASEAN Cup - Division 2",
             "reasonCode": "unmapped_provider_competition",
             "targetDayFixtureCount": 2,
             "targetDaySourceIds": [
-              "M7u0YAhl",
-              "QyfUwXUQ"
+              "IJOUDC6K",
+              "htXrj9ED"
             ]
           },
           {
@@ -424,75 +395,8 @@
             "reasonCode": "unmapped_provider_competition",
             "targetDayFixtureCount": 2,
             "targetDaySourceIds": [
-              "dUBxEBit",
-              "vHTFDst0"
-            ]
-          },
-          {
-            "providerCompetitionId": "QVSnFjdC",
-            "providerPath": "/football/austria/karnten/",
-            "providerCountry": "Austria",
-            "providerName": "Karnten",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 5,
-            "targetDaySourceIds": [
-              "IFrS2lbs",
-              "Offsa6c6",
-              "jTtz1SSg",
-              "nXid8AzK",
-              "ppF42Kn1"
-            ]
-          },
-          {
-            "providerCompetitionId": "bqRfDUQO",
-            "providerPath": "/football/austria/niederosterreich/",
-            "providerCountry": "Austria",
-            "providerName": "Niederosterreich",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "ITmqlKIF",
-              "bs8erknf"
-            ]
-          },
-          {
-            "providerCompetitionId": "tSKDXXBt",
-            "providerPath": "/football/austria/oberosterreich/",
-            "providerCountry": "Austria",
-            "providerName": "Oberosterreich",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "0vO9Zppe",
-              "ruZVtTiL"
-            ]
-          },
-          {
-            "providerCompetitionId": "xO5c0isJ",
-            "providerPath": "/football/austria/regionalliga-east/",
-            "providerCountry": "Austria",
-            "providerName": "Regionalliga East",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 4,
-            "targetDaySourceIds": [
-              "fqd4Ebx1",
-              "jm7QLtpR",
-              "nJhdGK7l",
-              "pj4IN2FE"
-            ]
-          },
-          {
-            "providerCompetitionId": "nqGSLXJ5",
-            "providerPath": "/football/austria/regionalliga-north/",
-            "providerCountry": "Austria",
-            "providerName": "Regionalliga North",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 4,
-            "targetDaySourceIds": [
-              "2H1uz2Ir",
-              "A1esfN9E",
-              "I78eWJH7",
-              "WUv8hAY9"
+              "CKIhATj5",
+              "nsXNBLAC"
             ]
           },
           {
@@ -501,11 +405,9 @@
             "providerCountry": "Austria",
             "providerName": "Regionalliga South",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 3,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "Cn99wwED",
-              "GYIrDDvK",
-              "zaPKpfLt"
+              "UcUtghml"
             ]
           },
           {
@@ -514,14 +416,10 @@
             "providerCountry": "Austria",
             "providerName": "Regionalliga West",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 6,
+            "targetDayFixtureCount": 2,
             "targetDaySourceIds": [
-              "6Jcm9yVO",
-              "Ae08dboJ",
-              "Y5auBc0C",
-              "jR3h0tnf",
-              "tbsYCJVa",
-              "x2hfK1wQ"
+              "Ov20bKG6",
+              "YXwQEu1m"
             ]
           },
           {
@@ -530,23 +428,9 @@
             "providerCountry": "Austria",
             "providerName": "Salzburg",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 3,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "6PxzFdl4",
-              "GIUL5hBj",
-              "rPM7Te3c"
-            ]
-          },
-          {
-            "providerCompetitionId": "KMwoSTuI",
-            "providerPath": "/football/austria/steiermark/",
-            "providerCountry": "Austria",
-            "providerName": "Steiermark",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "0nQuUs9O",
-              "Iuznu8HP"
+              "EktrDzJG"
             ]
           },
           {
@@ -555,13 +439,9 @@
             "providerCountry": "Austria",
             "providerName": "Tirol",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 5,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "Eq3fEhWs",
-              "WC5wdBGD",
-              "bJcPJE8K",
-              "dAs2G0JP",
-              "nc12CW0f"
+              "6qTXAvsm"
             ]
           },
           {
@@ -570,12 +450,10 @@
             "providerCountry": "Austria",
             "providerName": "Vorarlberg",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 4,
+            "targetDayFixtureCount": 2,
             "targetDaySourceIds": [
-              "6q3dddAL",
-              "8CizkE2e",
-              "bJalbIu9",
-              "zagSjzYr"
+              "6PC2zFm2",
+              "ba9fxyJk"
             ]
           },
           {
@@ -584,13 +462,9 @@
             "providerCountry": "Austria",
             "providerName": "Wien",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 5,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "4Oj1DpGi",
-              "EyZtQNac",
-              "hlaM5gEr",
-              "nVte2K7j",
-              "p2hH92FG"
+              "M1xkO1U9"
             ]
           },
           {
@@ -599,31 +473,25 @@
             "providerCountry": "Belgium",
             "providerName": "Belgian Cup",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 11,
+            "targetDayFixtureCount": 5,
             "targetDaySourceIds": [
-              "6DjmQSNH",
-              "CUPigRi4",
-              "G6SCtl8b",
-              "KfTai5MG",
-              "KxnPVWgt",
-              "MqX5QyI0",
-              "OWVKvSxB",
-              "QZlXTAOh",
-              "bmmuSlg5",
-              "dpUSx67N",
-              "fcVDOFnD"
+              "EJTcScml",
+              "EwfeO6hU",
+              "SSKbXqVp",
+              "UkU4rAwn",
+              "vHRqemNi"
             ]
           },
           {
-            "providerCompetitionId": "W4NRuwPE",
-            "providerPath": "/football/belgium/national-division-1-acff/",
+            "providerCompetitionId": "SKQEYfHl",
+            "providerPath": "/football/belgium/national-division-1-vv/",
             "providerCountry": "Belgium",
-            "providerName": "National Division 1 - ACFF",
+            "providerName": "National Division 1 - VV",
             "reasonCode": "unmapped_provider_competition",
             "targetDayFixtureCount": 2,
             "targetDaySourceIds": [
-              "EiyBJbcc",
-              "MclPee5j"
+              "IkuVLdCO",
+              "nFxj9JSI"
             ]
           },
           {
@@ -632,13 +500,11 @@
             "providerCountry": "Belgium",
             "providerName": "Second Amateur Division Group ACFF",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 5,
+            "targetDayFixtureCount": 3,
             "targetDaySourceIds": [
-              "IgVDzTqT",
-              "SMiYNk0N",
-              "WxX5xkFG",
-              "bPYcvBp4",
-              "jaVktXFi"
+              "ldCwilU9",
+              "lxMqV67j",
+              "tW8VhAac"
             ]
           },
           {
@@ -647,11 +513,10 @@
             "providerCountry": "Belgium",
             "providerName": "Second Amateur Division Group VFV A",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 3,
+            "targetDayFixtureCount": 2,
             "targetDaySourceIds": [
-              "A199RYCj",
-              "ALa3mGZ9",
-              "vJIwXfkT"
+              "CllstYRq",
+              "GI2Bof4M"
             ]
           },
           {
@@ -660,11 +525,9 @@
             "providerCountry": "Belgium",
             "providerName": "Second Amateur Division Group VFV B",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 3,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "AJ2mnIde",
-              "K6F1eMZ8",
-              "SWI9g04L"
+              "4MJxu1kS"
             ]
           },
           {
@@ -673,13 +536,23 @@
             "providerCountry": "Benin",
             "providerName": "Ligue 1",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 5,
+            "targetDayFixtureCount": 4,
             "targetDaySourceIds": [
-              "QyYod0Ss",
-              "UFkUwJCD",
-              "bkWgfvcf",
-              "d2iMuur1",
-              "dMsG1M4K"
+              "48lLcD3n",
+              "6FZ1hIR6",
+              "EuwAjddJ",
+              "xz2SeiYb"
+            ]
+          },
+          {
+            "providerCompetitionId": "rmq0Oa6D",
+            "providerPath": "/football/bhutan/premier-league/",
+            "providerCountry": "Bhutan",
+            "providerName": "Premier League",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "vXHdvJmS"
             ]
           },
           {
@@ -688,10 +561,11 @@
             "providerCountry": "Bolivia",
             "providerName": "Copa Pacena",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
+            "targetDayFixtureCount": 3,
             "targetDaySourceIds": [
-              "hpkMwqwo",
-              "pvx81nVi"
+              "QVhNc4UG",
+              "URs1jMMj",
+              "bqiVeraT"
             ]
           },
           {
@@ -700,9 +574,19 @@
             "providerCountry": "Bolivia",
             "providerName": "Copa Simon Bolivar",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
+            "targetDayFixtureCount": 11,
             "targetDaySourceIds": [
-              "KdMw2t2E"
+              "6DKo0KWQ",
+              "A99PhxP0",
+              "ITLNAApn",
+              "IZCXjGgD",
+              "QgPV8lFb",
+              "SneD3gwJ",
+              "fZd55F86",
+              "n9gc7yvf",
+              "rD4JEJoK",
+              "vqjk9c9s",
+              "xdBHfbfl"
             ]
           },
           {
@@ -711,14 +595,9 @@
             "providerCountry": "Bosnia and Herzegovina",
             "providerName": "Prva Liga - RS",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 6,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "4KjTELz0",
-              "6D6lZkME",
-              "6gGfD8ae",
-              "CCYLGs6m",
-              "pbhqBwzP",
-              "xYlyDa5C"
+              "EJJ2BnU7"
             ]
           },
           {
@@ -727,10 +606,9 @@
             "providerCountry": "Brazil",
             "providerName": "Brasiliense 2",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "C8OyDdie",
-              "KYRqBzM7"
+              "veQTEIMr"
             ]
           },
           {
@@ -739,12 +617,48 @@
             "providerCountry": "Brazil",
             "providerName": "Carioca B1",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 4,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "QNYDb6Iq",
-              "Uimr4SfM",
-              "Y7SFIR9F",
-              "YmxMdpmd"
+              "0fU7Kmu3"
+            ]
+          },
+          {
+            "providerCompetitionId": "tvB5qQKi",
+            "providerPath": "/football/brazil/carioca-b2/",
+            "providerCountry": "Brazil",
+            "providerName": "Carioca B2",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 6,
+            "targetDaySourceIds": [
+              "EmkLI0wo",
+              "K4rNxMUG",
+              "SUoVz0aT",
+              "bDx1VwNj",
+              "nipFvr04",
+              "tfs7t4Vi"
+            ]
+          },
+          {
+            "providerCompetitionId": "pS5l8tl3",
+            "providerPath": "/football/brazil/catarinense-3/",
+            "providerCountry": "Brazil",
+            "providerName": "Catarinense 3",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "Kj5T2jmR",
+              "YZ6L4CIE"
+            ]
+          },
+          {
+            "providerCompetitionId": "A1nbRAP7",
+            "providerPath": "/football/brazil/cearense-3/",
+            "providerCountry": "Brazil",
+            "providerName": "Cearense 3 - Play Offs",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "6FPuMJeo"
             ]
           },
           {
@@ -753,9 +667,8 @@
             "providerCountry": "Brazil",
             "providerName": "Copa FMF (Mato Grosso)",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 4,
+            "targetDayFixtureCount": 3,
             "targetDaySourceIds": [
-              "OGLttMpn",
               "YitXLIaU",
               "dUJlv0Fb",
               "hI6xf3BD"
@@ -767,9 +680,11 @@
             "providerCountry": "Brazil",
             "providerName": "Copa Parana",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
+            "targetDayFixtureCount": 3,
             "targetDaySourceIds": [
-              "Ui1J9Yed"
+              "MRcBBfRq",
+              "UBiDVFIF",
+              "dbg5Xyl3"
             ]
           },
           {
@@ -780,7 +695,18 @@
             "reasonCode": "unmapped_provider_competition",
             "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "jTCVCX76"
+              "AydGGF8s"
+            ]
+          },
+          {
+            "providerCompetitionId": "Mo79aCsI",
+            "providerPath": "/football/brazil/copa-rio/",
+            "providerCountry": "Brazil",
+            "providerName": "Copa Rio",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "GSPaeVyp"
             ]
           },
           {
@@ -791,8 +717,26 @@
             "reasonCode": "unmapped_provider_competition",
             "targetDayFixtureCount": 2,
             "targetDaySourceIds": [
-              "CCEruxOs",
-              "KxIjwGhf"
+              "4hMRMf8D",
+              "GtTCpb0K"
+            ]
+          },
+          {
+            "providerCompetitionId": "0EFQW51m",
+            "providerPath": "/football/brazil/gaucho-2/",
+            "providerCountry": "Brazil",
+            "providerName": "Gaucho 2",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 8,
+            "targetDaySourceIds": [
+              "0GygQc7b",
+              "8tu1OyxB",
+              "ATJYxyi4",
+              "CxUvHgUp",
+              "EawoSJxn",
+              "IgNtyFLG",
+              "tfw9MF6N",
+              "xGLQvcMi"
             ]
           },
           {
@@ -801,9 +745,10 @@
             "providerCountry": "Brazil",
             "providerName": "Gaucho 3",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
+            "targetDayFixtureCount": 2,
             "targetDaySourceIds": [
-              "jox6Twp9"
+              "0vUiKZ6e",
+              "YiSaIDy8"
             ]
           },
           {
@@ -812,9 +757,12 @@
             "providerCountry": "Brazil",
             "providerName": "Goiano 2",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
+            "targetDayFixtureCount": 4,
             "targetDaySourceIds": [
-              "dQ3oENVI"
+              "0fbISMpC",
+              "KGd2W4om",
+              "hUfAUrGa",
+              "lY5WyRNP"
             ]
           },
           {
@@ -823,11 +771,10 @@
             "providerCountry": "Brazil",
             "providerName": "Mineiro 3",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 3,
+            "targetDayFixtureCount": 2,
             "targetDaySourceIds": [
-              "QqvEAWjd",
-              "bmZ7WDDF",
-              "hjWaYZr3"
+              "2qOoPV5k",
+              "W0XFUirS"
             ]
           },
           {
@@ -836,22 +783,23 @@
             "providerCountry": "Brazil",
             "providerName": "Paraibano 2",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
+            "targetDayFixtureCount": 4,
             "targetDaySourceIds": [
-              "zRueFQS0"
+              "2DsmHnbl",
+              "63aEKL4t",
+              "riq3D4cD",
+              "vHcMIaZh"
             ]
           },
           {
-            "providerCompetitionId": "E5CB3Akl",
-            "providerPath": "/football/brazil/piauiense-2/",
+            "providerCompetitionId": "lUJnLvE6",
+            "providerPath": "/football/brazil/paranaense-3/",
             "providerCountry": "Brazil",
-            "providerName": "Piauiense 2",
+            "providerName": "Paranaense 3 - Play Offs",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 3,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "G2pgiJKD",
-              "vuzki1zK",
-              "zBLKoubs"
+              "vs7K4VDk"
             ]
           },
           {
@@ -860,58 +808,9 @@
             "providerCountry": "Brazil",
             "providerName": "Serie C - Second stage",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "KWbmCP0S",
-              "lnkJ63Ok"
-            ]
-          },
-          {
-            "providerCompetitionId": "I1gLElRF",
-            "providerPath": "/football/brazil/tocantinense-2/",
-            "providerCountry": "Brazil",
-            "providerName": "Tocantinense 2",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 4,
-            "targetDaySourceIds": [
-              "I76icyBG",
-              "M3eVkg3j",
-              "QX9aeFuT",
-              "Wj8qact4"
-            ]
-          },
-          {
-            "providerCompetitionId": "KbcYoAhg",
-            "providerPath": "/football/bulgaria/third-league-north-east/",
-            "providerCountry": "Bulgaria",
-            "providerName": "Third League - North-East",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 8,
-            "targetDaySourceIds": [
-              "I7OCeUMH",
-              "KAsPpD8a",
-              "SzoXriwC",
-              "jDOl1Yht",
-              "ncqHnZwm",
-              "pfQ4cjh5",
-              "xUMdaCNh",
-              "z1lusV7O"
-            ]
-          },
-          {
-            "providerCompetitionId": "GjtpsSiI",
-            "providerPath": "/football/bulgaria/third-league-north-west/",
-            "providerCountry": "Bulgaria",
-            "providerName": "Third League - North-West",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 6,
-            "targetDaySourceIds": [
-              "ADRc6s2E",
-              "E9Gyaafl",
-              "OxwdnMAr",
-              "djy4p0ue",
-              "r7ZBrvA7",
-              "rRP54LWQ"
+              "MamR4sg2"
             ]
           },
           {
@@ -920,35 +819,9 @@
             "providerCountry": "Bulgaria",
             "providerName": "Third League - South-East",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 8,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "AyUgf7AM",
-              "I9LhznJj",
-              "MwzNu8eT",
-              "lpOXnP2d",
-              "pGDvbkBc",
-              "tKKPloYq",
-              "tvBJASf3",
-              "xOVodTuA"
-            ]
-          },
-          {
-            "providerCompetitionId": "OGqhu6MU",
-            "providerPath": "/football/bulgaria/third-league-south-west/",
-            "providerCountry": "Bulgaria",
-            "providerName": "Third League - South-West",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 9,
-            "targetDaySourceIds": [
-              "A5PwslbL",
-              "EZJAemDE",
-              "IV8ll55l",
-              "MRHPXqL7",
-              "MaNIgRsR",
-              "QeCdnqz1",
-              "lEJHZ5je",
-              "tlG9ySLr",
-              "xhRVrAT8"
+              "Sf9R86PF"
             ]
           },
           {
@@ -957,12 +830,22 @@
             "providerCountry": "Burkina Faso",
             "providerName": "Premier League",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 4,
+            "targetDayFixtureCount": 3,
             "targetDaySourceIds": [
-              "2yjbXsAT",
-              "44OFkPPc",
-              "b7yURLXj",
-              "fBnjZ3uH"
+              "CURNm3fA",
+              "GQG1tLnp",
+              "prQVosPM"
+            ]
+          },
+          {
+            "providerCompetitionId": "AaUcNRHq",
+            "providerPath": "/football/burundi/primus-league/",
+            "providerCountry": "Burundi",
+            "providerName": "Primus League",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "ITgcK42L"
             ]
           },
           {
@@ -971,21 +854,13 @@
             "providerCountry": "Chile",
             "providerName": "Copa Chile - Play Offs",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
+            "targetDayFixtureCount": 5,
             "targetDaySourceIds": [
-              "0OPnB2V6",
-              "r5pFd3GD"
-            ]
-          },
-          {
-            "providerCompetitionId": "rizh8dAa",
-            "providerPath": "/football/chile/segunda-division/",
-            "providerCountry": "Chile",
-            "providerName": "Segunda Division - Promotion Group",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
-            "targetDaySourceIds": [
-              "jyyNbaUQ"
+              "2Rra0oHl",
+              "WQhABWtm",
+              "bVgL7TOE",
+              "pW7X5SAO",
+              "vidI9ABa"
             ]
           },
           {
@@ -996,7 +871,31 @@
             "reasonCode": "unmapped_provider_competition",
             "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "GxsX4Uig"
+              "rPrP6jNt"
+            ]
+          },
+          {
+            "providerCompetitionId": "Obnyfa5k",
+            "providerPath": "/football/costa-rica/liga-de-ascenso/",
+            "providerCountry": "Costa Rica",
+            "providerName": "Liga de Ascenso - Apertura",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 3,
+            "targetDaySourceIds": [
+              "6gABWN9g",
+              "EJDJU1v6",
+              "fySnpddq"
+            ]
+          },
+          {
+            "providerCompetitionId": "Icm7fQhL",
+            "providerPath": "/football/czech-republic/3-cfl-group-a/",
+            "providerCountry": "Czech Republic",
+            "providerName": "3. CFL - Group A",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "nufzG966"
             ]
           }
         ]
@@ -1008,7 +907,7 @@
       "type": "active_competition_structural_adapter_gap",
       "message": "Effective competition slugs still rely on supplemental acquisition because no league adapter is enabled.",
       "details": {
-        "dayKey": "2026-09-26",
+        "dayKey": "2026-09-27",
         "slugs": [
           "crc.1",
           "gua.1",
@@ -1039,43 +938,43 @@
         ],
         "missingPlans": [],
         "planA": {
-          "count": 9,
+          "count": 2,
           "summary": {
-            "picks": 9,
-            "uniqueMatches": 9,
-            "settled": 9,
-            "wins": 4,
-            "losses": 5,
+            "picks": 2,
+            "uniqueMatches": 2,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
             "voids": 0,
-            "unresolved": 0,
+            "unresolved": 2,
             "unsupported": 0,
-            "hitRate": 0.4444,
-            "oddsAvailable": 8,
-            "averageOdds": 1.62,
-            "totalStake": 8,
-            "totalReturn": 6.5,
-            "profit": -1.5,
-            "roi": -0.1875
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
           }
         },
         "planA2": {
-          "count": 9,
+          "count": 2,
           "summary": {
-            "picks": 9,
-            "uniqueMatches": 9,
-            "settled": 9,
-            "wins": 4,
-            "losses": 5,
+            "picks": 2,
+            "uniqueMatches": 2,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
             "voids": 0,
-            "unresolved": 0,
+            "unresolved": 2,
             "unsupported": 0,
-            "hitRate": 0.4444,
-            "oddsAvailable": 8,
-            "averageOdds": 1.62,
-            "totalStake": 8,
-            "totalReturn": 6.5,
-            "profit": -1.5,
-            "roi": -0.1875
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
           }
         },
         "planB": {
@@ -1124,104 +1023,901 @@
   "actionableIssues": [
     {
       "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
       "details": {
-        "reasons": [
-          "plan_a2_stale_against_canonical",
-          "plan_a2_audit_stale_against_canonical",
-          "plan_b_audit_stale_against_canonical",
-          "plan_b2_audit_stale_against_canonical"
-        ]
+        "slugs": [
+          "arg.supercopa.internacional",
+          "bol.copa",
+          "caf.nations_qual",
+          "concacaf.nations.league",
+          "eng.w.1",
+          "esp.w.1",
+          "global.gulf_cup",
+          "ned.w.1",
+          "uefa.euro_u21_qual",
+          "uefa.w.europa",
+          "usa.ncaa.m.1",
+          "usa.ncaa.w.1",
+          "usa.w.usl.1"
+        ],
+        "raw": "acquisition_skipped_slugs:arg.supercopa.internacional,bol.copa,caf.nations_qual,concacaf.nations.league,eng.w.1,esp.w.1,global.gulf_cup,ned.w.1,uefa.euro_u21_qual,uefa.w.europa,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
+        "contextOnly": false
       }
     },
     {
       "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
       "details": {
-        "kind": "plan_a2",
-        "artifact": "value-plans/2026-09-26/plan-a2.json",
-        "at": 1790363344258,
-        "staleReason": "plan_a2_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -92694143
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     },
     {
       "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
+      "source": "active-competition-completeness",
+      "type": "active_competition_scope_unresolved",
+      "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
       "details": {
-        "kind": "plan_a2_audit",
-        "artifact": "value-plans/2026-09-26/plan-a2-audit.json",
-        "at": "2026-09-25T19:09:04.260Z",
-        "staleReason": "plan_a2_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -92694141
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b_audit",
-        "artifact": "value-plans/2026-09-26/plan-b-audit.json",
-        "at": "2026-09-25T19:04:57.333Z",
-        "staleReason": "plan_b_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -92941068
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b2_audit",
-        "artifact": "value-plans/2026-09-26/plan-b2-audit.json",
-        "at": "2026-09-25T19:09:05.271Z",
-        "staleReason": "plan_b2_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -92693130
-      }
-    },
-    {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "foundation_publication_not_ready",
-      "message": "Publication foundation is not ready.",
-      "details": {
-        "blocked": [
+        "dayKey": "2026-09-27",
+        "count": 219,
+        "competitions": [
           {
-            "component": "details",
-            "reason": "details_foundation_not_ready"
+            "providerCompetitionId": "CMsJoR6L",
+            "providerPath": "/football/algeria/ligue-2/",
+            "providerCountry": "Algeria",
+            "providerName": "Ligue 2",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "rNJvNXAr"
+            ]
+          },
+          {
+            "providerCompetitionId": "67tiEYre",
+            "providerPath": "/football/argentina/copa-argentina/",
+            "providerCountry": "Argentina",
+            "providerName": "Copa Argentina",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "zcbjKO7E"
+            ]
+          },
+          {
+            "providerCompetitionId": "zsav4HyS",
+            "providerPath": "/football/argentina/primera-b/",
+            "providerCountry": "Argentina",
+            "providerName": "Primera B",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 3,
+            "targetDaySourceIds": [
+              "46YfTfJH",
+              "I9bUsfYA",
+              "hnB6sovS"
+            ]
+          },
+          {
+            "providerCompetitionId": "SvvJdZT1",
+            "providerPath": "/football/argentina/primera-c/",
+            "providerCountry": "Argentina",
+            "providerName": "Primera C",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 3,
+            "targetDaySourceIds": [
+              "CSeZ3eDt",
+              "j9w1fUkD",
+              "lYbC1oct"
+            ]
+          },
+          {
+            "providerCompetitionId": "8GrEGw7F",
+            "providerPath": "/football/argentina/torneo-federal/",
+            "providerCountry": "Argentina",
+            "providerName": "Torneo Federal - Additional match",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "6mgEfRi4"
+            ]
+          },
+          {
+            "providerCompetitionId": "8GrEGw7F",
+            "providerPath": "/football/argentina/torneo-federal/",
+            "providerCountry": "Argentina",
+            "providerName": "Torneo Federal - Play Offs",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "6qTrSNn2",
+              "fmb3nhYG"
+            ]
+          },
+          {
+            "providerCompetitionId": "Uc8bs2C5",
+            "providerPath": "/football/argentina/torneo-promocional-amateur/",
+            "providerCountry": "Argentina",
+            "providerName": "Torneo Promocional Amateur - Promotion",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "hGeyAvgM"
+            ]
+          },
+          {
+            "providerCompetitionId": "IqGI0R16",
+            "providerPath": "/football/asia/arabian-gulf-cup/",
+            "providerCountry": "Asia",
+            "providerName": "Arabian Gulf Cup",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "0vrzEsZ7",
+              "lIklNoCL"
+            ]
+          },
+          {
+            "providerCompetitionId": "QyhgY0uA",
+            "providerPath": "/football/asia/fifa-asean-cup/",
+            "providerCountry": "Asia",
+            "providerName": "FIFA ASEAN Cup - Division 2",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "IJOUDC6K",
+              "htXrj9ED"
+            ]
+          },
+          {
+            "providerCompetitionId": "U3ZwHCRa",
+            "providerPath": "/football/austria/burgenland/",
+            "providerCountry": "Austria",
+            "providerName": "Burgenland",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "CKIhATj5",
+              "nsXNBLAC"
+            ]
+          },
+          {
+            "providerCompetitionId": "KdEzKBlI",
+            "providerPath": "/football/austria/regionalliga-south/",
+            "providerCountry": "Austria",
+            "providerName": "Regionalliga South",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "UcUtghml"
+            ]
+          },
+          {
+            "providerCompetitionId": "hKcOIYdm",
+            "providerPath": "/football/austria/regionalliga-west/",
+            "providerCountry": "Austria",
+            "providerName": "Regionalliga West",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "Ov20bKG6",
+              "YXwQEu1m"
+            ]
+          },
+          {
+            "providerCompetitionId": "nPNLVBtg",
+            "providerPath": "/football/austria/salzburg/",
+            "providerCountry": "Austria",
+            "providerName": "Salzburg",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "EktrDzJG"
+            ]
+          },
+          {
+            "providerCompetitionId": "GlXgQ7AU",
+            "providerPath": "/football/austria/tirol/",
+            "providerCountry": "Austria",
+            "providerName": "Tirol",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "6qTXAvsm"
+            ]
+          },
+          {
+            "providerCompetitionId": "zJVBpBen",
+            "providerPath": "/football/austria/vorarlberg/",
+            "providerCountry": "Austria",
+            "providerName": "Vorarlberg",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "6PC2zFm2",
+              "ba9fxyJk"
+            ]
+          },
+          {
+            "providerCompetitionId": "fLoDrkQb",
+            "providerPath": "/football/austria/wien/",
+            "providerCountry": "Austria",
+            "providerName": "Wien",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "M1xkO1U9"
+            ]
+          },
+          {
+            "providerCompetitionId": "bPpRunJc",
+            "providerPath": "/football/belgium/belgian-cup/",
+            "providerCountry": "Belgium",
+            "providerName": "Belgian Cup",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 5,
+            "targetDaySourceIds": [
+              "EJTcScml",
+              "EwfeO6hU",
+              "SSKbXqVp",
+              "UkU4rAwn",
+              "vHRqemNi"
+            ]
+          },
+          {
+            "providerCompetitionId": "SKQEYfHl",
+            "providerPath": "/football/belgium/national-division-1-vv/",
+            "providerCountry": "Belgium",
+            "providerName": "National Division 1 - VV",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "IkuVLdCO",
+              "nFxj9JSI"
+            ]
+          },
+          {
+            "providerCompetitionId": "trXUUCGD",
+            "providerPath": "/football/belgium/second-amateur-division-group-acff/",
+            "providerCountry": "Belgium",
+            "providerName": "Second Amateur Division Group ACFF",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 3,
+            "targetDaySourceIds": [
+              "ldCwilU9",
+              "lxMqV67j",
+              "tW8VhAac"
+            ]
+          },
+          {
+            "providerCompetitionId": "C6mPhG8K",
+            "providerPath": "/football/belgium/second-amateur-division-group-vfv-a/",
+            "providerCountry": "Belgium",
+            "providerName": "Second Amateur Division Group VFV A",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "CllstYRq",
+              "GI2Bof4M"
+            ]
+          },
+          {
+            "providerCompetitionId": "WjUemfWs",
+            "providerPath": "/football/belgium/second-amateur-division-group-vfv-b/",
+            "providerCountry": "Belgium",
+            "providerName": "Second Amateur Division Group VFV B",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "4MJxu1kS"
+            ]
+          },
+          {
+            "providerCompetitionId": "ETxOBRJN",
+            "providerPath": "/football/benin/ligue-1/",
+            "providerCountry": "Benin",
+            "providerName": "Ligue 1",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 4,
+            "targetDaySourceIds": [
+              "48lLcD3n",
+              "6FZ1hIR6",
+              "EuwAjddJ",
+              "xz2SeiYb"
+            ]
+          },
+          {
+            "providerCompetitionId": "rmq0Oa6D",
+            "providerPath": "/football/bhutan/premier-league/",
+            "providerCountry": "Bhutan",
+            "providerName": "Premier League",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "vXHdvJmS"
+            ]
+          },
+          {
+            "providerCompetitionId": "EXafQpj2",
+            "providerPath": "/football/bolivia/copa-pacena/",
+            "providerCountry": "Bolivia",
+            "providerName": "Copa Pacena",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 3,
+            "targetDaySourceIds": [
+              "QVhNc4UG",
+              "URs1jMMj",
+              "bqiVeraT"
+            ]
+          },
+          {
+            "providerCompetitionId": "tK1nS6Lk",
+            "providerPath": "/football/bolivia/copa-simon-bolivar/",
+            "providerCountry": "Bolivia",
+            "providerName": "Copa Simon Bolivar",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 11,
+            "targetDaySourceIds": [
+              "6DKo0KWQ",
+              "A99PhxP0",
+              "ITLNAApn",
+              "IZCXjGgD",
+              "QgPV8lFb",
+              "SneD3gwJ",
+              "fZd55F86",
+              "n9gc7yvf",
+              "rD4JEJoK",
+              "vqjk9c9s",
+              "xdBHfbfl"
+            ]
+          },
+          {
+            "providerCompetitionId": "6cSiQCsI",
+            "providerPath": "/football/bosnia-and-herzegovina/prva-liga-rs/",
+            "providerCountry": "Bosnia and Herzegovina",
+            "providerName": "Prva Liga - RS",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "EJJ2BnU7"
+            ]
+          },
+          {
+            "providerCompetitionId": "0OadQWs9",
+            "providerPath": "/football/brazil/brasiliense-2/",
+            "providerCountry": "Brazil",
+            "providerName": "Brasiliense 2",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "veQTEIMr"
+            ]
+          },
+          {
+            "providerCompetitionId": "WORytiEa",
+            "providerPath": "/football/brazil/carioca-b1/",
+            "providerCountry": "Brazil",
+            "providerName": "Carioca B1",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "0fU7Kmu3"
+            ]
+          },
+          {
+            "providerCompetitionId": "tvB5qQKi",
+            "providerPath": "/football/brazil/carioca-b2/",
+            "providerCountry": "Brazil",
+            "providerName": "Carioca B2",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 6,
+            "targetDaySourceIds": [
+              "EmkLI0wo",
+              "K4rNxMUG",
+              "SUoVz0aT",
+              "bDx1VwNj",
+              "nipFvr04",
+              "tfs7t4Vi"
+            ]
+          },
+          {
+            "providerCompetitionId": "pS5l8tl3",
+            "providerPath": "/football/brazil/catarinense-3/",
+            "providerCountry": "Brazil",
+            "providerName": "Catarinense 3",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "Kj5T2jmR",
+              "YZ6L4CIE"
+            ]
+          },
+          {
+            "providerCompetitionId": "A1nbRAP7",
+            "providerPath": "/football/brazil/cearense-3/",
+            "providerCountry": "Brazil",
+            "providerName": "Cearense 3 - Play Offs",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "6FPuMJeo"
+            ]
+          },
+          {
+            "providerCompetitionId": "SQkxg4qh",
+            "providerPath": "/football/brazil/copa-fmf-mato-grosso/",
+            "providerCountry": "Brazil",
+            "providerName": "Copa FMF (Mato Grosso)",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 3,
+            "targetDaySourceIds": [
+              "YitXLIaU",
+              "dUJlv0Fb",
+              "hI6xf3BD"
+            ]
+          },
+          {
+            "providerCompetitionId": "MslCUCFa",
+            "providerPath": "/football/brazil/copa-parana/",
+            "providerCountry": "Brazil",
+            "providerName": "Copa Parana",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 3,
+            "targetDaySourceIds": [
+              "MRcBBfRq",
+              "UBiDVFIF",
+              "dbg5Xyl3"
+            ]
+          },
+          {
+            "providerCompetitionId": "QuaSFGDt",
+            "providerPath": "/football/brazil/copa-paulista/",
+            "providerCountry": "Brazil",
+            "providerName": "Copa Paulista - Play Offs",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "AydGGF8s"
+            ]
+          },
+          {
+            "providerCompetitionId": "Mo79aCsI",
+            "providerPath": "/football/brazil/copa-rio/",
+            "providerCountry": "Brazil",
+            "providerName": "Copa Rio",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "GSPaeVyp"
+            ]
+          },
+          {
+            "providerCompetitionId": "SSPNdsBd",
+            "providerPath": "/football/brazil/copa-santa-catarina/",
+            "providerCountry": "Brazil",
+            "providerName": "Copa Santa Catarina",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "4hMRMf8D",
+              "GtTCpb0K"
+            ]
+          },
+          {
+            "providerCompetitionId": "0EFQW51m",
+            "providerPath": "/football/brazil/gaucho-2/",
+            "providerCountry": "Brazil",
+            "providerName": "Gaucho 2",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 8,
+            "targetDaySourceIds": [
+              "0GygQc7b",
+              "8tu1OyxB",
+              "ATJYxyi4",
+              "CxUvHgUp",
+              "EawoSJxn",
+              "IgNtyFLG",
+              "tfw9MF6N",
+              "xGLQvcMi"
+            ]
+          },
+          {
+            "providerCompetitionId": "vNQFjfyJ",
+            "providerPath": "/football/brazil/gaucho-3/",
+            "providerCountry": "Brazil",
+            "providerName": "Gaucho 3",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "0vUiKZ6e",
+              "YiSaIDy8"
+            ]
+          },
+          {
+            "providerCompetitionId": "Agh4UN0C",
+            "providerPath": "/football/brazil/goiano-2/",
+            "providerCountry": "Brazil",
+            "providerName": "Goiano 2",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 4,
+            "targetDaySourceIds": [
+              "0fbISMpC",
+              "KGd2W4om",
+              "hUfAUrGa",
+              "lY5WyRNP"
+            ]
+          },
+          {
+            "providerCompetitionId": "hSiQjx3b",
+            "providerPath": "/football/brazil/mineiro-3/",
+            "providerCountry": "Brazil",
+            "providerName": "Mineiro 3",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "2qOoPV5k",
+              "W0XFUirS"
+            ]
+          },
+          {
+            "providerCompetitionId": "beUodkQp",
+            "providerPath": "/football/brazil/paraibano-2/",
+            "providerCountry": "Brazil",
+            "providerName": "Paraibano 2",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 4,
+            "targetDaySourceIds": [
+              "2DsmHnbl",
+              "63aEKL4t",
+              "riq3D4cD",
+              "vHcMIaZh"
+            ]
+          },
+          {
+            "providerCompetitionId": "lUJnLvE6",
+            "providerPath": "/football/brazil/paranaense-3/",
+            "providerCountry": "Brazil",
+            "providerName": "Paranaense 3 - Play Offs",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "vs7K4VDk"
+            ]
+          },
+          {
+            "providerCompetitionId": "GYVKoqKl",
+            "providerPath": "/football/brazil/serie-c/",
+            "providerCountry": "Brazil",
+            "providerName": "Serie C - Second stage",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "MamR4sg2"
+            ]
+          },
+          {
+            "providerCompetitionId": "fyhyqlN5",
+            "providerPath": "/football/bulgaria/third-league-south-east/",
+            "providerCountry": "Bulgaria",
+            "providerName": "Third League - South-East",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "Sf9R86PF"
+            ]
+          },
+          {
+            "providerCompetitionId": "ttOGsd3b",
+            "providerPath": "/football/burkina-faso/premier-league/",
+            "providerCountry": "Burkina Faso",
+            "providerName": "Premier League",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 3,
+            "targetDaySourceIds": [
+              "CURNm3fA",
+              "GQG1tLnp",
+              "prQVosPM"
+            ]
+          },
+          {
+            "providerCompetitionId": "AaUcNRHq",
+            "providerPath": "/football/burundi/primus-league/",
+            "providerCountry": "Burundi",
+            "providerName": "Primus League",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "ITgcK42L"
+            ]
+          },
+          {
+            "providerCompetitionId": "G4Ya6zuC",
+            "providerPath": "/football/chile/copa-chile/",
+            "providerCountry": "Chile",
+            "providerName": "Copa Chile - Play Offs",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 5,
+            "targetDaySourceIds": [
+              "2Rra0oHl",
+              "WQhABWtm",
+              "bVgL7TOE",
+              "pW7X5SAO",
+              "vidI9ABa"
+            ]
+          },
+          {
+            "providerCompetitionId": "rizh8dAa",
+            "providerPath": "/football/chile/segunda-division/",
+            "providerCountry": "Chile",
+            "providerName": "Segunda Division - Relegation Group",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "rPrP6jNt"
+            ]
+          },
+          {
+            "providerCompetitionId": "Obnyfa5k",
+            "providerPath": "/football/costa-rica/liga-de-ascenso/",
+            "providerCountry": "Costa Rica",
+            "providerName": "Liga de Ascenso - Apertura",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 3,
+            "targetDaySourceIds": [
+              "6gABWN9g",
+              "EJDJU1v6",
+              "fySnpddq"
+            ]
+          },
+          {
+            "providerCompetitionId": "Icm7fQhL",
+            "providerPath": "/football/czech-republic/3-cfl-group-a/",
+            "providerCountry": "Czech Republic",
+            "providerName": "3. CFL - Group A",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "nufzG966"
+            ]
           }
         ]
       }
     },
     {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "foundation_publication_not_ready",
+      "severity": "warning",
+      "source": "active-competition-completeness",
+      "type": "active_competition_structural_adapter_gap",
+      "message": "Effective competition slugs still rely on supplemental acquisition because no league adapter is enabled.",
       "details": {
-        "failure": "foundation_publication_not_ready"
+        "dayKey": "2026-09-27",
+        "slugs": [
+          "crc.1",
+          "gua.1",
+          "hon.1",
+          "par.1",
+          "slv.1"
+        ]
+      }
+    }
+  ],
+  "newIssues": [
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-09-27.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
       }
     },
     {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
       "details": {
-        "failure": "snapshot_stale"
+        "kind": "plan_b",
+        "artifact": "value-plans/2026-09-27/plan-b.json",
+        "at": null,
+        "staleReason": "plan_b_stale_against_canonical",
+        "preservation": null,
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b2",
+        "artifact": "value-plans/2026-09-27/plan-b2.json",
+        "at": null,
+        "staleReason": "plan_b2_stale_against_canonical",
+        "preservation": null,
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "arg.supercopa.internacional",
+          "bol.copa",
+          "caf.nations_qual",
+          "concacaf.nations.league",
+          "eng.w.1",
+          "esp.w.1",
+          "global.gulf_cup",
+          "ned.w.1",
+          "uefa.euro_u21_qual",
+          "uefa.w.europa",
+          "usa.ncaa.m.1",
+          "usa.ncaa.w.1",
+          "usa.w.usl.1"
+        ],
+        "raw": "acquisition_skipped_slugs:arg.supercopa.internacional,bol.copa,caf.nations_qual,concacaf.nations.league,eng.w.1,esp.w.1,global.gulf_cup,ned.w.1,uefa.euro_u21_qual,uefa.w.europa,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
+        "contextOnly": false
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "arg.supercopa.internacional",
+          "bol.copa",
+          "caf.nations_qual",
+          "concacaf.nations.league",
+          "eng.w.1",
+          "esp.w.1",
+          "global.gulf_cup",
+          "ned.w.1",
+          "uefa.euro_u21_qual",
+          "uefa.w.europa",
+          "usa.ncaa.m.1",
+          "usa.ncaa.w.1",
+          "usa.w.usl.1"
+        ],
+        "raw": "acquisition_skipped_slugs:arg.supercopa.internacional,bol.copa,caf.nations_qual,concacaf.nations.league,eng.w.1,esp.w.1,global.gulf_cup,ned.w.1,uefa.euro_u21_qual,uefa.w.europa,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
+        "contextOnly": false
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-09-26.json",
+        "at": "2026-09-26T17:32:04.303Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -7923
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-09-26.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b",
+        "artifact": "value-plans/2026-09-26/plan-b.json",
+        "at": null,
+        "staleReason": "plan_b_stale_against_canonical",
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-09-26",
+          "currentAthensDay": "2026-09-26",
+          "fixtureCount": 228,
+          "frozenHash": "4d94e62c62720bb3ab4e0cbf72206b7c893ce6176571f71abd550cb2186c1e8f",
+          "currentHash": "a74d53280b1fe1e4b4739a8791fd464d4516cb2114849977d769eda3a5ce1c6c",
+          "strictFrozenParity": true,
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": true,
+          "removedFixtureIds": [
+            "cid_arg2_defensoresbelgrano_ferrocarriloeste_20260926",
+            "cid_eng3_doncasterrovers_oxfordunited_20260926",
+            "cid_eng3_huddersfieldtown_lutontown_20260926",
+            "cid_eng3_leicestercity_wiganathletic_20260926",
+            "cid_eng3_stevenage_sheffieldwednesday_20260926",
+            "cid_espcopadelrey_auriensecentedacademy_sanjose_20260926",
+            "cid_espcopadelrey_cptalayuela_sportingalcazar_20260926",
+            "cid_espcopadelrey_maracena_taverneslavalldigna_20260926",
+            "cid_espcopadelrey_sanrafael_aeprat_20260926",
+            "cid_espcopadelrey_sportinghortaleza_atleticounionguimar_20260926"
+          ],
+          "deferredCurrentFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "persisted_authoritative_prune_ledger"
+        },
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b2",
+        "artifact": "value-plans/2026-09-26/plan-b2.json",
+        "at": null,
+        "staleReason": "plan_b2_stale_against_canonical",
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-09-26",
+          "currentAthensDay": "2026-09-26",
+          "fixtureCount": 228,
+          "frozenHash": "4d94e62c62720bb3ab4e0cbf72206b7c893ce6176571f71abd550cb2186c1e8f",
+          "currentHash": "a74d53280b1fe1e4b4739a8791fd464d4516cb2114849977d769eda3a5ce1c6c",
+          "strictFrozenParity": true,
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": true,
+          "removedFixtureIds": [
+            "cid_arg2_defensoresbelgrano_ferrocarriloeste_20260926",
+            "cid_eng3_doncasterrovers_oxfordunited_20260926",
+            "cid_eng3_huddersfieldtown_lutontown_20260926",
+            "cid_eng3_leicestercity_wiganathletic_20260926",
+            "cid_eng3_stevenage_sheffieldwednesday_20260926",
+            "cid_espcopadelrey_auriensecentedacademy_sanjose_20260926",
+            "cid_espcopadelrey_cptalayuela_sportingalcazar_20260926",
+            "cid_espcopadelrey_maracena_taverneslavalldigna_20260926",
+            "cid_espcopadelrey_sanrafael_aeprat_20260926",
+            "cid_espcopadelrey_sportinghortaleza_atleticounionguimar_20260926"
+          ],
+          "deferredCurrentFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "persisted_authoritative_prune_ledger"
+        },
+        "skipped": "artifact_missing_or_no_timestamp"
       }
     },
     {
@@ -1249,897 +1945,9 @@
         "raw": "acquisition_skipped_slugs:arg.supercopa.internacional,bol.copa,caf.nations_qual,col.copa,concacaf.nations.league,eng.w.1,esp.w.1,global.gulf_cup,ned.w.1,uefa.euro_u21_qual,uefa.w.europa,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
         "contextOnly": false
       }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
-      "details": {
-        "clean": false,
-        "cleanStrict": false
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "active-competition-completeness",
-      "type": "active_competition_scope_unresolved",
-      "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
-      "details": {
-        "dayKey": "2026-09-26",
-        "count": 233,
-        "competitions": [
-          {
-            "providerCompetitionId": "CMsJoR6L",
-            "providerPath": "/football/algeria/ligue-2/",
-            "providerCountry": "Algeria",
-            "providerName": "Ligue 2",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 15,
-            "targetDaySourceIds": [
-              "0IjTK2oC",
-              "0pVDOpnm",
-              "2iGfJkA7",
-              "4YV0Z105",
-              "8AYLMOGa",
-              "CvT8SgmL",
-              "ER7QkNpn",
-              "GzInLBue",
-              "MiBYm1Fb",
-              "OfUpwp1t",
-              "Uc8tsg2E",
-              "WKXhyOVh",
-              "YVlyJtGO",
-              "bFXGVJaU",
-              "jkU8XuVH"
-            ]
-          },
-          {
-            "providerCompetitionId": "fHKtJ7km",
-            "providerPath": "/football/argentina/international-super-cup/",
-            "providerCountry": "Argentina",
-            "providerName": "International Super Cup",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
-            "targetDaySourceIds": [
-              "ULtcNL8L"
-            ]
-          },
-          {
-            "providerCompetitionId": "zsav4HyS",
-            "providerPath": "/football/argentina/primera-b/",
-            "providerCountry": "Argentina",
-            "providerName": "Primera B",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 7,
-            "targetDaySourceIds": [
-              "0WdcoTv3",
-              "CCeMqG3b",
-              "Gp2DoxZo",
-              "WvLmVGl5",
-              "Yqe5q79F",
-              "pOEANPnd",
-              "xbB2PoIq"
-            ]
-          },
-          {
-            "providerCompetitionId": "SvvJdZT1",
-            "providerPath": "/football/argentina/primera-c/",
-            "providerCountry": "Argentina",
-            "providerName": "Primera C",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 7,
-            "targetDaySourceIds": [
-              "G4SzeIzQ",
-              "IDjTc3d5",
-              "MTopbCjl",
-              "QwfydsRH",
-              "bPVakdbm",
-              "ptfs2Zsg",
-              "zVQOqhSO"
-            ]
-          },
-          {
-            "providerCompetitionId": "IqGI0R16",
-            "providerPath": "/football/asia/arabian-gulf-cup/",
-            "providerCountry": "Asia",
-            "providerName": "Arabian Gulf Cup",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "2s1n3QKk",
-              "hl90CUc3"
-            ]
-          },
-          {
-            "providerCompetitionId": "SSSnG4Vr",
-            "providerPath": "/football/asia/asian-games/",
-            "providerCountry": "Asia",
-            "providerName": "Asian Games - Play Offs",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "Qgq74bvh",
-              "YadLteno"
-            ]
-          },
-          {
-            "providerCompetitionId": "QyhgY0uA",
-            "providerPath": "/football/asia/fifa-asean-cup/",
-            "providerCountry": "Asia",
-            "providerName": "FIFA ASEAN Cup - Division 1",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "M7u0YAhl",
-              "QyfUwXUQ"
-            ]
-          },
-          {
-            "providerCompetitionId": "U3ZwHCRa",
-            "providerPath": "/football/austria/burgenland/",
-            "providerCountry": "Austria",
-            "providerName": "Burgenland",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "dUBxEBit",
-              "vHTFDst0"
-            ]
-          },
-          {
-            "providerCompetitionId": "QVSnFjdC",
-            "providerPath": "/football/austria/karnten/",
-            "providerCountry": "Austria",
-            "providerName": "Karnten",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 5,
-            "targetDaySourceIds": [
-              "IFrS2lbs",
-              "Offsa6c6",
-              "jTtz1SSg",
-              "nXid8AzK",
-              "ppF42Kn1"
-            ]
-          },
-          {
-            "providerCompetitionId": "bqRfDUQO",
-            "providerPath": "/football/austria/niederosterreich/",
-            "providerCountry": "Austria",
-            "providerName": "Niederosterreich",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "ITmqlKIF",
-              "bs8erknf"
-            ]
-          },
-          {
-            "providerCompetitionId": "tSKDXXBt",
-            "providerPath": "/football/austria/oberosterreich/",
-            "providerCountry": "Austria",
-            "providerName": "Oberosterreich",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "0vO9Zppe",
-              "ruZVtTiL"
-            ]
-          },
-          {
-            "providerCompetitionId": "xO5c0isJ",
-            "providerPath": "/football/austria/regionalliga-east/",
-            "providerCountry": "Austria",
-            "providerName": "Regionalliga East",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 4,
-            "targetDaySourceIds": [
-              "fqd4Ebx1",
-              "jm7QLtpR",
-              "nJhdGK7l",
-              "pj4IN2FE"
-            ]
-          },
-          {
-            "providerCompetitionId": "nqGSLXJ5",
-            "providerPath": "/football/austria/regionalliga-north/",
-            "providerCountry": "Austria",
-            "providerName": "Regionalliga North",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 4,
-            "targetDaySourceIds": [
-              "2H1uz2Ir",
-              "A1esfN9E",
-              "I78eWJH7",
-              "WUv8hAY9"
-            ]
-          },
-          {
-            "providerCompetitionId": "KdEzKBlI",
-            "providerPath": "/football/austria/regionalliga-south/",
-            "providerCountry": "Austria",
-            "providerName": "Regionalliga South",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 3,
-            "targetDaySourceIds": [
-              "Cn99wwED",
-              "GYIrDDvK",
-              "zaPKpfLt"
-            ]
-          },
-          {
-            "providerCompetitionId": "hKcOIYdm",
-            "providerPath": "/football/austria/regionalliga-west/",
-            "providerCountry": "Austria",
-            "providerName": "Regionalliga West",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 6,
-            "targetDaySourceIds": [
-              "6Jcm9yVO",
-              "Ae08dboJ",
-              "Y5auBc0C",
-              "jR3h0tnf",
-              "tbsYCJVa",
-              "x2hfK1wQ"
-            ]
-          },
-          {
-            "providerCompetitionId": "nPNLVBtg",
-            "providerPath": "/football/austria/salzburg/",
-            "providerCountry": "Austria",
-            "providerName": "Salzburg",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 3,
-            "targetDaySourceIds": [
-              "6PxzFdl4",
-              "GIUL5hBj",
-              "rPM7Te3c"
-            ]
-          },
-          {
-            "providerCompetitionId": "KMwoSTuI",
-            "providerPath": "/football/austria/steiermark/",
-            "providerCountry": "Austria",
-            "providerName": "Steiermark",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "0nQuUs9O",
-              "Iuznu8HP"
-            ]
-          },
-          {
-            "providerCompetitionId": "GlXgQ7AU",
-            "providerPath": "/football/austria/tirol/",
-            "providerCountry": "Austria",
-            "providerName": "Tirol",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 5,
-            "targetDaySourceIds": [
-              "Eq3fEhWs",
-              "WC5wdBGD",
-              "bJcPJE8K",
-              "dAs2G0JP",
-              "nc12CW0f"
-            ]
-          },
-          {
-            "providerCompetitionId": "zJVBpBen",
-            "providerPath": "/football/austria/vorarlberg/",
-            "providerCountry": "Austria",
-            "providerName": "Vorarlberg",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 4,
-            "targetDaySourceIds": [
-              "6q3dddAL",
-              "8CizkE2e",
-              "bJalbIu9",
-              "zagSjzYr"
-            ]
-          },
-          {
-            "providerCompetitionId": "fLoDrkQb",
-            "providerPath": "/football/austria/wien/",
-            "providerCountry": "Austria",
-            "providerName": "Wien",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 5,
-            "targetDaySourceIds": [
-              "4Oj1DpGi",
-              "EyZtQNac",
-              "hlaM5gEr",
-              "nVte2K7j",
-              "p2hH92FG"
-            ]
-          },
-          {
-            "providerCompetitionId": "bPpRunJc",
-            "providerPath": "/football/belgium/belgian-cup/",
-            "providerCountry": "Belgium",
-            "providerName": "Belgian Cup",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 11,
-            "targetDaySourceIds": [
-              "6DjmQSNH",
-              "CUPigRi4",
-              "G6SCtl8b",
-              "KfTai5MG",
-              "KxnPVWgt",
-              "MqX5QyI0",
-              "OWVKvSxB",
-              "QZlXTAOh",
-              "bmmuSlg5",
-              "dpUSx67N",
-              "fcVDOFnD"
-            ]
-          },
-          {
-            "providerCompetitionId": "W4NRuwPE",
-            "providerPath": "/football/belgium/national-division-1-acff/",
-            "providerCountry": "Belgium",
-            "providerName": "National Division 1 - ACFF",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "EiyBJbcc",
-              "MclPee5j"
-            ]
-          },
-          {
-            "providerCompetitionId": "trXUUCGD",
-            "providerPath": "/football/belgium/second-amateur-division-group-acff/",
-            "providerCountry": "Belgium",
-            "providerName": "Second Amateur Division Group ACFF",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 5,
-            "targetDaySourceIds": [
-              "IgVDzTqT",
-              "SMiYNk0N",
-              "WxX5xkFG",
-              "bPYcvBp4",
-              "jaVktXFi"
-            ]
-          },
-          {
-            "providerCompetitionId": "C6mPhG8K",
-            "providerPath": "/football/belgium/second-amateur-division-group-vfv-a/",
-            "providerCountry": "Belgium",
-            "providerName": "Second Amateur Division Group VFV A",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 3,
-            "targetDaySourceIds": [
-              "A199RYCj",
-              "ALa3mGZ9",
-              "vJIwXfkT"
-            ]
-          },
-          {
-            "providerCompetitionId": "WjUemfWs",
-            "providerPath": "/football/belgium/second-amateur-division-group-vfv-b/",
-            "providerCountry": "Belgium",
-            "providerName": "Second Amateur Division Group VFV B",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 3,
-            "targetDaySourceIds": [
-              "AJ2mnIde",
-              "K6F1eMZ8",
-              "SWI9g04L"
-            ]
-          },
-          {
-            "providerCompetitionId": "ETxOBRJN",
-            "providerPath": "/football/benin/ligue-1/",
-            "providerCountry": "Benin",
-            "providerName": "Ligue 1",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 5,
-            "targetDaySourceIds": [
-              "QyYod0Ss",
-              "UFkUwJCD",
-              "bkWgfvcf",
-              "d2iMuur1",
-              "dMsG1M4K"
-            ]
-          },
-          {
-            "providerCompetitionId": "EXafQpj2",
-            "providerPath": "/football/bolivia/copa-pacena/",
-            "providerCountry": "Bolivia",
-            "providerName": "Copa Pacena",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "hpkMwqwo",
-              "pvx81nVi"
-            ]
-          },
-          {
-            "providerCompetitionId": "tK1nS6Lk",
-            "providerPath": "/football/bolivia/copa-simon-bolivar/",
-            "providerCountry": "Bolivia",
-            "providerName": "Copa Simon Bolivar",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
-            "targetDaySourceIds": [
-              "KdMw2t2E"
-            ]
-          },
-          {
-            "providerCompetitionId": "6cSiQCsI",
-            "providerPath": "/football/bosnia-and-herzegovina/prva-liga-rs/",
-            "providerCountry": "Bosnia and Herzegovina",
-            "providerName": "Prva Liga - RS",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 6,
-            "targetDaySourceIds": [
-              "4KjTELz0",
-              "6D6lZkME",
-              "6gGfD8ae",
-              "CCYLGs6m",
-              "pbhqBwzP",
-              "xYlyDa5C"
-            ]
-          },
-          {
-            "providerCompetitionId": "0OadQWs9",
-            "providerPath": "/football/brazil/brasiliense-2/",
-            "providerCountry": "Brazil",
-            "providerName": "Brasiliense 2",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "C8OyDdie",
-              "KYRqBzM7"
-            ]
-          },
-          {
-            "providerCompetitionId": "WORytiEa",
-            "providerPath": "/football/brazil/carioca-b1/",
-            "providerCountry": "Brazil",
-            "providerName": "Carioca B1",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 4,
-            "targetDaySourceIds": [
-              "QNYDb6Iq",
-              "Uimr4SfM",
-              "Y7SFIR9F",
-              "YmxMdpmd"
-            ]
-          },
-          {
-            "providerCompetitionId": "SQkxg4qh",
-            "providerPath": "/football/brazil/copa-fmf-mato-grosso/",
-            "providerCountry": "Brazil",
-            "providerName": "Copa FMF (Mato Grosso)",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 4,
-            "targetDaySourceIds": [
-              "OGLttMpn",
-              "YitXLIaU",
-              "dUJlv0Fb",
-              "hI6xf3BD"
-            ]
-          },
-          {
-            "providerCompetitionId": "MslCUCFa",
-            "providerPath": "/football/brazil/copa-parana/",
-            "providerCountry": "Brazil",
-            "providerName": "Copa Parana",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
-            "targetDaySourceIds": [
-              "Ui1J9Yed"
-            ]
-          },
-          {
-            "providerCompetitionId": "QuaSFGDt",
-            "providerPath": "/football/brazil/copa-paulista/",
-            "providerCountry": "Brazil",
-            "providerName": "Copa Paulista - Play Offs",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
-            "targetDaySourceIds": [
-              "jTCVCX76"
-            ]
-          },
-          {
-            "providerCompetitionId": "SSPNdsBd",
-            "providerPath": "/football/brazil/copa-santa-catarina/",
-            "providerCountry": "Brazil",
-            "providerName": "Copa Santa Catarina",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "CCEruxOs",
-              "KxIjwGhf"
-            ]
-          },
-          {
-            "providerCompetitionId": "vNQFjfyJ",
-            "providerPath": "/football/brazil/gaucho-3/",
-            "providerCountry": "Brazil",
-            "providerName": "Gaucho 3",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
-            "targetDaySourceIds": [
-              "jox6Twp9"
-            ]
-          },
-          {
-            "providerCompetitionId": "Agh4UN0C",
-            "providerPath": "/football/brazil/goiano-2/",
-            "providerCountry": "Brazil",
-            "providerName": "Goiano 2",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
-            "targetDaySourceIds": [
-              "dQ3oENVI"
-            ]
-          },
-          {
-            "providerCompetitionId": "hSiQjx3b",
-            "providerPath": "/football/brazil/mineiro-3/",
-            "providerCountry": "Brazil",
-            "providerName": "Mineiro 3",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 3,
-            "targetDaySourceIds": [
-              "QqvEAWjd",
-              "bmZ7WDDF",
-              "hjWaYZr3"
-            ]
-          },
-          {
-            "providerCompetitionId": "beUodkQp",
-            "providerPath": "/football/brazil/paraibano-2/",
-            "providerCountry": "Brazil",
-            "providerName": "Paraibano 2",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
-            "targetDaySourceIds": [
-              "zRueFQS0"
-            ]
-          },
-          {
-            "providerCompetitionId": "E5CB3Akl",
-            "providerPath": "/football/brazil/piauiense-2/",
-            "providerCountry": "Brazil",
-            "providerName": "Piauiense 2",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 3,
-            "targetDaySourceIds": [
-              "G2pgiJKD",
-              "vuzki1zK",
-              "zBLKoubs"
-            ]
-          },
-          {
-            "providerCompetitionId": "GYVKoqKl",
-            "providerPath": "/football/brazil/serie-c/",
-            "providerCountry": "Brazil",
-            "providerName": "Serie C - Second stage",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "KWbmCP0S",
-              "lnkJ63Ok"
-            ]
-          },
-          {
-            "providerCompetitionId": "I1gLElRF",
-            "providerPath": "/football/brazil/tocantinense-2/",
-            "providerCountry": "Brazil",
-            "providerName": "Tocantinense 2",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 4,
-            "targetDaySourceIds": [
-              "I76icyBG",
-              "M3eVkg3j",
-              "QX9aeFuT",
-              "Wj8qact4"
-            ]
-          },
-          {
-            "providerCompetitionId": "KbcYoAhg",
-            "providerPath": "/football/bulgaria/third-league-north-east/",
-            "providerCountry": "Bulgaria",
-            "providerName": "Third League - North-East",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 8,
-            "targetDaySourceIds": [
-              "I7OCeUMH",
-              "KAsPpD8a",
-              "SzoXriwC",
-              "jDOl1Yht",
-              "ncqHnZwm",
-              "pfQ4cjh5",
-              "xUMdaCNh",
-              "z1lusV7O"
-            ]
-          },
-          {
-            "providerCompetitionId": "GjtpsSiI",
-            "providerPath": "/football/bulgaria/third-league-north-west/",
-            "providerCountry": "Bulgaria",
-            "providerName": "Third League - North-West",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 6,
-            "targetDaySourceIds": [
-              "ADRc6s2E",
-              "E9Gyaafl",
-              "OxwdnMAr",
-              "djy4p0ue",
-              "r7ZBrvA7",
-              "rRP54LWQ"
-            ]
-          },
-          {
-            "providerCompetitionId": "fyhyqlN5",
-            "providerPath": "/football/bulgaria/third-league-south-east/",
-            "providerCountry": "Bulgaria",
-            "providerName": "Third League - South-East",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 8,
-            "targetDaySourceIds": [
-              "AyUgf7AM",
-              "I9LhznJj",
-              "MwzNu8eT",
-              "lpOXnP2d",
-              "pGDvbkBc",
-              "tKKPloYq",
-              "tvBJASf3",
-              "xOVodTuA"
-            ]
-          },
-          {
-            "providerCompetitionId": "OGqhu6MU",
-            "providerPath": "/football/bulgaria/third-league-south-west/",
-            "providerCountry": "Bulgaria",
-            "providerName": "Third League - South-West",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 9,
-            "targetDaySourceIds": [
-              "A5PwslbL",
-              "EZJAemDE",
-              "IV8ll55l",
-              "MRHPXqL7",
-              "MaNIgRsR",
-              "QeCdnqz1",
-              "lEJHZ5je",
-              "tlG9ySLr",
-              "xhRVrAT8"
-            ]
-          },
-          {
-            "providerCompetitionId": "ttOGsd3b",
-            "providerPath": "/football/burkina-faso/premier-league/",
-            "providerCountry": "Burkina Faso",
-            "providerName": "Premier League",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 4,
-            "targetDaySourceIds": [
-              "2yjbXsAT",
-              "44OFkPPc",
-              "b7yURLXj",
-              "fBnjZ3uH"
-            ]
-          },
-          {
-            "providerCompetitionId": "G4Ya6zuC",
-            "providerPath": "/football/chile/copa-chile/",
-            "providerCountry": "Chile",
-            "providerName": "Copa Chile - Play Offs",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "0OPnB2V6",
-              "r5pFd3GD"
-            ]
-          },
-          {
-            "providerCompetitionId": "rizh8dAa",
-            "providerPath": "/football/chile/segunda-division/",
-            "providerCountry": "Chile",
-            "providerName": "Segunda Division - Promotion Group",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
-            "targetDaySourceIds": [
-              "jyyNbaUQ"
-            ]
-          },
-          {
-            "providerCompetitionId": "rizh8dAa",
-            "providerPath": "/football/chile/segunda-division/",
-            "providerCountry": "Chile",
-            "providerName": "Segunda Division - Relegation Group",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
-            "targetDaySourceIds": [
-              "GxsX4Uig"
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "active-competition-completeness",
-      "type": "active_competition_structural_adapter_gap",
-      "message": "Effective competition slugs still rely on supplemental acquisition because no league adapter is enabled.",
-      "details": {
-        "dayKey": "2026-09-26",
-        "slugs": [
-          "crc.1",
-          "gua.1",
-          "hon.1",
-          "par.1",
-          "slv.1"
-        ]
-      }
-    }
-  ],
-  "newIssues": [],
-  "newActionableIssues": [],
-  "resolvedIssues": [
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a_unresolved_settlement",
-      "message": "Plan A picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-09-26",
-        "todayDayKey": "2026-09-26",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 9,
-        "settled": 8,
-        "unresolved": 1
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a2_unresolved_settlement",
-      "message": "Plan A2 picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-09-26",
-        "todayDayKey": "2026-09-26",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 9,
-        "settled": 8,
-        "unresolved": 1
-      }
     }
   ],
   "persistentIssues": [
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
-      "details": {
-        "reasons": [
-          "plan_a2_stale_against_canonical",
-          "plan_a2_audit_stale_against_canonical",
-          "plan_b_audit_stale_against_canonical",
-          "plan_b2_audit_stale_against_canonical"
-        ]
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2",
-        "artifact": "value-plans/2026-09-26/plan-a2.json",
-        "at": 1790363344258,
-        "staleReason": "plan_a2_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -89100774
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2_audit",
-        "artifact": "value-plans/2026-09-26/plan-a2-audit.json",
-        "at": "2026-09-25T19:09:04.260Z",
-        "staleReason": "plan_a2_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -89100772
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b_audit",
-        "artifact": "value-plans/2026-09-26/plan-b-audit.json",
-        "at": "2026-09-25T19:04:57.333Z",
-        "staleReason": "plan_b_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -89347699
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b2_audit",
-        "artifact": "value-plans/2026-09-26/plan-b2-audit.json",
-        "at": "2026-09-25T19:09:05.271Z",
-        "staleReason": "plan_b2_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -89099761
-      }
-    },
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "expected_matches",
-        "artifact": "expected-matches/2026-09-26.json",
-        "at": null,
-        "staleReason": "snapshot_stale_against_expected_matches",
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "plan_b",
-        "artifact": "value-plans/2026-09-26/plan-b.json",
-        "at": null,
-        "staleReason": "plan_b_stale_against_canonical",
-        "preservation": null,
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "plan_b2",
-        "artifact": "value-plans/2026-09-26/plan-b2.json",
-        "at": null,
-        "staleReason": "plan_b2_stale_against_canonical",
-        "preservation": null,
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "foundation_publication_not_ready",
-      "message": "Publication foundation is not ready.",
-      "details": {
-        "blocked": [
-          {
-            "component": "details",
-            "reason": "details_foundation_not_ready"
-          }
-        ]
-      }
-    },
     {
       "severity": "info",
       "source": "foundation-integrity",
@@ -2148,7 +1956,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 9348,
+        "count": 9344,
         "informational": true
       }
     },
@@ -2177,57 +1985,14 @@
       }
     },
     {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "foundation_publication_not_ready",
-      "details": {
-        "failure": "foundation_publication_not_ready"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
-      }
-    },
-    {
       "severity": "warning",
       "source": "build-report",
-      "type": "acquisition_skipped_slugs",
-      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
       "details": {
-        "slugs": [
-          "arg.supercopa.internacional",
-          "bol.copa",
-          "caf.nations_qual",
-          "col.copa",
-          "concacaf.nations.league",
-          "eng.w.1",
-          "esp.w.1",
-          "global.gulf_cup",
-          "ned.w.1",
-          "uefa.euro_u21_qual",
-          "uefa.w.europa",
-          "usa.ncaa.m.1",
-          "usa.ncaa.w.1",
-          "usa.w.usl.1"
-        ],
-        "raw": "acquisition_skipped_slugs:arg.supercopa.internacional,bol.copa,caf.nations_qual,col.copa,concacaf.nations.league,eng.w.1,esp.w.1,global.gulf_cup,ned.w.1,uefa.euro_u21_qual,uefa.w.europa,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
-        "contextOnly": false
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
-      "details": {
-        "clean": false,
-        "cleanStrict": false
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     },
     {
@@ -2244,10 +2009,10 @@
           "slv.1"
         ],
         "summary": {
-          "evidenceSlugCount": 26,
+          "evidenceSlugCount": 27,
           "admittedCount": 5,
           "pendingCount": 0,
-          "rejectedCount": 26,
+          "rejectedCount": 27,
           "alreadyDeclaredCount": 0
         }
       }
@@ -2260,6 +2025,7 @@
       "details": {
         "rejectedSlugs": [
           "arg.3",
+          "arg.copa",
           "arg.supercopa.internacional",
           "bol.copa",
           "caf.nations_qual",
@@ -2287,12 +2053,44 @@
           "usa.w.usl.1"
         ],
         "summary": {
-          "evidenceSlugCount": 26,
+          "evidenceSlugCount": 27,
           "admittedCount": 5,
           "pendingCount": 0,
-          "rejectedCount": 26,
+          "rejectedCount": 27,
           "alreadyDeclaredCount": 0
         }
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_a_unresolved_settlement",
+      "message": "Plan A picks are still unresolved.",
+      "details": {
+        "dayKey": "2026-09-27",
+        "todayDayKey": "2026-09-26",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 2,
+        "settled": 0,
+        "unresolved": 2
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_a2_unresolved_settlement",
+      "message": "Plan A2 picks are still unresolved.",
+      "details": {
+        "dayKey": "2026-09-27",
+        "todayDayKey": "2026-09-26",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 2,
+        "settled": 0,
+        "unresolved": 2
       }
     },
     {
@@ -2301,8 +2099,8 @@
       "type": "active_competition_scope_unresolved",
       "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
       "details": {
-        "dayKey": "2026-09-26",
-        "count": 233,
+        "dayKey": "2026-09-27",
+        "count": 219,
         "competitions": [
           {
             "providerCompetitionId": "CMsJoR6L",
@@ -2310,34 +2108,20 @@
             "providerCountry": "Algeria",
             "providerName": "Ligue 2",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 15,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "0IjTK2oC",
-              "0pVDOpnm",
-              "2iGfJkA7",
-              "4YV0Z105",
-              "8AYLMOGa",
-              "CvT8SgmL",
-              "ER7QkNpn",
-              "GzInLBue",
-              "MiBYm1Fb",
-              "OfUpwp1t",
-              "Uc8tsg2E",
-              "WKXhyOVh",
-              "YVlyJtGO",
-              "bFXGVJaU",
-              "jkU8XuVH"
+              "rNJvNXAr"
             ]
           },
           {
-            "providerCompetitionId": "fHKtJ7km",
-            "providerPath": "/football/argentina/international-super-cup/",
+            "providerCompetitionId": "67tiEYre",
+            "providerPath": "/football/argentina/copa-argentina/",
             "providerCountry": "Argentina",
-            "providerName": "International Super Cup",
+            "providerName": "Copa Argentina",
             "reasonCode": "unmapped_provider_competition",
             "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "ULtcNL8L"
+              "zcbjKO7E"
             ]
           },
           {
@@ -2346,15 +2130,11 @@
             "providerCountry": "Argentina",
             "providerName": "Primera B",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 7,
+            "targetDayFixtureCount": 3,
             "targetDaySourceIds": [
-              "0WdcoTv3",
-              "CCeMqG3b",
-              "Gp2DoxZo",
-              "WvLmVGl5",
-              "Yqe5q79F",
-              "pOEANPnd",
-              "xbB2PoIq"
+              "46YfTfJH",
+              "I9bUsfYA",
+              "hnB6sovS"
             ]
           },
           {
@@ -2363,15 +2143,45 @@
             "providerCountry": "Argentina",
             "providerName": "Primera C",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 7,
+            "targetDayFixtureCount": 3,
             "targetDaySourceIds": [
-              "G4SzeIzQ",
-              "IDjTc3d5",
-              "MTopbCjl",
-              "QwfydsRH",
-              "bPVakdbm",
-              "ptfs2Zsg",
-              "zVQOqhSO"
+              "CSeZ3eDt",
+              "j9w1fUkD",
+              "lYbC1oct"
+            ]
+          },
+          {
+            "providerCompetitionId": "8GrEGw7F",
+            "providerPath": "/football/argentina/torneo-federal/",
+            "providerCountry": "Argentina",
+            "providerName": "Torneo Federal - Additional match",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "6mgEfRi4"
+            ]
+          },
+          {
+            "providerCompetitionId": "8GrEGw7F",
+            "providerPath": "/football/argentina/torneo-federal/",
+            "providerCountry": "Argentina",
+            "providerName": "Torneo Federal - Play Offs",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "6qTrSNn2",
+              "fmb3nhYG"
+            ]
+          },
+          {
+            "providerCompetitionId": "Uc8bs2C5",
+            "providerPath": "/football/argentina/torneo-promocional-amateur/",
+            "providerCountry": "Argentina",
+            "providerName": "Torneo Promocional Amateur - Promotion",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "hGeyAvgM"
             ]
           },
           {
@@ -2382,32 +2192,20 @@
             "reasonCode": "unmapped_provider_competition",
             "targetDayFixtureCount": 2,
             "targetDaySourceIds": [
-              "2s1n3QKk",
-              "hl90CUc3"
-            ]
-          },
-          {
-            "providerCompetitionId": "SSSnG4Vr",
-            "providerPath": "/football/asia/asian-games/",
-            "providerCountry": "Asia",
-            "providerName": "Asian Games - Play Offs",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "Qgq74bvh",
-              "YadLteno"
+              "0vrzEsZ7",
+              "lIklNoCL"
             ]
           },
           {
             "providerCompetitionId": "QyhgY0uA",
             "providerPath": "/football/asia/fifa-asean-cup/",
             "providerCountry": "Asia",
-            "providerName": "FIFA ASEAN Cup - Division 1",
+            "providerName": "FIFA ASEAN Cup - Division 2",
             "reasonCode": "unmapped_provider_competition",
             "targetDayFixtureCount": 2,
             "targetDaySourceIds": [
-              "M7u0YAhl",
-              "QyfUwXUQ"
+              "IJOUDC6K",
+              "htXrj9ED"
             ]
           },
           {
@@ -2418,75 +2216,8 @@
             "reasonCode": "unmapped_provider_competition",
             "targetDayFixtureCount": 2,
             "targetDaySourceIds": [
-              "dUBxEBit",
-              "vHTFDst0"
-            ]
-          },
-          {
-            "providerCompetitionId": "QVSnFjdC",
-            "providerPath": "/football/austria/karnten/",
-            "providerCountry": "Austria",
-            "providerName": "Karnten",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 5,
-            "targetDaySourceIds": [
-              "IFrS2lbs",
-              "Offsa6c6",
-              "jTtz1SSg",
-              "nXid8AzK",
-              "ppF42Kn1"
-            ]
-          },
-          {
-            "providerCompetitionId": "bqRfDUQO",
-            "providerPath": "/football/austria/niederosterreich/",
-            "providerCountry": "Austria",
-            "providerName": "Niederosterreich",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "ITmqlKIF",
-              "bs8erknf"
-            ]
-          },
-          {
-            "providerCompetitionId": "tSKDXXBt",
-            "providerPath": "/football/austria/oberosterreich/",
-            "providerCountry": "Austria",
-            "providerName": "Oberosterreich",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "0vO9Zppe",
-              "ruZVtTiL"
-            ]
-          },
-          {
-            "providerCompetitionId": "xO5c0isJ",
-            "providerPath": "/football/austria/regionalliga-east/",
-            "providerCountry": "Austria",
-            "providerName": "Regionalliga East",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 4,
-            "targetDaySourceIds": [
-              "fqd4Ebx1",
-              "jm7QLtpR",
-              "nJhdGK7l",
-              "pj4IN2FE"
-            ]
-          },
-          {
-            "providerCompetitionId": "nqGSLXJ5",
-            "providerPath": "/football/austria/regionalliga-north/",
-            "providerCountry": "Austria",
-            "providerName": "Regionalliga North",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 4,
-            "targetDaySourceIds": [
-              "2H1uz2Ir",
-              "A1esfN9E",
-              "I78eWJH7",
-              "WUv8hAY9"
+              "CKIhATj5",
+              "nsXNBLAC"
             ]
           },
           {
@@ -2495,11 +2226,9 @@
             "providerCountry": "Austria",
             "providerName": "Regionalliga South",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 3,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "Cn99wwED",
-              "GYIrDDvK",
-              "zaPKpfLt"
+              "UcUtghml"
             ]
           },
           {
@@ -2508,14 +2237,10 @@
             "providerCountry": "Austria",
             "providerName": "Regionalliga West",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 6,
+            "targetDayFixtureCount": 2,
             "targetDaySourceIds": [
-              "6Jcm9yVO",
-              "Ae08dboJ",
-              "Y5auBc0C",
-              "jR3h0tnf",
-              "tbsYCJVa",
-              "x2hfK1wQ"
+              "Ov20bKG6",
+              "YXwQEu1m"
             ]
           },
           {
@@ -2524,23 +2249,9 @@
             "providerCountry": "Austria",
             "providerName": "Salzburg",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 3,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "6PxzFdl4",
-              "GIUL5hBj",
-              "rPM7Te3c"
-            ]
-          },
-          {
-            "providerCompetitionId": "KMwoSTuI",
-            "providerPath": "/football/austria/steiermark/",
-            "providerCountry": "Austria",
-            "providerName": "Steiermark",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "0nQuUs9O",
-              "Iuznu8HP"
+              "EktrDzJG"
             ]
           },
           {
@@ -2549,13 +2260,9 @@
             "providerCountry": "Austria",
             "providerName": "Tirol",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 5,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "Eq3fEhWs",
-              "WC5wdBGD",
-              "bJcPJE8K",
-              "dAs2G0JP",
-              "nc12CW0f"
+              "6qTXAvsm"
             ]
           },
           {
@@ -2564,12 +2271,10 @@
             "providerCountry": "Austria",
             "providerName": "Vorarlberg",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 4,
+            "targetDayFixtureCount": 2,
             "targetDaySourceIds": [
-              "6q3dddAL",
-              "8CizkE2e",
-              "bJalbIu9",
-              "zagSjzYr"
+              "6PC2zFm2",
+              "ba9fxyJk"
             ]
           },
           {
@@ -2578,13 +2283,9 @@
             "providerCountry": "Austria",
             "providerName": "Wien",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 5,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "4Oj1DpGi",
-              "EyZtQNac",
-              "hlaM5gEr",
-              "nVte2K7j",
-              "p2hH92FG"
+              "M1xkO1U9"
             ]
           },
           {
@@ -2593,31 +2294,25 @@
             "providerCountry": "Belgium",
             "providerName": "Belgian Cup",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 11,
+            "targetDayFixtureCount": 5,
             "targetDaySourceIds": [
-              "6DjmQSNH",
-              "CUPigRi4",
-              "G6SCtl8b",
-              "KfTai5MG",
-              "KxnPVWgt",
-              "MqX5QyI0",
-              "OWVKvSxB",
-              "QZlXTAOh",
-              "bmmuSlg5",
-              "dpUSx67N",
-              "fcVDOFnD"
+              "EJTcScml",
+              "EwfeO6hU",
+              "SSKbXqVp",
+              "UkU4rAwn",
+              "vHRqemNi"
             ]
           },
           {
-            "providerCompetitionId": "W4NRuwPE",
-            "providerPath": "/football/belgium/national-division-1-acff/",
+            "providerCompetitionId": "SKQEYfHl",
+            "providerPath": "/football/belgium/national-division-1-vv/",
             "providerCountry": "Belgium",
-            "providerName": "National Division 1 - ACFF",
+            "providerName": "National Division 1 - VV",
             "reasonCode": "unmapped_provider_competition",
             "targetDayFixtureCount": 2,
             "targetDaySourceIds": [
-              "EiyBJbcc",
-              "MclPee5j"
+              "IkuVLdCO",
+              "nFxj9JSI"
             ]
           },
           {
@@ -2626,13 +2321,11 @@
             "providerCountry": "Belgium",
             "providerName": "Second Amateur Division Group ACFF",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 5,
+            "targetDayFixtureCount": 3,
             "targetDaySourceIds": [
-              "IgVDzTqT",
-              "SMiYNk0N",
-              "WxX5xkFG",
-              "bPYcvBp4",
-              "jaVktXFi"
+              "ldCwilU9",
+              "lxMqV67j",
+              "tW8VhAac"
             ]
           },
           {
@@ -2641,11 +2334,10 @@
             "providerCountry": "Belgium",
             "providerName": "Second Amateur Division Group VFV A",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 3,
+            "targetDayFixtureCount": 2,
             "targetDaySourceIds": [
-              "A199RYCj",
-              "ALa3mGZ9",
-              "vJIwXfkT"
+              "CllstYRq",
+              "GI2Bof4M"
             ]
           },
           {
@@ -2654,11 +2346,9 @@
             "providerCountry": "Belgium",
             "providerName": "Second Amateur Division Group VFV B",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 3,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "AJ2mnIde",
-              "K6F1eMZ8",
-              "SWI9g04L"
+              "4MJxu1kS"
             ]
           },
           {
@@ -2667,13 +2357,23 @@
             "providerCountry": "Benin",
             "providerName": "Ligue 1",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 5,
+            "targetDayFixtureCount": 4,
             "targetDaySourceIds": [
-              "QyYod0Ss",
-              "UFkUwJCD",
-              "bkWgfvcf",
-              "d2iMuur1",
-              "dMsG1M4K"
+              "48lLcD3n",
+              "6FZ1hIR6",
+              "EuwAjddJ",
+              "xz2SeiYb"
+            ]
+          },
+          {
+            "providerCompetitionId": "rmq0Oa6D",
+            "providerPath": "/football/bhutan/premier-league/",
+            "providerCountry": "Bhutan",
+            "providerName": "Premier League",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "vXHdvJmS"
             ]
           },
           {
@@ -2682,10 +2382,11 @@
             "providerCountry": "Bolivia",
             "providerName": "Copa Pacena",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
+            "targetDayFixtureCount": 3,
             "targetDaySourceIds": [
-              "hpkMwqwo",
-              "pvx81nVi"
+              "QVhNc4UG",
+              "URs1jMMj",
+              "bqiVeraT"
             ]
           },
           {
@@ -2694,9 +2395,19 @@
             "providerCountry": "Bolivia",
             "providerName": "Copa Simon Bolivar",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
+            "targetDayFixtureCount": 11,
             "targetDaySourceIds": [
-              "KdMw2t2E"
+              "6DKo0KWQ",
+              "A99PhxP0",
+              "ITLNAApn",
+              "IZCXjGgD",
+              "QgPV8lFb",
+              "SneD3gwJ",
+              "fZd55F86",
+              "n9gc7yvf",
+              "rD4JEJoK",
+              "vqjk9c9s",
+              "xdBHfbfl"
             ]
           },
           {
@@ -2705,14 +2416,9 @@
             "providerCountry": "Bosnia and Herzegovina",
             "providerName": "Prva Liga - RS",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 6,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "4KjTELz0",
-              "6D6lZkME",
-              "6gGfD8ae",
-              "CCYLGs6m",
-              "pbhqBwzP",
-              "xYlyDa5C"
+              "EJJ2BnU7"
             ]
           },
           {
@@ -2721,10 +2427,9 @@
             "providerCountry": "Brazil",
             "providerName": "Brasiliense 2",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "C8OyDdie",
-              "KYRqBzM7"
+              "veQTEIMr"
             ]
           },
           {
@@ -2733,12 +2438,48 @@
             "providerCountry": "Brazil",
             "providerName": "Carioca B1",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 4,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "QNYDb6Iq",
-              "Uimr4SfM",
-              "Y7SFIR9F",
-              "YmxMdpmd"
+              "0fU7Kmu3"
+            ]
+          },
+          {
+            "providerCompetitionId": "tvB5qQKi",
+            "providerPath": "/football/brazil/carioca-b2/",
+            "providerCountry": "Brazil",
+            "providerName": "Carioca B2",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 6,
+            "targetDaySourceIds": [
+              "EmkLI0wo",
+              "K4rNxMUG",
+              "SUoVz0aT",
+              "bDx1VwNj",
+              "nipFvr04",
+              "tfs7t4Vi"
+            ]
+          },
+          {
+            "providerCompetitionId": "pS5l8tl3",
+            "providerPath": "/football/brazil/catarinense-3/",
+            "providerCountry": "Brazil",
+            "providerName": "Catarinense 3",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "Kj5T2jmR",
+              "YZ6L4CIE"
+            ]
+          },
+          {
+            "providerCompetitionId": "A1nbRAP7",
+            "providerPath": "/football/brazil/cearense-3/",
+            "providerCountry": "Brazil",
+            "providerName": "Cearense 3 - Play Offs",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "6FPuMJeo"
             ]
           },
           {
@@ -2747,9 +2488,8 @@
             "providerCountry": "Brazil",
             "providerName": "Copa FMF (Mato Grosso)",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 4,
+            "targetDayFixtureCount": 3,
             "targetDaySourceIds": [
-              "OGLttMpn",
               "YitXLIaU",
               "dUJlv0Fb",
               "hI6xf3BD"
@@ -2761,9 +2501,11 @@
             "providerCountry": "Brazil",
             "providerName": "Copa Parana",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
+            "targetDayFixtureCount": 3,
             "targetDaySourceIds": [
-              "Ui1J9Yed"
+              "MRcBBfRq",
+              "UBiDVFIF",
+              "dbg5Xyl3"
             ]
           },
           {
@@ -2774,7 +2516,18 @@
             "reasonCode": "unmapped_provider_competition",
             "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "jTCVCX76"
+              "AydGGF8s"
+            ]
+          },
+          {
+            "providerCompetitionId": "Mo79aCsI",
+            "providerPath": "/football/brazil/copa-rio/",
+            "providerCountry": "Brazil",
+            "providerName": "Copa Rio",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "GSPaeVyp"
             ]
           },
           {
@@ -2785,8 +2538,26 @@
             "reasonCode": "unmapped_provider_competition",
             "targetDayFixtureCount": 2,
             "targetDaySourceIds": [
-              "CCEruxOs",
-              "KxIjwGhf"
+              "4hMRMf8D",
+              "GtTCpb0K"
+            ]
+          },
+          {
+            "providerCompetitionId": "0EFQW51m",
+            "providerPath": "/football/brazil/gaucho-2/",
+            "providerCountry": "Brazil",
+            "providerName": "Gaucho 2",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 8,
+            "targetDaySourceIds": [
+              "0GygQc7b",
+              "8tu1OyxB",
+              "ATJYxyi4",
+              "CxUvHgUp",
+              "EawoSJxn",
+              "IgNtyFLG",
+              "tfw9MF6N",
+              "xGLQvcMi"
             ]
           },
           {
@@ -2795,9 +2566,10 @@
             "providerCountry": "Brazil",
             "providerName": "Gaucho 3",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
+            "targetDayFixtureCount": 2,
             "targetDaySourceIds": [
-              "jox6Twp9"
+              "0vUiKZ6e",
+              "YiSaIDy8"
             ]
           },
           {
@@ -2806,9 +2578,12 @@
             "providerCountry": "Brazil",
             "providerName": "Goiano 2",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
+            "targetDayFixtureCount": 4,
             "targetDaySourceIds": [
-              "dQ3oENVI"
+              "0fbISMpC",
+              "KGd2W4om",
+              "hUfAUrGa",
+              "lY5WyRNP"
             ]
           },
           {
@@ -2817,11 +2592,10 @@
             "providerCountry": "Brazil",
             "providerName": "Mineiro 3",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 3,
+            "targetDayFixtureCount": 2,
             "targetDaySourceIds": [
-              "QqvEAWjd",
-              "bmZ7WDDF",
-              "hjWaYZr3"
+              "2qOoPV5k",
+              "W0XFUirS"
             ]
           },
           {
@@ -2830,22 +2604,23 @@
             "providerCountry": "Brazil",
             "providerName": "Paraibano 2",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
+            "targetDayFixtureCount": 4,
             "targetDaySourceIds": [
-              "zRueFQS0"
+              "2DsmHnbl",
+              "63aEKL4t",
+              "riq3D4cD",
+              "vHcMIaZh"
             ]
           },
           {
-            "providerCompetitionId": "E5CB3Akl",
-            "providerPath": "/football/brazil/piauiense-2/",
+            "providerCompetitionId": "lUJnLvE6",
+            "providerPath": "/football/brazil/paranaense-3/",
             "providerCountry": "Brazil",
-            "providerName": "Piauiense 2",
+            "providerName": "Paranaense 3 - Play Offs",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 3,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "G2pgiJKD",
-              "vuzki1zK",
-              "zBLKoubs"
+              "vs7K4VDk"
             ]
           },
           {
@@ -2854,58 +2629,9 @@
             "providerCountry": "Brazil",
             "providerName": "Serie C - Second stage",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "KWbmCP0S",
-              "lnkJ63Ok"
-            ]
-          },
-          {
-            "providerCompetitionId": "I1gLElRF",
-            "providerPath": "/football/brazil/tocantinense-2/",
-            "providerCountry": "Brazil",
-            "providerName": "Tocantinense 2",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 4,
-            "targetDaySourceIds": [
-              "I76icyBG",
-              "M3eVkg3j",
-              "QX9aeFuT",
-              "Wj8qact4"
-            ]
-          },
-          {
-            "providerCompetitionId": "KbcYoAhg",
-            "providerPath": "/football/bulgaria/third-league-north-east/",
-            "providerCountry": "Bulgaria",
-            "providerName": "Third League - North-East",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 8,
-            "targetDaySourceIds": [
-              "I7OCeUMH",
-              "KAsPpD8a",
-              "SzoXriwC",
-              "jDOl1Yht",
-              "ncqHnZwm",
-              "pfQ4cjh5",
-              "xUMdaCNh",
-              "z1lusV7O"
-            ]
-          },
-          {
-            "providerCompetitionId": "GjtpsSiI",
-            "providerPath": "/football/bulgaria/third-league-north-west/",
-            "providerCountry": "Bulgaria",
-            "providerName": "Third League - North-West",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 6,
-            "targetDaySourceIds": [
-              "ADRc6s2E",
-              "E9Gyaafl",
-              "OxwdnMAr",
-              "djy4p0ue",
-              "r7ZBrvA7",
-              "rRP54LWQ"
+              "MamR4sg2"
             ]
           },
           {
@@ -2914,35 +2640,9 @@
             "providerCountry": "Bulgaria",
             "providerName": "Third League - South-East",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 8,
+            "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "AyUgf7AM",
-              "I9LhznJj",
-              "MwzNu8eT",
-              "lpOXnP2d",
-              "pGDvbkBc",
-              "tKKPloYq",
-              "tvBJASf3",
-              "xOVodTuA"
-            ]
-          },
-          {
-            "providerCompetitionId": "OGqhu6MU",
-            "providerPath": "/football/bulgaria/third-league-south-west/",
-            "providerCountry": "Bulgaria",
-            "providerName": "Third League - South-West",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 9,
-            "targetDaySourceIds": [
-              "A5PwslbL",
-              "EZJAemDE",
-              "IV8ll55l",
-              "MRHPXqL7",
-              "MaNIgRsR",
-              "QeCdnqz1",
-              "lEJHZ5je",
-              "tlG9ySLr",
-              "xhRVrAT8"
+              "Sf9R86PF"
             ]
           },
           {
@@ -2951,12 +2651,22 @@
             "providerCountry": "Burkina Faso",
             "providerName": "Premier League",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 4,
+            "targetDayFixtureCount": 3,
             "targetDaySourceIds": [
-              "2yjbXsAT",
-              "44OFkPPc",
-              "b7yURLXj",
-              "fBnjZ3uH"
+              "CURNm3fA",
+              "GQG1tLnp",
+              "prQVosPM"
+            ]
+          },
+          {
+            "providerCompetitionId": "AaUcNRHq",
+            "providerPath": "/football/burundi/primus-league/",
+            "providerCountry": "Burundi",
+            "providerName": "Primus League",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "ITgcK42L"
             ]
           },
           {
@@ -2965,21 +2675,13 @@
             "providerCountry": "Chile",
             "providerName": "Copa Chile - Play Offs",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
+            "targetDayFixtureCount": 5,
             "targetDaySourceIds": [
-              "0OPnB2V6",
-              "r5pFd3GD"
-            ]
-          },
-          {
-            "providerCompetitionId": "rizh8dAa",
-            "providerPath": "/football/chile/segunda-division/",
-            "providerCountry": "Chile",
-            "providerName": "Segunda Division - Promotion Group",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
-            "targetDaySourceIds": [
-              "jyyNbaUQ"
+              "2Rra0oHl",
+              "WQhABWtm",
+              "bVgL7TOE",
+              "pW7X5SAO",
+              "vidI9ABa"
             ]
           },
           {
@@ -2990,7 +2692,31 @@
             "reasonCode": "unmapped_provider_competition",
             "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
-              "GxsX4Uig"
+              "rPrP6jNt"
+            ]
+          },
+          {
+            "providerCompetitionId": "Obnyfa5k",
+            "providerPath": "/football/costa-rica/liga-de-ascenso/",
+            "providerCountry": "Costa Rica",
+            "providerName": "Liga de Ascenso - Apertura",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 3,
+            "targetDaySourceIds": [
+              "6gABWN9g",
+              "EJDJU1v6",
+              "fySnpddq"
+            ]
+          },
+          {
+            "providerCompetitionId": "Icm7fQhL",
+            "providerPath": "/football/czech-republic/3-cfl-group-a/",
+            "providerCountry": "Czech Republic",
+            "providerName": "3. CFL - Group A",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "nufzG966"
             ]
           }
         ]
@@ -3002,7 +2728,7 @@
       "type": "active_competition_structural_adapter_gap",
       "message": "Effective competition slugs still rely on supplemental acquisition because no league adapter is enabled.",
       "details": {
-        "dayKey": "2026-09-26",
+        "dayKey": "2026-09-27",
         "slugs": [
           "crc.1",
           "gua.1",
@@ -3033,43 +2759,43 @@
         ],
         "missingPlans": [],
         "planA": {
-          "count": 9,
+          "count": 2,
           "summary": {
-            "picks": 9,
-            "uniqueMatches": 9,
-            "settled": 9,
-            "wins": 4,
-            "losses": 5,
+            "picks": 2,
+            "uniqueMatches": 2,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
             "voids": 0,
-            "unresolved": 0,
+            "unresolved": 2,
             "unsupported": 0,
-            "hitRate": 0.4444,
-            "oddsAvailable": 8,
-            "averageOdds": 1.62,
-            "totalStake": 8,
-            "totalReturn": 6.5,
-            "profit": -1.5,
-            "roi": -0.1875
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
           }
         },
         "planA2": {
-          "count": 9,
+          "count": 2,
           "summary": {
-            "picks": 9,
-            "uniqueMatches": 9,
-            "settled": 9,
-            "wins": 4,
-            "losses": 5,
+            "picks": 2,
+            "uniqueMatches": 2,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
             "voids": 0,
-            "unresolved": 0,
+            "unresolved": 2,
             "unsupported": 0,
-            "hitRate": 0.4444,
-            "oddsAvailable": 8,
-            "averageOdds": 1.62,
-            "totalStake": 8,
-            "totalReturn": 6.5,
-            "profit": -1.5,
-            "roi": -0.1875
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
           }
         },
         "planB": {
@@ -3115,5 +2841,5 @@
       }
     }
   ],
-  "latestForDay": "2026-09-26"
+  "latestForDay": "2026-09-27"
 }
