@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-27",
-  "generatedAt": "2026-09-26T23:43:04.819Z",
+  "generatedAt": "2026-09-26T23:59:10.324Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "b8fdee54ce4edbc8527b5b6300168dd449c12ea5359de71233a4ea64ddf74b9c",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "dda8ceb95b3a9f9f0c5752a5748325b5b6afd148d98392cc0ad5b36ede334dfc",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -19,20 +19,20 @@
     "canonicalRows": 153,
     "playedTerminal": 4,
     "nonPlayedTerminal": 1,
-    "scheduled": 140,
-    "live": 8,
+    "scheduled": 136,
+    "live": 12,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 4,
-    "acceptedVerifiedFinalArtifacts": 4,
+    "verifiedFinalArtifacts": 5,
+    "acceptedVerifiedFinalArtifacts": 5,
     "convergedPlayedFinal": 4,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 148,
+    "openRows": 147,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 4,
@@ -147,11 +147,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 1,
-        "scoreAway": 0
+        "rawStatus": "STATUS_HALFTIME",
+        "scoreHome": 2,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -1624,18 +1624,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-27",
+        "scoreHome": 4,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -3871,9 +3871,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 2,
         "scoreAway": 0
       },
@@ -3920,9 +3920,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_FIRST_HALF",
         "scoreHome": 0,
         "scoreAway": 1
       },
@@ -4168,7 +4168,7 @@
         "status": "SECOND_HALF",
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 2,
+        "scoreHome": 3,
         "scoreAway": 1
       },
       "verifiedFinal": {
@@ -4214,10 +4214,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_HALFTIME",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -4315,7 +4315,7 @@
         "status": "SECOND_HALF",
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 1,
+        "scoreHome": 2,
         "scoreAway": 1
       },
       "verifiedFinal": {
@@ -6269,14 +6269,14 @@
       "homeTeam": "Atlanta United FC",
       "awayTeam": "New York City FC",
       "kickoffUtc": "2026-09-26T23:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_IN_PROGRESS",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -6290,7 +6290,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -6367,14 +6367,14 @@
       "homeTeam": "Charlotte FC",
       "awayTeam": "Chicago Fire FC",
       "kickoffUtc": "2026-09-26T23:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -6388,7 +6388,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -6563,14 +6563,14 @@
       "homeTeam": "CF Montréal",
       "awayTeam": "FC Cincinnati",
       "kickoffUtc": "2026-09-26T23:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -6584,7 +6584,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -6661,14 +6661,14 @@
       "homeTeam": "Philadelphia Union",
       "awayTeam": "Orlando City SC",
       "kickoffUtc": "2026-09-26T23:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 1,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -6682,7 +6682,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -7541,7 +7541,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_col2_bocajuniors_patriotas_20260927"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -10395,7 +10397,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "b8fdee54ce4edbc8527b5b6300168dd449c12ea5359de71233a4ea64ddf74b9c",
+      "truthFingerprint": "dda8ceb95b3a9f9f0c5752a5748325b5b6afd148d98392cc0ad5b36ede334dfc",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -10467,7 +10469,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-09-27",
-      "fileCount": 4,
+      "fileCount": 5,
       "authority": "scored_final_evidence"
     },
     "downstream": {
