@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-26",
-  "generatedAt": "2026-09-26T17:27:03.810Z",
+  "generatedAt": "2026-09-26T17:38:35.076Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "7ac435c798cc1fe4fd3fefe1a94c31490fe15b266a93a0d16c909cd2719dd141",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "64b566f4c951d314a6941f084b510e7edc1bf73af1d563d4a3975e08f5ccabbf",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -25,14 +25,14 @@
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 150,
-    "acceptedVerifiedFinalArtifacts": 150,
+    "verifiedFinalArtifacts": 151,
+    "acceptedVerifiedFinalArtifacts": 151,
     "convergedPlayedFinal": 150,
     "convergedNonPlayedTerminal": 6,
     "pendingVerifiedFinal": 0,
-    "openRows": 62,
+    "openRows": 61,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 150,
@@ -1330,18 +1330,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-26",
+        "scoreHome": 1,
+        "scoreAway": 4,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -2450,9 +2450,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 1,
         "scoreAway": 2
       },
@@ -8677,7 +8677,7 @@
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
-        "scoreAway": 1
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -8873,7 +8873,7 @@
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -10726,7 +10726,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_chi2_sanfelipe_copiapo_20260926"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -13767,7 +13769,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "7ac435c798cc1fe4fd3fefe1a94c31490fe15b266a93a0d16c909cd2719dd141",
+      "truthFingerprint": "64b566f4c951d314a6941f084b510e7edc1bf73af1d563d4a3975e08f5ccabbf",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -13985,7 +13987,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-09-26",
-      "fileCount": 150,
+      "fileCount": 151,
       "authority": "scored_final_evidence"
     },
     "downstream": {
