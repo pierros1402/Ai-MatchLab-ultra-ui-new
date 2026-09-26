@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-26",
-  "generatedAt": "2026-09-26T03:06:37.518Z",
+  "generatedAt": "2026-09-26T03:20:02.211Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "74e4c5cb60b784b2d87b0af7b04edee3a0d76656b81b1fde97277861ad192cdf",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "0ea6fc237646d2529c008514ea3a0569c95305a41fdd44cc4686c78afd137f1d",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 218,
-    "playedTerminal": 8,
+    "playedTerminal": 13,
     "nonPlayedTerminal": 6,
-    "scheduled": 201,
-    "live": 3,
+    "scheduled": 198,
+    "live": 1,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 11,
-    "acceptedVerifiedFinalArtifacts": 11,
-    "convergedPlayedFinal": 8,
+    "verifiedFinalArtifacts": 13,
+    "acceptedVerifiedFinalArtifacts": 13,
+    "convergedPlayedFinal": 13,
     "convergedNonPlayedTerminal": 6,
     "pendingVerifiedFinal": 0,
-    "openRows": 201,
+    "openRows": 199,
     "unresolvedRows": 0,
-    "conflictRows": 3,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 8,
-    "scoredSettlementEligible": 8,
+    "historyEligible": 13,
+    "scoredSettlementEligible": 13,
     "voidSettlementEligible": 6
   },
   "fixtures": [
@@ -1173,31 +1173,31 @@
       "homeTeam": "Cavalry",
       "awayTeam": "Supra du Quebec",
       "kickoffUtc": "2026-09-26T01:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 6,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-26",
+        "scoreHome": 6,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1467,31 +1467,31 @@
       "homeTeam": "Once Caldas",
       "awayTeam": "Atlético Bucaramanga",
       "kickoffUtc": "2026-09-26T01:15Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "LIVE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 3
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-26",
+        "scoreHome": 1,
+        "scoreAway": 3,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -5436,13 +5436,13 @@
       "homeTeam": "Atlante",
       "awayTeam": "Monterrey",
       "kickoffUtc": "2026-09-26T01:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 3,
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 4,
         "scoreAway": 2
       },
       "verifiedFinal": {
@@ -5453,14 +5453,14 @@
         "dayKey": "2026-09-26",
         "scoreHome": 4,
         "scoreAway": 2,
-        "scoreParity": false
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -5485,14 +5485,14 @@
       "homeTeam": "Tijuana",
       "awayTeam": "Atlas",
       "kickoffUtc": "2026-09-26T03:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -5506,7 +5506,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -5534,12 +5534,12 @@
       "homeTeam": "Correcaminos UAT",
       "awayTeam": "Club Jaiba Brava",
       "kickoffUtc": "2026-09-26T01:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -5554,11 +5554,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -9503,14 +9503,14 @@
       "homeTeam": "El Paso",
       "awayTeam": "FC Tulsa",
       "kickoffUtc": "2026-09-26T01:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": true,
@@ -9520,14 +9520,14 @@
         "dayKey": "2026-09-26",
         "scoreHome": 1,
         "scoreAway": 1,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -10726,11 +10726,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_mex1_atlante_monterrey_20260926",
-      "cid_mex2_correcaminosuat_jaibabrava_20260926",
-      "cid_usa2_elpaso_tulsa_20260926"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -13771,21 +13767,26 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "74e4c5cb60b784b2d87b0af7b04edee3a0d76656b81b1fde97277861ad192cdf",
+      "truthFingerprint": "0ea6fc237646d2529c008514ea3a0569c95305a41fdd44cc4686c78afd137f1d",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 8,
+        "expectedEligibleRows": 13,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_bra2_novorizontino_saobernardo_20260926",
           "cid_bra2_vilanova_londrina_20260926",
+          "cid_can1_cavalry_supraduquebec_20260926",
           "cid_col1_boyacachico_deportivopasto_20260926",
+          "cid_col1_oncecaldas_atleticobucaramanga_20260926",
           "cid_ecu2_elnacional_cumbaya_20260926",
+          "cid_mex1_atlante_monterrey_20260926",
+          "cid_mex2_correcaminosuat_jaibabrava_20260926",
           "cid_par1_nacionalasuncion_sportivoameliano_20260926",
           "cid_per2_carlosmannucci_usanmartin_20260926",
+          "cid_usa2_elpaso_tulsa_20260926",
           "cid_usa2_hartfordathletic_louisvillecity_20260926",
           "cid_usa2_sportingjax_loudoun_20260926"
         ],
@@ -13847,7 +13848,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-09-26",
-      "fileCount": 11,
+      "fileCount": 13,
       "authority": "scored_final_evidence"
     },
     "downstream": {
