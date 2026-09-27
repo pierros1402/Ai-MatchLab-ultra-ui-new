@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-27",
-  "generatedAt": "2026-09-27T03:44:37.932Z",
+  "generatedAt": "2026-09-27T04:03:01.218Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "eae13a2c4dff5feebd5b65e07e1c2114cb2f8bf79b40e3eb70ec619876f183a7",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "5b3f9ae04775e9939a3b2e123aba7bb8ff1e44f665a3c9467b186b296e61a6cd",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -25,14 +25,14 @@
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 37,
-    "acceptedVerifiedFinalArtifacts": 37,
+    "verifiedFinalArtifacts": 39,
+    "acceptedVerifiedFinalArtifacts": 39,
     "convergedPlayedFinal": 37,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 115,
+    "openRows": 113,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 37,
@@ -2993,7 +2993,7 @@
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 2,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -4018,10 +4018,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_HALFTIME",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -6517,10 +6517,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
         "scoreAway": 2
       },
       "verifiedFinal": {
@@ -6811,9 +6811,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 3,
         "scoreAway": 0
       },
@@ -6909,9 +6909,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 2,
         "scoreAway": 1
       },
@@ -7210,18 +7210,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-27",
+        "scoreHome": 3,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -7259,18 +7259,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-27",
+        "scoreHome": 1,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -7541,7 +7541,10 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_usa2_oaklandroots_phoenixrising_20260927",
+      "cid_usa2_orangecounty_pittsburgh_20260927"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -10395,7 +10398,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "eae13a2c4dff5feebd5b65e07e1c2114cb2f8bf79b40e3eb70ec619876f183a7",
+      "truthFingerprint": "5b3f9ae04775e9939a3b2e123aba7bb8ff1e44f665a3c9467b186b296e61a6cd",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -10500,7 +10503,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-09-27",
-      "fileCount": 37,
+      "fileCount": 39,
       "authority": "scored_final_evidence"
     },
     "downstream": {
