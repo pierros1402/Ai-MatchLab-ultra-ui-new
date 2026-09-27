@@ -31,7 +31,13 @@ jobs:
             echo "ERROR: RENDER_ENGINE_DEPLOY_HOOK_URL is not configured."
             exit 1
           fi
-          curl -fsS -X POST "${RENDER_ENGINE_DEPLOY_HOOK_URL}"
+          DEPLOY_URL="${RENDER_ENGINE_DEPLOY_HOOK_URL}"
+          if [[ "${DEPLOY_URL}" == *"?"* ]]; then
+            DEPLOY_URL="${DEPLOY_URL}&ref=${GITHUB_SHA}"
+          else
+            DEPLOY_URL="${DEPLOY_URL}?ref=${GITHUB_SHA}"
+          fi
+          curl -fsS -X POST "${DEPLOY_URL}"
 
       - name: Verify public engine release
         shell: bash
