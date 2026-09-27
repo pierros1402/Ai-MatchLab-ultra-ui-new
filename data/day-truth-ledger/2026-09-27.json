@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-27",
-  "generatedAt": "2026-09-27T11:35:04.567Z",
+  "generatedAt": "2026-09-27T12:05:17.996Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "991cce0ca062fa4b2796138d8bae6831427cd5cbad54e05418176ec8d5dde74e",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "6efc9477b49b390a194177fbfe2b4fb5ce749d95298937a53137b40011d5eda7",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 153,
-    "playedTerminal": 53,
+    "playedTerminal": 54,
     "nonPlayedTerminal": 2,
-    "scheduled": 98,
-    "live": 0,
+    "scheduled": 96,
+    "live": 1,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 53,
-    "acceptedVerifiedFinalArtifacts": 53,
-    "convergedPlayedFinal": 53,
+    "verifiedFinalArtifacts": 55,
+    "acceptedVerifiedFinalArtifacts": 55,
+    "convergedPlayedFinal": 54,
     "convergedNonPlayedTerminal": 2,
     "pendingVerifiedFinal": 0,
-    "openRows": 98,
+    "openRows": 96,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 53,
-    "scoredSettlementEligible": 53,
+    "historyEligible": 54,
+    "scoredSettlementEligible": 54,
     "voidSettlementEligible": 2
   },
   "fixtures": [
@@ -2153,14 +2153,14 @@
       "homeTeam": "Real Valladolid",
       "awayTeam": "Córdoba",
       "kickoffUtc": "2026-09-27T12:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -2174,7 +2174,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -2506,18 +2506,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-27",
+        "scoreHome": 1,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -3231,31 +3231,31 @@
       "homeTeam": "Gangwon",
       "awayTeam": "Incheon",
       "kickoffUtc": "2026-09-27T10:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-27",
+        "scoreHome": 0,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -7541,7 +7541,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_espcopadelrey_sportinghortaleza_atleticounionguimar_20260927"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -7661,7 +7663,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 9384,
+            "count": 9388,
             "informational": true
           }
         },
@@ -10229,13 +10231,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "991cce0ca062fa4b2796138d8bae6831427cd5cbad54e05418176ec8d5dde74e",
+      "truthFingerprint": "6efc9477b49b390a194177fbfe2b4fb5ce749d95298937a53137b40011d5eda7",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 53,
+        "expectedEligibleRows": 54,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg2_colegiales_chacaritajuniors_20260927",
@@ -10251,6 +10253,7 @@
           "cid_gua1_xelajumc_comunicaciones_20260927",
           "cid_idn2_perselalamongan_psbsbiaknumfor_20260927",
           "cid_idn2_ransnusantara_deltrassidoarjo_20260927",
+          "cid_kor1_gangwon_incheon_20260927",
           "cid_mex1_cruzazul_toluca_20260927",
           "cid_mex1_guadalajara_queretaro_20260927",
           "cid_mex1_santos_pachuca_20260927",
@@ -10350,7 +10353,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-09-27",
-      "fileCount": 53,
+      "fileCount": 55,
       "authority": "scored_final_evidence"
     },
     "downstream": {
