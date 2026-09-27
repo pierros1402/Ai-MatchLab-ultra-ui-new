@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-27",
-  "generatedAt": "2026-09-27T14:09:59.951Z",
+  "generatedAt": "2026-09-27T14:29:47.259Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "2f3bc907741e3891dccbef7466feafca31c5ab55a6b38270e103a7f83dc8cf2c",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "40f91dcc96c091fe3a31681fb8558f3e05c2142bbbf320c669475c29179de25b",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 153,
-    "playedTerminal": 63,
+    "playedTerminal": 64,
     "nonPlayedTerminal": 3,
-    "scheduled": 83,
-    "live": 4,
+    "scheduled": 81,
+    "live": 5,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 63,
-    "acceptedVerifiedFinalArtifacts": 63,
-    "convergedPlayedFinal": 63,
+    "verifiedFinalArtifacts": 66,
+    "acceptedVerifiedFinalArtifacts": 66,
+    "convergedPlayedFinal": 64,
     "convergedNonPlayedTerminal": 3,
     "pendingVerifiedFinal": 0,
-    "openRows": 87,
+    "openRows": 84,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 63,
-    "scoredSettlementEligible": 63,
+    "historyEligible": 64,
+    "scoredSettlementEligible": 64,
     "voidSettlementEligible": 3
   },
   "fixtures": [
@@ -1859,31 +1859,31 @@
       "homeTeam": "Segesta",
       "awayTeam": "Karlovac",
       "kickoffUtc": "2026-09-27T12:30:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-27",
+        "scoreHome": 1,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2055,14 +2055,14 @@
       "homeTeam": "Mallorca",
       "awayTeam": "Almería",
       "kickoffUtc": "2026-09-27T14:15Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -2076,7 +2076,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4263,25 +4263,25 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-27",
+        "scoreHome": 1,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -5635,9 +5635,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 1
       },
@@ -5838,18 +5838,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-27",
+        "scoreHome": 0,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -5929,11 +5929,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_FIRST_HALF",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -7541,7 +7541,10 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_ned2_graafschap_denbosch_20260927",
+      "cid_ukr2_nyvaternopil_ahrobiznesvolochysk_20260927"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -10229,13 +10232,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "2f3bc907741e3891dccbef7466feafca31c5ab55a6b38270e103a7f83dc8cf2c",
+      "truthFingerprint": "40f91dcc96c091fe3a31681fb8558f3e05c2142bbbf320c669475c29179de25b",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 63,
+        "expectedEligibleRows": 64,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg2_colegiales_chacaritajuniors_20260927",
@@ -10249,6 +10252,7 @@
           "cid_col1_cucutadeportivo_llaneros_20260927",
           "cid_col1_deportivopereira_internacionalbogota_20260927",
           "cid_col2_bocajuniors_patriotas_20260927",
+          "cid_cro2_segesta_karlovac_20260927",
           "cid_esp2_realvalladolid_cordoba_20260927",
           "cid_espcopadelrey_auriense_sanjose_20260927",
           "cid_espcopadelrey_auriensecentedacademy_sanjose_20260927",
@@ -10360,7 +10364,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-09-27",
-      "fileCount": 63,
+      "fileCount": 66,
       "authority": "scored_final_evidence"
     },
     "downstream": {
