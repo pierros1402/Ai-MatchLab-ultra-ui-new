@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-28",
-  "generatedAt": "2026-09-28T16:49:49.016Z",
+  "generatedAt": "2026-09-28T17:06:58.770Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "c2e2fdede861d6ffff9779ee0e811e3241c17418e665e325e4b8dd527a432bf1",
+  "truthFingerprint": "abbd558ca2c4a29979a27ca14c581021baa57b49669510844522d1afba856640",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 45,
-    "playedTerminal": 20,
+    "playedTerminal": 21,
     "nonPlayedTerminal": 0,
-    "scheduled": 22,
+    "scheduled": 21,
     "live": 3,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 20,
-    "acceptedVerifiedFinalArtifacts": 20,
-    "convergedPlayedFinal": 20,
+    "verifiedFinalArtifacts": 21,
+    "acceptedVerifiedFinalArtifacts": 21,
+    "convergedPlayedFinal": 21,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 25,
+    "openRows": 24,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 20,
-    "scoredSettlementEligible": 20,
+    "historyEligible": 21,
+    "scoredSettlementEligible": 21,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -1565,31 +1565,31 @@
       "homeTeam": "Zilina B",
       "awayTeam": "FK Humenne",
       "kickoffUtc": "2026-09-28T15:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-28",
+        "scoreHome": 0,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1666,9 +1666,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 2
       },
@@ -1764,9 +1764,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -1813,9 +1813,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -2382,7 +2382,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 9662,
+            "count": 9676,
             "informational": true
           }
         },
@@ -4668,13 +4668,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "c2e2fdede861d6ffff9779ee0e811e3241c17418e665e325e4b8dd527a432bf1",
+      "truthFingerprint": "abbd558ca2c4a29979a27ca14c581021baa57b49669510844522d1afba856640",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 20,
+        "expectedEligibleRows": 21,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg2_gimnasiayesgrimajujuy_sanmartintucuman_20260928",
@@ -4693,6 +4693,7 @@
           "cid_slv1_municipallimeno_fas_20260928",
           "cid_slv1_platense_fuertesanfrancisco_20260928",
           "cid_srb2_graficarbeograd_teleoptik_20260928",
+          "cid_svk2_zilinab_humenne_20260928",
           "cid_ukr2_zhytomyr2_koloskovalivka2_20260928",
           "cid_uru1_defensorsporting_danubio_20260928",
           "cid_uru2_huracan_miramar_20260928",
@@ -4756,7 +4757,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-09-28",
-      "fileCount": 20,
+      "fileCount": 21,
       "authority": "scored_final_evidence"
     },
     "downstream": {
