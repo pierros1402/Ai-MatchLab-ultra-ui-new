@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-28",
-  "generatedAt": "2026-09-28T01:09:21.047Z",
+  "generatedAt": "2026-09-28T01:26:23.690Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "565cd93c29416117fbcf4b386e92274aba041389ef3a228ed9d5ba7a87146441",
+  "truthFingerprint": "05a4a0c6b7175faf6c32295768f437dd2378ffd5d15df853f4ccbe2acdc0fba8",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 45,
-    "playedTerminal": 11,
+    "playedTerminal": 12,
     "nonPlayedTerminal": 0,
-    "scheduled": 31,
+    "scheduled": 30,
     "live": 3,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 11,
-    "acceptedVerifiedFinalArtifacts": 11,
-    "convergedPlayedFinal": 11,
+    "verifiedFinalArtifacts": 12,
+    "acceptedVerifiedFinalArtifacts": 12,
+    "convergedPlayedFinal": 12,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 34,
+    "openRows": 33,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 11,
-    "scoredSettlementEligible": 11,
+    "historyEligible": 12,
+    "scoredSettlementEligible": 12,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -49,9 +49,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 2
       },
@@ -389,14 +389,14 @@
       "homeTeam": "Deportivo Cali",
       "awayTeam": "Águilas Doradas",
       "kickoffUtc": "2026-09-28T01:10Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -410,7 +410,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -2202,31 +2202,31 @@
       "homeTeam": "Columbus Crew",
       "awayTeam": "Inter Miami CF",
       "kickoffUtc": "2026-09-27T23:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 1,
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 2,
         "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-28",
+        "scoreHome": 2,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4668,13 +4668,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "565cd93c29416117fbcf4b386e92274aba041389ef3a228ed9d5ba7a87146441",
+      "truthFingerprint": "05a4a0c6b7175faf6c32295768f437dd2378ffd5d15df853f4ccbe2acdc0fba8",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 11,
+        "expectedEligibleRows": 12,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg2_gimnasiaytirosalta_atleticorafaela_20260928",
@@ -4687,7 +4687,8 @@
           "cid_slv1_municipallimeno_fas_20260928",
           "cid_slv1_platense_fuertesanfrancisco_20260928",
           "cid_uru1_defensorsporting_danubio_20260928",
-          "cid_uru2_huracan_miramar_20260928"
+          "cid_uru2_huracan_miramar_20260928",
+          "cid_usa1_columbuscrew_intermiami_20260928"
         ],
         "unexpectedFixtureIds": [],
         "duplicateFixtureIds": [],
@@ -4747,7 +4748,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-09-28",
-      "fileCount": 11,
+      "fileCount": 12,
       "authority": "scored_final_evidence"
     },
     "downstream": {
