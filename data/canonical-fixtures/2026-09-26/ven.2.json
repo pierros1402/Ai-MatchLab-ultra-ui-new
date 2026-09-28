@@ -2,7 +2,7 @@
   "dayKey": "2026-09-26",
   "leagueSlug": "ven.2",
   "leagueName": "Venezuelan Segunda División",
-  "updatedAt": "2026-09-27T18:35:07.190Z",
+  "updatedAt": "2026-09-28T21:52:20.856Z",
   "count": 4,
   "sourceMeta": {
     "acquisitionProvider": "flashscore",
@@ -17,7 +17,10 @@
       ],
       "changedRows": 2,
       "mergedAt": "2026-09-27T18:35:07.190Z"
-    }
+    },
+    "crossDayVerifiedFinalSupersessionAt": "2026-09-28T21:52:20.856Z",
+    "crossDayVerifiedFinalSupersessionRows": 1,
+    "crossDayVerifiedFinalSupersessionPolicy": "cross-day-provider-verified-final-v1"
   },
   "fixtures": [
     {
@@ -95,12 +98,78 @@
       "scoreAway": null,
       "penalties": null,
       "decidedBy": null,
-      "status": "STATUS_SCHEDULED",
-      "rawStatus": "STATUS_SCHEDULED",
+      "status": "STATUS_POSTPONED",
+      "rawStatus": "STATUS_POSTPONED",
       "minute": null,
       "venue": null,
       "firstSeenAt": "2026-09-24T17:24:43.137Z",
-      "lastSeenAt": "2026-09-24T18:32:04.723Z"
+      "lastSeenAt": "2026-09-24T18:32:04.723Z",
+      "statusType": "STATUS_POSTPONED",
+      "statusCorrection": {
+        "schema": "ai-matchlab.cross-day-verified-final-supersession.v1",
+        "correctedAt": "2026-09-28T21:52:20.856Z",
+        "decisionId": "cross-day-verified-final-CxCTPfT0-cid_ven2_aragua_avila_20260926-v1",
+        "policyVersion": "cross-day-provider-verified-final-v1",
+        "correctedFrom": {
+          "status": "STATUS_SCHEDULED",
+          "statusType": null,
+          "rawStatus": "STATUS_SCHEDULED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "correctedTo": {
+          "status": "STATUS_POSTPONED",
+          "statusType": "STATUS_POSTPONED",
+          "rawStatus": "STATUS_POSTPONED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "reason": "verified_cross_day_provider_reschedule",
+        "decisionBasis": "exact_provider_identity_cross_day_supersession_with_verified_final",
+        "providerEvidence": {
+          "provider": "flashscore",
+          "providerMatchId": "CxCTPfT0",
+          "supersededCanonicalId": "cid_ven2_aragua_avila_20260926",
+          "supersededDayKey": "2026-09-26",
+          "supersededKickoffUtc": "2026-09-26T20:00:00.000Z",
+          "evidenceCanonicalId": "cid_ven2_aragua_avila_20260927",
+          "evidenceDayKey": "2026-09-27",
+          "evidenceKickoffUtc": "2026-09-27T19:30:00.000Z",
+          "evidenceHomeTeam": "Aragua",
+          "evidenceAwayTeam": "Avila",
+          "verifiedFinalArtifact": "data/final-results/2026-09-27/cid_ven2_aragua_avila_20260927.json",
+          "verifiedFinalVerdict": "verified_final_result",
+          "verifiedFinalTruth": true,
+          "verifiedFinalScoreHome": 1,
+          "verifiedFinalScoreAway": 0
+        },
+        "guarantees": {
+          "flashscoreProviderOnly": true,
+          "exactProviderIdentity": true,
+          "sameLeague": true,
+          "exactNormalizedOrderedTeamPair": true,
+          "uniqueLatestObservation": true,
+          "strictlyNewerKickoff": true,
+          "minimumKickoffShiftRequired": true,
+          "strictlyNewerObservation": true,
+          "nonOverlappingObservationWindows": true,
+          "oldKickoffPastGraceRequired": true,
+          "oldOccurrenceScorelessScheduledOnly": true,
+          "playedFinalNeverSuperseded": true,
+          "existingExplicitNonPlayedNeverSuperseded": true,
+          "exactVerifiedFinalArtifact": true,
+          "exactVerifiedFinalFlashscoreProviderIdentity": true,
+          "verifiedFinalScoreParity": true,
+          "verifiedFinalTeamPairParity": true,
+          "oldOccurrenceHasNoActiveFinalResult": true,
+          "oldOccurrenceAbsentFromHistory": true,
+          "oldOccurrenceHasNoOfficialValuePick": true,
+          "oldOccurrenceScoreRemainsNull": true,
+          "scoreNeverCopiedBackward": true
+        }
+      }
     },
     {
       "canonicalId": "cid_ven2_barquisimeto_urena_20260926",
