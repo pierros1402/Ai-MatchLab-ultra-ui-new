@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-28",
-  "generatedAt": "2026-09-27T23:56:23.003Z",
+  "generatedAt": "2026-09-28T00:09:27.164Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "9f2719b46180ec0efa59091ad42d6db609ff12faa86f67ac2f139d671cb753ac",
+  "truthFingerprint": "fd56979014e3c3bdba31fb8ef13ad1b494d116d2d02d729064104aaea6131923",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 45,
-    "playedTerminal": 7,
+    "playedTerminal": 8,
     "nonPlayedTerminal": 0,
-    "scheduled": 35,
+    "scheduled": 34,
     "live": 3,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 7,
-    "acceptedVerifiedFinalArtifacts": 7,
-    "convergedPlayedFinal": 7,
+    "verifiedFinalArtifacts": 8,
+    "acceptedVerifiedFinalArtifacts": 8,
+    "convergedPlayedFinal": 8,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 38,
+    "openRows": 37,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 7,
-    "scoredSettlementEligible": 7,
+    "historyEligible": 8,
+    "scoredSettlementEligible": 8,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -536,31 +536,31 @@
       "homeTeam": "Barranquilla",
       "awayTeam": "Real Cundinamarca",
       "kickoffUtc": "2026-09-27T22:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-28",
+        "scoreHome": 0,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1225,9 +1225,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -2205,9 +2205,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 1,
         "scoreAway": 1
       },
@@ -2382,7 +2382,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 9488,
+            "count": 9494,
             "informational": true
           }
         },
@@ -4668,18 +4668,19 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "9f2719b46180ec0efa59091ad42d6db609ff12faa86f67ac2f139d671cb753ac",
+      "truthFingerprint": "fd56979014e3c3bdba31fb8ef13ad1b494d116d2d02d729064104aaea6131923",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 7,
+        "expectedEligibleRows": 8,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg2_gimnasiaytirosalta_atleticorafaela_20260928",
           "cid_bra2_fortaleza_athletic_20260928",
           "cid_col1_jaguarescordoba_alianza_20260928",
+          "cid_col2_barranquilla_realcundinamarca_20260928",
           "cid_gua1_deportivomixco_antiguagfc_20260928",
           "cid_slv1_alianza_incaaruba_20260928",
           "cid_slv1_platense_fuertesanfrancisco_20260928",
@@ -4743,7 +4744,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-09-28",
-      "fileCount": 7,
+      "fileCount": 8,
       "authority": "scored_final_evidence"
     },
     "downstream": {
