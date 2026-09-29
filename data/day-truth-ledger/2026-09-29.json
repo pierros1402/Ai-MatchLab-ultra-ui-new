@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-29",
-  "generatedAt": "2026-09-29T00:55:58.405Z",
+  "generatedAt": "2026-09-29T01:09:36.539Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "932ccd3e1a42e866a4b7bbc0adafadacaf23769fbeb7e4a3a899c3e714b7f82f",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "2e8d189d82249383c75d887f45239a962112f18d37bdf53c939a5deadc07680f",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 48,
-    "playedTerminal": 5,
+    "playedTerminal": 6,
     "nonPlayedTerminal": 0,
     "scheduled": 41,
-    "live": 1,
+    "live": 0,
     "interrupted": 1,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 6,
     "acceptedVerifiedFinalArtifacts": 6,
-    "convergedPlayedFinal": 5,
+    "convergedPlayedFinal": 6,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
     "openRows": 42,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 5,
-    "scoredSettlementEligible": 5,
+    "historyEligible": 6,
+    "scoredSettlementEligible": 6,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -2251,12 +2251,12 @@
       "homeTeam": "Montevideo Wanderers",
       "awayTeam": "Albion FC",
       "kickoffUtc": "2026-09-28T23:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 2,
         "scoreAway": 1
       },
@@ -2271,11 +2271,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2396,9 +2396,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_uru1_montevideowanderers_albion_20260929"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -2512,7 +2510,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 9734,
+            "count": 9742,
             "informational": true
           }
         },
@@ -5404,19 +5402,20 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "932ccd3e1a42e866a4b7bbc0adafadacaf23769fbeb7e4a3a899c3e714b7f82f",
+      "truthFingerprint": "2e8d189d82249383c75d887f45239a962112f18d37bdf53c939a5deadc07680f",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 5,
+        "expectedEligibleRows": 6,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_bra2_americamineiro_juventude_20260929",
           "cid_col2_interpalmira_leones_20260929",
           "cid_col2_quindio_bogota_20260929",
           "cid_par1_libertad_olimpia_20260929",
+          "cid_uru1_montevideowanderers_albion_20260929",
           "cid_uru2_paysandu_tacuarembo_20260929"
         ],
         "unexpectedFixtureIds": [],
