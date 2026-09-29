@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-09-29",
-  "generatedAt": "2026-09-29T20:38:36.044Z",
+  "generatedAt": "2026-09-29T20:48:29.267Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,7 +18,7 @@
   "inputs": {
     "fixturesPath": "data/canonical-fixtures/2026-09-29",
     "finalResultsDir": "data/final-results/2026-09-29",
-    "verifiedFinalResults": 33,
+    "verifiedFinalResults": 41,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-09-29",
     "canonicalContradictionsRejected": [],
     "canonicalIdentityAmbiguities": [],
@@ -55,38 +55,38 @@
       "summary": {
         "picks": 2,
         "uniqueMatches": 2,
-        "settled": 0,
+        "settled": 2,
         "wins": 0,
-        "losses": 0,
+        "losses": 2,
         "voids": 0,
-        "unresolved": 2,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": null,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 0,
+        "oddsAvailable": 2,
+        "averageOdds": 1.675,
+        "totalStake": 2,
+        "totalReturn": 0,
+        "profit": -2,
+        "roi": -1
       },
       "marketSummary": [
         {
           "market": "Over / Under 2.5",
           "picks": 2,
           "uniqueMatches": 2,
-          "settled": 0,
+          "settled": 2,
           "wins": 0,
-          "losses": 0,
+          "losses": 2,
           "voids": 0,
-          "unresolved": 2,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "hitRate": 0,
+          "oddsAvailable": 2,
+          "averageOdds": 1.675,
+          "totalStake": 2,
+          "totalReturn": 0,
+          "profit": -2,
+          "roi": -1
         }
       ],
       "picks": [
@@ -110,11 +110,75 @@
           "aiFairOdds": 1.77,
           "oddsDecimal": 1.62,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 1,
+            "scoreKey": "0-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-29T20:48:24.233Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401889274",
+                "canonicalId": "cid_eng5_gateshead_altrincham_20260929",
+                "leagueName": "National League",
+                "home": "Gateshead",
+                "away": "Altrincham",
+                "scoreHome": 0,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-29T18:45Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "",
+                "terminalObservedAt": "2026-09-29T20:48:17.431Z",
+                "scoreKey": "0-1",
+                "homeTeam": "Gateshead",
+                "awayTeam": "Altrincham",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_eng5_gateshead_altrincham_20260929"
+                  ],
+                  "sourceFixtureId": "cid_eng5_gateshead_altrincham_20260929",
+                  "resolvedFixtureId": "cid_eng5_gateshead_altrincham_20260929",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Gateshead",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Altrincham",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "bm3516qg",
+                "country": "England",
+                "leagueName": "National League",
+                "leaguePath": "/football/england/national-league/",
+                "home": "Gateshead",
+                "away": "Altrincham",
+                "scoreHome": 0,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-29T18:45:00.000Z",
+                "scoreKey": "0-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -136,11 +200,75 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.73,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 1,
+            "scoreKey": "0-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-29T20:48:24.257Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401889273",
+                "canonicalId": "cid_eng5_hartlepoolunited_harrogatetown_20260929",
+                "leagueName": "National League",
+                "home": "Hartlepool United",
+                "away": "Harrogate Town",
+                "scoreHome": 0,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-29T18:45Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "",
+                "terminalObservedAt": "2026-09-29T20:48:17.431Z",
+                "scoreKey": "0-1",
+                "homeTeam": "Hartlepool United",
+                "awayTeam": "Harrogate Town",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_eng5_hartlepoolunited_harrogatetown_20260929"
+                  ],
+                  "sourceFixtureId": "cid_eng5_hartlepoolunited_harrogatetown_20260929",
+                  "resolvedFixtureId": "cid_eng5_hartlepoolunited_harrogatetown_20260929",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Hartlepool United",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Harrogate Town",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "W01DapE5",
+                "country": "England",
+                "leagueName": "National League",
+                "leaguePath": "/football/england/national-league/",
+                "home": "Hartlepool",
+                "away": "Harrogate",
+                "scoreHome": 0,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-29T18:45:00.000Z",
+                "scoreKey": "0-1"
+              }
+            ]
+          }
         }
       ]
     },
@@ -158,38 +286,38 @@
       "summary": {
         "picks": 2,
         "uniqueMatches": 2,
-        "settled": 0,
+        "settled": 2,
         "wins": 0,
-        "losses": 0,
+        "losses": 2,
         "voids": 0,
-        "unresolved": 2,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": null,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 0,
+        "oddsAvailable": 2,
+        "averageOdds": 1.675,
+        "totalStake": 2,
+        "totalReturn": 0,
+        "profit": -2,
+        "roi": -1
       },
       "marketSummary": [
         {
           "market": "Over / Under 2.5",
           "picks": 2,
           "uniqueMatches": 2,
-          "settled": 0,
+          "settled": 2,
           "wins": 0,
-          "losses": 0,
+          "losses": 2,
           "voids": 0,
-          "unresolved": 2,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "hitRate": 0,
+          "oddsAvailable": 2,
+          "averageOdds": 1.675,
+          "totalStake": 2,
+          "totalReturn": 0,
+          "profit": -2,
+          "roi": -1
         }
       ],
       "picks": [
@@ -213,11 +341,75 @@
           "aiFairOdds": 1.77,
           "oddsDecimal": 1.62,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 1,
+            "scoreKey": "0-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-29T20:48:24.233Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401889274",
+                "canonicalId": "cid_eng5_gateshead_altrincham_20260929",
+                "leagueName": "National League",
+                "home": "Gateshead",
+                "away": "Altrincham",
+                "scoreHome": 0,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-29T18:45Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "",
+                "terminalObservedAt": "2026-09-29T20:48:17.431Z",
+                "scoreKey": "0-1",
+                "homeTeam": "Gateshead",
+                "awayTeam": "Altrincham",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_eng5_gateshead_altrincham_20260929"
+                  ],
+                  "sourceFixtureId": "cid_eng5_gateshead_altrincham_20260929",
+                  "resolvedFixtureId": "cid_eng5_gateshead_altrincham_20260929",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Gateshead",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Altrincham",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "bm3516qg",
+                "country": "England",
+                "leagueName": "National League",
+                "leaguePath": "/football/england/national-league/",
+                "home": "Gateshead",
+                "away": "Altrincham",
+                "scoreHome": 0,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-29T18:45:00.000Z",
+                "scoreKey": "0-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -239,11 +431,75 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.73,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 1,
+            "scoreKey": "0-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-09-29T20:48:24.257Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401889273",
+                "canonicalId": "cid_eng5_hartlepoolunited_harrogatetown_20260929",
+                "leagueName": "National League",
+                "home": "Hartlepool United",
+                "away": "Harrogate Town",
+                "scoreHome": 0,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-29T18:45Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "",
+                "terminalObservedAt": "2026-09-29T20:48:17.431Z",
+                "scoreKey": "0-1",
+                "homeTeam": "Hartlepool United",
+                "awayTeam": "Harrogate Town",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_eng5_hartlepoolunited_harrogatetown_20260929"
+                  ],
+                  "sourceFixtureId": "cid_eng5_hartlepoolunited_harrogatetown_20260929",
+                  "resolvedFixtureId": "cid_eng5_hartlepoolunited_harrogatetown_20260929",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Hartlepool United",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Harrogate Town",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "W01DapE5",
+                "country": "England",
+                "leagueName": "National League",
+                "leaguePath": "/football/england/national-league/",
+                "home": "Hartlepool",
+                "away": "Harrogate",
+                "scoreHome": 0,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-09-29T18:45:00.000Z",
+                "scoreKey": "0-1"
+              }
+            ]
+          }
         }
       ]
     },
@@ -312,9 +568,9 @@
   },
   "comparison": {
     "pickDeltaPlanBMinusPlanA": -2,
-    "settledDeltaPlanBMinusPlanA": 0,
+    "settledDeltaPlanBMinusPlanA": -2,
     "winsDeltaPlanBMinusPlanA": 0,
-    "lossesDeltaPlanBMinusPlanA": 0,
+    "lossesDeltaPlanBMinusPlanA": -2,
     "hitRateDeltaPlanBMinusPlanA": null,
     "roiDeltaPlanBMinusPlanA": null
   }
