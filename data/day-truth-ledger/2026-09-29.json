@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-29",
-  "generatedAt": "2026-09-29T15:49:33.822Z",
+  "generatedAt": "2026-09-29T16:06:56.499Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "366ca83e2d6fe8e0dc58808fc9f18c2a451d9212776667403da47fbc98763b9d",
+  "truthFingerprint": "81225a0f93366d60da76d09da3df2ae487ab469928eb5b9c92f1a5193c112ff7",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 48,
-    "playedTerminal": 13,
+    "playedTerminal": 14,
     "nonPlayedTerminal": 0,
-    "scheduled": 34,
-    "live": 0,
+    "scheduled": 31,
+    "live": 2,
     "interrupted": 1,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 13,
-    "acceptedVerifiedFinalArtifacts": 13,
-    "convergedPlayedFinal": 13,
+    "verifiedFinalArtifacts": 14,
+    "acceptedVerifiedFinalArtifacts": 14,
+    "convergedPlayedFinal": 14,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 35,
+    "openRows": 34,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 13,
-    "scoredSettlementEligible": 13,
+    "historyEligible": 14,
+    "scoredSettlementEligible": 14,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -634,31 +634,31 @@
       "homeTeam": "Madagascar",
       "awayTeam": "Tanzania",
       "kickoffUtc": "2026-09-29T13:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-29",
+        "scoreHome": 1,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1859,14 +1859,14 @@
       "homeTeam": "Finland",
       "awayTeam": "Belarus",
       "kickoffUtc": "2026-09-29T16:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1880,7 +1880,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1957,14 +1957,14 @@
       "homeTeam": "Moldova",
       "awayTeam": "Faroe Islands",
       "kickoffUtc": "2026-09-29T16:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1978,7 +1978,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -2510,7 +2510,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 9788,
+            "count": 9792,
             "informational": true
           }
         },
@@ -5402,13 +5402,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "366ca83e2d6fe8e0dc58808fc9f18c2a451d9212776667403da47fbc98763b9d",
+      "truthFingerprint": "81225a0f93366d60da76d09da3df2ae487ab469928eb5b9c92f1a5193c112ff7",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 13,
+        "expectedEligibleRows": 14,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_bra2_americamineiro_juventude_20260929",
@@ -5416,6 +5416,7 @@
           "cid_cafnations_comoros_namibia_20260929",
           "cid_cafnations_ethiopia_senegal_20260929",
           "cid_cafnations_lesotho_morocco_20260929",
+          "cid_cafnations_madagascar_tanzania_20260929",
           "cid_cafnations_mozambique_sudan_20260929",
           "cid_cafnations_southsudan_egypt_20260929",
           "cid_chn2_wuxiwugou_ningboprofessional_20260929",
@@ -5483,7 +5484,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-09-29",
-      "fileCount": 13,
+      "fileCount": 14,
       "authority": "scored_final_evidence"
     },
     "downstream": {
