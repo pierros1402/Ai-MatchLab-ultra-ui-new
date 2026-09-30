@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-09-30",
-  "generatedAt": "2026-09-30T17:53:40.807Z",
+  "generatedAt": "2026-09-30T18:04:20.019Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "582a651ec06e84bff81b902f30c6515c8d02d1155f08d5709cfbd3a55cba6ece",
+  "truthFingerprint": "e0c982b9b67b5dcae8079f0776369b5f0598140334d55f3cc9e4e91313acb99b",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 16,
-    "playedTerminal": 9,
+    "playedTerminal": 10,
     "nonPlayedTerminal": 0,
-    "scheduled": 7,
+    "scheduled": 6,
     "live": 0,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 9,
-    "acceptedVerifiedFinalArtifacts": 9,
-    "convergedPlayedFinal": 9,
+    "verifiedFinalArtifacts": 10,
+    "acceptedVerifiedFinalArtifacts": 10,
+    "convergedPlayedFinal": 10,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 7,
+    "openRows": 6,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 9,
-    "scoredSettlementEligible": 9,
+    "historyEligible": 10,
+    "scoredSettlementEligible": 10,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -95,31 +95,31 @@
       "homeTeam": "Eritrea",
       "awayTeam": "South Africa",
       "kickoffUtc": "2026-09-30T16:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 0,
+        "scoreAway": 5
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-09-30",
+        "scoreHome": 0,
+        "scoreAway": 5,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -961,7 +961,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 10002,
+            "count": 10032,
             "informational": true
           }
         },
@@ -3336,16 +3336,17 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "582a651ec06e84bff81b902f30c6515c8d02d1155f08d5709cfbd3a55cba6ece",
+      "truthFingerprint": "e0c982b9b67b5dcae8079f0776369b5f0598140334d55f3cc9e4e91313acb99b",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 9,
+        "expectedEligibleRows": 10,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_bra2_botafogosp_pontepreta_20260930",
+          "cid_cafnations_eritrea_southafrica_20260930",
           "cid_col1_independientemedellin_millonarios_20260930",
           "cid_col2_umagdalena_cartagena_20260930",
           "cid_mne2_budva_lovcen_20260930",
@@ -3413,7 +3414,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-09-30",
-      "fileCount": 9,
+      "fileCount": 10,
       "authority": "scored_final_evidence"
     },
     "downstream": {
