@@ -1,0 +1,294 @@
+{
+  "schema": "ai-matchlab.identity-recovery-window.v1",
+  "runDayKey": "2026-10-01",
+  "source": "raw_canonical_fixtures_pre_dedup",
+  "window": {
+    "daysBack": 1,
+    "daysForward": 14
+  },
+  "sourceLatestUpdatedAt": "2026-09-30T22:18:59.772Z",
+  "resolver": {
+    "schema": "ai-matchlab.production-identity-resolver-runtime.v2",
+    "extensionLedgerSha256": "c6b0e23990c4af7ab258eed2aef1bc12d3021d8f5c1c7229d430f07215026981",
+    "effectiveCounts": {
+      "identityBindings": 125,
+      "retainedFixtureIds": 92,
+      "suppressedFixtureAliases": 92,
+      "sourceFixtureIds": 184
+    }
+  },
+  "status": "REVIEW_REQUIRED",
+  "promotionPolicy": {
+    "broadFuzzyAllowed": false,
+    "unresolvedTwoSidedAutoPromotionAllowed": false,
+    "independentConfirmationRequiredForTwoSidedUnknown": true
+  },
+  "summary": {
+    "scannedDays": 16,
+    "scannedLeagueFiles": 254,
+    "inputRows": 1011,
+    "autoPromotable": 1,
+    "pendingIndependentConfirmation": 0,
+    "ambiguous": 1,
+    "conflictRejected": 1,
+    "alreadyManagedPairs": 0
+  },
+  "targetDays": [
+    {
+      "dayKey": "2026-09-30",
+      "leagueFiles": 9,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-01",
+      "leagueFiles": 14,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-02",
+      "leagueFiles": 19,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "sco.tennents",
+          "inputRows": 2,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [],
+          "conflictRejected": [
+            {
+              "leagueSlug": "sco.tennents",
+              "kickoffUtc": "2026-10-02T18:30:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "xh7PCPpT",
+                "canonicalId": "cid_scotennents_cumnockjuniors_auchinlecktalbot_20261002",
+                "kickoffUtc": "2026-10-02T18:30:00.000Z",
+                "homeTeam": "Cumnock Juniors",
+                "awayTeam": "Auchinleck Talbot"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401921129",
+                "canonicalId": "cid_scotennents_cumnock_auchinlecktalbot_20261002",
+                "kickoffUtc": "2026-10-02T18:30Z",
+                "homeTeam": "Cumnock",
+                "awayTeam": "Auchinleck Talbot"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "SQUAD_CONFLICT",
+                  "stable": false,
+                  "conflict": true
+                },
+                "away": {
+                  "kind": "NORMALIZED_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": null,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null,
+                  "productionIdentityComplete": false
+                },
+                "stableSides": 1,
+                "conflict": true
+              },
+              "recoveryStatus": "REJECTED_IDENTITY_CONFLICT",
+              "promotionAuthorized": false
+            }
+          ],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 0,
+            "conflictRejected": 1,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
+    },
+    {
+      "dayKey": "2026-10-03",
+      "leagueFiles": 44,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "arg.2",
+          "inputRows": 19,
+          "temporalCrossProviderPairs": 17,
+          "autoPromotable": [
+            {
+              "leagueSlug": "arg.2",
+              "kickoffUtc": "2026-10-03T18:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "rkBevKWQ",
+                "canonicalId": "cid_arg2_temperley_gimnasiajujuy_20261003",
+                "kickoffUtc": "2026-10-03T18:00:00.000Z",
+                "homeTeam": "Temperley",
+                "awayTeam": "Gimnasia Jujuy"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401844181",
+                "canonicalId": "cid_arg2_temperley_gimnasiayesgrimajujuy_20261003",
+                "kickoffUtc": "2026-10-03T18:00Z",
+                "homeTeam": "Temperley",
+                "awayTeam": "Gimnasia y Esgrima (Jujuy)"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "NORMALIZED_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": null,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null,
+                  "productionIdentityComplete": false
+                },
+                "away": {
+                  "kind": "GLOBAL_ID_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": "gcid_a78224b54af6e51ee5fa1f72"
+                },
+                "stableSides": 2,
+                "conflict": false
+              },
+              "recoveryStatus": "AUTO_PROMOTABLE_IDENTITY_EXTENSION",
+              "promotionAuthorized": true,
+              "requiresIndependentConfirmation": false
+            }
+          ],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 1,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 0,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "sco.tennents",
+          "inputRows": 30,
+          "temporalCrossProviderPairs": 28,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [
+            {
+              "leagueSlug": "sco.tennents",
+              "kickoffUtc": "2026-10-03T14:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_scotennents_beith_huntly_20261003",
+                "cid_scotennents_bonessunited_irvinemeadowxi_20261003",
+                "cid_scotennents_bonnytonthistle_eaststirlingshire_20261003",
+                "cid_scotennents_brechincity_buckiethistle_20261003",
+                "cid_scotennents_caledonianbraves_fraserburgh_20261003",
+                "cid_scotennents_civilservicestrollers_formartineunited_20261003",
+                "cid_scotennents_clachnacuddin_bonnyriggrose_20261003",
+                "cid_scotennents_cowdenbeath_berwickrangers_20261003",
+                "cid_scotennents_deveronvale_troon_20261003",
+                "cid_scotennents_dunipace_prestonathletic_20261003",
+                "cid_scotennents_forresmechanics_stirlinguniversity_20261003",
+                "cid_scotennents_galafairydean_largsthistle_20261003",
+                "cid_scotennents_haddingtonathletic_cumbernauldcolts_20261003",
+                "cid_scotennents_hillofbeathhawthorn_glasgowuniversity_20261003",
+                "cid_scotennents_keith_stonehaven_20261003",
+                "cid_scotennents_kirkintillochrobroy_banksodee_20261003",
+                "cid_scotennents_linlithgowrose_clydebank_20261003",
+                "cid_scotennents_locheeunited_inverurielocoworks_20261003",
+                "cid_scotennents_musselburghathletic_lossiemouth_20261003",
+                "cid_scotennents_nairncounty_gretna2008_20261003",
+                "cid_scotennents_newtonstewart_johnstoneburgh_20261003",
+                "cid_scotennents_penicuik_kilwinningrangers_20261003",
+                "cid_scotennents_pollok_albionrovers_20261003",
+                "cid_scotennents_renfrew_broxburn_20261003",
+                "cid_scotennents_rothes_brorarangers_20261003",
+                "cid_scotennents_strathspeythistle_dalbeattiestar_20261003",
+                "cid_scotennents_tayport_wickacademy_20261003",
+                "cid_scotennents_tranent_turriffutd_20261003",
+                "cid_scotennents_tranentjuniors_turriffunited_20261003"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 1,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
+    },
+    {
+      "dayKey": "2026-10-04",
+      "leagueFiles": 10,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-05",
+      "leagueFiles": 5,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-06",
+      "leagueFiles": 4,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-07",
+      "leagueFiles": 2,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-08",
+      "leagueFiles": 5,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-09",
+      "leagueFiles": 23,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-10",
+      "leagueFiles": 35,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-11",
+      "leagueFiles": 32,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-12",
+      "leagueFiles": 22,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-13",
+      "leagueFiles": 14,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-14",
+      "leagueFiles": 7,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-15",
+      "leagueFiles": 9,
+      "recoveryLeagueReports": []
+    }
+  ]
+}
