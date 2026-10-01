@@ -103,4 +103,11 @@ jobs:
             if [ "$SETTLED_DAY" != "$DAY_KEY" ]; then
               bash tools/sync-public-plan-c-shadow.sh "$SETTLED_DAY" "$PUBLISHED_REF"
             fi
-          done < <(node -e 'const x=require("./data/plan-c-shadow/_audit/settlement-refresh-"+process.env.DAY_KEY+".json");for(const day of x.changedDays) console.log(day)')
+          done < <(node -e 'const x=require("./data/plan-c-shadow/_audit/settlement-sync-pending.json");for(const day of x.days) console.log(day)')
+          node -e 'require("fs").writeFileSync("data/plan-c-shadow/_audit/settlement-sync-pending.json",JSON.stringify({days:[]},null,2)+"\n")'
+          git add data/plan-c-shadow/_audit/settlement-sync-pending.json
+          node engine-v1/jobs/guard-staged-data-boundary.js --label=plan-c-settlement-sync-ack --dayKey="${DAY_KEY}" --allow="^data/plan-c-shadow/_audit/settlement-sync-pending\.json$"
+          if ! git diff --cached --quiet; then
+            git commit -m "Acknowledge verified Plan C settlement publication"
+            bash tools/git-push-rebase-retry.sh
+          fi

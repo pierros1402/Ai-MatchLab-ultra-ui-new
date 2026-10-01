@@ -22,15 +22,31 @@ if [[ -z "$CRON_SECRET" ]]; then
 fi
 
 ENGINE_BASE="${ENGINE_BASE%/}"
-START_RESPONSE="$(curl -fsS --connect-timeout 20 --max-time 300 -X POST -H "X-Cron-Secret: ${CRON_SECRET}" "${ENGINE_BASE}/ops/sync-plan-c-shadow?date=${DAY_KEY}&ref=${REF}")"
-JOB_ID="$(printf '%s' "$START_RESPONSE" | node -e '
+start_sync() {
+  local response
+  response="$(curl -fsS --connect-timeout 20 --max-time 300 -X POST -H "X-Cron-Secret: ${CRON_SECRET}" "${ENGINE_BASE}/ops/sync-plan-c-shadow?date=${DAY_KEY}&ref=${REF}")"
+  printf '%s' "$response" | node -e '
 let raw=""; process.stdin.on("data", c => raw += c); process.stdin.on("end", () => {
   const x=JSON.parse(raw); if(!x?.ok || !x?.job?.id) process.exit(2); process.stdout.write(String(x.job.id));
-});')"
+});'
+}
+JOB_ID="$(start_sync)"
 
 FINAL_RESPONSE=""
 for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
-  FINAL_RESPONSE="$(curl -fsS --connect-timeout 10 --max-time 20 -H "X-Cron-Secret: ${CRON_SECRET}" "${ENGINE_BASE}/ops/sync-plan-c-shadow/status?id=$(node -p 'encodeURIComponent(process.argv[1])' "$JOB_ID")")"
+  POLL_RESPONSE="$(curl -sS --connect-timeout 10 --max-time 20 -w $'\n%{http_code}' -H "X-Cron-Secret: ${CRON_SECRET}" "${ENGINE_BASE}/ops/sync-plan-c-shadow/status?id=$(node -p 'encodeURIComponent(process.argv[1])' "$JOB_ID")")"
+  POLL_CODE="${POLL_RESPONSE##*$'\n'}"
+  FINAL_RESPONSE="${POLL_RESPONSE%$'\n'*}"
+  if [[ "$POLL_CODE" == "404" ]]; then
+    echo "PLAN_C_SYNC_JOB_LOST restarting immutable day/ref sync"
+    JOB_ID="$(start_sync)"
+    sleep "$SLEEP_SECONDS"
+    continue
+  fi
+  if [[ "$POLL_CODE" != "200" ]]; then
+    echo "ERROR: Plan C sync status HTTP=$POLL_CODE" >&2
+    exit 1
+  fi
   STATUS="$(printf '%s' "$FINAL_RESPONSE" | node -e 'let r="";process.stdin.on("data",c=>r+=c);process.stdin.on("end",()=>process.stdout.write(String(JSON.parse(r)?.job?.status||"unknown")));')"
   echo "PLAN_C_SYNC_ATTEMPT=${attempt} STATUS=${STATUS}"
   case "$STATUS" in

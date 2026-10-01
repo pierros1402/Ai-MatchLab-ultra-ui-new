@@ -34,6 +34,10 @@ if (isCli) {
   const root = resolveDataPath("plan-c-shadow");
   const report = JSON.parse(fs.readFileSync(path.join(root, "settlement", "latest.json"), "utf8"));
   const changedDays = [];
+  const queueFile = path.join(root, "_audit", "settlement-sync-pending.json");
+  const priorAuditFile = path.join(root, "_audit", `settlement-refresh-${day}.json`);
+  const pendingDays = fs.existsSync(queueFile) ? JSON.parse(fs.readFileSync(queueFile, "utf8")).days :
+    fs.existsSync(priorAuditFile) ? JSON.parse(fs.readFileSync(priorAuditFile, "utf8")).changedDays : [];
   for (const name of fs.readdirSync(root).filter(name => /^\d{4}-\d{2}-\d{2}\.json$/.test(name)).sort()) {
     const file = path.join(root, name);
     const result = refreshPlanCSettlements(JSON.parse(fs.readFileSync(file, "utf8")), report);
@@ -48,5 +52,6 @@ if (isCli) {
     changedDays.push(name.slice(0, 10));
   }
   fs.writeFileSync(path.join(root, "_audit", `settlement-refresh-${day}.json`), JSON.stringify({ ok: true, date: day, changedDays }, null, 2) + "\n");
+  fs.writeFileSync(queueFile, JSON.stringify({ days: [...new Set([...pendingDays, ...changedDays])].sort() }, null, 2) + "\n");
   console.log(JSON.stringify({ ok: true, changedDays }));
 }
