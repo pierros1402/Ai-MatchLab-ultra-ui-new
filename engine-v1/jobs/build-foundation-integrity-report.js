@@ -226,7 +226,7 @@ export function writeFoundationIntegrityReport(dayKey, options = {}) {
   const report = buildFoundationIntegrityReport(dayKey, options);
   const outDir = ensureDir(resolveDataPath("foundation-integrity"));
   fs.writeFileSync(path.join(outDir, `${dayKey}.json`), JSON.stringify(report, null, 2) + "\n", "utf8");
-  fs.writeFileSync(path.join(outDir, "latest.json"), JSON.stringify({ ...report, latestForDay: dayKey }, null, 2) + "\n", "utf8");
+  if (options.updateLatest !== false) fs.writeFileSync(path.join(outDir, "latest.json"), JSON.stringify({ ...report, latestForDay: dayKey }, null, 2) + "\n", "utf8");
   return report;
 }
 
@@ -258,7 +258,7 @@ if (isCli) {
     console.error("Usage: node engine-v1/jobs/build-foundation-integrity-report.js --date=YYYY-MM-DD [--gate]");
     process.exit(1);
   }
-  const report = writeFoundationIntegrityReport(dayKey);
+  const report = writeFoundationIntegrityReport(dayKey, { updateLatest: !process.argv.includes("--no-latest") });
   console.log(JSON.stringify(foundationIntegrityCliSummary(report), null, 2));
   if (gate && !report.publicationReady) process.exitCode = 1;
 }

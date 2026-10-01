@@ -825,7 +825,7 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
   // unchanged. The old intraday deriveValueFromOdds call was REMOVED.
 
   console.log("[intraday-snapshot-refresh] export-snapshot:start", { dayKey: safeDayKey });
-  const snapshot = await exportDeploySnapshotDay(
+  let snapshot = await exportDeploySnapshotDay(
     safeDayKey,
     {
       preserveDetails: true,
@@ -841,6 +841,26 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
       failOnMissingDetails: true
     }
   );
+  let dataRecovery;
+  try {
+    const { recoverValueDataDay } = await import("./recover-value-data-day.js");
+    dataRecovery = await recoverValueDataDay(safeDayKey, { apply: process.env.VALUE_DATA_RECOVERY_APPLY === "true" });
+    if (dataRecovery.mutation) {
+      snapshot = await exportDeploySnapshotDay(safeDayKey, {
+        preserveDetails: true, preserveValue: true, publicationMode: "intraday_status_only",
+        fixtureIdAllowlist: publicationLock.allowedFixtureIds,
+        authoritativelyRemovedFixtureIds: authoritativeRemovalLedger,
+        legacyPrunedFixtureIds, buildMissingDetails: false, failOnMissingDetails: true
+      });
+    }
+  } catch (error) {
+    // The repair rolls back its own writes. Preserve the independently harvested
+    // LIVE/FT checkpoint; the downstream foundation gate remains authoritative.
+    dataRecovery = { status: "FAILED", reason: error.message, rolledBack: !dataRecovery, recoveryApplied: Boolean(dataRecovery?.mutation) };
+  }
+  fs.writeFileSync(resolveDataPath("deploy-snapshots", safeDayKey, "value-data-recovery.json"), JSON.stringify(dataRecovery, null, 2) + "\n");
+  console.log("[intraday-snapshot-refresh] value-data-recovery:done", { status: dataRecovery.status, mutation: dataRecovery.mutation });
+
   console.log("[intraday-snapshot-refresh] export-snapshot:done", {
     dayKey: safeDayKey,
     hash: snapshot?.hash,

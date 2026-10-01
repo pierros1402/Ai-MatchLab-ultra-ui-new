@@ -1,0 +1,67 @@
+name: Bounded Value data recovery
+
+on:
+  workflow_dispatch:
+    inputs:
+      dayKey:
+        description: "Exact day to diagnose or repair, YYYY-MM-DD. Frozen predictions are preserved."
+        required: true
+      apply:
+        description: "Apply the allowlisted, verified data repair after dry-run."
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ai-matchlab-data-writer
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - run: npm ci --no-audit --no-fund
+      - name: Validate exact day and diagnose
+        env:
+          DAY_KEY: ${{ inputs.dayKey }}
+        run: |
+          set -euo pipefail
+          node -e 'if(!/^\d{4}-\d{2}-\d{2}$/.test(process.env.DAY_KEY)) process.exit(2)'
+          node engine-v1/jobs/recover-value-data-day.js "$DAY_KEY" | tee "$RUNNER_TEMP/value-recovery-plan.json"
+      - name: Apply bounded repair and verify foundation
+        if: inputs.apply
+        env:
+          DAY_KEY: ${{ inputs.dayKey }}
+        run: |
+          set -euo pipefail
+          node engine-v1/jobs/recover-value-data-day.js "$DAY_KEY" --apply
+          node engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY" --no-latest
+          node engine-v1/jobs/build-day-report.js --date="$DAY_KEY"
+      - name: Commit only repaired artifacts and evidence
+        if: inputs.apply
+        env:
+          DAY_KEY: ${{ inputs.dayKey }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "data/deploy-snapshots/${DAY_KEY}/" "data/details/${DAY_KEY}/" "data/foundation-integrity/${DAY_KEY}.json" "data/build-reports/${DAY_KEY}.json"
+          node engine-v1/jobs/guard-staged-data-boundary.js --label=value-data-recovery --dayKey="$DAY_KEY" --allow="^(data/deploy-snapshots/${DAY_KEY}/|data/details/${DAY_KEY}/|data/foundation-integrity/${DAY_KEY}\.json$|data/build-reports/${DAY_KEY}\.json$)"
+          if ! git diff --cached --quiet; then
+            git commit -m "Recover verified Value data artifacts for ${DAY_KEY} without rescoring predictions"
+            bash tools/git-push-rebase-retry.sh
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: value-recovery-plan-${{ inputs.dayKey }}
+          path: ${{ runner.temp }}/value-recovery-plan.json
