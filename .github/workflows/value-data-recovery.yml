@@ -60,6 +60,13 @@ jobs:
             git commit -m "Recover verified Value data artifacts for ${DAY_KEY} without rescoring predictions"
             bash tools/git-push-rebase-retry.sh
           fi
+          echo "PUBLISHED_REF=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Publish and verify the repaired historical snapshot
+        if: inputs.apply
+        env:
+          DAY_KEY: ${{ inputs.dayKey }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: bash tools/sync-public-snapshot.sh "$DAY_KEY" "$PUBLISHED_REF"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

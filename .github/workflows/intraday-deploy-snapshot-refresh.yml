@@ -974,6 +974,7 @@ jobs:
           # Freshness + build reports refreshed by run-intraday-snapshot-refresh.js
           # so they describe THIS re-exported manifest, not the earlier daily one.
           if [ -f "data/deploy-snapshots/${DAY_KEY}/freshness-report.json" ]; then git add "data/deploy-snapshots/${DAY_KEY}/freshness-report.json"; fi
+          if [ -f "data/deploy-snapshots/${DAY_KEY}/value-data-recovery.json" ]; then git add "data/deploy-snapshots/${DAY_KEY}/value-data-recovery.json"; fi
           if [ -f "data/build-reports/${DAY_KEY}.json" ]; then git add "data/build-reports/${DAY_KEY}.json"; fi
           if [ -f "data/foundation-integrity/${DAY_KEY}.json" ]; then git add "data/foundation-integrity/${DAY_KEY}.json"; fi
           if [ -f "data/foundation-integrity/latest.json" ]; then git add "data/foundation-integrity/latest.json"; fi
@@ -1209,7 +1210,10 @@ jobs:
             manifestMissingHashesAfter: afterHashState.missing
           }, null, 2));
 
-          if (!materialChanged && !manifestContractRepair) {
+          const recovery = readJsonFile(`data/deploy-snapshots/${day}/value-data-recovery.json`);
+          const verifiedDataRepair = recovery?.apply === true && recovery?.mutation === true && recovery?.frozenValuesPreserved === true;
+
+          if (!materialChanged && !manifestContractRepair && !verifiedDataRepair) {
             console.log("No material score/status/minute or manifest-contract repair change. Restoring staged deploy snapshot files to avoid timestamp-only commit.");
             execFileSync("git", ["restore", "--staged", "--", "data/deploy-snapshots"], { stdio: "inherit" });
             execFileSync("git", ["restore", "--", "data/deploy-snapshots"], { stdio: "inherit" });
@@ -1262,7 +1266,7 @@ jobs:
             }
           }
 
-          let commitNeeded = materialChanged || manifestContractRepair;
+          let commitNeeded = materialChanged || manifestContractRepair || verifiedDataRepair;
           if (!commitNeeded) {
             try {
               execFileSync("git", ["diff", "--cached", "--quiet"], { stdio: "ignore" });
