@@ -77,6 +77,14 @@
     }).format(date);
   }
 
+  function predictionDay(entry) {
+    const date = new Date(entry?.prediction?.kickoffUtc);
+    if (!Number.isFinite(date.getTime())) return "";
+    const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Athens", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(date);
+    const value = type => parts.find(part => part.type === type)?.value;
+    return `${value("year")}-${value("month")}-${value("day")}`;
+  }
+
   function engineUrl(path) {
     const base =
       window.AIML_CONFIG?.BASE_URL ||
@@ -227,9 +235,12 @@
       return;
     }
 
-    const entries = payload.entries.filter(entry => activeFilter !== "picks" || entry.prediction.planCPick === true);
+    const dailyEntries = payload.entries.filter(entry => predictionDay(entry) === payload.date);
+    const scopedEntries = activeFilter === "history" ? payload.entries : dailyEntries;
+    const entries = scopedEntries.filter(entry => activeFilter === "all" || entry.prediction.planCPick === true);
     const generated = formatGenerated(payload.generatedAt);
-    const picks = payload.entries.filter(entry => entry.prediction.planCPick === true);
+    const picks = scopedEntries.filter(entry => entry.prediction.planCPick === true);
+    const dailyPickCount = dailyEntries.filter(entry => entry.prediction.planCPick === true).length;
     const wins = picks.filter(entry => pickOutcome(entry) === "WIN").length;
     const losses = picks.filter(entry => pickOutcome(entry) === "LOSS").length;
     const pending = picks.filter(entry => pickOutcome(entry) === "PENDING").length;
@@ -242,13 +253,14 @@
       <div class="plan-c-results-summary" aria-label="Αποτελέσματα προτάσεων">WIN ${wins} · LOSS ${losses} · Αναμονή ${pending} · VOID ${voids}</div>
       <p class="plan-c-explanation">Οι προτάσεις είναι Over 2.5: επιτυχία με 3 ή περισσότερα γκολ στο τελικό σκορ. Πειραματικό Plan C.</p>
       <div class="plan-c-summary">
-        <div><strong>${esc(payload.pickCount)}</strong><span>shadow picks</span></div>
-        <div><strong>${esc(payload.count)}</strong><span>predictions</span></div>
-        <div><strong>${esc(payload.date)}</strong><span>${generated ? `built ${esc(generated)}` : "daily export"}</span></div>
+        <div><strong>${esc(picks.length)}</strong><span>προτάσεις</span></div>
+        <div><strong>${esc(scopedEntries.length)}</strong><span>αναλύσεις</span></div>
+        <div><strong>${activeFilter === "history" ? "Ιστορικό & επόμενα" : esc(payload.date)}</strong><span>${generated ? `ενημέρωση ${esc(generated)}` : "ημερήσια προβολή"}</span></div>
       </div>
       <div class="plan-c-filter" role="group" aria-label="Plan C prediction filter">
-        <button type="button" data-plan-c-filter="picks" class="${activeFilter === "picks" ? "active" : ""}">Προτάσεις ${esc(payload.pickCount)}</button>
-        <button type="button" data-plan-c-filter="all" class="${activeFilter === "all" ? "active" : ""}">Όλες οι αναλύσεις ${esc(payload.count)}</button>
+        <button type="button" data-plan-c-filter="picks" class="${activeFilter === "picks" ? "active" : ""}">Προτάσεις ημέρας ${esc(dailyPickCount)}</button>
+        <button type="button" data-plan-c-filter="all" class="${activeFilter === "all" ? "active" : ""}">Αναλύσεις ημέρας ${esc(dailyEntries.length)}</button>
+        <button type="button" data-plan-c-filter="history" class="${activeFilter === "history" ? "active" : ""}">Ιστορικό & επόμενες προτάσεις</button>
       </div>
       <div class="plan-c-cards">
         ${entries.length ? entries.map(renderEntry).join("") : '<div class="panel-empty">Δεν υπάρχουν προτάσεις Plan C για αυτή την ημέρα.</div>'}
@@ -312,12 +324,13 @@
     const button = event.target.closest("[data-plan-c-filter]");
     if (!button || !activePayload?.available) return;
     const nextFilter = button.getAttribute("data-plan-c-filter");
-    if (!['all', 'picks'].includes(nextFilter)) return;
+    if (!['all', 'picks', 'history'].includes(nextFilter)) return;
     activeFilter = nextFilter;
     renderPayload(activePayload);
   });
 
   window.addEventListener("date:change", event => {
+    activeFilter = "picks";
     load(event?.detail?.date || event?.detail?.dataDate || "");
   });
 
@@ -326,7 +339,8 @@
     validatePayload,
     percent,
     signedPoints,
-    pickOutcome
+    pickOutcome,
+    predictionDay
   });
 
   load(window.__AIML_SELECTED_DATE || "");

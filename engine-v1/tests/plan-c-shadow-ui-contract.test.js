@@ -41,7 +41,7 @@ test("Plan C is rendered in a separate explicitly shadow-labelled panel", () => 
 
   assert.match(html, /class="intelligence-panel plan-c-shadow-panel"/);
   assert.match(html, /plan-c-shadow-header-badge">SHADOW/);
-  assert.match(html, /assets\/js\/ui\/plan-c-shadow\.js\?v=2/);
+  assert.match(html, /assets\/js\/ui\/plan-c-shadow\.js\?v=3/);
   assert.match(source, /const ENDPOINT = "\/plan-c-shadow"/);
   assert.match(source, /Separate from official Value picks and alerts/);
   assert.match(source, /productionEligible !== false/);
@@ -51,9 +51,10 @@ test("Plan C is rendered in a separate explicitly shadow-labelled panel", () => 
 
 test("Plan C UI validator accepts only the verified forward-only shadow cohort", async () => {
   const source = read("assets/js/ui/plan-c-shadow.js");
+  let clickHandler;
   const list = {
     innerHTML: "",
-    addEventListener() {}
+    addEventListener(name, handler) { if (name === "click") clickHandler = handler; }
   };
   const root = {};
   const listeners = new Map();
@@ -129,7 +130,11 @@ test("Plan C UI validator accepts only the verified forward-only shadow cohort",
   assert.equal(realValidation.count, 10);
   assert.equal(realValidation.pickCount, 6);
   await api.reload("2026-08-26");
-  assert.match(list.innerHTML, /6<\/strong><span>shadow picks/);
+  const dayPickCount = fetchPayload.entries.filter(entry => api.predictionDay(entry) === "2026-08-26" && entry.prediction.planCPick).length;
+  assert.match(list.innerHTML, new RegExp(`Προτάσεις ημέρας ${dayPickCount}`));
+  assert.doesNotMatch(list.innerHTML, /29 Aug|30 Aug|31 Aug/);
+  clickHandler({ target: { closest() { return { getAttribute() { return "history"; } }; } } });
+  assert.match(list.innerHTML, /6<\/strong><span>προτάσεις/);
   assert.match(list.innerHTML, /OVER 2\.5 · SHADOW PICK/);
   assert.match(list.innerHTML, /Verified ClubElo identities/);
 
@@ -140,6 +145,7 @@ test("Plan C UI validator accepts only the verified forward-only shadow cohort",
   assert.equal(api.pickOutcome({ prediction: { planCPick: true }, settlement: { state: "VOID_EXCLUDED" } }), "VOID");
   assert.match(list.innerHTML, /Πρόταση: Over 2.5 γκολ/);
   assert.match(list.innerHTML, /WIN \d+ · LOSS \d+/);
+  assert.equal(api.predictionDay({ prediction: { kickoffUtc: "2026-08-25T22:00:00Z" } }), "2026-08-26");
   assert.doesNotMatch(list.innerHTML, /class="plan-c-pick-badge observe"/);
 
   assert.ok(listeners.has("date:change"));
