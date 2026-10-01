@@ -1214,8 +1214,20 @@ jobs:
 
           const recovery = readJsonFile(`data/deploy-snapshots/${day}/value-data-recovery.json`);
           const verifiedDataRepair = recovery?.apply === true && recovery?.mutation === true && recovery?.frozenValuesPreserved === true;
+          const recoveryBefore = readJsonFromHeadOrNull(`data/deploy-snapshots/${day}/value-data-recovery.json`);
+          function recoveryState(report) {
+            if (!report) return null;
+            return {
+              status: report.status, apply: report.apply, after: report.after,
+              remainingUpcomingAssessmentIds: report.remainingUpcomingAssessmentIds,
+              historicalMissingAssessmentIds: report.historicalMissingAssessmentIds,
+              ambiguousAssessmentIds: report.ambiguousAssessmentIds,
+              reason: report.reason, rolledBack: report.rolledBack
+            };
+          }
+          const recoveryStateChanged = JSON.stringify(recoveryState(recoveryBefore)) !== JSON.stringify(recoveryState(recovery));
 
-          if (!materialChanged && !manifestContractRepair && !verifiedDataRepair) {
+          if (!materialChanged && !manifestContractRepair && !verifiedDataRepair && !recoveryStateChanged) {
             console.log("No material score/status/minute or manifest-contract repair change. Restoring staged deploy snapshot files to avoid timestamp-only commit.");
             execFileSync("git", ["restore", "--staged", "--", "data/deploy-snapshots"], { stdio: "inherit" });
             execFileSync("git", ["restore", "--", "data/deploy-snapshots"], { stdio: "inherit" });
@@ -1268,7 +1280,7 @@ jobs:
             }
           }
 
-          let commitNeeded = materialChanged || manifestContractRepair || verifiedDataRepair;
+          let commitNeeded = materialChanged || manifestContractRepair || verifiedDataRepair || recoveryStateChanged;
           if (!commitNeeded) {
             try {
               execFileSync("git", ["diff", "--cached", "--quiet"], { stdio: "ignore" });
