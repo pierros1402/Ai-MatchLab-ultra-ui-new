@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { verifiedFormRates, verifiedHistoryResultDocuments, mergeVerifiedFormIndexes } from "./prematch-verified-form.js";
+import { verifiedFormRates, verifiedHistoryResultDocuments, mergeVerifiedFormIndexes, verifiedNationalForm } from "./prematch-verified-form.js";
 import { createCrossCompetitionFormResolver } from "../storage/cross-competition-form-db.js";
 
 test("early form excludes future results, other competitions and ambiguous team names", () => {
@@ -10,6 +10,16 @@ test("early form excludes future results, other competitions and ambiguous team 
   assert.deepEqual(verifiedFormRates(index, "egy.2", "Exact", Date.parse("2026-10-01T00:00:00Z")),
     { sample: 1, gfRate: 2, gaRate: 1, ppg: 3 });
   assert.equal(verifiedFormRates(index, "egy.2", "exact", Date.parse("2026-10-01T00:00:00Z")).sample, 0);
+});
+
+test("national form uses only national competition history and preserves the identity veto", () => {
+  const row = { id: "n1", homeTeam: "Greece", awayTeam: "Opponent", leagueSlug: "fifa.world", status: "FT", scoreHome: 2, scoreAway: 0, kickoffUtc: "2026-06-20T12:00:00Z", homeGlobalClubId: "nation1" };
+  const index = { Greece: { matches: [row, { ...row, id: "club", leagueSlug: "eng.1" }, { ...row, id: "n2", leagueSlug: "uefa.nations", kickoffUtc: "2026-09-20T12:00:00Z" }] } };
+  const now = Date.parse("2026-10-01T00:00:00Z");
+  assert.equal(verifiedNationalForm(index, "uefa.nations", "Greece", now).sample, 2);
+  assert.equal(verifiedNationalForm(index, "eng.fa", "Greece", now), null);
+  index.Greece.matches[2].homeGlobalClubId = "nation2";
+  assert.equal(verifiedNationalForm(index, "uefa.nations", "Greece", now).reason, "global_club_id_conflict");
 });
 
 test("recent form crosses the season boundary, deduplicates truth and rejects stale results", () => {

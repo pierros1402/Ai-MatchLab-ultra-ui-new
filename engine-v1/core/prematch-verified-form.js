@@ -5,6 +5,28 @@ import { historicalFormRowsBeforeKickoff } from "./details-rich-blocks.js";
 import { currentSeason, seasonBefore } from "./season.js";
 import { createCrossCompetitionFormResolver } from "../storage/cross-competition-form-db.js";
 
+const NATIONAL_COMPETITIONS = new Set(["fifa.world", "fifa.world.qual", "uefa.nations", "uefa.euro", "uefa.euro.qual", "caf.nations", "afc.asian_cup", "conmebol.copa_america", "concacaf.nations"]);
+
+export function verifiedNationalForm(index, slug, team, nowMs, window = 6) {
+  if (!NATIONAL_COMPETITIONS.has(slug)) return null;
+  const rows = eligibleRecentRows(index?.[team], nowMs).filter(row => NATIONAL_COMPETITIONS.has(row.leagueSlug) && (row.homeTeam === team || row.awayTeam === team));
+  const identities = new Set(rows.map(row => row.homeTeam === team
+    ? row.homeGlobalClubId || row.productionIdentityBinding?.homeGlobalClubId
+    : row.awayGlobalClubId || row.productionIdentityBinding?.awayGlobalClubId).filter(Boolean));
+  if (identities.size > 1) return { sample: 0, reason: "global_club_id_conflict", source: "verified_national_team_form" };
+  const selected = rows.slice(-Math.min(6, Math.max(1, window)));
+  let gf = 0, ga = 0, points = 0;
+  for (const row of selected) {
+    const home = row.homeTeam === team;
+    const scored = Number(home ? row.scoreHome : row.scoreAway), conceded = Number(home ? row.scoreAway : row.scoreHome);
+    gf += scored; ga += conceded; points += scored > conceded ? 3 : scored === conceded ? 1 : 0;
+  }
+  return { sample: selected.length, gfRate: selected.length ? gf / selected.length : null,
+    gaRate: selected.length ? ga / selected.length : null, ppg: selected.length ? points / selected.length : null,
+    source: "verified_national_team_form", sourceSlugs: [...new Set(selected.map(row => row.leagueSlug))],
+    reason: selected.length ? null : "no_verified_national_history" };
+}
+
 export function verifiedFormRates(index, slug, team, nowMs) {
   const rows = eligibleRecentRows(index?.[team], nowMs)
     .filter(row => row.leagueSlug === slug && (row.homeTeam === team || row.awayTeam === team)).slice(-6);
@@ -49,6 +71,7 @@ export function verifiedHistoryResultDocuments(index, nowMs) {
       const gf = Number(home ? row.scoreHome : row.scoreAway), ga = Number(home ? row.scoreAway : row.scoreHome);
       const doc = documents.get(row.leagueSlug) || { slug: row.leagueSlug, doc: { teams: {} } };
       (doc.doc.teams[team] ||= []).push({ ...row,
+        matchId: row.matchId || row.id,
         date: row.kickoff || row.kickoffUtc || new Date(row.kickoff_ms).toISOString(),
         ha: home ? "H" : "A", opp: home ? row.awayTeam : row.homeTeam,
         gf, ga, res: gf > ga ? "W" : gf === ga ? "D" : "L" });
@@ -67,8 +90,9 @@ export function createPrematchVerifiedEvidence(nowMs) {
     }
   }
   const index = mergeVerifiedFormIndexes(indexes);
+  const clubCrossForm = createCrossCompetitionFormResolver({ resultDocuments: verifiedHistoryResultDocuments(index, nowMs) });
   return { formFn: (slug, team) => verifiedFormRates(index, slug, team, nowMs),
-    crossFormFn: createCrossCompetitionFormResolver({ resultDocuments: verifiedHistoryResultDocuments(index, nowMs) }) };
+    crossFormFn: (slug, team, window, options) => verifiedNationalForm(index, slug, team, nowMs, window) || clubCrossForm(slug, team, window, options) };
 }
 
 export function createPrematchVerifiedForm(nowMs) { return createPrematchVerifiedEvidence(nowMs).formFn; }
