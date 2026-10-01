@@ -15,6 +15,7 @@
 import fs from "fs";
 
 import { resolveDataPath } from "../storage/data-root.js";
+import { assessmentIdentityFields } from "../storage/assessment-read-view.js";
 import { readStandings } from "../storage/standings-memory-db.js";
 import { recordOddsSnapshot } from "../storage/odds-memory-db.js";
 import { priceMatchFromStandings } from "../odds/ai-odds-model.js";
@@ -424,6 +425,7 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
     recordFn(
       canonicalId,
       {
+        ...assessmentIdentityFields(fixture),
         canonicalId,
         leagueSlug,
         competition: fixture?.leagueName || fixture?.competition || null,

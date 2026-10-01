@@ -75,6 +75,16 @@ if (gate?.valueFreshAgainstCanonical === false && !frozenReleaseSafe) {
     }
   })();
 
+  for (const planId of ["plan-b", "plan-b2"]) {
+    let audit = null;
+    try { audit = JSON.parse(fs.readFileSync(resolveDataPath("value-plans", dayKey, `${planId}-audit.json`), "utf8")); } catch {}
+    // Frozen legacy observations stay immutable. New audits must account for
+    // all fixtures; a missing input remains a visible coverage warning.
+    if (audit?.evaluationAccounting && audit.evaluationAccounting.complete !== true) {
+      return { ok: false, code: 2, reason: "plan_b_evaluation_accounting_failed", planId, gate };
+    }
+  }
+
   if (planB && Number(planB?.count || 0) > 0) {
     const sourceContract = planB?.sourceContract || planBAudit?.sourceContract || null;
     const contractOk = Boolean(

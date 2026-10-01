@@ -384,6 +384,7 @@ export function buildDayReport(dayKey, options = {}) {
   const value = readJsonSafe(resolveDataPath("deploy-snapshots", dayKey, "value.json"));
   const planB = readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-b.json"));
   const planBAudit = readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-b-audit.json"));
+  const planB2Audit = readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-b2-audit.json"));
   const planBContract = planB?.sourceContract || planBAudit?.sourceContract || null;
   const planBMembership = planBAudit?.membership || null;
   const historicalPlanBNotAvailable =
@@ -406,11 +407,16 @@ export function buildDayReport(dayKey, options = {}) {
     source: String(value?.source || "missing"),
     count: Number(value?.count || 0),
     gateOk: !(publishedCount > 0 && String(value?.source || "") === "missing_local_value_file"),
+    planB2: planB2Audit ? { evaluationAccounting: planB2Audit.evaluationAccounting || null,
+      candidateMarkets: planB2Audit.summary?.candidateMarkets ?? null,
+      approved: planB2Audit.summary?.approved ?? null,
+      rejected: planB2Audit.summary?.rejected ?? null } : null,
     planB: planB ? {
       ok: planB?.ok !== false,
       count: Number(planB.count || 0),
       approved: Number(planBAudit?.approved ?? planBAudit?.summary?.approved ?? 0),
       rejected: Number(planBAudit?.rejected ?? planBAudit?.summary?.rejected ?? 0),
+      evaluationAccounting: planBAudit?.evaluationAccounting || null,
       historicalAvailabilityNotAvailable:
         historicalPlanBNotAvailable,
       canonicalMembershipContractApplicable:

@@ -392,7 +392,8 @@ jobs:
             echo "Persistent aiAssessment input is missing; priming ${DAY_KEY}."
             node ./engine-v1/jobs/run-odds-refresh.js "$DAY_KEY" --force
           else
-            echo "Persistent aiAssessment input already exists; no extra opening refresh required."
+            echo "Persistent aiAssessment input exists; checking current canonical coverage."
+            node ./engine-v1/jobs/run-odds-refresh.js "$DAY_KEY"
           fi
 
       - name: Refresh official ClubElo shadow snapshot

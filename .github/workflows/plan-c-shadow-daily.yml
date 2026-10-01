@@ -8,7 +8,7 @@ on:
         required: false
         default: ""
   schedule:
-    - cron: "30 4 * * *"
+    - cron: "*/20 * * * *"
 
 permissions:
   contents: write
@@ -62,6 +62,7 @@ jobs:
           node ./engine-v1/jobs/generate-plan-c-shadow-predictions.js "$DAY_KEY" --prediction-root "$PREDICTION_ROOT" --prediction-created-at "$PREDICTION_CREATED_AT" --days-forward 14 --max-snapshot-age-days 30
           node ./engine-v1/jobs/settle-plan-c-shadow.js "$DAY_KEY" --prediction-root "$PREDICTION_ROOT" --output data/plan-c-shadow/settlement/latest.json
           node ./engine-v1/jobs/build-plan-c-shadow-day.js "$DAY_KEY" --prediction-root "$PREDICTION_ROOT" --settlement-report data/plan-c-shadow/settlement/latest.json
+          node ./engine-v1/jobs/refresh-plan-c-shadow-settlements.js "$DAY_KEY"
 
       - name: Stage only Plan C shadow artifacts
         shell: bash
@@ -71,6 +72,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "data/plan-c-shadow/${DAY_KEY}.json"
           git add "data/plan-c-shadow/_audit/${DAY_KEY}.json"
+          git add 'data/plan-c-shadow/*.json' 'data/plan-c-shadow/_audit/*.json'
           git add data/plan-c-shadow/frozen/i2b-20260825/
           git add data/plan-c-shadow/clubelo-snapshots/
           git add "data/plan-c-shadow/clubelo-refresh/_audit/${DAY_KEY}.json"
@@ -94,4 +96,11 @@ jobs:
         shell: bash
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
-        run: bash tools/sync-public-plan-c-shadow.sh "$DAY_KEY" "$PUBLISHED_REF"
+        run: |
+          set -euo pipefail
+          bash tools/sync-public-plan-c-shadow.sh "$DAY_KEY" "$PUBLISHED_REF"
+          while IFS= read -r SETTLED_DAY; do
+            if [ "$SETTLED_DAY" != "$DAY_KEY" ]; then
+              bash tools/sync-public-plan-c-shadow.sh "$SETTLED_DAY" "$PUBLISHED_REF"
+            fi
+          done < <(node -e 'const x=require("./data/plan-c-shadow/_audit/settlement-refresh-"+process.env.DAY_KEY+".json");for(const day of x.changedDays) console.log(day)')

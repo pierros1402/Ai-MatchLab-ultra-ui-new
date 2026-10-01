@@ -14,6 +14,7 @@ import fs from "fs";
 import path from "path";
 import { pathToFileURL } from "node:url";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
+import { collectPlanBInputIssues } from "../system-health/plan-b-input-policy.js";
 import {
   parseAcquisitionSkippedSlugs,
   skippedSlugsContextOnly
@@ -83,6 +84,10 @@ function issue(severity, source, type, message, details = {}) {
 
 export function collectFoundationIntegrityIssues(foundationIntegrity, dayKey) {
   const issues = [];
+  issues.push(...collectPlanBInputIssues({
+    B: readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-b-audit.json")),
+    B2: readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-b2-audit.json"))
+  }));
   if (!foundationIntegrity) {
     issues.push(issue(
       systemHealthMissingArtifactSeverity("foundationIntegrity"),

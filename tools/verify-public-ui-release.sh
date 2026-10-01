@@ -23,6 +23,8 @@ FILES=(
   assets/js/live/live-overlay.js
   assets/js/ui/date-nav.js
   assets/js/ui/system-health.js
+  assets/js/ui/plan-c-shadow.js
+  assets/css/right-panels.css
 )
 
 for file in "${FILES[@]}"; do

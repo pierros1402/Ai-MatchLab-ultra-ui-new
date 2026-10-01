@@ -11,6 +11,7 @@ import { pathToFileURL } from "node:url";
 import { athensDayKey } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { getOddsForDay } from "../storage/odds-memory-db.js";
+import { assessmentIdentityFields } from "../storage/assessment-read-view.js";
 import {
   overlayProductionEvidenceDocumentReadView,
 } from "../core/production-evidence-identity-overlay.js";
@@ -43,6 +44,7 @@ export function snapshotRegressionReason(existingMatches = [], candidateMatches 
 
 export function contentHash(matches) {
   const stable = matches.map(m => ({
+    ...assessmentIdentityFields(m),
     matchId: m.matchId,
     canonicalId: m.canonicalId || null,
     leagueSlug: m.leagueSlug,

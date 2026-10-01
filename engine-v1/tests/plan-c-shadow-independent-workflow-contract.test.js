@@ -6,7 +6,8 @@ const workflow = fs.readFileSync(".github/workflows/plan-c-shadow-daily.yml", "u
 const syncTool = fs.readFileSync("tools/sync-public-plan-c-shadow.sh", "utf8");
 
 test("Plan C has an independent daily shadow-only publication path", () => {
-  assert.match(workflow, /cron: "30 4 \* \* \*"/u);
+  assert.match(workflow, /cron: "\*\/20 \* \* \* \*"/u);
+  assert.match(workflow, /refresh-plan-c-shadow-settlements\.js/u);
   assert.match(workflow, /group: ai-matchlab-data-writer/u);
   assert.match(workflow, /refresh-clubelo-shadow-registry\.js/u);
   assert.match(workflow, /generate-plan-c-shadow-predictions\.js/u);

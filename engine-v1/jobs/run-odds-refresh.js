@@ -288,7 +288,14 @@ export function assertPersistedAssessmentPostcondition(
 }
 
 export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
-  const existing = readExistingSnapshot(dayKey);
+  const readSnapshot = opts.readSnapshot || readExistingSnapshot;
+  const readCanonical = opts.readCanonical || readCanonicalFixtureDay;
+  const supplement = opts.supplement || supplementCanonicalAssessments;
+  const exportOdds = opts.exportOdds || exportOddsSnapshotDay;
+  const exportFixtures = opts.exportFixtures || exportFixturesSnapshotDay;
+  const opening = opts.opening || runOddsOpening;
+  const updateDecision = opts.updateDecision || oddsUpdateDecision;
+  const existing = readSnapshot(dayKey);
   const lastScrapeAt = existing?.generatedAt ? Date.parse(existing.generatedAt) : null;
   const kickoffsUtc = (existing?.matches || [])
     .map(m => m.kickoffUtc ? Date.parse(m.kickoffUtc) : kickoffToUtcMs(m.kickoffLocal))
@@ -307,31 +314,29 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
     ? { due: true, reason: "forced", hoursSinceLast: null }
     : missingAssessmentInput
       ? { due: true, reason: "missing_model_assessments", hoursSinceLast: null }
-      : oddsUpdateDecision({ lastScrapeAt, kickoffsUtc });
+      : updateDecision({ lastScrapeAt, kickoffsUtc });
 
   let fixturesChanged = false;
   try {
-    const fx = await exportFixturesSnapshotDay(dayKey);
+    const fx = await exportFixtures(dayKey);
     fixturesChanged = fx.changed;
   } catch (err) {
     console.warn("[run-odds-refresh] fixtures export failed", String(err?.message || err));
   }
 
-  if (!decision.due) {
-    return { ok: true, dayKey, due: false, reason: decision.reason, changed: fixturesChanged, fixturesChanged };
-  }
-
-  await runOddsOpening();
+  if (decision.due) await opening();
 
   // Model-only canonical supplement. No bookmaker odds are fabricated and no
   // already-started fixture receives a new assessment.
-  const canonicalSupplement = supplementCanonicalAssessments(dayKey);
+  // Acquisition and model coverage have separate clocks. Newly acquired canonical
+  // fixtures must receive eligible pre-kickoff evidence even between odds scrapes.
+  const canonicalSupplement = supplement(dayKey);
 
-  const snap = exportOddsSnapshotDay(dayKey);
-  const persisted = readExistingSnapshot(dayKey);
+  const snap = exportOdds(dayKey);
+  const persisted = readSnapshot(dayKey);
 
   const canonicalFixtureIds =
-    readCanonicalFixtureDay(dayKey)
+    readCanonical(dayKey)
       .map(
         row =>
           row?.canonicalId ||
@@ -354,18 +359,18 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
           canonicalSupplement
             .modelEvidenceEligibleFixtureIds,
 
-        fixtureIdResolver: value =>
+        fixtureIdResolver: opts.fixtureIdResolver || (value =>
           resolveProductionEvidenceFixtureIdReadView(
             value,
             { allowUnmanaged: true }
-          )
+          ))
       }
     );
 
   return {
     ok: true,
     dayKey,
-    due: true,
+    due: decision.due,
     reason: decision.reason,
     changed: snap.changed || fixturesChanged,
     fixturesChanged,

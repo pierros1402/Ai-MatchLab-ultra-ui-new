@@ -26,6 +26,15 @@ export function exactFixtureAliases(row) {
     addAlias(aliases, row?.[key]);
   }
 
+  // Only aliases explicitly carried by canonical acquisition are accepted.
+  // Provider ids are namespaced: ESPN's "123" is not Flashscore's "123".
+  for (const alias of Array.isArray(row?.canonicalAliases) ? row.canonicalAliases : []) {
+    addAlias(aliases, alias);
+  }
+  for (const [provider, id] of Object.entries(row?.providerIds || {})) {
+    if (clean(provider) && clean(id)) addAlias(aliases, `provider:${clean(provider).toLowerCase()}:${clean(id)}`);
+  }
+
   const sources = row?.sources;
 
   if (Array.isArray(sources)) {
@@ -156,7 +165,9 @@ export function joinCanonicalFixturesWithModelAssessments(
       }
 
       const assessment = assessmentIndex.byAlias.get(alias);
-      if (assessment) matchedAssessments.add(assessment);
+      if (assessment && !(canonicalFixture?.dayKey && assessment?.dayKey && canonicalFixture.dayKey !== assessment.dayKey)) {
+        matchedAssessments.add(assessment);
+      }
     }
 
     if (matchedAssessments.size > 1 || ambiguousAliases.length > 0) {

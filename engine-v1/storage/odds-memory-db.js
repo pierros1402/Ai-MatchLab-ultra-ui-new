@@ -14,6 +14,7 @@ import fs from "fs";
 import { resolveDataPath, ensureDir } from "./data-root.js";
 import { normalizeTeamKey as normTeamKey } from "../core/normalize.js";
 import { buildConsensusIndex, resolveConsensusMarket } from "../odds/multi-odds-consensus.js";
+import { assessmentIdentityFields, mergeAssessmentReadView } from "./assessment-read-view.js";
 import {
   overlayProductionEvidenceDocumentReadView,
   resolveProductionEvidenceFixtureIdReadView,
@@ -157,6 +158,7 @@ export function recordOddsSnapshot(matchId, meta, pricing) {
   cur.kickoffUtc = meta.kickoffUtc ?? cur.kickoffUtc ?? null;
   cur.kickoffLocal = meta.kickoffLocal ?? cur.kickoffLocal ?? null;
   cur.dayKey     = meta.dayKey ?? cur.dayKey ?? null;
+  Object.assign(cur, assessmentIdentityFields(meta));
   cur.updatedAt  = now;
   cur.openedAt   = cur.openedAt || now;
 
@@ -284,6 +286,7 @@ export function getOddsForDay(dayKey) {
       }
 
       matches.push({
+        ...assessmentIdentityFields(d),
         matchId: d.matchId,
         canonicalId: d.canonicalId || null,
         leagueSlug: d.leagueSlug,
@@ -309,35 +312,16 @@ export function getOddsForDay(dayKey) {
   // therefore often empty even though the previous odds workflow already
   // committed the same aiAssessment rows into the deploy snapshot. Never let
   // that runner-local storage boundary masquerade as a legitimate zero-input
-  // Plan B/B2 day. Prefer the committed assessment set only when it is more
-  // complete; fresh live memory remains authoritative otherwise.
-  const liveAssessmentRows = matches.filter(
-    row => row?.aiAssessment?.markets && Object.keys(row.aiAssessment.markets).length > 0
-  ).length;
+  // Plan B/B2 day. Retain complementary persisted rows; fresh live assessments
+  // remain authoritative for the same exact identity.
   const deployed = dayKey ? readDeployedOddsFile(dayKey) : null;
   const deployedMatches = Array.isArray(deployed?.matches) ? deployed.matches : [];
-  const deployedAssessmentRows = deployedMatches.filter(
-    row => row?.aiAssessment?.markets && Object.keys(row.aiAssessment.markets).length > 0
-  ).length;
-
-  if (deployedAssessmentRows > liveAssessmentRows) {
-    return {
-      ok: true,
-      dayKey: dayKey || null,
-      count: deployedMatches.length,
-      matches: deployedMatches,
-      source: "deploy_snapshot_assessment_fallback",
-      assessmentRows: deployedAssessmentRows
-    };
-  }
-
+  const merged = mergeAssessmentReadView(matches, deployedMatches, dayKey);
   return {
     ok: true,
     dayKey: dayKey || null,
-    count: matches.length,
-    matches,
-    source: "live_store",
-    assessmentRows: liveAssessmentRows
+    count: merged.matches.length,
+    ...merged
   };
 }
 

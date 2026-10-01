@@ -63,11 +63,13 @@ import {
 } from "../core/value-fixture-universe.js";
 import {
   joinCanonicalFixturesWithModelAssessments,
+  hasModelAssessment,
   validatePicksAgainstCanonicalFixtures
 } from "../core/plan-b-canonical-membership.js";
 import { isDisabledLeague } from "../source-discovery/disabled-leagues.js";
 import { adjustMarketProbabilities } from "../core/opponent-strength-adjusted-form.js";
 import { loadOpponentAdjustedProfiles } from "../core/opponent-strength-profile-loader.js";
+import { describePlanBMarketEligibility, describeOpponentAdjustment, completePlanBEvaluationAccounting } from "../core/plan-b-evaluation-accounting.js";
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -699,7 +701,8 @@ function buildValueAudit({
   sourceContract,
   inputFailure = null,
   membership = null,
-  isPlanB2Observation = false
+  isPlanB2Observation = false,
+  fixtureDiagnostics = new Map()
 }) {
   const candidateLedger = buildCandidateLedger(candidatePicks, finalPicks, rejectedRows);
   const rejected = candidateLedger.filter((row) => row.status === "rejected");
@@ -726,7 +729,8 @@ function buildValueAudit({
       approvedByLeague: countBy(approved, row => row.leagueSlug),
       rejectedByLeague: countBy(rejected, row => row.leagueSlug)
     },
-    candidateLedger
+    candidateLedger,
+    ...completePlanBEvaluationAccounting(sourceMatches, fixtureDiagnostics, candidateLedger)
   };
 }
 
@@ -805,7 +809,8 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
   Object.assign(sourceContract, {
     assessmentInputSource,
     deploySnapshotInput:
-      assessmentInputSource === "deploy_snapshot_assessment_fallback"
+      assessmentInputSource === "deploy_snapshot_assessment_fallback" ||
+      assessmentInputSource === "live_store_with_deploy_snapshot_assessments"
   });
 
   const assessmentRows =
@@ -954,10 +959,17 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
   }
 
   const candidatePicks = [];
+  const fixtureDiagnostics = new Map();
+  const ambiguousIds = new Set(membershipJoin.ambiguousCanonicalMatches.map(row => row.canonicalId));
 
   for (const originalMatch of sourceMatches) {
-    if (!originalMatch.aiAssessment?.markets) continue;
+    const diagnosticId = String(originalMatch?.canonicalId || originalMatch?.matchId || "");
+    if (!hasModelAssessment(originalMatch)) {
+      fixtureDiagnostics.set(diagnosticId, { reasonCode: ambiguousIds.has(diagnosticId) ? "ambiguous_model_assessment" : "missing_model_assessment" });
+      continue;
+    }
     let match = originalMatch;
+    let opponentAdjustment = null;
     if (isPlanB2Observation) {
       const profiles = loadOpponentAdjustedProfiles(
         String(originalMatch?.leagueSlug || ""),
@@ -969,6 +981,7 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
         profiles.home,
         profiles.away
       );
+      opponentAdjustment = describeOpponentAdjustment(profiles);
       match = {
         ...originalMatch,
         aiAssessment: {
@@ -985,7 +998,11 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
     }
 
     const canonicalId = String(match?.canonicalId || "").trim();
-    if (!canonicalId) continue;
+    if (!canonicalId) {
+      fixtureDiagnostics.set(diagnosticId, { reasonCode: "missing_canonical_identity" });
+      continue;
+    }
+    fixtureDiagnostics.set(canonicalId, { marketEligibility: describePlanBMarketEligibility(match), opponentAdjustment });
 
     const base = {
       canonicalId,
@@ -1036,7 +1053,8 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
     rejectedRows,
     sourceContract,
     membership,
-    isPlanB2Observation
+    isPlanB2Observation,
+    fixtureDiagnostics
   });
 
   const outputMembership = validatePicksAgainstCanonicalFixtures(

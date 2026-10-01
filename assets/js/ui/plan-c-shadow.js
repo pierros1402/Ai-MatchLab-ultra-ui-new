@@ -16,10 +16,11 @@
 
   if (!root || !list) return;
 
-  let activeFilter = "all";
+  let activeFilter = "picks";
   let activePayload = null;
   let requestSequence = 0;
   let activeController = null;
+  let selectedDay = "";
 
   function esc(value) {
     return String(value ?? "")
@@ -138,6 +139,16 @@
     return { ok: errors.length === 0, errors, count: entries.length, pickCount };
   }
 
+  function pickOutcome(entry) {
+    if (entry?.prediction?.planCPick !== true) return "OBSERVATION";
+    const settlement = entry?.settlement;
+    if (settlement?.state === "VOID_EXCLUDED") return "VOID";
+    const truth = settlement?.truth;
+    if (settlement?.state !== "SETTLED" || truth?.status !== "FT" ||
+      ![truth.scoreHome, truth.scoreAway].every(score => Number.isInteger(score) && score >= 0)) return "PENDING";
+    return truth.scoreHome + truth.scoreAway >= 3 ? "WIN" : "LOSS";
+  }
+
   function settlementBadge(settlement) {
     const state = String(settlement?.state || "PENDING");
     if (state === "SETTLED") {
@@ -156,10 +167,10 @@
     const isPick = prediction.planCPick === true;
     const edge = Number(prediction.eloEdge);
     const edgeText = Number.isFinite(edge) ? `${edge >= 0 ? "+" : ""}${edge.toFixed(3)}` : "—";
-    const hit = entry?.settlement?.hitRate?.isHit ?? entry?.settlement?.hitRate;
-    const resultClass = hit === true
+    const outcome = pickOutcome(entry);
+    const resultClass = outcome === "WIN"
       ? " win"
-      : hit === false
+      : outcome === "LOSS"
         ? " loss"
         : "";
 
@@ -175,6 +186,13 @@
           <span class="plan-c-vs">vs</span>
           <span>${esc(prediction.awayTeam)}</span>
         </div>
+        <div class="plan-c-recommendation">
+          <strong>${isPick ? "Πρόταση: Over 2.5 γκολ" : "Χωρίς πρόταση"}</strong>
+          <span>${isPick ? "Χρειάζονται τουλάχιστον 3 γκολ συνολικά." : "Ο αγώνας παρακολουθείται μόνο για αξιολόγηση."}</span>
+          ${isPick ? `<span class="plan-c-state ${outcome.toLowerCase()}">${outcome === "PENDING" ? "Αναμονή τελικού αποτελέσματος" : outcome === "VOID" ? "VOID · Ακυρώθηκε" : outcome === "WIN" ? "WIN · Επιτυχία" : "LOSS · Αποτυχία"}</span>` : ""}
+          <span>Εκτίμηση πιθανότητας: <b>${percent(adjusted.pOver25)}</b></span>
+        </div>
+        <details class="plan-c-model-details"><summary>Στοιχεία μοντέλου</summary>
         <div class="plan-c-elo" title="Verified ClubElo identities">
           <span>${esc(prediction.homeElo)} Elo</span>
           <span class="plan-c-edge">edge ${esc(edgeText)}</span>
@@ -196,6 +214,7 @@
           <span class="plan-c-pick-badge ${isPick ? "pick" : "observe"}">${isPick ? "OVER 2.5 · SHADOW PICK" : "OBSERVATION"}</span>
           <span class="plan-c-lambdas">λ ${Number(adjusted.lambdaHome).toFixed(2)}–${Number(adjusted.lambdaAway).toFixed(2)}</span>
         </div>
+        </details>
       </article>`;
   }
 
@@ -210,22 +229,29 @@
 
     const entries = payload.entries.filter(entry => activeFilter !== "picks" || entry.prediction.planCPick === true);
     const generated = formatGenerated(payload.generatedAt);
+    const picks = payload.entries.filter(entry => entry.prediction.planCPick === true);
+    const wins = picks.filter(entry => pickOutcome(entry) === "WIN").length;
+    const losses = picks.filter(entry => pickOutcome(entry) === "LOSS").length;
+    const pending = picks.filter(entry => pickOutcome(entry) === "PENDING").length;
+    const voids = picks.filter(entry => pickOutcome(entry) === "VOID").length;
     list.innerHTML = `
       <div class="plan-c-boundary-note">
         <b>SHADOW · EXPERIMENTAL</b>
         <span>Separate from official Value picks and alerts.</span>
       </div>
+      <div class="plan-c-results-summary" aria-label="Αποτελέσματα προτάσεων">WIN ${wins} · LOSS ${losses} · Αναμονή ${pending} · VOID ${voids}</div>
+      <p class="plan-c-explanation">Οι προτάσεις είναι Over 2.5: επιτυχία με 3 ή περισσότερα γκολ στο τελικό σκορ. Πειραματικό Plan C.</p>
       <div class="plan-c-summary">
         <div><strong>${esc(payload.pickCount)}</strong><span>shadow picks</span></div>
         <div><strong>${esc(payload.count)}</strong><span>predictions</span></div>
         <div><strong>${esc(payload.date)}</strong><span>${generated ? `built ${esc(generated)}` : "daily export"}</span></div>
       </div>
       <div class="plan-c-filter" role="group" aria-label="Plan C prediction filter">
-        <button type="button" data-plan-c-filter="all" class="${activeFilter === "all" ? "active" : ""}">All ${esc(payload.count)}</button>
-        <button type="button" data-plan-c-filter="picks" class="${activeFilter === "picks" ? "active" : ""}">Picks ${esc(payload.pickCount)}</button>
+        <button type="button" data-plan-c-filter="picks" class="${activeFilter === "picks" ? "active" : ""}">Προτάσεις ${esc(payload.pickCount)}</button>
+        <button type="button" data-plan-c-filter="all" class="${activeFilter === "all" ? "active" : ""}">Όλες οι αναλύσεις ${esc(payload.count)}</button>
       </div>
       <div class="plan-c-cards">
-        ${entries.length ? entries.map(renderEntry).join("") : '<div class="panel-empty">No shadow picks in this export.</div>'}
+        ${entries.length ? entries.map(renderEntry).join("") : '<div class="panel-empty">Δεν υπάρχουν προτάσεις Plan C για αυτή την ημέρα.</div>'}
       </div>`;
   }
 
@@ -242,11 +268,12 @@
       <div class="panel-empty plan-c-error">Shadow feed unavailable. ${esc(message || "")}</div>`;
   }
 
-  async function load(day = "") {
+  async function load(day = "", background = false) {
+    selectedDay = day;
     const sequence = ++requestSequence;
     activeController?.abort();
     activeController = new AbortController();
-    renderLoading();
+    if (!background) renderLoading();
 
     const query = validDay(day) ? `?date=${encodeURIComponent(day)}` : "";
     try {
@@ -298,8 +325,12 @@
     reload: load,
     validatePayload,
     percent,
-    signedPoints
+    signedPoints,
+    pickOutcome
   });
 
   load(window.__AIML_SELECTED_DATE || "");
+  window.setInterval?.(() => {
+    if (document.visibilityState !== "hidden") load(selectedDay, true);
+  }, 60000);
 })();

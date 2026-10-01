@@ -153,3 +153,25 @@ test("published Plan B picks must resolve to the canonical day universe", () => 
   assert.equal(result.orphanPicks.length, 1);
   assert.equal(result.orphanPicks[0], orphan);
 });
+
+test("explicit canonical aliases survive a canonical id migration", () => {
+  const result = joinCanonicalFixturesWithModelAssessments(
+    [canonical({ canonicalId: "cid_new", matchId: "cid_new", sourceMatchId: null, canonicalAliases: ["cid_old"] })],
+    [assessment({ canonicalId: "cid_old", matchId: "cid_old" })]
+  );
+  assert.equal(result.joinedMatches[0].canonicalId, "cid_new");
+});
+
+test("provider-map identity joins exactly without crossing provider namespaces", () => {
+  const fixture = canonical({ canonicalId: "cid_new", matchId: "cid_new", sourceMatchId: null, providerIds: { espn: "123" } });
+  const row = assessment({ canonicalId: "cid_old", matchId: "cid_old", providerIds: { espn: "123" } });
+  assert.equal(joinCanonicalFixturesWithModelAssessments([fixture], [row]).joinedMatches.length, 1);
+  assert.equal(joinCanonicalFixturesWithModelAssessments([fixture], [{ ...row, providerIds: { flashscore: "123" } }]).joinedMatches.length, 0);
+});
+
+test("shared explicit aliases remain ambiguous and day mismatch never joins", () => {
+  const fixture = canonical({ canonicalId: "cid_new", matchId: "cid_new", sourceMatchId: null, canonicalAliases: ["cid_old"] });
+  const row = assessment({ canonicalId: "cid_old", matchId: "cid_old" });
+  assert.equal(joinCanonicalFixturesWithModelAssessments([fixture], [row, { ...row }]).ambiguousCanonicalMatches.length, 1);
+  assert.equal(joinCanonicalFixturesWithModelAssessments([fixture], [{ ...row, dayKey: "2026-07-02" }]).joinedMatches.length, 0);
+});

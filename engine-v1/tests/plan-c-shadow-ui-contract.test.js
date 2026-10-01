@@ -41,7 +41,7 @@ test("Plan C is rendered in a separate explicitly shadow-labelled panel", () => 
 
   assert.match(html, /class="intelligence-panel plan-c-shadow-panel"/);
   assert.match(html, /plan-c-shadow-header-badge">SHADOW/);
-  assert.match(html, /assets\/js\/ui\/plan-c-shadow\.js\?v=1/);
+  assert.match(html, /assets\/js\/ui\/plan-c-shadow\.js\?v=2/);
   assert.match(source, /const ENDPOINT = "\/plan-c-shadow"/);
   assert.match(source, /Separate from official Value picks and alerts/);
   assert.match(source, /productionEligible !== false/);
@@ -132,6 +132,15 @@ test("Plan C UI validator accepts only the verified forward-only shadow cohort",
   assert.match(list.innerHTML, /6<\/strong><span>shadow picks/);
   assert.match(list.innerHTML, /OVER 2\.5 · SHADOW PICK/);
   assert.match(list.innerHTML, /Verified ClubElo identities/);
+
+  assert.equal(api.pickOutcome({ prediction: { planCPick: true }, settlement: { state: "SETTLED", truth: { status: "FT", scoreHome: 2, scoreAway: 1 } } }), "WIN");
+  assert.equal(api.pickOutcome({ prediction: { planCPick: true }, settlement: { state: "SETTLED", truth: { status: "FT", scoreHome: 1, scoreAway: 1 } } }), "LOSS");
+  assert.equal(api.pickOutcome({ prediction: { planCPick: true }, settlement: { state: "PENDING", hitRate: { isHit: true } } }), "PENDING");
+  assert.equal(api.pickOutcome({ prediction: { planCPick: false }, settlement: { state: "SETTLED", truth: { status: "FT", scoreHome: 3, scoreAway: 1 } } }), "OBSERVATION");
+  assert.equal(api.pickOutcome({ prediction: { planCPick: true }, settlement: { state: "VOID_EXCLUDED" } }), "VOID");
+  assert.match(list.innerHTML, /Πρόταση: Over 2.5 γκολ/);
+  assert.match(list.innerHTML, /WIN \d+ · LOSS \d+/);
+  assert.doesNotMatch(list.innerHTML, /class="plan-c-pick-badge observe"/);
 
   assert.ok(listeners.has("date:change"));
 });

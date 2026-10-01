@@ -2,9 +2,29 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  runOddsRefresh,
   assertPersistedAssessmentPostcondition,
   persistedAssessmentSummary
 } from "./run-odds-refresh.js";
+
+test("new canonical assessments are persisted even between scheduled odds scrapes", async () => {
+  let snapshot = { generatedAt: "2026-10-01T00:00:00Z", matches: [{ canonicalId: "old", aiAssessment: { markets: { OU25: {} } } }] };
+  let supplemented = false;
+  const result = await runOddsRefresh("2026-10-01", {
+    readSnapshot: () => snapshot,
+    fixtureIdResolver: value => value,
+    readCanonical: () => [{ canonicalId: "old" }, { canonicalId: "new" }],
+    updateDecision: () => ({ due: false, reason: "not_due" }),
+    opening: async () => { throw new Error("network scrape should not run"); },
+    exportFixtures: async () => ({ changed: false }),
+    supplement: () => { supplemented = true; return { canonicalFixtures: 2, modelEvidenceEligibleFixtureIds: ["new"] }; },
+    exportOdds: () => { snapshot.matches.push({ canonicalId: "new", aiAssessment: { markets: { OU25: {} } } }); return { count: 2, changed: true }; }
+  });
+  assert.equal(supplemented, true);
+  assert.equal(result.due, false);
+  assert.equal(result.changed, true);
+  assert.equal(result.assessmentRows, 2);
+});
 
 test("persisted assessment summary counts only non-empty model markets", () => {
   const summary = persistedAssessmentSummary({

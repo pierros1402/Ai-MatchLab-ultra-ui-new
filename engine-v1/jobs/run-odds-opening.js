@@ -153,6 +153,7 @@ async function main() {
         const natCid = buildCanonicalId(slug, fx.home, fx.away, dayKey || fx.kickoffUtc);
         const natId = natCid || `fs_${fx.matchId}`;
         recordOddsSnapshot(natId, {
+          providerIds: { flashscore: fx.matchId },
           canonicalId: natCid, leagueSlug: slug, competition: intl.label,
           home: fx.home, away: fx.away, dayKey, kickoffUtc: fx.kickoffUtc,
           source: "flashscore", aiAssessment: nationalAssessment
@@ -199,6 +200,7 @@ async function main() {
     }
 
     const result = recordOddsSnapshot(id, {
+      providerIds: { flashscore: fx.matchId },
       canonicalId,
       leagueSlug: slug,
       competition: isIntl ? intl.label : (fx.leagueName || null),
