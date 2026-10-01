@@ -1,7 +1,7 @@
 {
   "schema": "ai-matchlab.competition-format-registry.v1",
-  "registryVersion": "2026-08-01.2",
-  "generatedAt": "2026-08-01T15:09:00.000Z",
+  "registryVersion": "2026-10-01.3",
+  "generatedAt": "2026-10-01T11:32:51.860Z",
   "status": "PARTIAL_AUTHORITY_READ_ONLY",
   "policy": {
     "readOnlyValidation": true,
@@ -13,9 +13,9 @@
     "contractCount": 177,
     "enabledContractCount": 172,
     "disabledContractCount": 5,
-    "teamCountAuthorityCount": 8,
+    "teamCountAuthorityCount": 9,
     "phaseAuthorityCount": 0,
-    "unverifiedContractCount": 169
+    "unverifiedContractCount": 168
   },
   "contracts": [
     {
@@ -6076,8 +6076,8 @@
       }
     },
     {
-      "contractId": "isr.2@2025-2026#v1",
-      "contractVersion": 1,
+      "contractId": "isr.2@2026-2027#v2",
+      "contractVersion": 2,
       "competition": {
         "slug": "isr.2",
         "name": "Liga Leumit",
@@ -6088,26 +6088,39 @@
         "coverageTier": 3
       },
       "season": {
-        "reference": "2025-2026",
+        "reference": "2026-2027",
         "model": "CROSS_YEAR",
         "validFrom": null,
         "validTo": null
       },
       "authority": {
-        "status": "UNVERIFIED",
-        "scopes": [],
-        "verifiedAt": null,
-        "evidence": []
+        "status": "PARTIALLY_VERIFIED",
+        "scopes": [
+          "TEAM_COUNT"
+        ],
+        "verifiedAt": "2026-10-01",
+        "evidence": [
+          {
+            "sourceClass": "PRIMARY_OFFICIAL",
+            "publisher": "Israel Football Association",
+            "title": "Liga Leumit league profile: 2026/2027 season, 16 teams",
+            "url": "https://www.football.org.il/leagues/league/?league_id=45",
+            "retrievedAt": "2026-10-01",
+            "supports": [
+              "TEAM_COUNT"
+            ]
+          }
+        ]
       },
       "teamCount": {
         "rule": {
           "mode": "EXACT",
-          "value": 17,
+          "value": 16,
           "minimum": null,
           "maximum": null
         },
-        "enforcement": "REPORT_ONLY",
-        "sourceLabel": "history_archive_mode"
+        "enforcement": "STRICT_REPORT_ONLY",
+        "sourceLabel": "IFA official current-season league profile"
       },
       "tableModel": {
         "format": "UNKNOWN",
