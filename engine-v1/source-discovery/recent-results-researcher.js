@@ -6,7 +6,7 @@ const PATHS = Object.fromEntries(knownLeaguePaths().map(route => [resolveSlugFro
 
 // Read the provider's embedded result feed as data. Never execute page scripts.
 export function parseRecentResultEvidence(html, slug, nowMs) {
-  const blocks = [...String(html).matchAll(/initialFeeds\[['"](?:summary-results|results)['"]\]\s*=\s*\{\s*data:\s*`([^`]+)`/g)];
+  const blocks = [...String(html).matchAll(/initialFeeds\[['"](?:summary-results|results)['"]\]\s*=\s*\{\s*data:\s*`([^`]*)`/g)];
   const candidates = blocks.flatMap(block => parseFlashscoreFeed(block[1]));
   const byId = new Map(), conflicts = new Set(), rejected = {};
   const reject = reason => { rejected[reason] = (rejected[reason] || 0) + 1; };

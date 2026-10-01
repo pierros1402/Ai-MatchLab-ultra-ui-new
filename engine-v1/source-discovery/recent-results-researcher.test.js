@@ -40,4 +40,10 @@ test("correct Nations League route returns quarantined evidence and surfaces HTT
   assert.equal(missing.status, "SOURCE_HTTP_ERROR");
   const changed = await researchRecentResults("uefa.nations", { fetchFn: async () => ({ ok: true, status: 200, text: async () => "<html>new format</html>" }) });
   assert.equal(changed.status, "SOURCE_FORMAT_UNRECOGNIZED");
+  const empty = await researchRecentResults("sco.tennents", { fetchFn: async () => ({ ok: true, status: 200, text: async () => page("") }) });
+  assert.equal(empty.status, "NO_ELIGIBLE_RECENT_RESULTS", "an explicitly empty season feed is not a parser failure");
+  await researchRecentResults("eng.trophy", { fetchFn: async url => {
+    assert.equal(url, "https://www.flashscore.com/football/england/efl-trophy/results/");
+    return { ok: true, status: 200, text: async () => page("") };
+  } });
 });

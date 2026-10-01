@@ -41,7 +41,7 @@ export function validatePrematchFinalForm(candidate, canonical, final, nowMs) {
 
 export function collectPrematchFinalForm(baseIndex, candidates, nowMs, { fixturesForDay, finalForFixture }) {
   const index = {}, byDay = new Map(), knownIds = new Map(), knownPairs = new Set(), seen = new Set();
-  const summary = { candidates: candidates.length, accepted: 0, alreadyIndexed: 0, rejected: {}, acceptedCanonicalIds: [] };
+  const summary = { candidates: candidates.length, accepted: 0, alreadyIndexed: 0, rejected: {}, rejectedExamples: {}, acceptedCanonicalIds: [] };
   const pairKey = row => [row.leagueSlug, Date.parse(row.kickoff || row.kickoffUtc), row.homeTeam, row.awayTeam].join("|");
   for (const entry of Object.values(baseIndex)) for (const row of entry.matches || []) {
     knownIds.set(row.canonicalId || row.matchId || row.id, row); knownPairs.add(pairKey(row));
@@ -57,10 +57,20 @@ export function collectPrematchFinalForm(baseIndex, candidates, nowMs, { fixture
     const matches = byDay.get(day).filter(row => row.leagueSlug === candidate.leagueSlug
       && (row.providerIds?.flashscore === candidate.providerMatchId || (row.source === "flashscore" && (row.sourceMatchId || row.sourceId) === candidate.providerMatchId)));
     let result;
-    if (matches.length !== 1) result = { ok: false, reason: "CANONICAL_PROVIDER_ID_NOT_UNIQUE" };
+    if (matches.length !== 1) result = { ok: false, reason: matches.length ? "CANONICAL_PROVIDER_ID_NOT_UNIQUE" : "CANONICAL_PROVIDER_ID_NOT_FOUND" };
     else result = validatePrematchFinalForm(candidate, matches[0], finalForFixture(day, matches[0].canonicalId), nowMs);
-    if (!result.ok) { summary.rejected[result.reason] = (summary.rejected[result.reason] || 0) + 1; continue; }
+    if (!result.ok) {
+      summary.rejected[result.reason] = (summary.rejected[result.reason] || 0) + 1;
+      const examples = summary.rejectedExamples[result.reason] ||= [];
+      if (examples.length < 3) examples.push({ leagueSlug: candidate.leagueSlug, providerMatchId: candidate.providerMatchId,
+        canonicalIds: matches.map(row => row.canonicalId), statuses: matches.map(row => [row.status, row.statusType, row.rawStatus]) });
+      continue;
+    }
     const row = result.row;
+    const old = knownIds.get(row.id);
+    if (old && (old.scoreHome !== row.scoreHome || old.scoreAway !== row.scoreAway)) {
+      throw new Error(`prematch_verified_final_index_score_conflict:${row.id}`);
+    }
     if (knownIds.has(row.id) || knownPairs.has(pairKey(row))) { summary.alreadyIndexed++; continue; }
     knownIds.set(row.id, row); knownPairs.add(pairKey(row));
     for (const team of [row.homeTeam, row.awayTeam]) (index[team] ||= { matches: [] }).matches.push(row);

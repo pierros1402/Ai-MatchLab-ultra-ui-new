@@ -170,6 +170,7 @@ const PATH_SLUG_MAP = {
   "/football/england/fa-cup/":                                  "eng.fa",
   "/football/england/league-cup/":                              "eng.league_cup",
   "/football/england/football-league-trophy/":                  "eng.trophy",
+  "/football/england/efl-trophy/":                              "eng.trophy",
   // ── Germany ──────────────────────────────────────────────────────────────
   "/football/germany/dfb-pokal/":                               "ger.dfb_pokal",
   // ── Spain ────────────────────────────────────────────────────────────────

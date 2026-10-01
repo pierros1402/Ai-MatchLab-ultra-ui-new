@@ -38,6 +38,9 @@ test("final bridge deduplicates indexed games and rejects ambiguous provider ide
   const repeated = collectPrematchFinalForm(result.index, [candidate], now, deps);
   assert.equal(repeated.summary.accepted, 0);
   assert.equal(repeated.summary.alreadyIndexed, 1);
+  const conflictingIndex = structuredClone(result.index);
+  for (const entry of Object.values(conflictingIndex)) entry.matches[0].scoreHome = 9;
+  assert.throws(() => collectPrematchFinalForm(conflictingIndex, [candidate], now, deps), /index_score_conflict/);
   const ambiguous = collectPrematchFinalForm({}, [candidate], now, { ...deps, fixturesForDay: () => [canonical, { ...canonical, canonicalId: "cid_duplicate" }] });
   assert.equal(ambiguous.summary.accepted, 0);
   assert.equal(ambiguous.summary.rejected.CANONICAL_PROVIDER_ID_NOT_UNIQUE, 1);
