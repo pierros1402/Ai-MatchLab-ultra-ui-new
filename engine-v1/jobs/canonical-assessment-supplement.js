@@ -213,6 +213,7 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
     modelEvidenceEligibleFixtures: 0,
     modelEvidenceEligibleFixtureIds: [],
     assessmentFixtureIds: [],
+    unavailableEvidence: [],
 
     assessmentRowsWritten: 0,
     assessmentRowsFromTrustedStandings: 0,
@@ -354,6 +355,11 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
           MIN_FALLBACK_FORM_SAMPLE;
 
       if (!fallbackEligible) {
+        summary.unavailableEvidence.push({ canonicalId, leagueSlug,
+          reason: "INSUFFICIENT_VERIFIED_TEAM_FORM", requiredSamplePerSide: MIN_FALLBACK_FORM_SAMPLE,
+          homeSample: homeFallbackEvidence.formSample, awaySample: awayFallbackEvidence.formSample,
+          homeCrossReason: homeCrossForm?.reason || null, awayCrossReason: awayCrossForm?.reason || null,
+          trustedStandingsAvailable: Boolean(league), teamResolutionComplete: Boolean(homeHit && awayHit) });
         if (!league) {
           summary.skippedMissingStandings++;
         }

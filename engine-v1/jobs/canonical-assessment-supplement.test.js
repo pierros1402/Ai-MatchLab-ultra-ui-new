@@ -230,6 +230,10 @@ test("canonical team-form fallback fails closed below six form samples on either
   assert.equal(summary.assessmentRowsFromTeamFormFallback, 0);
   assert.equal(summary.skippedMissingStandings, 1);
   assert.equal(summary.skippedInsufficientTeamEvidence, 1);
+    assert.equal(summary.unavailableEvidence[0].canonicalId, "cid_test_form_fallback_insufficient_20260814");
+    assert.equal(summary.unavailableEvidence[0].homeSample, 6);
+    assert.equal(summary.unavailableEvidence[0].awaySample, 5);
+    assert.equal(summary.unavailableEvidence[0].requiredSamplePerSide, 6);
   assert.equal(priceCalls, 0);
   assert.equal(recorded.length, 0);
 });

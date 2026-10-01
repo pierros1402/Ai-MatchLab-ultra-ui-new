@@ -81,6 +81,15 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
         save(queueFile, queue);
       }
     }
+    if (write && supplement?.unavailableEvidence) {
+      for (const evidence of supplement.unavailableEvidence) {
+        const incident = queue.incidents[evidence.canonicalId];
+        if (incident && incident.status !== "RESOLVED") {
+          incident.modelInputDiagnosis = { ...evidence, checkedAt: new Date(nowMs).toISOString() };
+        }
+      }
+      save(queueFile, queue);
+    }
     days.push({ day, fixtures: fixtures.length, joined: join.summary.joinedMatches, supplement });
   }
   queue ||= { schema: "ai-matchlab.value-data-alarm.v1", incidents: {}, research: {} };
