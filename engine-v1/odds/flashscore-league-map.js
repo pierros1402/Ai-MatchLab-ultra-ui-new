@@ -142,6 +142,7 @@ const PATH_SLUG_MAP = {
   "/football/europe/europa-conference-league-qualification/":   "uecl.q",
   "/football/europe/super-cup/":                                "uefa.super_cup",
   "/football/europe/nations-league/":                           "uefa.nations",
+  "/football/europe/uefa-nations-league/":                      "uefa.nations",
   "/football/europe/euro/":                                     "uefa.euro",
   "/football/europe/euro-qualification/":                       "uefa.euro.qual",
   // ── FIFA ─────────────────────────────────────────────────────────────────

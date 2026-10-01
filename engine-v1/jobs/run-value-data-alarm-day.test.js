@@ -10,6 +10,7 @@ test("alarm scans previous-day readiness for the next week, persists before rese
   const fixtures = day => day === "2099-10-04" ? [{ canonicalId: id, leagueSlug: "egy.2", homeTeam: "A", awayTeam: "B", kickoffUtc: "2099-10-04T10:00Z" }] : [];
   let calls = 0;
   const dependencies = { queueRoot: root, fixtures, assessments: () => [], standings: () => ({ ok: false, validation: { issues: ["TEAM_COUNT_AUTHORITY_MISSING"] } }),
+    resultsSearch: async () => ({ status: "RESULTS_AWAIT_IDENTITY_VALIDATION", rows: [{ providerMatchId: "abcdefgh" }] }),
     supplement: () => ({ assessmentRowsWritten: 0 }), primarySearch: async options => { assert.deepEqual(options.leagues, ["egy.2"]); return { ok: false, error: "primary_unavailable" }; }, search: async () => {
       calls++;
       const queue = JSON.parse(fs.readFileSync(path.join(root, "queue.json")));
@@ -28,6 +29,9 @@ test("alarm scans previous-day readiness for the next week, persists before rese
     assert.equal(applied.queue.incidents[id].status, "DATA_SEARCH_REQUIRED");
     assert.equal(Object.values(applied.queue.research)[0].result.status, "SOURCE_SEARCH_FAILED");
     assert.equal(Object.values(applied.queue.research)[0].result.primarySource.error, "primary_unavailable");
+    assert.equal(Object.values(applied.queue.research)[0].result.recentResults.rows, 1);
+    assert.equal(applied.report.generatedAt, new Date(options.nowMs).toISOString());
+    assert.ok(fs.existsSync(path.join(root, "2099-10-01", "egy.2.results.research.json")));
     await runValueDataAlarmDay("2099-10-01", { ...options, write: true, research: true });
     assert.equal(calls, 1, "backoff must prevent repeated source requests on every five-minute tick");
     const rollover = await runValueDataAlarmDay("2099-10-10", { ...options, write: true, research: true, nowMs: Date.parse("2099-10-10T08:00Z") });
@@ -38,6 +42,8 @@ test("alarm scans previous-day readiness for the next week, persists before rese
     const restored = await runValueDataAlarmDay("2099-10-01", { ...options, dependencies: generated, write: true });
     assert.equal(restored.queue.incidents[id].status, "RESOLVED");
     assert.deepEqual(restored.report.oddsWrittenDays, ["2099-10-04"]);
+    assert.equal(restored.report.days.find(row => row.day === "2099-10-04").joined, 1);
+    assert.equal(restored.report.days.find(row => row.day === "2099-10-04").joinedBefore, 0);
     const unpersisted = { ...generated, persistedOdds: () => ({ matches: [] }) };
     const notUsed = await runValueDataAlarmDay("2099-10-01", { ...options, dependencies: unpersisted, write: true });
     assert.notEqual(notUsed.queue.incidents[id].status, "RESOLVED", "producer success cannot close an incident when the persisted input is still missing");

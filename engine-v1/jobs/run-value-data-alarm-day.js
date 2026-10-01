@@ -53,6 +53,7 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
     const persistedOdds = resolveDataPath("deploy-snapshots", day, "odds.json");
     const assessmentRows = dependencies.assessments ? dependencies.assessments(day) : fs.existsSync(persistedOdds) ? getDeployedOddsDay(day).matches : [];
     const join = joinCanonicalFixturesWithModelAssessments(fixtures, assessmentRows || []);
+    let persistedJoined = join.summary.joinedMatches;
     queue = updateValueDataAlarm(queue, { dayKey: day, fixtures, joinedIds: join.joinedMatches.map(row => row.canonicalId), nowMs, diagnoses });
     if (write) save(queueFile, queue); // Durable alarm is checkpointed before attempting acquisition.
     let supplement = null;
@@ -76,6 +77,7 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
         // Resolve only from the persisted public input, not ephemeral memory.
         const persisted = dependencies.persistedOdds ? dependencies.persistedOdds(day) : load(resolveDataPath("deploy-snapshots", day, "odds.json"));
         const verified = joinCanonicalFixturesWithModelAssessments(fixtures, persisted.matches || []);
+        persistedJoined = verified.summary.joinedMatches;
         queue = updateValueDataAlarm(queue, { dayKey: day, fixtures, joinedIds: verified.joinedMatches.map(row => row.canonicalId), nowMs, diagnoses });
         save(queueFile, queue);
       }
@@ -98,7 +100,7 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
       }
       save(queueFile, queue);
     }
-    days.push({ day, fixtures: fixtures.length, joined: join.summary.joinedMatches, supplement });
+    days.push({ day, fixtures: fixtures.length, joined: persistedJoined, joinedBefore: join.summary.joinedMatches, supplement });
   }
   queue ||= { schema: "ai-matchlab.value-data-alarm.v1", incidents: {}, research: {} };
   const researchTasks = dueValueDataResearch(queue, nowMs, maxResearchLeagues);
@@ -117,8 +119,18 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
       }
     }
     const search = dependencies.search || (await import("../source-discovery/standings-researcher.js")).researchStandings;
+    const resultsSearch = dependencies.resultsSearch || (await import("../source-discovery/recent-results-researcher.js")).researchRecentResults;
     for (const task of researchTasks) {
       const incident = task.incidents[0], meta = getLeagueMeta(incident.leagueSlug);
+      let recentResults;
+      try {
+        const evidence = await resultsSearch(incident.leagueSlug, { nowMs });
+        evidence.requiredTeamEvidence = task.incidents.map(row => ({ canonicalId: row.canonicalId,
+          home: row.home, away: row.away, diagnosis: row.modelInputDiagnosis || null }));
+        save(path.join(root, dayKey, `${incident.leagueSlug}.results.research.json`), evidence);
+        recentResults = { status: evidence.status, rows: evidence.rows?.length || 0, url: evidence.url,
+          valueInputVerified: false, authorityPromotionAllowed: false };
+      } catch (error) { recentResults = { status: "SOURCE_REQUEST_FAILED", error: error.message }; }
       let result;
       try {
         const evidence = await search(incident.leagueSlug, meta.name, meta.country, {
@@ -128,12 +140,13 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
           authorityPromotionAllowed: false, valueInputVerified: false };
         save(path.join(root, dayKey, `${incident.leagueSlug}.research.json`), evidence);
       } catch (error) { result = { status: "SOURCE_SEARCH_FAILED", primarySource: primary, error: error.message }; }
+      result.recentResults = recentResults;
       recordValueDataResearch(queue, task, result, nowMs);
       save(queueFile, queue);
     }
   }
   const open = Object.values(queue.incidents).filter(row => row.status !== "RESOLVED");
-  const report = { schema: "ai-matchlab.value-data-alarm-day.v1", dayKey, lookAheadDays, write, research,
+  const report = { schema: "ai-matchlab.value-data-alarm-day.v1", generatedAt: new Date(nowMs).toISOString(), dayKey, lookAheadDays, write, research,
     openIncidents: open.length, historicalOpen: open.filter(row => row.status === "HISTORICAL_GAP_OPEN").length,
     futureOpen: open.filter(row => Date.parse(row.kickoffUtc) > nowMs).length,
     urgentWithin24Hours: open.filter(row => Date.parse(row.kickoffUtc) > nowMs && Date.parse(row.kickoffUtc) - nowMs <= 86400000).length,

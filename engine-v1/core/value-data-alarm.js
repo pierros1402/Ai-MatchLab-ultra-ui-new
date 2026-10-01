@@ -39,18 +39,30 @@ export function dueValueDataResearch(queue, nowMs, maxLeagues = 2) {
     if (incident.status === "RESOLVED") continue;
     const key = `${incident.leagueSlug}|${incident.diagnosis.researchSeason || incident.dayKey.slice(0, 4)}`;
     const task = queue.research[key];
-    if (task?.nextAttemptAt && Date.parse(task.nextAttemptAt) > nowMs) continue;
+    const kickoff = Date.parse(incident.kickoffUtc);
+    const urgent = kickoff > nowMs && kickoff - nowMs <= 86400000;
+    // Old backoff schedules must not sleep through the pre-match deadline.
+    const dueAt = urgent && task?.lastAttemptAt
+      ? Math.min(Date.parse(task.nextAttemptAt), Date.parse(task.lastAttemptAt) + 15 * 60000)
+      : Date.parse(task?.nextAttemptAt);
+    if (dueAt > nowMs) continue;
     const list = groups.get(key) || [];
     list.push(incident); groups.set(key, list);
   }
   return [...groups].map(([key, incidents]) => ({ key, incidents,
+    lastAttempt: Date.parse(queue.research[key]?.lastAttemptAt) || 0,
     deadline: Math.min(...incidents.map(row => Date.parse(row.kickoffUtc) > nowMs ? Date.parse(row.kickoffUtc) : Infinity)) }))
-    .sort((a, b) => a.deadline - b.deadline || a.key.localeCompare(b.key)).slice(0, maxLeagues);
+    .sort((a, b) => {
+      const priority = task => task.deadline - nowMs <= 86400000 ? 0 : Number.isFinite(task.deadline) ? 1 : 2;
+      return priority(a) - priority(b) || a.lastAttempt - b.lastAttempt || a.deadline - b.deadline || a.key.localeCompare(b.key);
+    }).slice(0, maxLeagues);
 }
 
 export function recordValueDataResearch(queue, task, result, nowMs) {
   const attempts = (queue.research[task.key]?.attempts || 0) + 1;
-  const delayMs = Math.min(24 * 3600000, 15 * 60000 * 2 ** Math.min(attempts - 1, 7));
+  const futureKickoff = Math.min(...task.incidents.map(row => Date.parse(row.kickoffUtc) > nowMs ? Date.parse(row.kickoffUtc) : Infinity));
+  const deadlineDelay = Math.max(15 * 60000, futureKickoff - nowMs - 86400000);
+  const delayMs = Math.min(24 * 3600000, deadlineDelay, 15 * 60000 * 2 ** Math.min(attempts - 1, 7));
   queue.research[task.key] = { attempts, lastAttemptAt: new Date(nowMs).toISOString(),
     nextAttemptAt: new Date(nowMs + delayMs).toISOString(), result,
     status: attempts >= 3 ? "ESCALATED_SOURCE_VALIDATION_REQUIRED" : "RETRY_PENDING" };

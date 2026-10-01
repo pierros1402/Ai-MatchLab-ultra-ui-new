@@ -34,3 +34,16 @@ test("research is bounded, prioritizes upcoming deadlines, and escalates without
   assert.throws(() => update(q, [{ ...fixture, leagueSlug: "../bad" }]), /identity/);
   assert.throws(() => update({ schema: "broken" }), /queue/);
 });
+
+test("urgent evidence retries cannot sleep past kickoff or starve other due leagues", () => {
+  const other = { ...fixture, canonicalId: "cid_alarm_b_20261001", leagueSlug: "second.1", kickoffUtc: "2026-10-01T11:00Z" };
+  let q = update(null, [fixture, other]);
+  const first = dueValueDataResearch(q, now, 1)[0];
+  q.research[first.key] = { attempts: 12, lastAttemptAt: new Date(now - 3600000).toISOString(), nextAttemptAt: new Date(now + 86400000).toISOString() };
+  const due = dueValueDataResearch(q, now, 2);
+  assert.equal(due.length, 2, "legacy long backoff must be capped when kickoff is near");
+  assert.equal(due[0].incidents[0].leagueSlug, "second.1", "never-attempted urgent league must not starve");
+  recordValueDataResearch(q, first, { status: "failed" }, now);
+  assert.equal(Date.parse(q.research[first.key].nextAttemptAt) - now, 15 * 60000);
+  assert.equal(dueValueDataResearch(q, now + 60000, 2).length, 1, "the rate limit still applies");
+});
