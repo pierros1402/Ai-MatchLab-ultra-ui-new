@@ -41,6 +41,12 @@ test("alarm scans previous-day readiness for the next week, persists before rese
     const unpersisted = { ...generated, persistedOdds: () => ({ matches: [] }) };
     const notUsed = await runValueDataAlarmDay("2099-10-01", { ...options, dependencies: unpersisted, write: true });
     assert.notEqual(notUsed.queue.incidents[id].status, "RESOLVED", "producer success cannot close an incident when the persisted input is still missing");
+    const broken = await runValueDataAlarmDay("2099-10-01", { ...options, write: true,
+      dependencies: { ...dependencies, supplement: () => { throw new Error("producer_broken"); } } });
+    assert.equal(broken.report.acquisitionErrors[0].error, "producer_broken");
+    const durable = JSON.parse(fs.readFileSync(path.join(root, "queue.json")));
+    assert.equal(durable.incidents[id].lastProductionError.error, "producer_broken");
+    assert.notEqual(durable.incidents[id].status, "RESOLVED");
   } finally {
     assert.ok(path.resolve(root).startsWith(path.resolve(os.tmpdir()) + path.sep));
     fs.rmSync(root, { recursive: true });

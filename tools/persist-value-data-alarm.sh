@@ -31,3 +31,4 @@ if ! git diff --cached --quiet; then
   git commit -m "Persist pre-match Value data alarms and verified inputs for ${DAY_KEY}"
   bash tools/git-push-rebase-retry.sh
 fi
+node -e 'const fs=require("fs"); const r=JSON.parse(fs.readFileSync(`data/value-data-acquisition/${process.env.DAY_KEY}.json`)); if(r.acquisitionErrors?.length) { console.error("Persisted assessment-production failures:",r.acquisitionErrors); process.exit(1); }'

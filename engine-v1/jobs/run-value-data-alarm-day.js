@@ -26,7 +26,7 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
   const queueFile = path.join(root, "queue.json");
   let queue = fs.existsSync(queueFile) ? load(queueFile) : null;
   queue = updateValueDataAlarm(queue, { dayKey, fixtures: [], joinedIds: [], nowMs });
-  const days = [], oddsWrittenDays = [], diagnoses = {};
+  const days = [], oddsWrittenDays = [], diagnoses = {}, acquisitionErrors = [];
   for (let offset = 0; offset <= lookAheadDays; offset++) {
     const day = new Date(Date.parse(`${dayKey}T12:00:00Z`) + offset * 86400000).toISOString().slice(0, 10);
     const fixtures = (dependencies.fixtures || canonicalFixturesForDay)(day);
@@ -49,6 +49,7 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
     let supplement = null;
     const upcoming = join.canonicalRowsWithoutAssessment.filter(row => Date.parse(row.kickoffUtc) > nowMs);
     if (write && upcoming.length) {
+      try {
       const produce = dependencies.supplement || (await import("./canonical-assessment-supplement.js")).supplementCanonicalAssessments;
       supplement = produce(day, { canonicalFixtures: upcoming, nowMs,
         formFn: dependencies.formFn || createPrematchVerifiedForm(nowMs),
@@ -62,6 +63,15 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
         const persisted = dependencies.persistedOdds ? dependencies.persistedOdds(day) : load(resolveDataPath("deploy-snapshots", day, "odds.json"));
         const verified = joinCanonicalFixturesWithModelAssessments(fixtures, persisted.matches || []);
         queue = updateValueDataAlarm(queue, { dayKey: day, fixtures, joinedIds: verified.joinedMatches.map(row => row.canonicalId), nowMs, diagnoses });
+        save(queueFile, queue);
+      }
+      } catch (error) {
+        acquisitionErrors.push({ day, error: error.message });
+        supplement = { status: "ASSESSMENT_PRODUCTION_FAILED", error: error.message };
+        for (const row of upcoming) {
+          const incident = queue.incidents[row.canonicalId];
+          if (incident && incident.status !== "RESOLVED") incident.lastProductionError = { at: new Date(nowMs).toISOString(), error: error.message };
+        }
         save(queueFile, queue);
       }
     }
@@ -107,7 +117,7 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
     researchTasks: researchTasks.map(task => ({ key: task.key, fixtures: task.incidents.length })),
     fixtureDiscoveryPendingDays: days.filter(row => row.status === "FIXTURE_DISCOVERY_PENDING").map(row => row.day),
     readinessComplete: open.length === 0 && days.every(row => row.status !== "FIXTURE_DISCOVERY_PENDING"),
-    days, oddsWrittenDays, frozenPredictionsRegenerated: false,
+    days, oddsWrittenDays, acquisitionErrors, frozenPredictionsRegenerated: false,
     resolvedOnlyByVerifiedAssessmentJoin: true, incidentsExpireAutomatically: false };
   if (write) { save(queueFile, queue); save(path.join(root, `${dayKey}.json`), report); }
   return { report, queue };
