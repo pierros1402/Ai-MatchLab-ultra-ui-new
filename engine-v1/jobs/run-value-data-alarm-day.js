@@ -9,7 +9,7 @@ import { readTrustedStandingsState } from "../storage/trusted-standings-db.js";
 import { getLeagueMeta } from "../source-discovery/league-awareness-service.js";
 import { currentSeasonLabel } from "../source-discovery/season-calendar.js";
 import { updateValueDataAlarm, dueValueDataResearch, recordValueDataResearch } from "../core/value-data-alarm.js";
-import { createPrematchVerifiedForm } from "../core/prematch-verified-form.js";
+import { createPrematchVerifiedEvidence } from "../core/prematch-verified-form.js";
 
 function load(file) { return JSON.parse(fs.readFileSync(file, "utf8")); }
 function save(file, data) {
@@ -27,6 +27,7 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
   let queue = fs.existsSync(queueFile) ? load(queueFile) : null;
   queue = updateValueDataAlarm(queue, { dayKey, fixtures: [], joinedIds: [], nowMs });
   const days = [], oddsWrittenDays = [], diagnoses = {}, acquisitionErrors = [];
+  let verifiedEvidence;
   for (let offset = 0; offset <= lookAheadDays; offset++) {
     const day = new Date(Date.parse(`${dayKey}T12:00:00Z`) + offset * 86400000).toISOString().slice(0, 10);
     const fixtures = (dependencies.fixtures || canonicalFixturesForDay)(day);
@@ -50,10 +51,11 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
     const upcoming = join.canonicalRowsWithoutAssessment.filter(row => Date.parse(row.kickoffUtc) > nowMs);
     if (write && upcoming.length) {
       try {
+      verifiedEvidence ||= createPrematchVerifiedEvidence(nowMs);
       const produce = dependencies.supplement || (await import("./canonical-assessment-supplement.js")).supplementCanonicalAssessments;
       supplement = produce(day, { canonicalFixtures: upcoming, nowMs,
-        formFn: dependencies.formFn || createPrematchVerifiedForm(nowMs),
-        crossFormFn: () => ({ sample: 0, reason: "verified_cross_competition_evidence_unavailable" }) });
+        formFn: dependencies.formFn || verifiedEvidence.formFn,
+        crossFormFn: dependencies.crossFormFn || verifiedEvidence.crossFormFn });
       if (supplement.assessmentRowsWritten > 0) {
         const exportOdds = dependencies.exportOdds || (await import("./export-odds-snapshot-day.js")).exportOddsSnapshotDay;
         const exported = await exportOdds(day);
