@@ -1,0 +1,43 @@
+name: Pre-match Value data alarm canary
+on:
+  workflow_dispatch:
+    inputs:
+      dayKey:
+        required: true
+        description: "Scan this day and the following seven days."
+      apply:
+        type: boolean
+        default: false
+        description: "Persist alarms and run bounded source research."
+permissions:
+  contents: write
+concurrency:
+  group: ai-matchlab-data-writer
+  cancel-in-progress: false
+jobs:
+  alarm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - run: npm ci --no-audit --no-fund
+      - name: Read-only pre-match readiness diagnosis
+        env:
+          DAY_KEY: ${{ inputs.dayKey }}
+        run: node engine-v1/jobs/run-value-data-alarm-day.js "$DAY_KEY"
+      - name: Persist alarms and execute source research
+        if: inputs.apply
+        env:
+          DAY_KEY: ${{ inputs.dayKey }}
+        run: bash tools/persist-value-data-alarm.sh "$DAY_KEY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: value-data-alarm-${{ inputs.dayKey }}
+          path: data/value-data-acquisition/
+          if-no-files-found: ignore
