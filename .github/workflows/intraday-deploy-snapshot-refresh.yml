@@ -246,6 +246,8 @@ jobs:
       - name: Run intraday snapshot refresh
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/run-intraday-snapshot-refresh.js "$DAY_KEY" --chunks=0 --chunk-size=12 --days-back=1 --days-forward=14 --no-rebuild-details
+        env:
+          VALUE_DATA_RECOVERY_APPLY: "true"
 
       # Public score/status truth is committed and promoted before any Value
       # self-heal or settlement gate. A Value failure can no longer strand an
