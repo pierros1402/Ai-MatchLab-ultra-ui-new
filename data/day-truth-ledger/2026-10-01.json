@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-01",
-  "generatedAt": "2026-10-01T17:37:03.417Z",
+  "generatedAt": "2026-10-01T17:50:49.711Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "830ea7f0f9ec1818f24f8982e7e8312bd4cf9be01d1b63a7aebc9ab5febddff1",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "099fe703ccb7b3483196673071ca020628a45125c339d90df81d482104882bbe",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -25,14 +25,14 @@
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 17,
-    "acceptedVerifiedFinalArtifacts": 17,
+    "verifiedFinalArtifacts": 19,
+    "acceptedVerifiedFinalArtifacts": 19,
     "convergedPlayedFinal": 17,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 20,
+    "openRows": 18,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 17,
@@ -595,18 +595,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-01",
+        "scoreHome": 1,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -889,18 +889,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-01",
+        "scoreHome": 1,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1906,7 +1906,10 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_isr2_ashdod_mherzliya_20261001",
+      "cid_isr2_maccabijaffa_hakko_20261001"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -4460,7 +4463,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "830ea7f0f9ec1818f24f8982e7e8312bd4cf9be01d1b63a7aebc9ab5febddff1",
+      "truthFingerprint": "099fe703ccb7b3483196673071ca020628a45125c339d90df81d482104882bbe",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -4545,7 +4548,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-01",
-      "fileCount": 17,
+      "fileCount": 19,
       "authority": "scored_final_evidence"
     },
     "downstream": {
