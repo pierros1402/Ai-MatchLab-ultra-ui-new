@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-01",
-  "generatedAt": "2026-10-01T14:06:55.023Z",
+  "generatedAt": "2026-10-01T14:36:45.350Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "7c36343fb206c44f228a78cc90d2817b1cda62a782e0dd42ba1628c04b9c2640",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "93291750e9d77582a6497bbb02eb4d23c792adeebd91f382961b8cf829ccc9b9",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -25,14 +25,14 @@
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 13,
-    "acceptedVerifiedFinalArtifacts": 13,
+    "verifiedFinalArtifacts": 15,
+    "acceptedVerifiedFinalArtifacts": 15,
     "convergedPlayedFinal": 13,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 24,
+    "openRows": 22,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 13,
@@ -497,18 +497,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-01",
+        "scoreHome": 1,
+        "scoreAway": 3,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -546,18 +546,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-01",
+        "scoreHome": 0,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1906,7 +1906,10 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_egy2_laviena_alnasr_20261001",
+      "cid_egy2_pharco_tersana_20261001"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -2125,7 +2128,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 10494,
+            "count": 10502,
             "informational": true
           }
         },
@@ -4460,7 +4463,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "7c36343fb206c44f228a78cc90d2817b1cda62a782e0dd42ba1628c04b9c2640",
+      "truthFingerprint": "93291750e9d77582a6497bbb02eb4d23c792adeebd91f382961b8cf829ccc9b9",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -4541,7 +4544,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-01",
-      "fileCount": 13,
+      "fileCount": 15,
       "authority": "scored_final_evidence"
     },
     "downstream": {
