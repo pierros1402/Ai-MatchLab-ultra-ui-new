@@ -9,6 +9,10 @@ on:
         type: boolean
         default: false
         description: "Persist alarms and run bounded source research."
+      applyVerifiedContracts:
+        type: boolean
+        default: false
+        description: "Apply reviewed primary-source team-count evidence with full standings validation."
 permissions:
   contents: write
 concurrency:
@@ -34,6 +38,7 @@ jobs:
         if: inputs.apply
         env:
           DAY_KEY: ${{ inputs.dayKey }}
+          VALUE_APPLY_VERIFIED_CONTRACTS: ${{ inputs.applyVerifiedContracts }}
         run: bash tools/persist-value-data-alarm.sh "$DAY_KEY"
       - uses: actions/upload-artifact@v4
         if: always()

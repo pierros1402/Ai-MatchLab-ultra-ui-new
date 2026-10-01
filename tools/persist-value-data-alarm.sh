@@ -6,7 +6,9 @@ if ! git diff --cached --quiet; then
   echo "ERROR: data alarm will not commit unrelated staged changes" >&2
   exit 2
 fi
-node engine-v1/jobs/run-value-data-alarm-day.js "$DAY_KEY" --write --research
+EXTRA_ARGS=()
+if [ "${VALUE_APPLY_VERIFIED_CONTRACTS:-false}" = "true" ]; then EXTRA_ARGS+=(--apply-verified-contracts); fi
+node engine-v1/jobs/run-value-data-alarm-day.js "$DAY_KEY" --write --research "${EXTRA_ARGS[@]}"
 git add "data/value-data-acquisition/queue.json" "data/value-data-acquisition/${DAY_KEY}.json"
 if [ -d "data/value-data-acquisition/${DAY_KEY}" ]; then git add "data/value-data-acquisition/${DAY_KEY}/"; fi
 export DAY_KEY
@@ -16,6 +18,10 @@ import { execFileSync } from 'node:child_process';
 import { currentSeason, seasonBefore } from './engine-v1/core/season.js';
 const day = process.env.DAY_KEY;
 const report = JSON.parse(fs.readFileSync(`data/value-data-acquisition/${day}.json`, 'utf8'));
+for (const file of report.competitionContractPreparation?.writePaths || []) {
+  if (!/^(data\/competition-format-registry\/registry\.v1\.json|data\/standings\/[a-zA-Z0-9_.-]+\.json)$/.test(file)) throw new Error('official_contract_write_scope_invalid');
+  execFileSync('git', ['add', file], { stdio: 'inherit' });
+}
 if (report.historicalFormPreparation?.changed) {
   const season = report.historicalFormPreparation.season;
   if (season !== seasonBefore(currentSeason())) throw new Error('invalid_historical_form_season');
@@ -32,7 +38,7 @@ NODE
 EXTRA_DAYS="$(node -e 'const fs=require("fs"); const r=JSON.parse(fs.readFileSync(`data/value-data-acquisition/${process.env.DAY_KEY}.json`)); console.log(r.oddsWrittenDays.join(","))')"
 node engine-v1/jobs/guard-staged-data-boundary.js --label=value-data-alarm --dayKey="$DAY_KEY" \
   --extra-days="$EXTRA_DAYS" \
-  --allow="^(data/value-data-acquisition/(queue\.json|${DAY_KEY}\.json|${DAY_KEY}/[^/]+\.research\.json)$|data/deploy-snapshots/[0-9]{4}-[0-9]{2}-[0-9]{2}/odds\.json$|data/history-index/(team-form|league-form|matchups|foundation)/[0-9]{4}-[0-9]{4}\.json$)"
+  --allow="^(data/value-data-acquisition/(queue\.json|${DAY_KEY}\.json|${DAY_KEY}/[^/]+\.research\.json)$|data/deploy-snapshots/[0-9]{4}-[0-9]{2}-[0-9]{2}/odds\.json$|data/history-index/(team-form|league-form|matchups|foundation)/[0-9]{4}-[0-9]{4}\.json$|data/competition-format-registry/registry\.v1\.json$|data/standings/[a-zA-Z0-9_.-]+\.json$)"
 if ! git diff --cached --quiet; then
   git config user.name "github-actions[bot]"
   git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

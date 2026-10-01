@@ -19,7 +19,7 @@ function save(file, data) {
   const temporary = `${file}.tmp`; fs.writeFileSync(temporary, bytes); fs.renameSync(temporary, file);
 }
 
-export async function runValueDataAlarmDay(dayKey, { write = false, research = false, nowMs = Date.now(), lookAheadDays = 7, maxResearchLeagues = 2, dependencies = {} } = {}) {
+export async function runValueDataAlarmDay(dayKey, { write = false, research = false, applyVerifiedContracts = false, nowMs = Date.now(), lookAheadDays = 7, maxResearchLeagues = 2, dependencies = {} } = {}) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dayKey) || lookAheadDays < 0 || lookAheadDays > 14) throw new Error("invalid_alarm_window");
   if (research && !write) throw new Error("research_requires_persisted_alarm");
   const root = dependencies.queueRoot || resolveDataPath("value-data-acquisition");
@@ -28,6 +28,14 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
   queue = updateValueDataAlarm(queue, { dayKey, fixtures: [], joinedIds: [], nowMs });
   const days = [], oddsWrittenDays = [], diagnoses = {}, acquisitionErrors = [];
   let verifiedEvidence, historicalFormPreparation;
+  let competitionContractPreparation = null;
+  if (write && applyVerifiedContracts) {
+    save(queueFile, queue);
+    try {
+      const { prepareVerifiedCompetitionContracts } = await import("./prepare-verified-competition-contracts.js");
+      competitionContractPreparation = await prepareVerifiedCompetitionContracts(dayKey, nowMs);
+    } catch (error) { acquisitionErrors.push({ day: dayKey, stage: "official_contract_preparation", error: error.message }); }
+  }
   for (let offset = 0; offset <= lookAheadDays; offset++) {
     const day = new Date(Date.parse(`${dayKey}T12:00:00Z`) + offset * 86400000).toISOString().slice(0, 10);
     const fixtures = (dependencies.fixtures || canonicalFixturesForDay)(day);
@@ -132,13 +140,13 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
     researchTasks: researchTasks.map(task => ({ key: task.key, fixtures: task.incidents.length })),
     fixtureDiscoveryPendingDays: days.filter(row => row.status === "FIXTURE_DISCOVERY_PENDING").map(row => row.day),
     readinessComplete: open.length === 0 && days.every(row => row.status !== "FIXTURE_DISCOVERY_PENDING"),
-    days, oddsWrittenDays, acquisitionErrors, historicalFormPreparation: historicalFormPreparation || null, frozenPredictionsRegenerated: false,
+    days, oddsWrittenDays, acquisitionErrors, competitionContractPreparation, historicalFormPreparation: historicalFormPreparation || null, frozenPredictionsRegenerated: false,
     resolvedOnlyByVerifiedAssessmentJoin: true, incidentsExpireAutomatically: false };
   if (write) { save(queueFile, queue); save(path.join(root, `${dayKey}.json`), report); }
   return { report, queue };
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const { report } = await runValueDataAlarmDay(process.argv[2], { write: process.argv.includes("--write"), research: process.argv.includes("--research") });
+  const { report } = await runValueDataAlarmDay(process.argv[2], { write: process.argv.includes("--write"), research: process.argv.includes("--research"), applyVerifiedContracts: process.argv.includes("--apply-verified-contracts") });
   console.log(JSON.stringify(report, null, 2));
 }

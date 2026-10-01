@@ -30,18 +30,16 @@ test("production registry schema validates and coverage is internally exact", ()
     {
       contracts: summary.contracts,
       enabled: summary.enabled,
-      teamCountAuthority: summary.teamCountAuthority,
       phaseAuthority: summary.phaseAuthority,
-      unverified: summary.unverified
     },
     {
       contracts: 177,
       enabled: 172,
-      teamCountAuthority: 8,
       phaseAuthority: 0,
-      unverified: 169
     }
   );
+  assert.ok(summary.teamCountAuthority >= 8, "reviewed baseline authority must not regress as verified sources are added");
+  assert.ok(summary.unverified < summary.contracts, "registry must retain verified authority");
 });
 
 test("contract resolver selects exact league and season", () => {
