@@ -153,7 +153,8 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
     researchTasks: researchTasks.map(task => ({ key: task.key, fixtures: task.incidents.length })),
     fixtureDiscoveryPendingDays: days.filter(row => row.status === "FIXTURE_DISCOVERY_PENDING").map(row => row.day),
     readinessComplete: open.length === 0 && days.every(row => row.status !== "FIXTURE_DISCOVERY_PENDING"),
-    days, oddsWrittenDays, acquisitionErrors, competitionContractPreparation, historicalFormPreparation: historicalFormPreparation || null, frozenPredictionsRegenerated: false,
+    days, oddsWrittenDays, acquisitionErrors, competitionContractPreparation, historicalFormPreparation: historicalFormPreparation || null,
+    verifiedFinalForm: verifiedEvidence?.verifiedFinalForm || null, frozenPredictionsRegenerated: false,
     resolvedOnlyByVerifiedAssessmentJoin: true, incidentsExpireAutomatically: false };
   if (write) { save(queueFile, queue); save(path.join(root, `${dayKey}.json`), report); }
   return { report, queue };

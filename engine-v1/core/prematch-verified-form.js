@@ -4,6 +4,7 @@ import { validateHistoryIndexFoundationSync } from "./derived-history-foundation
 import { historicalFormRowsBeforeKickoff } from "./details-rich-blocks.js";
 import { currentSeason, seasonBefore } from "./season.js";
 import { createCrossCompetitionFormResolver } from "../storage/cross-competition-form-db.js";
+import { readPrematchFinalForm } from "./prematch-verified-final-form.js";
 
 const NATIONAL_COMPETITIONS = new Set(["fifa.world", "fifa.world.qual", "uefa.nations", "uefa.euro", "uefa.euro.qual", "caf.nations", "afc.asian_cup", "conmebol.copa_america", "concacaf.nations"]);
 
@@ -89,9 +90,11 @@ export function createPrematchVerifiedEvidence(nowMs) {
       indexes.push(JSON.parse(fs.readFileSync(resolveDataPath("history-index", "team-form", `${label}.json`), "utf8")));
     }
   }
-  const index = mergeVerifiedFormIndexes(indexes);
+  const baseIndex = mergeVerifiedFormIndexes(indexes);
+  const recentFinals = readPrematchFinalForm(baseIndex, nowMs);
+  const index = mergeVerifiedFormIndexes([baseIndex, recentFinals.index]);
   const clubCrossForm = createCrossCompetitionFormResolver({ resultDocuments: verifiedHistoryResultDocuments(index, nowMs) });
-  return { formFn: (slug, team) => verifiedFormRates(index, slug, team, nowMs),
+  return { verifiedFinalForm: recentFinals.summary, formFn: (slug, team) => verifiedFormRates(index, slug, team, nowMs),
     crossFormFn: (slug, team, window, options) => verifiedNationalForm(index, slug, team, nowMs, window) || clubCrossForm(slug, team, window, options) };
 }
 
