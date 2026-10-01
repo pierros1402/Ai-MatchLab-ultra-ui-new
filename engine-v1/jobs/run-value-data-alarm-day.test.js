@@ -10,7 +10,7 @@ test("alarm scans previous-day readiness for the next week, persists before rese
   const fixtures = day => day === "2099-10-04" ? [{ canonicalId: id, leagueSlug: "egy.2", homeTeam: "A", awayTeam: "B", kickoffUtc: "2099-10-04T10:00Z" }] : [];
   let calls = 0;
   const dependencies = { queueRoot: root, fixtures, assessments: () => [], standings: () => ({ ok: false, validation: { issues: ["TEAM_COUNT_AUTHORITY_MISSING"] } }),
-    supplement: () => ({ assessmentRowsWritten: 0 }), search: async () => {
+    supplement: () => ({ assessmentRowsWritten: 0 }), primarySearch: async options => { assert.deepEqual(options.leagues, ["egy.2"]); return { ok: false, error: "primary_unavailable" }; }, search: async () => {
       calls++;
       const queue = JSON.parse(fs.readFileSync(path.join(root, "queue.json")));
       assert.ok(queue.incidents[id], "alarm must exist before the source search starts");
@@ -27,6 +27,7 @@ test("alarm scans previous-day readiness for the next week, persists before rese
     assert.equal(calls, 1);
     assert.equal(applied.queue.incidents[id].status, "DATA_SEARCH_REQUIRED");
     assert.equal(Object.values(applied.queue.research)[0].result.status, "SOURCE_SEARCH_FAILED");
+    assert.equal(Object.values(applied.queue.research)[0].result.primarySource.error, "primary_unavailable");
     await runValueDataAlarmDay("2099-10-01", { ...options, write: true, research: true });
     assert.equal(calls, 1, "backoff must prevent repeated source requests on every five-minute tick");
     const rollover = await runValueDataAlarmDay("2099-10-10", { ...options, write: true, research: true, nowMs: Date.parse("2099-10-10T08:00Z") });

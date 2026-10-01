@@ -9,6 +9,7 @@ import { readTrustedStandingsState } from "../storage/trusted-standings-db.js";
 import { getLeagueMeta } from "../source-discovery/league-awareness-service.js";
 import { currentSeasonLabel } from "../source-discovery/season-calendar.js";
 import { updateValueDataAlarm, dueValueDataResearch, recordValueDataResearch } from "../core/value-data-alarm.js";
+import { createPrematchVerifiedForm } from "../core/prematch-verified-form.js";
 
 function load(file) { return JSON.parse(fs.readFileSync(file, "utf8")); }
 function save(file, data) {
@@ -49,7 +50,9 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
     const upcoming = join.canonicalRowsWithoutAssessment.filter(row => Date.parse(row.kickoffUtc) > nowMs);
     if (write && upcoming.length) {
       const produce = dependencies.supplement || (await import("./canonical-assessment-supplement.js")).supplementCanonicalAssessments;
-      supplement = produce(day, { canonicalFixtures: upcoming, nowMs });
+      supplement = produce(day, { canonicalFixtures: upcoming, nowMs,
+        formFn: dependencies.formFn || createPrematchVerifiedForm(nowMs),
+        crossFormFn: () => ({ sample: 0, reason: "verified_cross_competition_evidence_unavailable" }) });
       if (supplement.assessmentRowsWritten > 0) {
         const exportOdds = dependencies.exportOdds || (await import("./export-odds-snapshot-day.js")).exportOddsSnapshotDay;
         const exported = await exportOdds(day);
@@ -66,7 +69,12 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
   }
   queue ||= { schema: "ai-matchlab.value-data-alarm.v1", incidents: {}, research: {} };
   const researchTasks = dueValueDataResearch(queue, nowMs, maxResearchLeagues);
-  if (research) {
+  if (research && researchTasks.length) {
+    const primarySearch = dependencies.primarySearch || (await import("./refresh-standings-from-flashscore.js")).refreshStandingsFromFlashscore;
+    let primary;
+    try {
+      primary = await primarySearch({ leagues: [...new Set(researchTasks.map(task => task.incidents[0].leagueSlug))], offsets: [-1, 0, 1, 2, 3] });
+    } catch (error) { primary = { ok: false, error: error.message }; }
     const search = dependencies.search || (await import("../source-discovery/standings-researcher.js")).researchStandings;
     for (const task of researchTasks) {
       const incident = task.incidents[0], meta = getLeagueMeta(incident.leagueSlug);
@@ -74,11 +82,11 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
       try {
         const evidence = await search(incident.leagueSlug, meta.name, meta.country, {
           season: incident.diagnosis.researchSeason, allowSearch: true, timeoutMs: 8000 });
-        result = { status: evidence.status, source: evidence.source, url: evidence.url,
+        result = { status: evidence.status, primarySource: primary, source: evidence.source, url: evidence.url,
           rows: evidence.rowCount, trail: evidence.trail, confidence: evidence.confidence,
           authorityPromotionAllowed: false, valueInputVerified: false };
         save(path.join(root, dayKey, `${incident.leagueSlug}.research.json`), evidence);
-      } catch (error) { result = { status: "SOURCE_SEARCH_FAILED", error: error.message }; }
+      } catch (error) { result = { status: "SOURCE_SEARCH_FAILED", primarySource: primary, error: error.message }; }
       recordValueDataResearch(queue, task, result, nowMs);
       save(queueFile, queue);
     }
