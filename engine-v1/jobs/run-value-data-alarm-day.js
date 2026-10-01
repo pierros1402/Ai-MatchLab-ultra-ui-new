@@ -75,6 +75,14 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
     try {
       primary = await primarySearch({ leagues: [...new Set(researchTasks.map(task => task.incidents[0].leagueSlug))], offsets: [-1, 0, 1, 2, 3] });
     } catch (error) { primary = { ok: false, error: error.message }; }
+    if (!dependencies.primarySearch) {
+      const { readStandingsEvidence } = await import("../storage/standings-memory-db.js");
+      for (const refreshed of primary.refreshed || []) {
+        save(path.join(root, dayKey, `${refreshed.slug}.primary.research.json`), {
+          source: "flashscore", acquiredAt: new Date(nowMs).toISOString(),
+          evidence: readStandingsEvidence(refreshed.slug), authorityPromotionAllowed: false });
+      }
+    }
     const search = dependencies.search || (await import("../source-discovery/standings-researcher.js")).researchStandings;
     for (const task of researchTasks) {
       const incident = task.incidents[0], meta = getLeagueMeta(incident.leagueSlug);

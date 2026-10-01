@@ -462,6 +462,21 @@ jobs:
           set -euo pipefail
           bash tools/sync-public-snapshot.sh "${DAY_KEY}" "${TRUTH_PUBLISHED_REF}"
 
+      - name: Persist upcoming Value data alarms before downstream gates
+        id: prematch-data-alarm
+        if: always() && env.SKIP_BUILD != 'true' && env.DAY_KEY != ''
+        continue-on-error: true
+        shell: bash
+        run: bash tools/persist-value-data-alarm.sh "${DAY_KEY}"
+
+      - name: Preserve pre-match alarm evidence
+        if: always() && steps.prematch-data-alarm.outcome != 'skipped'
+        uses: actions/upload-artifact@v4
+        with:
+          name: prematch-value-data-alarm-${{ env.DAY_KEY }}
+          path: data/value-data-acquisition/
+          if-no-files-found: warn
+
       - name: Self-heal stale or missing value artifacts
         if: env.SKIP_BUILD != 'true'
         shell: bash
@@ -1348,6 +1363,12 @@ jobs:
         run: |
           set -euo pipefail
           bash tools/sync-public-snapshot.sh "${DAY_KEY}" "${PUBLISHED_REF}"
+
+      - name: Surface pre-match acquisition failure without interrupting score publication
+        if: always() && steps.prematch-data-alarm.outcome == 'failure'
+        run: |
+          echo "ERROR: pre-match data acquisition failed; inspect preserved alarm evidence."
+          exit 1
 
       - name: Automatic Render redeploy disabled by deploy-budget firewall
         if: ${{ false }}
