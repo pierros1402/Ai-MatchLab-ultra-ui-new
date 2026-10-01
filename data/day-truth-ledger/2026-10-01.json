@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-01",
-  "generatedAt": "2026-10-01T18:06:30.904Z",
+  "generatedAt": "2026-10-01T18:21:25.766Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "8bb76dd3a8a3134aa17aba70db4314b3bfaf47f753a4aedf1eb8a9b00d8b7963",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "4a93d8728b9a2fe73256e048edf82831555ddcf11c5f51d3956e5c8618ed82e4",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,9 +17,9 @@
   },
   "summary": {
     "canonicalRows": 38,
-    "playedTerminal": 26,
+    "playedTerminal": 27,
     "nonPlayedTerminal": 1,
-    "scheduled": 11,
+    "scheduled": 10,
     "live": 0,
     "interrupted": 0,
     "delayed": 0,
@@ -27,16 +27,16 @@
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 27,
     "acceptedVerifiedFinalArtifacts": 27,
-    "convergedPlayedFinal": 26,
+    "convergedPlayedFinal": 27,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
     "openRows": 10,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 26,
-    "scoredSettlementEligible": 26,
+    "historyEligible": 27,
+    "scoredSettlementEligible": 27,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -46,14 +46,14 @@
       "homeTeam": "Guinea",
       "awayTeam": "Kenya",
       "kickoffUtc": "2026-10-01T16:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": true,
@@ -63,14 +63,14 @@
         "dayKey": "2026-10-01",
         "scoreHome": 1,
         "scoreAway": 0,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1906,9 +1906,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_cafnations_guinea_kenya_20261001"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -2127,7 +2125,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 10862,
+            "count": 10866,
             "informational": true
           }
         },
@@ -4462,15 +4460,16 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "8bb76dd3a8a3134aa17aba70db4314b3bfaf47f753a4aedf1eb8a9b00d8b7963",
+      "truthFingerprint": "4a93d8728b9a2fe73256e048edf82831555ddcf11c5f51d3956e5c8618ed82e4",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 26,
+        "expectedEligibleRows": 27,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
+          "cid_cafnations_guinea_kenya_20261001",
           "cid_can1_atlottawa_cavalry_20261001",
           "cid_chi2_sanfelipe_sanluis_20261001",
           "cid_col1_atleticonacional_atleticojunior_20261001",
