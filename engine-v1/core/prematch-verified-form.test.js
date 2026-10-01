@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { verifiedFormRates, verifiedHistoryResultDocuments } from "./prematch-verified-form.js";
+import { verifiedFormRates, verifiedHistoryResultDocuments, mergeVerifiedFormIndexes } from "./prematch-verified-form.js";
 import { createCrossCompetitionFormResolver } from "../storage/cross-competition-form-db.js";
 
 test("early form excludes future results, other competitions and ambiguous team names", () => {
@@ -10,6 +10,12 @@ test("early form excludes future results, other competitions and ambiguous team 
   assert.deepEqual(verifiedFormRates(index, "egy.2", "Exact", Date.parse("2026-10-01T00:00:00Z")),
     { sample: 1, gfRate: 2, gaRate: 1, ppg: 3 });
   assert.equal(verifiedFormRates(index, "egy.2", "exact", Date.parse("2026-10-01T00:00:00Z")).sample, 0);
+});
+
+test("recent form crosses the season boundary, deduplicates truth and rejects stale results", () => {
+  const row = { id: "same", homeTeam: "Exact", awayTeam: "Opponent", leagueSlug: "eng.3", status: "FT", scoreHome: 1, scoreAway: 0, kickoffUtc: "2026-07-31T12:00:00Z" };
+  const merged = mergeVerifiedFormIndexes([{ Exact: { matches: [row] } }, { Exact: { matches: [row, { ...row, id: "old", kickoffUtc: "2025-12-31T12:00:00Z" }] } }]);
+  assert.equal(verifiedFormRates(merged, "eng.3", "Exact", Date.parse("2026-10-01T00:00:00Z")).sample, 1);
 });
 
 test("cup form consumes verified prior domestic results with identity veto and cutoff preserved", () => {

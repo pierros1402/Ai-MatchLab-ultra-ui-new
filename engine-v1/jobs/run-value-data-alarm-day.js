@@ -27,7 +27,7 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
   let queue = fs.existsSync(queueFile) ? load(queueFile) : null;
   queue = updateValueDataAlarm(queue, { dayKey, fixtures: [], joinedIds: [], nowMs });
   const days = [], oddsWrittenDays = [], diagnoses = {}, acquisitionErrors = [];
-  let verifiedEvidence;
+  let verifiedEvidence, historicalFormPreparation;
   for (let offset = 0; offset <= lookAheadDays; offset++) {
     const day = new Date(Date.parse(`${dayKey}T12:00:00Z`) + offset * 86400000).toISOString().slice(0, 10);
     const fixtures = (dependencies.fixtures || canonicalFixturesForDay)(day);
@@ -51,6 +51,10 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
     const upcoming = join.canonicalRowsWithoutAssessment.filter(row => Date.parse(row.kickoffUtc) > nowMs);
     if (write && upcoming.length) {
       try {
+      if (!historicalFormPreparation && !dependencies.supplement) {
+        const { preparePrematchHistoryForm } = await import("./prepare-prematch-history-form.js");
+        historicalFormPreparation = await preparePrematchHistoryForm(nowMs);
+      }
       verifiedEvidence ||= createPrematchVerifiedEvidence(nowMs);
       const produce = dependencies.supplement || (await import("./canonical-assessment-supplement.js")).supplementCanonicalAssessments;
       supplement = produce(day, { canonicalFixtures: upcoming, nowMs,
@@ -119,7 +123,7 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
     researchTasks: researchTasks.map(task => ({ key: task.key, fixtures: task.incidents.length })),
     fixtureDiscoveryPendingDays: days.filter(row => row.status === "FIXTURE_DISCOVERY_PENDING").map(row => row.day),
     readinessComplete: open.length === 0 && days.every(row => row.status !== "FIXTURE_DISCOVERY_PENDING"),
-    days, oddsWrittenDays, acquisitionErrors, frozenPredictionsRegenerated: false,
+    days, oddsWrittenDays, acquisitionErrors, historicalFormPreparation: historicalFormPreparation || null, frozenPredictionsRegenerated: false,
     resolvedOnlyByVerifiedAssessmentJoin: true, incidentsExpireAutomatically: false };
   if (write) { save(queueFile, queue); save(path.join(root, `${dayKey}.json`), report); }
   return { report, queue };
