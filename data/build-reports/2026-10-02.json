@@ -2,12 +2,12 @@
   "ok": false,
   "schema": "ai-matchlab.day-build-report.v1",
   "dayKey": "2026-10-02",
-  "generatedAt": "2026-10-02T03:57:44.080Z",
+  "generatedAt": "2026-10-02T18:52:34.234Z",
   "universe": {
     "expected": null,
-    "canonical": 50,
-    "published": 50,
-    "details": 50,
+    "canonical": 49,
+    "published": 49,
+    "details": 49,
     "byLeague": {
       "expected": {},
       "canonical": {
@@ -28,7 +28,7 @@
         "nor.2": 1,
         "sco.tennents": 2,
         "slv.1": 2,
-        "uefa.nations": 11,
+        "uefa.nations": 10,
         "ukr.2": 1,
         "usa.1": 1,
         "wal.2": 4
@@ -36,7 +36,6 @@
       "published": {
         "slv.1": 2,
         "bra.2": 2,
-        "col.1": 1,
         "usa.1": 1,
         "ukr.2": 1,
         "idn.2": 2,
@@ -57,7 +56,8 @@
       }
     },
     "canonicalLeaguesMissingFromPublished": [
-      "arg.2"
+      "arg.2",
+      "col.1"
     ],
     "expectedLeaguesMissingFromPublished": []
   },
@@ -641,28 +641,21 @@
   },
   "freshness": {
     "ok": false,
-    "manifestGeneratedAt": "2026-10-02T01:18:03.757Z",
+    "manifestGeneratedAt": "2026-10-02T18:51:22.521Z",
     "reasons": [
-      "snapshot_stale_against_canonical",
-      "snapshot_value_stale_against_canonical",
       "plan_a2_stale_against_canonical",
       "plan_a2_audit_stale_against_canonical",
       "plan_b_audit_stale_against_canonical",
       "plan_b2_audit_stale_against_canonical"
     ],
-    "staleInputs": [
-      "canonical-fixtures/2026-10-02/bra.2.json",
-      "canonical-fixtures/2026-10-02/col.1.json",
-      "canonical-fixtures/2026-10-02/slv.1.json",
-      "canonical-fixtures/2026-10-02/usa.1.json"
-    ]
+    "staleInputs": []
   },
   "invariant": {
     "ok": true,
     "blocked": 0,
     "warnings": 0,
     "autoFixed": 0,
-    "checkedAt": "2026-10-02T01:18:05.015Z"
+    "checkedAt": "2026-10-02T18:51:23.990Z"
   },
   "value": {
     "source": "canonical_fixtures",
@@ -720,7 +713,7 @@
     }
   },
   "settlement": {
-    "generatedAt": "2026-10-02T03:56:54.862Z",
+    "generatedAt": "2026-10-02T18:51:23.965Z",
     "requiredPlans": [
       "A",
       "A2",
@@ -737,19 +730,19 @@
     "complete": true,
     "planA": {
       "picks": 6,
-      "settled": 1,
+      "settled": 3,
       "wins": 1,
-      "losses": 0,
+      "losses": 2,
       "voids": 0,
-      "unresolved": 5
+      "unresolved": 3
     },
     "planA2": {
       "picks": 6,
-      "settled": 1,
+      "settled": 3,
       "wins": 1,
-      "losses": 0,
+      "losses": 2,
       "voids": 0,
-      "unresolved": 5
+      "unresolved": 3
     },
     "planB": {
       "picks": 0,
@@ -770,21 +763,16 @@
   },
   "foundationIntegrity": {
     "schema": "ai-matchlab.foundation-integrity.v1",
-    "generatedAt": "2026-10-02T03:57:43.836Z",
+    "generatedAt": "2026-10-02T18:52:33.990Z",
     "season": "2026-2027",
     "modelReady": true,
-    "publicationReady": false,
-    "blocked": [
-      {
-        "component": "details",
-        "reason": "details_foundation_not_ready"
-      }
-    ],
+    "publicationReady": true,
+    "blocked": [],
     "warnings": [
       {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 10982,
+        "count": 11554,
         "informational": true
       },
       {
@@ -818,11 +806,10 @@
     "supersededOpenFixtures": []
   },
   "hardFailures": [
-    "foundation_publication_not_ready",
     "snapshot_stale"
   ],
   "warnings": [
-    "canonical_leagues_missing_from_published:arg.2",
+    "canonical_leagues_missing_from_published:arg.2,col.1",
     "acquisition_skipped_slugs:bol.copa,caf.nations_qual,concacaf.nations.league,mex.w.1,uefa.euro_u21_qual,uefa.wchampions,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1"
   ],
   "clean": false,
