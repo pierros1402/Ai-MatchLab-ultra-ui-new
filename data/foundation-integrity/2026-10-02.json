@@ -1,12 +1,17 @@
 {
   "schema": "ai-matchlab.foundation-integrity.v1",
-  "generatedAt": "2026-10-02T01:20:34.552Z",
+  "generatedAt": "2026-10-02T01:32:39.013Z",
   "dayKey": "2026-10-02",
   "season": "2026-2027",
-  "ok": true,
+  "ok": false,
   "modelReady": true,
-  "publicationReady": true,
-  "blocked": [],
+  "publicationReady": false,
+  "blocked": [
+    {
+      "component": "details",
+      "reason": "details_foundation_not_ready"
+    }
+  ],
   "warnings": [
     {
       "component": "historySemantic",
@@ -35,7 +40,7 @@
         "ok": false,
         "clean": false,
         "schema": "ai-matchlab.history-semantic-integrity.v1",
-        "generatedAt": "2026-10-02T01:20:33.604Z",
+        "generatedAt": "2026-10-02T01:32:38.275Z",
         "sourceContract": {
           "readOnlyTruthLayers": true,
           "truthWrites": 0,
@@ -4651,7 +4656,7 @@
       "reason": null,
       "detail": {
         "schema": "ai-matchlab.standings-foundation-audit.v1",
-        "generatedAt": "2026-10-02T01:20:33.645Z",
+        "generatedAt": "2026-10-02T01:32:38.306Z",
         "ok": true,
         "season": "2026-2027",
         "summary": {
@@ -211100,16 +211105,16 @@
       }
     },
     "details": {
-      "ok": true,
-      "reason": null,
+      "ok": false,
+      "reason": "details_foundation_not_ready",
       "detail": {
         "schema": "ai-matchlab.details-foundation-audit.v2",
-        "generatedAt": "2026-10-02T01:20:34.552Z",
+        "generatedAt": "2026-10-02T01:32:39.012Z",
         "dayKey": "2026-10-02",
-        "ok": true,
+        "ok": false,
         "publicationUniverse": {
           "mode": "intraday_status_only",
-          "currentFixtureCount": 50,
+          "currentFixtureCount": 49,
           "publishedFixtureCount": 50,
           "deferredFixtureCount": 0,
           "deferredFixtureIds": []
@@ -211118,9 +211123,22 @@
           "expectedFixtures": 50,
           "detailFiles": 50,
           "checked": 50,
-          "issueCount": 0
+          "issueCount": 2
         },
-        "issues": []
+        "issues": [
+          {
+            "code": "PUBLISHED_FIXTURE_NOT_IN_CURRENT_UNIVERSE",
+            "ids": [
+              "cid_col1_internacionalbogota_oncecaldas_20261002"
+            ]
+          },
+          {
+            "code": "PUBLICATION_COUNT_MISMATCH",
+            "field": "currentFixtureCount",
+            "declared": 50,
+            "actual": 49
+          }
+        ]
       }
     }
   },
