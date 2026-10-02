@@ -79,6 +79,28 @@ function strictPublishedEspnProviderId(row) {
     : "";
 }
 
+function hasExactPublishedEspnLineage(row) {
+  const source = clean(row?.source).toLowerCase();
+  if (source === "espn") return true;
+  if (source !== "reconciled") return false;
+  const providerId = strictPublishedEspnProviderId(row);
+  const evidence = row?.sources?.espn;
+  const meta = row?.reconcileMeta;
+  const observed = row?.sourceParticipation?.observedSources;
+  // Reconciliation changes the envelope label, never the exact provider proof.
+  // Only a conflict-free, single-ESPN lineage is admitted by this path.
+  return Boolean(providerId && evidence && meta
+    && Object.keys(row.sources).length === 1
+    && Array.isArray(observed) && observed.length === 1 && observed[0] === "espn"
+    && row.sourceParticipation.sourceCount === 1
+    && row.hasConflict === false && meta.disagreement === false
+    && Array.isArray(meta.conflictTypes) && meta.conflictTypes.length === 0
+    && [meta.chosenKickoffSource, meta.chosenTeamsSource, meta.chosenStatusSource].every(value => value === "espn")
+    && clean(evidence.sourceId) === providerId
+    && clean(evidence.homeTeam) === clean(row.homeTeam) && clean(evidence.awayTeam) === clean(row.awayTeam)
+    && Number.isFinite(Date.parse(evidence.kickoffUtc)) && Date.parse(evidence.kickoffUtc) === Date.parse(row.kickoffUtc));
+}
+
 /*
  * Authoritative shrink is intentionally narrow.
  *
@@ -265,10 +287,7 @@ export function collectAuthoritativeWrongDayPublishedFixtureIds({
         : []
     )
   ) {
-    if (
-      clean(row?.source).toLowerCase() !==
-        "espn"
-    ) {
+    if (!hasExactPublishedEspnLineage(row)) {
       continue;
     }
 

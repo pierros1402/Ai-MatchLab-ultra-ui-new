@@ -10,6 +10,23 @@ import {
 const day =
   "2026-08-25";
 
+test("reconciled single-ESPN publication retains exact wrong-day proof without admitting mixed or conflicting lineage", () => {
+  const row = { ...publishedRow({ id: "reconciled-stale", providerId: "1001", source: "reconciled" }),
+    homeTeam: "A", awayTeam: "B", kickoffUtc: `${day}T01:00Z`, hasConflict: false,
+    sources: { espn: { sourceId: "1001", homeTeam: "A", awayTeam: "B", kickoffUtc: `${day}T01:00Z` } },
+    sourceParticipation: { observedSources: ["espn"], sourceCount: 1 },
+    reconcileMeta: { chosenKickoffSource: "espn", chosenTeamsSource: "espn", chosenStatusSource: "espn", disagreement: false, conflictTypes: [] } };
+  const collect = candidate => collectAuthoritativeWrongDayPublishedFixtureIds({ dayKey: day, publishedFixtures: [candidate], canonicalLeaguePayloads: [strictLeaguePayload({ removedIds: ["1001"] })] });
+  assert.deepEqual(collect(row), ["reconciled-stale"]);
+  assert.deepEqual(collect({ ...row, hasConflict: true }), []);
+  assert.deepEqual(collect({ ...row, sources: { ...row.sources, flashscore: {} } }), []);
+  assert.deepEqual(collect({ ...row, reconcileMeta: { ...row.reconcileMeta, chosenTeamsSource: "flashscore" } }), []);
+  assert.deepEqual(collect({ ...row, sources: { espn: { ...row.sources.espn, sourceId: "9999" } } }), []);
+  assert.deepEqual(collect({ ...row, sources: { espn: { ...row.sources.espn, homeTeam: "Other" } } }), []);
+  assert.deepEqual(collect({ ...row, sources: { espn: { ...row.sources.espn, kickoffUtc: `${day}T02:00Z` } } }), []);
+  assert.deepEqual(collect({ ...row, sources: undefined }), []);
+});
+
 function publishedRow({
   id,
   providerId,

@@ -15,6 +15,7 @@ test("a missing model-history row requires committed exact canonical and verifie
   assert.equal(result.ok, true);
   assert.equal(result.row.id, canonical.canonicalId);
   assert.equal(result.row.truthContract.exactScoreParity, true);
+  assert.equal(validatePrematchFinalForm(candidate, { ...canonical, rawStatus: "STATUS_FULL_TIME" }, final, now).ok, true);
   assert.equal(validatePrematchFinalForm(candidate, canonical, null, now).ok, false);
   assert.equal(validatePrematchFinalForm(candidate, canonical, { ...final, verifiedFinalTruth: false }, now).ok, false);
   assert.equal(validatePrematchFinalForm(candidate, canonical, { ...final, homeTeam: "A FC" }, now).reason, "EXACT_FINAL_METADATA_MISMATCH");

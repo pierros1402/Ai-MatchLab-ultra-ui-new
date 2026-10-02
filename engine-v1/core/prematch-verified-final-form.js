@@ -28,7 +28,7 @@ export function validatePrematchFinalForm(candidate, canonical, final, nowMs) {
   // Restrict this new path to regulation finals. AET/PEN require their existing
   // score-semantics resolver, never a guessed 90-minute score.
   const statuses = [canonical.status, canonical.statusType, canonical.rawStatus].filter(Boolean);
-  if (!statuses.length || statuses.some(value => !["FT", "STATUS_FINAL", "FINISHED"].includes(value))) return deny("REGULATION_FINAL_REQUIRED");
+  if (!statuses.length || statuses.some(value => !["FT", "STATUS_FINAL", "STATUS_FULL_TIME", "FINISHED"].includes(value))) return deny("REGULATION_FINAL_REQUIRED");
   const verdicts = [final.verdict, final.finalTruthVerdict, final.verification?.verdict, final.verification?.state].filter(Boolean);
   if (!verdicts.length || verdicts.some(value => value !== "verified_final_result")) return deny("VERIFIED_FINAL_VERDICT_REQUIRED");
   const dayKey = athensDayFromKickoff(canonical.kickoffUtc);
