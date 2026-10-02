@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-02",
-  "generatedAt": "2026-10-02T14:45:19.657Z",
+  "generatedAt": "2026-10-02T14:59:43.845Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "b5a2d4f8c5a9328bba6951044658d878aca8e5c7a7cc9d7049ab904119c453ba",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "5cc7fd39286db9b2dd097a60aa4809ec253be60b6de5232fc0c0a025fb4372d4",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,9 +17,9 @@
   },
   "summary": {
     "canonicalRows": 49,
-    "playedTerminal": 12,
+    "playedTerminal": 13,
     "nonPlayedTerminal": 0,
-    "scheduled": 36,
+    "scheduled": 35,
     "live": 1,
     "interrupted": 0,
     "delayed": 0,
@@ -27,16 +27,16 @@
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 13,
     "acceptedVerifiedFinalArtifacts": 13,
-    "convergedPlayedFinal": 11,
+    "convergedPlayedFinal": 13,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
     "openRows": 36,
     "unresolvedRows": 0,
-    "conflictRows": 2,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 11,
-    "scoredSettlementEligible": 11,
+    "historyEligible": 13,
+    "scoredSettlementEligible": 13,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -389,14 +389,14 @@
       "homeTeam": "Dayrout",
       "awayTeam": "El Ismaily",
       "kickoffUtc": "2026-10-02T12:30:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": true,
@@ -406,14 +406,14 @@
         "dayKey": "2026-10-02",
         "scoreHome": 2,
         "scoreAway": 2,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1960,11 +1960,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -2168,16 +2168,16 @@
         "reason": "verified_final_result",
         "verdict": "verified_final_result",
         "dayKey": "2026-10-02",
-        "scoreHome": 1,
+        "scoreHome": 0,
         "scoreAway": 1,
-        "scoreParity": false
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "canonical_verified_final_score_mismatch",
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
         "operationallyClosed": true,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2445,10 +2445,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_egy2_dayrout_elismaily_20261002",
-      "cid_ukr2_poltava_chernihiv_20261002"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -2628,7 +2625,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 11268,
+            "count": 11272,
             "informational": true
           }
         },
@@ -5461,18 +5458,19 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "b5a2d4f8c5a9328bba6951044658d878aca8e5c7a7cc9d7049ab904119c453ba",
+      "truthFingerprint": "5cc7fd39286db9b2dd097a60aa4809ec253be60b6de5232fc0c0a025fb4372d4",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 11,
+        "expectedEligibleRows": 13,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_bra2_athletic_sport_20261002",
           "cid_bra2_novorizontino_goias_20261002",
           "cid_egy2_baladiyatelmahalla_team_20261002",
+          "cid_egy2_dayrout_elismaily_20261002",
           "cid_egy2_eldaklyeh_maleyeitkafrelzayiat_20261002",
           "cid_egy2_kahrabaaismailia_deltaunited_20261002",
           "cid_egy2_proxy_we_20261002",
@@ -5480,6 +5478,7 @@
           "cid_idn2_dejan_persipurajayapura_20261002",
           "cid_slv1_fuertesanfrancisco_luisangelfirpo_20261002",
           "cid_slv1_incaaruba_municipallimeno_20261002",
+          "cid_ukr2_poltava_chernihiv_20261002",
           "cid_usa1_seattlesounders_sportingkansascity_20261002"
         ],
         "unexpectedFixtureIds": [],
