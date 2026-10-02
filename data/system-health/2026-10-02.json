@@ -1,25 +1,25 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-10-02",
-  "generatedAt": "2026-10-02T01:32:39.415Z",
-  "severity": "error",
+  "generatedAt": "2026-10-02T04:03:51.809Z",
+  "severity": "warning",
   "issueCounts": {
-    "error": 4,
-    "warning": 7,
+    "error": 0,
+    "warning": 8,
     "info": 11
   },
   "alert": true,
   "alertCounts": {
-    "error": 4,
-    "warning": 0,
+    "error": 0,
+    "warning": 2,
     "info": 0
   },
-  "activeIssueCount": 22,
-  "actionableIssueCount": 11,
-  "newIssueCount": 4,
-  "newActionableIssueCount": 4,
-  "resolvedIssueCount": 1,
-  "persistentIssueCount": 18,
+  "activeIssueCount": 19,
+  "actionableIssueCount": 8,
+  "newIssueCount": 2,
+  "newActionableIssueCount": 2,
+  "resolvedIssueCount": 5,
+  "persistentIssueCount": 17,
   "activeIssues": [
     {
       "severity": "info",
@@ -50,17 +50,19 @@
           "currentAthensDay": "2026-10-02",
           "fixtureCount": 50,
           "frozenHash": "c7c356c7342969244afe518b45ccd04625b092c4ffe3859b5c34890e404563fd",
-          "currentHash": "c7c356c7342969244afe518b45ccd04625b092c4ffe3859b5c34890e404563fd",
+          "currentHash": "7e69cb8d627af93d5a581bf520daf02a03d6d4d74a344c90793b3400673a5f85",
           "strictFrozenParity": true,
-          "membershipParity": true,
-          "descriptorDrift": false,
-          "publicationMembershipPreserved": false,
-          "authorizedShrink": false,
-          "removedFixtureIds": [],
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": true,
+          "removedFixtureIds": [
+            "cid_col1_internacionalbogota_oncecaldas_20261002"
+          ],
           "deferredCurrentFixtureIds": [],
           "publishedOutsideFrozenFixtureIds": [],
           "resolvedFrozenAliasMappings": [],
-          "removalEvidenceSource": "exact_current_frozen_membership"
+          "removalEvidenceSource": "persisted_authoritative_prune_ledger"
         },
         "skipped": "artifact_missing_or_no_timestamp"
       }
@@ -81,17 +83,19 @@
           "currentAthensDay": "2026-10-02",
           "fixtureCount": 50,
           "frozenHash": "c7c356c7342969244afe518b45ccd04625b092c4ffe3859b5c34890e404563fd",
-          "currentHash": "c7c356c7342969244afe518b45ccd04625b092c4ffe3859b5c34890e404563fd",
+          "currentHash": "7e69cb8d627af93d5a581bf520daf02a03d6d4d74a344c90793b3400673a5f85",
           "strictFrozenParity": true,
-          "membershipParity": true,
-          "descriptorDrift": false,
-          "publicationMembershipPreserved": false,
-          "authorizedShrink": false,
-          "removedFixtureIds": [],
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": true,
+          "removedFixtureIds": [
+            "cid_col1_internacionalbogota_oncecaldas_20261002"
+          ],
           "deferredCurrentFixtureIds": [],
           "publishedOutsideFrozenFixtureIds": [],
           "resolvedFrozenAliasMappings": [],
-          "removalEvidenceSource": "exact_current_frozen_membership"
+          "removalEvidenceSource": "persisted_authoritative_prune_ledger"
         },
         "skipped": "artifact_missing_or_no_timestamp"
       }
@@ -159,20 +163,6 @@
       }
     },
     {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "foundation_publication_not_ready",
-      "message": "Publication foundation is not ready.",
-      "details": {
-        "blocked": [
-          {
-            "component": "details",
-            "reason": "details_foundation_not_ready"
-          }
-        ]
-      }
-    },
-    {
       "severity": "info",
       "source": "foundation-integrity",
       "type": "age_expired_results_rows_present",
@@ -209,30 +199,12 @@
       }
     },
     {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "foundation_publication_not_ready",
-      "details": {
-        "failure": "foundation_publication_not_ready"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
-      }
-    },
-    {
       "severity": "warning",
       "source": "build-report",
       "type": "build_warning",
-      "message": "canonical_leagues_missing_from_published:arg.2",
+      "message": "canonical_leagues_missing_from_published:arg.2,col.1",
       "details": {
-        "raw": "canonical_leagues_missing_from_published:arg.2"
+        "raw": "canonical_leagues_missing_from_published:arg.2,col.1"
       }
     },
     {
@@ -257,13 +229,14 @@
       }
     },
     {
-      "severity": "error",
+      "severity": "warning",
       "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
       "details": {
-        "clean": false,
-        "cleanStrict": false
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     },
     {
@@ -1184,44 +1157,12 @@
       }
     },
     {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "foundation_publication_not_ready",
-      "message": "Publication foundation is not ready.",
-      "details": {
-        "blocked": [
-          {
-            "component": "details",
-            "reason": "details_foundation_not_ready"
-          }
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "foundation_publication_not_ready",
-      "details": {
-        "failure": "foundation_publication_not_ready"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
-      }
-    },
-    {
       "severity": "warning",
       "source": "build-report",
       "type": "build_warning",
-      "message": "canonical_leagues_missing_from_published:arg.2",
+      "message": "canonical_leagues_missing_from_published:arg.2,col.1",
       "details": {
-        "raw": "canonical_leagues_missing_from_published:arg.2"
+        "raw": "canonical_leagues_missing_from_published:arg.2,col.1"
       }
     },
     {
@@ -1246,13 +1187,14 @@
       }
     },
     {
-      "severity": "error",
+      "severity": "warning",
       "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
       "details": {
-        "clean": false,
-        "cleanStrict": false
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     },
     {
@@ -1910,93 +1852,14 @@
   ],
   "newIssues": [
     {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "foundation_publication_not_ready",
-      "message": "Publication foundation is not ready.",
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:arg.2,col.1",
       "details": {
-        "blocked": [
-          {
-            "component": "details",
-            "reason": "details_foundation_not_ready"
-          }
-        ]
+        "raw": "canonical_leagues_missing_from_published:arg.2,col.1"
       }
     },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "foundation_publication_not_ready",
-      "details": {
-        "failure": "foundation_publication_not_ready"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
-      "details": {
-        "clean": false,
-        "cleanStrict": false
-      }
-    }
-  ],
-  "newActionableIssues": [
-    {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "foundation_publication_not_ready",
-      "message": "Publication foundation is not ready.",
-      "details": {
-        "blocked": [
-          {
-            "component": "details",
-            "reason": "details_foundation_not_ready"
-          }
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "foundation_publication_not_ready",
-      "details": {
-        "failure": "foundation_publication_not_ready"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
-      "details": {
-        "clean": false,
-        "cleanStrict": false
-      }
-    }
-  ],
-  "resolvedIssues": [
     {
       "severity": "warning",
       "source": "build-report",
@@ -2006,6 +1869,81 @@
         "clean": true,
         "cleanStrict": false,
         "contextOnlyWarnings": false
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:arg.2,col.1",
+      "details": {
+        "raw": "canonical_leagues_missing_from_published:arg.2,col.1"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_publication_not_ready",
+      "details": {
+        "failure": "foundation_publication_not_ready"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:arg.2",
+      "details": {
+        "raw": "canonical_leagues_missing_from_published:arg.2"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
       }
     }
   ],
@@ -2039,17 +1977,19 @@
           "currentAthensDay": "2026-10-02",
           "fixtureCount": 50,
           "frozenHash": "c7c356c7342969244afe518b45ccd04625b092c4ffe3859b5c34890e404563fd",
-          "currentHash": "c7c356c7342969244afe518b45ccd04625b092c4ffe3859b5c34890e404563fd",
+          "currentHash": "7e69cb8d627af93d5a581bf520daf02a03d6d4d74a344c90793b3400673a5f85",
           "strictFrozenParity": true,
-          "membershipParity": true,
-          "descriptorDrift": false,
-          "publicationMembershipPreserved": false,
-          "authorizedShrink": false,
-          "removedFixtureIds": [],
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": true,
+          "removedFixtureIds": [
+            "cid_col1_internacionalbogota_oncecaldas_20261002"
+          ],
           "deferredCurrentFixtureIds": [],
           "publishedOutsideFrozenFixtureIds": [],
           "resolvedFrozenAliasMappings": [],
-          "removalEvidenceSource": "exact_current_frozen_membership"
+          "removalEvidenceSource": "persisted_authoritative_prune_ledger"
         },
         "skipped": "artifact_missing_or_no_timestamp"
       }
@@ -2070,17 +2010,19 @@
           "currentAthensDay": "2026-10-02",
           "fixtureCount": 50,
           "frozenHash": "c7c356c7342969244afe518b45ccd04625b092c4ffe3859b5c34890e404563fd",
-          "currentHash": "c7c356c7342969244afe518b45ccd04625b092c4ffe3859b5c34890e404563fd",
+          "currentHash": "7e69cb8d627af93d5a581bf520daf02a03d6d4d74a344c90793b3400673a5f85",
           "strictFrozenParity": true,
-          "membershipParity": true,
-          "descriptorDrift": false,
-          "publicationMembershipPreserved": false,
-          "authorizedShrink": false,
-          "removedFixtureIds": [],
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": true,
+          "removedFixtureIds": [
+            "cid_col1_internacionalbogota_oncecaldas_20261002"
+          ],
           "deferredCurrentFixtureIds": [],
           "publishedOutsideFrozenFixtureIds": [],
           "resolvedFrozenAliasMappings": [],
-          "removalEvidenceSource": "exact_current_frozen_membership"
+          "removalEvidenceSource": "persisted_authoritative_prune_ledger"
         },
         "skipped": "artifact_missing_or_no_timestamp"
       }
@@ -2155,7 +2097,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 10970,
+        "count": 10982,
         "informational": true
       }
     },
@@ -2181,15 +2123,6 @@
         "reason": "score_consistent_alias_mirror_conflicts_present",
         "count": 47,
         "informational": true
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_warning",
-      "message": "canonical_leagues_missing_from_published:arg.2",
-      "details": {
-        "raw": "canonical_leagues_missing_from_published:arg.2"
       }
     },
     {
@@ -2292,8 +2225,8 @@
         "overdue": false,
         "settlementSource": "value-comparison",
         "picks": 6,
-        "settled": 0,
-        "unresolved": 6
+        "settled": 1,
+        "unresolved": 5
       }
     },
     {
@@ -2308,8 +2241,8 @@
         "overdue": false,
         "settlementSource": "value-comparison",
         "picks": 6,
-        "settled": 0,
-        "unresolved": 6
+        "settled": 1,
+        "unresolved": 5
       }
     },
     {
@@ -2989,19 +2922,19 @@
           "summary": {
             "picks": 6,
             "uniqueMatches": 6,
-            "settled": 0,
-            "wins": 0,
+            "settled": 1,
+            "wins": 1,
             "losses": 0,
             "voids": 0,
-            "unresolved": 6,
+            "unresolved": 5,
             "unsupported": 0,
-            "hitRate": null,
-            "oddsAvailable": 0,
-            "averageOdds": null,
-            "totalStake": null,
-            "totalReturn": null,
-            "profit": null,
-            "roi": null
+            "hitRate": 1,
+            "oddsAvailable": 1,
+            "averageOdds": 1.43,
+            "totalStake": 1,
+            "totalReturn": 1.43,
+            "profit": 0.43,
+            "roi": 0.43
           }
         },
         "planA2": {
@@ -3009,19 +2942,19 @@
           "summary": {
             "picks": 6,
             "uniqueMatches": 6,
-            "settled": 0,
-            "wins": 0,
+            "settled": 1,
+            "wins": 1,
             "losses": 0,
             "voids": 0,
-            "unresolved": 6,
+            "unresolved": 5,
             "unsupported": 0,
-            "hitRate": null,
-            "oddsAvailable": 0,
-            "averageOdds": null,
-            "totalStake": null,
-            "totalReturn": null,
-            "profit": null,
-            "roi": null
+            "hitRate": 1,
+            "oddsAvailable": 1,
+            "averageOdds": 1.43,
+            "totalStake": 1,
+            "totalReturn": 1.43,
+            "profit": 0.43,
+            "roi": 0.43
           }
         },
         "planB": {
