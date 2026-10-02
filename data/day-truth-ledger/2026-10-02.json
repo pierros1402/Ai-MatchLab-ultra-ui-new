@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-02",
-  "generatedAt": "2026-10-02T15:16:43.188Z",
+  "generatedAt": "2026-10-02T15:30:29.153Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "aaa0fdc03453e9eca3f26df785a01d40518de4ced661ad8c28a04502b9249334",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "1399e5be6a317a19c4d4005a6364269306a56986b54eecd0dc0915cf56b6063b",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,22 +17,22 @@
   },
   "summary": {
     "canonicalRows": 49,
-    "playedTerminal": 13,
+    "playedTerminal": 14,
     "nonPlayedTerminal": 0,
-    "scheduled": 35,
+    "scheduled": 34,
     "live": 1,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 13,
-    "acceptedVerifiedFinalArtifacts": 13,
+    "verifiedFinalArtifacts": 14,
+    "acceptedVerifiedFinalArtifacts": 14,
     "convergedPlayedFinal": 13,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 36,
+    "openRows": 35,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 13,
@@ -732,31 +732,31 @@
       "homeTeam": "Persiraja Aceh",
       "awayTeam": "Sumsel United",
       "kickoffUtc": "2026-10-02T13:30:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-02",
+        "scoreHome": 1,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1963,7 +1963,7 @@
         "status": "SECOND_HALF",
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 0,
+        "scoreHome": 1,
         "scoreAway": 2
       },
       "verifiedFinal": {
@@ -2168,16 +2168,16 @@
         "reason": "verified_final_result",
         "verdict": "verified_final_result",
         "dayKey": "2026-10-02",
-        "scoreHome": 0,
-        "scoreAway": 1,
-        "scoreParity": true
+        "scoreHome": 1,
+        "scoreAway": 2,
+        "scoreParity": false
       },
       "decision": {
-        "status": "CONVERGED_PLAYED_FINAL",
-        "reason": "canonical_and_verified_final_converged",
+        "status": "CONFLICT",
+        "reason": "canonical_verified_final_score_mismatch",
         "operationallyClosed": true,
-        "historyEligible": true,
-        "scoredSettlementEligible": true,
+        "historyEligible": false,
+        "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2445,7 +2445,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_ukr2_poltava_chernihiv_20261002"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -2625,7 +2627,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 11436,
+            "count": 11456,
             "informational": true
           }
         },
@@ -5458,7 +5460,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "aaa0fdc03453e9eca3f26df785a01d40518de4ced661ad8c28a04502b9249334",
+      "truthFingerprint": "1399e5be6a317a19c4d4005a6364269306a56986b54eecd0dc0915cf56b6063b",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -5476,9 +5478,9 @@
           "cid_egy2_proxy_we_20261002",
           "cid_egy2_tanta_haraselhodood_20261002",
           "cid_idn2_dejan_persipurajayapura_20261002",
+          "cid_idn2_persirajaaceh_sumselunited_20261002",
           "cid_slv1_fuertesanfrancisco_luisangelfirpo_20261002",
           "cid_slv1_incaaruba_municipallimeno_20261002",
-          "cid_ukr2_poltava_chernihiv_20261002",
           "cid_usa1_seattlesounders_sportingkansascity_20261002"
         ],
         "unexpectedFixtureIds": [],
@@ -5539,7 +5541,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-02",
-      "fileCount": 13,
+      "fileCount": 14,
       "authority": "scored_final_evidence"
     },
     "downstream": {
