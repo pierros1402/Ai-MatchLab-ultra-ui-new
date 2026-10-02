@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-02",
-  "generatedAt": "2026-10-02T11:46:05.541Z",
+  "generatedAt": "2026-10-02T12:01:21.767Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "401728fc9a159dcf6125415c78f013f4bb2f0e8ee50c75a43435047fb9857aab",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "018f969ca7042d470f8e2091d4216c04a71a8e86cc79983e0ce0dda06dfe28f4",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -25,14 +25,14 @@
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 5,
-    "acceptedVerifiedFinalArtifacts": 5,
+    "verifiedFinalArtifacts": 6,
+    "acceptedVerifiedFinalArtifacts": 6,
     "convergedPlayedFinal": 5,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 44,
+    "openRows": 43,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 5,
@@ -2163,18 +2163,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-02",
+        "scoreHome": 0,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -2445,7 +2445,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_ukr2_poltava_chernihiv_20261002"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -2625,7 +2627,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 11076,
+            "count": 11096,
             "informational": true
           }
         },
@@ -5458,7 +5460,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "401728fc9a159dcf6125415c78f013f4bb2f0e8ee50c75a43435047fb9857aab",
+      "truthFingerprint": "018f969ca7042d470f8e2091d4216c04a71a8e86cc79983e0ce0dda06dfe28f4",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -5531,7 +5533,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-02",
-      "fileCount": 5,
+      "fileCount": 6,
       "authority": "scored_final_evidence"
     },
     "downstream": {
