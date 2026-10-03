@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-03",
-  "generatedAt": "2026-10-03T05:05:40.272Z",
+  "generatedAt": "2026-10-03T06:58:04.323Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "43f9d3aae6fba1d10929a5686af4d7c4b44e6aac249601a771e091a99c0aee59",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "9d32370a645edfdec6c846ddabdf01393de69904c586fc2714d8f11671f1ac83",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -25,14 +25,14 @@
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 16,
-    "acceptedVerifiedFinalArtifacts": 16,
+    "verifiedFinalArtifacts": 17,
+    "acceptedVerifiedFinalArtifacts": 17,
     "convergedPlayedFinal": 16,
     "convergedNonPlayedTerminal": 12,
     "pendingVerifiedFinal": 0,
-    "openRows": 247,
+    "openRows": 246,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 16,
@@ -6916,18 +6916,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-03",
+        "scoreHome": 2,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -13519,7 +13519,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_jpn2_albirexniigata_tokushima_20261003"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -17297,7 +17299,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "43f9d3aae6fba1d10929a5686af4d7c4b44e6aac249601a771e091a99c0aee59",
+      "truthFingerprint": "9d32370a645edfdec6c846ddabdf01393de69904c586fc2714d8f11671f1ac83",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -17381,7 +17383,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-03",
-      "fileCount": 16,
+      "fileCount": 17,
       "authority": "scored_final_evidence"
     },
     "downstream": {
