@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-03",
-  "generatedAt": "2026-10-03T03:08:33.860Z",
+  "generatedAt": "2026-10-03T03:33:09.608Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "9d8291f5f8bf6b57be0c7dc88460920ac4f58a222606de13b1886c65441422b3",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "9c1d12437d41e15d4ea6d95fff9edd7cb0a945555f4680cec56924d824b832b0",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 275,
-    "playedTerminal": 11,
+    "playedTerminal": 13,
     "nonPlayedTerminal": 12,
-    "scheduled": 248,
-    "live": 4,
+    "scheduled": 247,
+    "live": 3,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 13,
     "acceptedVerifiedFinalArtifacts": 13,
-    "convergedPlayedFinal": 11,
+    "convergedPlayedFinal": 13,
     "convergedNonPlayedTerminal": 12,
     "pendingVerifiedFinal": 0,
     "openRows": 250,
     "unresolvedRows": 0,
-    "conflictRows": 2,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 11,
-    "scoredSettlementEligible": 11,
+    "historyEligible": 13,
+    "scoredSettlementEligible": 13,
     "voidSettlementEligible": 12
   },
   "fixtures": [
@@ -2208,7 +2208,7 @@
         "status": "SECOND_HALF",
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 0,
+        "scoreHome": 2,
         "scoreAway": 1
       },
       "verifiedFinal": {
@@ -6615,11 +6615,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -8033,14 +8033,14 @@
       "homeTeam": "Club Atlético La Paz",
       "awayTeam": "Venados FC",
       "kickoffUtc": "2026-10-03T03:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -8054,7 +8054,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -8082,12 +8082,12 @@
       "homeTeam": "Correcaminos UAT",
       "awayTeam": "Cruz Azul Hidalgo",
       "kickoffUtc": "2026-10-03T01:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -8102,11 +8102,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -8131,12 +8131,12 @@
       "homeTeam": "Tepatitlán FC",
       "awayTeam": "Club Jaiba Brava",
       "kickoffUtc": "2026-10-03T01:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 3,
         "scoreAway": 1
       },
@@ -8151,11 +8151,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -13519,10 +13519,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_mex2_correcaminosuat_cruzazulhidalgo_20261003",
-      "cid_mex2_tepatitlan_jaibabrava_20261003"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -17300,13 +17297,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "9d8291f5f8bf6b57be0c7dc88460920ac4f58a222606de13b1886c65441422b3",
+      "truthFingerprint": "9c1d12437d41e15d4ea6d95fff9edd7cb0a945555f4680cec56924d824b832b0",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 11,
+        "expectedEligibleRows": 13,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_bocajuniors_unionsantafe_20261003",
@@ -17319,7 +17316,9 @@
           "cid_bra2_londrina_criciuma_20261003",
           "cid_bra2_saobernardo_crb_20261003",
           "cid_chi1_universidadconcepcion_huachipato_20261003",
-          "cid_col2_atletico_realcundinamarca_20261003"
+          "cid_col2_atletico_realcundinamarca_20261003",
+          "cid_mex2_correcaminosuat_cruzazulhidalgo_20261003",
+          "cid_mex2_tepatitlan_jaibabrava_20261003"
         ],
         "unexpectedFixtureIds": [],
         "duplicateFixtureIds": [],
