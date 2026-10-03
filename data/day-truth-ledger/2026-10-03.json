@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-03",
-  "generatedAt": "2026-10-03T11:08:10.189Z",
+  "generatedAt": "2026-10-03T11:50:39.701Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "b59066a2877dac8cca06f8fafa30dc340a6579292fa1c3b1c5c7e40e00ffbffe",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "b1210849dc970736afc521e8e58165e8579dfcc30e50f13ba7cfeb7c76ec4fa8",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 275,
-    "playedTerminal": 22,
+    "playedTerminal": 23,
     "nonPlayedTerminal": 12,
-    "scheduled": 241,
-    "live": 0,
+    "scheduled": 239,
+    "live": 1,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 22,
-    "acceptedVerifiedFinalArtifacts": 22,
-    "convergedPlayedFinal": 22,
+    "verifiedFinalArtifacts": 25,
+    "acceptedVerifiedFinalArtifacts": 25,
+    "convergedPlayedFinal": 23,
     "convergedNonPlayedTerminal": 12,
     "pendingVerifiedFinal": 0,
-    "openRows": 241,
+    "openRows": 238,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 22,
-    "scoredSettlementEligible": 22,
+    "historyEligible": 23,
+    "scoredSettlementEligible": 23,
     "voidSettlementEligible": 12
   },
   "fixtures": [
@@ -1183,18 +1183,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-03",
+        "scoreHome": 0,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -3035,14 +3035,14 @@
       "homeTeam": "Chesterfield",
       "awayTeam": "Tranmere Rovers",
       "kickoffUtc": "2026-10-03T11:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -3056,7 +3056,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -12149,31 +12149,31 @@
       "homeTeam": "Lokomotyv Kyiv",
       "awayTeam": "Zhytomyr 2",
       "kickoffUtc": "2026-10-03T09:30:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 3,
+        "scoreAway": 3
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-03",
+        "scoreHome": 3,
+        "scoreAway": 3,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -12257,18 +12257,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-03",
+        "scoreHome": 1,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -13519,7 +13519,10 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_blr2_orsha_nivadolbizno_20261003",
+      "cid_ukr2_viktoria_inhulets_20261003"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -13879,7 +13882,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 11638,
+            "count": 11644,
             "informational": true
           }
         },
@@ -14023,8 +14026,8 @@
             "overdue": false,
             "settlementSource": "value-comparison",
             "picks": 10,
-            "settled": 0,
-            "unresolved": 10
+            "settled": 1,
+            "unresolved": 9
           }
         },
         {
@@ -14039,8 +14042,8 @@
             "overdue": false,
             "settlementSource": "value-comparison",
             "picks": 10,
-            "settled": 0,
-            "unresolved": 10
+            "settled": 1,
+            "unresolved": 9
           }
         },
         {
@@ -14806,13 +14809,13 @@
               "summary": {
                 "picks": 10,
                 "uniqueMatches": 10,
-                "settled": 0,
+                "settled": 1,
                 "wins": 0,
-                "losses": 0,
+                "losses": 1,
                 "voids": 0,
-                "unresolved": 10,
+                "unresolved": 9,
                 "unsupported": 0,
-                "hitRate": null,
+                "hitRate": 0,
                 "oddsAvailable": 0,
                 "averageOdds": null,
                 "totalStake": null,
@@ -14826,13 +14829,13 @@
               "summary": {
                 "picks": 10,
                 "uniqueMatches": 10,
-                "settled": 0,
+                "settled": 1,
                 "wins": 0,
-                "losses": 0,
+                "losses": 1,
                 "voids": 0,
-                "unresolved": 10,
+                "unresolved": 9,
                 "unsupported": 0,
-                "hitRate": null,
+                "hitRate": 0,
                 "oddsAvailable": 0,
                 "averageOdds": null,
                 "totalStake": null,
@@ -17297,13 +17300,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "b59066a2877dac8cca06f8fafa30dc340a6579292fa1c3b1c5c7e40e00ffbffe",
+      "truthFingerprint": "b1210849dc970736afc521e8e58165e8579dfcc30e50f13ba7cfeb7c76ec4fa8",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 22,
+        "expectedEligibleRows": 23,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_bocajuniors_unionsantafe_20261003",
@@ -17327,7 +17330,8 @@
           "cid_jpn2_tochigicity_imabari_20261003",
           "cid_mex2_atleticolapaz_venados_20261003",
           "cid_mex2_correcaminosuat_cruzazulhidalgo_20261003",
-          "cid_mex2_tepatitlan_jaibabrava_20261003"
+          "cid_mex2_tepatitlan_jaibabrava_20261003",
+          "cid_ukr2_lokomotyvkyiv_zhytomyr2_20261003"
         ],
         "unexpectedFixtureIds": [],
         "duplicateFixtureIds": [],
@@ -17387,7 +17391,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-03",
-      "fileCount": 22,
+      "fileCount": 25,
       "authority": "scored_final_evidence"
     },
     "downstream": {
