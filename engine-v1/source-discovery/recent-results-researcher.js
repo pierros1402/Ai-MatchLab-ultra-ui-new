@@ -17,13 +17,27 @@ export function parseRecentResultEvidence(html, slug, nowMs) {
     if (!Number.isFinite(kickoff) || kickoff >= nowMs || kickoff < nowMs - 180 * 86400000) { reject("OUTSIDE_RECENT_PAST_WINDOW"); continue; }
     if (!/^[a-zA-Z0-9]{6,16}$/.test(row.matchId) || !row.home || !row.away || row.home === row.away) { reject("INVALID_RESULT_IDENTITY"); continue; }
     const result = { providerMatchId: row.matchId, leagueSlug: slug, home: row.home, away: row.away,
+      homeProviderTeamId: row.homeProviderTeamId, awayProviderTeamId: row.awayProviderTeamId,
       kickoffUtc: row.kickoffUtc, scoreHome: row.scoreHome, scoreAway: row.scoreAway, status: "FT" };
     const old = byId.get(row.matchId);
     if (old && JSON.stringify(old) !== JSON.stringify(result)) conflicts.add(row.matchId);
     else byId.set(row.matchId, result);
   }
   for (const id of conflicts) { byId.delete(id); reject("PROVIDER_RESULT_CONFLICT"); }
-  return { embeddedFeeds: blocks.length, parsedRows: candidates.length, rejected,
+  const upcoming = new Map();
+  const fixtureBlocks = [...String(html).matchAll(/initialFeeds\[['"](?:summary-fixtures|fixtures)['"]\]\s*=\s*\{\s*data:\s*`([^`]*)`/g)];
+  for (const block of fixtureBlocks) for (const row of parseFlashscoreFeed(block[1])) {
+    const kickoff = Date.parse(row.kickoffUtc);
+    if (resolveSlugFromPath(row.leaguePath) !== slug || row.statusCode !== "1" || row.statusDetailCode !== "1"
+      || !Number.isFinite(kickoff) || kickoff <= nowMs || kickoff > nowMs + 8 * 86400000) continue;
+    if (![row.matchId, row.homeProviderTeamId, row.awayProviderTeamId].every(value => /^[a-zA-Z0-9]{6,16}$/.test(value || ""))) continue;
+    const anchor = { providerMatchId: row.matchId, leagueSlug: slug, home: row.home, away: row.away,
+      homeProviderTeamId: row.homeProviderTeamId, awayProviderTeamId: row.awayProviderTeamId, kickoffUtc: row.kickoffUtc };
+    const old = upcoming.get(row.matchId);
+    if (old && JSON.stringify(old) !== JSON.stringify(anchor)) { conflicts.add(row.matchId); upcoming.delete(row.matchId); }
+    else if (!conflicts.has(row.matchId)) upcoming.set(row.matchId, anchor);
+  }
+  return { embeddedFeeds: blocks.length, parsedRows: candidates.length, rejected, upcomingAnchors: [...upcoming.values()],
     rows: [...byId.values()].sort((a, b) => a.kickoffUtc.localeCompare(b.kickoffUtc)) };
 }
 

@@ -8,6 +8,19 @@ const header = "ZA÷EUROPE: UEFA Nations League¬ZY÷Europe¬ZL÷/football/europ
 const row = (id, extras = "") => `AA÷${id}¬AE÷Greece¬AF÷Israel¬AD÷1790272800¬AB÷3¬AC÷3¬AG÷2¬AH÷1¬${extras}~`;
 const page = feed => "cjs.initialFeeds['results'] = { data: `" + feed + "`, allEventsCount: 2 };";
 
+test("native team IDs survive research and only unambiguous upcoming anchors inside eight days are retained", () => {
+  const timestamp = Math.floor((now + 86400000) / 1000);
+  const future = (id, extras = "") => row(id, `AB÷1¬AC÷1¬AD÷${timestamp}¬PX÷home0001¬PY÷away0001¬${extras}`);
+  const html = page(header + row("past0001", "PX÷home0001¬PY÷away0001¬"))
+    + "cjs.initialFeeds['fixtures'] = { data: `" + header + future("future01") + future("conflict")
+    + future("conflict", "PY÷other001¬") + future("distant1", `AD÷${timestamp + 9 * 86400}¬`)
+    + future("noids001", "PY÷¬") + "` };";
+  const result = parseRecentResultEvidence(html, "uefa.nations", now);
+  assert.equal(result.rows[0].homeProviderTeamId, "home0001");
+  assert.deepEqual(result.upcomingAnchors.map(x => x.providerMatchId), ["future01"]);
+  assert.equal(result.upcomingAnchors[0].awayProviderTeamId, "away0001");
+});
+
 test("research excludes unplayed, future, stale, different competition and conflicting scores; deduplicates repeated feeds", () => {
   const valid = row("valid001");
   const html = page(header + valid + valid + row("live0001", "AB÷2¬") + row("blank001", "AG÷¬")

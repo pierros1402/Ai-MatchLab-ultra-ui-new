@@ -136,6 +136,8 @@ export function parseFlashscoreFeed(text) {
         stageId,
         home: f.AE.trim(),
         away: f.AF.trim(),
+        homeProviderTeamId: f.PX || null,
+        awayProviderTeamId: f.PY || null,
         kickoffUtc,
         kickoffTs: Number.isFinite(ts) ? ts : null,
         scoreHome,

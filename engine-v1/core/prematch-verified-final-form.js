@@ -4,6 +4,7 @@ import { resolveDataPath } from "../storage/data-root.js";
 import { canonicalFixturesForDay } from "./day-fixture-universe.js";
 import { athensDayFromKickoff } from "./daykey.js";
 import { buildVerifiedHistoryDay } from "../jobs/append-finalized-day-to-history.js";
+import { applyProviderTeamContinuity } from "./prematch-provider-team-continuity.js";
 
 // Research locates candidates; only committed canonical + verified-final parity
 // grants model eligibility. This never writes canonical truth or season history.
@@ -39,8 +40,9 @@ export function validatePrematchFinalForm(candidate, canonical, final, nowMs) {
     providerMatchId: candidate.providerMatchId, verifiedFinalGeneratedAt: new Date(generated).toISOString() } };
 }
 
-export function collectPrematchFinalForm(baseIndex, candidates, nowMs, { fixturesForDay, finalForFixture }) {
+export function collectPrematchFinalForm(baseIndex, candidates, nowMs, { fixturesForDay, finalForFixture, anchors = [] }) {
   const index = {}, byDay = new Map(), knownIds = new Map(), knownPairs = new Set(), seen = new Set();
+  const validated = [], replacedCanonicalIds = [];
   const summary = { candidates: candidates.length, accepted: 0, alreadyIndexed: 0, rejected: {}, rejectedExamples: {}, acceptedCanonicalIds: [] };
   const pairKey = row => [row.leagueSlug, Date.parse(row.kickoff || row.kickoffUtc), row.homeTeam, row.awayTeam].join("|");
   for (const entry of Object.values(baseIndex)) for (const row of entry.matches || []) {
@@ -66,32 +68,74 @@ export function collectPrematchFinalForm(baseIndex, candidates, nowMs, { fixture
         canonicalIds: matches.map(row => row.canonicalId), statuses: matches.map(row => [row.status, row.statusType, row.rawStatus]) });
       continue;
     }
-    const row = result.row;
+    validated.push({ candidate, row: result.row });
+  }
+  const resolvedAnchors = anchors.map(candidate => {
+    const time = Date.parse(candidate.kickoffUtc);
+    if (!Number.isFinite(time) || time <= nowMs || time > nowMs + 8 * 86400000) return { candidate, canonical: null };
+    const day = athensDayFromKickoff(candidate.kickoffUtc);
+    if (!byDay.has(day)) byDay.set(day, fixturesForDay(day));
+    const matches = byDay.get(day).filter(row => row.leagueSlug === candidate.leagueSlug
+      && (row.providerIds?.flashscore === candidate.providerMatchId || (row.source === "flashscore" && (row.sourceMatchId || row.sourceId) === candidate.providerMatchId)));
+    return { candidate, canonical: matches.length === 1 ? matches[0] : null };
+  });
+  const continuity = applyProviderTeamContinuity(validated, resolvedAnchors, nowMs);
+  summary.teamContinuity = continuity.proofs;
+  for (const row of continuity.rows) {
     const old = knownIds.get(row.id);
     if (old && (old.scoreHome !== row.scoreHome || old.scoreAway !== row.scoreAway)) {
       throw new Error(`prematch_verified_final_index_score_conflict:${row.id}`);
     }
-    if (knownIds.has(row.id) || knownPairs.has(pairKey(row))) { summary.alreadyIndexed++; continue; }
+    const replacesView = old && row.modelIdentityReadView;
+    if ((!replacesView && knownIds.has(row.id)) || knownPairs.has(pairKey(row))) { summary.alreadyIndexed++; continue; }
+    if (replacesView) replacedCanonicalIds.push(row.id);
     knownIds.set(row.id, row); knownPairs.add(pairKey(row));
     for (const team of [row.homeTeam, row.awayTeam]) (index[team] ||= { matches: [] }).matches.push(row);
     summary.accepted++; summary.acceptedCanonicalIds.push(row.id);
   }
-  return { index, summary };
+  summary.identityReadViewRows = replacedCanonicalIds.length;
+  return { index, summary, replacedCanonicalIds };
+}
+
+export function selectPrematchResearchEvidence(documents, nowMs) {
+  const latest = new Map(), nativeHistory = new Map(), nativeIdentities = new Map(), conflicts = new Set();
+  for (const evidence of [...documents].sort((a, b) => Date.parse(a.acquiredAt) - Date.parse(b.acquiredAt))) {
+    const acquired = Date.parse(evidence.acquiredAt);
+    if (evidence.schema !== "ai-matchlab.recent-results-research.v1" || evidence.source !== "flashscore"
+      || evidence.status !== "RESULTS_AWAIT_IDENTITY_VALIDATION" || !Number.isFinite(acquired)
+      || acquired > nowMs || acquired < nowMs - 180 * 86400000 || !Array.isArray(evidence.rows) || evidence.rows.length > 1000) continue;
+    latest.set(evidence.leagueSlug, evidence);
+    for (const row of evidence.rows) {
+      if (row.leagueSlug !== evidence.leagueSlug || ![row.homeProviderTeamId, row.awayProviderTeamId].every(x => /^[a-zA-Z0-9]{6,16}$/.test(x || ""))) continue;
+      const key = `${row.leagueSlug}|${row.providerMatchId}`, identity = `${row.homeProviderTeamId}|${row.awayProviderTeamId}`;
+      if (nativeIdentities.has(key) && nativeIdentities.get(key) !== identity) conflicts.add(key);
+      nativeIdentities.set(key, identity); nativeHistory.set(key, row);
+    }
+  }
+  // Keep dated native-ID evidence within the form window, even when a provider's
+  // current results page has paginated those games away. Every retained game is
+  // revalidated against canonical and verified-final truth on every read.
+  const rows = new Map(nativeHistory);
+  for (const evidence of latest.values()) for (const row of evidence.rows) {
+    if (row.leagueSlug === evidence.leagueSlug) rows.set(`${row.leagueSlug}|${row.providerMatchId}`, row);
+  }
+  for (const key of conflicts) rows.delete(key);
+  return { candidates: [...rows.values()], anchors: [...latest.values()].flatMap(x => Array.isArray(x.upcomingAnchors) ? x.upcomingAnchors.slice(0, 400) : []),
+    identityConflicts: [...conflicts] };
 }
 
 export function readPrematchFinalForm(baseIndex, nowMs) {
-  const root = resolveDataPath("value-data-acquisition"), latest = new Map();
-  if (fs.existsSync(root)) for (const day of fs.readdirSync(root).filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x)).sort().slice(-14)) {
+  const root = resolveDataPath("value-data-acquisition"), documents = [];
+  if (fs.existsSync(root)) for (const day of fs.readdirSync(root).filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x)
+    && Date.parse(`${x}T23:59:59Z`) >= nowMs - 180 * 86400000 && Date.parse(`${x}T00:00Z`) <= nowMs).sort()) {
     for (const file of fs.readdirSync(path.join(root, day)).filter(x => x.endsWith(".results.research.json"))) {
       const evidence = JSON.parse(fs.readFileSync(path.join(root, day, file), "utf8"));
-      if (evidence.schema !== "ai-matchlab.recent-results-research.v1" || evidence.source !== "flashscore"
-        || evidence.status !== "RESULTS_AWAIT_IDENTITY_VALIDATION" || Date.parse(evidence.acquiredAt) > nowMs
-        || !Number.isFinite(Date.parse(evidence.acquiredAt)) || !Array.isArray(evidence.rows) || evidence.rows.length > 1000) continue;
-      const old = latest.get(evidence.leagueSlug);
-      if (!old || Date.parse(old.acquiredAt) < Date.parse(evidence.acquiredAt)) latest.set(evidence.leagueSlug, evidence);
+      documents.push(evidence);
     }
   }
-  return collectPrematchFinalForm(baseIndex, [...latest.values()].flatMap(x => x.rows), nowMs, {
+  const selected = selectPrematchResearchEvidence(documents, nowMs);
+  const result = collectPrematchFinalForm(baseIndex, selected.candidates, nowMs, {
+    anchors: selected.anchors,
     fixturesForDay: canonicalFixturesForDay,
     finalForFixture: (day, id) => {
       if (!/^cid_[a-zA-Z0-9_]+$/.test(id || "")) return null;
@@ -99,4 +143,6 @@ export function readPrematchFinalForm(baseIndex, nowMs) {
       return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : null;
     }
   });
+  result.summary.researchIdentityConflicts = selected.identityConflicts;
+  return result;
 }
