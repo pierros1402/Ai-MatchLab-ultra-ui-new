@@ -176,6 +176,11 @@
     const edge = Number(prediction.eloEdge);
     const edgeText = Number.isFinite(edge) ? `${edge >= 0 ? "+" : ""}${edge.toFixed(3)}` : "—";
     const outcome = pickOutcome(entry);
+    const pendingLabel = Date.parse(prediction.kickoffUtc) > Date.now()
+      ? "Δεν έχει ξεκινήσει ο αγώνας"
+      : entry.settlement?.pendingReason === "NO_CANONICAL_TRUTH"
+        ? "Λείπει επαληθευμένο αποτέλεσμα · εκκρεμεί έλεγχος"
+        : "Αναμονή επαληθευμένου τελικού αποτελέσματος";
     const resultClass = outcome === "WIN"
       ? " win"
       : outcome === "LOSS"
@@ -197,7 +202,7 @@
         <div class="plan-c-recommendation">
           <strong>${isPick ? "Πρόταση: Over 2.5 γκολ" : "Χωρίς πρόταση"}</strong>
           <span>${isPick ? "Χρειάζονται τουλάχιστον 3 γκολ συνολικά." : "Ο αγώνας παρακολουθείται μόνο για αξιολόγηση."}</span>
-          ${isPick ? `<span class="plan-c-state ${outcome.toLowerCase()}">${outcome === "PENDING" ? "Αναμονή τελικού αποτελέσματος" : outcome === "VOID" ? "VOID · Ακυρώθηκε" : outcome === "WIN" ? "WIN · Επιτυχία" : "LOSS · Αποτυχία"}</span>` : ""}
+          ${isPick ? `<span class="plan-c-state ${outcome.toLowerCase()}">${outcome === "PENDING" ? pendingLabel : outcome === "VOID" ? "VOID · Ακυρώθηκε" : outcome === "WIN" ? "WIN · Επιτυχία" : "LOSS · Αποτυχία"}</span>` : ""}
           <span>Εκτίμηση πιθανότητας: <b>${percent(adjusted.pOver25)}</b></span>
         </div>
         <details class="plan-c-model-details"><summary>Στοιχεία μοντέλου</summary>
