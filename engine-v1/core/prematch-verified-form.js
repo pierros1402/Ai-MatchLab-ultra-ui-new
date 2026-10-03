@@ -92,10 +92,10 @@ export function createPrematchVerifiedEvidence(nowMs) {
   }
   const baseIndex = mergeVerifiedFormIndexes(indexes);
   const recentFinals = readPrematchFinalForm(baseIndex, nowMs);
-  const replaced = new Set(recentFinals.replacedCanonicalIds);
-  const retained = Object.fromEntries(Object.entries(baseIndex).map(([team, entry]) => [team,
-    { ...entry, matches: entry.matches.filter(row => !replaced.has(row.canonicalId || row.matchId || row.id)) }]));
-  const index = mergeVerifiedFormIndexes([retained, recentFinals.index]);
+  // Preserve the original spelling for fixtures still using it. Per-team form
+  // selection deduplicates canonical IDs, so an opponent never counts both
+  // the original record and the proved alternate-name read view.
+  const index = mergeVerifiedFormIndexes([baseIndex, recentFinals.index]);
   const clubCrossForm = createCrossCompetitionFormResolver({ resultDocuments: verifiedHistoryResultDocuments(index, nowMs) });
   return { verifiedFinalForm: recentFinals.summary, formFn: (slug, team) => verifiedFormRates(index, slug, team, nowMs),
     crossFormFn: (slug, team, window, options) => verifiedNationalForm(index, slug, team, nowMs, window) || clubCrossForm(slug, team, window, options) };

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { validatePrematchFinalForm, collectPrematchFinalForm, selectPrematchResearchEvidence } from "./prematch-verified-final-form.js";
-import { mergeVerifiedFormIndexes } from "./prematch-verified-form.js";
+import { mergeVerifiedFormIndexes, verifiedFormRates, verifiedHistoryResultDocuments } from "./prematch-verified-form.js";
 
 const now = Date.parse("2026-10-01T20:00Z");
 const canonical = { canonicalId: "cid_egy2_a_b_20260917", dayKey: "2026-09-17", leagueSlug: "egy.2", homeTeam: "A", awayTeam: "B",
@@ -42,7 +42,7 @@ test("a missing model-history row requires committed exact canonical and verifie
   assert.equal(validatePrematchFinalForm(candidate, { ...canonical, status: "STATUS_POSTPONED" }, final, now).ok, false);
 });
 
-test("continuity replaces existing old-name model rows once while preserving canonical and final truth", () => {
+test("continuity supports both canonical spellings without double-counting opponents or changing truth", () => {
   const canonicals = [17, 24].map(day => ({ ...canonical, canonicalId: `cid_old_${day}`, dayKey: `2026-09-${day}`,
     kickoffUtc: `2026-09-${day}T13:30Z`, homeTeam: "Mega Sport", sourceMatchId: `result${day}`, providerIds: { flashscore: `result${day}` } }));
   const finals = canonicals.map(c => ({ ...final, matchId: c.canonicalId, dayKey: c.dayKey, homeTeam: c.homeTeam,
@@ -59,14 +59,14 @@ test("continuity replaces existing old-name model rows once while preserving can
   const result = collectPrematchFinalForm(base, candidates, now, { ...deps, anchors: [anchor] });
   assert.equal(result.summary.identityReadViewRows, 2);
   assert.equal(result.summary.teamContinuity.length, 1);
-  const replaced = new Set(result.replacedCanonicalIds);
-  const retained = Object.fromEntries(Object.entries(base).map(([name, entry]) => [name, {
-    ...entry, matches: entry.matches.filter(row => !replaced.has(row.id))
-  }]));
-  const merged = mergeVerifiedFormIndexes([retained, result.index]);
-  assert.equal(merged["Delta United"].matches.length, 2);
-  assert.equal(merged.B.matches.length, 2);
-  assert.equal(merged["Mega Sport"].matches.length, 0);
+  const merged = mergeVerifiedFormIndexes([base, result.index]);
+  assert.equal(verifiedFormRates(merged, "egy.2", "Delta United", now).sample, 2);
+  assert.equal(verifiedFormRates(merged, "egy.2", "Mega Sport", now).sample, 2);
+  assert.equal(verifiedFormRates(merged, "egy.2", "B", now).sample, 2);
+  const document = verifiedHistoryResultDocuments(merged, now).find(x => x.slug === "egy.2").doc;
+  assert.equal(document.teams.B.length, 2);
+  assert.equal(document.teams["Mega Sport"].length, 2);
+  assert.equal(document.teams["Delta United"].length, 2);
   assert.equal(JSON.stringify({ base, canonicals, finals }), before);
   const ambiguous = collectPrematchFinalForm(base, candidates, now, { ...deps, anchors: [anchor],
     fixturesForDay: () => [...canonicals, upcoming, { ...upcoming, canonicalId: "cid_duplicate_future" }] });
