@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-04",
-  "generatedAt": "2026-10-03T23:13:39.158Z",
+  "generatedAt": "2026-10-03T23:33:39.656Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "3417f1378b2bd044e002cc194a5ee6e771fb854d159a44d6a925db3f0b83f142",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "22b1fc8b99a4e67da06250740636632697b0fa3839676ae2031e8ff5e0093556",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 127,
-    "playedTerminal": 2,
+    "playedTerminal": 5,
     "nonPlayedTerminal": 0,
-    "scheduled": 120,
-    "live": 5,
+    "scheduled": 119,
+    "live": 3,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 4,
-    "acceptedVerifiedFinalArtifacts": 4,
-    "convergedPlayedFinal": 2,
+    "verifiedFinalArtifacts": 5,
+    "acceptedVerifiedFinalArtifacts": 5,
+    "convergedPlayedFinal": 5,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 123,
+    "openRows": 122,
     "unresolvedRows": 0,
-    "conflictRows": 2,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 2,
-    "scoredSettlementEligible": 2,
+    "historyEligible": 5,
+    "scoredSettlementEligible": 5,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -634,31 +634,31 @@
       "homeTeam": "Botafogo SP",
       "awayTeam": "Vila Nova FC",
       "kickoffUtc": "2026-10-03T21:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 0,
         "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-04",
+        "scoreHome": 0,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2006,12 +2006,12 @@
       "homeTeam": "Cobán Imperial",
       "awayTeam": "CD Malacateco",
       "kickoffUtc": "2026-10-03T21:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 2,
         "scoreAway": 0
       },
@@ -2026,11 +2026,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3234,9 +3234,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 1,
         "scoreAway": 1
       },
@@ -3378,12 +3378,12 @@
       "homeTeam": "Águila",
       "awayTeam": "Cacahuatique",
       "kickoffUtc": "2026-10-03T21:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 4,
         "scoreAway": 1
       },
@@ -3398,11 +3398,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3476,14 +3476,14 @@
       "homeTeam": "Isidro Metapán",
       "awayTeam": "Atletico Balboa",
       "kickoffUtc": "2026-10-03T23:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -3497,7 +3497,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -6267,10 +6267,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_gua1_cobanimperial_malacateco_20261004",
-      "cid_slv1_aguila_cacahuatique_20261004"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -9554,16 +9551,19 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "3417f1378b2bd044e002cc194a5ee6e771fb854d159a44d6a925db3f0b83f142",
+      "truthFingerprint": "22b1fc8b99a4e67da06250740636632697b0fa3839676ae2031e8ff5e0093556",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 2,
+        "expectedEligibleRows": 5,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
+          "cid_bra2_botafogosp_vilanova_20261004",
           "cid_col1_deportestolima_boyacachico_20261004",
+          "cid_gua1_cobanimperial_malacateco_20261004",
+          "cid_slv1_aguila_cacahuatique_20261004",
           "cid_uru1_deportivomaldonado_centralespanolfutbol_20261004"
         ],
         "unexpectedFixtureIds": [],
@@ -9624,7 +9624,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-04",
-      "fileCount": 4,
+      "fileCount": 5,
       "authority": "scored_final_evidence"
     },
     "downstream": {
