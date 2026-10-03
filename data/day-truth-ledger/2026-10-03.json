@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-03",
-  "generatedAt": "2026-10-03T09:13:22.971Z",
+  "generatedAt": "2026-10-03T09:58:13.501Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "ac7d3df0231cdb7f059ccf2f8ca990c60aee13c1618f67074f13e6f9f1944b62",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "fca8b5480ff0bb0736291d8067fbe98c8be74645aceffdee48607088406d5f9e",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -25,14 +25,14 @@
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 19,
-    "acceptedVerifiedFinalArtifacts": 19,
+    "verifiedFinalArtifacts": 21,
+    "acceptedVerifiedFinalArtifacts": 21,
     "convergedPlayedFinal": 19,
     "convergedNonPlayedTerminal": 12,
     "pendingVerifiedFinal": 0,
-    "openRows": 244,
+    "openRows": 242,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 19,
@@ -7063,18 +7063,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-03",
+        "scoreHome": 2,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -7112,18 +7112,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-03",
+        "scoreHome": 1,
+        "scoreAway": 2,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -13519,7 +13519,10 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_jpn2_oitatrinita_montedioyamagata_20261003",
+      "cid_jpn2_tochigicity_imabari_20261003"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -17297,7 +17300,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "ac7d3df0231cdb7f059ccf2f8ca990c60aee13c1618f67074f13e6f9f1944b62",
+      "truthFingerprint": "fca8b5480ff0bb0736291d8067fbe98c8be74645aceffdee48607088406d5f9e",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -17384,7 +17387,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-03",
-      "fileCount": 19,
+      "fileCount": 21,
       "authority": "scored_final_evidence"
     },
     "downstream": {
