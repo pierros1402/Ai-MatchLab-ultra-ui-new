@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-03",
-  "generatedAt": "2026-10-03T11:50:39.701Z",
+  "generatedAt": "2026-10-03T12:13:42.426Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "b1210849dc970736afc521e8e58165e8579dfcc30e50f13ba7cfeb7c76ec4fa8",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "fd184060d2b4dc59f5554faf36d3f78331b9441e938cfc0f62b21424bd76c73a",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 275,
-    "playedTerminal": 23,
+    "playedTerminal": 26,
     "nonPlayedTerminal": 12,
-    "scheduled": 239,
-    "live": 1,
+    "scheduled": 235,
+    "live": 2,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 25,
-    "acceptedVerifiedFinalArtifacts": 25,
-    "convergedPlayedFinal": 23,
+    "verifiedFinalArtifacts": 26,
+    "acceptedVerifiedFinalArtifacts": 26,
+    "convergedPlayedFinal": 26,
     "convergedNonPlayedTerminal": 12,
     "pendingVerifiedFinal": 0,
-    "openRows": 238,
+    "openRows": 237,
     "unresolvedRows": 0,
-    "conflictRows": 2,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 23,
-    "scoredSettlementEligible": 23,
+    "historyEligible": 26,
+    "scoredSettlementEligible": 26,
     "voidSettlementEligible": 12
   },
   "fixtures": [
@@ -1173,14 +1173,14 @@
       "homeTeam": "Orsha",
       "awayTeam": "Niva Dolbizno",
       "kickoffUtc": "2026-10-03T10:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": true,
@@ -1190,14 +1190,14 @@
         "dayKey": "2026-10-03",
         "scoreHome": 0,
         "scoreAway": 0,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3041,7 +3041,7 @@
         "status": "FIRST_HALF",
         "statusType": null,
         "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -6122,14 +6122,14 @@
       "homeTeam": "Albacete",
       "awayTeam": "Eibar",
       "kickoffUtc": "2026-10-03T12:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -6143,7 +6143,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -12100,31 +12100,31 @@
       "homeTeam": "Veres-Rivne",
       "awayTeam": "Kudrivka",
       "kickoffUtc": "2026-10-03T10:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-03",
+        "scoreHome": 2,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -12247,14 +12247,14 @@
       "homeTeam": "Viktoria",
       "awayTeam": "Inhulets",
       "kickoffUtc": "2026-10-03T08:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": true,
@@ -12264,14 +12264,14 @@
         "dayKey": "2026-10-03",
         "scoreHome": 1,
         "scoreAway": 0,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -13519,10 +13519,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_blr2_orsha_nivadolbizno_20261003",
-      "cid_ukr2_viktoria_inhulets_20261003"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -17300,19 +17297,20 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "b1210849dc970736afc521e8e58165e8579dfcc30e50f13ba7cfeb7c76ec4fa8",
+      "truthFingerprint": "fd184060d2b4dc59f5554faf36d3f78331b9441e938cfc0f62b21424bd76c73a",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 23,
+        "expectedEligibleRows": 26,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_bocajuniors_unionsantafe_20261003",
           "cid_arg1_independiente_institutocordoba_20261003",
           "cid_arg1_independienterivadavia_gimnasialaplata_20261003",
           "cid_arg2_ferrocarriloeste_deportivomadryn_20261003",
+          "cid_blr2_orsha_nivadolbizno_20261003",
           "cid_bra1_saopaulo_santos_20261003",
           "cid_bra2_fortaleza_nautico_20261003",
           "cid_bra2_juventude_operariopr_20261003",
@@ -17331,7 +17329,9 @@
           "cid_mex2_atleticolapaz_venados_20261003",
           "cid_mex2_correcaminosuat_cruzazulhidalgo_20261003",
           "cid_mex2_tepatitlan_jaibabrava_20261003",
-          "cid_ukr2_lokomotyvkyiv_zhytomyr2_20261003"
+          "cid_ukr1_veresrivne_kudrivka_20261003",
+          "cid_ukr2_lokomotyvkyiv_zhytomyr2_20261003",
+          "cid_ukr2_viktoria_inhulets_20261003"
         ],
         "unexpectedFixtureIds": [],
         "duplicateFixtureIds": [],
@@ -17391,7 +17391,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-03",
-      "fileCount": 25,
+      "fileCount": 26,
       "authority": "scored_final_evidence"
     },
     "downstream": {
