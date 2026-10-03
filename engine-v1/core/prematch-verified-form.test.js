@@ -1,7 +1,26 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { verifiedFormRates, verifiedHistoryResultDocuments, mergeVerifiedFormIndexes, verifiedNationalForm } from "./prematch-verified-form.js";
+import { verifiedFormRates, verifiedHistoryResultDocuments, mergeVerifiedFormIndexes, verifiedNationalForm, filterPrematchCompetitionContradictions } from "./prematch-verified-form.js";
 import { createCrossCompetitionFormResolver } from "../storage/cross-competition-form-db.js";
+
+test("explicit lower-division history cannot masquerade as eng.1 form, even with valid file fingerprints", () => {
+  const bad = { id: "cid_eng1_dartford_brentwood_20260811", leagueSlug: "eng.1", leagueName: "Isthmian League Premier Division",
+    homeTeam: "Dartford", awayTeam: "Brentwood", kickoffUtc: "2026-08-11T18:45Z", status: "FT", scoreHome: 1, scoreAway: 0 };
+  const good = { ...bad, id: "cid_engfa_valid", leagueSlug: "eng.fa", leagueName: "FA Cup" };
+  const premier = { ...bad, id: "cid_eng1_valid", leagueName: "Premier League", homeTeam: "Arsenal", awayTeam: "Chelsea" };
+  const input = { Brentwood: { matches: [bad, good] }, Dartford: { matches: [bad, good] }, Arsenal: { matches: [premier] } };
+  const before = JSON.stringify(input);
+  const checked = filterPrematchCompetitionContradictions(input);
+  assert.equal(checked.summary.excludedMatches, 1, "opponent perspectives are not separate incidents");
+  assert.equal(checked.summary.historicalFilesChanged, false);
+  assert.equal(checked.index.Arsenal.matches.length, 1);
+  assert.equal(verifiedFormRates(checked.index, "eng.1", "Brentwood", Date.parse("2026-10-03T00:00Z")).sample, 0);
+  assert.equal(verifiedHistoryResultDocuments(checked.index, Date.parse("2026-10-03T00:00Z")).find(x => x.slug === "eng.fa").doc.teams.Brentwood.length, 1);
+  for (const leagueName of ["Southern League Premier Central", "Southern League Premier South"]) {
+    assert.equal(filterPrematchCompetitionContradictions({ T: { matches: [{ ...bad, leagueName }] } }).summary.excludedMatches, 1);
+  }
+  assert.equal(JSON.stringify(input), before);
+});
 
 test("early form excludes future results, other competitions and ambiguous team names", () => {
   const row = { homeTeam: "Exact", awayTeam: "Opponent", leagueSlug: "egy.2", status: "FT", scoreHome: 2, scoreAway: 1, kickoffUtc: "2026-09-30T12:00:00Z" };

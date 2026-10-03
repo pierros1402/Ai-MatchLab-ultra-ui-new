@@ -8,6 +8,26 @@ import { readPrematchFinalForm } from "./prematch-verified-final-form.js";
 
 const NATIONAL_COMPETITIONS = new Set(["fifa.world", "fifa.world.qual", "uefa.nations", "uefa.euro", "uefa.euro.qual", "caf.nations", "afc.asian_cup", "conmebol.copa_america", "concacaf.nations"]);
 
+// Legacy fuzzy competition routing placed these explicit regional divisions in
+// eng.1. A valid history fingerprint proves file consistency, not competition
+// identity. Exclude the known contradiction from new model reads; never guess
+// a replacement slug or rewrite the historical result/prediction.
+export function filterPrematchCompetitionContradictions(index) {
+  const excluded = new Map();
+  const filtered = Object.fromEntries(Object.entries(index).map(([team, entry]) => [team, { ...entry,
+    matches: (entry.matches || []).filter(row => {
+      const name = String(row.leagueName || "").trim().replace(/\s+/g, " ");
+      if (row.leagueSlug !== "eng.1" || !/^(Isthmian League Premier Division|Southern League Premier Central|Southern League Premier South)$/i.test(name)) return true;
+      const id = row.canonicalId || row.matchId || row.id || [row.kickoff || row.kickoffUtc, row.homeTeam, row.awayTeam].join("|");
+      excluded.set(id, { id, leagueSlug: row.leagueSlug, leagueName: name, homeTeam: row.homeTeam, awayTeam: row.awayTeam,
+        reason: "LEGACY_COMPETITION_IDENTITY_CONTRADICTION" });
+      return false;
+    })
+  }]));
+  return { index: filtered, summary: { scope: "known_explicit_legacy_competition_contradictions", excludedMatches: excluded.size,
+    excluded: [...excluded.values()], historicalFilesChanged: false } };
+}
+
 export function verifiedNationalForm(index, slug, team, nowMs, window = 6) {
   if (!NATIONAL_COMPETITIONS.has(slug)) return null;
   const rows = eligibleRecentRows(index?.[team], nowMs).filter(row => NATIONAL_COMPETITIONS.has(row.leagueSlug) && (row.homeTeam === team || row.awayTeam === team));
@@ -95,9 +115,11 @@ export function createPrematchVerifiedEvidence(nowMs) {
   // Preserve the original spelling for fixtures still using it. Per-team form
   // selection deduplicates canonical IDs, so an opponent never counts both
   // the original record and the proved alternate-name read view.
-  const index = mergeVerifiedFormIndexes([baseIndex, recentFinals.index]);
+  const checked = filterPrematchCompetitionContradictions(mergeVerifiedFormIndexes([baseIndex, recentFinals.index]));
+  const index = checked.index;
   const clubCrossForm = createCrossCompetitionFormResolver({ resultDocuments: verifiedHistoryResultDocuments(index, nowMs) });
-  return { verifiedFinalForm: recentFinals.summary, formFn: (slug, team) => verifiedFormRates(index, slug, team, nowMs),
+  return { verifiedFinalForm: recentFinals.summary, historyCompetitionValidation: checked.summary,
+    formFn: (slug, team) => verifiedFormRates(index, slug, team, nowMs),
     crossFormFn: (slug, team, window, options) => verifiedNationalForm(index, slug, team, nowMs, window) || clubCrossForm(slug, team, window, options) };
 }
 
