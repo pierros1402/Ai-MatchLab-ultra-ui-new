@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-03",
-  "generatedAt": "2026-10-03T13:01:20.511Z",
+  "generatedAt": "2026-10-03T13:15:37.815Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "dd97f5941b39b7fa59b68950073c9392d5a5f085c929f74b296c2e45ad1ab384",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "b74f2208d5ce3fe6fa1e94ef4116003aa9df61efc3a0dfa3d453abb534abfda8",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 275,
-    "playedTerminal": 26,
+    "playedTerminal": 27,
     "nonPlayedTerminal": 12,
-    "scheduled": 235,
-    "live": 2,
+    "scheduled": 233,
+    "live": 3,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 27,
     "acceptedVerifiedFinalArtifacts": 27,
-    "convergedPlayedFinal": 26,
+    "convergedPlayedFinal": 27,
     "convergedNonPlayedTerminal": 12,
     "pendingVerifiedFinal": 0,
     "openRows": 236,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 26,
-    "scoredSettlementEligible": 26,
+    "historyEligible": 27,
+    "scoredSettlementEligible": 27,
     "voidSettlementEligible": 12
   },
   "fixtures": [
@@ -1222,14 +1222,14 @@
       "homeTeam": "FC Slonim",
       "awayTeam": "Soligorsk",
       "kickoffUtc": "2026-10-03T11:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": true,
@@ -1239,14 +1239,14 @@
         "dayKey": "2026-10-03",
         "scoreHome": 1,
         "scoreAway": 1,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3038,9 +3038,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_IN_PROGRESS",
         "scoreHome": 1,
         "scoreAway": 1
       },
@@ -11855,14 +11855,14 @@
       "homeTeam": "Finland",
       "awayTeam": "Albania",
       "kickoffUtc": "2026-10-03T13:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -11876,7 +11876,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -13519,9 +13519,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_blr2_slonim_soligorsk_20261003"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -17299,13 +17297,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "dd97f5941b39b7fa59b68950073c9392d5a5f085c929f74b296c2e45ad1ab384",
+      "truthFingerprint": "b74f2208d5ce3fe6fa1e94ef4116003aa9df61efc3a0dfa3d453abb534abfda8",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 26,
+        "expectedEligibleRows": 27,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_bocajuniors_unionsantafe_20261003",
@@ -17313,6 +17311,7 @@
           "cid_arg1_independienterivadavia_gimnasialaplata_20261003",
           "cid_arg2_ferrocarriloeste_deportivomadryn_20261003",
           "cid_blr2_orsha_nivadolbizno_20261003",
+          "cid_blr2_slonim_soligorsk_20261003",
           "cid_bra1_saopaulo_santos_20261003",
           "cid_bra2_fortaleza_nautico_20261003",
           "cid_bra2_juventude_operariopr_20261003",
