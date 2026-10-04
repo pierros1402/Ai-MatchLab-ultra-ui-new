@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-05",
-  "generatedAt": "2026-10-04T23:34:58.045Z",
+  "generatedAt": "2026-10-04T23:50:09.196Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "485edc66c1ca50bf78e06e6293527bdd14f89415fa0e8c0ab1e345ed3470c09a",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "74474ce527e150127090753ea44748888cbf83e6176459a0549d7422721b93bb",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 39,
-    "playedTerminal": 5,
+    "playedTerminal": 6,
     "nonPlayedTerminal": 0,
     "scheduled": 28,
-    "live": 5,
+    "live": 4,
     "interrupted": 1,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 6,
     "acceptedVerifiedFinalArtifacts": 6,
-    "convergedPlayedFinal": 5,
+    "convergedPlayedFinal": 6,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
     "openRows": 33,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 5,
-    "scoredSettlementEligible": 5,
+    "historyEligible": 6,
+    "scoredSettlementEligible": 6,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -53,7 +53,7 @@
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 2,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -291,12 +291,12 @@
       "homeTeam": "San Martin T.",
       "awayTeam": "Gimnasia y Tiro",
       "kickoffUtc": "2026-10-04T21:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -311,11 +311,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -346,8 +346,8 @@
         "status": "FIRST_HALF",
         "statusType": null,
         "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 1,
-        "scoreAway": 0
+        "scoreHome": 2,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -1813,9 +1813,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -1955,9 +1955,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_arg2_sanmartintucuman_gimnasiaytirosalta_20261005"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -4499,16 +4497,17 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "485edc66c1ca50bf78e06e6293527bdd14f89415fa0e8c0ab1e345ed3470c09a",
+      "truthFingerprint": "74474ce527e150127090753ea44748888cbf83e6176459a0549d7422721b93bb",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 5,
+        "expectedEligibleRows": 6,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg2_godoycruzantoniotomba_losandes_20261005",
+          "cid_arg2_sanmartintucuman_gimnasiaytirosalta_20261005",
           "cid_col1_cucutadeportivo_deportivopereira_20261005",
           "cid_col1_internacionalbogota_oncecaldas_20261005",
           "cid_col2_tigres_interpalmira_20261005",
