@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-04",
-  "generatedAt": "2026-10-04T12:12:33.120Z",
+  "generatedAt": "2026-10-04T12:28:53.450Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "367fefaaf683970430d663c4a0d64e8b977be82a42e9aae9623ded6a4891fe35",
+  "truthFingerprint": "dceeaf557a2fceef53c091c3dd3052f570300ec0a655b629a0c78681b63d45c5",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,22 +17,22 @@
   },
   "summary": {
     "canonicalRows": 129,
-    "playedTerminal": 35,
+    "playedTerminal": 36,
     "nonPlayedTerminal": 0,
-    "scheduled": 92,
+    "scheduled": 91,
     "live": 1,
     "interrupted": 1,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 35,
-    "acceptedVerifiedFinalArtifacts": 35,
+    "verifiedFinalArtifacts": 36,
+    "acceptedVerifiedFinalArtifacts": 36,
     "convergedPlayedFinal": 34,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 94,
+    "openRows": 93,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 34,
@@ -5093,31 +5093,31 @@
       "homeTeam": "Ahrobiznes Volochysk",
       "awayTeam": "UCSA",
       "kickoffUtc": "2026-10-04T10:30:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 3,
+        "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-04",
+        "scoreHome": 3,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -5158,15 +5158,15 @@
         "verdict": "verified_final_result",
         "dayKey": "2026-10-04",
         "scoreHome": 0,
-        "scoreAway": 1,
-        "scoreParity": true
+        "scoreAway": 2,
+        "scoreParity": false
       },
       "decision": {
-        "status": "CONVERGED_PLAYED_FINAL",
-        "reason": "canonical_and_verified_final_converged",
+        "status": "CONFLICT",
+        "reason": "canonical_verified_final_score_mismatch",
         "operationallyClosed": true,
-        "historyEligible": true,
-        "scoredSettlementEligible": true,
+        "historyEligible": false,
+        "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -6366,7 +6366,8 @@
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
     "conflictFixtureIds": [
-      "cid_col2_cartagena_bocajuniors_20261004"
+      "cid_col2_cartagena_bocajuniors_20261004",
+      "cid_ukr2_koloskovalivka2_oleksandriya_20261004"
     ],
     "pendingVerifiedFinalFixtureIds": []
   },
@@ -9657,7 +9658,7 @@
     },
     "convergence": {
       "overallState": "INCOMPLETE",
-      "truthFingerprint": "367fefaaf683970430d663c4a0d64e8b977be82a42e9aae9623ded6a4891fe35",
+      "truthFingerprint": "dceeaf557a2fceef53c091c3dd3052f570300ec0a655b629a0c78681b63d45c5",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -9688,7 +9689,7 @@
           "cid_slv1_alianza_luisangelfirpo_20261004",
           "cid_slv1_isidrometapan_atleticobalboa_20261004",
           "cid_svk2_petrzalka_malzenice_20261004",
-          "cid_ukr2_koloskovalivka2_oleksandriya_20261004",
+          "cid_ukr2_ahrobiznesvolochysk_ucsa_20261004",
           "cid_uru1_deportivomaldonado_centralespanolfutbol_20261004",
           "cid_uru2_tacuarembo_atenas_20261004",
           "cid_usa2_brooklyn_rhodeisland_20261004",
@@ -9762,7 +9763,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-04",
-      "fileCount": 35,
+      "fileCount": 36,
       "authority": "scored_final_evidence"
     },
     "downstream": {
