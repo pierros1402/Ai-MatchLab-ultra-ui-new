@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-05",
-  "generatedAt": "2026-10-04T23:29:06.841Z",
+  "generatedAt": "2026-10-04T23:34:58.045Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "e936beb56bd4bf63386eefb3aa6695380a461023091a7f548c43229f04dedabb",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "485edc66c1ca50bf78e06e6293527bdd14f89415fa0e8c0ab1e345ed3470c09a",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -25,14 +25,14 @@
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 5,
-    "acceptedVerifiedFinalArtifacts": 5,
+    "verifiedFinalArtifacts": 6,
+    "acceptedVerifiedFinalArtifacts": 6,
     "convergedPlayedFinal": 5,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 34,
+    "openRows": 33,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 5,
@@ -301,18 +301,18 @@
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-05",
+        "scoreHome": 1,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -833,9 +833,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_FIRST_HALF",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -1955,7 +1955,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_arg2_sanmartintucuman_gimnasiaytirosalta_20261005"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -2150,7 +2152,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 11762,
+            "count": 11764,
             "informational": true
           }
         },
@@ -4497,7 +4499,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "e936beb56bd4bf63386eefb3aa6695380a461023091a7f548c43229f04dedabb",
+      "truthFingerprint": "485edc66c1ca50bf78e06e6293527bdd14f89415fa0e8c0ab1e345ed3470c09a",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -4570,7 +4572,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-05",
-      "fileCount": 5,
+      "fileCount": 6,
       "authority": "scored_final_evidence"
     },
     "downstream": {
