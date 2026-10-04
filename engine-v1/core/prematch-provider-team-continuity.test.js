@@ -28,7 +28,7 @@ test("two verified games on distinct days and an exact future anchor create a mo
   assert.equal(JSON.stringify({ games, anchors }), before);
 });
 
-test("missing, started, mismatched and conflicting anchors never establish continuity", () => {
+test("missing, stale, mismatched and conflicting anchors never establish continuity", () => {
   for (const mutate of [a => { a.canonical.homeTeam = "Other"; }, a => { a.canonical.providerIds.flashscore = "wrong001"; },
     a => { a.canonical.kickoffUtc = "2026-10-02T12:31Z"; }, a => { a.canonical.hasConflict = true; },
     a => { a.canonical.awayGlobalClubId = "managed_conflict"; }]) {
@@ -36,7 +36,8 @@ test("missing, started, mismatched and conflicting anchors never establish conti
     assert.equal(applyProviderTeamContinuity(history(), [a], now).proofs.length, 0);
   }
   assert.equal(applyProviderTeamContinuity(history(), [], now).proofs.length, 0);
-  assert.equal(applyProviderTeamContinuity(history(), [anchor()], now + 2 * 3600000).proofs.length, 0);
+  assert.equal(applyProviderTeamContinuity(history(), [anchor()], now + 2 * 3600000).proofs.length, 1, "kickoff preserves identity, without supplying an outcome");
+  assert.equal(applyProviderTeamContinuity(history(), [anchor()], now + 9 * 86400000).proofs.length, 0);
   const conflict = anchor(); conflict.candidate.awayProviderTeamId = "another1";
   assert.equal(applyProviderTeamContinuity(history(), [anchor(), conflict], now).proofs.length, 0);
 });

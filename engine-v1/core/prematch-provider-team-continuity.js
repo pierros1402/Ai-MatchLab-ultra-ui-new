@@ -22,7 +22,9 @@ export function applyProviderTeamContinuity(validated, anchors, nowMs) {
   }
   for (const { candidate, canonical } of anchors) {
     const time = Date.parse(candidate.kickoffUtc);
-    if (!canonical || !Number.isFinite(time) || time <= nowMs || time > nowMs + 8 * 86400000
+    // Kickoff does not invalidate an exact team identity. Retain recent fixture
+    // anchors for eight days; their scores never enter form via this path.
+    if (!canonical || !Number.isFinite(time) || time < nowMs - 8 * 86400000 || time > nowMs + 8 * 86400000
       || canonical.hasConflict === true || canonical.leagueSlug !== candidate.leagueSlug
       || Date.parse(canonical.kickoffUtc) !== time || canonical.homeTeam !== candidate.home || canonical.awayTeam !== candidate.away) continue;
     const ids = [canonical.providerIds?.flashscore, canonical.source === "flashscore" ? canonical.sourceMatchId || canonical.sourceId : null].filter(Boolean);
@@ -45,7 +47,7 @@ export function applyProviderTeamContinuity(validated, anchors, nowMs) {
     const oldGlobalId = row[`${side}GlobalClubId`] || null;
     if (oldGlobalId !== target.globalClubId) continue; // Includes managed/unmanaged ambiguity.
     const proofKey = `${key}|${oldName}|${target.name}`;
-    const proof = proofs.get(proofKey) || { leagueSlug: row.leagueSlug, providerTeamId: nativeId, from: oldName, to: target.name,
+    const proof = proofs.get(proofKey) || { leagueSlug: row.leagueSlug, providerTeamId: nativeId, from: oldName, to: target.name, globalClubId: oldGlobalId,
       providerMatchIds: new Set(), days: new Set(), canonicalIds: new Set() };
     proof.providerMatchIds.add(candidate.providerMatchId); proof.days.add(row.dayKey); proof.canonicalIds.add(row.id);
     proofs.set(proofKey, proof);
