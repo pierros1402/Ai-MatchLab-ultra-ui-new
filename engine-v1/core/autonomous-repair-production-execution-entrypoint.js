@@ -15,11 +15,18 @@ import {
   validateAutonomousRepairExecutionTransactionPlanArtifact
 } from "./autonomous-repair-execution-transaction-plan.js";
 
+import {
+  executeAutonomousRepairProductionExecutionAdapter
+} from "./autonomous-repair-production-execution-adapter.js";
+
 export const AUTONOMOUS_REPAIR_PRODUCTION_EXECUTION_ENTRYPOINT_SCHEMA =
   "ai-matchlab.autonomous-repair-production-execution-entrypoint.v1";
 
 export const AUTONOMOUS_REPAIR_PRODUCTION_EXECUTION_ENTRYPOINT_VERSION =
   "1.0.0";
+
+const AUTONOMOUS_REPAIR_PRODUCTION_KERNEL_ENABLED =
+  false;
 
 export const AUTONOMOUS_REPAIR_PRODUCTION_EXECUTION_STATE =
   Object.freeze({
@@ -127,7 +134,7 @@ export function inspectAutonomousRepairProductionExecutionReadiness() {
       true,
 
     productionKernelEnabled:
-      false,
+      AUTONOMOUS_REPAIR_PRODUCTION_KERNEL_ENABLED,
 
     authority:
       Object.freeze(
@@ -203,11 +210,23 @@ export function prepareAutonomousRepairProductionExecutionWithPinnedTrust(
 export function executeAutonomousRepairProductionExecution(
   options = {}
 ) {
-  prepareAutonomousRepairProductionExecutionWithPinnedTrust(
-    options
-  );
+  const prepared =
+    prepareAutonomousRepairProductionExecutionWithPinnedTrust(
+      options
+    );
 
-  throw new Error(
-    "autonomous_repair_production_execution_kernel_not_enabled"
-  );
+  if (
+    !AUTONOMOUS_REPAIR_PRODUCTION_KERNEL_ENABLED
+  ) {
+    throw new Error(
+      "autonomous_repair_production_execution_kernel_not_enabled"
+    );
+  }
+
+  return executeAutonomousRepairProductionExecutionAdapter({
+    transactionPlan:
+      prepared.transactionPlan,
+    materialResolution:
+      options.materialResolution
+  });
 }
