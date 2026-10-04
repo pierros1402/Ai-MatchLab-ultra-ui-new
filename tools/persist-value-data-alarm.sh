@@ -8,7 +8,7 @@ if ! git diff --cached --quiet; then
 fi
 EXTRA_ARGS=()
 if [ "${VALUE_APPLY_VERIFIED_CONTRACTS:-false}" = "true" ]; then EXTRA_ARGS+=(--apply-verified-contracts); fi
-node engine-v1/jobs/run-value-data-alarm-day.js "$DAY_KEY" --write --research "${EXTRA_ARGS[@]}"
+node engine-v1/jobs/run-value-data-alarm-day.js "$DAY_KEY" --write --research --max-research-leagues "${VALUE_MAX_RESEARCH_LEAGUES:-2}" "${EXTRA_ARGS[@]}"
 git add "data/value-data-acquisition/queue.json" "data/value-data-acquisition/${DAY_KEY}.json"
 if [ -d "data/value-data-acquisition/${DAY_KEY}" ]; then git add "data/value-data-acquisition/${DAY_KEY}/"; fi
 export DAY_KEY

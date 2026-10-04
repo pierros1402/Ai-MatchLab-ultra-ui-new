@@ -21,6 +21,7 @@ function save(file, data) {
 
 export async function runValueDataAlarmDay(dayKey, { write = false, research = false, applyVerifiedContracts = false, nowMs = Date.now(), lookAheadDays = 7, maxResearchLeagues = 2, dependencies = {} } = {}) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dayKey) || lookAheadDays < 0 || lookAheadDays > 14) throw new Error("invalid_alarm_window");
+  if (!Number.isInteger(maxResearchLeagues) || maxResearchLeagues < 1 || maxResearchLeagues > 12) throw new Error("invalid_research_league_limit");
   if (research && !write) throw new Error("research_requires_persisted_alarm");
   const root = dependencies.queueRoot || resolveDataPath("value-data-acquisition");
   const queueFile = path.join(root, "queue.json");
@@ -197,6 +198,8 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const { report } = await runValueDataAlarmDay(process.argv[2], { write: process.argv.includes("--write"), research: process.argv.includes("--research"), applyVerifiedContracts: process.argv.includes("--apply-verified-contracts") });
+  const limitIndex = process.argv.indexOf("--max-research-leagues");
+  const { report } = await runValueDataAlarmDay(process.argv[2], { write: process.argv.includes("--write"), research: process.argv.includes("--research"), applyVerifiedContracts: process.argv.includes("--apply-verified-contracts"),
+    maxResearchLeagues: limitIndex < 0 ? 2 : Number(process.argv[limitIndex + 1]) });
   console.log(JSON.stringify(report, null, 2));
 }

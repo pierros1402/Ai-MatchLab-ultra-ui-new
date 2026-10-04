@@ -49,13 +49,20 @@ export function dueValueDataResearch(queue, nowMs, maxLeagues = 2) {
     const list = groups.get(key) || [];
     list.push(incident); groups.set(key, list);
   }
-  return [...groups].map(([key, incidents]) => ({ key, incidents,
+  const ordered = [...groups].map(([key, incidents]) => ({ key, incidents,
     lastAttempt: Date.parse(queue.research[key]?.lastAttemptAt) || 0,
     deadline: Math.min(...incidents.map(row => Date.parse(row.kickoffUtc) > nowMs ? Date.parse(row.kickoffUtc) : Infinity)) }))
     .sort((a, b) => {
       const priority = task => task.deadline - nowMs <= 86400000 ? 0 : Number.isFinite(task.deadline) ? 1 : 2;
       return priority(a) - priority(b) || a.lastAttempt - b.lastAttempt || a.deadline - b.deadline || a.key.localeCompare(b.key);
-    }).slice(0, maxLeagues);
+    });
+  const selected = ordered.slice(0, maxLeagues);
+  // Repeated urgent failures must not consume every slot until the next set
+  // of fixtures also becomes overdue. Reserve one due slot for early research.
+  const early = ordered.find(task => Number.isFinite(task.deadline) && task.deadline - nowMs > 86400000);
+  if (maxLeagues >= 2 && selected.length === maxLeagues && early && !selected.includes(early)
+    && selected.every(task => task.deadline - nowMs <= 86400000)) selected[selected.length - 1] = early;
+  return selected;
 }
 
 export function recordValueDataResearch(queue, task, result, nowMs) {

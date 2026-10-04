@@ -4,6 +4,11 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { runValueDataAlarmDay } from "./run-value-data-alarm-day.js";
+test("catch-up research rejects invalid or unbounded league limits before work", async () => {
+  for (const maxResearchLeagues of [0, -1, 13, 1.5, NaN]) {
+    await assert.rejects(runValueDataAlarmDay("2099-10-04", { maxResearchLeagues }), /invalid_research_league_limit/);
+  }
+});
 test("team research is consumed in the same cycle but raw findings cannot close an incident", async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-team-cycle-"));
   const day = "2099-10-04", nowMs = Date.parse(`${day}T08:00Z`);
