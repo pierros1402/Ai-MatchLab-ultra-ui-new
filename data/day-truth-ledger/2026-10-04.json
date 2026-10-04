@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-04",
-  "generatedAt": "2026-10-04T01:14:03.669Z",
+  "generatedAt": "2026-10-04T01:33:52.613Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "0d05912c806a1cb07e7c8d651354cb9c411bcf15ae9cd3fb4a8809bc3ef835d1",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "126f79668a1a18779cd476b9ed6bc00c9970c90975334bdc561fb775a5b5b0b9",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 127,
-    "playedTerminal": 12,
+    "playedTerminal": 13,
     "nonPlayedTerminal": 0,
     "scheduled": 108,
-    "live": 6,
+    "live": 5,
     "interrupted": 1,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 13,
     "acceptedVerifiedFinalArtifacts": 13,
-    "convergedPlayedFinal": 12,
+    "convergedPlayedFinal": 13,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
     "openRows": 114,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 12,
-    "scoredSettlementEligible": 12,
+    "historyEligible": 13,
+    "scoredSettlementEligible": 13,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -2698,7 +2698,7 @@
         "status": "FIRST_HALF",
         "statusType": null,
         "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -2796,7 +2796,7 @@
         "status": "FIRST_HALF",
         "statusType": null,
         "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 1,
+        "scoreHome": 2,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -2891,10 +2891,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_IN_PROGRESS",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -3430,9 +3430,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_IN_PROGRESS",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -3476,12 +3476,12 @@
       "homeTeam": "Isidro Metapán",
       "awayTeam": "Atletico Balboa",
       "kickoffUtc": "2026-10-03T23:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 3,
         "scoreAway": 2
       },
@@ -3496,11 +3496,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -6267,9 +6267,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_slv1_isidrometapan_atleticobalboa_20261004"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -9553,13 +9551,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "0d05912c806a1cb07e7c8d651354cb9c411bcf15ae9cd3fb4a8809bc3ef835d1",
+      "truthFingerprint": "126f79668a1a18779cd476b9ed6bc00c9970c90975334bdc561fb775a5b5b0b9",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 12,
+        "expectedEligibleRows": 13,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_bra1_atleticomg_redbullbragantino_20261004",
@@ -9568,6 +9566,7 @@
           "cid_col1_deportestolima_boyacachico_20261004",
           "cid_gua1_cobanimperial_malacateco_20261004",
           "cid_slv1_aguila_cacahuatique_20261004",
+          "cid_slv1_isidrometapan_atleticobalboa_20261004",
           "cid_uru1_deportivomaldonado_centralespanolfutbol_20261004",
           "cid_uru2_tacuarembo_atenas_20261004",
           "cid_usa2_brooklyn_rhodeisland_20261004",
