@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-04",
-  "generatedAt": "2026-10-04T14:12:33.184Z",
+  "generatedAt": "2026-10-04T14:27:04.943Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "ba0201cb6be9b786ed84f424c1ba4bbc8020ab91d587c52e50c1d88de3b1db64",
+  "truthFingerprint": "48e8d842c1fae63414d78f6d012a82feda8abdacb886862a3eee7978020e1e52",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -18,9 +18,9 @@
   "summary": {
     "canonicalRows": 129,
     "playedTerminal": 45,
-    "nonPlayedTerminal": 0,
-    "scheduled": 80,
-    "live": 3,
+    "nonPlayedTerminal": 1,
+    "scheduled": 78,
+    "live": 4,
     "interrupted": 1,
     "delayed": 0,
     "operationalConflict": 0,
@@ -28,16 +28,16 @@
     "verifiedFinalArtifacts": 45,
     "acceptedVerifiedFinalArtifacts": 45,
     "convergedPlayedFinal": 43,
-    "convergedNonPlayedTerminal": 0,
+    "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 84,
+    "openRows": 83,
     "unresolvedRows": 0,
     "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 43,
     "scoredSettlementEligible": 43,
-    "voidSettlementEligible": 0
+    "voidSettlementEligible": 1
   },
   "fixtures": [
     {
@@ -1418,14 +1418,14 @@
       "homeTeam": "Sporting Gijón",
       "awayTeam": "RC Celta Fortuna",
       "kickoffUtc": "2026-10-04T14:15Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1439,7 +1439,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1614,12 +1614,12 @@
       "homeTeam": "Prat",
       "awayTeam": "El Espinar Sant Rafel",
       "kickoffUtc": "2026-10-04T14:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PRE_KICKOFF_NON_PLAYED",
+      "operationalState": "NON_PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
+        "status": "STATUS_POSTPONED",
+        "statusType": "STATUS_POSTPONED",
+        "rawStatus": "STATUS_POSTPONED",
         "scoreHome": null,
         "scoreAway": null
       },
@@ -1634,12 +1634,12 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "CONVERGED_NON_PLAYED_TERMINAL",
+        "reason": "explicit_nonplayed_terminal",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
-        "voidSettlementEligible": false,
+        "voidSettlementEligible": true,
         "repairAuthorized": false
       },
       "downstream": {
@@ -3185,9 +3185,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_IN_PROGRESS",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -5341,9 +5341,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 2,
         "scoreAway": 1
       },
@@ -9490,7 +9490,7 @@
     },
     "convergence": {
       "overallState": "INCOMPLETE",
-      "truthFingerprint": "ba0201cb6be9b786ed84f424c1ba4bbc8020ab91d587c52e50c1d88de3b1db64",
+      "truthFingerprint": "48e8d842c1fae63414d78f6d012a82feda8abdacb886862a3eee7978020e1e52",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
