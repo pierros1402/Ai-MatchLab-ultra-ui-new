@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-04",
-  "generatedAt": "2026-10-04T13:24:17.936Z",
+  "generatedAt": "2026-10-04T13:33:15.268Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "1f7f77992d7768c7512d41a2414d9e42b0ecf6b6cb642f12a630237ce9185e5a",
+  "truthFingerprint": "b9c1172e410edc99b6a3c6b0fbf5d4b7ac1e0a8822102c24862ce8121fa38955",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -25,14 +25,14 @@
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 36,
-    "acceptedVerifiedFinalArtifacts": 36,
+    "verifiedFinalArtifacts": 37,
+    "acceptedVerifiedFinalArtifacts": 37,
     "convergedPlayedFinal": 34,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 93,
+    "openRows": 92,
     "unresolvedRows": 0,
-    "conflictRows": 2,
+    "conflictRows": 3,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 34,
@@ -1327,7 +1327,7 @@
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 2,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -3185,9 +3185,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -3437,18 +3437,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-04",
+        "scoreHome": 1,
+        "scoreAway": 2,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4413,7 +4413,7 @@
         "status": "FIRST_HALF",
         "statusType": null,
         "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -5341,9 +5341,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_IN_PROGRESS",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -6367,6 +6367,7 @@
     "duplicateVerifiedFinalFixtureIds": [],
     "conflictFixtureIds": [
       "cid_col2_cartagena_bocajuniors_20261004",
+      "cid_rus2_velesmoscow_ulyanovsk_20261004",
       "cid_ukr2_koloskovalivka2_oleksandriya_20261004"
     ],
     "pendingVerifiedFinalFixtureIds": []
@@ -9658,7 +9659,7 @@
     },
     "convergence": {
       "overallState": "INCOMPLETE",
-      "truthFingerprint": "1f7f77992d7768c7512d41a2414d9e42b0ecf6b6cb642f12a630237ce9185e5a",
+      "truthFingerprint": "b9c1172e410edc99b6a3c6b0fbf5d4b7ac1e0a8822102c24862ce8121fa38955",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -9763,7 +9764,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-04",
-      "fileCount": 36,
+      "fileCount": 37,
       "authority": "scored_final_evidence"
     },
     "downstream": {
