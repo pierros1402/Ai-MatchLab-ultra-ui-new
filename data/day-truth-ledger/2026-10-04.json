@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-04",
-  "generatedAt": "2026-10-04T10:59:22.736Z",
+  "generatedAt": "2026-10-04T11:54:11.817Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "abd72928de5c0bd60f5dea045beb61cb422d73251c66e122505cc9e83b5948c4",
+  "truthFingerprint": "605252a2676df825a477ee59ae79d03c518b715fcdd1db38c0208736c3c4ada7",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 129,
-    "playedTerminal": 32,
+    "playedTerminal": 33,
     "nonPlayedTerminal": 0,
-    "scheduled": 96,
+    "scheduled": 95,
     "live": 0,
     "interrupted": 1,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 32,
-    "acceptedVerifiedFinalArtifacts": 32,
-    "convergedPlayedFinal": 31,
+    "verifiedFinalArtifacts": 33,
+    "acceptedVerifiedFinalArtifacts": 33,
+    "convergedPlayedFinal": 32,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 97,
+    "openRows": 96,
     "unresolvedRows": 0,
     "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 31,
-    "scoredSettlementEligible": 31,
+    "historyEligible": 32,
+    "scoredSettlementEligible": 32,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -5142,31 +5142,31 @@
       "homeTeam": "Kolos Kovalivka 2",
       "awayTeam": "Oleksandriya",
       "kickoffUtc": "2026-10-04T09:30:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-04",
+        "scoreHome": 0,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -6609,7 +6609,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 11714,
+            "count": 11718,
             "informational": true
           }
         },
@@ -9657,13 +9657,13 @@
     },
     "convergence": {
       "overallState": "INCOMPLETE",
-      "truthFingerprint": "abd72928de5c0bd60f5dea045beb61cb422d73251c66e122505cc9e83b5948c4",
+      "truthFingerprint": "605252a2676df825a477ee59ae79d03c518b715fcdd1db38c0208736c3c4ada7",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 31,
+        "expectedEligibleRows": 32,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_bra1_atleticomg_redbullbragantino_20261004",
@@ -9686,6 +9686,7 @@
           "cid_slv1_alianza_luisangelfirpo_20261004",
           "cid_slv1_isidrometapan_atleticobalboa_20261004",
           "cid_svk2_petrzalka_malzenice_20261004",
+          "cid_ukr2_koloskovalivka2_oleksandriya_20261004",
           "cid_uru1_deportivomaldonado_centralespanolfutbol_20261004",
           "cid_uru2_tacuarembo_atenas_20261004",
           "cid_usa2_brooklyn_rhodeisland_20261004",
@@ -9759,7 +9760,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-04",
-      "fileCount": 32,
+      "fileCount": 33,
       "authority": "scored_final_evidence"
     },
     "downstream": {
