@@ -7,36 +7,30 @@ import {
   parseArgs,
   runConsumerIntegrationAudit,
 } from "./audit-production-identity-consumer-integration.js";
+import {
+  currentP0CArtifactPaths,
+} from "../test-support/p0c-hermetic-test-inputs.js";
 
-function required(name) {
-  const value = process.env[name];
-  assert.ok(value, `${name} is required`);
-  return value;
-}
+const P0C_PATHS = currentP0CArtifactPaths();
 
 function artifactArgs() {
   return {
-    contract:
-      required("AIML_P0C_RESOLVER_CONTRACT"),
-    registry:
-      required("AIML_P0C_REGISTRY"),
-    retention:
-      required("AIML_P0C_RETENTION"),
-    "source-ledger":
-      required("AIML_P0C_SOURCE_LEDGER"),
+    contract: P0C_PATHS.contract,
+    registry: P0C_PATHS.registry,
+    retention: P0C_PATHS.retentionLedger,
+    "source-ledger": P0C_PATHS.sourceLedger,
   };
 }
 
 function firstDecision() {
   const ledger = JSON.parse(
     fs.readFileSync(
-      required("AIML_P0C_RETENTION"),
+      P0C_PATHS.retentionLedger,
       "utf8",
     ),
   );
   return ledger.decisions[0];
 }
-
 function fixture(
   fixtureId,
   decision,

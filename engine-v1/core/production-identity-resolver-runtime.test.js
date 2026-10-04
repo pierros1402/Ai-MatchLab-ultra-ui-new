@@ -8,26 +8,13 @@ import {
   getProductionIdentityResolverRuntime,
   resetProductionIdentityResolverRuntimeForTests,
 } from "./production-identity-resolver-runtime.js";
-
-function required(name) {
-  const value = process.env[name];
-  assert.ok(value, `${name} is required`);
-  return value;
-}
+import {
+  currentP0CArtifactPaths,
+} from "../test-support/p0c-hermetic-test-inputs.js";
 
 function sourcePaths() {
-  return {
-    contract:
-      required("AIML_P0C_RESOLVER_CONTRACT"),
-    registry:
-      required("AIML_P0C_REGISTRY"),
-    retentionLedger:
-      required("AIML_P0C_RETENTION"),
-    sourceLedger:
-      required("AIML_P0C_SOURCE_LEDGER"),
-  };
+  return currentP0CArtifactPaths();
 }
-
 function copyInputs() {
   const root = fs.mkdtempSync(
     path.join(os.tmpdir(), "aiml-p0c-runtime-loader-"),

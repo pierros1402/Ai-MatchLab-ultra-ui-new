@@ -9,60 +9,28 @@ import {
   validateResolverFoundation,
   validateResolverRuntimeDecisions,
 } from "./production-identity-resolver.js";
+import {
+  currentP0CArtifactPaths,
+  makeResolverClassificationAuditFixture,
+  makeResolverPhaseContractFixture,
+} from "../test-support/p0c-hermetic-test-inputs.js";
 
 const root = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../..",
 );
 
-function required(name) {
-  const value = process.env[name];
-  assert.ok(value, `${name} is required`);
-  return value;
-}
-
 function loadAll() {
-  const contract = loadJsonBomSafe(
-    process.env.AIML_P0C_RESOLVER_CONTRACT ||
-      path.join(
-        root,
-        "data/identity-decisions/production-identity-resolver-contract.v1.json",
-      ),
-  );
-  const registry = loadJsonBomSafe(
-    process.env.AIML_P0C_REGISTRY ||
-      path.join(
-        root,
-        "data/identity-decisions/production-global-club-id-registry.v1.json",
-      ),
-  );
-  const retentionLedger = loadJsonBomSafe(
-    process.env.AIML_P0C_RETENTION ||
-      path.join(
-        root,
-        "data/identity-decisions/fixture-retention-decision-ledger.v1.json",
-      ),
-  );
-  const sourceLedger = loadJsonBomSafe(
-    process.env.AIML_P0C_SOURCE_LEDGER ||
-      path.join(
-        root,
-        "data/identity-decisions/semantic-duplicate-decision-ledger.v1.json",
-      ),
-  );
-  const classificationAudit = loadJsonBomSafe(
-    required("AIML_P0C_CLASSIFICATION_AUDIT"),
-  );
-  const phaseContract = loadJsonBomSafe(
-    required("AIML_P0C_PHASE_CONTRACT"),
-  );
+  const paths = currentP0CArtifactPaths();
   return {
-    contract,
-    registry,
-    retentionLedger,
-    sourceLedger,
-    classificationAudit,
-    phaseContract,
+    contract: loadJsonBomSafe(paths.contract),
+    registry: loadJsonBomSafe(paths.registry),
+    retentionLedger: loadJsonBomSafe(paths.retentionLedger),
+    sourceLedger: loadJsonBomSafe(paths.sourceLedger),
+    classificationAudit:
+      makeResolverClassificationAuditFixture(),
+    phaseContract:
+      makeResolverPhaseContractFixture(),
   };
 }
 

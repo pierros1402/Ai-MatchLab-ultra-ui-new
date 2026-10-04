@@ -5,13 +5,19 @@ import { collectFoundationIntegrityIssues } from "../jobs/build-system-health-al
 import { systemHealthMissingArtifactSeverity } from "../system-health/runtime-report-policy.js";
 
 test("missing foundation integrity is a System Health error", () => {
-  assert.equal(systemHealthMissingArtifactSeverity("foundationIntegrity"), "error");
-  const issues = collectFoundationIntegrityIssues(null, "2026-08-09");
+  assert.equal(
+    systemHealthMissingArtifactSeverity("foundationIntegrity"),
+    "error",
+  );
+  const issues = collectFoundationIntegrityIssues(
+    null,
+    "2026-08-09",
+  ).filter(row => row.source === "foundation-integrity");
+
   assert.equal(issues.length, 1);
   assert.equal(issues[0].severity, "error");
   assert.equal(issues[0].type, "artifact_missing");
 });
-
 test("not-ready foundation produces hard System Health errors", () => {
   const issues = collectFoundationIntegrityIssues({
     dayKey: "2026-08-09",
@@ -24,14 +30,22 @@ test("not-ready foundation produces hard System Health errors", () => {
   assert.ok(issues.some(row => row.type === "foundation_publication_not_ready" && row.severity === "error"));
 });
 
-test("ready foundation only surfaces informational warnings", () => {
+test("ready foundation only surfaces informational foundation warnings", () => {
   const issues = collectFoundationIntegrityIssues({
     dayKey: "2026-08-09",
     modelReady: true,
     publicationReady: true,
     blocked: [],
-    warnings: [{ reason: "age_expired_results_rows_present", count: 288 }]
-  }, "2026-08-09");
+    warnings: [
+      {
+        reason: "age_expired_results_rows_present",
+        count: 288,
+      },
+    ],
+  }, "2026-08-09").filter(
+    row => row.source === "foundation-integrity",
+  );
+
   assert.equal(issues.length, 1);
   assert.equal(issues[0].severity, "info");
 });

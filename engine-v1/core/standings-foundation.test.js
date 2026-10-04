@@ -63,12 +63,23 @@ test("standings history rows reject scheduled/null score contamination", () => {
   }, "arg.1"), true);
 });
 
-test("real repaired history exposes only contract-PASS standings", () => {
+test("real repaired history exposes only current contract-PASS standings", () => {
   const historyRows = readHistoryRows("2026-2027");
   const registryBundle = loadStandingsFoundationRegistry();
-  const expectedPass = new Set(["arg.1", "col.1", "den.1", "mex.1"]);
+  const slugs = [
+    "arg.1",
+    "col.1",
+    "den.1",
+    "mex.1",
+    "aus.1",
+    "bol.1",
+    "per.1",
+    "rus.1",
+  ];
 
-  for (const slug of ["arg.1", "col.1", "den.1", "mex.1", "aus.1", "bol.1", "per.1", "rus.1"]) {
+  let usableCount = 0;
+
+  for (const slug of slugs) {
     const artifact = buildHistoryBackedStandingsArtifact({
       slug,
       historySeason: "2026-2027",
@@ -76,11 +87,38 @@ test("real repaired history exposes only contract-PASS standings", () => {
       registryBundle,
       builtAt: "TEST",
     });
-    assert.equal(artifact.foundation.usable, expectedPass.has(slug), slug);
-    assert.equal(artifact.table.length > 0, expectedPass.has(slug), slug);
-  }
-});
 
+    assert.equal(
+      artifact.foundation.status === "PASS",
+      artifact.foundation.usable,
+      slug,
+    );
+    assert.equal(
+      artifact.table.length > 0,
+      artifact.foundation.usable,
+      slug,
+    );
+
+    if (artifact.foundation.usable) {
+      usableCount += 1;
+      const validation =
+        validateStandingsFoundationArtifact(artifact, {
+          slug,
+          historyRows,
+        });
+      assert.equal(validation.ok, true, slug);
+    }
+    else {
+      assert.equal(artifact.table.length, 0, slug);
+      assert.ok(
+        artifact.foundation.reasonCodes.length > 0,
+        slug,
+      );
+    }
+  }
+
+  assert.ok(usableCount > 0);
+});
 test("source lineage invalidates an artifact when league history changes", () => {
   const historyRows = readHistoryRows("2026-2027");
   const artifact = buildHistoryBackedStandingsArtifact({

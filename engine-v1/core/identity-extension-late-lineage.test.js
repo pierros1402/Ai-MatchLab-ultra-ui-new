@@ -36,6 +36,31 @@ function loadCurrentPrimaryLedger() {
   return JSON.parse(fs.readFileSync(LEDGER, "utf8"));
 }
 
+function loadPrePromotionLedger() {
+  const ledger = clone(loadCurrentPrimaryLedger());
+  ledger.fixtureLineageDecisions =
+    (ledger.fixtureLineageDecisions || []).filter(
+      row =>
+        row.retainedRepositoryFixtureId !== RETAINED &&
+        !(row.suppressedRepositoryFixtureIds || []).includes(SUPPRESSED),
+    );
+
+  ledger.summary = {
+    ...(ledger.summary || {}),
+    promotedTeamBindings: (ledger.teamBindings || []).length,
+    fixtureLineageDecisions: (ledger.fixtureLineageDecisions || []).length,
+    suppressedFixtureAliases:
+      (ledger.fixtureLineageDecisions || []).reduce(
+        (sum, row) =>
+          sum +
+          (row.suppressedRepositoryFixtureIds || []).length,
+        0,
+      ),
+  };
+
+  return ledger;
+}
+
 function rennesPsgRows() {
   const filePath = path.join(CANONICAL_ROOT, RENNES_PSG_DAY, `${LEAGUE}.json`);
   const payload = JSON.parse(fs.readFileSync(filePath, "utf8"));
@@ -46,7 +71,7 @@ function rennesPsgRows() {
 
 function buildLateLineageArtifact() {
   const runtime = getProductionIdentityResolverRuntime();
-  const ledger = loadCurrentPrimaryLedger();
+  const ledger = loadPrePromotionLedger();
   const resolver = buildExtendedProductionIdentityResolver({
     baseResolver: runtime.baseResolver,
     ledger,
@@ -89,7 +114,11 @@ function dryRunLateLineagePromotion() {
     `${JSON.stringify(buildLateLineageArtifact(), null, 2)}\n`,
     "utf8",
   );
-  fs.copyFileSync(LEDGER, extensionLedgerPath);
+  fs.writeFileSync(
+    extensionLedgerPath,
+    `${JSON.stringify(loadPrePromotionLedger(), null, 2)}\n`,
+    "utf8",
+  );
 
   const runtime = getProductionIdentityResolverRuntime();
   return promoteIdentityRecoveryArtifact({

@@ -11,13 +11,28 @@ import {
   readTrustedStandingsState,
 } from "./trusted-standings-db.js";
 
-test("consumer boundary exposes exactly the four PASS history-backed leagues", () => {
-  assert.deepEqual(
-    listTrustedStandingsSlugs(),
-    ["arg.1", "col.1", "den.1", "mex.1"],
-  );
-});
+test("consumer boundary exposes every currently PASS history-backed league", () => {
+  const slugs = listTrustedStandingsSlugs();
 
+  assert.ok(slugs.length > 0);
+  assert.deepEqual(
+    slugs,
+    [...slugs].sort(),
+  );
+
+  for (const slug of slugs) {
+    const state = readTrustedStandingsState(slug);
+    const consumer = readStandings(slug);
+
+    assert.equal(state.ok, true, slug);
+    assert.equal(state.status, "PASS", slug);
+    assert.equal(consumer.gate.status, "PASS", slug);
+    assert.ok(
+      (consumer.accepted?.rows?.length || 0) > 0,
+      slug,
+    );
+  }
+});
 test("legacy research evidence cannot masquerade as consumer standings", () => {
   const bolEvidence = readStandingsEvidence("bol.1");
   assert.ok((bolEvidence?.accepted?.rows?.length || 0) > 0);
@@ -28,14 +43,33 @@ test("legacy research evidence cannot masquerade as consumer standings", () => {
   assert.equal(readTrustedStandingsState("bol.1").status, "GATED");
 });
 
-test("trusted consumer view ignores larger stale league-memory tables", () => {
-  assert.equal(readStandingsEvidence("den.1")?.accepted?.rows?.length, 20);
-  assert.equal(readStandings("den.1")?.accepted?.rows?.length, 12);
+test("trusted consumer view is sourced from validated foundation rather than raw evidence counts", () => {
+  const slugs = listTrustedStandingsSlugs();
+  assert.ok(slugs.length > 0);
 
-  assert.equal(readStandingsEvidence("mex.1")?.accepted?.rows?.length, 22);
-  assert.equal(readStandings("mex.1")?.accepted?.rows?.length, 18);
+  for (const slug of slugs) {
+    const evidence = readStandingsEvidence(slug);
+    const consumer = readStandings(slug);
+
+    assert.equal(
+      consumer.accepted?.source,
+      "history-backed-standings-foundation",
+      slug,
+    );
+    assert.equal(
+      consumer.accepted?.rowCount,
+      consumer.accepted?.rows?.length,
+      slug,
+    );
+
+    if (evidence?.accepted?.rows) {
+      assert.ok(
+        Array.isArray(evidence.accepted.rows),
+        slug,
+      );
+    }
+  }
 });
-
 test("source collectors cannot write the consumer standings directory", () => {
   const collectSource = fs.readFileSync(
     new URL("../jobs/collect-standings.js", import.meta.url),

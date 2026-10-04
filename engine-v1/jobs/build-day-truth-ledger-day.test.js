@@ -383,14 +383,28 @@ test(
 );
 
 test(
-  "dry-run builder never creates production day-truth-ledger storage",
+  "dry-run builder preserves production day-truth-ledger storage byte-for-byte",
   () => {
-    assert.equal(
-      fs.existsSync(
-        "data/day-truth-ledger"
-      ),
-      false
-    );
+    const ledgerRoot =
+      "data/day-truth-ledger";
+
+    const beforeExists =
+      fs.existsSync(ledgerRoot);
+
+    const beforeNames =
+      beforeExists
+        ? fs.readdirSync(ledgerRoot).sort()
+        : [];
+
+    const beforeBytes =
+      Object.fromEntries(
+        beforeNames.map(name => [
+          name,
+          fs.readFileSync(
+            `${ledgerRoot}/${name}`,
+          ),
+        ]),
+      );
 
     buildDayTruthLedgerDay({
       dayKey:
@@ -400,10 +414,28 @@ test(
     });
 
     assert.equal(
-      fs.existsSync(
-        "data/day-truth-ledger"
-      ),
-      false
+      fs.existsSync(ledgerRoot),
+      beforeExists,
     );
+
+    const afterNames =
+      beforeExists
+        ? fs.readdirSync(ledgerRoot).sort()
+        : [];
+
+    assert.deepEqual(
+      afterNames,
+      beforeNames,
+    );
+
+    for (const name of beforeNames) {
+      assert.deepEqual(
+        fs.readFileSync(
+          `${ledgerRoot}/${name}`,
+        ),
+        beforeBytes[name],
+        name,
+      );
+    }
   }
 );

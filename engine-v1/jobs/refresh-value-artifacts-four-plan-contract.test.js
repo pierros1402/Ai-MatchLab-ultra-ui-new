@@ -53,7 +53,7 @@ test(
 
     const buildIndex = tokenIndex(
       source,
-      "const adjustedPlans = await buildValueA2B2Day(date);",
+      "const adjustedPlans = await buildValueA2B2Day(date, {",
       "A2/B2 build"
     );
 
@@ -254,8 +254,10 @@ test(
     const source = readNormalized(builderFile);
 
     for (const token of [
-      'outputPath: resolveDataPath("value-plans", dayKey, "plan-a2.json")',
-      'auditPath: resolveDataPath("value-plans", dayKey, "plan-a2-audit.json")',
+      "outputPath: resolveDataPath(",
+      '"plan-a2.json"',
+      "auditPath: resolveDataPath(",
+      '"plan-a2-audit.json"',
       'outputMode: "plan-b2-observation"'
     ]) {
       requireToken(source, token);
@@ -280,7 +282,6 @@ test(
     );
   }
 );
-
 test(
   "A2/B2 builder success requires both plans",
   () => {
@@ -288,10 +289,13 @@ test(
 
     requireToken(
       source,
-      "ok: planA2?.ok === true && planB2?.ok === true"
+      "freshPlans.A2?.ok === true &&"
+    );
+    requireToken(
+      source,
+      "freshPlans.B2?.ok === true"
     );
 
-    requireToken(source, "A2: planA2,");
-    requireToken(source, "B2: planB2");
+    requireToken(source, "plans: freshPlans");
   }
 );

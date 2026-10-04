@@ -19,7 +19,7 @@ test("deploy snapshot enriches only its existing fixture universe", () => {
   assert.match(text, /enrichFixtureRowsFromDisplaySnapshot/u);
   assert.match(
     text,
-    /const fixtures = enrichFixtureRowsFromDisplaySnapshot\([\s\S]*?fixturesSnapshot\.fixtures/u
+    /const allFixtures = enrichFixtureRowsFromDisplaySnapshot\([\s\S]*?fixturesSnapshot\.fixtures/u
   );
 });
 

@@ -129,6 +129,29 @@ function productionTeamIdentityMatch(identityResolver, slug, a, b) {
   return leftId === rightId;
 }
 
+const ESTUDIANTES_LA_PLATA_ALIAS_KEYS = new Set([
+  normalizeTeamKey("Estudiantes de La Plata"),
+  normalizeTeamKey("Estudiantes La Plata"),
+  normalizeTeamKey("Estudiantes L.P."),
+]);
+
+function legacyTeamNamesMatchForLeague(slug, nameA, nameB) {
+  if (!teamNamesMatch(nameA, nameB)) return false;
+
+  const keyA = normalizeTeamKey(nameA);
+  const keyB = normalizeTeamKey(nameB);
+  const estudiantesScopedAlias =
+    keyA !== keyB &&
+    ESTUDIANTES_LA_PLATA_ALIAS_KEYS.has(keyA) &&
+    ESTUDIANTES_LA_PLATA_ALIAS_KEYS.has(keyB);
+
+  if (estudiantesScopedAlias) {
+    return String(slug || "").trim().toLowerCase() === "arg.1";
+  }
+
+  return true;
+}
+
 export function sameTeamName(slug, a, b, { identityResolver = null } = {}) {
   const rawA = String(a || "").trim();
   const rawB = String(b || "").trim();
@@ -155,7 +178,7 @@ export function sameTeamName(slug, a, b, { identityResolver = null } = {}) {
   const keyA = normalizeTeamKey(nameA);
   const keyB = normalizeTeamKey(nameB);
   if (keyA && keyA === keyB) return true;
-  if (teamNamesMatch(nameA, nameB)) return true;
+  if (legacyTeamNamesMatchForLeague(slug, nameA, nameB)) return true;
 
   // Alias-db link (learned or seeded aliases).
   try {
