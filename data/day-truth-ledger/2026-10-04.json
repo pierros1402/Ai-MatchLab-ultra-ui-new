@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-04",
-  "generatedAt": "2026-10-04T15:15:11.652Z",
+  "generatedAt": "2026-10-04T15:32:38.666Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "bb5672c3a36fdd4fc011f5ef97b96235b6f0c1ae96d97752153cab65c89a219e",
+  "truthFingerprint": "008d78f65838c1d106ab7b6006754a930e63085de904c675aa2d10d3de3c2e97",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -18,8 +18,8 @@
   "summary": {
     "canonicalRows": 129,
     "playedTerminal": 53,
-    "nonPlayedTerminal": 2,
-    "scheduled": 72,
+    "nonPlayedTerminal": 3,
+    "scheduled": 71,
     "live": 1,
     "interrupted": 1,
     "delayed": 0,
@@ -28,16 +28,16 @@
     "verifiedFinalArtifacts": 53,
     "acceptedVerifiedFinalArtifacts": 53,
     "convergedPlayedFinal": 51,
-    "convergedNonPlayedTerminal": 2,
+    "convergedNonPlayedTerminal": 3,
     "pendingVerifiedFinal": 0,
-    "openRows": 74,
+    "openRows": 73,
     "unresolvedRows": 0,
     "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 51,
     "scoredSettlementEligible": 51,
-    "voidSettlementEligible": 2
+    "voidSettlementEligible": 3
   },
   "fixtures": [
     {
@@ -1421,10 +1421,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 1,
+        "rawStatus": "STATUS_HALFTIME",
+        "scoreHome": 2,
         "scoreAway": 1
       },
       "verifiedFinal": {
@@ -2006,12 +2006,12 @@
       "homeTeam": "Olympiacos Piraeus B",
       "awayTeam": "Athens Kallithea",
       "kickoffUtc": "2026-10-04T15:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PRE_KICKOFF_NON_PLAYED",
+      "operationalState": "NON_PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
+        "status": "STATUS_POSTPONED",
+        "statusType": "STATUS_POSTPONED",
+        "rawStatus": "STATUS_POSTPONED",
         "scoreHome": null,
         "scoreAway": null
       },
@@ -2026,12 +2026,12 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "CONVERGED_NON_PLAYED_TERMINAL",
+        "reason": "explicit_nonplayed_terminal",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
-        "voidSettlementEligible": false,
+        "voidSettlementEligible": true,
         "repairAuthorized": false
       },
       "downstream": {
@@ -9490,7 +9490,7 @@
     },
     "convergence": {
       "overallState": "INCOMPLETE",
-      "truthFingerprint": "bb5672c3a36fdd4fc011f5ef97b96235b6f0c1ae96d97752153cab65c89a219e",
+      "truthFingerprint": "008d78f65838c1d106ab7b6006754a930e63085de904c675aa2d10d3de3c2e97",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
