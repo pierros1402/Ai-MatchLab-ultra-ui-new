@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-04",
-  "generatedAt": "2026-10-04T14:27:04.943Z",
+  "generatedAt": "2026-10-04T14:40:54.293Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "48e8d842c1fae63414d78f6d012a82feda8abdacb886862a3eee7978020e1e52",
+  "truthFingerprint": "88d79289536de35e73a77da0348ef5df3a458fff97953c8d0501ea693771f3ce",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,27 +17,27 @@
   },
   "summary": {
     "canonicalRows": 129,
-    "playedTerminal": 45,
-    "nonPlayedTerminal": 1,
-    "scheduled": 78,
-    "live": 4,
+    "playedTerminal": 47,
+    "nonPlayedTerminal": 2,
+    "scheduled": 76,
+    "live": 3,
     "interrupted": 1,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 45,
-    "acceptedVerifiedFinalArtifacts": 45,
-    "convergedPlayedFinal": 43,
-    "convergedNonPlayedTerminal": 1,
+    "verifiedFinalArtifacts": 47,
+    "acceptedVerifiedFinalArtifacts": 47,
+    "convergedPlayedFinal": 45,
+    "convergedNonPlayedTerminal": 2,
     "pendingVerifiedFinal": 0,
-    "openRows": 83,
+    "openRows": 80,
     "unresolvedRows": 0,
     "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 43,
-    "scoredSettlementEligible": 43,
-    "voidSettlementEligible": 1
+    "historyEligible": 45,
+    "scoredSettlementEligible": 45,
+    "voidSettlementEligible": 2
   },
   "fixtures": [
     {
@@ -1425,7 +1425,7 @@
         "statusType": null,
         "rawStatus": "STATUS_FIRST_HALF",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -1565,12 +1565,12 @@
       "homeTeam": "Atlético Unión Güímar",
       "awayTeam": "Sporting Hortaleza",
       "kickoffUtc": "2026-10-04T11:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PRE_KICKOFF_NON_PLAYED",
+      "operationalState": "NON_PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "SPECIAL",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
+        "rawStatus": "STATUS_POSTPONED",
         "scoreHome": null,
         "scoreAway": null
       },
@@ -1585,12 +1585,12 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "CONVERGED_NON_PLAYED_TERMINAL",
+        "reason": "explicit_nonplayed_terminal",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
-        "voidSettlementEligible": false,
+        "voidSettlementEligible": true,
         "repairAuthorized": false
       },
       "downstream": {
@@ -3182,31 +3182,31 @@
       "homeTeam": "VVV-Venlo",
       "awayTeam": "Roda JC Kerkrade",
       "kickoffUtc": "2026-10-04T12:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "LIVE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
-        "scoreHome": 1,
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 2,
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-04",
+        "scoreHome": 2,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3280,31 +3280,31 @@
       "homeTeam": "Bryne",
       "awayTeam": "Lyn",
       "kickoffUtc": "2026-10-04T12:30:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-04",
+        "scoreHome": 1,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -5341,9 +5341,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_IN_PROGRESS",
         "scoreHome": 2,
         "scoreAway": 1
       },
@@ -9490,13 +9490,13 @@
     },
     "convergence": {
       "overallState": "INCOMPLETE",
-      "truthFingerprint": "48e8d842c1fae63414d78f6d012a82feda8abdacb886862a3eee7978020e1e52",
+      "truthFingerprint": "88d79289536de35e73a77da0348ef5df3a458fff97953c8d0501ea693771f3ce",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 43,
+        "expectedEligibleRows": 45,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_blr2_bumpromgomel_minsk2_20261004",
@@ -9522,6 +9522,8 @@
           "cid_mex2_cancun_tapatio_20261004",
           "cid_mex2_durango_mineroszacatecas_20261004",
           "cid_mex2_piratas_alebrijesoaxaca_20261004",
+          "cid_ned2_vvvvenlo_rodajckerkrade_20261004",
+          "cid_nor2_bryne_lyn_20261004",
           "cid_por2_farense_chaves_20261004",
           "cid_rus2_velesmoscow_ulyanovsk_20261004",
           "cid_slv1_aguila_cacahuatique_20261004",
@@ -9604,7 +9606,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-04",
-      "fileCount": 45,
+      "fileCount": 47,
       "authority": "scored_final_evidence"
     },
     "downstream": {
