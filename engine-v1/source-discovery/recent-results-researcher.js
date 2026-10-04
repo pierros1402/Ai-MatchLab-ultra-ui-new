@@ -18,6 +18,7 @@ export function parseRecentResultEvidence(html, slug, nowMs) {
     if (!/^[a-zA-Z0-9]{6,16}$/.test(row.matchId) || !row.home || !row.away || row.home === row.away) { reject("INVALID_RESULT_IDENTITY"); continue; }
     const result = { providerMatchId: row.matchId, leagueSlug: slug, home: row.home, away: row.away,
       homeProviderTeamId: row.homeProviderTeamId, awayProviderTeamId: row.awayProviderTeamId,
+      homeProviderTeamSlug: row.homeProviderTeamSlug, awayProviderTeamSlug: row.awayProviderTeamSlug,
       kickoffUtc: row.kickoffUtc, scoreHome: row.scoreHome, scoreAway: row.scoreAway, status: "FT" };
     const old = byId.get(row.matchId);
     if (old && JSON.stringify(old) !== JSON.stringify(result)) conflicts.add(row.matchId);
@@ -32,7 +33,8 @@ export function parseRecentResultEvidence(html, slug, nowMs) {
       || !Number.isFinite(kickoff) || kickoff <= nowMs || kickoff > nowMs + 8 * 86400000) continue;
     if (![row.matchId, row.homeProviderTeamId, row.awayProviderTeamId].every(value => /^[a-zA-Z0-9]{6,16}$/.test(value || ""))) continue;
     const anchor = { providerMatchId: row.matchId, leagueSlug: slug, home: row.home, away: row.away,
-      homeProviderTeamId: row.homeProviderTeamId, awayProviderTeamId: row.awayProviderTeamId, kickoffUtc: row.kickoffUtc };
+      homeProviderTeamId: row.homeProviderTeamId, awayProviderTeamId: row.awayProviderTeamId,
+      homeProviderTeamSlug: row.homeProviderTeamSlug, awayProviderTeamSlug: row.awayProviderTeamSlug, kickoffUtc: row.kickoffUtc };
     const old = upcoming.get(row.matchId);
     if (old && JSON.stringify(old) !== JSON.stringify(anchor)) { conflicts.add(row.matchId); upcoming.delete(row.matchId); }
     else if (!conflicts.has(row.matchId)) upcoming.set(row.matchId, anchor);

@@ -104,7 +104,8 @@ export function selectPrematchResearchEvidence(documents, nowMs) {
     if (evidence.schema !== "ai-matchlab.recent-results-research.v1" || evidence.source !== "flashscore"
       || evidence.status !== "RESULTS_AWAIT_IDENTITY_VALIDATION" || !Number.isFinite(acquired)
       || acquired > nowMs || acquired < nowMs - 180 * 86400000 || !Array.isArray(evidence.rows) || evidence.rows.length > 1000) continue;
-    latest.set(evidence.leagueSlug, evidence);
+    // A partial team profile must not evict the league feed or its anchors.
+    latest.set(`${evidence.leagueSlug}|${evidence.teamBinding?.providerTeamId || "league"}`, evidence);
     for (const row of evidence.rows) {
       if (row.leagueSlug !== evidence.leagueSlug || ![row.homeProviderTeamId, row.awayProviderTeamId].every(x => /^[a-zA-Z0-9]{6,16}$/.test(x || ""))) continue;
       const key = `${row.leagueSlug}|${row.providerMatchId}`, identity = `${row.homeProviderTeamId}|${row.awayProviderTeamId}`;
@@ -116,7 +117,7 @@ export function selectPrematchResearchEvidence(documents, nowMs) {
   // current results page has paginated those games away. Every retained game is
   // revalidated against canonical and verified-final truth on every read.
   const rows = new Map(nativeHistory);
-  for (const evidence of latest.values()) for (const row of evidence.rows) {
+  for (const evidence of [...latest.values()].sort((a, b) => Date.parse(a.acquiredAt) - Date.parse(b.acquiredAt))) for (const row of evidence.rows) {
     if (row.leagueSlug === evidence.leagueSlug) rows.set(`${row.leagueSlug}|${row.providerMatchId}`, row);
   }
   for (const key of conflicts) rows.delete(key);

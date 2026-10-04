@@ -4,6 +4,41 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { runValueDataAlarmDay } from "./run-value-data-alarm-day.js";
+test("team research is consumed in the same cycle but raw findings cannot close an incident", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-team-cycle-"));
+  const day = "2099-10-04", nowMs = Date.parse(`${day}T08:00Z`);
+  const fixture = { canonicalId: "cid_team_cycle", leagueSlug: "egy.2", homeTeam: "A", awayTeam: "B",
+    kickoffUtc: `${day}T14:00Z`, providerIds: { flashscore: "match001" } };
+  const candidateFile = path.join(root, day, "egy.2.team-native01.egy.2.results.research.json");
+  let produced = 0, researched = 0;
+  const dependencies = { queueRoot: root, fixtures: () => [fixture], assessments: () => [], standings: () => ({ ok: false }),
+    supplement: () => {
+      produced++;
+      if (produced === 2) assert.ok(fs.existsSync(candidateFile), "second production pass must see persisted research");
+      return { assessmentRowsWritten: 0, unavailableEvidence: [{ canonicalId: fixture.canonicalId, homeSample: 1, awaySample: 6 }] };
+    }, primarySearch: async () => ({ ok: true }), search: async () => ({ status: "NO_SOURCE" }),
+    resultsSearch: async () => ({ rows: [], upcomingAnchors: [{ leagueSlug: "egy.2", providerMatchId: "match001",
+      kickoffUtc: fixture.kickoffUtc, home: "A", away: "B", homeProviderTeamId: "native01", homeProviderTeamSlug: "team-a" }] }),
+    teamHistorySearch: async () => {
+      researched++;
+      return { status: "TEAM_RESULTS_AWAIT_CANONICAL_FINAL_VALIDATION", documents: [{ leagueSlug: "egy.2", rows: [{ providerMatchId: "result01" }] }] };
+    } };
+  try {
+    const result = await runValueDataAlarmDay(day, { write: true, research: true, nowMs, lookAheadDays: 0, dependencies });
+    assert.equal(produced, 2);
+    assert.equal(researched, 1, "consumption must not recursively perform another acquisition");
+    assert.equal(result.report.postResearchReevaluation, true);
+    assert.equal(result.report.futureOpen, 1);
+    assert.notEqual(result.queue.incidents[fixture.canonicalId].status, "RESOLVED");
+    assert.equal(result.report.days[0].joined, 0);
+    assert.equal(result.report.teamHistoryResearch[0].attempts.length, 1);
+    assert.ok(result.queue.teamHistoryAttempts["egy.2|native01"]);
+  } finally {
+    assert.ok(path.resolve(root).startsWith(path.resolve(os.tmpdir()) + path.sep));
+    fs.rmSync(root, { recursive: true });
+  }
+});
+
 test("alarm scans previous-day readiness for the next week, persists before research, and retains failures across days", async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-alarm-test-"));
   const id = "cid_alarm_future_20991004";

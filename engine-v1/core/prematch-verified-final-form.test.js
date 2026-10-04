@@ -23,6 +23,18 @@ test("dated native evidence survives provider pagination while conflicting, futu
   assert.equal(selectPrematchResearchEvidence([{ ...old, acquiredAt: "2026-10-02T12:00Z" }, { ...old, acquiredAt: "2025-10-01T12:00Z" }], now).candidates.length, 0);
 });
 
+test("partial team research preserves league evidence and upcoming identity anchors", () => {
+  const league = { schema: "ai-matchlab.recent-results-research.v1", source: "flashscore", status: "RESULTS_AWAIT_IDENTITY_VALIDATION",
+    leagueSlug: "egy.2", acquiredAt: "2026-10-01T10:00Z", rows: [candidate], upcomingAnchors: [{ providerMatchId: "future01" }] };
+  const team = { ...league, acquiredAt: "2026-10-01T12:00Z", teamBinding: { providerTeamId: "native01" },
+    rows: [{ ...candidate, providerMatchId: "teamonly" }], upcomingAnchors: [] };
+  const result = selectPrematchResearchEvidence([team, league], now);
+  assert.deepEqual(result.candidates.map(r => r.providerMatchId).sort(), ["abcd1234", "teamonly"]);
+  assert.deepEqual(result.anchors, league.upcomingAnchors);
+  const updatedLeague = { ...league, acquiredAt: "2026-10-01T13:00Z", rows: [{ ...team.rows[0], scoreHome: 3 }] };
+  assert.equal(selectPrematchResearchEvidence([updatedLeague, team], now).candidates[0].scoreHome, 3);
+});
+
 test("a missing model-history row requires committed exact canonical and verified-final parity", () => {
   const result = validatePrematchFinalForm(candidate, canonical, final, now);
   assert.equal(result.ok, true);
