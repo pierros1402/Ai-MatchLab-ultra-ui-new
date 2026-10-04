@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-05",
-  "generatedAt": "2026-10-04T22:40:50.495Z",
+  "generatedAt": "2026-10-04T22:57:58.954Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "6337bee35abdc0897c62c5f1d354f4a03e147a05863ac7fd863fc3bfbbfd1bbb",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "666ed51d5540940ef2d54bad1ee49e712dd651bd02d5b0fd47266e8ec5d33e87",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -19,20 +19,20 @@
     "canonicalRows": 39,
     "playedTerminal": 0,
     "nonPlayedTerminal": 0,
-    "scheduled": 32,
-    "live": 6,
+    "scheduled": 31,
+    "live": 7,
     "interrupted": 1,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 0,
-    "acceptedVerifiedFinalArtifacts": 0,
+    "verifiedFinalArtifacts": 3,
+    "acceptedVerifiedFinalArtifacts": 3,
     "convergedPlayedFinal": 0,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 39,
+    "openRows": 36,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 3,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 0,
@@ -294,9 +294,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -395,22 +395,22 @@
         "status": "SECOND_HALF",
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 3,
+        "scoreHome": 4,
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-05",
+        "scoreHome": 4,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -546,18 +546,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-05",
+        "scoreHome": 1,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1134,18 +1134,18 @@
         "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-05",
+        "scoreHome": 2,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1810,14 +1810,14 @@
       "homeTeam": "Racing (Montevideo)",
       "awayTeam": "Peñarol",
       "kickoffUtc": "2026-10-04T22:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1831,7 +1831,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1955,7 +1955,11 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_col1_cucutadeportivo_deportivopereira_20261005",
+      "cid_col2_tigres_interpalmira_20261005",
+      "cid_slv1_platense_municipallimeno_20261005"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -4497,7 +4501,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "6337bee35abdc0897c62c5f1d354f4a03e147a05863ac7fd863fc3bfbbfd1bbb",
+      "truthFingerprint": "666ed51d5540940ef2d54bad1ee49e712dd651bd02d5b0fd47266e8ec5d33e87",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -4564,7 +4568,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-05",
-      "fileCount": 0,
+      "fileCount": 3,
       "authority": "scored_final_evidence"
     },
     "downstream": {
