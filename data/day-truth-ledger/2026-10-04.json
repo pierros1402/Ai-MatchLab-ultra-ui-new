@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-04",
-  "generatedAt": "2026-10-04T04:09:07.117Z",
+  "generatedAt": "2026-10-04T04:14:20.434Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "57c6eae0390883e44114065489aed1b8d46526187db48b5c683117b1a31aaf01",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "5ea65c4100a50c4b7be79da0be07bcc9dafd984492e2167f23f5088988d02a94",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -27,16 +27,16 @@
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 24,
     "acceptedVerifiedFinalArtifacts": 24,
-    "convergedPlayedFinal": 24,
+    "convergedPlayedFinal": 23,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
     "openRows": 103,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 24,
-    "scoredSettlementEligible": 24,
+    "historyEligible": 23,
+    "scoredSettlementEligible": 23,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -1041,16 +1041,16 @@
         "reason": "verified_final_result",
         "verdict": "verified_final_result",
         "dayKey": "2026-10-04",
-        "scoreHome": 0,
+        "scoreHome": 2,
         "scoreAway": 3,
-        "scoreParity": true
+        "scoreParity": false
       },
       "decision": {
-        "status": "CONVERGED_PLAYED_FINAL",
-        "reason": "canonical_and_verified_final_converged",
+        "status": "CONFLICT",
+        "reason": "canonical_verified_final_score_mismatch",
         "operationallyClosed": true,
-        "historyEligible": true,
-        "scoredSettlementEligible": true,
+        "historyEligible": false,
+        "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -6267,7 +6267,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_col2_cartagena_bocajuniors_20261004"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -9551,20 +9553,19 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "57c6eae0390883e44114065489aed1b8d46526187db48b5c683117b1a31aaf01",
+      "truthFingerprint": "5ea65c4100a50c4b7be79da0be07bcc9dafd984492e2167f23f5088988d02a94",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 24,
+        "expectedEligibleRows": 23,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_bra1_atleticomg_redbullbragantino_20261004",
           "cid_bra2_botafogosp_vilanova_20261004",
           "cid_chi2_santacruz_sanmarcosarica_20261004",
           "cid_col1_deportestolima_boyacachico_20261004",
-          "cid_col2_cartagena_bocajuniors_20261004",
           "cid_gua1_cobanimperial_malacateco_20261004",
           "cid_gua1_xelajumc_deportivosanpedro_20261004",
           "cid_mex2_atleticomorelia_tlaxcala_20261004",
