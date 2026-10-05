@@ -138,6 +138,8 @@ export function parseFlashscoreFeed(text) {
         away: f.AF.trim(),
         homeProviderTeamId: f.PX || null,
         awayProviderTeamId: f.PY || null,
+        homeProviderTeamSlug: f.WU || null,
+        awayProviderTeamSlug: f.WV || null,
         kickoffUtc,
         kickoffTs: Number.isFinite(ts) ? ts : null,
         scoreHome,

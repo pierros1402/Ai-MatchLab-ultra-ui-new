@@ -12,6 +12,8 @@ import { athensDayKey } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { getOddsForDay } from "../storage/odds-memory-db.js";
 import { assessmentIdentityFields } from "../storage/assessment-read-view.js";
+import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
+import { resolveCanonicalAssessmentOwnership } from "../core/plan-b-canonical-membership.js";
 import {
   overlayProductionEvidenceDocumentReadView,
 } from "../core/production-evidence-identity-overlay.js";
@@ -65,7 +67,9 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
   ensureDir(dir);
 
   const file = resolveDataPath("deploy-snapshots", dayKey, "odds.json");
-  const candidateMatches = Array.isArray(day?.matches) ? day.matches : [];
+  const canonical = canonicalFixturesForDay(dayKey);
+  const ownership = resolveCanonicalAssessmentOwnership(canonical, Array.isArray(day?.matches) ? day.matches : []);
+  const candidateMatches = ownership.matches;
   const hash = contentHash(candidateMatches);
 
   let existing = null;
@@ -81,7 +85,7 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
 
   if (existing) {
     const existingMatches = Array.isArray(existing?.matches) ? existing.matches : [];
-    const regressionReason = snapshotRegressionReason(existingMatches, candidateMatches);
+    const regressionReason = snapshotRegressionReason(resolveCanonicalAssessmentOwnership(canonical, existingMatches).matches, candidateMatches);
     if (regressionReason) {
       return {
         ok: true,
@@ -115,6 +119,7 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
     hash,
     count: candidateMatches.length,
     assessmentRows: assessmentRowCount(candidateMatches),
+    assessmentOwnership: { supersededLegacyAssessments: ownership.superseded.length, decisions: ownership.superseded },
     matches: candidateMatches
   };
 

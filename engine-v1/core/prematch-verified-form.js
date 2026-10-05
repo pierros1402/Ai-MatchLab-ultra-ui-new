@@ -119,6 +119,7 @@ export function createPrematchVerifiedEvidence(nowMs) {
   const index = checked.index;
   const clubCrossForm = createCrossCompetitionFormResolver({ resultDocuments: verifiedHistoryResultDocuments(index, nowMs) });
   return { verifiedFinalForm: recentFinals.summary, historyCompetitionValidation: checked.summary,
+    providerIdentityLinker: recentFinals.providerIdentityLinker,
     formFn: (slug, team) => verifiedFormRates(index, slug, team, nowMs),
     crossFormFn: (slug, team, window, options) => verifiedNationalForm(index, slug, team, nowMs, window) || clubCrossForm(slug, team, window, options) };
 }

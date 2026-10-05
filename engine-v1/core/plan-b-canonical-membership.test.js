@@ -69,7 +69,8 @@ test("Plan B joins assessment only through an exact canonical identity", () => {
     canonicalRowsWithoutAssessment: 0,
     ambiguousCanonicalMatches: 0,
     canonicalRowsMissingIdentity: 0,
-    ambiguousAssessmentAliases: 0
+    ambiguousAssessmentAliases: 0,
+    supersededLegacyAssessments: 0
   });
 
   assert.equal(result.joinedMatches[0].canonicalId, "cid_fin1_hjk_ilves_20260701");

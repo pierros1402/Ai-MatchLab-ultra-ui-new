@@ -1,7 +1,7 @@
 {
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison-cumulative.v1",
-  "generatedAt": "2026-10-03T17:25:10.349Z",
+  "generatedAt": "2026-10-05T13:59:32.517Z",
   "note": "Rolled-up immutable Plan A vs Plan B observations for the full trial window. Historical minimum-sample exclusions are applied only to derived statistics; frozen observations remain immutable. Snapshot-integrity warnings remain diagnostics.",
   "historicalStatisticsCorrection": {
     "active": true,
@@ -39,9 +39,9 @@
     "correctedStatisticalPopulation": 401
   },
   "trialStartDay": "2026-07-05",
-  "dayCount": 85,
+  "dayCount": 87,
   "firstDay": "2026-07-05",
-  "lastDay": "2026-10-03",
+  "lastDay": "2026-10-05",
   "requireIntegrityClean": false,
   "requireImmutablePlanA": true,
   "daysIncluded": [
@@ -129,7 +129,9 @@
     "2026-09-30",
     "2026-10-01",
     "2026-10-02",
-    "2026-10-03"
+    "2026-10-03",
+    "2026-10-04",
+    "2026-10-05"
   ],
   "daysExcluded": [
     {
@@ -1024,7 +1026,7 @@
         "ok": false,
         "reason": "invariant_report_stale",
         "checkedAt": "2026-09-28T20:48:45.724Z",
-        "manifestGeneratedAt": "2026-10-02T17:52:09.282Z"
+        "manifestGeneratedAt": "2026-10-04T18:40:42.829Z"
       }
     },
     {
@@ -1057,28 +1059,51 @@
           "snapshot_stale"
         ]
       }
+    },
+    {
+      "dayKey": "2026-10-03",
+      "reason": "build_report_not_clean",
+      "details": {
+        "ok": false,
+        "reason": "build_report_not_clean",
+        "hardFailures": [
+          "foundation_publication_not_ready",
+          "snapshot_stale"
+        ]
+      }
+    },
+    {
+      "dayKey": "2026-10-04",
+      "reason": "build_report_not_clean",
+      "details": {
+        "ok": false,
+        "reason": "build_report_not_clean",
+        "hardFailures": [
+          "snapshot_stale"
+        ]
+      }
     }
   ],
-  "integrityWarningDayCount": 72,
+  "integrityWarningDayCount": 74,
   "plans": {
     "A": {
       "id": "plan-a",
       "label": "Plan A - frozen production observation",
       "totals": {
-        "picks": 318,
-        "uniqueMatches": 304,
-        "settled": 309,
-        "wins": 205,
-        "losses": 104,
+        "picks": 322,
+        "uniqueMatches": 308,
+        "settled": 318,
+        "wins": 211,
+        "losses": 107,
         "voids": 2,
-        "unresolved": 7,
+        "unresolved": 2,
         "unsupported": 0,
-        "oddsAvailable": 157,
-        "totalStake": 157,
-        "totalReturn": 161.91000000000003,
-        "profit": 4.91,
-        "hitRate": 0.6634,
-        "roi": 0.0313
+        "oddsAvailable": 165,
+        "totalStake": 165,
+        "totalReturn": 169.69000000000003,
+        "profit": 4.690000000000001,
+        "hitRate": 0.6635,
+        "roi": 0.0284
       }
     },
     "B": {
@@ -1103,11 +1128,11 @@
     }
   },
   "comparison": {
-    "picksDeltaPlanBMinusPlanA": -119,
-    "settledDeltaPlanBMinusPlanA": -110,
-    "winsDeltaPlanBMinusPlanA": -64,
-    "lossesDeltaPlanBMinusPlanA": -46,
-    "hitRateDeltaPlanBMinusPlanA": 0.0451,
-    "roiDeltaPlanBMinusPlanA": 0.3346
+    "picksDeltaPlanBMinusPlanA": -123,
+    "settledDeltaPlanBMinusPlanA": -119,
+    "winsDeltaPlanBMinusPlanA": -70,
+    "lossesDeltaPlanBMinusPlanA": -49,
+    "hitRateDeltaPlanBMinusPlanA": 0.045,
+    "roiDeltaPlanBMinusPlanA": 0.3375
   }
 }

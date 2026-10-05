@@ -47,3 +47,18 @@ test("urgent evidence retries cannot sleep past kickoff or starve other due leag
   assert.equal(Date.parse(q.research[first.key].nextAttemptAt) - now, 15 * 60000);
   assert.equal(dueValueDataResearch(q, now + 60000, 2).length, 1, "the rate limit still applies");
 });
+
+test("early fixture acquisition keeps a bounded slot while urgent failures recur", () => {
+  const rows = [fixture, { ...fixture, canonicalId: "cid_urgent_two", leagueSlug: "urgent.2" },
+    { ...fixture, canonicalId: "cid_early_one", leagueSlug: "early.1", kickoffUtc: "2026-10-06T10:00Z" },
+    { ...fixture, canonicalId: "cid_early_two", leagueSlug: "early.2", kickoffUtc: "2026-10-07T10:00Z" }];
+  const q = update(null, rows);
+  const first = dueValueDataResearch(q, now, 2);
+  assert.equal(first.length, 2);
+  assert.equal(first[0].incidents[0].leagueSlug, "test.1");
+  assert.equal(first[1].incidents[0].leagueSlug, "early.1");
+  recordValueDataResearch(q, first[1], { status: "failed" }, now);
+  const next = dueValueDataResearch(q, now + 60000, 2);
+  assert.equal(next[1].incidents[0].leagueSlug, "early.2");
+  assert.equal(dueValueDataResearch(q, now + 60000, 1)[0].incidents[0].leagueSlug, "test.1");
+});

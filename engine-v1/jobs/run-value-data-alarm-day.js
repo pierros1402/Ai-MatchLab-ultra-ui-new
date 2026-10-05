@@ -21,12 +21,14 @@ function save(file, data) {
 
 export async function runValueDataAlarmDay(dayKey, { write = false, research = false, applyVerifiedContracts = false, nowMs = Date.now(), lookAheadDays = 7, maxResearchLeagues = 2, dependencies = {} } = {}) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dayKey) || lookAheadDays < 0 || lookAheadDays > 14) throw new Error("invalid_alarm_window");
+  if (!Number.isInteger(maxResearchLeagues) || maxResearchLeagues < 1 || maxResearchLeagues > 12) throw new Error("invalid_research_league_limit");
   if (research && !write) throw new Error("research_requires_persisted_alarm");
   const root = dependencies.queueRoot || resolveDataPath("value-data-acquisition");
   const queueFile = path.join(root, "queue.json");
   let queue = fs.existsSync(queueFile) ? load(queueFile) : null;
   queue = updateValueDataAlarm(queue, { dayKey, fixtures: [], joinedIds: [], nowMs });
-  const days = [], oddsWrittenDays = [], diagnoses = {}, acquisitionErrors = [];
+  const days = [], oddsWrittenDays = [], diagnoses = {}, acquisitionErrors = [], researchFixtures = [], teamHistoryResearch = [];
+  let researchDocumentsWritten = 0;
   let verifiedEvidence, historicalFormPreparation;
   let competitionContractPreparation = null;
   if (write && applyVerifiedContracts) {
@@ -39,6 +41,7 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
   for (let offset = 0; offset <= lookAheadDays; offset++) {
     const day = new Date(Date.parse(`${dayKey}T12:00:00Z`) + offset * 86400000).toISOString().slice(0, 10);
     const fixtures = (dependencies.fixtures || canonicalFixturesForDay)(day);
+    researchFixtures.push(...fixtures);
     if (!fixtures.length) { days.push({ day, fixtures: 0, status: "FIXTURE_DISCOVERY_PENDING" }); continue; }
     for (const row of fixtures) {
       const slug = row.leagueSlug;
@@ -128,6 +131,34 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
         evidence.requiredTeamEvidence = task.incidents.map(row => ({ canonicalId: row.canonicalId,
           home: row.home, away: row.away, diagnosis: row.modelInputDiagnosis || null }));
         save(path.join(root, dayKey, `${incident.leagueSlug}.results.research.json`), evidence);
+        if (evidence.rows?.length) researchDocumentsWritten++;
+        if (!dependencies.resultsSearch || dependencies.teamHistorySearch) {
+          // A newly acquired league feed may supply the native identity proof
+          // needed to research an ESPN-only fixture's team in this same cycle.
+          if (evidence.rows?.length && !dependencies.supplement) {
+            try { verifiedEvidence = createPrematchVerifiedEvidence(Math.max(nowMs, Date.now())); }
+            catch (error) { acquisitionErrors.push({ day: dayKey, stage: "research_evidence_validation", error: error.message }); }
+          }
+          const { selectTeamHistoryTargets, researchTeamHistory } = await import("../source-discovery/team-history-researcher.js");
+          queue.teamHistoryAttempts ||= {};
+          const selection = selectTeamHistoryTargets(evidence, task.incidents, researchFixtures, queue.teamHistoryAttempts, nowMs, 2, verifiedEvidence?.providerIdentityLinker);
+          const attempts = [];
+          for (const target of selection.targets) {
+            const teamEvidence = await (dependencies.teamHistorySearch || researchTeamHistory)(target, { nowMs });
+            save(path.join(root, dayKey, `${incident.leagueSlug}.team-${target.providerTeamId}.research.json`), teamEvidence);
+            for (const doc of teamEvidence.documents || []) {
+              if (!/^[a-zA-Z0-9_.-]+$/.test(doc.leagueSlug || "")) throw new Error("invalid_team_history_competition");
+              save(path.join(root, dayKey, `${incident.leagueSlug}.team-${target.providerTeamId}.${doc.leagueSlug}.results.research.json`), doc);
+              if (doc.rows?.length) researchDocumentsWritten++;
+            }
+            const attempt = { attemptedAt: new Date(nowMs).toISOString(), team: target.team, status: teamEvidence.status,
+              observedRecentResults: teamEvidence.observedRecentResults || 0, unmappedCompetitions: teamEvidence.unmappedCompetitions || [],
+              documents: teamEvidence.documents?.length || 0, url: teamEvidence.url };
+            queue.teamHistoryAttempts[target.key] = attempt; attempts.push(attempt);
+            save(queueFile, queue);
+          }
+          teamHistoryResearch.push({ leagueSlug: incident.leagueSlug, attempts, deferred: selection.deferred, unresolved: selection.unresolved });
+        }
         recentResults = { status: evidence.status, rows: evidence.rows?.length || 0, url: evidence.url,
           valueInputVerified: false, authorityPromotionAllowed: false };
       } catch (error) { recentResults = { status: "SOURCE_REQUEST_FAILED", error: error.message }; }
@@ -153,15 +184,29 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
     researchTasks: researchTasks.map(task => ({ key: task.key, fixtures: task.incidents.length })),
     fixtureDiscoveryPendingDays: days.filter(row => row.status === "FIXTURE_DISCOVERY_PENDING").map(row => row.day),
     readinessComplete: open.length === 0 && days.every(row => row.status !== "FIXTURE_DISCOVERY_PENDING"),
-    days, oddsWrittenDays, acquisitionErrors, competitionContractPreparation, historicalFormPreparation: historicalFormPreparation || null,
+    days, oddsWrittenDays, acquisitionErrors, teamHistoryResearch, competitionContractPreparation, historicalFormPreparation: historicalFormPreparation || null,
     verifiedFinalForm: verifiedEvidence?.verifiedFinalForm || null,
     historyCompetitionValidation: verifiedEvidence?.historyCompetitionValidation || null, frozenPredictionsRegenerated: false,
     resolvedOnlyByVerifiedAssessmentJoin: true, incidentsExpireAutomatically: false };
   if (write) { save(queueFile, queue); save(path.join(root, `${dayKey}.json`), report); }
+  if (research && researchDocumentsWritten > 0) {
+    // Consume newly discovered evidence in this cycle, with a fresh time guard
+    // so research crossing kickoff cannot create a post-kickoff prediction.
+    const consumed = await runValueDataAlarmDay(dayKey, { write, research: false, nowMs: Math.max(nowMs, Date.now()),
+      lookAheadDays, maxResearchLeagues, dependencies });
+    Object.assign(consumed.report, { research: true, researchTasks: report.researchTasks, teamHistoryResearch,
+      postResearchReevaluation: true, oddsWrittenDays: [...new Set([...oddsWrittenDays, ...consumed.report.oddsWrittenDays])],
+      acquisitionErrors: [...acquisitionErrors, ...consumed.report.acquisitionErrors], competitionContractPreparation,
+      historicalFormPreparation: historicalFormPreparation?.changed ? historicalFormPreparation : consumed.report.historicalFormPreparation });
+    save(path.join(root, `${dayKey}.json`), consumed.report);
+    return consumed;
+  }
   return { report, queue };
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const { report } = await runValueDataAlarmDay(process.argv[2], { write: process.argv.includes("--write"), research: process.argv.includes("--research"), applyVerifiedContracts: process.argv.includes("--apply-verified-contracts") });
+  const limitIndex = process.argv.indexOf("--max-research-leagues");
+  const { report } = await runValueDataAlarmDay(process.argv[2], { write: process.argv.includes("--write"), research: process.argv.includes("--research"), applyVerifiedContracts: process.argv.includes("--apply-verified-contracts"),
+    maxResearchLeagues: limitIndex < 0 ? 2 : Number(process.argv[limitIndex + 1]) });
   console.log(JSON.stringify(report, null, 2));
 }

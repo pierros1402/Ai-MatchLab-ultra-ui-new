@@ -13,6 +13,10 @@ on:
         type: boolean
         default: false
         description: "Apply reviewed primary-source team-count evidence with full standings validation."
+      maxResearchLeagues:
+        type: string
+        default: "2"
+        description: "Bounded catch-up research: 1–12 leagues. Scheduled runs keep the default of 2."
 permissions:
   contents: write
 concurrency:
@@ -39,6 +43,7 @@ jobs:
         env:
           DAY_KEY: ${{ inputs.dayKey }}
           VALUE_APPLY_VERIFIED_CONTRACTS: ${{ inputs.applyVerifiedContracts }}
+          VALUE_MAX_RESEARCH_LEAGUES: ${{ inputs.maxResearchLeagues }}
         run: bash tools/persist-value-data-alarm.sh "$DAY_KEY"
       - uses: actions/upload-artifact@v4
         if: always()

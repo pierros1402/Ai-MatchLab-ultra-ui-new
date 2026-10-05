@@ -154,7 +154,7 @@ const SOURCE_BINDINGS = Object.freeze({
   oddsSnapshotExporter: Object.freeze({
     path: "engine-v1/jobs/export-odds-snapshot-day.js",
     sha256:
-      "164c19943c0c25002fac93f711652f8dea112cf68e628e986d6a9930daee5d18",
+      "8ebfafb7cc96fa4fde9727571cf9aaf1b94acd22628e6a95a22fa04338a71b8f",
     exports: Object.freeze(["exportOddsSnapshotDay"]),
   }),
   deploySnapshotOddsPureBuilder: Object.freeze({

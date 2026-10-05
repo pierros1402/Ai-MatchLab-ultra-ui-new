@@ -23,6 +23,20 @@ test("dated native evidence survives provider pagination while conflicting, futu
   assert.equal(selectPrematchResearchEvidence([{ ...old, acquiredAt: "2026-10-02T12:00Z" }, { ...old, acquiredAt: "2025-10-01T12:00Z" }], now).candidates.length, 0);
 });
 
+test("partial team research preserves league evidence and upcoming identity anchors", () => {
+  const league = { schema: "ai-matchlab.recent-results-research.v1", source: "flashscore", status: "RESULTS_AWAIT_IDENTITY_VALIDATION",
+    leagueSlug: "egy.2", acquiredAt: "2026-10-01T10:00Z", rows: [candidate], upcomingAnchors: [{ providerMatchId: "future01", leagueSlug: "egy.2", kickoffUtc: "2026-10-02T12:00Z" }] };
+  const team = { ...league, acquiredAt: "2026-10-01T12:00Z", teamBinding: { providerTeamId: "native01" },
+    rows: [{ ...candidate, providerMatchId: "teamonly" }], upcomingAnchors: [] };
+  const result = selectPrematchResearchEvidence([team, league], now);
+  assert.deepEqual(result.candidates.map(r => r.providerMatchId).sort(), ["abcd1234", "teamonly"]);
+  assert.deepEqual(result.anchors, league.upcomingAnchors);
+  assert.deepEqual(selectPrematchResearchEvidence([league, { ...league, acquiredAt: "2026-10-01T14:00Z", upcomingAnchors: [] }], now).anchors,
+    league.upcomingAnchors, "pagination cannot remove a recently verified fixture identity anchor");
+  const updatedLeague = { ...league, acquiredAt: "2026-10-01T13:00Z", rows: [{ ...team.rows[0], scoreHome: 3 }] };
+  assert.equal(selectPrematchResearchEvidence([updatedLeague, team], now).candidates[0].scoreHome, 3);
+});
+
 test("a missing model-history row requires committed exact canonical and verified-final parity", () => {
   const result = validatePrematchFinalForm(candidate, canonical, final, now);
   assert.equal(result.ok, true);
@@ -71,6 +85,38 @@ test("continuity supports both canonical spellings without double-counting oppon
   const ambiguous = collectPrematchFinalForm(base, candidates, now, { ...deps, anchors: [anchor],
     fixturesForDay: () => [...canonicals, upcoming, { ...upcoming, canonicalId: "cid_duplicate_future" }] });
   assert.equal(ambiguous.summary.identityReadViewRows, 0);
+});
+
+test("proved team names expose other stored finals only after individual parity checks", () => {
+  const canonicals = [10, 17, 24].map(day => ({ ...canonical, canonicalId: `cid_stored_${day}`, dayKey: `2026-09-${day}`,
+    kickoffUtc: `2026-09-${day}T13:30Z`, homeTeam: "Old Name", sourceMatchId: `stored${day}`, providerIds: { flashscore: `stored${day}` } }));
+  const finals = canonicals.map(c => ({ ...final, matchId: c.canonicalId, dayKey: c.dayKey, homeTeam: c.homeTeam,
+    kickoffUtc: c.kickoffUtc, generatedAt: `${c.dayKey}T19:00Z` }));
+  const candidates = canonicals.map(c => ({ ...candidate, providerMatchId: c.sourceMatchId, kickoffUtc: c.kickoffUtc,
+    home: "New Name", away: "B", homeProviderTeamId: "native01", awayProviderTeamId: "native02" }));
+  const anchor = { providerMatchId: "future01", leagueSlug: "egy.2", kickoffUtc: "2026-10-02T12:30Z", home: "New Name", away: "B",
+    homeProviderTeamId: "native01", awayProviderTeamId: "native02" };
+  const upcoming = { ...canonical, canonicalId: "cid_upcoming", homeTeam: "New Name", kickoffUtc: anchor.kickoffUtc,
+    sourceMatchId: "future01", providerIds: { flashscore: "future01" } };
+  const deps = { fixturesForDay: () => [...canonicals, upcoming], finalForFixture: (_, id) => finals.find(f => f.matchId === id) };
+  const base = collectPrematchFinalForm({}, candidates, now, deps).index;
+  canonicals[2].providerIds = { espn: "401123456" }; canonicals[2].source = "espn"; canonicals[2].sourceMatchId = "401123456";
+  const before = JSON.stringify({ base, canonicals, finals });
+  const recovered = collectPrematchFinalForm(base, candidates.slice(0, 2), now, { ...deps, anchors: [anchor] });
+  assert.equal(recovered.summary.propagatedIdentityReadViewRows, 1);
+  const view = recovered.index["New Name"].matches.find(row => row.id === "cid_stored_24");
+  assert.equal(view.providerMatchId, undefined, "an ESPN-only row must not acquire an invented Flashscore ID");
+  assert.equal(view.modelIdentityReadView.changes[0].proofCanonicalIds.length, 2);
+  const merged = mergeVerifiedFormIndexes([base, recovered.index]);
+  assert.equal(verifiedFormRates(merged, "egy.2", "New Name", now).sample, 3);
+  assert.equal(verifiedFormRates(merged, "egy.2", "Old Name", now).sample, 3);
+  assert.equal(verifiedFormRates(merged, "egy.2", "B", now).sample, 3);
+  assert.equal(JSON.stringify({ base, canonicals, finals }), before);
+  for (const changed of [null, { ...finals[2], scoreHome: 9 }, { ...finals[2], generatedAt: "2026-10-03T19:00Z" }]) {
+    const denied = collectPrematchFinalForm(base, candidates.slice(0, 2), now, { ...deps, anchors: [anchor],
+      finalForFixture: (day, id) => id === "cid_stored_24" ? changed : deps.finalForFixture(day, id) });
+    assert.equal(denied.summary.propagatedIdentityReadViewRows, 0);
+  }
 });
 
 test("final bridge deduplicates indexed games and rejects ambiguous provider identity without writing history", () => {

@@ -131,12 +131,53 @@ function canonicalJoinedRow(canonicalFixture, assessmentRow) {
   };
 }
 
+export function resolveCanonicalAssessmentOwnership(canonicalFixtures = [], rows = []) {
+  const authoritativeSources = new Set(["canonical_fixture_trusted_standings", "canonical_fixture_team_form_fallback", "canonical_fixture_cross_competition_team_form_fallback"]);
+  const owners = new Map(), groups = new Map(), suppressed = new Map();
+  for (const fixture of canonicalFixtures) for (const alias of exactFixtureAliases(fixture)) {
+    const set = owners.get(alias) || new Set(); set.add(fixture); owners.set(alias, set);
+  }
+  for (const row of rows.filter(hasModelAssessment)) {
+    const candidates = new Set(exactFixtureAliases(row).flatMap(alias => [...(owners.get(alias) || [])]));
+    if (candidates.size !== 1) continue;
+    const fixture = [...candidates][0];
+    const group = groups.get(fixture) || []; group.push(row); groups.set(fixture, group);
+  }
+  const sameTimeAndDay = (row, fixture) => Boolean(row.dayKey && row.dayKey === fixture.dayKey
+    && Number.isFinite(Date.parse(kickoffUtc(row))) && Date.parse(kickoffUtc(row)) === Date.parse(kickoffUtc(fixture)));
+  const globalConflict = (row, fixture) => ["home", "away"].some(side => {
+    const key = `${side}GlobalClubId`;
+    const a = row[key] || row.productionIdentityBinding?.[key], b = fixture[key] || fixture.productionIdentityBinding?.[key];
+    return a && b && a !== b;
+  });
+  for (const [fixture, group] of groups) {
+    if (group.length < 2) continue;
+    const leaders = group.filter(row => canonicalOutputId(row) === canonicalOutputId(fixture)
+      && authoritativeSources.has(row.aiAssessment?.inputSource) && sameTimeAndDay(row, fixture)
+      && row.leagueSlug === fixture.leagueSlug && teamName(row, "home") === teamName(fixture, "home")
+      && teamName(row, "away") === teamName(fixture, "away") && !globalConflict(row, fixture));
+    if (leaders.length !== 1) continue;
+    const leader = leaders[0];
+    // An explicit canonical producer may supersede legacy aliases, never another
+    // canonical producer or a conflicting time/global identity. Preserve all
+    // original evidence and bookmaker data for audit; no averaging or best-odds choice.
+    const legacy = group.filter(row => row !== leader);
+    if (legacy.some(row => authoritativeSources.has(row.aiAssessment?.inputSource)
+      || !sameTimeAndDay(row, fixture) || globalConflict(row, fixture) || globalConflict(row, leader))) continue;
+    for (const row of legacy) suppressed.set(row, { canonicalId: canonicalOutputId(fixture),
+      selectedInputSource: leader.aiAssessment.inputSource, reason: "EXPLICIT_CANONICAL_PRODUCER_SUPERSEDES_LEGACY_ALIAS" });
+  }
+  return { matches: rows.map(row => suppressed.has(row) ? { ...row, supersededAiAssessment: row.aiAssessment,
+    aiAssessment: null, assessmentOwnership: suppressed.get(row) } : row), superseded: [...suppressed.values()] };
+}
+
 export function joinCanonicalFixturesWithModelAssessments(
   canonicalFixtures = [],
   assessmentRows = []
 ) {
   const canonicalRows = Array.isArray(canonicalFixtures) ? canonicalFixtures : [];
-  const inputRows = Array.isArray(assessmentRows) ? assessmentRows : [];
+  const ownership = resolveCanonicalAssessmentOwnership(canonicalRows, Array.isArray(assessmentRows) ? assessmentRows : []);
+  const inputRows = ownership.matches;
   const assessments = inputRows.filter(hasModelAssessment);
   const nonAssessmentInputRows = inputRows.filter(row => !hasModelAssessment(row));
   const assessmentIndex = buildUniqueAliasIndex(assessments);
@@ -225,7 +266,8 @@ export function joinCanonicalFixturesWithModelAssessments(
       canonicalRowsWithoutAssessment: canonicalRowsWithoutAssessment.length,
       ambiguousCanonicalMatches: ambiguousCanonicalMatches.length,
       canonicalRowsMissingIdentity: canonicalRowsMissingIdentity.length,
-      ambiguousAssessmentAliases: assessmentIndex.ambiguousAliases.size
+      ambiguousAssessmentAliases: assessmentIndex.ambiguousAliases.size,
+      supersededLegacyAssessments: ownership.superseded.length
     }
   };
 }
