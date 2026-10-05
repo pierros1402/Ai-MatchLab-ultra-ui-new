@@ -1,25 +1,25 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-10-05",
-  "generatedAt": "2026-10-04T17:55:44.167Z",
+  "generatedAt": "2026-10-05T00:06:13.242Z",
   "severity": "warning",
   "issueCounts": {
     "error": 0,
     "warning": 7,
-    "info": 12
+    "info": 10
   },
-  "alert": true,
+  "alert": false,
   "alertCounts": {
     "error": 0,
-    "warning": 1,
+    "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 19,
+  "activeIssueCount": 17,
   "actionableIssueCount": 7,
-  "newIssueCount": 7,
-  "newActionableIssueCount": 1,
-  "resolvedIssueCount": 6,
-  "persistentIssueCount": 12,
+  "newIssueCount": 0,
+  "newActionableIssueCount": 0,
+  "resolvedIssueCount": 2,
+  "persistentIssueCount": 17,
   "activeIssues": [
     {
       "severity": "info",
@@ -185,7 +185,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 11764,
+        "count": 11768,
         "informational": true
       }
     },
@@ -312,38 +312,6 @@
           "rejectedCount": 28,
           "alreadyDeclaredCount": 0
         }
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a_unresolved_settlement",
-      "message": "Plan A picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-10-05",
-        "todayDayKey": "2026-10-05",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 1,
-        "settled": 0,
-        "unresolved": 1
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a2_unresolved_settlement",
-      "message": "Plan A2 picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-10-05",
-        "todayDayKey": "2026-10-05",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 1,
-        "settled": 0,
-        "unresolved": 1
       }
     },
     {
@@ -845,19 +813,19 @@
           "summary": {
             "picks": 1,
             "uniqueMatches": 1,
-            "settled": 0,
-            "wins": 0,
+            "settled": 1,
+            "wins": 1,
             "losses": 0,
             "voids": 0,
-            "unresolved": 1,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": null,
-            "oddsAvailable": 0,
-            "averageOdds": null,
-            "totalStake": null,
-            "totalReturn": null,
-            "profit": null,
-            "roi": null
+            "hitRate": 1,
+            "oddsAvailable": 1,
+            "averageOdds": 1.56,
+            "totalStake": 1,
+            "totalReturn": 1.56,
+            "profit": 0.56,
+            "roi": 0.56
           }
         },
         "planA2": {
@@ -865,19 +833,19 @@
           "summary": {
             "picks": 1,
             "uniqueMatches": 1,
-            "settled": 0,
-            "wins": 0,
+            "settled": 1,
+            "wins": 1,
             "losses": 0,
             "voids": 0,
-            "unresolved": 1,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": null,
-            "oddsAvailable": 0,
-            "averageOdds": null,
-            "totalStake": null,
-            "totalReturn": null,
-            "profit": null,
-            "roi": null
+            "hitRate": 1,
+            "oddsAvailable": 1,
+            "averageOdds": 1.56,
+            "totalStake": 1,
+            "totalReturn": 1.56,
+            "profit": 0.56,
+            "roi": 0.56
           }
         },
         "planB": {
@@ -1495,7 +1463,43 @@
       }
     }
   ],
-  "newIssues": [
+  "newIssues": [],
+  "newActionableIssues": [],
+  "resolvedIssues": [
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_a_unresolved_settlement",
+      "message": "Plan A picks are still unresolved.",
+      "details": {
+        "dayKey": "2026-10-05",
+        "todayDayKey": "2026-10-05",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 1,
+        "settled": 0,
+        "unresolved": 1
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_a2_unresolved_settlement",
+      "message": "Plan A2 picks are still unresolved.",
+      "details": {
+        "dayKey": "2026-10-05",
+        "todayDayKey": "2026-10-05",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 1,
+        "settled": 0,
+        "unresolved": 1
+      }
+    }
+  ],
+  "persistentIssues": [
     {
       "severity": "info",
       "source": "invariant-report",
@@ -1504,9 +1508,9 @@
       "details": {
         "type": "coverage_floor_drop",
         "staticFloor": 45,
-        "effectiveFloor": 37,
-        "actualFixtures": 40,
-        "drop": 8,
+        "effectiveFloor": 36,
+        "actualFixtures": 39,
+        "drop": 9,
         "reason": "canonical_fixture_count_below_static_floor",
         "effectiveFloorMet": true
       }
@@ -1534,7 +1538,26 @@
         "artifact": "value-plans/2026-10-05/plan-b.json",
         "at": null,
         "staleReason": "plan_b_stale_against_canonical",
-        "preservation": null,
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-10-05",
+          "currentAthensDay": "2026-10-05",
+          "fixtureCount": 40,
+          "frozenHash": "016d621b812a9eee8be1a4eb1b125d161066b7d971e36caff5ad3ef000bc63e1",
+          "currentHash": "67de7dd3a19ef428bde25fadd7e7b38d5f88e117a3a98f7e1bd457d52f3f900c",
+          "strictFrozenParity": true,
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": true,
+          "removedFixtureIds": [
+            "cid_arg1_bocajuniors_unionsantafe_20261005"
+          ],
+          "deferredCurrentFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "persisted_authoritative_prune_ledger"
+        },
         "skipped": "artifact_missing_or_no_timestamp"
       }
     },
@@ -1548,159 +1571,22 @@
         "artifact": "value-plans/2026-10-05/plan-b2.json",
         "at": null,
         "staleReason": "plan_b2_stale_against_canonical",
-        "preservation": null,
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "acquisition_skipped_slugs",
-      "message": "Acquisition skipped slugs during fixture acquisition.",
-      "details": {
-        "slugs": [
-          "bol.copa",
-          "concacaf.nations.league",
-          "eng.w.1",
-          "esp.w.1",
-          "fra.w.1",
-          "mex.w.1",
-          "ned.w.1",
-          "uefa.euro_u21_qual",
-          "usa.ncaa.m.1",
-          "usa.ncaa.w.1",
-          "usa.w.usl.1"
-        ],
-        "raw": "acquisition_skipped_slugs:bol.copa,concacaf.nations.league,eng.w.1,esp.w.1,fra.w.1,mex.w.1,ned.w.1,uefa.euro_u21_qual,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
-        "contextOnly": false
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a_unresolved_settlement",
-      "message": "Plan A picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-10-05",
-        "todayDayKey": "2026-10-04",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 1,
-        "settled": 0,
-        "unresolved": 1
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a2_unresolved_settlement",
-      "message": "Plan A2 picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-10-05",
-        "todayDayKey": "2026-10-04",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 1,
-        "settled": 0,
-        "unresolved": 1
-      }
-    }
-  ],
-  "newActionableIssues": [
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "acquisition_skipped_slugs",
-      "message": "Acquisition skipped slugs during fixture acquisition.",
-      "details": {
-        "slugs": [
-          "bol.copa",
-          "concacaf.nations.league",
-          "eng.w.1",
-          "esp.w.1",
-          "fra.w.1",
-          "mex.w.1",
-          "ned.w.1",
-          "uefa.euro_u21_qual",
-          "usa.ncaa.m.1",
-          "usa.ncaa.w.1",
-          "usa.w.usl.1"
-        ],
-        "raw": "acquisition_skipped_slugs:bol.copa,concacaf.nations.league,eng.w.1,esp.w.1,fra.w.1,mex.w.1,ned.w.1,uefa.euro_u21_qual,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
-        "contextOnly": false
-      }
-    }
-  ],
-  "resolvedIssues": [
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
-      "details": {
-        "reasons": [
-          "value_plan_comparison_stale_against_canonical"
-        ]
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "value_plan_comparison",
-        "artifact": "value-comparison/2026-10-04.json",
-        "at": "2026-10-04T16:52:55.021Z",
-        "staleReason": "value_plan_comparison_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -7712
-      }
-    },
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "expected_matches",
-        "artifact": "expected-matches/2026-10-04.json",
-        "at": null,
-        "staleReason": "snapshot_stale_against_expected_matches",
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "plan_b",
-        "artifact": "value-plans/2026-10-04/plan-b.json",
-        "at": null,
-        "staleReason": "plan_b_stale_against_canonical",
         "preservation": {
           "reason": "frozen_value_observation_cohort_identity_preserved",
-          "requestedDay": "2026-10-04",
-          "currentAthensDay": "2026-10-04",
-          "fixtureCount": 129,
-          "frozenHash": "0f25b67eb7c906bc705bca46d67436006116eed5acc0edf179b878faf5758512",
-          "currentHash": "0e2b9653471eca5de9add54d19cd6ed66d76dec258eee4c6aa4188e361d22d16",
+          "requestedDay": "2026-10-05",
+          "currentAthensDay": "2026-10-05",
+          "fixtureCount": 40,
+          "frozenHash": "016d621b812a9eee8be1a4eb1b125d161066b7d971e36caff5ad3ef000bc63e1",
+          "currentHash": "67de7dd3a19ef428bde25fadd7e7b38d5f88e117a3a98f7e1bd457d52f3f900c",
           "strictFrozenParity": true,
           "membershipParity": false,
           "descriptorDrift": null,
           "publicationMembershipPreserved": true,
           "authorizedShrink": true,
           "removedFixtureIds": [
-            "cid_arg1_argentinosjuniors_tigre_20261004",
-            "cid_espcopadelrey_atleticomelilla_atleticopinatarense_20261004"
+            "cid_arg1_bocajuniors_unionsantafe_20261005"
           ],
-          "deferredCurrentFixtureIds": [
-            "cid_esp2_sabadell_andorra_20261004",
-            "cid_espcopadelrey_atleticomelilla_atleticopinatarense_20261004"
-          ],
+          "deferredCurrentFixtureIds": [],
           "publishedOutsideFrozenFixtureIds": [],
           "resolvedFrozenAliasMappings": [],
           "removalEvidenceSource": "persisted_authoritative_prune_ledger"
@@ -1708,71 +1594,6 @@
         "skipped": "artifact_missing_or_no_timestamp"
       }
     },
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "plan_b2",
-        "artifact": "value-plans/2026-10-04/plan-b2.json",
-        "at": null,
-        "staleReason": "plan_b2_stale_against_canonical",
-        "preservation": {
-          "reason": "frozen_value_observation_cohort_identity_preserved",
-          "requestedDay": "2026-10-04",
-          "currentAthensDay": "2026-10-04",
-          "fixtureCount": 129,
-          "frozenHash": "0f25b67eb7c906bc705bca46d67436006116eed5acc0edf179b878faf5758512",
-          "currentHash": "0e2b9653471eca5de9add54d19cd6ed66d76dec258eee4c6aa4188e361d22d16",
-          "strictFrozenParity": true,
-          "membershipParity": false,
-          "descriptorDrift": null,
-          "publicationMembershipPreserved": true,
-          "authorizedShrink": true,
-          "removedFixtureIds": [
-            "cid_arg1_argentinosjuniors_tigre_20261004",
-            "cid_espcopadelrey_atleticomelilla_atleticopinatarense_20261004"
-          ],
-          "deferredCurrentFixtureIds": [
-            "cid_esp2_sabadell_andorra_20261004",
-            "cid_espcopadelrey_atleticomelilla_atleticopinatarense_20261004"
-          ],
-          "publishedOutsideFrozenFixtureIds": [],
-          "resolvedFrozenAliasMappings": [],
-          "removalEvidenceSource": "persisted_authoritative_prune_ledger"
-        },
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "acquisition_skipped_slugs",
-      "message": "Acquisition skipped slugs during fixture acquisition.",
-      "details": {
-        "slugs": [
-          "bol.copa",
-          "col.copa",
-          "concacaf.nations.league",
-          "eng.fa_qual",
-          "eng.w.1",
-          "esp.w.1",
-          "fra.w.1",
-          "global.gulf_cup",
-          "mex.w.1",
-          "ned.w.1",
-          "uefa.euro_u21_qual",
-          "usa.ncaa.m.1",
-          "usa.ncaa.w.1",
-          "usa.w.usl.1"
-        ],
-        "raw": "acquisition_skipped_slugs:bol.copa,col.copa,concacaf.nations.league,eng.fa_qual,eng.w.1,esp.w.1,fra.w.1,global.gulf_cup,mex.w.1,ned.w.1,uefa.euro_u21_qual,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
-        "contextOnly": false
-      }
-    }
-  ],
-  "persistentIssues": [
     {
       "severity": "warning",
       "source": "value-input",
@@ -1784,18 +1605,18 @@
         "ambiguous": 0,
         "canonicalFixtures": 40,
         "joinedMatches": 30,
-        "orphanAssessmentRows": 8,
+        "orphanAssessmentRows": 15,
         "missingCanonicalIds": [
           "cid_gre2_chrisoupolis_marko_20261005",
           "cid_gre2_paokb_ellassyrou_20261005",
           "cid_gre2_zakynthos_kalamaria_20261005",
-          "cid_gua1_comunicaciones_suchitepequez_20261005",
-          "cid_gua1_guastatoya_aurora_20261005",
-          "cid_par1_deportivorecoleta_libertad_20261005",
-          "cid_par1_sportivotrinidense_sportivoluqueno_20261005",
-          "cid_slv1_fas_incaaruba_20261005",
-          "cid_slv1_internacionalsantatecla_fuertesanfrancisco_20261005",
-          "cid_slv1_platense_municipallimeno_20261005"
+          "cid_uefanations_bosniaherzegovina_poland_20261005",
+          "cid_uefanations_cyprus_latvia_20261005",
+          "cid_uefanations_italy_turkiye_20261005",
+          "cid_uefanations_montenegro_armenia_20261005",
+          "cid_uefanations_northernireland_georgia_20261005",
+          "cid_uefanations_romania_sweden_20261005",
+          "cid_uefanations_ukraine_hungary_20261005"
         ]
       }
     },
@@ -1810,18 +1631,18 @@
         "ambiguous": 0,
         "canonicalFixtures": 40,
         "joinedMatches": 30,
-        "orphanAssessmentRows": 8,
+        "orphanAssessmentRows": 15,
         "missingCanonicalIds": [
           "cid_gre2_chrisoupolis_marko_20261005",
           "cid_gre2_paokb_ellassyrou_20261005",
           "cid_gre2_zakynthos_kalamaria_20261005",
-          "cid_gua1_comunicaciones_suchitepequez_20261005",
-          "cid_gua1_guastatoya_aurora_20261005",
-          "cid_par1_deportivorecoleta_libertad_20261005",
-          "cid_par1_sportivotrinidense_sportivoluqueno_20261005",
-          "cid_slv1_fas_incaaruba_20261005",
-          "cid_slv1_internacionalsantatecla_fuertesanfrancisco_20261005",
-          "cid_slv1_platense_municipallimeno_20261005"
+          "cid_uefanations_bosniaherzegovina_poland_20261005",
+          "cid_uefanations_cyprus_latvia_20261005",
+          "cid_uefanations_italy_turkiye_20261005",
+          "cid_uefanations_montenegro_armenia_20261005",
+          "cid_uefanations_northernireland_georgia_20261005",
+          "cid_uefanations_romania_sweden_20261005",
+          "cid_uefanations_ukraine_hungary_20261005"
         ]
       }
     },
@@ -1843,7 +1664,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 11730,
+        "count": 11768,
         "informational": true
       }
     },
@@ -1874,6 +1695,29 @@
     {
       "severity": "warning",
       "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "bol.copa",
+          "concacaf.nations.league",
+          "eng.w.1",
+          "esp.w.1",
+          "fra.w.1",
+          "mex.w.1",
+          "ned.w.1",
+          "uefa.euro_u21_qual",
+          "usa.ncaa.m.1",
+          "usa.ncaa.w.1",
+          "usa.w.usl.1"
+        ],
+        "raw": "acquisition_skipped_slugs:bol.copa,concacaf.nations.league,eng.w.1,esp.w.1,fra.w.1,mex.w.1,ned.w.1,uefa.euro_u21_qual,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
+        "contextOnly": false
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
       "type": "build_not_strict_clean",
       "message": "Build report is clean but not strict-clean.",
       "details": {
@@ -1896,10 +1740,10 @@
           "slv.1"
         ],
         "summary": {
-          "evidenceSlugCount": 31,
+          "evidenceSlugCount": 28,
           "admittedCount": 5,
           "pendingCount": 0,
-          "rejectedCount": 31,
+          "rejectedCount": 28,
           "alreadyDeclaredCount": 0
         }
       }
@@ -1922,8 +1766,6 @@
           "concacaf.nations.league",
           "eng.fa_qual",
           "eng.w.1",
-          "eng.w.league_cup",
-          "esp.copa_de_la_reina",
           "esp.w.1",
           "fifa.friendly",
           "fifa.friendly_u21",
@@ -1933,7 +1775,6 @@
           "mex.w.1",
           "ned.w.1",
           "uefa.euro_u21_qual",
-          "uefa.w.europa",
           "uefa.wchampions",
           "usa.ncaa.m.1",
           "usa.ncaa.w.1",
@@ -1944,10 +1785,10 @@
           "usa.w.usl.1"
         ],
         "summary": {
-          "evidenceSlugCount": 31,
+          "evidenceSlugCount": 28,
           "admittedCount": 5,
           "pendingCount": 0,
-          "rejectedCount": 31,
+          "rejectedCount": 28,
           "alreadyDeclaredCount": 0
         }
       }
@@ -2451,19 +2292,19 @@
           "summary": {
             "picks": 1,
             "uniqueMatches": 1,
-            "settled": 0,
-            "wins": 0,
+            "settled": 1,
+            "wins": 1,
             "losses": 0,
             "voids": 0,
-            "unresolved": 1,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": null,
-            "oddsAvailable": 0,
-            "averageOdds": null,
-            "totalStake": null,
-            "totalReturn": null,
-            "profit": null,
-            "roi": null
+            "hitRate": 1,
+            "oddsAvailable": 1,
+            "averageOdds": 1.56,
+            "totalStake": 1,
+            "totalReturn": 1.56,
+            "profit": 0.56,
+            "roi": 0.56
           }
         },
         "planA2": {
@@ -2471,19 +2312,19 @@
           "summary": {
             "picks": 1,
             "uniqueMatches": 1,
-            "settled": 0,
-            "wins": 0,
+            "settled": 1,
+            "wins": 1,
             "losses": 0,
             "voids": 0,
-            "unresolved": 1,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": null,
-            "oddsAvailable": 0,
-            "averageOdds": null,
-            "totalStake": null,
-            "totalReturn": null,
-            "profit": null,
-            "roi": null
+            "hitRate": 1,
+            "oddsAvailable": 1,
+            "averageOdds": 1.56,
+            "totalStake": 1,
+            "totalReturn": 1.56,
+            "profit": 0.56,
+            "roi": 0.56
           }
         },
         "planB": {
