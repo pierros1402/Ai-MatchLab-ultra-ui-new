@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-05",
-  "generatedAt": "2026-10-05T00:37:09.781Z",
+  "generatedAt": "2026-10-05T00:49:53.056Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "311c36844981b2e5c1ea5f2d5bf277e351a49b34ae9d4add290a66a70fe3e11f",
+  "truthFingerprint": "26e8b8e8591b68f8d7a739c29977058f574276479b2a8f5c7bb6ac2aa845fd67",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 39,
-    "playedTerminal": 9,
+    "playedTerminal": 10,
     "nonPlayedTerminal": 0,
     "scheduled": 24,
-    "live": 5,
+    "live": 4,
     "interrupted": 1,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 9,
-    "acceptedVerifiedFinalArtifacts": 9,
-    "convergedPlayedFinal": 9,
+    "verifiedFinalArtifacts": 10,
+    "acceptedVerifiedFinalArtifacts": 10,
+    "convergedPlayedFinal": 10,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 30,
+    "openRows": 29,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 9,
-    "scoredSettlementEligible": 9,
+    "historyEligible": 10,
+    "scoredSettlementEligible": 10,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -151,7 +151,7 @@
         "statusType": null,
         "rawStatus": "STATUS_FIRST_HALF",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -1810,31 +1810,31 @@
       "homeTeam": "Racing (Montevideo)",
       "awayTeam": "Peñarol",
       "kickoffUtc": "2026-10-04T22:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 0,
         "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-05",
+        "scoreHome": 0,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4338,13 +4338,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "311c36844981b2e5c1ea5f2d5bf277e351a49b34ae9d4add290a66a70fe3e11f",
+      "truthFingerprint": "26e8b8e8591b68f8d7a739c29977058f574276479b2a8f5c7bb6ac2aa845fd67",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 9,
+        "expectedEligibleRows": 10,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_argentinosjuniors_tigre_20261005",
@@ -4354,6 +4354,7 @@
           "cid_col1_internacionalbogota_oncecaldas_20261005",
           "cid_col2_tigres_interpalmira_20261005",
           "cid_slv1_platense_municipallimeno_20261005",
+          "cid_uru1_racingmontevideo_penarol_20261005",
           "cid_uru2_laluz_riverplate_20261005",
           "cid_usa2_newmexico_phoenixrising_20261005"
         ],
@@ -4415,7 +4416,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-05",
-      "fileCount": 9,
+      "fileCount": 10,
       "authority": "scored_final_evidence"
     },
     "downstream": {
