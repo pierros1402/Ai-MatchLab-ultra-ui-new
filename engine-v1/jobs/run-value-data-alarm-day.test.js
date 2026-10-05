@@ -44,6 +44,26 @@ test("team research is consumed in the same cycle but raw findings cannot close 
   }
 });
 
+test("league-only research also rechecks persisted inputs in the same cycle", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-league-cycle-"));
+  const day = "2099-10-04", fixture = { canonicalId: "cid_league_cycle", leagueSlug: "egy.2", homeTeam: "A", awayTeam: "B", kickoffUtc: `${day}T14:00Z` };
+  let productions = 0;
+  try {
+    const result = await runValueDataAlarmDay(day, { write: true, research: true, nowMs: Date.parse(`${day}T08:00Z`), lookAheadDays: 0,
+      dependencies: { queueRoot: root, fixtures: () => [fixture], assessments: () => [], standings: () => ({ ok: false }),
+        primarySearch: async () => ({ ok: true }), search: async () => ({ status: "NO_SOURCE" }),
+        resultsSearch: async () => ({ rows: [{ providerMatchId: "result01" }], upcomingAnchors: [] }),
+        supplement: () => { productions++; return { assessmentRowsWritten: 0 }; } } });
+    assert.equal(productions, 2);
+    assert.equal(result.report.postResearchReevaluation, true);
+    assert.equal(result.report.futureOpen, 1, "raw league rows are not an assessment");
+    assert.deepEqual(result.report.teamHistoryResearch, []);
+  } finally {
+    assert.ok(path.resolve(root).startsWith(path.resolve(os.tmpdir()) + path.sep));
+    fs.rmSync(root, { recursive: true });
+  }
+});
+
 test("alarm scans previous-day readiness for the next week, persists before research, and retains failures across days", async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-alarm-test-"));
   const id = "cid_alarm_future_20991004";

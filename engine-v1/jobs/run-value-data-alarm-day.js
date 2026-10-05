@@ -28,7 +28,7 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
   let queue = fs.existsSync(queueFile) ? load(queueFile) : null;
   queue = updateValueDataAlarm(queue, { dayKey, fixtures: [], joinedIds: [], nowMs });
   const days = [], oddsWrittenDays = [], diagnoses = {}, acquisitionErrors = [], researchFixtures = [], teamHistoryResearch = [];
-  let teamHistoryDocumentsWritten = 0;
+  let researchDocumentsWritten = 0;
   let verifiedEvidence, historicalFormPreparation;
   let competitionContractPreparation = null;
   if (write && applyVerifiedContracts) {
@@ -131,7 +131,14 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
         evidence.requiredTeamEvidence = task.incidents.map(row => ({ canonicalId: row.canonicalId,
           home: row.home, away: row.away, diagnosis: row.modelInputDiagnosis || null }));
         save(path.join(root, dayKey, `${incident.leagueSlug}.results.research.json`), evidence);
+        if (evidence.rows?.length) researchDocumentsWritten++;
         if (!dependencies.resultsSearch || dependencies.teamHistorySearch) {
+          // A newly acquired league feed may supply the native identity proof
+          // needed to research an ESPN-only fixture's team in this same cycle.
+          if (evidence.rows?.length && !dependencies.supplement) {
+            try { verifiedEvidence = createPrematchVerifiedEvidence(Math.max(nowMs, Date.now())); }
+            catch (error) { acquisitionErrors.push({ day: dayKey, stage: "research_evidence_validation", error: error.message }); }
+          }
           const { selectTeamHistoryTargets, researchTeamHistory } = await import("../source-discovery/team-history-researcher.js");
           queue.teamHistoryAttempts ||= {};
           const selection = selectTeamHistoryTargets(evidence, task.incidents, researchFixtures, queue.teamHistoryAttempts, nowMs, 2, verifiedEvidence?.providerIdentityLinker);
@@ -142,7 +149,7 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
             for (const doc of teamEvidence.documents || []) {
               if (!/^[a-zA-Z0-9_.-]+$/.test(doc.leagueSlug || "")) throw new Error("invalid_team_history_competition");
               save(path.join(root, dayKey, `${incident.leagueSlug}.team-${target.providerTeamId}.${doc.leagueSlug}.results.research.json`), doc);
-              if (doc.rows?.length) teamHistoryDocumentsWritten++;
+              if (doc.rows?.length) researchDocumentsWritten++;
             }
             const attempt = { attemptedAt: new Date(nowMs).toISOString(), team: target.team, status: teamEvidence.status,
               observedRecentResults: teamEvidence.observedRecentResults || 0, unmappedCompetitions: teamEvidence.unmappedCompetitions || [],
@@ -182,7 +189,7 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
     historyCompetitionValidation: verifiedEvidence?.historyCompetitionValidation || null, frozenPredictionsRegenerated: false,
     resolvedOnlyByVerifiedAssessmentJoin: true, incidentsExpireAutomatically: false };
   if (write) { save(queueFile, queue); save(path.join(root, `${dayKey}.json`), report); }
-  if (research && teamHistoryDocumentsWritten > 0) {
+  if (research && researchDocumentsWritten > 0) {
     // Consume newly discovered evidence in this cycle, with a fresh time guard
     // so research crossing kickoff cannot create a post-kickoff prediction.
     const consumed = await runValueDataAlarmDay(dayKey, { write, research: false, nowMs: Math.max(nowMs, Date.now()),
