@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { selectTeamHistoryTargets, researchTeamHistory } from "./team-history-researcher.js";
+import { createPrematchCrossProviderLinker } from "../core/prematch-cross-provider-link.js";
 const now = Date.parse("2026-10-04T06:00Z");
 const fixture = { canonicalId: "cid_test", leagueSlug: "eng.fa", homeTeam: "Home", awayTeam: "Away", kickoffUtc: "2026-10-04T14:00Z", providerIds: { flashscore: "match001" } };
 const anchor = { leagueSlug: fixture.leagueSlug, providerMatchId: "match001", home: "Home", away: "Away", kickoffUtc: fixture.kickoffUtc,
@@ -23,6 +24,21 @@ test("bounded team research rotates rather than starving the other side", () => 
   const next = selectTeamHistoryTargets(evidence, [both], [fixture], { [first.targets[0].key]: { attemptedAt: new Date(now).toISOString() } }, now, 1);
   assert.notEqual(first.targets[0].key, next.targets[0].key);
   assert.equal(first.deferred, 1);
+});
+
+test("an ESPN-only fixture can research exact native teams using independently verified historical bindings", () => {
+  const espn = { ...fixture, providerIds: { espn: "401123456" } };
+  const seeds = [10, 17].map(day => ({ candidate: { ...anchor, providerMatchId: `proved${day}` }, row: {
+    id: `cid_proved_${day}`, dayKey: `2026-09-${day}`, leagueSlug: fixture.leagueSlug, homeTeam: "Home", awayTeam: "Away",
+    source: "prematch_exact_verified_final", truthContract: { verifiedFinalTruth: true } } }));
+  const linker = createPrematchCrossProviderLinker(seeds);
+  assert.equal(selectTeamHistoryTargets(evidence, [incident], [espn], {}, now).targets.length, 0);
+  const selection = selectTeamHistoryTargets(evidence, [incident], [espn], {}, now, 2, linker);
+  assert.equal(selection.targets.length, 1);
+  assert.equal(selection.targets[0].identityProof.espnMatchId, "401123456");
+  assert.equal(selection.targets[0].providerTeamId, "home0001");
+  const wrong = { upcomingAnchors: [{ ...anchor, awayProviderTeamId: "unknown1" }] };
+  assert.equal(selectTeamHistoryTargets(wrong, [incident], [espn], {}, now, 2, linker).targets.length, 0);
 });
 const row = (id, native = "home0001", extra = "") => `AA÷${id}¬AE÷Home¬AF÷Opponent¬PX÷${native}¬PY÷other001¬AD÷1790769600¬AB÷3¬AC÷3¬AG÷2¬AH÷1¬${extra}~`;
 const page = feed => "cjs.initialFeeds['results'] = {data: `" + feed + "`};";

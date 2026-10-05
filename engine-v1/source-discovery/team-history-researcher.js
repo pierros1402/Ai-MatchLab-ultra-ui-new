@@ -5,7 +5,7 @@ import { parseRecentResultEvidence } from "./recent-results-researcher.js";
 
 // Team profiles are followed only from an exact, future canonical fixture's
 // native provider identity. No fuzzy names, guessed URLs or source promotion.
-export function selectTeamHistoryTargets(evidence, incidents, fixtures, attempts = {}, nowMs = Date.now(), limit = 2) {
+export function selectTeamHistoryTargets(evidence, incidents, fixtures, attempts = {}, nowMs = Date.now(), limit = 2, resolveProviderIdentity = null) {
   const targets = new Map(), unresolved = [];
   const anchors = [...(evidence.rows || []), ...(evidence.upcomingAnchors || [])];
   for (const incident of incidents) {
@@ -14,19 +14,24 @@ export function selectTeamHistoryTargets(evidence, incidents, fixtures, attempts
     if (canonical.length !== 1) { unresolved.push({ canonicalId: incident.canonicalId, reason: "CANONICAL_IDENTITY_NOT_UNIQUE" }); continue; }
     const fixture = canonical[0];
     const ids = [fixture.providerIds?.flashscore, fixture.source === "flashscore" ? fixture.sourceMatchId || fixture.sourceId : null].filter(Boolean);
-    const matched = anchors.filter(a => ids.length && ids.every(id => id === a.providerMatchId)
+    const matched = anchors.map(a => {
+      const exact = ids.length && ids.every(id => id === a.providerMatchId)
       && a.leagueSlug === fixture.leagueSlug && Date.parse(a.kickoffUtc) === Date.parse(fixture.kickoffUtc)
-      && a.home === fixture.homeTeam && a.away === fixture.awayTeam);
+      && a.home === fixture.homeTeam && a.away === fixture.awayTeam;
+      const proof = !exact && resolveProviderIdentity ? resolveProviderIdentity(a, fixture) : null;
+      return exact || proof ? { anchor: a, proof } : null;
+    }).filter(Boolean);
     if (matched.length !== 1 || fixture.hasConflict === true) { unresolved.push({ canonicalId: incident.canonicalId, reason: "EXACT_NATIVE_TEAM_ANCHOR_UNAVAILABLE" }); continue; }
     for (const side of ["home", "away"]) {
       if (Number(incident.modelInputDiagnosis?.[`${side}Sample`]) >= 6) continue;
-      const providerTeamId = matched[0][`${side}ProviderTeamId`], providerTeamSlug = matched[0][`${side}ProviderTeamSlug`];
+      const providerTeamId = matched[0].anchor[`${side}ProviderTeamId`], providerTeamSlug = matched[0].anchor[`${side}ProviderTeamSlug`];
       if (!/^[A-Za-z0-9]{6,16}$/.test(providerTeamId || "") || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(providerTeamSlug || "")) {
         unresolved.push({ canonicalId: incident.canonicalId, side, reason: "NATIVE_TEAM_ROUTE_UNAVAILABLE" }); continue;
       }
       const key = `${fixture.leagueSlug}|${providerTeamId}`;
       const target = { key, providerTeamId, providerTeamSlug, leagueSlug: fixture.leagueSlug, team: fixture[`${side}Team`],
-        canonicalId: fixture.canonicalId, providerMatchId: matched[0].providerMatchId, kickoffUtc: fixture.kickoffUtc,
+        canonicalId: fixture.canonicalId, providerMatchId: matched[0].anchor.providerMatchId, kickoffUtc: fixture.kickoffUtc,
+        ...(matched[0].proof ? { identityProof: matched[0].proof } : {}),
         previousAttemptAt: attempts[key]?.attemptedAt || null };
       const old = targets.get(key);
       if (!old || Date.parse(target.kickoffUtc) < Date.parse(old.kickoffUtc)) targets.set(key, target);

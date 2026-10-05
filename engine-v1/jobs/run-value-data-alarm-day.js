@@ -134,7 +134,7 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
         if (!dependencies.resultsSearch || dependencies.teamHistorySearch) {
           const { selectTeamHistoryTargets, researchTeamHistory } = await import("../source-discovery/team-history-researcher.js");
           queue.teamHistoryAttempts ||= {};
-          const selection = selectTeamHistoryTargets(evidence, task.incidents, researchFixtures, queue.teamHistoryAttempts, nowMs);
+          const selection = selectTeamHistoryTargets(evidence, task.incidents, researchFixtures, queue.teamHistoryAttempts, nowMs, 2, verifiedEvidence?.providerIdentityLinker);
           const attempts = [];
           for (const target of selection.targets) {
             const teamEvidence = await (dependencies.teamHistorySearch || researchTeamHistory)(target, { nowMs });

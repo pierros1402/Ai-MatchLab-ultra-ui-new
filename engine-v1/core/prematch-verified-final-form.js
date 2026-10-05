@@ -162,7 +162,7 @@ export function collectPrematchFinalForm(baseIndex, candidates, nowMs, { fixture
     summary.accepted++; summary.acceptedCanonicalIds.push(row.id);
   }
   summary.identityReadViewRows = replacedCanonicalIds.length;
-  return { index, summary, replacedCanonicalIds };
+  return { index, summary, replacedCanonicalIds, providerIdentityLinker: link };
 }
 
 export function selectPrematchResearchEvidence(documents, nowMs) {
