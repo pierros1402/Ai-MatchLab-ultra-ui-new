@@ -3,12 +3,12 @@
   "verifiedFinalTruth": true,
   "date": "2026-10-06",
   "dayKey": "2026-10-06",
-  "matchId": "cid_engtrophy_blackpool_crewealexandra_20261006",
+  "matchId": "cid_engtrophy_newportcounty_plymouthargyle_20261006",
   "leagueSlug": "eng.trophy",
   "leagueName": "EFL Trophy",
   "country": "",
-  "homeTeam": "Blackpool",
-  "awayTeam": "Crewe Alexandra",
+  "homeTeam": "Newport County",
+  "awayTeam": "Plymouth Argyle",
   "homeScore": 2,
   "awayScore": 2,
   "scoreHome": 2,
@@ -24,24 +24,34 @@
   "kickoffUtc": "2026-10-06T18:00Z",
   "finalTruthVerdict": "verified_final_result",
   "verdict": "verified_final_result",
-  "sourceCount": 1,
-  "independentSourceCount": 1,
+  "sourceCount": 2,
+  "independentSourceCount": 2,
   "source": "canonical_espn_final_pen_score_correction",
   "sources": [
     {
       "provider": "espn",
-      "providerMatchId": "401911178",
-      "canonicalId": "cid_engtrophy_blackpool_crewealexandra_20261006",
+      "providerMatchId": "401906355",
+      "canonicalId": "cid_engtrophy_newportcounty_plymouthargyle_20261006",
       "leagueName": "EFL Trophy",
-      "home": "Blackpool",
-      "away": "Crewe Alexandra",
+      "home": "Newport County",
+      "away": "Plymouth Argyle",
       "scoreHome": 2,
       "scoreAway": 2,
       "kickoffUtc": "2026-10-06T18:00Z",
       "rawStatus": "STATUS_FINAL_PEN",
       "statusType": "",
-      "terminalObservedAt": "2026-10-06T20:23:05.228Z",
+      "terminalObservedAt": "2026-10-06T20:23:05.229Z",
       "scoreKey": "2-2"
+    },
+    {
+      "provider": "flashscore",
+      "providerMatchId": "lMmRNZzQ",
+      "home": "Newport",
+      "away": "Plymouth",
+      "scoreHome": 2,
+      "scoreAway": 3,
+      "scoreKey": "2-3",
+      "scoreSemantics": "penalty_shootout_winner_marker_included"
     }
   ],
   "verification": {
@@ -50,8 +60,8 @@
     "state": "verified_final_result",
     "method": "canonical_espn_final_pen_score_correction",
     "authority": "canonical_fixture_store",
-    "sourceCount": 1,
-    "independentSourceCount": 1,
+    "sourceCount": 2,
+    "independentSourceCount": 2,
     "checks": {
       "canonicalIdExact": true,
       "provider": "espn",
@@ -64,21 +74,22 @@
       "flashscoreFinishedMatchAbsent": true,
       "explicitFinalPenaltyStatus": true,
       "canonicalTiedScore": true,
-      "existingExactFlashscoreArtifact": true,
-      "singlePenaltyWinnerMarkerRemoved": true
+      "flashscoreSinglePenaltyWinnerMarker": true,
+      "playedScoreNormalizedExcludingPenaltyShootout": true
     },
-    "generatedAt": "2026-10-06T20:23:10.503Z",
-    "replacedArtifact": {
-      "source": "flashscore_same_day_exact_team_match",
-      "provider": "flashscore",
-      "providerMatchId": "juTALUiD",
-      "scoreKey": "3-2"
+    "generatedAt": "2026-10-06T20:23:10.613Z",
+    "observedConflict": {
+      "flashscoreScoreKey": "2-3",
+      "canonicalScoreKey": "2-2",
+      "winnerMarkerSide": "away"
     }
   },
   "settlement": {
     "finalTruthVerdict": "verified_final_result",
     "state": "verified_final_result",
-    "scoreSemantics": "played_score_excluding_penalty_shootout"
+    "scoreSemantics": "played_score_excluding_penalty_shootout",
+    "convergenceRequired": true,
+    "convergenceState": "penalty_winner_marker_normalized"
   },
-  "generatedAt": "2026-10-06T20:23:10.503Z"
+  "generatedAt": "2026-10-06T20:23:10.613Z"
 }
