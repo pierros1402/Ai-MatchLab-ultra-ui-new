@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-06",
-  "generatedAt": "2026-10-06T20:08:05.312Z",
+  "generatedAt": "2026-10-06T20:27:11.721Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "0704a090d1bbdc0050c03eb29cb2b1def28c847c0dacd19f051736d07926654a",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "efc42ffe87590234102c365edf06b8d82461ee21c1934025cfe77549887fefda",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 56,
-    "playedTerminal": 32,
+    "playedTerminal": 37,
     "nonPlayedTerminal": 0,
     "scheduled": 8,
-    "live": 12,
+    "live": 11,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
-    "operationalUnresolved": 4,
-    "verifiedFinalArtifacts": 33,
-    "acceptedVerifiedFinalArtifacts": 33,
-    "convergedPlayedFinal": 32,
+    "operationalUnresolved": 0,
+    "verifiedFinalArtifacts": 37,
+    "acceptedVerifiedFinalArtifacts": 37,
+    "convergedPlayedFinal": 37,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 20,
-    "unresolvedRows": 3,
-    "conflictRows": 1,
+    "openRows": 19,
+    "unresolvedRows": 0,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 32,
-    "scoredSettlementEligible": 32,
+    "historyEligible": 37,
+    "scoredSettlementEligible": 37,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -879,31 +879,31 @@
       "homeTeam": "Accrington Stanley",
       "awayTeam": "Salford City",
       "kickoffUtc": "2026-10-06T18:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "UNRESOLVED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "UNKNOWN",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SHOOTOUT",
+        "rawStatus": "STATUS_FINAL_PEN",
         "scoreHome": 1,
         "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-06",
+        "scoreHome": 1,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "UNRESOLVED",
-        "reason": "canonical_state_unresolved",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -928,12 +928,12 @@
       "homeTeam": "Blackpool",
       "awayTeam": "Crewe Alexandra",
       "kickoffUtc": "2026-10-06T18:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "UNRESOLVED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "UNKNOWN",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SHOOTOUT",
+        "rawStatus": "STATUS_FINAL_PEN",
         "scoreHome": 2,
         "scoreAway": 2
       },
@@ -943,16 +943,16 @@
         "reason": "verified_final_result",
         "verdict": "verified_final_result",
         "dayKey": "2026-10-06",
-        "scoreHome": 3,
+        "scoreHome": 2,
         "scoreAway": 2,
-        "scoreParity": false
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_unresolved_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1029,9 +1029,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 3,
         "scoreAway": 0
       },
@@ -1320,31 +1320,31 @@
       "homeTeam": "Milton Keynes Dons",
       "awayTeam": "Brentford U21",
       "kickoffUtc": "2026-10-06T18:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 7,
         "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-06",
+        "scoreHome": 7,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1369,31 +1369,31 @@
       "homeTeam": "Newport County",
       "awayTeam": "Plymouth Argyle",
       "kickoffUtc": "2026-10-06T18:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "UNRESOLVED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "UNKNOWN",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SHOOTOUT",
+        "rawStatus": "STATUS_FINAL_PEN",
         "scoreHome": 2,
         "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-06",
+        "scoreHome": 2,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "UNRESOLVED",
-        "reason": "canonical_state_unresolved",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1712,31 +1712,31 @@
       "homeTeam": "AFC Wimbledon",
       "awayTeam": "Barnet",
       "kickoffUtc": "2026-10-06T18:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "UNRESOLVED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "UNKNOWN",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SHOOTOUT",
+        "rawStatus": "STATUS_FINAL_PEN",
         "scoreHome": 0,
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-06",
+        "scoreHome": 0,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "UNRESOLVED",
-        "reason": "canonical_state_unresolved",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2209,7 +2209,7 @@
         "statusType": null,
         "rawStatus": "STATUS_IN_PROGRESS",
         "scoreHome": 1,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -2401,9 +2401,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_IN_PROGRESS",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -2499,9 +2499,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_IN_PROGRESS",
         "scoreHome": 0,
         "scoreAway": 2
       },
@@ -2552,7 +2552,7 @@
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
-        "scoreAway": 3
+        "scoreAway": 4
       },
       "verifiedFinal": {
         "present": false,
@@ -2597,11 +2597,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
-        "scoreAway": 1
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -2649,7 +2649,7 @@
         "status": "SECOND_HALF",
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 1,
+        "scoreHome": 2,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -2788,9 +2788,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_engtrophy_blackpool_crewealexandra_20261006"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -5306,13 +5304,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "0704a090d1bbdc0050c03eb29cb2b1def28c847c0dacd19f051736d07926654a",
+      "truthFingerprint": "efc42ffe87590234102c365edf06b8d82461ee21c1934025cfe77549887fefda",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 32,
+        "expectedEligibleRows": 37,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_banfield_rosariocentral_20261006",
@@ -5326,18 +5324,23 @@
           "cid_col1_independientemedellin_independientesantafe_20261006",
           "cid_col2_bogota_envigado_20261006",
           "cid_col2_orsomarso_quindio_20261006",
+          "cid_engtrophy_accringtonstanley_salfordcity_20261006",
+          "cid_engtrophy_blackpool_crewealexandra_20261006",
           "cid_engtrophy_cambridgeunited_northamptontown_20261006",
           "cid_engtrophy_doncasterrovers_liverpoolu21_20261006",
           "cid_engtrophy_exetercity_oxfordunited_20261006",
           "cid_engtrophy_fleetwoodtown_barnsley_20261006",
           "cid_engtrophy_grimsbytown_burtonalbion_20261006",
           "cid_engtrophy_huddersfieldtown_rochdale_20261006",
+          "cid_engtrophy_miltonkeynesdons_brentfordu21_20261006",
+          "cid_engtrophy_newportcounty_plymouthargyle_20261006",
           "cid_engtrophy_peterboroughunited_ipswichtownu21_20261006",
           "cid_engtrophy_portvale_mansfieldtown_20261006",
           "cid_engtrophy_rotherhamunited_bradfordcity_20261006",
           "cid_engtrophy_sheffieldwednesday_sunderlandu21_20261006",
           "cid_engtrophy_shrewsburytown_stockportcounty_20261006",
           "cid_engtrophy_stevenage_leicestercity_20261006",
+          "cid_engtrophy_wimbledon_barnet_20261006",
           "cid_engtrophy_wycombewanderers_bristolrovers_20261006",
           "cid_mne2_iskra_rudar_20261006",
           "cid_mne2_podgorica_lovcen_20261006",
@@ -5406,7 +5409,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-06",
-      "fileCount": 33,
+      "fileCount": 37,
       "authority": "scored_final_evidence"
     },
     "downstream": {
