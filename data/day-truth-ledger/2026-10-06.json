@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-06",
-  "generatedAt": "2026-10-06T15:12:16.345Z",
+  "generatedAt": "2026-10-06T15:41:45.850Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "79b8d32710ccb30d0ca5b788eae85fff182226468000b550174b776c50899604",
+  "truthFingerprint": "62a431cf8466b211ce1d78f9e87486ada0de657babc86dc65df82c7b276bec48",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 56,
-    "playedTerminal": 14,
+    "playedTerminal": 15,
     "nonPlayedTerminal": 0,
-    "scheduled": 41,
+    "scheduled": 40,
     "live": 1,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 14,
-    "acceptedVerifiedFinalArtifacts": 14,
-    "convergedPlayedFinal": 14,
+    "verifiedFinalArtifacts": 15,
+    "acceptedVerifiedFinalArtifacts": 15,
+    "convergedPlayedFinal": 15,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 42,
+    "openRows": 41,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 14,
-    "scoredSettlementEligible": 14,
+    "historyEligible": 15,
+    "scoredSettlementEligible": 15,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -1859,31 +1859,31 @@
       "homeTeam": "FK Podgorica",
       "awayTeam": "Lovcen",
       "kickoffUtc": "2026-10-06T13:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-06",
+        "scoreHome": 2,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2453,8 +2453,8 @@
         "status": "SECOND_HALF",
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 0,
-        "scoreAway": 1
+        "scoreHome": 2,
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -5304,13 +5304,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "79b8d32710ccb30d0ca5b788eae85fff182226468000b550174b776c50899604",
+      "truthFingerprint": "62a431cf8466b211ce1d78f9e87486ada0de657babc86dc65df82c7b276bec48",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 14,
+        "expectedEligibleRows": 15,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_banfield_rosariocentral_20261006",
@@ -5325,6 +5325,7 @@
           "cid_col2_bogota_envigado_20261006",
           "cid_col2_orsomarso_quindio_20261006",
           "cid_mne2_iskra_rudar_20261006",
+          "cid_mne2_podgorica_lovcen_20261006",
           "cid_par1_cerroporteno_2mayo_20261006",
           "cid_uru1_nacional_montevideocitytorque_20261006"
         ],
@@ -5386,7 +5387,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-06",
-      "fileCount": 14,
+      "fileCount": 15,
       "authority": "scored_final_evidence"
     },
     "downstream": {
