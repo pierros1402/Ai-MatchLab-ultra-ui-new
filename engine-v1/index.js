@@ -52,6 +52,7 @@ import {
   buildValueExportReport,
   comparisonToValueExportDay,
   fallbackPlanAToValueExportDay,
+  prepareValueComparisonForExport,
   valueExportCsvRecords
 } from "./core/value-export-report.js";
 import { teamPairMatches } from "./core/team-identity.js";
@@ -2944,7 +2945,12 @@ function readValueComparisonArtifact(date) {
     payload?.date !== date ||
     (!ordinaryComparisonValid && !unrecoverablePlanAGapValid)
   ) {
-    return { ok: false, reason: "value_comparison_payload_invalid", file };
+    return {
+      ok: false,
+      reason: "value_comparison_payload_invalid",
+      file,
+      payload
+    };
   }
 
   return { ok: true, file, payload };
@@ -3092,21 +3098,43 @@ function resolveValueExportOdds(oddsEntry, market, marketName, pick) {
   return Number.isFinite(v) ? v : null;
 }
 
-// Load all four settled plans from value-comparison/<date>.json. A present
-// comparison artifact is authoritative for Value export: invalid JSON must be
-// surfaced, never silently replaced by the production snapshot.
+// Load authoritative Value comparison artifacts for export through the same
+// runtime/public mirror reader. Export may accept evidence-bound historical
+// payload shapes as a read-only compatibility view, while the public
+// /value-comparison contract itself remains strict.
 function loadValueExportComparisonDay(date) {
   const artifact =
     readValueComparisonArtifact(date);
 
-  if (!artifact.ok) {
+  if (
+    !artifact.ok &&
+    artifact.reason ===
+      "value_comparison_not_found"
+  ) {
     return {
       ok: false,
       issue: {
         code:
-          artifact.reason === "value_comparison_not_found"
-            ? "VALUE_EXPORT_COMPARISON_NOT_FOUND"
-            : "VALUE_EXPORT_COMPARISON_INVALID",
+          "VALUE_EXPORT_COMPARISON_NOT_FOUND",
+        date,
+        artifact:
+          artifact.file || null,
+        message:
+          "value_comparison_not_found"
+      }
+    };
+  }
+
+  if (
+    !artifact.ok &&
+    artifact.reason !==
+      "value_comparison_payload_invalid"
+  ) {
+    return {
+      ok: false,
+      issue: {
+        code:
+          "VALUE_EXPORT_COMPARISON_INVALID",
         date,
         artifact:
           artifact.file || null,
@@ -3117,13 +3145,38 @@ function loadValueExportComparisonDay(date) {
     };
   }
 
+  const prepared =
+    prepareValueComparisonForExport({
+      date,
+      comparison:
+        artifact.payload
+    });
+
+  if (!prepared.ok) {
+    return {
+      ok: false,
+      issue: {
+        code:
+          "VALUE_EXPORT_COMPARISON_INVALID",
+        date,
+        artifact:
+          artifact.file || null,
+        message:
+          prepared.reason ||
+          "value_comparison_payload_invalid"
+      }
+    };
+  }
+
   return {
     ok: true,
+    compatibilityKind:
+      prepared.kind,
     day:
       comparisonToValueExportDay({
         date,
         comparison:
-          artifact.payload,
+          prepared.comparison,
         source:
           "value_comparison_release_artifact"
       })
@@ -3519,7 +3572,16 @@ app.get("/value-export/range", async (req, res) => {
     const comparisonResult = !rebuild ? loadValueExportComparisonDay(date) : null;
 
     if (comparisonResult?.ok === false) {
-      sourceIssues.push(comparisonResult.issue);
+      if (
+        comparisonResult?.issue?.code ===
+        "VALUE_EXPORT_COMPARISON_NOT_FOUND"
+      ) {
+        continue;
+      }
+
+      sourceIssues.push(
+        comparisonResult.issue
+      );
       continue;
     }
 

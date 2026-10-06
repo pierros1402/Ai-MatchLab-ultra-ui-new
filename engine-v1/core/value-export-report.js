@@ -26,6 +26,205 @@ function upper(value) {
   return clean(value).toUpperCase();
 }
 
+function valueExportPlainObject(value) {
+  return Boolean(
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value)
+  );
+}
+
+function valueExportOptionalPlan(value) {
+  return (
+    value === undefined ||
+    value === null ||
+    valueExportPlainObject(value)
+  );
+}
+
+function zeroValueExportSummary() {
+  return {
+    picks: 0,
+    uniqueMatches: 0,
+    settled: 0,
+    wins: 0,
+    losses: 0,
+    voids: 0,
+    unresolved: 0,
+    unsupported: 0,
+    hitRate: null,
+    oddsAvailable: 0,
+    averageOdds: null,
+    totalStake: null,
+    totalReturn: null,
+    profit: null,
+    roi: null
+  };
+}
+
+export function prepareValueComparisonForExport({
+  date,
+  comparison
+}) {
+  const expectedDate = clean(date);
+
+  if (
+    !valueExportPlainObject(comparison) ||
+    comparison.ok !== true ||
+    clean(comparison.date) !== expectedDate
+  ) {
+    return {
+      ok: false,
+      reason: "value_comparison_payload_invalid"
+    };
+  }
+
+  const sourcePlans =
+    valueExportPlainObject(comparison.plans)
+      ? comparison.plans
+      : {};
+
+  const allFourPlansValid =
+    ["A", "A2", "B", "B2"].every(
+      planKey =>
+        valueExportPlainObject(sourcePlans[planKey])
+    );
+
+  if (allFourPlansValid) {
+    return {
+      ok: true,
+      kind: "FOUR_PLAN",
+      comparison
+    };
+  }
+
+  const legacyABValid =
+    valueExportPlainObject(sourcePlans.A) &&
+    valueExportPlainObject(sourcePlans.B) &&
+    valueExportOptionalPlan(sourcePlans.A2) &&
+    valueExportOptionalPlan(sourcePlans.B2);
+
+  if (legacyABValid) {
+    return {
+      ok: true,
+      kind: "LEGACY_AB",
+      comparison
+    };
+  }
+
+  const planAAvailability =
+    valueExportPlainObject(
+      comparison.planAAvailability
+    )
+      ? comparison.planAAvailability
+      : {};
+
+  const planBAvailability =
+    valueExportPlainObject(
+      comparison.planBAvailability
+    )
+      ? comparison.planBAvailability
+      : {};
+
+  const unrecoverablePlanAValid = Boolean(
+    comparison.comparisonEligible === false &&
+    planAAvailability.status === "unrecoverable" &&
+    clean(planAAvailability.reason) &&
+    sourcePlans.A === null &&
+    valueExportPlainObject(sourcePlans.B) &&
+    valueExportOptionalPlan(sourcePlans.A2) &&
+    valueExportOptionalPlan(sourcePlans.B2)
+  );
+
+  if (unrecoverablePlanAValid) {
+    return {
+      ok: true,
+      kind: "PLAN_A_UNRECOVERABLE",
+      comparison
+    };
+  }
+
+  const provenance =
+    valueExportPlainObject(comparison.provenance)
+      ? comparison.provenance
+      : {};
+
+  const signature =
+    clean(
+      planAAvailability.observationSignature
+    ).toLowerCase();
+
+  const evidenceBoundPlanAZero = Boolean(
+    comparison.comparisonEligible === false &&
+    planAAvailability.available === true &&
+    Number(planAAvailability.count) === 0 &&
+    planAAvailability.immutable === true &&
+    /^[a-f0-9]{64}$/u.test(signature) &&
+    planBAvailability.available === false &&
+    clean(planBAvailability.reason) &&
+    provenance.kind ===
+      "evidence_bound_runner_recovery" &&
+    Array.isArray(provenance.runIds) &&
+    provenance.runIds.length > 0 &&
+    Object.keys(sourcePlans).length === 0
+  );
+
+  if (evidenceBoundPlanAZero) {
+    return {
+      ok: true,
+      kind: "EVIDENCE_BOUND_PLAN_A_ZERO",
+      comparison: {
+        ...comparison,
+        plans: {
+          A: {
+            id: "plan-a",
+            label:
+              "Plan A - frozen production observation",
+            immutable: true,
+            count: 0,
+            summary: zeroValueExportSummary(),
+            picks: [],
+            provenance:
+              comparison.provenance || null
+          }
+        }
+      }
+    };
+  }
+
+  return {
+    ok: false,
+    reason: "value_comparison_payload_invalid"
+  };
+}
+
+function valueExportPlanAvailabilityReason(
+  comparison,
+  planKey,
+  available
+) {
+  if (available) return null;
+
+  const explicitReason =
+    planKey === "A"
+      ? clean(
+          comparison?.planAAvailability?.reason
+        )
+      : planKey === "B"
+        ? clean(
+            comparison?.planBAvailability?.reason
+          )
+        : "";
+
+  if (explicitReason) return explicitReason;
+
+  if (planKey === "A2" || planKey === "B2") {
+    return "historical_plan_not_present_in_artifact";
+  }
+
+  return "historical_plan_not_available";
+}
+
 export function normalizeValueSettlement(value) {
   const normalized = upper(value).replace(/[\s-]+/gu, "_");
 
@@ -164,6 +363,12 @@ export function comparisonToValueExportDay({ date, comparison, source = "value_c
     plans[plan.key] = {
       ...plan,
       available,
+      availabilityReason:
+        valueExportPlanAvailabilityReason(
+          comparison,
+          plan.key,
+          available
+        ),
       source,
       declaredSummary: available && rawPlan.summary && typeof rawPlan.summary === "object"
         ? rawPlan.summary
@@ -291,6 +496,7 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
     status: "COMPLETE",
     issues: [],
     missingDays: [],
+    unavailablePlanDays: [],
     unresolvedClosedDays: [],
     unsupportedRows: [],
     duplicatePicks: [],
@@ -320,10 +526,29 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
       const summary = summarizeValueRows(rows);
       const status = planDayStatus(available, summary);
 
-      if (available) availableDays += 1;
-      else notAvailableDays += 1;
+      const availabilityReason =
+        available
+          ? null
+          : clean(planDay?.availabilityReason) ||
+            "plan_not_available";
 
-      daily.push({ date, status, ...summary });
+      if (available) {
+        availableDays += 1;
+      } else {
+        notAvailableDays += 1;
+        integrity.unavailablePlanDays.push({
+          date,
+          plan: plan.key,
+          reason: availabilityReason
+        });
+      }
+
+      daily.push({
+        date,
+        status,
+        availabilityReason,
+        ...summary
+      });
       picks.push(...rows);
       addCounts(rangeCounts, summary);
 
@@ -390,7 +615,8 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
     ...integrity.unresolvedClosedDays.map(issue => ({ code: "VALUE_EXPORT_CLOSED_DAY_UNRESOLVED", ...issue })),
     ...integrity.unsupportedRows.map(issue => ({ code: "VALUE_EXPORT_UNSUPPORTED_SETTLEMENT", ...issue })),
     ...integrity.duplicatePicks.map(issue => ({ code: "VALUE_EXPORT_DUPLICATE_PICK", ...issue })),
-    ...integrity.countMismatches.map(issue => ({ code: "VALUE_EXPORT_COUNT_MISMATCH", ...issue }))
+    ...integrity.countMismatches.map(issue => ({ code: "VALUE_EXPORT_COUNT_MISMATCH", ...issue })),
+    ...integrity.unavailablePlanDays.map(issue => ({ code: "VALUE_EXPORT_PLAN_NOT_AVAILABLE", ...issue }))
   ];
   integrity.status = integrity.issues.length > 0 ? "INCOMPLETE" : "COMPLETE";
 
