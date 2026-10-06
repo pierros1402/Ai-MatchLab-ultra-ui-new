@@ -1735,7 +1735,7 @@ test(
       plan
         .futureExecutionRecipe[1]
         .producer,
-      "DEDICATED_MANIFEST_ONLY_ADAPTER_REQUIRED"
+      "engine-v1/core/checkpoint-aware-targeted-freshness-coverage-manifest-only-adapter.js"
     );
 
     assert.equal(

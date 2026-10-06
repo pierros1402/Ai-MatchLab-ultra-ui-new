@@ -706,7 +706,13 @@ export function buildCheckpointAwareTargetedRepairExecutorContract({
             "engine-v1/jobs/build-league-gap-report-day.js",
 
           manifestOnlyAdapterStatus:
-            "DEDICATED_ADAPTER_REQUIRED_BEFORE_MUTABLE_EXECUTION",
+            "IMPLEMENTED_SANDBOX_ONLY_MUTABLE_EXECUTION_NOT_AUTHORIZED",
+
+          manifestOnlyAdapter:
+            "engine-v1/core/checkpoint-aware-targeted-freshness-coverage-manifest-only-adapter.js",
+
+          manifestOnlySandboxRunner:
+            "engine-v1/jobs/run-checkpoint-aware-targeted-freshness-coverage-manifest-only-sandbox-day.js",
 
           currentFullSnapshotExporterAuthorized:
             false
@@ -805,7 +811,7 @@ export function buildCheckpointAwareTargetedRepairExecutorContract({
           false,
 
         reason:
-          "freshness_repair_requires_a_manifest_only_adapter_that_preserves_value_and_detail_bytes;_the_current_full_snapshot_exporter_is_not_authorized_for_this_bounded_route"
+          "freshness_repair_has_a_sandbox_only_manifest_adapter_but_mutable_execution_still_requires_external_authorization;_the_full_snapshot_exporter_remains_forbidden_for_this_bounded_route"
       }
     };
 

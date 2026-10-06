@@ -51,7 +51,7 @@ function basePlan({
       "rebuild_coverage_readiness_then_manifest_only_reexport_preserving_value_and_details",
 
     mutableBridgeStatus:
-      "NOT_AUTHORIZED_MANIFEST_ONLY_ADAPTER_REQUIRED",
+      "IMPLEMENTED_SANDBOX_ONLY_MUTABLE_EXECUTION_NOT_AUTHORIZED",
 
     allowedRepositoryOutputsAfterFutureAuthorization: [
       `data/coverage-readiness/${dayKey}.json`,
@@ -342,7 +342,10 @@ export function classifyCheckpointAwareFreshnessCoverageReadinessPlan({
           "MANIFEST_ONLY_REEXPORT_FROM_EXISTING_SNAPSHOT_BYTES",
 
         producer:
-          "DEDICATED_MANIFEST_ONLY_ADAPTER_REQUIRED",
+          "engine-v1/core/checkpoint-aware-targeted-freshness-coverage-manifest-only-adapter.js",
+
+        sandboxRunner:
+          "engine-v1/jobs/run-checkpoint-aware-targeted-freshness-coverage-manifest-only-sandbox-day.js",
 
         output:
           `data/deploy-snapshots/${day}/manifest.json`,
