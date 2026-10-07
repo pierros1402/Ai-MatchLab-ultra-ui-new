@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-08",
-  "generatedAt": "2026-10-07T22:46:04.133Z",
+  "generatedAt": "2026-10-07T22:59:41.492Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "f62056a19f51452677709f761b9d976c26b35f06f36dcb9311adc0ad8f73e3e4",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "04d052c1a9e9a62874cfa729ec3bb5ed44536aeaccbbbe8823dd1576dc8cdd30",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -25,14 +25,14 @@
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 0,
-    "acceptedVerifiedFinalArtifacts": 0,
+    "verifiedFinalArtifacts": 1,
+    "acceptedVerifiedFinalArtifacts": 1,
     "convergedPlayedFinal": 0,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 58,
+    "openRows": 57,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 0,
@@ -1036,18 +1036,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-08",
+        "scoreHome": 1,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -2886,7 +2886,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_col2_leones_barranquilla_20261008"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -5373,7 +5375,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "f62056a19f51452677709f761b9d976c26b35f06f36dcb9311adc0ad8f73e3e4",
+      "truthFingerprint": "04d052c1a9e9a62874cfa729ec3bb5ed44536aeaccbbbe8823dd1576dc8cdd30",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -5440,7 +5442,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-08",
-      "fileCount": 0,
+      "fileCount": 1,
       "authority": "scored_final_evidence"
     },
     "downstream": {
