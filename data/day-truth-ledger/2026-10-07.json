@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-07",
-  "generatedAt": "2026-10-07T15:25:43.203Z",
+  "generatedAt": "2026-10-07T15:39:39.842Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "db3e9e11e8804f9ab5dce3cc84953f20189ed3290845328d3ea52ccc1333675b",
+  "truthFingerprint": "a06d66c188c0313fc3ff51e1b1dfbaa44f9006e6f9fd94bbf198c02f3a915775",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 22,
-    "playedTerminal": 13,
+    "playedTerminal": 14,
     "nonPlayedTerminal": 0,
-    "scheduled": 9,
+    "scheduled": 8,
     "live": 0,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 13,
-    "acceptedVerifiedFinalArtifacts": 13,
-    "convergedPlayedFinal": 13,
+    "verifiedFinalArtifacts": 14,
+    "acceptedVerifiedFinalArtifacts": 14,
+    "convergedPlayedFinal": 14,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 9,
+    "openRows": 8,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 13,
-    "scoredSettlementEligible": 13,
+    "historyEligible": 14,
+    "scoredSettlementEligible": 14,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -1075,31 +1075,31 @@
       "homeTeam": "Triangle",
       "awayTeam": "Dynamos",
       "kickoffUtc": "2026-10-07T13:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-07",
+        "scoreHome": 1,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1303,7 +1303,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 11902,
+            "count": 11906,
             "informational": true
           }
         },
@@ -4976,13 +4976,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "db3e9e11e8804f9ab5dce3cc84953f20189ed3290845328d3ea52ccc1333675b",
+      "truthFingerprint": "a06d66c188c0313fc3ff51e1b1dfbaa44f9006e6f9fd94bbf198c02f3a915775",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 13,
+        "expectedEligibleRows": 14,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_aze2_sahdagqusar_zaqatala_20261007",
@@ -4997,7 +4997,8 @@
           "cid_uga1_kitara_kigezihomeboyz_20261007",
           "cid_uga1_maroons_lugazi_20261007",
           "cid_uga1_ntugasaze_mbararacity_20261007",
-          "cid_usa1_chicagofire_vancouverwhitecaps_20261007"
+          "cid_usa1_chicagofire_vancouverwhitecaps_20261007",
+          "cid_zim1_triangle_dynamos_20261007"
         ],
         "unexpectedFixtureIds": [],
         "duplicateFixtureIds": [],
@@ -5057,7 +5058,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-07",
-      "fileCount": 13,
+      "fileCount": 14,
       "authority": "scored_final_evidence"
     },
     "downstream": {
