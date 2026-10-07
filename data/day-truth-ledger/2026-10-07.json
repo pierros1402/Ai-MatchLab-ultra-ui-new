@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-07",
-  "generatedAt": "2026-10-07T01:24:57.781Z",
+  "generatedAt": "2026-10-07T01:39:26.319Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "b4fd19be086fe14e508b908570dcb8113cdfb5f62904bec788d29b4e49fb27bd",
+  "truthFingerprint": "b671d6a8ff82362deb0bea1d47c008dc1ad6e94de7d23aa3fecef41cf6d2cec8",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 22,
-    "playedTerminal": 2,
+    "playedTerminal": 3,
     "nonPlayedTerminal": 0,
     "scheduled": 17,
-    "live": 3,
+    "live": 2,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 2,
-    "acceptedVerifiedFinalArtifacts": 2,
-    "convergedPlayedFinal": 2,
+    "verifiedFinalArtifacts": 3,
+    "acceptedVerifiedFinalArtifacts": 3,
+    "convergedPlayedFinal": 3,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 20,
+    "openRows": 19,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 2,
-    "scoredSettlementEligible": 2,
+    "historyEligible": 3,
+    "scoredSettlementEligible": 3,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -95,31 +95,31 @@
       "homeTeam": "Goias",
       "awayTeam": "Athletic Club",
       "kickoffUtc": "2026-10-06T23:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 2,
         "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-07",
+        "scoreHome": 2,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -147,9 +147,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
         "scoreAway": 1
       },
@@ -1029,9 +1029,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -4976,15 +4976,16 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "b4fd19be086fe14e508b908570dcb8113cdfb5f62904bec788d29b4e49fb27bd",
+      "truthFingerprint": "b671d6a8ff82362deb0bea1d47c008dc1ad6e94de7d23aa3fecef41cf6d2cec8",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 2,
+        "expectedEligibleRows": 3,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
+          "cid_bra2_goias_athletic_20261007",
           "cid_bra2_sport_saobernardo_20261007",
           "cid_par1_olimpia_nacionalasuncion_20261007"
         ],
@@ -5046,7 +5047,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-07",
-      "fileCount": 2,
+      "fileCount": 3,
       "authority": "scored_final_evidence"
     },
     "downstream": {
