@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-08",
-  "generatedAt": "2026-10-08T11:14:54.163Z",
+  "generatedAt": "2026-10-08T12:00:28.653Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "f029541b1587fbe11e1e78db1dc8089a40eae5f9f7a4f4a4f1dabd88965d182e",
+  "truthFingerprint": "08677e24dc9baa773b479c070bd38794fa94f6a3f0047642473f2d6394915dbd",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 58,
-    "playedTerminal": 14,
+    "playedTerminal": 16,
     "nonPlayedTerminal": 0,
-    "scheduled": 44,
+    "scheduled": 42,
     "live": 0,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 14,
-    "acceptedVerifiedFinalArtifacts": 14,
-    "convergedPlayedFinal": 14,
+    "verifiedFinalArtifacts": 16,
+    "acceptedVerifiedFinalArtifacts": 16,
+    "convergedPlayedFinal": 16,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 44,
+    "openRows": 42,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 14,
-    "scoredSettlementEligible": 14,
+    "historyEligible": 16,
+    "scoredSettlementEligible": 16,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -1712,31 +1712,31 @@
       "homeTeam": "Shakhter Karagandy",
       "awayTeam": "Akademiya Ontustik",
       "kickoffUtc": "2026-10-08T10:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-08",
+        "scoreHome": 2,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1761,31 +1761,31 @@
       "homeTeam": "Yelimay Semey 2",
       "awayTeam": "Arys",
       "kickoffUtc": "2026-10-08T10:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 3
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-08",
+        "scoreHome": 2,
+        "scoreAway": 3,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3060,7 +3060,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 11994,
+            "count": 11996,
             "informational": true
           }
         },
@@ -5373,13 +5373,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "f029541b1587fbe11e1e78db1dc8089a40eae5f9f7a4f4a4f1dabd88965d182e",
+      "truthFingerprint": "08677e24dc9baa773b479c070bd38794fa94f6a3f0047642473f2d6394915dbd",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 14,
+        "expectedEligibleRows": 16,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_bra1_botafogo_vascogama_20261008",
@@ -5395,7 +5395,9 @@
           "cid_bra2_vilanova_cuiaba_20261008",
           "cid_can1_forge_pacific_20261008",
           "cid_col2_bocajuniors_umagdalena_20261008",
-          "cid_col2_leones_barranquilla_20261008"
+          "cid_col2_leones_barranquilla_20261008",
+          "cid_kaz2_shakhterkaragandy_akademiyaontustik_20261008",
+          "cid_kaz2_yelimaysemey2_arys_20261008"
         ],
         "unexpectedFixtureIds": [],
         "duplicateFixtureIds": [],
@@ -5455,7 +5457,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-08",
-      "fileCount": 14,
+      "fileCount": 16,
       "authority": "scored_final_evidence"
     },
     "downstream": {
