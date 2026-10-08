@@ -1,17 +1,17 @@
 const CONTRACT_DATA = {
-  "schema": "ai-matchlab.g6-operational-memory-architecture-contract.v13",
-  "generatedAt": "2026-10-07T12:28:09.2359842Z",
+  "schema": "ai-matchlab.g6-operational-memory-architecture-contract.v14",
+  "generatedAt": "2026-10-08T04:43:24.8445358Z",
   "supersedesContract": {
-    "schema": "ai-matchlab.g6-operational-memory-architecture-contract.v11",
-    "sha256": "02B6556BEE9165919102BA9B7739EF74CF962B60E39BFC8CE9DED0E698D1FFA0",
-    "reviewSha256": "E02CA3EE8B6AFEE54914FD0E581D936AE48463B412CCCFD5A3417449ABAB9CA0",
+    "schema": "ai-matchlab.g6-operational-memory-architecture-contract.v13",
+    "sha256": "84067F618A5AFB4701B79511212066EC2DC0389EBE000A2B2902CBE1C67F0214",
+    "reviewSha256": "A3813B5FFE2FFA7BE1D72179205CD0611FE97272DAF6FDA9F76696FFB85D0454",
     "approvedNormativeBaseline": {
-      "schema": "ai-matchlab.g6-operational-memory-architecture-contract.v10",
-      "sha256": "0F6FDE2F8F06A38E5C192A9619A0ECD9D7E3C8589D2CDB82F4C89C35A4E48062",
-      "approvalSha256": "D2743DE5AA2FCE90AC73C8863E59323F7667D199A800D347B2857C9D371EE3C8"
+      "schema": "ai-matchlab.g6-operational-memory-architecture-contract.v13",
+      "sha256": "84067F618A5AFB4701B79511212066EC2DC0389EBE000A2B2902CBE1C67F0214",
+      "approvalSha256": "E906A3669088A78036166E86AB866C456A11CD6FCE462D5F1EAF38596C872AFD"
     }
   },
-  "status": "PASS_G6_OPERATIONAL_MEMORY_ARCHITECTURE_CONTRACT_V13_EVENT_V3_REVISION",
+  "status": "PASS_G6_OPERATIONAL_MEMORY_ARCHITECTURE_CONTRACT_V14_EVENT_V4_VALIDITY_DAG_REVISION",
   "acceptedInvariants": {
     "canonicalModel": "IMMUTABLE_EVENT_PER_FILE",
     "createOnlyCanonicalHistory": true,
@@ -218,11 +218,11 @@ const CONTRACT_DATA = {
       "CASE_ID": "^case2_[0-9abcdef]{64}$",
       "PRODUCER_ID": "^[a-z0-9][a-z0-9._-]{0,127}$"
     },
-    "normativeRegexAuditRule": "Every normative pattern used by event.v3 MUST either equal one entry in normativeRegexPatterns or be separately declared with regexDialect=AI_MATCHLAB_PORTABLE_ASCII_REGEX_V1 and pass completeGrammar validation."
+    "normativeRegexAuditRule": "Every normative pattern used by event.v4 MUST either equal one entry in normativeRegexPatterns or be separately declared with regexDialect=AI_MATCHLAB_PORTABLE_ASCII_REGEX_V1 and pass completeGrammar validation."
   },
   "identity": {
     "hashAlgorithm": "SHA-256",
-    "eventSchema": "ai-matchlab.operational-memory.event.v3",
+    "eventSchema": "ai-matchlab.operational-memory.event.v4",
     "semanticIdentityProjectionFields": [
       "schema",
       "eventType",
@@ -542,7 +542,7 @@ const CONTRACT_DATA = {
     "cycleAllowed": false,
     "supersedesRule": "supersedesEventId must reference a pre-existing event compatible with the event-type-specific supersession rule.",
     "validityTargetRule": "VALIDITY_CHANGE.validityTargetEventId must reference a pre-existing canonical event in the same case and subject.",
-    "validityChangeSupersessionRule": "A later VALIDITY_CHANGE for the same target must supersede the current unsuperseded VALIDITY_CHANGE head for that target. Multiple live heads are corruption and fail closed.",
+    "validityChangeSupersessionRule": "VALIDITY_CHANGE succession uses an order-independent same-target parentEventIds DAG. supersedesEventId MUST remain null. Multiple structurally valid current heads are recorded conflict and yield CONFLICTED rather than corruption.",
     "parentReferenceSet": "parentEventIds is canonical sorted unique set.",
     "readerMustValidateReachabilityForCyclePrevention": true,
     "allowedTypedEdges": {
@@ -650,7 +650,7 @@ const CONTRACT_DATA = {
       }
     },
     "typedEdgeValidation": "Every non-null relationship reference must target an event type explicitly permitted by allowedTypedEdges for the referencing event type and relationship field. Any unspecified non-null edge is forbidden.",
-    "supersedesCompatibility": "For non-VALIDITY_CHANGE events, supersedesEventId must target the same eventType, same caseId and same subjectFingerprint. VALIDITY_CHANGE uses parentEventIds for validity-head succession and must have supersedesEventId=null.",
+    "supersedesCompatibility": "For non-VALIDITY_CHANGE events, supersedesEventId must target the same eventType, same caseId and same subjectFingerprint. VALIDITY_CHANGE uses parentEventIds for order-independent validity-DAG succession and must have supersedesEventId=null.",
     "effectiveTimeOrdering": {
       "comparisonDomain": "parsed canonical UTC instants",
       "generalCausalRule": "For every causal/dependency relationship, referencedEvent.effectiveAt <= referencingEvent.effectiveAt.",
@@ -668,7 +668,7 @@ const CONTRACT_DATA = {
       "authorizationRule": "Referenced AUTHORIZATION_RECORD.effectiveAt <= EXECUTION_ATTEMPT.effectiveAt.",
       "outcomeRule": "Referenced EXECUTION_ATTEMPT.effectiveAt <= OUTCOME_VERIFICATION.effectiveAt.",
       "rollbackRule": "Both referenced execution attempts must have effectiveAt <= ROLLBACK_RECOVERY.effectiveAt.",
-      "validityRule": "validityTargetEvent.effectiveAt and every predecessor validity-head effectiveAt must be <= VALIDITY_CHANGE.effectiveAt.",
+      "validityRule": "validityTargetEvent.effectiveAt and every referenced parent VALIDITY_CHANGE.effectiveAt must be <= VALIDITY_CHANGE.effectiveAt.",
       "supersessionRule": "supersededEvent.effectiveAt <= supersedingEvent.effectiveAt.",
       "caseRootRule": "caseIdentity.rootEffectiveAt <= every descendant event.effectiveAt.",
       "recordedAtOrderingRequired": false,
@@ -752,7 +752,7 @@ const CONTRACT_DATA = {
       "EXTERNAL_RECORD"
     ],
     "generatedAtCanonicalization": "When present, generatedAt MUST use the exact contract canonical timestamp form YYYY-MM-DDTHH:mm:ss.SSSZ and round-trip identically.",
-    "gitCommitFormat": "When present, gitCommit MUST be the complete lowercase 40-hex Git SHA-1 object id. Abbreviated hashes are forbidden in operational-memory event.v3.",
+    "gitCommitFormat": "When present, gitCommit MUST be the complete lowercase 40-hex Git SHA-1 object id. Abbreviated hashes are forbidden in operational-memory event.v4.",
     "schemaFieldCanonicalization": "When present, schema is a non-empty NFC string with no leading/trailing whitespace.",
     "optionalMetadataAbsence": "Optional schema, gitCommit and generatedAt fields are OMITTED when absent; explicit null is forbidden.",
     "evidenceReferenceIdentity": {
@@ -1064,14 +1064,14 @@ const CONTRACT_DATA = {
     "scopeMismatchCompatible": false,
     "writeSetOutsideConstraintsCompatible": false,
     "semanticMeaning": "Historical linkage validation only; independent current authority validation remains mandatory immediately before real mutation.",
-    "targetScopeCompatibilityAlgorithm": "AUTHORIZATION_RECORD.payload.scope, AUTHORIZATION_RECORD.payload.constraints.targetScope and EXECUTION_ATTEMPT.payload.targetScope must be canonical-JSON byte-identical. No implicit parent/child scope containment exists in event.v3.",
+    "targetScopeCompatibilityAlgorithm": "AUTHORIZATION_RECORD.payload.scope, AUTHORIZATION_RECORD.payload.constraints.targetScope and EXECUTION_ATTEMPT.payload.targetScope must be canonical-JSON byte-identical. No implicit parent/child scope containment exists in event.v4.",
     "authorizationScopeConstraintConsistency": "AUTHORIZATION_RECORD.payload.scope MUST equal payload.constraints.targetScope under canonical TARGET_SCOPE equality.",
     "operationCompatibility": "EXECUTION_ATTEMPT.payload.operationKind must be an exact member of authorization constraints.allowedOperations.",
     "writeSetSubsetAlgorithm": "actualWriteSet and allowedWritePaths are canonical sorted unique repository-path sets; every actualWriteSet member must have an exact byte-equal member in allowedWritePaths.",
     "expiryAlgorithm": "If expiresAt exists, EXECUTION_ATTEMPT.payload.startedAt must be <= expiresAt after parsing both as canonical UTC instants."
   },
   "validityControl": {
-    "schema": "ai-matchlab.operational-memory.validity-control.v2",
+    "schema": "ai-matchlab.operational-memory.validity-control.v3",
     "eventType": "VALIDITY_CHANGE",
     "targetBytesChanged": false,
     "targetDeleted": false,
@@ -1097,18 +1097,18 @@ const CONTRACT_DATA = {
         "REINSTATE"
       ]
     },
-    "successionProtocol": "PARENT_EVENT_IDS_ONLY",
+    "successionProtocol": "PARENT_EVENT_IDS_ORDER_INDEPENDENT_DAG",
     "supersedesEventId": "MUST_BE_NULL",
-    "firstChange": "The first structurally valid canonical VALIDITY_CHANGE for one validityTargetEventId MUST have parentEventIds empty.",
-    "currentHeadDefinition": "For one validityTargetEventId, a structurally valid canonical VALIDITY_CHANGE is a current head iff no other structurally valid canonical VALIDITY_CHANGE for the same validityTargetEventId references its eventId in parentEventIds.",
-    "subsequentProposal": "Every later structurally valid canonical VALIDITY_CHANGE MUST set parentEventIds to the complete sorted unique set of current heads computed solely under currentHeadEligibilityRule for that same validityTargetEventId.",
+    "firstChange": "A structurally valid canonical VALIDITY_CHANGE with parentEventIds empty is a validity root proposal. Multiple structurally valid root proposals for the same validityTargetEventId are permitted as competing branches and produce CONFLICTED when they remain multiple current heads.",
+    "currentHeadDefinition": "For one validityTargetEventId, a structurally valid canonical VALIDITY_CHANGE is a current head iff no other structurally valid canonical VALIDITY_CHANGE for the same validityTargetEventId directly references its eventId in parentEventIds.",
+    "subsequentProposal": "A non-root structurally valid canonical VALIDITY_CHANGE MAY reference one or more pre-existing structurally valid same-target VALIDITY_CHANGE events in canonical sorted unique parentEventIds. The parent set is not required to equal the current-head set at insertion time. Structural eligibility is derived only from the immutable validity DAG rules and not from arrival, replay, recordedAt or repository iteration order.",
     "concurrentFork": "PERMITTED_AS_RECORDED_CONFLICT_NOT_AS_RESOLVED_STATE",
     "zeroHeadsState": "ACTIVE",
     "oneHeadState": "head payload.action determines ACTIVE or INVALID",
     "multipleHeadsState": "CONFLICTED",
     "conflictedOperationalUse": "FAIL_CLOSED",
     "conflictedG7Eligibility": "EXCLUDED",
-    "conflictResolution": "A new VALIDITY_CHANGE references the complete sorted set of all current conflicting heads in parentEventIds; its action establishes the next single-head state.",
+    "conflictResolution": "Conflict is resolved only when the finite structurally valid validity DAG for one validityTargetEventId has exactly one current head. All other structurally valid branches must be ancestors of that sole head; otherwise multiple heads remain CONFLICTED. The sole head payload.action establishes ACTIVE or INVALID.",
     "arbitraryWinnerAllowed": false,
     "dependentEventValidityPolicy": {
       "model": "FAIL_CLOSED_LINEAGE_EFFECTIVE_VALIDITY",
@@ -1158,16 +1158,16 @@ const CONTRACT_DATA = {
         "typed relationship rules valid",
         "effective-time ordering valid",
         "validityTargetEventId valid",
-        "parentEventIds validity-head protocol valid",
+        "parentEventIds order-independent validity-DAG protocol valid",
         "security gate PASS",
         "resource bounds PASS"
       ],
-      "directTargetValidityComputation": "Every structurally valid canonical VALIDITY_CHANGE satisfying the validity succession protocol participates in target direct-validity computation even when that VALIDITY_CHANGE event's own lineage-effective state is INVALID or CONFLICTED because of case-root aggregate validity.",
+      "directTargetValidityComputation": "Every structurally valid canonical VALIDITY_CHANGE satisfying the order-independent validity-DAG protocol participates in target direct-validity computation even when that VALIDITY_CHANGE event's own lineage-effective state is INVALID or CONFLICTED because of case-root aggregate validity.",
       "separationOfConcerns": "Applicability to target direct validity and lineage/G7 eligibility of the VALIDITY_CHANGE event itself are separate computations.",
       "repairLiveness": "A structurally valid VALIDITY_CHANGE may resolve the root or validity conflict that caused its own pre-resolution lineage state to be non-ACTIVE.",
       "invalidStructuralEventApplies": false,
       "arbitrarySuppressionAllowed": false,
-      "headGraphMembershipRule": "Head graph membership uses exactly currentHeadEligibilityRule and is independent of lineage-effective state, G7 eligibility and caseRootAggregateValidity.",
+      "headGraphMembershipRule": "Head graph membership uses exactly currentHeadEligibilityRule and the order-independent same-target validity DAG; it is independent of lineage-effective state, G7 eligibility, caseRootAggregateValidity, recordedAt and arrival/replay order.",
       "headGraphAndApplicationEligibilityIdentical": true
     },
     "currentHeadEligibilityRule": {
@@ -1177,10 +1177,17 @@ const CONTRACT_DATA = {
       "requiresG7Eligibility": false,
       "requiresCaseRootAggregateActive": false,
       "requiresTargetCurrentlyActive": false,
-      "graphMembershipRule": "Every structurally valid canonical VALIDITY_CHANGE participates in the validity-head graph for its validityTargetEventId.",
+      "graphMembershipRule": "Every structurally valid canonical VALIDITY_CHANGE participates in the order-independent validity-head DAG for its validityTargetEventId.",
       "excludedEventRule": "A VALIDITY_CHANGE that fails structural canonical validation does not participate in the head graph or target direct-validity calculation."
     },
-    "parentHeadEligibility": "Every parentEventId of VALIDITY_CHANGE MUST reference a structurally valid canonical VALIDITY_CHANGE for the same validityTargetEventId that is a current head immediately before the proposed event is included."
+    "orderingModel": "ORDER_INDEPENDENT_IMMUTABLE_DAG",
+    "rootProposalRule": "parentEventIds empty defines a validity root proposal. Multiple root proposals are structurally permitted and become multiple heads/conflict unless later merged into one head.",
+    "parentEligibility": "Every parentEventId MUST reference a pre-existing structurally valid canonical VALIDITY_CHANGE for the same validityTargetEventId, caseId and subjectFingerprint; parent.effectiveAt MUST be <= child.effectiveAt; self-reference and cycles are forbidden.",
+    "parentAntichainRule": "The direct parentEventIds set MUST be an antichain under same-target validity-parent reachability: no declared parent may be an ancestor of another declared parent.",
+    "siblingForkRule": "Two or more structurally valid canonical VALIDITY_CHANGE events may reference the same predecessor frontier. Every sibling remains structurally valid; multiple resulting current heads yield CONFLICTED.",
+    "staleProposalRule": "When immutable event bytes cannot distinguish a stale proposal from a genuinely concurrent sibling, the reader MUST NOT invent arrival-order freshness. The proposal remains a structurally valid sibling branch if all order-independent DAG rules pass; any resulting multiple-head state is CONFLICTED and operational use fails closed.",
+    "subsetMergeRule": "A child that references only a subset of live branches cannot silently resolve conflict because every unreferenced live branch remains a current head.",
+    "singleHeadResolutionRule": "A target is conflict-resolved only when exactly one structurally valid current head remains and every other structurally valid branch is an ancestor of that head."
   },
   "eventPayloadContracts": {
     "OBSERVATION": {
@@ -1394,7 +1401,7 @@ const CONTRACT_DATA = {
     }
   },
   "eventEnvelope": {
-    "schema": "ai-matchlab.operational-memory.event.v3",
+    "schema": "ai-matchlab.operational-memory.event.v4",
     "closedSchema": true,
     "requiredFields": [
       "schema",
@@ -1490,7 +1497,7 @@ const CONTRACT_DATA = {
       "typed relationship-edge matrix",
       "relationshipFingerprint",
       "temporal causal ordering",
-      "validity parentEventIds-only succession",
+      "validity order-independent parentEventIds DAG semantics",
       "lineage-effective validity",
       "semanticHash",
       "eventId",
@@ -1527,7 +1534,7 @@ const CONTRACT_DATA = {
     "writerMayChangeAuthority": false
   },
   "schemaEvolution": {
-    "currentEventSchema": "ai-matchlab.operational-memory.event.v3",
+    "currentEventSchema": "ai-matchlab.operational-memory.event.v4",
     "immutableHistoricalSchemas": true,
     "inPlaceMigrationAllowed": false,
     "explicitSupportedSchemaAllowlist": true,
@@ -1575,7 +1582,7 @@ const CONTRACT_DATA = {
     "priorCanonicalEventDetectionRule": "If any canonical operational-memory event is discovered to predate Architecture Approval, event.v1 MUST NOT be approved under the new semantics; the architecture must instead assign a new event schema version and define explicit migration/reader compatibility.",
     "approvalPrecondition": "Architecture Approval MUST independently re-check zero pre-approval canonical event history immediately before approval.",
     "supportedEventSchemas": [
-      "ai-matchlab.operational-memory.event.v3"
+      "ai-matchlab.operational-memory.event.v4"
     ],
     "eventV1Disposition": {
       "schema": "ai-matchlab.operational-memory.event.v1",
@@ -1640,7 +1647,47 @@ const CONTRACT_DATA = {
       "eventIdentityIncludesExactSchema": true,
       "supportedAfterApproval": true
     },
-    "v13EventSchemaTransition": "NEW_EVENT_SCHEMA_NO_MIGRATION_REQUIRED"
+    "v13EventSchemaTransition": "NEW_EVENT_SCHEMA_NO_MIGRATION_REQUIRED",
+    "eventV3Disposition": {
+      "eventSchema": "ai-matchlab.operational-memory.event.v3",
+      "status": "FROZEN_HISTORICAL_NORMATIVE_DEFINITION_IMPLEMENTED_NO_CANONICAL_EVENTS",
+      "sourceArchitectureContract": "V13",
+      "boundArchitectureContractSha256": "84067F618A5AFB4701B79511212066EC2DC0389EBE000A2B2902CBE1C67F0214",
+      "boundArchitectureApprovalSha256": "E906A3669088A78036166E86AB866C456A11CD6FCE462D5F1EAF38596C872AFD",
+      "immutable": true,
+      "completedI1Implementation": true,
+      "canonicalEventCount": 0,
+      "historicalCanonicalEventCommitCount": 0,
+      "writerSupportedAfterV14Approval": false,
+      "readerOperationallySupportedAfterV14Approval": false,
+      "G7EligibleAfterV14Approval": false,
+      "inPlaceSemanticRepairAllowed": false,
+      "migrationRequired": false,
+      "historyRewriteRequired": false,
+      "blockerId": "G6-I2-DESIGN-B01-VALIDITY-HEAD-CONCURRENCY-REPLAY-UNDERDEFINED",
+      "reason": "event.v3 validity-head concurrency semantics are underdefined for reader-verifiable concurrent forks. The approved schema is frozen rather than redefined."
+    },
+    "eventV4NormativeBinding": {
+      "eventSchema": "ai-matchlab.operational-memory.event.v4",
+      "sourceArchitectureContract": "V14",
+      "sourceRepairDecisionSha256": "CDF7336BB3DF513042B2C5ED4AD0A403FD16163EF27E3DAFBB8DF8913B8C4A85",
+      "blockerId": "G6-I2-DESIGN-B01-VALIDITY-HEAD-CONCURRENCY-REPLAY-UNDERDEFINED",
+      "selectedRepair": "ORDER_INDEPENDENT_VALIDITY_HEAD_DAG_V1",
+      "validityControlSchema": "ai-matchlab.operational-memory.validity-control.v3",
+      "eventId": "om1_<semanticHash>",
+      "evidenceRefId": "ev1_<sha256(canonicalJson(evidenceReferenceIdentityProjection))>",
+      "payloadFingerprint": "sha256(canonicalJson(payload))",
+      "semanticIdentityProjectionFieldListChanged": false,
+      "becomesNormativeOnlyWhen": "G6_OPERATIONAL_MEMORY_ARCHITECTURE_CONTRACT_V14_APPROVAL status PASS",
+      "architectureApprovalRequired": true,
+      "implementationBeforeApprovalAllowed": false,
+      "canonicalEventWriteBeforeApprovalAllowed": false,
+      "migrationRequired": false,
+      "historicalRewriteRequired": false,
+      "eventIdentityIncludesExactSchema": true,
+      "supportedAfterApproval": true
+    },
+    "v14EventSchemaTransition": "NEW_EVENT_SCHEMA_NO_MIGRATION_REQUIRED"
   },
   "futureG7ReadContract": {
     "mayReadCanonicalEvents": true,
@@ -1717,7 +1764,7 @@ const CONTRACT_DATA = {
     "Define canonical event reader/validator before integrating any producer.",
     "Keep derived indexes out of scope until canonical event writer/reader is frozen."
   ],
-  "nextGate": "G6_OPERATIONAL_MEMORY_ARCHITECTURE_CONTRACT_V13_EVENT_V3_REVIEW",
+  "nextGate": "G6_OPERATIONAL_MEMORY_ARCHITECTURE_CONTRACT_V14_EVENT_V4_REVIEW",
   "v4BlockerResolution": [
     {
       "id": "G6-CR-B04-R1",
@@ -2039,7 +2086,7 @@ const CONTRACT_DATA = {
     "validationTiming": "After strict parse/NFC normalization and before fingerprints, eventId computation or persistence.",
     "validationFailure": "FAIL_CLOSED_NO_EVENT_WRITE",
     "redactionTiming": "Any upstream redaction must occur before operational-memory proposal construction; canonical memory never stores the prohibited original and never mutates later to redact it.",
-    "separatelyApprovedSensitiveDataException": "Requires a future explicit versioned architecture/security contract; no implicit exception exists in event.v3.",
+    "separatelyApprovedSensitiveDataException": "Requires a future explicit versioned architecture/security contract; no implicit exception exists in event.v4.",
     "canonicalRetention": "Indefinite create-only history unless a separately approved retention/erasure architecture explicitly supersedes this rule.",
     "sensitiveDataClassificationRules": {
       "fieldNameComparison": "ASCII_CASE_INSENSITIVE_AFTER_NFC",
@@ -2497,18 +2544,22 @@ const CONTRACT_DATA = {
     "replacement": "ai-matchlab.operational-memory.event.v2"
   },
   "supersedesArchitectureContract": {
-    "contract": "V12",
-    "sha256": "08B7BCC5FDA90004F4D45AAF6759595AEDDFA5D20B3FDF4F30B048AE182371EC",
-    "approvalSha256": "09393BE0CC93D17D9A66A24FDC53C293AD36D1F888504CDCFD7ACB47374104DE",
-    "reason": "Approved event.v2 is immutable and its V12 architecture contains a portable-regex grammar contradiction."
+    "contract": "V13",
+    "sha256": "84067F618A5AFB4701B79511212066EC2DC0389EBE000A2B2902CBE1C67F0214",
+    "approvalSha256": "E906A3669088A78036166E86AB866C456A11CD6FCE462D5F1EAF38596C872AFD",
+    "reason": "Approved event.v3 is immutable and its validity-head protocol cannot reader-verify explicitly permitted concurrent forks without order-dependent implementation-local state."
   },
   "repairDecisionBinding": {
-    "diagnosticSha256": "E73A21F947044180DACF57EAA6A4C967A7256524D39F7019B84D0384D1E111CC",
-    "decisionSha256": "381D6CAA7AA337F9D12796DFE8E2E4480DCA90A0F815654803153FA7E99C0736",
-    "blockerId": "G6-I1-IMP-B02-PORTABLE-REGEX-GRAMMAR-NORMATIVE-PATTERN-CONTRADICTION",
-    "selectedRepair": "REWRITE_FOUR_HEX_PATTERNS_WITH_EXPLICIT_LOWERCASE_HEX_LITERALS",
-    "portableRegexDialectChanged": false,
-    "lowercaseHexLanguageChanged": false
+    "diagnosticSha256": "9B666E967B13A0BB968F04E8612C0FC58C408C29A8748DB40F73983058A4493E",
+    "decisionSha256": "CDF7336BB3DF513042B2C5ED4AD0A403FD16163EF27E3DAFBB8DF8913B8C4A85",
+    "blockerId": "G6-I2-DESIGN-B01-VALIDITY-HEAD-CONCURRENCY-REPLAY-UNDERDEFINED",
+    "selectedRepair": "ORDER_INDEPENDENT_VALIDITY_HEAD_DAG_V1",
+    "repairOrderIndependent": true,
+    "readerVerifiableFromImmutableGraph": true,
+    "priorEventSchema": "ai-matchlab.operational-memory.event.v3",
+    "proposedEventSchema": "ai-matchlab.operational-memory.event.v4",
+    "migrationRequired": false,
+    "historyRewriteRequired": false
   },
   "v13Revision": {
     "classification": "TARGETED_EVENT_V3_REGEX_CONTRADICTION_REPAIR",
@@ -2525,6 +2576,37 @@ const CONTRACT_DATA = {
     "eventIdPrefixChanged": false,
     "evidenceRefIdPrefixChanged": false,
     "payloadFingerprintFormulaChanged": false
+  },
+  "v14Revision": {
+    "classification": "TARGETED_EVENT_V4_VALIDITY_HEAD_CONCURRENCY_REPAIR",
+    "blockerId": "G6-I2-DESIGN-B01-VALIDITY-HEAD-CONCURRENCY-REPLAY-UNDERDEFINED",
+    "diagnosticSha256": "9B666E967B13A0BB968F04E8612C0FC58C408C29A8748DB40F73983058A4493E",
+    "repairDecisionSha256": "CDF7336BB3DF513042B2C5ED4AD0A403FD16163EF27E3DAFBB8DF8913B8C4A85",
+    "priorNormativeSchema": "ai-matchlab.operational-memory.event.v3",
+    "proposedNormativeSchema": "ai-matchlab.operational-memory.event.v4",
+    "selectedRepair": "ORDER_INDEPENDENT_VALIDITY_HEAD_DAG_V1",
+    "validityControlRevision": "v2_to_v3",
+    "orderIndependent": true,
+    "recordedAtParticipates": false,
+    "arrivalOrderParticipates": false,
+    "arbitraryWinnerAllowed": false,
+    "concurrentForkRecordedAsConflict": true,
+    "staleIndistinguishableProposalRecordedAsConflict": true,
+    "multipleHeadsState": "CONFLICTED",
+    "repairLivenessPreserved": true,
+    "staleGraphIntegrityValidityClauseReplaced": true,
+    "eventV3Frozen": true,
+    "eventV3CanonicalEventCount": 0,
+    "eventV3HistoricalCanonicalEventCommitCount": 0,
+    "migrationRequired": false,
+    "historyRewriteRequired": false,
+    "eventIdPrefixChanged": false,
+    "evidenceRefIdPrefixChanged": false,
+    "payloadFingerprintFormulaChanged": false,
+    "semanticIdentityProjectionFieldListChanged": false,
+    "architectureApprovalRequired": true,
+    "I1EventV4KernelRevisionRequiredAfterApproval": true,
+    "I2DesignBlockedUntilEventV4KernelSupport": true
   }
 };
 
@@ -2535,9 +2617,9 @@ function deepFreeze(value, seen = new WeakSet()) {
   return Object.freeze(value);
 }
 
-export const APPROVED_ARCHITECTURE_CONTRACT_SHA256 = "84067F618A5AFB4701B79511212066EC2DC0389EBE000A2B2902CBE1C67F0214";
-export const APPROVED_ARCHITECTURE_APPROVAL_SHA256 = "E906A3669088A78036166E86AB866C456A11CD6FCE462D5F1EAF38596C872AFD";
-export const OPERATIONAL_MEMORY_EVENT_SCHEMA = "ai-matchlab.operational-memory.event.v3";
+export const APPROVED_ARCHITECTURE_CONTRACT_SHA256 = "CC08A192AF29D07EA3F5B0F1F33F8CECCEA85C2E21707B83FA85EDC1668A0786";
+export const APPROVED_ARCHITECTURE_APPROVAL_SHA256 = "ED4F284F1CC48252464A286E064048888056A918EFCBB9B4FFBE2734E1300574";
+export const OPERATIONAL_MEMORY_EVENT_SCHEMA = "ai-matchlab.operational-memory.event.v4";
 export const OPERATIONAL_MEMORY_CASE_SCHEMA = CONTRACT_DATA.caseIdentity.schema;
 export const OPERATIONAL_MEMORY_PRODUCER_SCHEMA = CONTRACT_DATA.producerIdentity.schema;
 export const OPERATIONAL_MEMORY_SUBJECT_SCHEMA = CONTRACT_DATA.subjectIdentity.schema;

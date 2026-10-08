@@ -19,9 +19,10 @@ test("component fingerprints and case2 identity deterministic", () => {
   assert.match(deriveCaseId(caseIdentity), /^case2_[0-9a-f]{64}$/);
 });
 test("semanticHash om1 eventId and eventHash deterministic", () => {
-  const base = { schema:"ai-matchlab.operational-memory.event.v3",eventType:"OBSERVATION",caseId:"case2_"+"a".repeat(64),effectiveAt:"2026-10-07T00:00:00Z",producerFingerprint:"1".repeat(64),subjectFingerprint:"2".repeat(64),payloadFingerprint:"3".repeat(64),evidenceFingerprint:"4".repeat(64),authorityFingerprint:"5".repeat(64),relationshipFingerprint:"6".repeat(64) };
+  const base = { schema:"ai-matchlab.operational-memory.event.v4",eventType:"OBSERVATION",caseId:"case2_"+"a".repeat(64),effectiveAt:"2026-10-07T00:00:00Z",producerFingerprint:"1".repeat(64),subjectFingerprint:"2".repeat(64),payloadFingerprint:"3".repeat(64),evidenceFingerprint:"4".repeat(64),authorityFingerprint:"5".repeat(64),relationshipFingerprint:"6".repeat(64) };
   const h = deriveSemanticHash(base); assert.match(h,/^[0-9a-f]{64}$/); assert.equal(deriveEventId(h),"om1_"+h);
   const persisted={...base,eventId:"om1_"+h,semanticHash:h,eventHash:"0".repeat(64)};
   assert.equal(deriveEventHash(persisted),deriveEventHash({...persisted,eventHash:"f".repeat(64)}));
   assert.notEqual(deriveSemanticHash({...base,payloadFingerprint:"7".repeat(64)}),h);
+  assert.notEqual(deriveSemanticHash({...base,schema:"ai-matchlab.operational-memory.event.v3"}),h);
 });

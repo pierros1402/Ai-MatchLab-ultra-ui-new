@@ -92,16 +92,25 @@ function makeEvent(eventType) {
   const event={schema:OPERATIONAL_MEMORY_EVENT_SCHEMA,eventId:"om1_"+"0".repeat(64),eventType,caseId:deriveCaseId(caseIdentity),caseIdentity,effectiveAt,effectiveUtcDay:"2026-10-07",recordedAt:effectiveAt,producer,producerFingerprint,subject,subjectFingerprint,payloadFingerprint,evidenceFingerprint,authorityFingerprint,relationshipFingerprint,semanticHash:"0".repeat(64),eventHash:"0".repeat(64),evidenceRefs,authoritySnapshot,relationships,payload};
   event.semanticHash=deriveSemanticHash(event); event.eventId=deriveEventId(event.semanticHash); event.eventHash=deriveEventHash(event); return event;
 }
-test("valid event.v3 for every event type", () => {
+test("valid event.v4 for every event type", () => {
   for (const type of Object.keys(EVENT_PAYLOAD_CONTRACTS)) {
     const result=validateOperationalMemoryEvent(makeEvent(type));
     assert.equal(result.ok,true,`${type}: ${result.errors.join(",")}`);
   }
 });
-test("reject v1/v2 closed-shape and bad identities", () => {
+test("reject frozen v1/v2/v3 schemas, closed-shape and bad identities", () => {
   const good=makeEvent("OBSERVATION"); assert.doesNotThrow(()=>assertOperationalMemoryEvent(good));
-  assert.equal(validateOperationalMemoryEvent({...good,schema:"ai-matchlab.operational-memory.event.v1"}).ok,false);
-  assert.equal(validateOperationalMemoryEvent({...good,schema:"ai-matchlab.operational-memory.event.v2"}).ok,false);
+  for (const schema of [
+    "ai-matchlab.operational-memory.event.v1",
+    "ai-matchlab.operational-memory.event.v2",
+    "ai-matchlab.operational-memory.event.v3"
+  ]) {
+    const frozen = structuredClone(good);
+    frozen.schema = schema;
+    resealEvent(frozen);
+    assert.equal(validateOperationalMemoryEvent(frozen).ok,false,`schema ${schema} must be rejected`);
+  }
+
   const missing=structuredClone(good); delete missing.payload; assert.equal(validateOperationalMemoryEvent(missing).ok,false);
   assert.equal(validateOperationalMemoryEvent({...good,extra:true}).ok,false);
   assert.equal(validateOperationalMemoryEvent({...good,payloadFingerprint:"f".repeat(64)}).ok,false);
@@ -130,7 +139,7 @@ function resealEvent(event) {
   event.eventHash=deriveEventHash(event);
   return event;
 }
-test("V13 subject evidence relationship and cardinality contracts fail closed", () => {
+test("V14 subject evidence relationship and cardinality contracts fail closed", () => {
   const badDay=makeEvent("OBSERVATION");
   badDay.subject={scope:"DAY",key:"not-a-calendar-day"};
   resealEvent(badDay);
