@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-08",
-  "generatedAt": "2026-10-08T12:14:59.604Z",
+  "generatedAt": "2026-10-08T12:45:02.925Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "08677e24dc9baa773b479c070bd38794fa94f6a3f0047642473f2d6394915dbd",
+  "truthFingerprint": "83f148acc088ffebb42e3bc376c1e586a123155aad1ac7125f24672e47950ba2",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -18,8 +18,8 @@
   "summary": {
     "canonicalRows": 58,
     "playedTerminal": 16,
-    "nonPlayedTerminal": 0,
-    "scheduled": 42,
+    "nonPlayedTerminal": 1,
+    "scheduled": 41,
     "live": 0,
     "interrupted": 0,
     "delayed": 0,
@@ -28,16 +28,16 @@
     "verifiedFinalArtifacts": 16,
     "acceptedVerifiedFinalArtifacts": 16,
     "convergedPlayedFinal": 16,
-    "convergedNonPlayedTerminal": 0,
+    "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 42,
+    "openRows": 41,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 16,
     "scoredSettlementEligible": 16,
-    "voidSettlementEligible": 0
+    "voidSettlementEligible": 1
   },
   "fixtures": [
     {
@@ -2055,12 +2055,12 @@
       "homeTeam": "Arsenal Tivat",
       "awayTeam": "Decic",
       "kickoffUtc": "2026-10-08T12:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PRE_KICKOFF_NON_PLAYED",
+      "operationalState": "NON_PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
+        "status": "STATUS_POSTPONED",
+        "statusType": "STATUS_POSTPONED",
+        "rawStatus": "STATUS_POSTPONED",
         "scoreHome": null,
         "scoreAway": null
       },
@@ -2075,12 +2075,12 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "CONVERGED_NON_PLAYED_TERMINAL",
+        "reason": "explicit_nonplayed_terminal",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
-        "voidSettlementEligible": false,
+        "voidSettlementEligible": true,
         "repairAuthorized": false
       },
       "downstream": {
@@ -5373,7 +5373,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "08677e24dc9baa773b479c070bd38794fa94f6a3f0047642473f2d6394915dbd",
+      "truthFingerprint": "83f148acc088ffebb42e3bc376c1e586a123155aad1ac7125f24672e47950ba2",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
