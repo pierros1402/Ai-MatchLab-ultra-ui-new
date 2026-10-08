@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-09",
-  "generatedAt": "2026-10-08T22:51:07.306Z",
+  "generatedAt": "2026-10-08T23:11:34.912Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "df5a09f03f900598e0efcd769ab40780ccee4bd8f513b319185bede61c560efb",
+  "truthFingerprint": "0e8440dd4f97fbd1d2bfc98435827e74834a47957bc81bb2c3e80f64b94fd487",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -19,8 +19,8 @@
     "canonicalRows": 184,
     "playedTerminal": 0,
     "nonPlayedTerminal": 2,
-    "scheduled": 180,
-    "live": 2,
+    "scheduled": 178,
+    "live": 4,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
@@ -830,14 +830,14 @@
       "homeTeam": "Athletico-PR",
       "awayTeam": "Atlético-MG",
       "kickoffUtc": "2026-10-08T23:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -851,7 +851,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1029,9 +1029,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_FIRST_HALF",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -1075,14 +1075,14 @@
       "homeTeam": "Nautico",
       "awayTeam": "Novorizontino",
       "kickoffUtc": "2026-10-08T22:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -1096,7 +1096,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -9065,7 +9065,7 @@
   },
   "downstream": {
     "historyObserved": false,
-    "settlementObserved": true,
+    "settlementObserved": false,
     "publicationObserved": true,
     "systemHealthObserved": true,
     "systemHealth": {
@@ -9266,7 +9266,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 12206,
+            "count": 12220,
             "informational": true
           }
         },
@@ -13068,7 +13068,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "df5a09f03f900598e0efcd769ab40780ccee4bd8f513b319185bede61c560efb",
+      "truthFingerprint": "0e8440dd4f97fbd1d2bfc98435827e74834a47957bc81bb2c3e80f64b94fd487",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -13083,8 +13083,8 @@
         "structuralIssues": []
       },
       "settlement": {
-        "state": "PRESENT_CONVERGED",
-        "observed": true,
+        "state": "NOT_OBSERVED",
+        "observed": false,
         "bundlePath": "data/football-truth/_diagnostics/value-settlement-daily-cycle/2026-10-09.four-plan-settlement-bundle.json",
         "aggregateSummaryPath": "data/football-truth/_settlement-summaries/2026-10-09.value-settlement-summary.json",
         "totalRows": 0,
