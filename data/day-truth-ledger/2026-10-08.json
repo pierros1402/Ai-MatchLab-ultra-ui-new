@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-08",
-  "generatedAt": "2026-10-08T15:35:34.058Z",
+  "generatedAt": "2026-10-08T16:49:55.727Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "04755d836ad69c5de5bbfa73087f472f051d84f0a6e6bbdb202788f968f41445",
+  "truthFingerprint": "a287f7604d04fdea345ae02dd965e10ca6a5bc102cd84b923b73db5b72519f8b",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 58,
-    "playedTerminal": 29,
+    "playedTerminal": 30,
     "nonPlayedTerminal": 3,
-    "scheduled": 26,
+    "scheduled": 25,
     "live": 0,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 29,
-    "acceptedVerifiedFinalArtifacts": 29,
-    "convergedPlayedFinal": 29,
+    "verifiedFinalArtifacts": 30,
+    "acceptedVerifiedFinalArtifacts": 30,
+    "convergedPlayedFinal": 30,
     "convergedNonPlayedTerminal": 3,
     "pendingVerifiedFinal": 0,
-    "openRows": 26,
+    "openRows": 25,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 29,
-    "scoredSettlementEligible": 29,
+    "historyEligible": 30,
+    "scoredSettlementEligible": 30,
     "voidSettlementEligible": 3
   },
   "fixtures": [
@@ -2447,31 +2447,31 @@
       "homeTeam": "Shamal",
       "awayTeam": "Al Duhail",
       "kickoffUtc": "2026-10-08T14:45:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 0,
+        "scoreAway": 4
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-08",
+        "scoreHome": 0,
+        "scoreAway": 4,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3060,7 +3060,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 12148,
+            "count": 12150,
             "informational": true
           }
         },
@@ -5373,13 +5373,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "04755d836ad69c5de5bbfa73087f472f051d84f0a6e6bbdb202788f968f41445",
+      "truthFingerprint": "a287f7604d04fdea345ae02dd965e10ca6a5bc102cd84b923b73db5b72519f8b",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 29,
+        "expectedEligibleRows": 30,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arm2_araratarmenia2_andranik_20261008",
@@ -5410,6 +5410,7 @@
           "cid_kaz2_shakhterkaragandy_akademiyaontustik_20261008",
           "cid_kaz2_yelimaysemey2_arys_20261008",
           "cid_mne1_otrant_mladostdg_20261008",
+          "cid_qat1_shamal_alduhail_20261008",
           "cid_uga1_blackspower_vipers_20261008"
         ],
         "unexpectedFixtureIds": [],
@@ -5470,7 +5471,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-08",
-      "fileCount": 29,
+      "fileCount": 30,
       "authority": "scored_final_evidence"
     },
     "downstream": {
