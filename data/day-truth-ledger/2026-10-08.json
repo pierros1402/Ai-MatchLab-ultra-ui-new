@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-08",
-  "generatedAt": "2026-10-08T13:13:38.679Z",
+  "generatedAt": "2026-10-08T13:29:33.026Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "9b6a69df35efac76054ab61cb74d698412384eb9e46b4fe2034dd2ee062bc9fb",
+  "truthFingerprint": "78f82df5852b9d89a4740b1bc59f25c166195e3e07caf819a9443e93c20230e7",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 58,
-    "playedTerminal": 18,
+    "playedTerminal": 19,
     "nonPlayedTerminal": 1,
-    "scheduled": 39,
+    "scheduled": 38,
     "live": 0,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 18,
-    "acceptedVerifiedFinalArtifacts": 18,
-    "convergedPlayedFinal": 18,
+    "verifiedFinalArtifacts": 19,
+    "acceptedVerifiedFinalArtifacts": 19,
+    "convergedPlayedFinal": 19,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 39,
+    "openRows": 38,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 18,
-    "scoredSettlementEligible": 18,
+    "historyEligible": 19,
+    "scoredSettlementEligible": 19,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -242,31 +242,31 @@
       "homeTeam": "Sabail",
       "awayTeam": "Karvan",
       "kickoffUtc": "2026-10-08T11:30:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-08",
+        "scoreHome": 1,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3060,7 +3060,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 12028,
+            "count": 12030,
             "informational": true
           }
         },
@@ -5373,15 +5373,16 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "9b6a69df35efac76054ab61cb74d698412384eb9e46b4fe2034dd2ee062bc9fb",
+      "truthFingerprint": "78f82df5852b9d89a4740b1bc59f25c166195e3e07caf819a9443e93c20230e7",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 18,
+        "expectedEligibleRows": 19,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
+          "cid_aze2_sabail_karvan_20261008",
           "cid_bra1_botafogo_vascogama_20261008",
           "cid_bra1_cruzeiro_saopaulo_20261008",
           "cid_bra1_internacional_corinthians_20261008",
@@ -5459,7 +5460,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-08",
-      "fileCount": 18,
+      "fileCount": 19,
       "authority": "scored_final_evidence"
     },
     "downstream": {
