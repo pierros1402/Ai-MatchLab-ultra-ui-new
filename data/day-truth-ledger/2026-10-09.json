@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-09",
-  "generatedAt": "2026-10-09T08:30:51.659Z",
+  "generatedAt": "2026-10-09T09:30:59.817Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "7fc7ba3a798ed3891c50be77c228b635a99532ca175bfbc54d20bea48b5cf164",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "fbad6e530815af073ebcf724b271987b0f1be663807a98df0a3f68216615e96f",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -25,14 +25,14 @@
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 13,
-    "acceptedVerifiedFinalArtifacts": 13,
+    "verifiedFinalArtifacts": 16,
+    "acceptedVerifiedFinalArtifacts": 16,
     "convergedPlayedFinal": 13,
     "convergedNonPlayedTerminal": 2,
     "pendingVerifiedFinal": 0,
-    "openRows": 169,
+    "openRows": 166,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 3,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 13,
@@ -4711,18 +4711,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-09",
+        "scoreHome": 3,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4760,18 +4760,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-09",
+        "scoreHome": 3,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4809,18 +4809,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-09",
+        "scoreHome": 0,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -9060,7 +9060,11 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_kor1_incheon_pohang_20261009",
+      "cid_kor2_cheongju_seongnam_20261009",
+      "cid_kor2_gimpo_seoulland_20261009"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -9266,7 +9270,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 12258,
+            "count": 12260,
             "informational": true
           }
         },
@@ -13068,7 +13072,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "7fc7ba3a798ed3891c50be77c228b635a99532ca175bfbc54d20bea48b5cf164",
+      "truthFingerprint": "fbad6e530815af073ebcf724b271987b0f1be663807a98df0a3f68216615e96f",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -13149,7 +13153,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-09",
-      "fileCount": 13,
+      "fileCount": 16,
       "authority": "scored_final_evidence"
     },
     "downstream": {
