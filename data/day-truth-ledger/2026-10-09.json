@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-09",
-  "generatedAt": "2026-10-09T10:11:24.963Z",
+  "generatedAt": "2026-10-09T10:30:56.267Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "dbf2d97e4db90d72e4c781a06c7215e52ed3a6dc2d1416d244e8b71e6fb85b08",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "15a46cdc1dd3199ac63aaf0c745967d0f8b6818264075db50ecbd235df64efe5",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -19,20 +19,20 @@
     "canonicalRows": 184,
     "playedTerminal": 17,
     "nonPlayedTerminal": 2,
-    "scheduled": 165,
-    "live": 0,
+    "scheduled": 163,
+    "live": 2,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 17,
-    "acceptedVerifiedFinalArtifacts": 17,
+    "verifiedFinalArtifacts": 19,
+    "acceptedVerifiedFinalArtifacts": 19,
     "convergedPlayedFinal": 17,
     "convergedNonPlayedTerminal": 2,
     "pendingVerifiedFinal": 0,
-    "openRows": 165,
+    "openRows": 163,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 17,
@@ -3633,18 +3633,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-09",
+        "scoreHome": 2,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -3682,18 +3682,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-09",
+        "scoreHome": 1,
+        "scoreAway": 3,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4358,14 +4358,14 @@
       "homeTeam": "Kashima Antlers",
       "awayTeam": "Gamba Osaka",
       "kickoffUtc": "2026-10-09T10:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -4379,7 +4379,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4407,14 +4407,14 @@
       "homeTeam": "Kashiwa Reysol",
       "awayTeam": "Vissel Kobe",
       "kickoffUtc": "2026-10-09T10:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -4428,7 +4428,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -9060,7 +9060,10 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_idn1_persikkediri_maduraunited_20261009",
+      "cid_idn2_persipurajayapura_ransnusantara_20261009"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -13068,7 +13071,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "dbf2d97e4db90d72e4c781a06c7215e52ed3a6dc2d1416d244e8b71e6fb85b08",
+      "truthFingerprint": "15a46cdc1dd3199ac63aaf0c745967d0f8b6818264075db50ecbd235df64efe5",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -13153,7 +13156,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-09",
-      "fileCount": 17,
+      "fileCount": 19,
       "authority": "scored_final_evidence"
     },
     "downstream": {
