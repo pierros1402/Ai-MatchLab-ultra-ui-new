@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-09",
-  "generatedAt": "2026-10-09T11:39:31.647Z",
+  "generatedAt": "2026-10-09T11:59:34.688Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "a5c85fac32479b1079cae0765a87d1352bd07493561ce40f66c4ac3f302ba6d9",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "e9ac0528aecf34e4e2f0445830c6b711017b31981093683b78fd679a73d4f243",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -19,20 +19,20 @@
     "canonicalRows": 184,
     "playedTerminal": 20,
     "nonPlayedTerminal": 2,
-    "scheduled": 160,
-    "live": 2,
+    "scheduled": 158,
+    "live": 4,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 20,
-    "acceptedVerifiedFinalArtifacts": 20,
+    "verifiedFinalArtifacts": 21,
+    "acceptedVerifiedFinalArtifacts": 21,
     "convergedPlayedFinal": 20,
     "convergedNonPlayedTerminal": 2,
     "pendingVerifiedFinal": 0,
-    "openRows": 162,
+    "openRows": 161,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 20,
@@ -1222,14 +1222,14 @@
       "homeTeam": "Qingdao Hainiu",
       "awayTeam": "BEIJING GUOAN",
       "kickoffUtc": "2026-10-09T11:35Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -1243,7 +1243,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1271,14 +1271,14 @@
       "homeTeam": "Shenzhen Xinpengcheng",
       "awayTeam": "Henan",
       "kickoffUtc": "2026-10-09T11:35Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1292,7 +1292,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4413,8 +4413,8 @@
         "status": "SECOND_HALF",
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 3,
-        "scoreAway": 0
+        "scoreHome": 4,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -4466,18 +4466,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-09",
+        "scoreHome": 1,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -9060,7 +9060,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_kaz2_batyr_khantengri_20261009"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -13068,7 +13070,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "a5c85fac32479b1079cae0765a87d1352bd07493561ce40f66c4ac3f302ba6d9",
+      "truthFingerprint": "e9ac0528aecf34e4e2f0445830c6b711017b31981093683b78fd679a73d4f243",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -13156,7 +13158,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-09",
-      "fileCount": 20,
+      "fileCount": 21,
       "authority": "scored_final_evidence"
     },
     "downstream": {
