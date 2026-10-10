@@ -1,25 +1,25 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-10-10",
-  "generatedAt": "2026-10-10T16:49:16.028Z",
-  "severity": "warning",
+  "generatedAt": "2026-10-10T18:55:27.970Z",
+  "severity": "error",
   "issueCounts": {
-    "error": 0,
-    "warning": 8,
+    "error": 2,
+    "warning": 7,
     "info": 11
   },
-  "alert": false,
+  "alert": true,
   "alertCounts": {
-    "error": 0,
+    "error": 2,
     "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 19,
-  "actionableIssueCount": 8,
-  "newIssueCount": 0,
-  "newActionableIssueCount": 0,
-  "resolvedIssueCount": 2,
-  "persistentIssueCount": 19,
+  "activeIssueCount": 20,
+  "actionableIssueCount": 9,
+  "newIssueCount": 2,
+  "newActionableIssueCount": 2,
+  "resolvedIssueCount": 1,
+  "persistentIssueCount": 18,
   "activeIssues": [
     {
       "severity": "info",
@@ -312,7 +312,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 12412,
+        "count": 12418,
         "informational": true
       }
     },
@@ -341,6 +341,38 @@
       }
     },
     {
+      "severity": "error",
+      "source": "live-status-completeness",
+      "type": "stale_open_exact_provider_ids",
+      "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
+      "details": {
+        "raw": "live_status_stale_open_exact_provider_ids:cid_por1_casapia_santaclara_20261010",
+        "canonicalIds": [
+          "cid_por1_casapia_santaclara_20261010"
+        ],
+        "count": 1,
+        "staleAfterHours": 4,
+        "exactProviderIdOnly": true,
+        "heuristicFinalPromotion": false,
+        "fixtures": [
+          {
+            "canonicalId": "cid_por1_casapia_santaclara_20261010",
+            "providerId": "401885426",
+            "source": "espn",
+            "leagueSlug": "por.1",
+            "providerLeagueSlug": "por.1",
+            "kickoffUtc": "2026-10-10T14:30Z",
+            "ageHours": 4.424,
+            "status": "PRE",
+            "rawStatus": "STATUS_SCHEDULED",
+            "statusType": null,
+            "operationalState": null,
+            "classification": "stale_open_exact_provider_id"
+          }
+        ]
+      }
+    },
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "build_warning",
@@ -366,14 +398,13 @@
       }
     },
     {
-      "severity": "warning",
+      "severity": "error",
       "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -1477,6 +1508,38 @@
       }
     },
     {
+      "severity": "error",
+      "source": "live-status-completeness",
+      "type": "stale_open_exact_provider_ids",
+      "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
+      "details": {
+        "raw": "live_status_stale_open_exact_provider_ids:cid_por1_casapia_santaclara_20261010",
+        "canonicalIds": [
+          "cid_por1_casapia_santaclara_20261010"
+        ],
+        "count": 1,
+        "staleAfterHours": 4,
+        "exactProviderIdOnly": true,
+        "heuristicFinalPromotion": false,
+        "fixtures": [
+          {
+            "canonicalId": "cid_por1_casapia_santaclara_20261010",
+            "providerId": "401885426",
+            "source": "espn",
+            "leagueSlug": "por.1",
+            "providerLeagueSlug": "por.1",
+            "kickoffUtc": "2026-10-10T14:30Z",
+            "ageHours": 4.424,
+            "status": "PRE",
+            "rawStatus": "STATUS_SCHEDULED",
+            "statusType": null,
+            "operationalState": null,
+            "classification": "stale_open_exact_provider_id"
+          }
+        ]
+      }
+    },
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "build_warning",
@@ -1502,14 +1565,13 @@
       }
     },
     {
-      "severity": "warning",
+      "severity": "error",
       "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -2213,39 +2275,104 @@
       }
     }
   ],
-  "newIssues": [],
-  "newActionableIssues": [],
-  "resolvedIssues": [
+  "newIssues": [
     {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a_unresolved_settlement",
-      "message": "Plan A picks are still unresolved.",
+      "severity": "error",
+      "source": "live-status-completeness",
+      "type": "stale_open_exact_provider_ids",
+      "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
       "details": {
-        "dayKey": "2026-10-10",
-        "todayDayKey": "2026-10-10",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 7,
-        "settled": 6,
-        "unresolved": 1
+        "raw": "live_status_stale_open_exact_provider_ids:cid_por1_casapia_santaclara_20261010",
+        "canonicalIds": [
+          "cid_por1_casapia_santaclara_20261010"
+        ],
+        "count": 1,
+        "staleAfterHours": 4,
+        "exactProviderIdOnly": true,
+        "heuristicFinalPromotion": false,
+        "fixtures": [
+          {
+            "canonicalId": "cid_por1_casapia_santaclara_20261010",
+            "providerId": "401885426",
+            "source": "espn",
+            "leagueSlug": "por.1",
+            "providerLeagueSlug": "por.1",
+            "kickoffUtc": "2026-10-10T14:30Z",
+            "ageHours": 4.424,
+            "status": "PRE",
+            "rawStatus": "STATUS_SCHEDULED",
+            "statusType": null,
+            "operationalState": null,
+            "classification": "stale_open_exact_provider_id"
+          }
+        ]
       }
     },
     {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a2_unresolved_settlement",
-      "message": "Plan A2 picks are still unresolved.",
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "dayKey": "2026-10-10",
-        "todayDayKey": "2026-10-10",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 7,
-        "settled": 6,
-        "unresolved": 1
+        "clean": false,
+        "cleanStrict": false
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "error",
+      "source": "live-status-completeness",
+      "type": "stale_open_exact_provider_ids",
+      "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
+      "details": {
+        "raw": "live_status_stale_open_exact_provider_ids:cid_por1_casapia_santaclara_20261010",
+        "canonicalIds": [
+          "cid_por1_casapia_santaclara_20261010"
+        ],
+        "count": 1,
+        "staleAfterHours": 4,
+        "exactProviderIdOnly": true,
+        "heuristicFinalPromotion": false,
+        "fixtures": [
+          {
+            "canonicalId": "cid_por1_casapia_santaclara_20261010",
+            "providerId": "401885426",
+            "source": "espn",
+            "leagueSlug": "por.1",
+            "providerLeagueSlug": "por.1",
+            "kickoffUtc": "2026-10-10T14:30Z",
+            "ageHours": 4.424,
+            "status": "PRE",
+            "rawStatus": "STATUS_SCHEDULED",
+            "statusType": null,
+            "operationalState": null,
+            "classification": "stale_open_exact_provider_id"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     }
   ],
@@ -2541,7 +2668,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 12410,
+        "count": 12418,
         "informational": true
       }
     },
@@ -2592,17 +2719,6 @@
         ],
         "raw": "acquisition_skipped_slugs:fifa.wworldq.uefa,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
         "contextOnly": false
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
-      "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
       }
     },
     {
@@ -2673,8 +2789,8 @@
         "overdue": false,
         "settlementSource": "value-comparison",
         "picks": 6,
-        "settled": 3,
-        "unresolved": 3
+        "settled": 4,
+        "unresolved": 2
       }
     },
     {
@@ -2689,8 +2805,8 @@
         "overdue": false,
         "settlementSource": "value-comparison",
         "picks": 6,
-        "settled": 3,
-        "unresolved": 3
+        "settled": 4,
+        "unresolved": 2
       }
     },
     {
@@ -3458,13 +3574,13 @@
           "summary": {
             "picks": 6,
             "uniqueMatches": 4,
-            "settled": 3,
+            "settled": 4,
             "wins": 3,
-            "losses": 0,
+            "losses": 1,
             "voids": 0,
-            "unresolved": 3,
+            "unresolved": 2,
             "unsupported": 0,
-            "hitRate": 1,
+            "hitRate": 0.75,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -3478,13 +3594,13 @@
           "summary": {
             "picks": 6,
             "uniqueMatches": 4,
-            "settled": 3,
+            "settled": 4,
             "wins": 3,
-            "losses": 0,
+            "losses": 1,
             "voids": 0,
-            "unresolved": 3,
+            "unresolved": 2,
             "unsupported": 0,
-            "hitRate": 1,
+            "hitRate": 0.75,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,

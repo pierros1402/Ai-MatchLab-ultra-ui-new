@@ -1,8 +1,8 @@
 {
-  "ok": true,
+  "ok": false,
   "schema": "ai-matchlab.day-build-report.v1",
   "dayKey": "2026-10-10",
-  "generatedAt": "2026-10-10T18:26:36.872Z",
+  "generatedAt": "2026-10-10T18:55:27.119Z",
   "universe": {
     "expected": null,
     "canonical": 493,
@@ -687,7 +687,7 @@
   },
   "freshness": {
     "ok": true,
-    "manifestGeneratedAt": "2026-10-10T18:24:28.879Z",
+    "manifestGeneratedAt": "2026-10-10T18:53:15.523Z",
     "reasons": [],
     "staleInputs": []
   },
@@ -696,7 +696,7 @@
     "blocked": 0,
     "warnings": 0,
     "autoFixed": 0,
-    "checkedAt": "2026-10-10T18:25:06.121Z"
+    "checkedAt": "2026-10-10T18:53:52.395Z"
   },
   "value": {
     "source": "canonical_fixtures",
@@ -758,7 +758,7 @@
     }
   },
   "settlement": {
-    "generatedAt": "2026-10-10T18:26:01.621Z",
+    "generatedAt": "2026-10-10T18:54:51.473Z",
     "requiredPlans": [
       "A",
       "A2",
@@ -808,7 +808,7 @@
   },
   "foundationIntegrity": {
     "schema": "ai-matchlab.foundation-integrity.v1",
-    "generatedAt": "2026-10-10T18:26:36.633Z",
+    "generatedAt": "2026-10-10T18:55:26.873Z",
     "season": "2026-2027",
     "modelReady": true,
     "publicationReady": true,
@@ -817,7 +817,7 @@
       {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 12412,
+        "count": 12418,
         "informational": true
       },
       {
@@ -836,25 +836,44 @@
   },
   "liveStatusCompleteness": {
     "schema": "ai-matchlab.live-status-completeness.v1",
-    "ok": true,
+    "ok": false,
     "policy": {
       "staleAfterHours": 4,
       "exactProviderIdOnly": true,
       "exactProviderLineageSupersession": true,
       "heuristicFinalPromotion": false
     },
-    "staleOpenCount": 0,
-    "staleOpenCanonicalIds": [],
-    "staleOpenFixtures": [],
+    "staleOpenCount": 1,
+    "staleOpenCanonicalIds": [
+      "cid_por1_casapia_santaclara_20261010"
+    ],
+    "staleOpenFixtures": [
+      {
+        "canonicalId": "cid_por1_casapia_santaclara_20261010",
+        "providerId": "401885426",
+        "source": "espn",
+        "leagueSlug": "por.1",
+        "providerLeagueSlug": "por.1",
+        "kickoffUtc": "2026-10-10T14:30Z",
+        "ageHours": 4.424,
+        "status": "PRE",
+        "rawStatus": "STATUS_SCHEDULED",
+        "statusType": null,
+        "operationalState": null,
+        "classification": "stale_open_exact_provider_id"
+      }
+    ],
     "supersededOpenCount": 0,
     "supersededOpenCanonicalIds": [],
     "supersededOpenFixtures": []
   },
-  "hardFailures": [],
+  "hardFailures": [
+    "live_status_stale_open_exact_provider_ids:cid_por1_casapia_santaclara_20261010"
+  ],
   "warnings": [
     "canonical_leagues_missing_from_published:bra.1",
     "acquisition_skipped_slugs:fifa.wworldq.uefa,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1"
   ],
-  "clean": true,
+  "clean": false,
   "cleanStrict": false
 }
