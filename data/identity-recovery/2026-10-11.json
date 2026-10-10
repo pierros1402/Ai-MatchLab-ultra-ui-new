@@ -1,0 +1,262 @@
+{
+  "schema": "ai-matchlab.identity-recovery-window.v1",
+  "runDayKey": "2026-10-11",
+  "source": "raw_canonical_fixtures_pre_dedup",
+  "window": {
+    "daysBack": 1,
+    "daysForward": 14
+  },
+  "sourceLatestUpdatedAt": "2026-10-10T19:00:58.241Z",
+  "resolver": {
+    "schema": "ai-matchlab.production-identity-resolver-runtime.v2",
+    "extensionLedgerSha256": "cddc046f5a19e489d6f198b0fa4c3605e4db3a269f2c8decbc44e4b472736e72",
+    "effectiveCounts": {
+      "identityBindings": 131,
+      "retainedFixtureIds": 96,
+      "suppressedFixtureAliases": 96,
+      "sourceFixtureIds": 192
+    }
+  },
+  "status": "REVIEW_REQUIRED",
+  "promotionPolicy": {
+    "broadFuzzyAllowed": false,
+    "unresolvedTwoSidedAutoPromotionAllowed": false,
+    "independentConfirmationRequiredForTwoSidedUnknown": true
+  },
+  "summary": {
+    "scannedDays": 16,
+    "scannedLeagueFiles": 592,
+    "inputRows": 2090,
+    "autoPromotable": 0,
+    "pendingIndependentConfirmation": 1,
+    "ambiguous": 0,
+    "conflictRejected": 1,
+    "alreadyManagedPairs": 0,
+    "independentConfirmed": 0,
+    "independentConfirmationRetryPending": 1
+  },
+  "targetDays": [
+    {
+      "dayKey": "2026-10-10",
+      "leagueFiles": 140,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-11",
+      "leagueFiles": 129,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "esp.copa_del_rey",
+          "inputRows": 3,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [
+            {
+              "leagueSlug": "esp.copa_del_rey",
+              "kickoffUtc": "2026-10-11T14:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "fwDU0IFa",
+                "canonicalId": "cid_espcopadelrey_prat_elespinarsantrafel_20261011",
+                "kickoffUtc": "2026-10-11T14:00:00.000Z",
+                "homeTeam": "Prat",
+                "awayTeam": "El Espinar Sant Rafel"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401918752",
+                "canonicalId": "cid_espcopadelrey_aeprat_sanrafael_20261011",
+                "kickoffUtc": "2026-10-11T14:00Z",
+                "homeTeam": "AE Prat",
+                "awayTeam": "CF San Rafael"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "away": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "stableSides": 0,
+                "conflict": false
+              },
+              "recoveryStatus": "PENDING_INDEPENDENT_CONFIRMATION",
+              "promotionAuthorized": false,
+              "requiresIndependentConfirmation": true,
+              "independentConfirmation": {
+                "status": "PENDING_RETRY",
+                "source": "api_football",
+                "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
+                "oddsUsed": false,
+                "attempts": 1,
+                "lastAttemptAt": "2026-10-10T19:00:58.644Z",
+                "retryable": true,
+                "providerStatus": "MISSING_API_KEY",
+                "evaluationStatus": null,
+                "thirdSourceKickoffRows": 0
+              }
+            }
+          ],
+          "ambiguous": [],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 1,
+            "ambiguous": 0,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "ger.1",
+          "inputRows": 3,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [],
+          "conflictRejected": [
+            {
+              "leagueSlug": "ger.1",
+              "kickoffUtc": "2026-10-11T13:30:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "hfnxl7Pb",
+                "canonicalId": "cid_ger1_koln_bmonchengladbach_20261011",
+                "kickoffUtc": "2026-10-11T13:30:00.000Z",
+                "homeTeam": "FC Koln",
+                "awayTeam": "B. Monchengladbach"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401884774",
+                "canonicalId": "cid_ger1_cologne_borussiamonchengladbach_20261011",
+                "kickoffUtc": "2026-10-11T13:30Z",
+                "homeTeam": "FC Cologne",
+                "awayTeam": "Borussia Mönchengladbach"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "GLOBAL_ID_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": "gcid_557de2d747e597bbf4be66fe"
+                },
+                "away": {
+                  "kind": "SQUAD_CONFLICT",
+                  "stable": false,
+                  "conflict": true
+                },
+                "stableSides": 1,
+                "conflict": true
+              },
+              "recoveryStatus": "REJECTED_IDENTITY_CONFLICT",
+              "promotionAuthorized": false
+            }
+          ],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 0,
+            "conflictRejected": 1,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
+    },
+    {
+      "dayKey": "2026-10-12",
+      "leagueFiles": 58,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-13",
+      "leagueFiles": 15,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-14",
+      "leagueFiles": 7,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-15",
+      "leagueFiles": 9,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-16",
+      "leagueFiles": 22,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-17",
+      "leagueFiles": 36,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-18",
+      "leagueFiles": 32,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-19",
+      "leagueFiles": 20,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-20",
+      "leagueFiles": 11,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-21",
+      "leagueFiles": 8,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-22",
+      "leagueFiles": 7,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-23",
+      "leagueFiles": 28,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-24",
+      "leagueFiles": 39,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-25",
+      "leagueFiles": 31,
+      "recoveryLeagueReports": []
+    }
+  ],
+  "independentConfirmation": {
+    "source": "api_football",
+    "evidenceEndpoint": "fixtures",
+    "oddsAllowed": false,
+    "fuzzyMatchingAllowed": false,
+    "runAt": "2026-10-10T19:00:58.645Z",
+    "attempts": [
+      {
+        "dayKey": "2026-10-11",
+        "leagueSlug": "esp.copa_del_rey",
+        "key": "cid_espcopadelrey_aeprat_sanrafael_20261011|cid_espcopadelrey_prat_elespinarsantrafel_20261011",
+        "status": "PENDING_RETRY",
+        "providerStatus": "MISSING_API_KEY",
+        "evaluationStatus": null
+      }
+    ]
+  }
+}
