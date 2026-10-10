@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-10",
-  "generatedAt": "2026-10-10T06:25:23.632Z",
+  "generatedAt": "2026-10-10T08:53:37.108Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "17c43c190a534dabd6a93ba226b02d0ede6c704fa97a08d09f22144bb0688957",
+  "ledgerState": "INCOMPLETE",
+  "truthFingerprint": "b13b26f6b5d62947b9f9322840fba540f20df00c943b22c31239a69709a6318f",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,10 +17,10 @@
   },
   "summary": {
     "canonicalRows": 493,
-    "playedTerminal": 15,
+    "playedTerminal": 25,
     "nonPlayedTerminal": 1,
-    "scheduled": 474,
-    "live": 3,
+    "scheduled": 467,
+    "live": 0,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
@@ -29,8 +29,8 @@
     "acceptedVerifiedFinalArtifacts": 15,
     "convergedPlayedFinal": 15,
     "convergedNonPlayedTerminal": 1,
-    "pendingVerifiedFinal": 0,
-    "openRows": 477,
+    "pendingVerifiedFinal": 10,
+    "openRows": 467,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
@@ -442,7 +442,7 @@
       "operationalState": "PLAYED_TERMINAL",
       "canonical": {
         "status": "FT",
-        "statusType": null,
+        "statusType": "STATUS_FINAL",
         "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 2,
         "scoreAway": 2
@@ -491,7 +491,7 @@
       "operationalState": "PLAYED_TERMINAL",
       "canonical": {
         "status": "FT",
-        "statusType": null,
+        "statusType": "STATUS_FINAL",
         "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 0,
         "scoreAway": 2
@@ -3578,7 +3578,7 @@
       "operationalState": "PLAYED_TERMINAL",
       "canonical": {
         "status": "FT",
-        "statusType": null,
+        "statusType": "STATUS_FINAL",
         "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 2,
         "scoreAway": 2
@@ -3676,7 +3676,7 @@
       "operationalState": "PLAYED_TERMINAL",
       "canonical": {
         "status": "FT",
-        "statusType": null,
+        "statusType": "STATUS_FINAL",
         "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 0
@@ -3725,7 +3725,7 @@
       "operationalState": "PLAYED_TERMINAL",
       "canonical": {
         "status": "FT",
-        "statusType": null,
+        "statusType": "STATUS_FINAL",
         "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 3,
         "scoreAway": 1
@@ -12639,14 +12639,14 @@
       "homeTeam": "Avispa Fukuoka",
       "awayTeam": "Okayama",
       "kickoffUtc": "2026-10-10T06:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
-        "scoreAway": 0
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 2,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -12659,9 +12659,9 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
+        "status": "PENDING_VERIFIED_FINAL",
+        "reason": "played_terminal_requires_verified_final",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
@@ -12688,12 +12688,12 @@
       "homeTeam": "Cerezo Osaka",
       "awayTeam": "Yokohama F. Marinos",
       "kickoffUtc": "2026-10-10T05:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -12708,9 +12708,9 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
+        "status": "PENDING_VERIFIED_FINAL",
+        "reason": "played_terminal_requires_verified_final",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
@@ -12786,13 +12786,13 @@
       "homeTeam": "FC Tokyo",
       "awayTeam": "Urawa Reds",
       "kickoffUtc": "2026-10-10T06:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 3,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -12806,9 +12806,9 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
+        "status": "PENDING_VERIFIED_FINAL",
+        "reason": "played_terminal_requires_verified_final",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
@@ -12933,14 +12933,14 @@
       "homeTeam": "Omiya Ardija",
       "awayTeam": "Vanraure",
       "kickoffUtc": "2026-10-10T05:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 3,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -12953,9 +12953,9 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "PENDING_VERIFIED_FINAL",
+        "reason": "played_terminal_requires_verified_final",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
@@ -12982,14 +12982,14 @@
       "homeTeam": "Sagan Tosu",
       "awayTeam": "Fujieda MYFC",
       "kickoffUtc": "2026-10-10T05:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -13002,9 +13002,9 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "PENDING_VERIFIED_FINAL",
+        "reason": "played_terminal_requires_verified_final",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
@@ -13031,14 +13031,14 @@
       "homeTeam": "Tokushima",
       "awayTeam": "Imabari",
       "kickoffUtc": "2026-10-10T05:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -13051,9 +13051,9 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "PENDING_VERIFIED_FINAL",
+        "reason": "played_terminal_requires_verified_final",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
@@ -13080,14 +13080,14 @@
       "homeTeam": "Yokohama FC",
       "awayTeam": "Oita Trinita",
       "kickoffUtc": "2026-10-10T05:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -13100,9 +13100,9 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "PENDING_VERIFIED_FINAL",
+        "reason": "played_terminal_requires_verified_final",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
@@ -13423,14 +13423,14 @@
       "homeTeam": "Seoul",
       "awayTeam": "Jeju SK",
       "kickoffUtc": "2026-10-10T05:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -13443,9 +13443,9 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "PENDING_VERIFIED_FINAL",
+        "reason": "played_terminal_requires_verified_final",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
@@ -13570,14 +13570,14 @@
       "homeTeam": "Jeonnam",
       "awayTeam": "Yongin",
       "kickoffUtc": "2026-10-10T05:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -13590,9 +13590,9 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "PENDING_VERIFIED_FINAL",
+        "reason": "played_terminal_requires_verified_final",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
@@ -13619,14 +13619,14 @@
       "homeTeam": "Paju Frontier",
       "awayTeam": "Busan",
       "kickoffUtc": "2026-10-10T05:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -13639,9 +13639,9 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "PENDING_VERIFIED_FINAL",
+        "reason": "played_terminal_requires_verified_final",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
@@ -15142,7 +15142,7 @@
       "operationalState": "PLAYED_TERMINAL",
       "canonical": {
         "status": "FT",
-        "statusType": null,
+        "statusType": "STATUS_FINAL",
         "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 1
@@ -15191,7 +15191,7 @@
       "operationalState": "PLAYED_TERMINAL",
       "canonical": {
         "status": "FT",
-        "statusType": null,
+        "statusType": "STATUS_FINAL",
         "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 3,
         "scoreAway": 2
@@ -15240,7 +15240,7 @@
       "operationalState": "PLAYED_TERMINAL",
       "canonical": {
         "status": "FT",
-        "statusType": null,
+        "statusType": "STATUS_FINAL",
         "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 2,
         "scoreAway": 4
@@ -15289,7 +15289,7 @@
       "operationalState": "PLAYED_TERMINAL",
       "canonical": {
         "status": "FT",
-        "statusType": null,
+        "statusType": "STATUS_FINAL",
         "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 1
@@ -17249,7 +17249,7 @@
       "operationalState": "PLAYED_TERMINAL",
       "canonical": {
         "status": "FT",
-        "statusType": null,
+        "statusType": "STATUS_FINAL",
         "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 0,
         "scoreAway": 1
@@ -19748,7 +19748,7 @@
       "operationalState": "PLAYED_TERMINAL",
       "canonical": {
         "status": "FT",
-        "statusType": null,
+        "statusType": "STATUS_FINAL",
         "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 4
@@ -22688,7 +22688,7 @@
       "operationalState": "PLAYED_TERMINAL",
       "canonical": {
         "status": "FT",
-        "statusType": null,
+        "statusType": "STATUS_FINAL",
         "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 1
@@ -24202,11 +24202,22 @@
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
     "conflictFixtureIds": [],
-    "pendingVerifiedFinalFixtureIds": []
+    "pendingVerifiedFinalFixtureIds": [
+      "cid_jpn1_avispafukuoka_fagianookayama_20261010",
+      "cid_jpn1_cerezoosaka_yokohamafmarinos_20261010",
+      "cid_jpn1_tokyo_urawareddiamonds_20261010",
+      "cid_jpn2_omiyaardija_vanraure_20261010",
+      "cid_jpn2_sagantosu_fujiedamyfc_20261010",
+      "cid_jpn2_tokushima_imabari_20261010",
+      "cid_jpn2_yokohama_oitatrinita_20261010",
+      "cid_kor1_seoul_jejusk_20261010",
+      "cid_kor2_jeonnam_yongin_20261010",
+      "cid_kor2_pajufrontier_busan_20261010"
+    ]
   },
   "downstream": {
     "historyObserved": false,
-    "settlementObserved": false,
+    "settlementObserved": true,
     "publicationObserved": true,
     "systemHealthObserved": true,
     "systemHealth": {
@@ -24601,10 +24612,10 @@
               "slv.1"
             ],
             "summary": {
-              "evidenceSlugCount": 18,
+              "evidenceSlugCount": 17,
               "admittedCount": 5,
               "pendingCount": 0,
-              "rejectedCount": 18,
+              "rejectedCount": 17,
               "alreadyDeclaredCount": 0
             }
           }
@@ -24624,7 +24635,6 @@
               "concacaf.nations.league",
               "eng.fa_qual",
               "fifa.friendly",
-              "fifa.friendly_u21",
               "fifa.friendly.w",
               "fifa.wworldq.uefa",
               "global.gulf_cup",
@@ -24636,10 +24646,10 @@
               "usa.w.usl.1"
             ],
             "summary": {
-              "evidenceSlugCount": 18,
+              "evidenceSlugCount": 17,
               "admittedCount": 5,
               "pendingCount": 0,
-              "rejectedCount": 18,
+              "rejectedCount": 17,
               "alreadyDeclaredCount": 0
             }
           }
@@ -28828,8 +28838,8 @@
       ]
     },
     "convergence": {
-      "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "17c43c190a534dabd6a93ba226b02d0ede6c704fa97a08d09f22144bb0688957",
+      "overallState": "INCOMPLETE",
+      "truthFingerprint": "b13b26f6b5d62947b9f9322840fba540f20df00c943b22c31239a69709a6318f",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -28860,15 +28870,15 @@
         "structuralIssues": []
       },
       "settlement": {
-        "state": "NOT_OBSERVED",
-        "observed": false,
+        "state": "PRESENT_UNRESOLVED",
+        "observed": true,
         "bundlePath": "data/football-truth/_diagnostics/value-settlement-daily-cycle/2026-10-10.four-plan-settlement-bundle.json",
         "aggregateSummaryPath": "data/football-truth/_settlement-summaries/2026-10-10.value-settlement-summary.json",
-        "totalRows": 0,
-        "settledRows": 0,
-        "unresolvedRows": 0,
+        "totalRows": 27,
+        "settledRows": 1,
+        "unresolvedRows": 26,
         "winRows": 0,
-        "lossRows": 0,
+        "lossRows": 1,
         "voidRows": 0,
         "unknownRows": 0,
         "orphanSettlementRows": [],
