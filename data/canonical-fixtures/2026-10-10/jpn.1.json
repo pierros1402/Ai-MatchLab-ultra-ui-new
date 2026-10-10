@@ -2,14 +2,38 @@
   "dayKey": "2026-10-10",
   "leagueSlug": "jpn.1",
   "leagueName": "J1 League",
-  "updatedAt": "2026-10-10T06:30:29.801Z",
+  "updatedAt": "2026-10-10T08:16:27.342Z",
   "count": 4,
   "sourceMeta": {
-    "acquisitionProvider": "espn_all_scoreboard",
-    "requestedLeagueSlug": "all",
+    "acquisitionProvider": "espn_direct_league_status",
+    "requestedLeagueSlug": "jpn.1",
     "requestedDayKey": "2026-10-10",
-    "mergedAt": "2026-10-10T06:30:29.801Z",
-    "mode": "supplemental_target_seed_only"
+    "providerFetchSlugs": [
+      "jpn.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 0,
+      "matches": 0,
+      "fetches": []
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-10-10T08:16:27.342Z",
+    "mode": "targeted_live_status_refresh"
   },
   "fixtures": [
     {
@@ -31,15 +55,35 @@
       "awayTeam": "Yokohama F. Marinos",
       "venue": "Yodoko Sakura Stadium",
       "firstSeenAt": "2026-09-25T18:04:32.598Z",
-      "lastSeenAt": "2026-10-10T06:30:29.775Z",
+      "lastSeenAt": "2026-10-10T08:16:27.306Z",
       "providerLeagueSlug": "jpn.1",
-      "status": "SECOND_HALF",
-      "rawStatus": "STATUS_SECOND_HALF",
-      "minute": "66'",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+6'",
       "scoreHome": 0,
       "scoreAway": 0,
-      "penalties": null,
-      "decidedBy": null
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-10-10T07:39:21.040Z",
+        "provider": "espn",
+        "providerMatchId": "401877606",
+        "dayKey": "2026-10-10",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 0,
+          "scoreAway": 0
+        }
+      }
     },
     {
       "canonicalId": "cid_jpn1_avispafukuoka_fagianookayama_20261010",
@@ -60,18 +104,16 @@
       "awayTeam": "Fagiano Okayama",
       "venue": "Best Denki Stadium",
       "firstSeenAt": "2026-09-25T18:04:32.682Z",
-      "lastSeenAt": "2026-10-10T06:30:29.778Z",
+      "lastSeenAt": "2026-10-10T08:16:27.306Z",
       "canonicalAliases": [
         "cid_jpn1_avispafukuoka_okayama_20261010"
       ],
       "providerLeagueSlug": "jpn.1",
-      "status": "FIRST_HALF",
-      "rawStatus": "STATUS_FIRST_HALF",
-      "minute": "27'",
-      "scoreHome": 1,
-      "scoreAway": 0,
-      "penalties": null,
-      "decidedBy": null
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+6'",
+      "scoreHome": 2,
+      "scoreAway": 1
     },
     {
       "canonicalId": "cid_jpn1_tokyo_urawareddiamonds_20261010",
@@ -92,18 +134,16 @@
       "awayTeam": "Urawa Red Diamonds",
       "venue": "Tokyo Stadium",
       "firstSeenAt": "2026-09-25T18:04:32.797Z",
-      "lastSeenAt": "2026-10-10T06:30:29.780Z",
+      "lastSeenAt": "2026-10-10T08:16:27.306Z",
       "canonicalAliases": [
         "cid_jpn1_tokyo_urawareds_20261010"
       ],
       "providerLeagueSlug": "jpn.1",
-      "status": "FIRST_HALF",
-      "rawStatus": "STATUS_FIRST_HALF",
-      "minute": "27'",
-      "scoreHome": 0,
-      "scoreAway": 0,
-      "penalties": null,
-      "decidedBy": null
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+6'",
+      "scoreHome": 3,
+      "scoreAway": 0
     },
     {
       "canonicalId": "cid_jpn1_kyotosanga_machidazelvia_20261010",
@@ -124,7 +164,7 @@
       "awayTeam": "Machida Zelvia",
       "venue": "Sanga Stadium by Kyocera",
       "firstSeenAt": "2026-09-25T18:04:32.798Z",
-      "lastSeenAt": "2026-10-10T06:30:29.783Z",
+      "lastSeenAt": "2026-10-10T08:16:27.307Z",
       "canonicalAliases": [
         "cid_jpn1_kyoto_machida_20261010"
       ],
@@ -133,9 +173,7 @@
       "rawStatus": "STATUS_SCHEDULED",
       "minute": "0'",
       "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null
+      "scoreAway": null
     }
   ]
 }
