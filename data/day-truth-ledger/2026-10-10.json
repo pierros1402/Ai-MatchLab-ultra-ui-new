@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-10",
-  "generatedAt": "2026-10-10T02:40:37.307Z",
+  "generatedAt": "2026-10-10T03:06:00.934Z",
   "role": "derived_control_plane",
-  "ledgerState": "INCOMPLETE",
-  "truthFingerprint": "d732be8ea75f646bac7636f0f6b8354feb4fec807151c86c67006cabca5c78e3",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "7f0da7100ad1e443e6acd056f23bb51f06b7a1a8120b75df4343000b6cbd2aeb",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 493,
-    "playedTerminal": 7,
+    "playedTerminal": 9,
     "nonPlayedTerminal": 1,
-    "scheduled": 479,
-    "live": 6,
+    "scheduled": 478,
+    "live": 5,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 0,
-    "acceptedVerifiedFinalArtifacts": 0,
-    "convergedPlayedFinal": 0,
+    "verifiedFinalArtifacts": 11,
+    "acceptedVerifiedFinalArtifacts": 11,
+    "convergedPlayedFinal": 9,
     "convergedNonPlayedTerminal": 1,
-    "pendingVerifiedFinal": 7,
-    "openRows": 485,
+    "pendingVerifiedFinal": 0,
+    "openRows": 481,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 0,
-    "scoredSettlementEligible": 0,
+    "historyEligible": 9,
+    "scoredSettlementEligible": 9,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -399,21 +399,21 @@
         "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-10",
+        "scoreHome": 1,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "PENDING_VERIFIED_FINAL",
-        "reason": "played_terminal_requires_verified_final",
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
         "operationallyClosed": true,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -448,21 +448,21 @@
         "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-10",
+        "scoreHome": 2,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "PENDING_VERIFIED_FINAL",
-        "reason": "played_terminal_requires_verified_final",
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
         "operationallyClosed": true,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -487,31 +487,31 @@
       "homeTeam": "Unión (Santa Fe)",
       "awayTeam": "Defensa y Justicia",
       "kickoffUtc": "2026-10-10T00:45Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 0,
         "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-10",
+        "scoreHome": 0,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3584,21 +3584,21 @@
         "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-10",
+        "scoreHome": 2,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "PENDING_VERIFIED_FINAL",
-        "reason": "played_terminal_requires_verified_final",
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
         "operationallyClosed": true,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3675,10 +3675,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -3721,14 +3721,14 @@
       "homeTeam": "Sporting San José",
       "awayTeam": "Cartaginés",
       "kickoffUtc": "2026-10-10T02:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 1,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -3742,7 +3742,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -10787,21 +10787,21 @@
         "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-10",
+        "scoreHome": 2,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "PENDING_VERIFIED_FINAL",
-        "reason": "played_terminal_requires_verified_final",
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
         "operationallyClosed": true,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -15141,25 +15141,25 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
-        "scoreAway": 0
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-10",
+        "scoreHome": 1,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -15246,21 +15246,21 @@
         "scoreAway": 4
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-10",
+        "scoreHome": 2,
+        "scoreAway": 4,
+        "scoreParity": true
       },
       "decision": {
-        "status": "PENDING_VERIFIED_FINAL",
-        "reason": "played_terminal_requires_verified_final",
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
         "operationallyClosed": true,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -15288,11 +15288,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -17248,25 +17248,25 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-10",
+        "scoreHome": 0,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -19744,31 +19744,31 @@
       "homeTeam": "Inca Aruba",
       "awayTeam": "C.D. Platense",
       "kickoffUtc": "2026-10-10T00:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "LIVE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
-        "scoreAway": 3
+        "scoreAway": 4
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-10",
+        "scoreHome": 1,
+        "scoreAway": 4,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -22694,21 +22694,21 @@
         "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-10",
+        "scoreHome": 1,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "PENDING_VERIFIED_FINAL",
-        "reason": "played_terminal_requires_verified_final",
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
         "operationallyClosed": true,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -23037,21 +23037,21 @@
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-10",
+        "scoreHome": 0,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "PENDING_VERIFIED_FINAL",
-        "reason": "played_terminal_requires_verified_final",
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
         "operationallyClosed": true,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -24201,20 +24201,15 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
-    "pendingVerifiedFinalFixtureIds": [
-      "cid_arg1_gimnasialaplata_atleticotucuman_20261010",
-      "cid_arg1_institutocordoba_bocajuniors_20261010",
-      "cid_col1_alianza_aguilasdoradas_20261010",
-      "cid_hon1_platense_juticalpa_20261010",
-      "cid_mex2_tapatio_atleticolapaz_20261010",
-      "cid_uru1_deportivomaldonado_liverpool_20261010",
-      "cid_usa2_lexington_tulsa_20261010"
-    ]
+    "conflictFixtureIds": [
+      "cid_mex1_puebla_leon_20261010",
+      "cid_per1_deportivogarcilaso_sporthuancayo_20261010"
+    ],
+    "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
     "historyObserved": false,
-    "settlementObserved": true,
+    "settlementObserved": false,
     "publicationObserved": true,
     "systemHealthObserved": true,
     "systemHealth": {
@@ -28836,29 +28831,39 @@
       ]
     },
     "convergence": {
-      "overallState": "INCOMPLETE",
-      "truthFingerprint": "d732be8ea75f646bac7636f0f6b8354feb4fec807151c86c67006cabca5c78e3",
+      "overallState": "PARTIALLY_OBSERVED",
+      "truthFingerprint": "7f0da7100ad1e443e6acd056f23bb51f06b7a1a8120b75df4343000b6cbd2aeb",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 0,
+        "expectedEligibleRows": 9,
         "persistedRows": 0,
-        "missingEligibleFixtureIds": [],
+        "missingEligibleFixtureIds": [
+          "cid_arg1_gimnasialaplata_atleticotucuman_20261010",
+          "cid_arg1_institutocordoba_bocajuniors_20261010",
+          "cid_arg1_unionsantafe_defensayjusticia_20261010",
+          "cid_col1_alianza_aguilasdoradas_20261010",
+          "cid_hon1_platense_juticalpa_20261010",
+          "cid_mex2_tapatio_atleticolapaz_20261010",
+          "cid_slv1_incaaruba_platense_20261010",
+          "cid_uru1_deportivomaldonado_liverpool_20261010",
+          "cid_usa2_lexington_tulsa_20261010"
+        ],
         "unexpectedFixtureIds": [],
         "duplicateFixtureIds": [],
         "invalidTruthContractFixtureIds": [],
         "structuralIssues": []
       },
       "settlement": {
-        "state": "PRESENT_UNRESOLVED",
-        "observed": true,
+        "state": "NOT_OBSERVED",
+        "observed": false,
         "bundlePath": "data/football-truth/_diagnostics/value-settlement-daily-cycle/2026-10-10.four-plan-settlement-bundle.json",
         "aggregateSummaryPath": "data/football-truth/_settlement-summaries/2026-10-10.value-settlement-summary.json",
-        "totalRows": 32,
+        "totalRows": 0,
         "settledRows": 0,
-        "unresolvedRows": 32,
+        "unresolvedRows": 0,
         "winRows": 0,
         "lossRows": 0,
         "voidRows": 0,
@@ -28904,7 +28909,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-10",
-      "fileCount": 0,
+      "fileCount": 11,
       "authority": "scored_final_evidence"
     },
     "downstream": {
