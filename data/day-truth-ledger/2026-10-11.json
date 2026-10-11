@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-11",
-  "generatedAt": "2026-10-11T06:05:58.172Z",
+  "generatedAt": "2026-10-11T06:19:38.975Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "7ed48b104278a9a42f85ee2a0e4921793f8a95d72bdcf6aa7d5a7df21ec39785",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "7289f1f5ce86c80a2aa9f2e25fa0dac06f0a5d044054a63da3a8304877b787ed",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 410,
-    "playedTerminal": 56,
+    "playedTerminal": 57,
     "nonPlayedTerminal": 1,
-    "scheduled": 350,
-    "live": 1,
+    "scheduled": 347,
+    "live": 3,
     "interrupted": 2,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 57,
     "acceptedVerifiedFinalArtifacts": 57,
-    "convergedPlayedFinal": 56,
+    "convergedPlayedFinal": 57,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
     "openRows": 352,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 56,
-    "scoredSettlementEligible": 56,
+    "historyEligible": 57,
+    "scoredSettlementEligible": 57,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -9114,9 +9114,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -9209,14 +9209,14 @@
       "homeTeam": "Mito Hollyhock",
       "awayTeam": "Shimizu S-Pulse",
       "kickoffUtc": "2026-10-11T06:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -9230,7 +9230,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -9258,14 +9258,14 @@
       "homeTeam": "Tokyo Verdy",
       "awayTeam": "Sanfrecce Hiroshima",
       "kickoffUtc": "2026-10-11T06:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -9279,7 +9279,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -9356,14 +9356,14 @@
       "homeTeam": "Montedio Yamagata",
       "awayTeam": "Vegalta Sendai",
       "kickoffUtc": "2026-10-11T04:05:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": true,
@@ -9373,14 +9373,14 @@
         "dayKey": "2026-10-11",
         "scoreHome": 0,
         "scoreAway": 1,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -20134,9 +20134,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_jpn2_montedioyamagata_vegaltasendai_20261011"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -24404,13 +24402,13 @@
     },
     "convergence": {
       "overallState": "INCOMPLETE",
-      "truthFingerprint": "7ed48b104278a9a42f85ee2a0e4921793f8a95d72bdcf6aa7d5a7df21ec39785",
+      "truthFingerprint": "7289f1f5ce86c80a2aa9f2e25fa0dac06f0a5d044054a63da3a8304877b787ed",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 56,
+        "expectedEligibleRows": 57,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_riverplate_estudiantesriocuarto_20261011",
@@ -24428,6 +24426,7 @@
           "cid_hon1_genesispn_deportivoolimpia_20261011",
           "cid_hon1_motagua_choloma_20261011",
           "cid_hon1_upnfm_deportivomarathon_20261011",
+          "cid_jpn2_montedioyamagata_vegaltasendai_20261011",
           "cid_mex1_america_monterrey_20261011",
           "cid_mex1_atlas_guadalajara_20261011",
           "cid_mex1_juarez_tijuana_20261011",
