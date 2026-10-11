@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-11",
-  "generatedAt": "2026-10-11T12:28:38.838Z",
+  "generatedAt": "2026-10-11T12:48:54.818Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "3511d0ec336b537077ed6c790eddd3eb3219178326cac870b6f55348152a5d81",
+  "truthFingerprint": "932ed4ba8c5e95d994066b34a3a3078fe51ded948c5b9f9e37cc8d4d16e8c9da",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,27 +17,27 @@
   },
   "summary": {
     "canonicalRows": 410,
-    "playedTerminal": 91,
-    "nonPlayedTerminal": 2,
-    "scheduled": 299,
-    "live": 17,
+    "playedTerminal": 94,
+    "nonPlayedTerminal": 3,
+    "scheduled": 292,
+    "live": 20,
     "interrupted": 1,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 93,
-    "acceptedVerifiedFinalArtifacts": 93,
-    "convergedPlayedFinal": 91,
-    "convergedNonPlayedTerminal": 2,
+    "verifiedFinalArtifacts": 95,
+    "acceptedVerifiedFinalArtifacts": 95,
+    "convergedPlayedFinal": 94,
+    "convergedNonPlayedTerminal": 3,
     "pendingVerifiedFinal": 0,
-    "openRows": 315,
+    "openRows": 312,
     "unresolvedRows": 0,
-    "conflictRows": 2,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 91,
-    "scoredSettlementEligible": 91,
-    "voidSettlementEligible": 2
+    "historyEligible": 94,
+    "scoredSettlementEligible": 94,
+    "voidSettlementEligible": 3
   },
   "fixtures": [
     {
@@ -1516,14 +1516,14 @@
       "homeTeam": "sc rheindorf altach",
       "awayTeam": "Wolfsberger",
       "kickoffUtc": "2026-10-11T12:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_IN_PROGRESS",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1537,7 +1537,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1565,14 +1565,14 @@
       "homeTeam": "TSV Hartberg",
       "awayTeam": "Austria Lustenau",
       "kickoffUtc": "2026-10-11T12:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_IN_PROGRESS",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1586,7 +1586,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1862,9 +1862,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -3528,9 +3528,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -3577,9 +3577,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -4319,18 +4319,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-11",
+        "scoreHome": 0,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4806,7 +4806,7 @@
         "statusType": null,
         "rawStatus": "STATUS_FIRST_HALF",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -4855,7 +4855,7 @@
         "statusType": null,
         "rawStatus": "STATUS_FIRST_HALF",
         "scoreHome": 0,
-        "scoreAway": 1
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -5390,9 +5390,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_IN_PROGRESS",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -5638,7 +5638,7 @@
         "status": "FIRST_HALF",
         "statusType": null,
         "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -6811,9 +6811,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -6860,9 +6860,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -6909,9 +6909,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -7494,12 +7494,12 @@
       "homeTeam": "Karditsa",
       "awayTeam": "Zakynthos",
       "kickoffUtc": "2026-10-11T12:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PRE_KICKOFF_NON_PLAYED",
+      "operationalState": "NON_PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
+        "status": "STATUS_POSTPONED",
+        "statusType": "STATUS_POSTPONED",
+        "rawStatus": "STATUS_POSTPONED",
         "scoreHome": null,
         "scoreAway": null
       },
@@ -7514,12 +7514,12 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "CONVERGED_NON_PLAYED_TERMINAL",
+        "reason": "explicit_nonplayed_terminal",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
-        "voidSettlementEligible": false,
+        "voidSettlementEligible": true,
         "repairAuthorized": false
       },
       "downstream": {
@@ -8425,14 +8425,14 @@
       "homeTeam": "PSPS Riau",
       "awayTeam": "PSMS Medan",
       "kickoffUtc": "2026-10-11T12:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": true,
@@ -8442,14 +8442,14 @@
         "dayKey": "2026-10-11",
         "scoreHome": 2,
         "scoreAway": 1,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -8526,9 +8526,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
         "scoreAway": 1
       },
@@ -8768,31 +8768,31 @@
       "homeTeam": "Como",
       "awayTeam": "AS Roma",
       "kickoffUtc": "2026-10-11T10:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 0,
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-11",
+        "scoreHome": 0,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -12492,14 +12492,14 @@
       "homeTeam": "PEC Zwolle",
       "awayTeam": "SC Cambuur",
       "kickoffUtc": "2026-10-11T12:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -12513,7 +12513,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -12541,14 +12541,14 @@
       "homeTeam": "Telstar",
       "awayTeam": "ADO Den Haag",
       "kickoffUtc": "2026-10-11T12:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -12562,7 +12562,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -12688,14 +12688,14 @@
       "homeTeam": "Fredrikstad",
       "awayTeam": "Tromso",
       "kickoffUtc": "2026-10-11T12:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_IN_PROGRESS",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -12709,7 +12709,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -14802,7 +14802,7 @@
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
-        "scoreAway": 1
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -17098,12 +17098,12 @@
       "homeTeam": "Konyaspor",
       "awayTeam": "Istanbul Basaksehir",
       "kickoffUtc": "2026-10-11T10:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -17118,11 +17118,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -20135,8 +20135,7 @@
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
     "conflictFixtureIds": [
-      "cid_idn2_pspsriau_psmsmedan_20261011",
-      "cid_tur1_konyaspor_istanbulbasaksehir_20261011"
+      "cid_cro2_dugopolje_croatiazmijavci_20261011"
     ],
     "pendingVerifiedFinalFixtureIds": []
   },
@@ -20437,7 +20436,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 12454,
+            "count": 12456,
             "informational": true
           }
         },
@@ -24403,13 +24402,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "3511d0ec336b537077ed6c790eddd3eb3219178326cac870b6f55348152a5d81",
+      "truthFingerprint": "932ed4ba8c5e95d994066b34a3a3078fe51ded948c5b9f9e37cc8d4d16e8c9da",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 91,
+        "expectedEligibleRows": 94,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_and1_rangers_carroi_20261011",
@@ -24438,6 +24437,8 @@
           "cid_idn1_psssleman_psmmakassar_20261011",
           "cid_idn2_perselalamongan_deltrassidoarjo_20261011",
           "cid_idn2_persissolo_dejan_20261011",
+          "cid_idn2_pspsriau_psmsmedan_20261011",
+          "cid_ita1_como_asroma_20261011",
           "cid_jpn1_jefunitedichiharachiba_vvarennagasaki_20261011",
           "cid_jpn1_kawasakifrontale_nagoyagrampus_20261011",
           "cid_jpn1_mitohollyhock_shimizuspulse_20261011",
@@ -24470,6 +24471,7 @@
           "cid_svk2_malzenice_ibratislava_20261011",
           "cid_svk2_slovanbratislavab_lmikulas_20261011",
           "cid_svk2_zilinab_galanta_20261011",
+          "cid_tur1_konyaspor_istanbulbasaksehir_20261011",
           "cid_ukr1_dynkyiv_karpatylviv_20261011",
           "cid_ukr1_lnzcherkasy_kudrivka_20261011",
           "cid_ukr2_oleksandriya_lokomotyvkyiv_20261011",
@@ -24562,7 +24564,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-11",
-      "fileCount": 93,
+      "fileCount": 95,
       "authority": "scored_final_evidence"
     },
     "downstream": {
