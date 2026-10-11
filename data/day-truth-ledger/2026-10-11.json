@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-11",
-  "generatedAt": "2026-10-11T07:03:03.434Z",
+  "generatedAt": "2026-10-11T07:25:10.559Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "3ee3aec407823dca7be3ad4360217d0f8ea62afbf4b2083b708b683ff6a65395",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "4affab3e1c64da25b10b28f05d2d64a9bdff9a93b5503779c92e3d1da5f1fe6a",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,9 +17,9 @@
   },
   "summary": {
     "canonicalRows": 410,
-    "playedTerminal": 57,
+    "playedTerminal": 61,
     "nonPlayedTerminal": 1,
-    "scheduled": 347,
+    "scheduled": 343,
     "live": 3,
     "interrupted": 2,
     "delayed": 0,
@@ -27,16 +27,16 @@
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 61,
     "acceptedVerifiedFinalArtifacts": 61,
-    "convergedPlayedFinal": 57,
+    "convergedPlayedFinal": 61,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
     "openRows": 348,
     "unresolvedRows": 0,
-    "conflictRows": 4,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 57,
-    "scoredSettlementEligible": 57,
+    "historyEligible": 61,
+    "scoredSettlementEligible": 61,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -9111,14 +9111,14 @@
       "homeTeam": "JEF United Ichihara-Chiba",
       "awayTeam": "V-Varen Nagasaki",
       "kickoffUtc": "2026-10-11T05:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": true,
@@ -9128,14 +9128,14 @@
         "dayKey": "2026-10-11",
         "scoreHome": 1,
         "scoreAway": 1,
-        "scoreParity": false
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -9160,14 +9160,14 @@
       "homeTeam": "Kawasaki Frontale",
       "awayTeam": "Nagoya Grampus",
       "kickoffUtc": "2026-10-11T07:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -9181,7 +9181,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -9212,10 +9212,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -9261,11 +9261,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -9454,14 +9454,14 @@
       "homeTeam": "Toyama",
       "awayTeam": "Tegevajaro Miyazaki",
       "kickoffUtc": "2026-10-11T05:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": true,
@@ -9471,14 +9471,14 @@
         "dayKey": "2026-10-11",
         "scoreHome": 1,
         "scoreAway": 1,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -9650,14 +9650,14 @@
       "homeTeam": "Gwangju FC",
       "awayTeam": "Ulsan HD",
       "kickoffUtc": "2026-10-11T05:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 4,
+        "scoreAway": 3
       },
       "verifiedFinal": {
         "present": true,
@@ -9667,14 +9667,14 @@
         "dayKey": "2026-10-11",
         "scoreHome": 4,
         "scoreAway": 3,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -9699,14 +9699,14 @@
       "homeTeam": "Suwon Bluewings",
       "awayTeam": "Ansan Greeners",
       "kickoffUtc": "2026-10-11T05:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 4,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": true,
@@ -9716,14 +9716,14 @@
         "dayKey": "2026-10-11",
         "scoreHome": 4,
         "scoreAway": 1,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -20134,12 +20134,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_jpn1_jefunitedichiharachiba_vvarennagasaki_20261011",
-      "cid_jpn2_toyama_tegevajaromiyazaki_20261011",
-      "cid_kor1_gwangju_ulsanhd_20261011",
-      "cid_kor2_suwonbluewings_ansangreeners_20261011"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -24407,13 +24402,13 @@
     },
     "convergence": {
       "overallState": "INCOMPLETE",
-      "truthFingerprint": "3ee3aec407823dca7be3ad4360217d0f8ea62afbf4b2083b708b683ff6a65395",
+      "truthFingerprint": "4affab3e1c64da25b10b28f05d2d64a9bdff9a93b5503779c92e3d1da5f1fe6a",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 57,
+        "expectedEligibleRows": 61,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_riverplate_estudiantesriocuarto_20261011",
@@ -24431,7 +24426,11 @@
           "cid_hon1_genesispn_deportivoolimpia_20261011",
           "cid_hon1_motagua_choloma_20261011",
           "cid_hon1_upnfm_deportivomarathon_20261011",
+          "cid_jpn1_jefunitedichiharachiba_vvarennagasaki_20261011",
           "cid_jpn2_montedioyamagata_vegaltasendai_20261011",
+          "cid_jpn2_toyama_tegevajaromiyazaki_20261011",
+          "cid_kor1_gwangju_ulsanhd_20261011",
+          "cid_kor2_suwonbluewings_ansangreeners_20261011",
           "cid_mex1_america_monterrey_20261011",
           "cid_mex1_atlas_guadalajara_20261011",
           "cid_mex1_juarez_tijuana_20261011",
