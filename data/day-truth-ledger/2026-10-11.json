@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-11",
-  "generatedAt": "2026-10-11T05:25:55.246Z",
+  "generatedAt": "2026-10-11T06:05:58.172Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "41d20bec5d70215ec2833b7fa3c77a199b2bd8919a65e3f3260713928393478a",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "7ed48b104278a9a42f85ee2a0e4921793f8a95d72bdcf6aa7d5a7df21ec39785",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -25,14 +25,14 @@
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 56,
-    "acceptedVerifiedFinalArtifacts": 56,
+    "verifiedFinalArtifacts": 57,
+    "acceptedVerifiedFinalArtifacts": 57,
     "convergedPlayedFinal": 56,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 353,
+    "openRows": 352,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 56,
@@ -9114,9 +9114,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -9366,18 +9366,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-11",
+        "scoreHome": 0,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -20134,7 +20134,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_jpn2_montedioyamagata_vegaltasendai_20261011"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -24402,7 +24404,7 @@
     },
     "convergence": {
       "overallState": "INCOMPLETE",
-      "truthFingerprint": "41d20bec5d70215ec2833b7fa3c77a199b2bd8919a65e3f3260713928393478a",
+      "truthFingerprint": "7ed48b104278a9a42f85ee2a0e4921793f8a95d72bdcf6aa7d5a7df21ec39785",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -24528,7 +24530,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-11",
-      "fileCount": 56,
+      "fileCount": 57,
       "authority": "scored_final_evidence"
     },
     "downstream": {
