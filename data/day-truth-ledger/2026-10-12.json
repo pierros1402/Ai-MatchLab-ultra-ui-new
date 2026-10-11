@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-12",
-  "generatedAt": "2026-10-11T20:39:41.983Z",
+  "generatedAt": "2026-10-11T21:13:45.017Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "0483ff59e8669d18f506bddd2e56412a0ddf56beaa707cb1d35b8e38451f718f",
+  "truthFingerprint": "cfb0a9012dbd89085a93e6cd818b7cdd1667618b09f6c36316ab335f184cec63",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -19,8 +19,8 @@
     "canonicalRows": 114,
     "playedTerminal": 0,
     "nonPlayedTerminal": 1,
-    "scheduled": 113,
-    "live": 0,
+    "scheduled": 109,
+    "live": 4,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
@@ -2986,14 +2986,14 @@
       "homeTeam": "Deportivo San Pedro",
       "awayTeam": "Comunicaciones",
       "kickoffUtc": "2026-10-11T21:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_IN_PROGRESS",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -3007,7 +3007,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -3084,14 +3084,14 @@
       "homeTeam": "CD Estrella Roja",
       "awayTeam": "Real España",
       "kickoffUtc": "2026-10-11T21:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_IN_PROGRESS",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -3105,7 +3105,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4750,14 +4750,14 @@
       "homeTeam": "Águila",
       "awayTeam": "Isidro Metapán",
       "kickoffUtc": "2026-10-11T21:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -4771,7 +4771,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4848,14 +4848,14 @@
       "homeTeam": "Atletico Balboa",
       "awayTeam": "CD FAS",
       "kickoffUtc": "2026-10-11T21:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -4869,7 +4869,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -5635,7 +5635,7 @@
   },
   "downstream": {
     "historyObserved": false,
-    "settlementObserved": true,
+    "settlementObserved": false,
     "publicationObserved": true,
     "systemHealthObserved": true,
     "systemHealth": {
@@ -5684,7 +5684,24 @@
             "artifact": "value-plans/2026-10-12/plan-b.json",
             "at": null,
             "staleReason": "plan_b_stale_against_canonical",
-            "preservation": null,
+            "preservation": {
+              "reason": "frozen_value_observation_cohort_identity_preserved",
+              "requestedDay": "2026-10-12",
+              "currentAthensDay": "2026-10-12",
+              "fixtureCount": 114,
+              "frozenHash": "9af4b61e8ae895e92aab756cee7eb3a0939634023f0b6804037697e8e6151240",
+              "currentHash": "9af4b61e8ae895e92aab756cee7eb3a0939634023f0b6804037697e8e6151240",
+              "strictFrozenParity": true,
+              "membershipParity": true,
+              "descriptorDrift": false,
+              "publicationMembershipPreserved": false,
+              "authorizedShrink": false,
+              "removedFixtureIds": [],
+              "deferredCurrentFixtureIds": [],
+              "publishedOutsideFrozenFixtureIds": [],
+              "resolvedFrozenAliasMappings": [],
+              "removalEvidenceSource": "exact_current_frozen_membership"
+            },
             "skipped": "artifact_missing_or_no_timestamp"
           }
         },
@@ -5698,7 +5715,24 @@
             "artifact": "value-plans/2026-10-12/plan-b2.json",
             "at": null,
             "staleReason": "plan_b2_stale_against_canonical",
-            "preservation": null,
+            "preservation": {
+              "reason": "frozen_value_observation_cohort_identity_preserved",
+              "requestedDay": "2026-10-12",
+              "currentAthensDay": "2026-10-12",
+              "fixtureCount": 114,
+              "frozenHash": "9af4b61e8ae895e92aab756cee7eb3a0939634023f0b6804037697e8e6151240",
+              "currentHash": "9af4b61e8ae895e92aab756cee7eb3a0939634023f0b6804037697e8e6151240",
+              "strictFrozenParity": true,
+              "membershipParity": true,
+              "descriptorDrift": false,
+              "publicationMembershipPreserved": false,
+              "authorizedShrink": false,
+              "removedFixtureIds": [],
+              "deferredCurrentFixtureIds": [],
+              "publishedOutsideFrozenFixtureIds": [],
+              "resolvedFrozenAliasMappings": [],
+              "removalEvidenceSource": "exact_current_frozen_membership"
+            },
             "skipped": "artifact_missing_or_no_timestamp"
           }
         },
@@ -5806,7 +5840,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 12476,
+            "count": 12480,
             "informational": true
           }
         },
@@ -5919,7 +5953,7 @@
           "message": "Plan A picks are still unresolved.",
           "details": {
             "dayKey": "2026-10-12",
-            "todayDayKey": "2026-10-11",
+            "todayDayKey": "2026-10-12",
             "ageDays": 0,
             "overdue": false,
             "settlementSource": "value-comparison",
@@ -5935,7 +5969,7 @@
           "message": "Plan A2 picks are still unresolved.",
           "details": {
             "dayKey": "2026-10-12",
-            "todayDayKey": "2026-10-11",
+            "todayDayKey": "2026-10-12",
             "ageDays": 0,
             "overdue": false,
             "settlementSource": "value-comparison",
@@ -8555,8 +8589,8 @@
       ]
     },
     "convergence": {
-      "overallState": "INCOMPLETE",
-      "truthFingerprint": "0483ff59e8669d18f506bddd2e56412a0ddf56beaa707cb1d35b8e38451f718f",
+      "overallState": "PARTIALLY_OBSERVED",
+      "truthFingerprint": "cfb0a9012dbd89085a93e6cd818b7cdd1667618b09f6c36316ab335f184cec63",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -8571,13 +8605,13 @@
         "structuralIssues": []
       },
       "settlement": {
-        "state": "PRESENT_UNRESOLVED",
-        "observed": true,
+        "state": "NOT_OBSERVED",
+        "observed": false,
         "bundlePath": "data/football-truth/_diagnostics/value-settlement-daily-cycle/2026-10-12.four-plan-settlement-bundle.json",
         "aggregateSummaryPath": "data/football-truth/_settlement-summaries/2026-10-12.value-settlement-summary.json",
-        "totalRows": 8,
+        "totalRows": 0,
         "settledRows": 0,
-        "unresolvedRows": 8,
+        "unresolvedRows": 0,
         "winRows": 0,
         "lossRows": 0,
         "voidRows": 0,
