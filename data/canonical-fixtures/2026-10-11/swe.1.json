@@ -2,14 +2,38 @@
   "dayKey": "2026-10-11",
   "leagueSlug": "swe.1",
   "leagueName": "Allsvenskan",
-  "updatedAt": "2026-10-11T13:32:56.830Z",
+  "updatedAt": "2026-10-11T15:23:56.326Z",
   "count": 2,
   "sourceMeta": {
-    "acquisitionProvider": "espn_all_scoreboard",
-    "requestedLeagueSlug": "all",
+    "acquisitionProvider": "espn_direct_league_status",
+    "requestedLeagueSlug": "swe.1",
     "requestedDayKey": "2026-10-11",
-    "mergedAt": "2026-10-11T13:32:56.830Z",
-    "mode": "supplemental_target_seed_only"
+    "providerFetchSlugs": [
+      "swe.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 0,
+      "matches": 0,
+      "fetches": []
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-10-11T15:23:56.326Z",
+    "mode": "targeted_live_status_refresh"
   },
   "fixtures": [
     {
@@ -31,15 +55,35 @@
       "awayTeam": "Djurgården",
       "venue": "Tele2 Arena",
       "firstSeenAt": "2026-09-26T17:49:24.933Z",
-      "lastSeenAt": "2026-10-11T13:32:56.712Z",
+      "lastSeenAt": "2026-10-11T15:23:56.326Z",
       "providerLeagueSlug": "swe.1",
-      "status": "SECOND_HALF",
-      "rawStatus": "STATUS_SECOND_HALF",
-      "minute": "70'",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+5'",
       "scoreHome": 0,
       "scoreAway": 1,
-      "penalties": null,
-      "decidedBy": null
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-10-11T14:41:44.196Z",
+        "provider": "espn",
+        "providerMatchId": "401842837",
+        "dayKey": "2026-10-11",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 0,
+          "scoreAway": 1
+        }
+      }
     },
     {
       "canonicalId": "cid_swe1_hacken_orgryteis_20261011",
@@ -60,18 +104,16 @@
       "awayTeam": "Örgryte IS",
       "venue": "Bravida Arena",
       "firstSeenAt": "2026-09-26T17:49:24.933Z",
-      "lastSeenAt": "2026-10-11T13:32:56.714Z",
+      "lastSeenAt": "2026-10-11T15:23:56.326Z",
       "canonicalAliases": [
         "cid_swe1_hacken_orgryte_20261011"
       ],
       "providerLeagueSlug": "swe.1",
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
-      "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null
+      "status": "HALF_TIME",
+      "rawStatus": "STATUS_HALFTIME",
+      "minute": "45'+1'",
+      "scoreHome": 2,
+      "scoreAway": 0
     }
   ]
 }
