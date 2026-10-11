@@ -2,13 +2,46 @@
   "dayKey": "2026-10-11",
   "leagueSlug": "chi.1",
   "leagueName": "Chile Primera División",
-  "updatedAt": "2026-10-11T19:09:51.828Z",
+  "updatedAt": "2026-10-11T20:04:15.913Z",
   "count": 4,
   "sourceMeta": {
-    "acquisitionProvider": "flashscore",
+    "acquisitionProvider": "espn_direct_league_status",
     "requestedLeagueSlug": "chi.1",
-    "requestedDayKey": "2026-10-22",
-    "mergedAt": "2026-10-11T19:09:51.827Z"
+    "requestedDayKey": "2026-10-11",
+    "providerFetchSlugs": [
+      "chi.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 1,
+      "matches": 1,
+      "fetches": [
+        {
+          "providerSlug": "chi.1",
+          "dayKey": "2026-10-10",
+          "ok": true,
+          "events": 3,
+          "matched": 1
+        }
+      ]
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-10-11T20:04:15.913Z",
+    "mode": "targeted_live_status_refresh"
   },
   "fixtures": [
     {
@@ -31,7 +64,7 @@
       "awayTeam": "Audax Italiano",
       "venue": "Estadio San Carlos de Apoquindo",
       "firstSeenAt": "2026-09-26T17:50:05.597Z",
-      "lastSeenAt": "2026-10-11T19:09:51.821Z",
+      "lastSeenAt": "2026-10-11T20:04:15.913Z",
       "canonicalAliases": [
         "cid_chi1_ucatolica_aitaliano_20261011"
       ],
@@ -67,16 +100,35 @@
       "awayTeam": "La Serena",
       "venue": "Estadio Sausalito",
       "firstSeenAt": "2026-09-26T17:50:05.709Z",
-      "lastSeenAt": "2026-10-11T19:09:51.822Z",
+      "lastSeenAt": "2026-10-11T20:04:15.789Z",
       "providerLeagueSlug": "chi.1",
       "status": "FT",
-      "statusType": "STATUS_FINAL",
       "rawStatus": "STATUS_FULL_TIME",
       "minute": "90'+9'",
       "scoreHome": 3,
       "scoreAway": 2,
-      "penalties": null,
-      "decidedBy": null
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-10-11T19:58:22.211Z",
+        "provider": "espn",
+        "providerMatchId": "401850665",
+        "dayKey": "2026-10-11",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 3,
+          "scoreAway": 2
+        }
+      }
     },
     {
       "canonicalId": "cid_chi1_coquimbounido_colocolo_20261011",
@@ -98,18 +150,16 @@
       "awayTeam": "Colo Colo",
       "venue": "Estadio Francisco Sánchez Rumoroso",
       "firstSeenAt": "2026-09-26T17:50:05.710Z",
-      "lastSeenAt": "2026-10-11T19:09:51.824Z",
+      "lastSeenAt": "2026-10-11T20:04:15.790Z",
       "canonicalAliases": [
         "cid_chi1_coquimbo_colocolo_20261011"
       ],
       "providerLeagueSlug": "chi.1",
-      "status": "SECOND_HALF",
-      "rawStatus": "STATUS_SECOND_HALF",
-      "minute": "46'",
-      "scoreHome": 3,
-      "scoreAway": 1,
-      "penalties": null,
-      "decidedBy": null
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+6'",
+      "scoreHome": 5,
+      "scoreAway": 2
     },
     {
       "canonicalId": "cid_chi1_deportesconcepcion_unionlacalera_20261011",
@@ -131,7 +181,7 @@
       "awayTeam": "Unión La Calera",
       "venue": "Estadio Municipal Alcaldesa Ester Roa Rebolledo",
       "firstSeenAt": "2026-09-26T17:50:05.711Z",
-      "lastSeenAt": "2026-10-11T19:09:51.826Z",
+      "lastSeenAt": "2026-10-11T20:04:15.790Z",
       "canonicalAliases": [
         "cid_chi1_dconcepcion_unionlacalera_20261011"
       ],
@@ -140,9 +190,7 @@
       "rawStatus": "STATUS_SCHEDULED",
       "minute": "0'",
       "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null
+      "scoreAway": null
     }
   ]
 }
