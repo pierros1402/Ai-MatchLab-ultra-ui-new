@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-11",
-  "generatedAt": "2026-10-11T07:48:29.272Z",
+  "generatedAt": "2026-10-11T08:13:06.197Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "3a9d365222289f7c6cbeede1a722dbcdc60a446528ab32d93ca2f944bf61e076",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "855f4f3d48c6699d9c0814fa819de396c67fdcc608d9bd0275a828f8d7adf109",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 410,
-    "playedTerminal": 61,
+    "playedTerminal": 63,
     "nonPlayedTerminal": 1,
-    "scheduled": 343,
-    "live": 3,
+    "scheduled": 342,
+    "live": 2,
     "interrupted": 2,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 61,
-    "acceptedVerifiedFinalArtifacts": 61,
-    "convergedPlayedFinal": 61,
+    "verifiedFinalArtifacts": 64,
+    "acceptedVerifiedFinalArtifacts": 64,
+    "convergedPlayedFinal": 63,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 348,
+    "openRows": 345,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 61,
-    "scoredSettlementEligible": 61,
+    "historyEligible": 63,
+    "scoredSettlementEligible": 63,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -9163,9 +9163,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 1,
         "scoreAway": 1
       },
@@ -9216,21 +9216,21 @@
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
-        "scoreAway": 0
+        "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-11",
+        "scoreHome": 1,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -9258,31 +9258,31 @@
       "homeTeam": "Tokyo Verdy",
       "awayTeam": "Sanfrecce Hiroshima",
       "kickoffUtc": "2026-10-11T06:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 0,
         "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-11",
+        "scoreHome": 0,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -9307,31 +9307,31 @@
       "homeTeam": "Iwaki",
       "awayTeam": "Blaublitz",
       "kickoffUtc": "2026-10-11T06:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-11",
+        "scoreHome": 1,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -20134,7 +20134,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_jpn1_mitohollyhock_shimizuspulse_20261011"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -24402,13 +24404,13 @@
     },
     "convergence": {
       "overallState": "INCOMPLETE",
-      "truthFingerprint": "3a9d365222289f7c6cbeede1a722dbcdc60a446528ab32d93ca2f944bf61e076",
+      "truthFingerprint": "855f4f3d48c6699d9c0814fa819de396c67fdcc608d9bd0275a828f8d7adf109",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 61,
+        "expectedEligibleRows": 63,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_riverplate_estudiantesriocuarto_20261011",
@@ -24427,6 +24429,8 @@
           "cid_hon1_motagua_choloma_20261011",
           "cid_hon1_upnfm_deportivomarathon_20261011",
           "cid_jpn1_jefunitedichiharachiba_vvarennagasaki_20261011",
+          "cid_jpn1_tokyoverdy1969_sanfreccehiroshima_20261011",
+          "cid_jpn2_iwaki_blaublitz_20261011",
           "cid_jpn2_montedioyamagata_vegaltasendai_20261011",
           "cid_jpn2_toyama_tegevajaromiyazaki_20261011",
           "cid_kor1_gwangju_ulsanhd_20261011",
@@ -24533,7 +24537,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-11",
-      "fileCount": 61,
+      "fileCount": 64,
       "authority": "scored_final_evidence"
     },
     "downstream": {
