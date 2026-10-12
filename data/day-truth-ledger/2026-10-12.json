@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-12",
-  "generatedAt": "2026-10-12T18:11:14.064Z",
+  "generatedAt": "2026-10-12T18:29:26.901Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "182132dd4b27bf5325b10e40f80c9582d9ea0c65c48e1b8e5a7b6ff2a9df5070",
+  "truthFingerprint": "481cc42e5bc70a84770445e210b24befeaf8455fbdd1957e8120a12a3c46b92f",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 114,
-    "playedTerminal": 68,
+    "playedTerminal": 70,
     "nonPlayedTerminal": 1,
-    "scheduled": 36,
+    "scheduled": 34,
     "live": 8,
     "interrupted": 1,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 70,
-    "acceptedVerifiedFinalArtifacts": 70,
-    "convergedPlayedFinal": 67,
+    "verifiedFinalArtifacts": 71,
+    "acceptedVerifiedFinalArtifacts": 71,
+    "convergedPlayedFinal": 69,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 43,
+    "openRows": 42,
     "unresolvedRows": 0,
-    "conflictRows": 3,
+    "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 67,
-    "scoredSettlementEligible": 67,
+    "historyEligible": 69,
+    "scoredSettlementEligible": 69,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -46,14 +46,14 @@
       "homeTeam": "AL GHARAFA AL GHARAFA",
       "awayTeam": "Esteghlal",
       "kickoffUtc": "2026-10-12T18:15Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -67,7 +67,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -144,14 +144,14 @@
       "homeTeam": "Air Force Club",
       "awayTeam": "Al Ain",
       "kickoffUtc": "2026-10-12T18:15Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -165,7 +165,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -193,12 +193,12 @@
       "homeTeam": "Al Wasl",
       "awayTeam": "Al Ahli",
       "kickoffUtc": "2026-10-12T16:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 3
       },
@@ -213,11 +213,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2453,8 +2453,8 @@
         "status": "SECOND_HALF",
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 2,
-        "scoreAway": 0
+        "scoreHome": 3,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -3525,31 +3525,31 @@
       "homeTeam": "Atalanta",
       "awayTeam": "Venezia",
       "kickoffUtc": "2026-10-12T16:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "LIVE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 3,
         "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-12",
+        "scoreHome": 3,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4070,7 +4070,7 @@
         "status": "SECOND_HALF",
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 1,
+        "scoreHome": 2,
         "scoreAway": 1
       },
       "verifiedFinal": {
@@ -5050,7 +5050,7 @@
         "status": "SECOND_HALF",
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 2,
+        "scoreHome": 3,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -5145,11 +5145,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
-        "scoreAway": 1
+        "scoreAway": 3
       },
       "verifiedFinal": {
         "present": false,
@@ -5631,7 +5631,6 @@
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
     "conflictFixtureIds": [
-      "cid_afcchampions_alwasl_alahli_20261012",
       "cid_col1_boyacachico_cucutadeportivo_20261012",
       "cid_ukr2_zhytomyr2_kulikiv_20261012"
     ],
@@ -8594,15 +8593,16 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "182132dd4b27bf5325b10e40f80c9582d9ea0c65c48e1b8e5a7b6ff2a9df5070",
+      "truthFingerprint": "481cc42e5bc70a84770445e210b24befeaf8455fbdd1957e8120a12a3c46b92f",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 67,
+        "expectedEligibleRows": 69,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
+          "cid_afcchampions_alwasl_alahli_20261012",
           "cid_afcchampions_pakhtakortashkent_alqadsiah_20261012",
           "cid_afcchampions_traktorsazi_alshamal_20261012",
           "cid_arg1_racing_belgranocordoba_20261012",
@@ -8645,6 +8645,7 @@
           "cid_isr2_hapoelkfarsaba_ashdod_20261012",
           "cid_isr2_hapoelkfarshalem_hraanana_20261012",
           "cid_isr2_hironirishon_maccabijaffa_20261012",
+          "cid_ita1_atalanta_venezia_20261012",
           "cid_ksa2_aladalah_alanwar_20261012",
           "cid_ksa2_alnajma_damac_20261012",
           "cid_lva1_liepaja_auda_20261012",
@@ -8729,7 +8730,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-12",
-      "fileCount": 70,
+      "fileCount": 71,
       "authority": "scored_final_evidence"
     },
     "downstream": {
