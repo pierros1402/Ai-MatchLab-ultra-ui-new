@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-12",
-  "generatedAt": "2026-10-12T16:09:48.367Z",
+  "generatedAt": "2026-10-12T16:27:59.783Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "fb74da1ba3508cc3472e517971c2d467c763087134536ddad099b983f8d9f9eb",
+  "truthFingerprint": "ff0f15414e13c217094a2f70d9f31813ab4b259bcf722bcda2382e19d2beadbb",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 114,
-    "playedTerminal": 46,
+    "playedTerminal": 48,
     "nonPlayedTerminal": 1,
-    "scheduled": 62,
-    "live": 4,
+    "scheduled": 61,
+    "live": 3,
     "interrupted": 1,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 47,
-    "acceptedVerifiedFinalArtifacts": 47,
-    "convergedPlayedFinal": 45,
+    "verifiedFinalArtifacts": 49,
+    "acceptedVerifiedFinalArtifacts": 49,
+    "convergedPlayedFinal": 47,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 66,
+    "openRows": 64,
     "unresolvedRows": 0,
     "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 45,
-    "scoredSettlementEligible": 45,
+    "historyEligible": 47,
+    "scoredSettlementEligible": 47,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -200,7 +200,7 @@
         "statusType": null,
         "rawStatus": "STATUS_FIRST_HALF",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -2104,31 +2104,31 @@
       "homeTeam": "Arab Contractors",
       "awayTeam": "ZED",
       "kickoffUtc": "2026-10-12T14:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-12",
+        "scoreHome": 1,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2398,31 +2398,31 @@
       "homeTeam": "Burgos",
       "awayTeam": "Granada",
       "kickoffUtc": "2026-10-12T14:15Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 0,
         "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-12",
+        "scoreHome": 0,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2793,11 +2793,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
-        "scoreAway": 1
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -8593,13 +8593,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "fb74da1ba3508cc3472e517971c2d467c763087134536ddad099b983f8d9f9eb",
+      "truthFingerprint": "ff0f15414e13c217094a2f70d9f31813ab4b259bcf722bcda2382e19d2beadbb",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 45,
+        "expectedEligibleRows": 47,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_afcchampions_pakhtakortashkent_alqadsiah_20261012",
@@ -8621,7 +8621,9 @@
           "cid_col2_umagdalena_leones_20261012",
           "cid_crc1_escorpionesbelen_saprissa_20261012",
           "cid_ecu1_ligaquito_barcelona_20261012",
+          "cid_egy1_arabcontractors_zed_20261012",
           "cid_egy1_modernsport_enppi_20261012",
+          "cid_esp2_burgos_granada_20261012",
           "cid_esp2_realvalladolid_albacete_20261012",
           "cid_gre2_karditsa_zakynthos_20261012",
           "cid_gre2_panionios_paokb_20261012",
@@ -8706,7 +8708,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-12",
-      "fileCount": 47,
+      "fileCount": 49,
       "authority": "scored_final_evidence"
     },
     "downstream": {
