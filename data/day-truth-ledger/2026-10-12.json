@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-12",
-  "generatedAt": "2026-10-12T00:19:03.670Z",
+  "generatedAt": "2026-10-12T00:35:22.980Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "9aa5cea49d7e0bfd5342a4a886c75bf6a126582fa5dd5dfab7ce6722a2657510",
+  "truthFingerprint": "115b290ee80377834baa77f18f55e865aba6a37fbdd2cb2e59ccc3171e3c3c58",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 114,
-    "playedTerminal": 17,
+    "playedTerminal": 19,
     "nonPlayedTerminal": 1,
     "scheduled": 82,
-    "live": 14,
+    "live": 12,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 18,
-    "acceptedVerifiedFinalArtifacts": 18,
-    "convergedPlayedFinal": 17,
+    "verifiedFinalArtifacts": 20,
+    "acceptedVerifiedFinalArtifacts": 20,
+    "convergedPlayedFinal": 19,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 95,
+    "openRows": 93,
     "unresolvedRows": 0,
     "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 17,
-    "scoredSettlementEligible": 17,
+    "historyEligible": 19,
+    "scoredSettlementEligible": 19,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -487,31 +487,31 @@
       "homeTeam": "Ciudad Bolivar",
       "awayTeam": "San Telmo",
       "kickoffUtc": "2026-10-11T22:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-12",
+        "scoreHome": 1,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -784,9 +784,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -1326,8 +1326,8 @@
         "status": "SECOND_HALF",
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 1,
-        "scoreAway": 0
+        "scoreHome": 2,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -1617,25 +1617,25 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-12",
+        "scoreHome": 0,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -3038,11 +3038,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -3136,9 +3136,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -3871,11 +3871,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_IN_PROGRESS",
         "scoreHome": 1,
-        "scoreAway": 1
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -3920,9 +3920,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 2
       },
@@ -4162,12 +4162,12 @@
       "homeTeam": "Libertad",
       "awayTeam": "Guaraní",
       "kickoffUtc": "2026-10-11T22:20Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 2,
         "scoreAway": 2
       },
@@ -4182,11 +4182,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4214,11 +4214,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -4802,9 +4802,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -5390,10 +5390,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 5,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 6,
         "scoreAway": 1
       },
       "verifiedFinal": {
@@ -5631,7 +5631,7 @@
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
     "conflictFixtureIds": [
-      "cid_par1_libertad_guarani_20261012"
+      "cid_col1_boyacachico_cucutadeportivo_20261012"
     ],
     "pendingVerifiedFinalFixtureIds": []
   },
@@ -5842,7 +5842,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 12496,
+            "count": 12500,
             "informational": true
           }
         },
@@ -8592,16 +8592,17 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "9aa5cea49d7e0bfd5342a4a886c75bf6a126582fa5dd5dfab7ce6722a2657510",
+      "truthFingerprint": "115b290ee80377834baa77f18f55e865aba6a37fbdd2cb2e59ccc3171e3c3c58",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 17,
+        "expectedEligibleRows": 19,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_racing_belgranocordoba_20261012",
+          "cid_arg2_ciudadbolivar_santelmo_20261012",
           "cid_bol1_aurora_nacionalpotosi_20261012",
           "cid_bra2_cuiaba_avai_20261012",
           "cid_bra2_operariopr_goias_20261012",
@@ -8611,6 +8612,7 @@
           "cid_ecu1_ligaquito_barcelona_20261012",
           "cid_gua1_deportivosanpedro_comunicaciones_20261012",
           "cid_hon1_estrellaroja_realespana_20261012",
+          "cid_par1_libertad_guarani_20261012",
           "cid_slv1_aguila_isidrometapan_20261012",
           "cid_slv1_atleticobalboa_fas_20261012",
           "cid_uru1_centralespanolfutbol_nacional_20261012",
@@ -8677,7 +8679,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-12",
-      "fileCount": 18,
+      "fileCount": 20,
       "authority": "scored_final_evidence"
     },
     "downstream": {
