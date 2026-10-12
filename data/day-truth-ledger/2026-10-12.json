@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-12",
-  "generatedAt": "2026-10-12T14:59:03.660Z",
+  "generatedAt": "2026-10-12T15:21:01.617Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "9eac30915b1613fd3f5c1d44759ef63c0334ee577c6b57ac12f126b083d59b32",
+  "truthFingerprint": "eb03444e44eb34da8191a202f6a8ac7f86a261f0f266fc17ac5b8fb1c2ebe8c7",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 114,
-    "playedTerminal": 42,
+    "playedTerminal": 43,
     "nonPlayedTerminal": 1,
-    "scheduled": 67,
-    "live": 3,
+    "scheduled": 65,
+    "live": 4,
     "interrupted": 1,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 44,
     "acceptedVerifiedFinalArtifacts": 44,
-    "convergedPlayedFinal": 41,
+    "convergedPlayedFinal": 42,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
     "openRows": 69,
     "unresolvedRows": 0,
-    "conflictRows": 3,
+    "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 41,
-    "scoredSettlementEligible": 41,
+    "historyEligible": 42,
+    "scoredSettlementEligible": 42,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -2401,9 +2401,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
         "scoreAway": 1
       },
@@ -2790,14 +2790,14 @@
       "homeTeam": "PAOK",
       "awayTeam": "Kalamata",
       "kickoffUtc": "2026-10-12T15:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -2811,7 +2811,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -3234,9 +3234,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -4015,14 +4015,14 @@
       "homeTeam": "Bashkimi",
       "awayTeam": "Struga",
       "kickoffUtc": "2026-10-12T13:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": true,
@@ -4032,14 +4032,14 @@
         "dayKey": "2026-10-12",
         "scoreHome": 2,
         "scoreAway": 1,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -5632,7 +5632,6 @@
     "duplicateVerifiedFinalFixtureIds": [],
     "conflictFixtureIds": [
       "cid_col1_boyacachico_cucutadeportivo_20261012",
-      "cid_mkd1_bashkimi_struga_20261012",
       "cid_ukr2_zhytomyr2_kulikiv_20261012"
     ],
     "pendingVerifiedFinalFixtureIds": []
@@ -5844,7 +5843,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 12530,
+            "count": 12538,
             "informational": true
           }
         },
@@ -8594,13 +8593,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "9eac30915b1613fd3f5c1d44759ef63c0334ee577c6b57ac12f126b083d59b32",
+      "truthFingerprint": "eb03444e44eb34da8191a202f6a8ac7f86a261f0f266fc17ac5b8fb1c2ebe8c7",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 41,
+        "expectedEligibleRows": 42,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_racing_belgranocordoba_20261012",
@@ -8632,6 +8631,7 @@
           "cid_mex1_atleticosanluis_santos_20261012",
           "cid_mex1_pachuca_necaxa_20261012",
           "cid_mex1_pumasunam_cruzazul_20261012",
+          "cid_mkd1_bashkimi_struga_20261012",
           "cid_par1_libertad_guarani_20261012",
           "cid_per1_cusco_alianzalima_20261012",
           "cid_slv1_aguila_isidrometapan_20261012",
