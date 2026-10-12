@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-12",
-  "generatedAt": "2026-10-12T00:35:22.980Z",
+  "generatedAt": "2026-10-12T00:53:47.154Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "115b290ee80377834baa77f18f55e865aba6a37fbdd2cb2e59ccc3171e3c3c58",
+  "truthFingerprint": "117cc02696453b765be4bd64156e6fca820ae26e66249ba300c9ae7cbc55a835",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 114,
-    "playedTerminal": 19,
+    "playedTerminal": 20,
     "nonPlayedTerminal": 1,
-    "scheduled": 82,
-    "live": 12,
-    "interrupted": 0,
+    "scheduled": 81,
+    "live": 11,
+    "interrupted": 1,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 20,
-    "acceptedVerifiedFinalArtifacts": 20,
-    "convergedPlayedFinal": 19,
+    "verifiedFinalArtifacts": 21,
+    "acceptedVerifiedFinalArtifacts": 21,
+    "convergedPlayedFinal": 20,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 93,
+    "openRows": 92,
     "unresolvedRows": 0,
     "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 19,
-    "scoredSettlementEligible": 19,
+    "historyEligible": 20,
+    "scoredSettlementEligible": 20,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -438,14 +438,14 @@
       "homeTeam": "Talleres (Córdoba)",
       "awayTeam": "Independiente",
       "kickoffUtc": "2026-10-12T00:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -459,7 +459,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -784,9 +784,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -879,31 +879,31 @@
       "homeTeam": "Bahia",
       "awayTeam": "Mirassol",
       "kickoffUtc": "2026-10-11T22:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-12",
+        "scoreHome": 1,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1327,7 +1327,7 @@
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 2,
-        "scoreAway": 1
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -1614,12 +1614,12 @@
       "homeTeam": "Boyacá Chicó FC",
       "awayTeam": "Cúcuta Deportivo",
       "kickoffUtc": "2026-10-11T23:10Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAY_INTERRUPTED",
+      "operationalState": "INTERRUPTED",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "SPECIAL",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_SUSPENDED",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -3136,9 +3136,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_IN_PROGRESS",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -3871,9 +3871,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 2
       },
@@ -4214,9 +4214,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 1
       },
@@ -4802,11 +4802,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 1,
-        "scoreAway": 0
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 2,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -8592,18 +8592,19 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "115b290ee80377834baa77f18f55e865aba6a37fbdd2cb2e59ccc3171e3c3c58",
+      "truthFingerprint": "117cc02696453b765be4bd64156e6fca820ae26e66249ba300c9ae7cbc55a835",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 19,
+        "expectedEligibleRows": 20,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_racing_belgranocordoba_20261012",
           "cid_arg2_ciudadbolivar_santelmo_20261012",
           "cid_bol1_aurora_nacionalpotosi_20261012",
+          "cid_bra1_bahia_mirassol_20261012",
           "cid_bra2_cuiaba_avai_20261012",
           "cid_bra2_operariopr_goias_20261012",
           "cid_col1_jaguarescordoba_deportestolima_20261012",
@@ -8679,7 +8680,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-12",
-      "fileCount": 20,
+      "fileCount": 21,
       "authority": "scored_final_evidence"
     },
     "downstream": {
