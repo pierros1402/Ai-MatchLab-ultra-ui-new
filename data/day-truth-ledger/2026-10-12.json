@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-12",
-  "generatedAt": "2026-10-12T02:29:03.036Z",
+  "generatedAt": "2026-10-12T02:45:37.177Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "38bed78732f7f3763c67c8b6dc560fb4cfbd65ae652a1f2eda27a350918a79e3",
+  "truthFingerprint": "6a0a761856658fb76c3ad133fde20b73b044f1d5369f2bc1a43234373110f3a0",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 114,
-    "playedTerminal": 31,
+    "playedTerminal": 32,
     "nonPlayedTerminal": 1,
     "scheduled": 77,
-    "live": 4,
+    "live": 3,
     "interrupted": 1,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 33,
     "acceptedVerifiedFinalArtifacts": 33,
-    "convergedPlayedFinal": 31,
+    "convergedPlayedFinal": 32,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
     "openRows": 80,
     "unresolvedRows": 0,
-    "conflictRows": 2,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 31,
-    "scoredSettlementEligible": 31,
+    "historyEligible": 32,
+    "scoredSettlementEligible": 32,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -438,12 +438,12 @@
       "homeTeam": "Talleres (Córdoba)",
       "awayTeam": "Independiente",
       "kickoffUtc": "2026-10-12T00:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -458,11 +458,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2940,9 +2940,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -3969,10 +3969,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 2,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 3,
         "scoreAway": 1
       },
       "verifiedFinal": {
@@ -5631,7 +5631,6 @@
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
     "conflictFixtureIds": [
-      "cid_arg1_tallerescordoba_independiente_20261012",
       "cid_col1_boyacachico_cucutadeportivo_20261012"
     ],
     "pendingVerifiedFinalFixtureIds": []
@@ -8593,16 +8592,17 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "38bed78732f7f3763c67c8b6dc560fb4cfbd65ae652a1f2eda27a350918a79e3",
+      "truthFingerprint": "6a0a761856658fb76c3ad133fde20b73b044f1d5369f2bc1a43234373110f3a0",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 31,
+        "expectedEligibleRows": 32,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_racing_belgranocordoba_20261012",
+          "cid_arg1_tallerescordoba_independiente_20261012",
           "cid_arg2_ciudadbolivar_santelmo_20261012",
           "cid_bol1_aurora_nacionalpotosi_20261012",
           "cid_bol1_bolivar_blooming_20261012",
