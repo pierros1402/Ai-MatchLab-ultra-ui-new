@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-12",
-  "generatedAt": "2026-10-12T14:19:11.391Z",
+  "generatedAt": "2026-10-12T14:39:16.244Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "0938624146b2b8bf66b45f6755eb75495384d6b3d776e8c45834bc66228ebfbc",
+  "truthFingerprint": "64165cf3277ae0ed9b68e6dba68f1c017e76fd218a3ade3167bbfc62532e1aba",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -19,24 +19,24 @@
     "canonicalRows": 114,
     "playedTerminal": 42,
     "nonPlayedTerminal": 1,
-    "scheduled": 68,
-    "live": 2,
+    "scheduled": 67,
+    "live": 3,
     "interrupted": 1,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 43,
     "acceptedVerifiedFinalArtifacts": 43,
-    "convergedPlayedFinal": 42,
+    "convergedPlayedFinal": 41,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
     "openRows": 70,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 42,
-    "scoredSettlementEligible": 42,
+    "historyEligible": 41,
+    "scoredSettlementEligible": 41,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -249,7 +249,7 @@
         "statusType": null,
         "rawStatus": "STATUS_FIRST_HALF",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -2398,14 +2398,14 @@
       "homeTeam": "Burgos",
       "awayTeam": "Granada",
       "kickoffUtc": "2026-10-12T14:15Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -2419,7 +2419,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -5255,16 +5255,16 @@
         "reason": "verified_final_result",
         "verdict": "verified_final_result",
         "dayKey": "2026-10-12",
-        "scoreHome": 1,
+        "scoreHome": 2,
         "scoreAway": 4,
-        "scoreParity": true
+        "scoreParity": false
       },
       "decision": {
-        "status": "CONVERGED_PLAYED_FINAL",
-        "reason": "canonical_and_verified_final_converged",
+        "status": "CONFLICT",
+        "reason": "canonical_verified_final_score_mismatch",
         "operationallyClosed": true,
-        "historyEligible": true,
-        "scoredSettlementEligible": true,
+        "historyEligible": false,
+        "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -5631,7 +5631,8 @@
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
     "conflictFixtureIds": [
-      "cid_col1_boyacachico_cucutadeportivo_20261012"
+      "cid_col1_boyacachico_cucutadeportivo_20261012",
+      "cid_ukr2_zhytomyr2_kulikiv_20261012"
     ],
     "pendingVerifiedFinalFixtureIds": []
   },
@@ -5842,7 +5843,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 12526,
+            "count": 12528,
             "informational": true
           }
         },
@@ -8592,13 +8593,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "0938624146b2b8bf66b45f6755eb75495384d6b3d776e8c45834bc66228ebfbc",
+      "truthFingerprint": "64165cf3277ae0ed9b68e6dba68f1c017e76fd218a3ade3167bbfc62532e1aba",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 42,
+        "expectedEligibleRows": 41,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_racing_belgranocordoba_20261012",
@@ -8636,7 +8637,6 @@
           "cid_slv1_alianza_internacionalsantatecla_20261012",
           "cid_slv1_atleticobalboa_fas_20261012",
           "cid_ukr1_livyibereg_zoryaluhansk_20261012",
-          "cid_ukr2_zhytomyr2_kulikiv_20261012",
           "cid_uru1_centralespanolfutbol_nacional_20261012",
           "cid_uru2_huracan_fenix_20261012",
           "cid_usa1_stlouiscity_lagalaxy_20261012",
