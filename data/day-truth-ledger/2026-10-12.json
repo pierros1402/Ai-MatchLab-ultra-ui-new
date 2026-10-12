@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-12",
-  "generatedAt": "2026-10-12T17:22:50.292Z",
+  "generatedAt": "2026-10-12T17:39:55.886Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "4f4e90f52f53946ac99dc9cf1ca7603fd6d74ca5c7c7c95f943543ec6729469c",
+  "truthFingerprint": "c9ff394a17e98a153dbc48556226947079812080202d455df156c88b8042e904",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 114,
-    "playedTerminal": 57,
+    "playedTerminal": 58,
     "nonPlayedTerminal": 1,
-    "scheduled": 46,
+    "scheduled": 45,
     "live": 9,
     "interrupted": 1,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 58,
-    "acceptedVerifiedFinalArtifacts": 58,
-    "convergedPlayedFinal": 56,
+    "verifiedFinalArtifacts": 59,
+    "acceptedVerifiedFinalArtifacts": 59,
+    "convergedPlayedFinal": 57,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 55,
+    "openRows": 54,
     "unresolvedRows": 0,
     "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 56,
-    "scoredSettlementEligible": 56,
+    "historyEligible": 57,
+    "scoredSettlementEligible": 57,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -200,7 +200,7 @@
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
-        "scoreAway": 1
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -1467,31 +1467,31 @@
       "homeTeam": "D. Puerto Montt",
       "awayTeam": "San Luis",
       "kickoffUtc": "2026-10-12T15:30:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-12",
+        "scoreHome": 0,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2450,9 +2450,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 2,
         "scoreAway": 0
       },
@@ -3528,9 +3528,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 3,
         "scoreAway": 1
       },
@@ -4070,8 +4070,8 @@
         "status": "FIRST_HALF",
         "statusType": null,
         "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
-        "scoreAway": 0
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -8593,13 +8593,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "4f4e90f52f53946ac99dc9cf1ca7603fd6d74ca5c7c7c95f943543ec6729469c",
+      "truthFingerprint": "c9ff394a17e98a153dbc48556226947079812080202d455df156c88b8042e904",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 56,
+        "expectedEligibleRows": 57,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_afcchampions_pakhtakortashkent_alqadsiah_20261012",
@@ -8616,6 +8616,7 @@
           "cid_bra2_operariopr_goias_20261012",
           "cid_can1_pacific_atlottawa_20261012",
           "cid_chi1_deporteslimache_palestino_20261012",
+          "cid_chi2_dpuertomontt_sanluis_20261012",
           "cid_col1_americacali_independientemedellin_20261012",
           "cid_col1_jaguarescordoba_deportestolima_20261012",
           "cid_col2_barranquilla_quindio_20261012",
@@ -8717,7 +8718,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-12",
-      "fileCount": 58,
+      "fileCount": 59,
       "authority": "scored_final_evidence"
     },
     "downstream": {
