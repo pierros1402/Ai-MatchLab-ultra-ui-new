@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-12",
-  "generatedAt": "2026-10-12T19:31:09.197Z",
+  "generatedAt": "2026-10-12T19:49:08.200Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "68455b961caf1d4ed9a1d90eff14f271d716818941ad5285d86875c9012be681",
+  "truthFingerprint": "0e14ab2aa684060e6ac9830e554a2713dce5e43370d2c181e699655c1882b0c7",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 114,
-    "playedTerminal": 83,
+    "playedTerminal": 84,
     "nonPlayedTerminal": 1,
-    "scheduled": 16,
+    "scheduled": 15,
     "live": 12,
     "interrupted": 1,
     "delayed": 1,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 84,
-    "acceptedVerifiedFinalArtifacts": 84,
-    "convergedPlayedFinal": 82,
+    "verifiedFinalArtifacts": 85,
+    "acceptedVerifiedFinalArtifacts": 85,
+    "convergedPlayedFinal": 83,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 29,
+    "openRows": 28,
     "unresolvedRows": 0,
     "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 82,
-    "scoredSettlementEligible": 82,
+    "historyEligible": 83,
+    "scoredSettlementEligible": 83,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -52,8 +52,8 @@
         "status": "SECOND_HALF",
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 0,
-        "scoreAway": 1
+        "scoreHome": 1,
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -151,7 +151,7 @@
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
-        "scoreAway": 5
+        "scoreAway": 4
       },
       "verifiedFinal": {
         "present": false,
@@ -935,7 +935,7 @@
         "statusType": null,
         "rawStatus": "STATUS_FIRST_HALF",
         "scoreHome": 1,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -2695,11 +2695,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 3,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -3182,31 +3182,31 @@
       "homeTeam": "BVSC-Zuglo",
       "awayTeam": "Soroksar",
       "kickoffUtc": "2026-10-12T17:45:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 5,
+        "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-12",
+        "scoreHome": 5,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3577,11 +3577,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 1,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -4561,7 +4561,7 @@
         "statusType": null,
         "rawStatus": "STATUS_FIRST_HALF",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -8593,13 +8593,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "68455b961caf1d4ed9a1d90eff14f271d716818941ad5285d86875c9012be681",
+      "truthFingerprint": "0e14ab2aa684060e6ac9830e554a2713dce5e43370d2c181e699655c1882b0c7",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 82,
+        "expectedEligibleRows": 83,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_afcchampions_alwasl_alahli_20261012",
@@ -8647,6 +8647,7 @@
           "cid_gua1_municipal_marquense_20261012",
           "cid_hon1_estrellaroja_realespana_20261012",
           "cid_hon1_olancho_independientesiguatepeque_20261012",
+          "cid_hun2_bvsczuglo_soroksar_20261012",
           "cid_ind1_northeastunited_mohunbagansupergiant_20261012",
           "cid_isr1_hapoeljerusalem_maccabihaifa_20261012",
           "cid_isr2_hapoelkfarsaba_ashdod_20261012",
@@ -8743,7 +8744,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-12",
-      "fileCount": 84,
+      "fileCount": 85,
       "authority": "scored_final_evidence"
     },
     "downstream": {
