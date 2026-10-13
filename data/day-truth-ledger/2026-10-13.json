@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-13",
-  "generatedAt": "2026-10-13T18:07:54.146Z",
+  "generatedAt": "2026-10-13T18:40:22.238Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "1ce2446997f5ba73df5dc2c20a956ad9fe700fbeb8fe085acfeb96687ff65b4a",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "4c28546343b27967c6c44ae5f3e72e0a6832fdcf2ff9a52700032c24999fbd6a",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 100,
-    "playedTerminal": 36,
+    "playedTerminal": 37,
     "nonPlayedTerminal": 2,
-    "scheduled": 55,
-    "live": 7,
+    "scheduled": 48,
+    "live": 13,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 37,
     "acceptedVerifiedFinalArtifacts": 37,
-    "convergedPlayedFinal": 36,
+    "convergedPlayedFinal": 37,
     "convergedNonPlayedTerminal": 2,
     "pendingVerifiedFinal": 0,
     "openRows": 61,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 36,
-    "scoredSettlementEligible": 36,
+    "historyEligible": 37,
+    "scoredSettlementEligible": 37,
     "voidSettlementEligible": 2
   },
   "fixtures": [
@@ -46,14 +46,14 @@
       "homeTeam": "Al Ittihad",
       "awayTeam": "Shabab Al-Ahli",
       "kickoffUtc": "2026-10-13T18:15Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -67,7 +67,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -95,12 +95,12 @@
       "homeTeam": "Al Sadd",
       "awayTeam": "Al Hilal",
       "kickoffUtc": "2026-10-13T16:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "LIVE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 0,
         "scoreAway": 2
       },
@@ -115,11 +115,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1712,14 +1712,14 @@
       "homeTeam": "Cheltenham Town",
       "awayTeam": "Tottenham Hotspur U21",
       "kickoffUtc": "2026-10-13T18:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1733,7 +1733,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1761,14 +1761,14 @@
       "homeTeam": "Gillingham",
       "awayTeam": "Brighton & Hove Albion U21",
       "kickoffUtc": "2026-10-13T18:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1782,7 +1782,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1810,14 +1810,14 @@
       "homeTeam": "Notts County",
       "awayTeam": "Nottingham Forest U21",
       "kickoffUtc": "2026-10-13T18:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 1,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1831,7 +1831,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1859,14 +1859,14 @@
       "homeTeam": "Oldham Athletic",
       "awayTeam": "Leeds United U21",
       "kickoffUtc": "2026-10-13T18:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1880,7 +1880,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1908,14 +1908,14 @@
       "homeTeam": "Reading",
       "awayTeam": "Chelsea U21",
       "kickoffUtc": "2026-10-13T18:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -1929,7 +1929,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1957,14 +1957,14 @@
       "homeTeam": "Walsall",
       "awayTeam": "Fulham U21",
       "kickoffUtc": "2026-10-13T18:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1978,7 +1978,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -2842,11 +2842,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
-        "scoreAway": 1
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -2891,9 +2891,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -2940,9 +2940,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -2989,11 +2989,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 1,
-        "scoreAway": 1
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -4512,7 +4512,7 @@
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
-        "scoreAway": 1
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -4944,9 +4944,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_afcchampions_alsadd_alhilal_20261013"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -8812,15 +8810,16 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "1ce2446997f5ba73df5dc2c20a956ad9fe700fbeb8fe085acfeb96687ff65b4a",
+      "truthFingerprint": "4c28546343b27967c6c44ae5f3e72e0a6832fdcf2ff9a52700032c24999fbd6a",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 36,
+        "expectedEligibleRows": 37,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
+          "cid_afcchampions_alsadd_alhilal_20261013",
           "cid_afcchampions_buriramunited_beijingguoan_20261013",
           "cid_afcchampions_conganhanoi_kashimaantlers_20261013",
           "cid_afcchampions_kyotosanga_ratchaburi_20261013",
