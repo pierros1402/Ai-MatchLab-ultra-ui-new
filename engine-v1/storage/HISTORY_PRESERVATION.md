@@ -79,6 +79,10 @@ rerun may be presented as an original historical observation.
 This code needs to be merged into the production writer branch and exercised by
 a real run. The first successful remote checkpoint plus restore is the activation
 proof. Draft code and local tests alone do not prove production preservation.
+After merge, manually dispatch `history-preservation-canary.yml` to checkpoint
+the existing repository evidence and verify a fresh restore without executing
+any plan or calling odds providers. Then verify normal scheduled writers too;
+the canary does not prove that a schedule fires or captures its future output.
 
 - Verify the workflow token has contents-write access and permits the archive
   branch. Protect that branch from deletion/force pushes and disable automatic

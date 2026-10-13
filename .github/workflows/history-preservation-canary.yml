@@ -1,0 +1,43 @@
+name: History preservation and recovery canary
+
+on:
+  workflow_dispatch:
+    inputs:
+      dayKey:
+        description: "Evidence capture day, YYYY-MM-DD. Empty = Europe/Athens today; no plan is run."
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ai-matchlab-data-writer
+  cancel-in-progress: false
+
+jobs:
+  verify-recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout existing evidence
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: Resolve capture day without executing any plan
+        shell: bash
+        env:
+          INPUT_DAY_KEY: ${{ inputs.dayKey }}
+        run: |
+          set -euo pipefail
+          DAY_KEY="${INPUT_DAY_KEY:-}"
+          [ -z "$DAY_KEY" ] && DAY_KEY="$(TZ=Europe/Athens date +%F)"
+          [[ "$DAY_KEY" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || exit 1
+          echo "DAY_KEY=$DAY_KEY" >> "$GITHUB_ENV"
+      - name: Preserve existing bytes and prove restoration
+        if: ${{ always() && env.DAY_KEY != '' }}
+        uses: ./.github/actions/preserve-history
