@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "node:path";
+import { checkpointHistoryIfRequired, writeHistoryJsonAtomic } from "../storage/history-preservation.js";
 import { ensureDir, resolveDataPath } from "../storage/data-root.js";
 import {
   evaluateMatchValue,
@@ -259,20 +260,21 @@ function writeValueSnapshot(date, result, outputPath = null) {
     picks: result.picks
   };
 
-  fs.writeFileSync(file, JSON.stringify(payload, null, 2));
+  writeHistoryJsonAtomic(file, payload);
 }
 
 // Production value-audit (rejection ledger). Report 2026-07-07 #5: production
 // value shipped WITHOUT an audit — only Plan B had one — so a 0-pick day was
 // indistinguishable from a broken pipeline. This is OBSERVABILITY ONLY: it
 // records the decisions buildValueDay already makes at its existing stage
-// predicates and NEVER gates, mutates, or re-scores a pick (value scoring is
-// frozen — value-baseline-2026-07-06). Written to data/value/_audit/<day>.json;
+// predicates without mutating or re-scoring a pick (value scoring is frozen —
+// value-baseline-2026-07-06). Audit write failures now fail the build: successful
+// zero-pick observations must retain their evidence. Written to data/value/_audit/<day>.json;
 // the deploy exporter ships it as value-audit.json.
 function writeValueAudit(date, audit, auditPath = null) {
   ensureDir(auditPath ? path.dirname(path.resolve(auditPath)) : resolveDataPath("value", "_audit"));
   const file = auditPath || resolveDataPath("value", "_audit", `${date}.json`);
-  fs.writeFileSync(file, JSON.stringify(audit, null, 2));
+  writeHistoryJsonAtomic(file, audit);
 }
 // ------------------------------
 async function getSeasonResources(season, force = false) {
@@ -1296,9 +1298,11 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
   try {
     writeValueAudit(date, audit, auditPath);
   } catch (e) {
-    console.log("[value] audit write failed", e?.message || e);
+    checkpointHistoryIfRequired(date, "value-audit-write-failed");
+    throw e;
   }
 
+  checkpointHistoryIfRequired(date, opponentAdjusted ? "plan-a2-value-built" : "plan-a-value-built");
   return result;
 }
 function applyMatchProfileToValue(value, matchProfile) {

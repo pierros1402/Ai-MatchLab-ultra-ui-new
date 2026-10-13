@@ -2,6 +2,7 @@ import {
   assertValueFixtureUniverseParity,
   valueFixtureUniverseContract
 } from "../core/value-fixture-universe.js";
+import { checkpointHistoryIfRequired } from "../storage/history-preservation.js";
 /**
  * refresh-value-artifacts-day.js
  *
@@ -1173,6 +1174,7 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
     ? null
     : buildValuePlanComparisonDay(date, { write: true });
 
+  checkpointHistoryIfRequired(date, "four-plan-comparison-written");
   const freshness = verifyArtifactFreshnessDay(date);
   writeFreshnessReport(date, freshness);
 

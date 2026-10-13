@@ -1,5 +1,8 @@
 name: Plan C shadow daily publish
 
+env:
+  HISTORY_PRESERVATION_REQUIRED: "1"
+
 on:
   workflow_dispatch:
     inputs:
@@ -63,6 +66,7 @@ jobs:
           node ./engine-v1/jobs/settle-plan-c-shadow.js "$DAY_KEY" --prediction-root "$PREDICTION_ROOT" --output data/plan-c-shadow/settlement/latest.json
           node ./engine-v1/jobs/build-plan-c-shadow-day.js "$DAY_KEY" --prediction-root "$PREDICTION_ROOT" --settlement-report data/plan-c-shadow/settlement/latest.json
           node ./engine-v1/jobs/refresh-plan-c-shadow-settlements.js "$DAY_KEY"
+          node engine-v1/jobs/preserve-history-checkpoint.js --stage=plan-c-produced
 
       - name: Stage only Plan C shadow artifacts
         shell: bash
@@ -111,3 +115,7 @@ jobs:
             git commit -m "Acknowledge verified Plan C settlement publication"
             bash tools/git-push-rebase-retry.sh
           fi
+
+      - name: Preserve shadow history independently of publication
+        if: ${{ always() && env.DAY_KEY != '' }}
+        uses: ./.github/actions/preserve-history

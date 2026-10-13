@@ -1,5 +1,8 @@
 name: Intraday deploy snapshot refresh
 
+env:
+  HISTORY_PRESERVATION_REQUIRED: "1"
+
 on:
   workflow_dispatch:
     inputs:
@@ -1392,3 +1395,7 @@ jobs:
           else
             echo "RENDER_UI_DEPLOY_HOOK_URL is not configured; skipping UI redeploy trigger."
           fi
+
+      - name: Preserve all produced history independently of publication
+        if: ${{ always() && env.DAY_KEY != '' && env.SKIP_BUILD != 'true' }}
+        uses: ./.github/actions/preserve-history
