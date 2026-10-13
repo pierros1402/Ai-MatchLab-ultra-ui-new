@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-13",
-  "generatedAt": "2026-10-13T13:18:01.176Z",
+  "generatedAt": "2026-10-13T13:46:15.822Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "34c69986bc70a4ef8d6fc28abec3e264c9a553be9ca2f8ea95bad4f48c7bfa71",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "69f9a8bc7d467e0dc612db6e6687081f0d07a362cb4ce7ec2fdd403118b0b220",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 100,
-    "playedTerminal": 15,
+    "playedTerminal": 16,
     "nonPlayedTerminal": 1,
-    "scheduled": 82,
+    "scheduled": 81,
     "live": 2,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 15,
-    "acceptedVerifiedFinalArtifacts": 15,
-    "convergedPlayedFinal": 15,
+    "verifiedFinalArtifacts": 17,
+    "acceptedVerifiedFinalArtifacts": 17,
+    "convergedPlayedFinal": 16,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 84,
+    "openRows": 82,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 15,
-    "scoredSettlementEligible": 15,
+    "historyEligible": 16,
+    "scoredSettlementEligible": 16,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -147,9 +147,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -196,11 +196,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_IN_PROGRESS",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -693,18 +693,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-13",
+        "scoreHome": 3,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4162,31 +4162,31 @@
       "homeTeam": "Bandirmaspor",
       "awayTeam": "Sivasspor",
       "kickoffUtc": "2026-10-13T11:30:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-13",
+        "scoreHome": 1,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4944,7 +4944,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_arm2_araksararat_araratarmenia2_20261013"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -8810,13 +8812,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "34c69986bc70a4ef8d6fc28abec3e264c9a553be9ca2f8ea95bad4f48c7bfa71",
+      "truthFingerprint": "69f9a8bc7d467e0dc612db6e6687081f0d07a362cb4ce7ec2fdd403118b0b220",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 15,
+        "expectedEligibleRows": 16,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_afcchampions_kyotosanga_ratchaburi_20261013",
@@ -8833,7 +8835,8 @@
           "cid_bra2_criciuma_americamineiro_20261013",
           "cid_bra2_novorizontino_pontepreta_20261013",
           "cid_par1_nacionalasuncion_deportivorecoleta_20261013",
-          "cid_per2_carlosmannucci_alianzahuanuco_20261013"
+          "cid_per2_carlosmannucci_alianzahuanuco_20261013",
+          "cid_tur2_bandirmaspor_sivasspor_20261013"
         ],
         "unexpectedFixtureIds": [],
         "duplicateFixtureIds": [],
@@ -8893,7 +8896,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-13",
-      "fileCount": 15,
+      "fileCount": 17,
       "authority": "scored_final_evidence"
     },
     "downstream": {
