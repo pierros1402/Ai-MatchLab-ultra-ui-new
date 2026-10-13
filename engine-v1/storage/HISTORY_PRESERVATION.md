@@ -29,7 +29,7 @@ Normal fast-forward pushes retry against concurrent writers; no force push is
 used. Unique blobs are retained once, with immutable manifests that name each
 original path, SHA-256, byte count, chunk Git objects and source commit. Files
 are streamed in at most 8 MiB chunks, including large historical indexes; the
-archive is not limited by the GitHub per-blob maximum. Both individual chunks
+new archive payload blobs remain small. Both individual chunks
 and reconstructed whole files are hashed and verified.
 
 A checkpoint is acknowledged only after it is fetched from the remote and its
@@ -109,6 +109,11 @@ the canary does not prove that a schedule fires or captures its future output.
   a final restore checks the full captured set. Recovery delta bundles are uploaded
   separately, so artifact storage and upload duration must be budgeted. Chunking
   avoids large individual Git blobs, not Git repository/account capacity limits.
+  Retained source commits are still subject to their own GitHub file limits:
+  committing an oversized generated index before archival can prevent that
+  source parent from being pushed. Move growing indexes to durable object
+  storage before reaching that boundary; a temporary Actions artifact is not
+  a substitute for permanent archival.
 
 The operational claim is bounded: bytes in an acknowledged remote checkpoint
 are recoverable and subsequent publication failure cannot remove them. Complete
