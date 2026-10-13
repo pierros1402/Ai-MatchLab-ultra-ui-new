@@ -52,6 +52,7 @@
  */
 
 import fs from "fs";
+import { checkpointHistoryIfRequired, writeHistoryJsonAtomic } from "../storage/history-preservation.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import { athensDayKey } from "../core/daykey.js";
@@ -736,7 +737,7 @@ function buildValueAudit({
 
 function writeJsonFile(file, payload) {
   ensureDir(path.dirname(file));
-  fs.writeFileSync(file, JSON.stringify(payload, null, 2), "utf8");
+  writeHistoryJsonAtomic(file, payload);
 }
 export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, outputMode = "production" } = {}) {
   const isPlanBObservation = outputMode === "plan-b-observation";
@@ -1128,6 +1129,7 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
   writeJsonFile(canonicalOut, result);
   writeJsonFile(outFile, result);
 
+  checkpointHistoryIfRequired(dayKey, isPlanB2Observation ? "plan-b2-built" : "plan-b-built");
   return result;
 }
 const isCli = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);

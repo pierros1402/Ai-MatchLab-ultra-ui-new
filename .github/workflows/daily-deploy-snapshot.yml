@@ -1,5 +1,8 @@
 name: Daily deploy snapshot
 
+env:
+  HISTORY_PRESERVATION_REQUIRED: "1"
+
 on:
   workflow_dispatch:
     inputs:
@@ -1234,3 +1237,7 @@ jobs:
           curl -fsS -X POST "${RENDER_UI_DEPLOY_HOOK_URL}"
           bash tools/wait-for-render-engine-release.sh "${PUBLISHED_REF}"
           bash tools/verify-public-ui-release.sh "${PUBLISHED_REF}"
+
+      - name: Preserve all produced history independently of publication
+        if: ${{ always() && env.DAY_KEY != '' && env.SKIP_BUILD != 'true' }}
+        uses: ./.github/actions/preserve-history

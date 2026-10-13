@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { checkpointHistoryIfRequired, writeHistoryJsonAtomic } from "../storage/history-preservation.js";
 
 import { ensureDir, resolveDataPath } from "../storage/data-root.js";
 
@@ -75,7 +76,7 @@ function readJsonSafe(filePath, fallback = null) {
 
 function writeJsonPretty(filePath, payload) {
   ensureDir(path.dirname(filePath));
-  fs.writeFileSync(filePath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+  writeHistoryJsonAtomic(filePath, payload);
 }
 
 function relativeArtifactPath(filePath) {
@@ -315,6 +316,7 @@ export function ensurePlanAObservationAtPaths({
     };
   }
 
+  checkpointHistoryIfRequired(day, "plan-a-first-observation");
   return {
     ok: true,
     created: true,

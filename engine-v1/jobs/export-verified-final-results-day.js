@@ -1,4 +1,5 @@
 import fs from "fs";
+import { checkpointHistoryIfRequired, writeHistoryJsonAtomic } from "../storage/history-preservation.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -44,7 +45,7 @@ function readJsonSafe(filePath, fallback = null) {
 
 function writeJsonPretty(filePath, payload) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+  writeHistoryJsonAtomic(filePath, payload);
 }
 
 function rowsFromPayload(payload, keys = []) {
@@ -2745,6 +2746,7 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
     conflictCount: remainingConflicts.length
   });
 
+  if (options.write === true) checkpointHistoryIfRequired(safeDayKey, "verified-results-written");
   return {
     ok: completion.ok,
     truthComplete: completion.truthComplete,

@@ -1,4 +1,7 @@
 name: Pre-match Value data alarm canary
+env:
+  HISTORY_PRESERVATION_REQUIRED: "1"
+  DAY_KEY: ${{ inputs.dayKey }}
 on:
   workflow_dispatch:
     inputs:
@@ -51,3 +54,7 @@ jobs:
           name: value-data-alarm-${{ inputs.dayKey }}
           path: data/value-data-acquisition/
           if-no-files-found: ignore
+
+      - name: Preserve applied acquisition evidence even when later steps failed
+        if: ${{ always() && inputs.apply && env.DAY_KEY != '' }}
+        uses: ./.github/actions/preserve-history

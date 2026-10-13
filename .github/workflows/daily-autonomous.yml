@@ -1,5 +1,8 @@
 name: Daily autonomous run
 
+env:
+  HISTORY_PRESERVATION_REQUIRED: "1"
+
 # Fully automatic SAME-DAY maintenance run (~16:00 Europe/Athens): awareness
 # refresh, prior-day results accumulation, comprehensive fixtures, odds opening +
 # drift, and coverage report. It is deliberately NOT a midnight/day-rollover
@@ -170,3 +173,7 @@ jobs:
             git commit -m "Daily autonomous run for ${DAY_KEY}"
             bash tools/git-push-rebase-retry.sh
           fi
+
+      - name: Preserve all produced history independently of result closure
+        if: ${{ always() && env.DAY_KEY != '' && env.SKIP != 'true' }}
+        uses: ./.github/actions/preserve-history
