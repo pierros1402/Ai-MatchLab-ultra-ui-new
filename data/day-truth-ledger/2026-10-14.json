@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-14",
-  "generatedAt": "2026-10-14T01:00:27.724Z",
+  "generatedAt": "2026-10-14T01:14:19.474Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "98df475b5f7b7f276606862c8cae4f168af2abadc56de9d80301888a9e5bacc7",
+  "truthFingerprint": "7bc1876d559182bfa08dfb8310ca81aefd89ab31b992db618363224d55e13a6b",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 70,
-    "playedTerminal": 1,
+    "playedTerminal": 2,
     "nonPlayedTerminal": 0,
     "scheduled": 65,
-    "live": 4,
+    "live": 3,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 1,
-    "acceptedVerifiedFinalArtifacts": 1,
-    "convergedPlayedFinal": 1,
+    "verifiedFinalArtifacts": 2,
+    "acceptedVerifiedFinalArtifacts": 2,
+    "convergedPlayedFinal": 2,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 69,
+    "openRows": 68,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 1,
-    "scoredSettlementEligible": 1,
+    "historyEligible": 2,
+    "scoredSettlementEligible": 2,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -882,11 +882,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_FIRST_HALF",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -931,9 +931,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 1
       },
@@ -2202,31 +2202,31 @@
       "homeTeam": "Tapatío",
       "awayTeam": "Tepatitlán FC",
       "kickoffUtc": "2026-10-13T23:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 4,
         "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-14",
+        "scoreHome": 4,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -7222,16 +7222,17 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "98df475b5f7b7f276606862c8cae4f168af2abadc56de9d80301888a9e5bacc7",
+      "truthFingerprint": "7bc1876d559182bfa08dfb8310ca81aefd89ab31b992db618363224d55e13a6b",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 1,
+        "expectedEligibleRows": 2,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
-          "cid_bra2_athletic_londrina_20261014"
+          "cid_bra2_athletic_londrina_20261014",
+          "cid_mex2_tapatio_tepatitlan_20261014"
         ],
         "unexpectedFixtureIds": [],
         "duplicateFixtureIds": [],
@@ -7291,7 +7292,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-14",
-      "fileCount": 1,
+      "fileCount": 2,
       "authority": "scored_final_evidence"
     },
     "downstream": {
