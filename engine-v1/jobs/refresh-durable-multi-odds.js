@@ -1,6 +1,6 @@
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { athensDayKey, shiftDay } from "../core/daykey.js";
+import { athensDayKey, shiftDay, assertLiveOddsDay } from "../core/daykey.js";
 import { resolveDataPath } from "../storage/data-root.js";
 import { checkpointHistoryIfRequired, writeHistoryJsonAtomic } from "../storage/history-preservation.js";
 import { fetchMultiBookmakerOdds } from "./fetch-multi-bookmaker-odds.js";
@@ -37,8 +37,7 @@ export async function refreshDurableMultiOdds(dayKey = athensDayKey(), {
   auditFile = null, runId = process.env.GITHUB_RUN_ID || "local",
   attempt = process.env.GITHUB_RUN_ATTEMPT || "1"
 } = {}) {
-  if (!/^\d{4}-\d{2}-\d{2}$/u.test(dayKey) || !Number.isFinite(Date.parse(`${dayKey}T12:00:00Z`)) ||
-    new Date(`${dayKey}T12:00:00Z`).toISOString().slice(0, 10) !== dayKey || dayKey < today()) throw new Error("live_odds_historical_replay_forbidden");
+  assertLiveOddsDay(dayKey, today());
   if (!Number.isInteger(daysAhead) || daysAhead < 0 || daysAhead > 6) throw new Error("invalid_odds_prefetch_horizon");
   if (!/^[a-zA-Z0-9._-]+$/u.test(runId) || !/^[a-zA-Z0-9._-]+$/u.test(attempt)) throw new Error("invalid_odds_run_identity");
   const file = auditFile || resolveDataPath("ingest-state", "multi-odds", dayKey, `${runId}-${attempt}.json`);

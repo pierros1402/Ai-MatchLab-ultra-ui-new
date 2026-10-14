@@ -108,6 +108,10 @@ jobs:
           fi
           DAY_KEY="$(printf "%s" "${INPUT_DAY_KEY:-}" | grep -Eo '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -n1 || true)"
           [ -z "$DAY_KEY" ] && DAY_KEY="$(TZ=Europe/Athens date +%F)"
+          # Validate before the older odds/assessment writer as well as before
+          # the durable multi-provider collector. Never reinterpret a live
+          # collection as an original past-date execution.
+          node --input-type=module -e 'import { assertLiveOddsDay } from "./engine-v1/core/daykey.js"; assertLiveOddsDay(process.argv[1]);' "$DAY_KEY"
           echo "SKIP=false" >> "$GITHUB_ENV"
           echo "DAY_KEY=$DAY_KEY" >> "$GITHUB_ENV"
 
