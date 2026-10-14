@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-14",
-  "generatedAt": "2026-10-14T01:40:43.369Z",
+  "generatedAt": "2026-10-14T02:05:58.042Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "006c60c8c3709a1a323b128c2f6aa6dcdcefbc80028e20b1c97077282c4c705c",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "049b311cda6288ad5b11bbdecd17d679e642b368250419beb2027705334edfb3",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -18,26 +18,26 @@
   "summary": {
     "canonicalRows": 70,
     "playedTerminal": 3,
-    "nonPlayedTerminal": 0,
-    "scheduled": 65,
+    "nonPlayedTerminal": 1,
+    "scheduled": 64,
     "live": 2,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 3,
-    "acceptedVerifiedFinalArtifacts": 3,
+    "verifiedFinalArtifacts": 4,
+    "acceptedVerifiedFinalArtifacts": 4,
     "convergedPlayedFinal": 3,
-    "convergedNonPlayedTerminal": 0,
+    "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 67,
+    "openRows": 65,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 3,
     "scoredSettlementEligible": 3,
-    "voidSettlementEligible": 0
+    "voidSettlementEligible": 1
   },
   "fixtures": [
     {
@@ -830,12 +830,12 @@
       "homeTeam": "Millonarios",
       "awayTeam": "Once Caldas",
       "kickoffUtc": "2026-10-14T01:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PRE_KICKOFF_NON_PLAYED",
+      "operationalState": "NON_PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "SPECIAL",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
+        "rawStatus": "STATUS_POSTPONED",
         "scoreHome": null,
         "scoreAway": null
       },
@@ -850,12 +850,12 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "CONVERGED_NON_PLAYED_TERMINAL",
+        "reason": "explicit_nonplayed_terminal",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
-        "voidSettlementEligible": false,
+        "voidSettlementEligible": true,
         "repairAuthorized": false
       },
       "downstream": {
@@ -882,9 +882,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 1
       },
@@ -931,25 +931,25 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
-        "scoreHome": 2,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 3,
         "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-14",
+        "scoreHome": 3,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -3474,7 +3474,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_crc1_cartagines_puntarenas_20261014"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -3662,7 +3664,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 12646,
+            "count": 12648,
             "informational": true
           }
         },
@@ -7222,7 +7224,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "006c60c8c3709a1a323b128c2f6aa6dcdcefbc80028e20b1c97077282c4c705c",
+      "truthFingerprint": "049b311cda6288ad5b11bbdecd17d679e642b368250419beb2027705334edfb3",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -7293,7 +7295,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-14",
-      "fileCount": 3,
+      "fileCount": 4,
       "authority": "scored_final_evidence"
     },
     "downstream": {
