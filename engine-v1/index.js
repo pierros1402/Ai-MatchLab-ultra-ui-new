@@ -3317,10 +3317,15 @@ function addValueExportPlanSection(sheet, plan) {
     setValueExportPercentCell(added, 9);
   }
 
+  const scopeNote = sheet.addRow(["Status scope: stored picks/settlement only. Empty or missing records do not prove successful execution, zero values, no games, complete inputs or plan unavailability."]);
+  sheet.mergeCells(scopeNote.number, 1, scopeNote.number, sheet.columnCount);
+  scopeNote.getCell(1).alignment = { vertical: "middle", wrapText: true };
+  scopeNote.height = 30;
+
   sheet.addRow([]);
   styleValueExportTitle(sheet, sheet.rowCount + 1, `${plan.label} — Selected Range Summary`);
   addValueExportTableHeader(sheet, [
-    "From", "To", "Available Days", "Not Available Days", "Picks", "Wins",
+    "From", "To", "Plan Records Present", "Plan Records Absent", "Missing Day Records", "Total Days", "Picks", "Wins",
     "Losses", "Voids", "Unresolved", "Unsupported", "Win %"
   ]);
   const rangeRow = sheet.addRow([
@@ -3328,6 +3333,8 @@ function addValueExportPlanSection(sheet, plan) {
     plan.range.to,
     plan.range.availableDays,
     plan.range.notAvailableDays,
+    plan.range.missingDayRecords,
+    plan.range.totalDays,
     plan.range.picks,
     plan.range.wins,
     plan.range.losses,
@@ -3336,7 +3343,7 @@ function addValueExportPlanSection(sheet, plan) {
     plan.range.unsupported,
     valueExportPercent(plan.range.winRate)
   ]);
-  setValueExportPercentCell(rangeRow, 11);
+  setValueExportPercentCell(rangeRow, 13);
 
   sheet.addRow([]);
   styleValueExportTitle(sheet, sheet.rowCount + 1, `${plan.label} — Market Breakdown`);

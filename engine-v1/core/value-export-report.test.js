@@ -37,6 +37,41 @@ function pick(id, result, market = "OU25", selection = "over") {
   };
 }
 
+test("empty records and recovery placeholders do not certify successful zero-value execution", () => {
+  const date = "2026-09-01";
+  const day = comparisonToValueExportDay({date, comparison:comparison(date, {
+    A: {summary:{picks:0}, picks:[]},
+    A2: {summary:{picks:0}, picks:[], status:"NOT_AVAILABLE"},
+    B: {summary:{picks:0}, picks:[], provenance:{authenticPayloadRecovered:false}},
+    B2: {summary:{picks:0}, picks:[], ok:false}
+  })});
+  const report=buildValueExportReport({from:date,to:date,days:[date],dayRecords:[day],today:"2026-10-14"});
+  for(const key of report.planOrder) assert.equal(report.plans[key].daily[0].status,"ZERO_PICKS_UNVERIFIED");
+  assert.equal(report.integrity.unverifiedZeroPickDays.length,4);
+  assert.equal(report.integrity.status,"INCOMPLETE");
+  assert.equal(report.totalRows,0);
+});
+
+test("record presence, absent plan records and missing days exhaust all seventy requested days", () => {
+  const days=Array.from({length:70},(_,index)=>new Date(Date.UTC(2026,7,5+index)).toISOString().slice(0,10));
+  const missing=new Set(["2026-08-19","2026-09-13"]);
+  const notObserved=new Set(["2026-08-11","2026-08-12","2026-08-13","2026-08-14"]);
+  const dayRecords=days.filter(date=>!missing.has(date)).map(date=>comparisonToValueExportDay({date,comparison:comparison(date,{
+    A:plan([pick(`a-${date}`,"WIN")]), B:plan([pick(`b-${date}`,"LOSS")]),
+    ...(notObserved.has(date)?{}:{A2:plan([]),B2:plan([])})
+  })}));
+  const report=buildValueExportReport({from:days[0],to:days.at(-1),days,dayRecords,today:"2026-10-14"});
+  for(const key of report.planOrder){
+    const range=report.plans[key].range;
+    assert.equal(range.recordedPlanDays+range.noPlanRecordDays+range.missingDayRecords,70);
+    assert.equal(range.totalDays,70); assert.equal(range.missingDayRecords,2);
+  }
+  assert.equal(report.plans.A.range.recordedPlanDays,68);
+  assert.equal(report.plans.A2.range.recordedPlanDays,64);
+  assert.equal(report.plans.A2.range.noPlanRecordDays,4);
+  assert.equal(report.totalRows,136);
+});
+
 test("range win rate is calculated from summed wins and losses, never daily percentage averages", () => {
   const first = comparisonToValueExportDay({
     date: "2026-07-01",
@@ -91,10 +126,10 @@ test("four plans remain separate and unavailable historical plans are not conver
 
   assert.deepEqual(report.planOrder, ["A", "A2", "B", "B2"]);
   assert.equal(report.plans.A.daily[0].status, "COMPLETE_WITH_PICKS");
-  assert.equal(report.plans.A2.daily[0].status, "NOT_AVAILABLE");
+  assert.equal(report.plans.A2.daily[0].status, "NO_PLAN_RECORD");
   assert.equal(report.plans.A2.range.availableDays, 0);
   assert.equal(report.plans.A2.range.notAvailableDays, 1);
-  assert.equal(report.plans.B2.daily[0].status, "NOT_AVAILABLE");
+  assert.equal(report.plans.B2.daily[0].status, "NO_PLAN_RECORD");
 });
 
 test("market breakdown normalizes equivalent market and selection spellings", () => {
