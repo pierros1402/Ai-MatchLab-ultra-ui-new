@@ -293,7 +293,7 @@ async function getSeasonResources(season, force = false) {
 }
 
 // ------------------------------
-function expandValueMarkets(match, value) {
+export function expandValueMarkets(match, value) {
   const items = [];
 
   const over15 = Number(value?.over15Score ?? -1);
@@ -403,6 +403,9 @@ function expandValueMarkets(match, value) {
 
     return {
       ...(value.meta || {}),
+      ...(value.opponentAdjustedForm
+        ? { opponentAdjustedForm: value.opponentAdjustedForm }
+        : {}),
       valuePolicy: {
         version: STRICT_VALUE_POLICY_VERSION,
         oddsIndependent: true,
@@ -1029,11 +1032,22 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
                         matchIntelligence: intelligence
                       }
                     },
-                    { season, indexes, priors }
+                    { season, indexes, priors, returnNullDiagnostics: true }
                   );
 
-      if (!value) {
-        auditRejections.push({ matchId: auditIdOf(match), reason: "no_value_signal" });
+      if (!value || value.__valueNullDiagnostic === true) {
+        auditRejections.push({
+          matchId: auditIdOf(match),
+          // Keep the existing terminal decision and aggregate reason stable.
+          // The optional engine diagnostic explains the null without re-scoring.
+          reason: "no_value_signal",
+          ...(value?.__valueNullDiagnostic === true
+            ? {
+                valueNullReason: value.reason,
+                minimumRecentSample: value.minimumRecentSample
+              }
+            : {})
+        });
         continue;
       }
 
@@ -1271,6 +1285,9 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
     rejections: {
       total: auditRejections.length,
       byReason: rejectionByReason,
+      details: auditRejections,
+      complete: true,
+      sampleLimit: 100,
       sample: auditRejections.slice(0, 100)
     }
   };
