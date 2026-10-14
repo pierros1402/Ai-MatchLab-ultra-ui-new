@@ -4,6 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
+import { assertLiveOddsDay } from "../core/daykey.js";
 import { collectionStatus, refreshDurableMultiOdds } from "../jobs/refresh-durable-multi-odds.js";
 import { requestOddsPapiJson } from "../jobs/fetch-multi-bookmaker-odds.js";
 import { requestOddsApiIoJson, createOddsApiIoBudget } from "../jobs/fetch-oddsapiio-odds.js";
@@ -52,6 +53,10 @@ test("IO rate limits, network failures and supported fallback are distinct", asy
 });
 
 test("past-day live collection is rejected before a provider or audit is touched", async () => {
+  assert.throws(()=>assertLiveOddsDay("2026-02-30","2026-10-14"),/historical_replay_forbidden/);
+  assert.throws(()=>assertLiveOddsDay("2026-08-19","2026-10-14"),/historical_replay_forbidden/);
+  assert.doesNotThrow(()=>assertLiveOddsDay("2026-10-14","2026-10-14"));
+  assert.doesNotThrow(()=>assertLiveOddsDay("2026-10-15","2026-10-14"));
   let calls = 0;
   await assert.rejects(refreshDurableMultiOdds("2026-08-19", {
     ...defaults, papi: async () => { calls++; }, writeAudit: () => { calls++; }

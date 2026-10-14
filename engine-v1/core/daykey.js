@@ -19,6 +19,12 @@ export function athensDayKey(date = new Date()) {
   return dayKeyTZ(ATHENS_TZ, date);
 }
 
+// Admission for live odds collection; safe to run before provider modules load.
+export function assertLiveOddsDay(dayKey, today = athensDayKey()) {
+  if (!/^\d{4}-\d{2}-\d{2}$/u.test(dayKey) || !Number.isFinite(Date.parse(`${dayKey}T12:00:00Z`)) ||
+    new Date(`${dayKey}T12:00:00Z`).toISOString().slice(0, 10) !== dayKey || dayKey < today) throw new Error("live_odds_historical_replay_forbidden");
+}
+
 export function shiftDay(day, offset) {
   const d = new Date(day + "T00:00:00Z");
   d.setUTCDate(d.getUTCDate() + offset);
