@@ -6,7 +6,7 @@
     "daysBack": 1,
     "daysForward": 14
   },
-  "sourceLatestUpdatedAt": "2026-10-14T18:53:51.695Z",
+  "sourceLatestUpdatedAt": "2026-10-14T22:45:59.261Z",
   "resolver": {
     "schema": "ai-matchlab.production-identity-resolver-runtime.v2",
     "extensionLedgerSha256": "cddc046f5a19e489d6f198b0fa4c3605e4db3a269f2c8decbc44e4b472736e72",
@@ -25,12 +25,12 @@
   },
   "summary": {
     "scannedDays": 16,
-    "scannedLeagueFiles": 407,
-    "inputRows": 1432,
+    "scannedLeagueFiles": 502,
+    "inputRows": 1778,
     "autoPromotable": 0,
     "pendingIndependentConfirmation": 1,
-    "ambiguous": 0,
-    "conflictRejected": 0,
+    "ambiguous": 1,
+    "conflictRejected": 1,
     "alreadyManagedPairs": 0,
     "independentConfirmed": 0,
     "independentConfirmationRetryPending": 1
@@ -102,7 +102,7 @@
                 "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
                 "oddsUsed": false,
                 "attempts": 1,
-                "lastAttemptAt": "2026-10-14T18:53:52.052Z",
+                "lastAttemptAt": "2026-10-14T22:45:59.594Z",
                 "retryable": true,
                 "providerStatus": "MISSING_API_KEY",
                 "evaluationStatus": null,
@@ -124,12 +124,104 @@
     },
     {
       "dayKey": "2026-10-17",
-      "leagueFiles": 37,
-      "recoveryLeagueReports": []
+      "leagueFiles": 130,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "caf.confed",
+          "inputRows": 9,
+          "temporalCrossProviderPairs": 6,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [
+            {
+              "leagueSlug": "caf.confed",
+              "kickoffUtc": "2026-10-17T16:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_cafconfed_academiefadivo_cssfaxientun_20261017",
+                "cid_cafconfed_afadplateau_sportifsfaxien_20261017",
+                "cid_cafconfed_cokorhogo_asfar_20261017",
+                "cid_cafconfed_korhogoivo_farrabatmar_20261017",
+                "cid_cafconfed_rayonsport_associacaoblackbulls_20261017"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 1,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "esp.2",
+          "inputRows": 5,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [],
+          "conflictRejected": [
+            {
+              "leagueSlug": "esp.2",
+              "kickoffUtc": "2026-10-17T12:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "zsQHSA3E",
+                "canonicalId": "cid_esp2_realsociedadb_almeria_20261017",
+                "kickoffUtc": "2026-10-17T12:00:00.000Z",
+                "homeTeam": "Real Sociedad B",
+                "awayTeam": "Almeria"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401883133",
+                "canonicalId": "cid_esp2_realsociedadii_almeria_20261017",
+                "kickoffUtc": "2026-10-17T12:00Z",
+                "homeTeam": "Real Sociedad II",
+                "awayTeam": "Almería"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "SQUAD_CONFLICT",
+                  "stable": false,
+                  "conflict": true
+                },
+                "away": {
+                  "kind": "NORMALIZED_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": null,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null,
+                  "productionIdentityComplete": false
+                },
+                "stableSides": 1,
+                "conflict": true
+              },
+              "recoveryStatus": "REJECTED_IDENTITY_CONFLICT",
+              "promotionAuthorized": false
+            }
+          ],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 0,
+            "conflictRejected": 1,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
     },
     {
       "dayKey": "2026-10-18",
-      "leagueFiles": 32,
+      "leagueFiles": 34,
       "recoveryLeagueReports": []
     },
     {
@@ -193,7 +285,7 @@
     "evidenceEndpoint": "fixtures",
     "oddsAllowed": false,
     "fuzzyMatchingAllowed": false,
-    "runAt": "2026-10-14T18:53:52.052Z",
+    "runAt": "2026-10-14T22:45:59.595Z",
     "attempts": [
       {
         "dayKey": "2026-10-16",
