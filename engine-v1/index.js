@@ -3869,6 +3869,10 @@ app.post("/api/refresh-multi-odds", async (req, res) => {
   if (provided !== secret) {
     return res.status(401).json({ ok: false, error: "unauthorized" });
   }
+  if (runtimeBuildsDisabled()) {
+    return res.status(409).json({ ok: false, error: "durable_odds_writer_required",
+      writer: "GitHub Actions / Odds refresh", runtimeWritesDisabled: true });
+  }
   const date = String(req.query.date || athensDayKey());
   const doPrefetch = req.query.prefetch !== "0"; // default: also prefetch next 6 days
   try {

@@ -3,7 +3,14 @@ description: Preserve recovery evidence after failures, verify the durable archi
 runs:
   using: composite
   steps:
+    - name: Retain upstream job status without inferring plan outcomes
+      shell: bash
+      env:
+        HISTORY_UPSTREAM_JOB_STATUS: ${{ job.status }}
+      run: node engine-v1/jobs/record-history-workflow-state.js
+
     - name: Prepare new and changed recovery evidence
+      if: ${{ always() }}
       id: bundle
       shell: bash
       run: |

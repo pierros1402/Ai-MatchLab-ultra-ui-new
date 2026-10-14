@@ -31,6 +31,7 @@ import { pathToFileURL } from "node:url";
 import { athensDayKey } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { mergeWithDelta, normTeam, pairKey, namesMatch } from "../odds/multi-odds-merge.js";
+import { writeHistoryJsonAtomic } from "../storage/history-preservation.js";
 
 const BASE = process.env.ODDS_API_IO_BASE || "https://api.odds-api.io/v3";
 const KEY  = process.env.ODDS_API_IO_KEY || "";
@@ -97,30 +98,37 @@ export function createOddsApiIoBudget(max = MAX_REQUESTS_PER_RUN) {
   return { remaining: max, used: 0, limitHit: false };
 }
 
-async function apiGet(pathAndQuery, budget, meta = {}) {
+export async function requestOddsApiIoJson(pathAndQuery, budget, meta = {}, { fetchImpl = fetch, wait = sleep, apiKey = KEY } = {}) {
   if (budget.remaining <= 0) return null;
   budget.remaining--;
   budget.used++;
-  await sleep(DELAY_MS);
+  await wait(DELAY_MS);
 
   const sep = pathAndQuery.includes("?") ? "&" : "?";
-  const url = `${BASE}${pathAndQuery}${sep}apiKey=${KEY}`;
+  const url = `${BASE}${pathAndQuery}${sep}apiKey=${apiKey}`;
+  const failed = () => { budget.requestFailures = (budget.requestFailures || 0) + 1; };
   try {
-    const r = await fetch(url, { signal: AbortSignal.timeout(20000) });
+    const r = await fetchImpl(url, { signal: AbortSignal.timeout(20000) });
     meta.status = r.status;
     if (r.status === 429) {
       budget.remaining = 0;
       budget.limitHit = true;
+      failed();
       log("HTTP 429 rate limited — aborting run, next cycle continues");
       return null;
     }
-    if (!r.ok) { log(`HTTP ${r.status} → ${pathAndQuery.split("?")[0]}`); return null; }
+    if (!r.ok) {
+      if (!(r.status === 403 && meta.allowUnsupported)) failed();
+      log(`HTTP ${r.status} → ${pathAndQuery.split("?")[0]}`); return null;
+    }
     return await r.json();
   } catch (e) {
-    log(`fetch error: ${e?.message || e} → ${pathAndQuery.split("?")[0]}`);
+    failed();
+    log(`provider request failed → ${pathAndQuery.split("?")[0]}`);
     return null;
   }
 }
+const apiGet = requestOddsApiIoJson;
 
 // If /odds/multi is ever genuinely unavailable, the process falls back to
 // per-event /odds requests (1 request per match instead of per 10).
@@ -136,7 +144,7 @@ let bookmakersParamPromise = null;
 function resolveBookmakersParam(budget) {
   if (!bookmakersParamPromise) {
     bookmakersParamPromise = (async () => {
-      const j = await apiGet("/bookmakers/selected", budget);
+      const j = await apiGet("/bookmakers/selected", budget, { allowUnsupported: true });
       const sel = Array.isArray(j?.bookmakers) ? j.bookmakers.filter(Boolean) : [];
       const books = sel.length ? sel : BOOKMAKERS;
       log(`odds requests will use ${books.length} bookmakers${sel.length ? " (account selection)" : " (full list)"}: ${books.join(", ")}`);
@@ -276,6 +284,7 @@ export async function fetchOddsApiIoDay(date, budget = null) {
 
   date = date || athensDayKey();
   budget = budget || createOddsApiIoBudget();
+  const failuresAtStart = budget.requestFailures || 0;
 
   const outDir  = ensureDir(resolveDataPath("multi-odds"));
   const outFile = path.join(outDir, `${date}.json`);
@@ -313,10 +322,14 @@ export async function fetchOddsApiIoDay(date, budget = null) {
   const from = `${addDays(date, -1)}T21:00:00Z`;
   const to   = `${date}T22:00:00Z`;
   const evJ  = await apiGet(`/events?sport=football&status=pending&from=${from}&to=${to}&limit=5000`, budget);
+  if (evJ == null) return { ok: false, date, fetched: 0, skipped,
+    reason: budget.limitHit ? "provider_rate_limited" : "provider_events_request_failed",
+    requestFailures: (budget.requestFailures || 0) - failuresAtStart, limitHit: budget.limitHit };
+  if (!Array.isArray(evJ) && !Array.isArray(evJ?.data)) return { ok: false, date, fetched: 0, skipped, reason: "provider_payload_invalid" };
   const events = Array.isArray(evJ) ? evJ : (Array.isArray(evJ?.data) ? evJ.data : []);
   if (!events.length) {
     log(`${date}: provider returned no pending events`);
-    return { ok: true, date, fetched: 0, skipped, matched: 0 };
+    return { ok: true, date, fetched: 0, skipped, matched: 0, unmatchedFixtures: stale.length, reason: "no_provider_events" };
   }
   log(`${date}: provider events ${events.length}`);
 
@@ -348,7 +361,7 @@ export async function fetchOddsApiIoDay(date, budget = null) {
   }
   toFetch.sort((a, b) => a.priority - b.priority);
   log(`${date}: matched ${toFetch.length}/${stale.length} fixtures`);
-  if (!toFetch.length) return { ok: true, date, fetched: 0, skipped, matched: 0 };
+  if (!toFetch.length) return { ok: true, date, fetched: 0, skipped, matched: 0, unmatchedFixtures: stale.length };
 
   // 3) Odds: /odds/multi batches (10 events/request) when the plan allows it,
   //    per-event /odds otherwise (see oddsMultiBlocked above).
@@ -374,7 +387,7 @@ export async function fetchOddsApiIoDay(date, budget = null) {
     if (!oddsMultiBlocked) {
       const chunk = toFetch.slice(i, i + 10);
       const ids = chunk.map(c => c.eventId).join(",");
-      const meta = {};
+      const meta = { allowUnsupported: true };
       const oddsJ = await apiGet(`/odds/multi?eventIds=${encodeURIComponent(ids)}&bookmakers=${booksParam}`, budget, meta);
       if (oddsJ) {
         const oddsEvents = Array.isArray(oddsJ) ? oddsJ : Object.values(oddsJ || {});
@@ -406,10 +419,15 @@ export async function fetchOddsApiIoDay(date, budget = null) {
   }
 
   // 4) Persist (even partial — truth is truth)
-  fs.writeFileSync(outFile, JSON.stringify({ date, updatedAt: Date.now(), matches: cache }, null, 2), "utf8");
+  writeHistoryJsonAtomic(outFile, { date, updatedAt: Date.now(), matches: cache });
   log(`${date}: done`, { fetched, skipped, requestsUsed: budget.used, limitHit: budget.limitHit });
 
-  return { ok: true, date, fetched, skipped, matched: toFetch.length, requestsUsed: budget.used, limitHit: budget.limitHit };
+  const requestFailures = (budget.requestFailures || 0) - failuresAtStart;
+  return { ok: requestFailures === 0, date, fetched, skipped, matched: toFetch.length,
+    unmatchedFixtures: stale.length - toFetch.length,
+    requestsUsed: budget.used, limitHit: budget.limitHit, requestFailures,
+    budgetExhausted: budget.remaining <= 0 && fetched < toFetch.length,
+    missingMarkets: Math.max(0, toFetch.length - fetched) };
 }
 
 // ─── CLI ──────────────────────────────────────────────────────────────────────

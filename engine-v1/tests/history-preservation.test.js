@@ -49,6 +49,9 @@ test("failed later gate cannot discard original picks, inputs, verified results 
   // Simulate a failed publication and a later run overwriting production state.
   f.write("data/value/2026-08-19.json", '{"count":0,"picks":[]}');
   const second = preserveHistoryCheckpoint({ root: f.root, dayKey: "2026-08-19", stage: "failed-final", runId: "20" });
+  const locator = JSON.parse(git(f.root, ["show", `${second.archiveCommit}:latest-checkpoint.json`]));
+  assert.equal(locator.manifestPath, second.manifestPath);
+  assert.notEqual(locator.manifestPath, first.manifestPath);
   const manifest = verifyHistoryCheckpoint({ root: f.root, ref: second.archiveCommit, manifestPath: first.manifestPath });
   assert.equal(manifest.publicationApproved, false);
   assert.equal(manifest.files.some(file => file.path.includes("secret") || file.path === ".env"), false);
