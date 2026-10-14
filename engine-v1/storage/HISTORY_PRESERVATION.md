@@ -147,3 +147,10 @@ pin an archive commit, verify the located manifest and every payload hash, and
 retain local immutable refs before acknowledging a backup. Render snapshot mode
 rejects the authenticated volatile multi-odds writer after deployment; it serves
 the GitHub-persisted cache through the existing snapshot synchronizer.
+# Completed workflow logs
+
+`history-workflow-logs.yml` captures each completed main-branch writer attempt, including failed runs, through the GitHub Actions API. A manual input captures an already completed run; it never reruns the plan. It checks the repository, branch, exact attempt and known workflow name before retaining evidence. The archiver executes only current trusted main code, never code from the completed run or its log payload.
+
+The original GitHub-provided ZIP is stored as base64 JSON with its SHA-256, exact run conclusion and source commit. Corrupt or unavailable logs are explicit failures and do not establish a zero-pick result. ZIPs are validated without extraction. Archives above 64 MiB, or with more than 512 MiB of expanded entries, are reported incomplete; larger logs need a separate storage path.
+
+Log-only checkpoints use the `workflow-logs` evidence scope and `latest-workflow-logs.json`. They do not replace `latest-checkpoint.json`, declare unrelated sparse application data missing, publish results, or change main. Immutable older manifests remain in the protected archive. Each captured log checkpoint is remotely verified and restored, with a separate 90-day artifact fallback. Stored console logs have GitHub's existing secret masking; this workflow does not query provider secrets.

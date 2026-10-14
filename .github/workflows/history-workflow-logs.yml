@@ -1,0 +1,120 @@
+name: Preserve completed writer logs
+
+on:
+  workflow_run:
+    workflows:
+      - Daily deploy snapshot
+      - Daily autonomous run
+      - Intraday deploy snapshot refresh
+      - Odds refresh
+      - Plan C shadow daily publish
+      - Bounded Value data recovery
+      - Pre-match Value data alarm canary
+      - History preservation and recovery canary
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      runId:
+        description: "Completed writer run to preserve; does not rerun it."
+        required: true
+      attempt:
+        description: "Exact completed attempt."
+        required: true
+        default: "1"
+
+permissions:
+  contents: write
+  actions: read
+
+# Per-run groups prevent unrelated completed runs from replacing each other's
+# pending archival job. The archive itself uses checked fast-forward retries.
+concurrency:
+  group: history-logs-${{ github.event.workflow_run.id || inputs.runId }}-${{ github.event.workflow_run.run_attempt || inputs.attempt }}
+  cancel-in-progress: false
+
+jobs:
+  preserve-logs:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout trusted archiver from main without materializing application data
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout: |
+            engine-v1/jobs
+            engine-v1/storage
+            tools
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Resolve and retrieve exact completed run metadata
+        id: target
+        shell: bash
+        env:
+          TARGET_RUN: ${{ github.event.workflow_run.id || inputs.runId }}
+          TARGET_ATTEMPT: ${{ github.event.workflow_run.run_attempt || inputs.attempt }}
+        run: |
+          set -euo pipefail
+          [[ "$TARGET_RUN" =~ ^[1-9][0-9]*$ ]] && [[ "$TARGET_ATTEMPT" =~ ^[1-9][0-9]*$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$TARGET_RUN/attempts/$TARGET_ATTEMPT" > "$RUNNER_TEMP/completed-run.json"
+          echo "TARGET_RUN=$TARGET_RUN" >> "$GITHUB_ENV"
+          echo "TARGET_ATTEMPT=$TARGET_ATTEMPT" >> "$GITHUB_ENV"
+          echo "DAY_KEY=$(TZ=Europe/Athens date +%F)" >> "$GITHUB_ENV"
+
+      - name: Download original completed attempt logs
+        id: download
+        continue-on-error: true
+        shell: bash
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$TARGET_RUN/attempts/$TARGET_ATTEMPT/logs" > "$RUNNER_TEMP/completed-run-logs.zip"
+
+      - name: Validate source and record exact log bytes or explicit unavailability
+        id: evidence
+        if: ${{ always() && steps.target.outcome == 'success' }}
+        continue-on-error: true
+        shell: bash
+        run: |
+          python3 tools/preserve_workflow_logs.py \
+            --metadata="$RUNNER_TEMP/completed-run.json" \
+            --archive="$RUNNER_TEMP/completed-run-logs.zip" \
+            --repository="$GITHUB_REPOSITORY" --run="$TARGET_RUN" --attempt="$TARGET_ATTEMPT"
+
+      - name: Retain additional fallback for the captured log evidence
+        if: ${{ always() && steps.target.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: completed-writer-logs-${{ env.TARGET_RUN }}-${{ env.TARGET_ATTEMPT }}
+          path: data/ingest-state/workflow-logs/
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Preserve and remotely verify completed log evidence
+        id: archive
+        if: ${{ always() && steps.target.outcome == 'success' }}
+        shell: bash
+        run: |
+          test -f "data/ingest-state/workflow-logs/$TARGET_RUN/$TARGET_ATTEMPT.json"
+          node engine-v1/jobs/preserve-history-checkpoint.js --scope=workflow-logs --stage=completed-writer-logs
+
+      - name: Prove recovery of the log evidence
+        if: ${{ always() && steps.archive.outcome == 'success' }}
+        shell: bash
+        run: |
+          node engine-v1/jobs/preserve-history-checkpoint.js restore \
+            --ref="${{ steps.archive.outputs.archiveCommit }}" \
+            --manifest="${{ steps.archive.outputs.manifestPath }}" \
+            --destination="$RUNNER_TEMP/recovered-writer-logs"
+
+      - name: Surface missing or invalid logs as a failure
+        if: ${{ always() && (steps.download.outcome != 'success' || steps.evidence.outcome != 'success') }}
+        run: exit 1

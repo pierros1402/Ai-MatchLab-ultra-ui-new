@@ -23,6 +23,7 @@ export function runHistoryPreservationCli(argv = process.argv.slice(2)) {
   return preserveHistoryCheckpoint({
     dayKey: args.day || process.env.DAY_KEY,
     stage: args.stage || "workflow-final",
+    evidenceScope: args.scope || "full",
     runId: args.run || process.env.GITHUB_RUN_ID,
     attempt: args.attempt || process.env.GITHUB_RUN_ATTEMPT || "1"
   });
