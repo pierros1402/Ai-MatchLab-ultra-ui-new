@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-14",
-  "generatedAt": "2026-10-14T02:05:58.042Z",
+  "generatedAt": "2026-10-14T02:37:18.542Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "049b311cda6288ad5b11bbdecd17d679e642b368250419beb2027705334edfb3",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "f48544731d5ab013f3115b2aaaa801179aeefe319aef5d5a1c1dc5263a78e625",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,9 +17,9 @@
   },
   "summary": {
     "canonicalRows": 70,
-    "playedTerminal": 3,
+    "playedTerminal": 4,
     "nonPlayedTerminal": 1,
-    "scheduled": 64,
+    "scheduled": 63,
     "live": 2,
     "interrupted": 0,
     "delayed": 0,
@@ -27,16 +27,16 @@
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 4,
     "acceptedVerifiedFinalArtifacts": 4,
-    "convergedPlayedFinal": 3,
+    "convergedPlayedFinal": 4,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
     "openRows": 65,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 3,
-    "scoredSettlementEligible": 3,
+    "historyEligible": 4,
+    "scoredSettlementEligible": 4,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -928,12 +928,12 @@
       "homeTeam": "Cartaginés",
       "awayTeam": "Puntarenas FC",
       "kickoffUtc": "2026-10-14T00:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 3,
         "scoreAway": 1
       },
@@ -948,11 +948,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -977,14 +977,14 @@
       "homeTeam": "AD San Carlos",
       "awayTeam": "Inter de San Carlos",
       "kickoffUtc": "2026-10-14T02:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -998,7 +998,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -3474,9 +3474,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_crc1_cartagines_puntarenas_20261014"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -7224,17 +7222,18 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "049b311cda6288ad5b11bbdecd17d679e642b368250419beb2027705334edfb3",
+      "truthFingerprint": "f48544731d5ab013f3115b2aaaa801179aeefe319aef5d5a1c1dc5263a78e625",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 3,
+        "expectedEligibleRows": 4,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_bra2_athletic_londrina_20261014",
           "cid_col1_atleticobucaramanga_aguilasdoradas_20261014",
+          "cid_crc1_cartagines_puntarenas_20261014",
           "cid_mex2_tapatio_tepatitlan_20261014"
         ],
         "unexpectedFixtureIds": [],
