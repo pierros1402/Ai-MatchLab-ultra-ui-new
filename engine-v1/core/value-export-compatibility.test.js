@@ -111,11 +111,11 @@ test(
     );
     assert.equal(
       report.plans.A2.daily[0].status,
-      "NOT_AVAILABLE"
+      "NO_PLAN_RECORD"
     );
     assert.equal(
       report.plans.B2.daily[0].status,
-      "NOT_AVAILABLE"
+      "NO_PLAN_RECORD"
     );
     assert.equal(
       report.plans.A2.range.picks,
@@ -137,7 +137,7 @@ test(
       report.integrity.issues.some(
         issue =>
           issue.code ===
-            "VALUE_EXPORT_PLAN_NOT_AVAILABLE" &&
+            "VALUE_EXPORT_PLAN_RECORD_ABSENT" &&
           issue.plan === "A2"
       )
     );
@@ -247,11 +247,11 @@ test(
 
     assert.equal(
       report.plans.A.daily[0].status,
-      "COMPLETE_ZERO_PICKS"
+      "ZERO_PICKS_UNVERIFIED"
     );
     assert.equal(
       report.plans.B.daily[0].status,
-      "NOT_AVAILABLE"
+      "NO_PLAN_RECORD"
     );
     assert.equal(
       report.plans.B.range.picks,

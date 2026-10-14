@@ -442,9 +442,12 @@ function addCounts(target, source) {
 }
 
 function planDayStatus(available, summary) {
-  if (!available) return "NOT_AVAILABLE";
+  if (!available) return "NO_PLAN_RECORD";
   if (summary.unresolved > 0 || summary.unsupported > 0) return "INCOMPLETE";
-  return summary.picks > 0 ? "COMPLETE_WITH_PICKS" : "COMPLETE_ZERO_PICKS";
+  // This report reads stored picks/settlements. It does not verify successful
+  // execution or complete required inputs, so an empty array cannot prove zero
+  // values, no fixtures, or a successfully completed plan.
+  return summary.picks > 0 ? "COMPLETE_WITH_PICKS" : "ZERO_PICKS_UNVERIFIED";
 }
 
 function duplicateKey(row) {
@@ -497,6 +500,7 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
     issues: [],
     missingDays: [],
     unavailablePlanDays: [],
+    unverifiedZeroPickDays: [],
     unresolvedClosedDays: [],
     unsupportedRows: [],
     duplicatePicks: [],
@@ -511,10 +515,12 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
     const rangeCounts = emptyCounts();
     let availableDays = 0;
     let notAvailableDays = 0;
+    let missingDayRecords = 0;
 
     for (const date of days) {
       const record = recordsByDay.get(date);
       if (!record) {
+        missingDayRecords += 1;
         integrity.missingDays.push(date);
         daily.push({ date, status: "MISSING_DAY", ...emptyCounts() });
         continue;
@@ -525,6 +531,9 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
       const rows = available && Array.isArray(planDay.picks) ? planDay.picks : [];
       const summary = summarizeValueRows(rows);
       const status = planDayStatus(available, summary);
+      if (status === "ZERO_PICKS_UNVERIFIED") {
+        integrity.unverifiedZeroPickDays.push({date, plan:plan.key, reason:"successful_execution_and_required_inputs_not_verified"});
+      }
 
       const availabilityReason =
         available
@@ -547,6 +556,8 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
         date,
         status,
         availabilityReason,
+        statusReason: status === "ZERO_PICKS_UNVERIFIED" ? "successful_execution_and_required_inputs_not_verified" :
+          status === "NO_PLAN_RECORD" ? "stored_plan_record_missing_not_proof_plan_did_not_exist" : null,
         ...summary
       });
       picks.push(...rows);
@@ -596,6 +607,11 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
       to,
       availableDays,
       notAvailableDays,
+      recordedPlanDays: availableDays,
+      noPlanRecordDays: notAvailableDays,
+      missingDayRecords,
+      totalDays: days.length,
+      dayCountBasis: "stored_plan_records_not_execution_or_plan_availability",
       ...finalizeCounts(rangeCounts)
     };
 
@@ -616,13 +632,14 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
     ...integrity.unsupportedRows.map(issue => ({ code: "VALUE_EXPORT_UNSUPPORTED_SETTLEMENT", ...issue })),
     ...integrity.duplicatePicks.map(issue => ({ code: "VALUE_EXPORT_DUPLICATE_PICK", ...issue })),
     ...integrity.countMismatches.map(issue => ({ code: "VALUE_EXPORT_COUNT_MISMATCH", ...issue })),
-    ...integrity.unavailablePlanDays.map(issue => ({ code: "VALUE_EXPORT_PLAN_NOT_AVAILABLE", ...issue }))
+    ...integrity.unverifiedZeroPickDays.map(issue => ({ code:"VALUE_EXPORT_ZERO_PICKS_UNVERIFIED", ...issue })),
+    ...integrity.unavailablePlanDays.map(issue => ({ code: "VALUE_EXPORT_PLAN_RECORD_ABSENT", ...issue }))
   ];
   integrity.status = integrity.issues.length > 0 ? "INCOMPLETE" : "COMPLETE";
 
   return {
     ok: true,
-    schema: "ai-matchlab.value-export-report.v1",
+    schema: "ai-matchlab.value-export-report.v2",
     from,
     to,
     dayCount: days.length,
