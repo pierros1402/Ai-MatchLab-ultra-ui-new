@@ -71,6 +71,7 @@ import { isDisabledLeague } from "../source-discovery/disabled-leagues.js";
 import { adjustMarketProbabilities } from "../core/opponent-strength-adjusted-form.js";
 import { loadOpponentAdjustedProfiles } from "../core/opponent-strength-profile-loader.js";
 import { describePlanBMarketEligibility, describeOpponentAdjustment, completePlanBEvaluationAccounting } from "../core/plan-b-evaluation-accounting.js";
+import { readFrozenPlanBObservation } from "../value/frozen-plan-b-observation.js";
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -739,7 +740,7 @@ function writeJsonFile(file, payload) {
   ensureDir(path.dirname(file));
   writeHistoryJsonAtomic(file, payload);
 }
-export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, outputMode = "production" } = {}) {
+export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, outputMode = "production", readFrozenObservation = readFrozenPlanBObservation } = {}) {
   const isPlanBObservation = outputMode === "plan-b-observation";
   const isPlanB2Observation = outputMode === "plan-b2-observation";
   const isObservation = isPlanBObservation || isPlanB2Observation;
@@ -779,6 +780,13 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
         canonical: `data/value/_audit/${dayKey}.json`,
         snapshot: `data/deploy-snapshots/${dayKey}/value-audit.json`
       };
+
+  const calendarDay = athensDayKey();
+  if (isObservation && (freeze || dayKey <= calendarDay)) {
+    const frozen = readFrozenObservation({ dayKey, outputMode, observationFile: outFile, auditFile: canonicalAuditOut });
+    if (frozen) return frozen;
+    if (dayKey < calendarDay) throw new Error("missing_historical_plan_b_observation");
+  }
 
   ensureDir(snapshotDir);
   ensureDir(valueDir);
