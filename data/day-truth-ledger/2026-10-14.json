@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-14",
-  "generatedAt": "2026-10-14T01:14:19.474Z",
+  "generatedAt": "2026-10-14T01:40:43.369Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "7bc1876d559182bfa08dfb8310ca81aefd89ab31b992db618363224d55e13a6b",
+  "truthFingerprint": "006c60c8c3709a1a323b128c2f6aa6dcdcefbc80028e20b1c97077282c4c705c",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 70,
-    "playedTerminal": 2,
+    "playedTerminal": 3,
     "nonPlayedTerminal": 0,
     "scheduled": 65,
-    "live": 3,
+    "live": 2,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 2,
-    "acceptedVerifiedFinalArtifacts": 2,
-    "convergedPlayedFinal": 2,
+    "verifiedFinalArtifacts": 3,
+    "acceptedVerifiedFinalArtifacts": 3,
+    "convergedPlayedFinal": 3,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 68,
+    "openRows": 67,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 2,
-    "scoredSettlementEligible": 2,
+    "historyEligible": 3,
+    "scoredSettlementEligible": 3,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -781,31 +781,31 @@
       "homeTeam": "Atlético Bucaramanga",
       "awayTeam": "Águilas Doradas",
       "kickoffUtc": "2026-10-13T23:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-14",
+        "scoreHome": 1,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -882,9 +882,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
         "scoreAway": 1
       },
@@ -931,10 +931,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 1,
+        "rawStatus": "STATUS_IN_PROGRESS",
+        "scoreHome": 2,
         "scoreAway": 1
       },
       "verifiedFinal": {
@@ -7222,16 +7222,17 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "7bc1876d559182bfa08dfb8310ca81aefd89ab31b992db618363224d55e13a6b",
+      "truthFingerprint": "006c60c8c3709a1a323b128c2f6aa6dcdcefbc80028e20b1c97077282c4c705c",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 2,
+        "expectedEligibleRows": 3,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_bra2_athletic_londrina_20261014",
+          "cid_col1_atleticobucaramanga_aguilasdoradas_20261014",
           "cid_mex2_tapatio_tepatitlan_20261014"
         ],
         "unexpectedFixtureIds": [],
@@ -7292,7 +7293,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-14",
-      "fileCount": 2,
+      "fileCount": 3,
       "authority": "scored_final_evidence"
     },
     "downstream": {
