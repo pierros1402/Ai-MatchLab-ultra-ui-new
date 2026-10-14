@@ -196,6 +196,9 @@ export function preserveHistoryCheckpoint({
       note: "Capture includes partial inputs and failed outputs; no execution status or zero-pick result is inferred." };
     const bytes = Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`);
     const manifestOid = String(git(root, ["hash-object", "-w", "--stdin"], { input: bytes })).trim();
+    const locator = Buffer.from(`${JSON.stringify({ schema: "ai-matchlab.history-locator.v1", manifestPath,
+      dayKey, runId: String(runId), attempt: String(attempt), stage, fingerprint, capturedAt: manifest.capturedAt })}\n`);
+    const locatorOid = String(git(root, ["hash-object", "-w", "--stdin"], { input: locator })).trim();
     let lastError;
     for (let retry = 0; retry < retries; retry++) {
       const parent = retry === 0 ? initialParent : remoteArchive(root, remote);
@@ -213,6 +216,9 @@ export function preserveHistoryCheckpoint({
         [`blobs/${chunk.sha256.slice(0, 2)}/${chunk.sha256}`, chunk.oid])));
       const entries = [...blobEntries].map(([name, oid]) => `100644 ${oid}\t${name}\0`);
       entries.push(`100644 ${manifestOid}\t${manifestPath}\0`);
+      // A small locator for off-site backup readers. Immutable older manifests
+      // and payloads remain in this tree and in the append-only parent history.
+      entries.push(`100644 ${locatorOid}\tlatest-checkpoint.json\0`);
       git(root, ["update-index", "-z", "--index-info"], { index, input: Buffer.from(entries.join("")) });
       const tree = git(root, ["write-tree"], { index }).trim();
       const parents = [...new Set([parent, sourceCommit].filter(Boolean))];

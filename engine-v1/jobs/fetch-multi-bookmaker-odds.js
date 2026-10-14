@@ -19,6 +19,7 @@ import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { buildAssessmentDay } from "./build-assessment-day.js";
 import { fetchOddsApiIoDay, createOddsApiIoBudget } from "./fetch-oddsapiio-odds.js";
 import { mergeWithDelta, normTeam, pairKey, namesMatch } from "../odds/multi-odds-merge.js";
+import { writeHistoryJsonAtomic } from "../storage/history-preservation.js";
 
 const BASE   = "https://api.oddspapi.io/v4";
 const KEY    = process.env.ODDSPAPI_KEY || "";
@@ -61,19 +62,20 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 function log(...a) { console.log("[multi-odds]", ...a); }
 
-async function apiGet(path) {
-  const url = `${BASE}${path}&apiKey=${KEY}`;
-  const r = await fetch(url);
+export async function requestOddsPapiJson(path, { fetchImpl = fetch, wait = sleep, apiKey = KEY } = {}) {
+  const url = `${BASE}${path}${path.includes("?") ? "&" : "?"}apiKey=${apiKey}`;
+  const r = await fetchImpl(url, { signal: AbortSignal.timeout(20000) });
   if (r.status === 429) {
     log("rate limited, waiting 10s");
-    await sleep(10000);
-    const r2 = await fetch(url);
-    if (!r2.ok) return null;
+    await wait(10000);
+    const r2 = await fetchImpl(url, { signal: AbortSignal.timeout(20000) });
+    if (!r2.ok) throw Object.assign(new Error(`oddspapi_http_${r2.status}`), { code: "provider_http_failed", httpStatus: r2.status });
     return r2.json();
   }
-  if (!r.ok) return null;
+  if (!r.ok) throw Object.assign(new Error(`oddspapi_http_${r.status}`), { code: "provider_http_failed", httpStatus: r.status });
   return r.json();
 }
+const apiGet = requestOddsPapiJson;
 
 // ─── OddsPapi market parsing ───────────────────────────────────────────────────
 //
@@ -214,7 +216,8 @@ export async function fetchMultiBookmakerOdds(date) {
   const nextDay = addDays(date, 1);
   await sleep(DELAY_MS);
   const fixJ = await apiGet(`/fixtures?sportId=10&statusId=0&from=${date}&to=${nextDay}`);
-  const opFixtures = Array.isArray(fixJ?.data || fixJ) ? (fixJ?.data || fixJ) : [];
+  if (!Array.isArray(fixJ?.data || fixJ)) throw Object.assign(new Error("oddspapi_invalid_fixture_payload"), { code: "provider_payload_invalid" });
+  const opFixtures = fixJ?.data || fixJ;
   const opWithOdds = opFixtures.filter(x => x.hasOdds);
   log(`oddspapi fixtures: ${opWithOdds.length} with odds`);
 
@@ -233,10 +236,11 @@ export async function fetchMultiBookmakerOdds(date) {
   const REFRESH_MS = 3 * 60 * 60 * 1000;
   const now = Date.now();
   const toFetch = [];
+  let skippedFresh = 0;
   for (const m of ourMatches) {
     const cached = cache[m.matchId];
     const needsRefresh = !cached || (now - (cached.fetchedAt || 0)) > REFRESH_MS;
-    if (!needsRefresh) continue;
+    if (!needsRefresh) { skippedFresh++; continue; }
 
     const fwd = pairKey(m.homeTeam, m.awayTeam);
     let opFix = exactIndex.get(fwd) || reverseIndex.get(fwd);
@@ -260,18 +264,29 @@ export async function fetchMultiBookmakerOdds(date) {
 
   // 5) Fetch ALL markets per fixture (no marketId filter = full response)
   let fetched = 0;
+  let requestFailures = 0, missingMarkets = 0, attempted = 0;
   const allSeenMarketIds = new Set();
 
   for (const { matchId, fixtureId, home, away, isRefresh } of toFetch) {
     await sleep(DELAY_MS);
 
-    const oddsJ = await apiGet(`/odds?fixtureId=${encodeURIComponent(fixtureId)}`);
+    let oddsJ;
+    attempted++;
+    try { oddsJ = await apiGet(`/odds?fixtureId=${encodeURIComponent(fixtureId)}`); }
+    catch (error) {
+      requestFailures++;
+      log("provider odds request failed", { code: error?.code || "provider_request_failed", status: error?.httpStatus || null });
+      if ([401, 403, 429].includes(error?.httpStatus)) break;
+      continue;
+    }
     if (!oddsJ?.bookmakerOdds) {
+      missingMarkets++;
       log(`  skip ${home} vs ${away}: no bookmakerOdds`);
       continue;
     }
 
     const { markets: freshMarkets, seenMarketIds } = parseAllMarkets(oddsJ.bookmakerOdds);
+    if (!Object.keys(freshMarkets).length) missingMarkets++;
     seenMarketIds.forEach(id => allSeenMarketIds.add(id));
 
     // Merge each market with delta tracking. Start from the existing markets so
@@ -290,6 +305,7 @@ export async function fetchMultiBookmakerOdds(date) {
     log(`  ${home} vs ${away}: ${totalBooks} books [${mkKeys}]${isRefresh ? ` (refresh, ${moved} moved)` : ""}`);
 
     cache[matchId] = {
+      ...cache[matchId],
       oddspapiFixtureId: fixtureId,
       home:      home,
       away:      away,
@@ -306,10 +322,13 @@ export async function fetchMultiBookmakerOdds(date) {
 
   // 6) Persist
   const out = { date, updatedAt: Date.now(), matches: cache };
-  fs.writeFileSync(outFile, JSON.stringify(out, null, 2), "utf8");
+  writeHistoryJsonAtomic(outFile, out);
   log("done", { fetched, cached: Object.keys(cache).length, file: outFile });
 
-  return { ok: true, date, fetched, total: Object.keys(cache).length };
+  return { ok: requestFailures === 0, date, fetched, total: Object.keys(cache).length,
+    matched: toFetch.length, skipped: skippedFresh, expectedFixtures: ourMatches.length,
+    unmatchedFixtures: ourMatches.length - skippedFresh - toFetch.length,
+    unattemptedFixtures: toFetch.length - attempted, requestFailures, missingMarkets };
 }
 
 // ─── Prefetch upcoming odds (D+1 to D+daysAhead) ─────────────────────────────

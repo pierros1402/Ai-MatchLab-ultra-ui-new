@@ -118,3 +118,32 @@ the canary does not prove that a schedule fires or captures its future output.
 The operational claim is bounded: bytes in an acknowledged remote checkpoint
 are recoverable and subsequent publication failure cannot remove them. Complete
 system assurance requires the activation and independent-storage checks above.
+
+## Durable display-odds writer
+
+`Odds refresh` collects D0 and D+1..D+6 on GitHub using the existing provider
+credentials, refresh gates and shared 80-request IO budget. It no longer starts
+an asynchronous write on Render. The collector never executes value/assessment
+models and refuses live collection for a past date. Raw cache updates use atomic
+writes; another provider's identifiers/timestamps and frozen opening odds survive
+refreshes. Successful batches are checkpointed before the next producer stage.
+
+The acquisition audit in `data/ingest-state/multi-odds/` distinguishes provider
+failure, missing keys, fresh cache, no fixtures in the supplied input, no provider
+matches, missing markets, request-budget exhaustion and HTTP rate limits. Quota
+or coverage-limited data can be published as explicitly incomplete; provider
+errors fail the collector after preserving available evidence. Neither an empty
+provider response nor missing fixtures establishes no games or zero value picks.
+`valueExecution` is null. No historical plan result is reconstructed by this job.
+
+History cleanup also retains the upstream job status in
+`data/ingest-state/history-runs/`. Its scope is before cleanup, so a subsequent
+backup failure can still fail the job. It does not claim the final run conclusion
+or classify plan outcomes. Full textual Actions logs still use GitHub retention.
+
+`latest-checkpoint.json` is a small locator for independent backup readers;
+older immutable manifests and blobs remain in the append-only archive. Readers
+pin an archive commit, verify the located manifest and every payload hash, and
+retain local immutable refs before acknowledging a backup. Render snapshot mode
+rejects the authenticated volatile multi-odds writer after deployment; it serves
+the GitHub-persisted cache through the existing snapshot synchronizer.
