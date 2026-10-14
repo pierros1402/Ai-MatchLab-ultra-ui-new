@@ -24,7 +24,7 @@ export function collectionStatus(result) {
 // that there were no games or that every required input was available.
 const completeStatuses = new Set(["FRESH_CACHE", "COLLECTION_COMPLETED"]);
 const safeSummary = result => Object.fromEntries([
-  "ok", "reason", "errorCode", "fetched", "skipped", "matched", "total", "expectedFixtures", "unmatchedFixtures", "unattemptedFixtures", "requestFailures", "missingMarkets", "limitHit", "budgetExhausted", "requestsUsed"
+  "ok", "reason", "errorCode", "httpStatus", "fetched", "skipped", "matched", "total", "expectedFixtures", "unmatchedFixtures", "unattemptedFixtures", "requestFailures", "missingMarkets", "limitHit", "budgetExhausted", "requestsUsed"
 ].filter(key => result?.[key] !== undefined).map(key => [key, result[key]]));
 
 /** Capture display-only odds on a durable writer. Never execute value/assessment
@@ -56,7 +56,10 @@ export async function refreshDurableMultiOdds(dayKey = athensDayKey(), {
   const collect = async (provider, date, fetcher) => {
     let result;
     try { result = await fetcher(date, budget); }
-    catch (error) { result = { ok: false, reason: "provider_request_failed", errorCode: error?.code || error?.name || "Error" }; }
+    catch (error) {
+      const httpStatus = Number.isInteger(error?.httpStatus) && error.httpStatus >= 100 && error.httpStatus <= 599 ? error.httpStatus : undefined;
+      result = { ok: false, reason: "provider_request_failed", errorCode: error?.code || error?.name || "Error", httpStatus, limitHit: httpStatus === 429 };
+    }
     audit.stages.push({ provider, date, status: collectionStatus(result), result: safeSummary(result), capturedAt: new Date().toISOString() });
     writeAudit(file, audit);
   };

@@ -92,6 +92,22 @@ test("available quota-limited data is preserved and explicitly incomplete", asyn
   assert.equal(captured.status, "INCOMPLETE"); assert.equal(captured.valueExecution, null);
 });
 
+test("provider HTTP cause survives durable audit without copying secret error text", async () => {
+  let captured;
+  const invoke = status => refreshDurableMultiOdds("2026-10-14", {
+    ...defaults, papi: async () => { throw Object.assign(new Error("https://provider?apiKey=private-test-key"), { code: "provider_http_failed", httpStatus: status }); },
+    writeAudit: (_file, audit) => { captured = structuredClone(audit); }
+  });
+  await assert.rejects(invoke(403), /provider_failed/);
+  assert.equal(captured.status, "FAILED");
+  assert.equal(captured.stages[0].result.httpStatus, 403);
+  assert.equal(JSON.stringify(captured).includes("private-test-key"), false);
+  const limited = await invoke(429);
+  assert.equal(limited.status, "INCOMPLETE");
+  assert.equal(limited.stages[0].status, "INCOMPLETE_PROVIDER_RATE_LIMIT");
+  assert.equal(limited.stages[0].result.httpStatus, 429);
+});
+
 test("a later provider failure retains earlier original odds on a real independent archive", async t => {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), "durable-odds-"));
   t.after(() => fs.rmSync(temp, { recursive: true, force: true }));
