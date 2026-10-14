@@ -73,6 +73,7 @@ test("input absence, fresh cache, missing markets and provider failure are never
   assert.equal(collectionStatus({ ok: true, fetched: 0, matched: 0 }), "NO_PROVIDER_MATCHES");
   assert.equal(collectionStatus({ ok: true, missingMarkets: 2 }), "INCOMPLETE_ODDS_DATA");
   assert.equal(collectionStatus({ ok: false, reason: "no_key" }), "MISSING_PROVIDER_KEY");
+  assert.equal(collectionStatus({ ok: false, requestFailures: 1, budgetExhausted: true }), "PROVIDER_FAILED");
   const result = await refreshDurableMultiOdds("2026-10-14", {
     ...defaults, papi: async () => ({ ok: false, reason: "no_fixtures" }),
     io: async () => ({ ok: true, fetched: 0, skipped: 4 })

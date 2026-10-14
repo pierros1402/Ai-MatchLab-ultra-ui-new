@@ -10,8 +10,8 @@ export function collectionStatus(result) {
   if (result?.reason === "no_key") return "MISSING_PROVIDER_KEY";
   if (result?.reason === "no_fixtures") return "NO_FIXTURES_IN_INPUT";
   if (result?.limitHit) return "INCOMPLETE_PROVIDER_RATE_LIMIT";
-  if (result?.budgetExhausted) return "INCOMPLETE_REQUEST_BUDGET";
   if (result?.ok === false || result?.requestFailures > 0) return "PROVIDER_FAILED";
+  if (result?.budgetExhausted) return "INCOMPLETE_REQUEST_BUDGET";
   if (result?.unmatchedFixtures > 0) return "INCOMPLETE_PROVIDER_COVERAGE";
   if (result?.missingMarkets > 0) return "INCOMPLETE_ODDS_DATA";
   if (result?.fetched === 0 && result?.skipped > 0) return "FRESH_CACHE";
