@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-14",
-  "generatedAt": "2026-10-14T12:41:17.679Z",
+  "generatedAt": "2026-10-14T13:08:57.037Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "c1105e6fdfbe36f9cd8e699d273b315457e3884f3315998ffe6c0acfc8615537",
+  "truthFingerprint": "990c22fa1d88b9579a43469f803eabbb7deb3622de0d03d827ea4ec648551e2a",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -18,8 +18,8 @@
   "summary": {
     "canonicalRows": 70,
     "playedTerminal": 10,
-    "nonPlayedTerminal": 1,
-    "scheduled": 58,
+    "nonPlayedTerminal": 2,
+    "scheduled": 57,
     "live": 1,
     "interrupted": 0,
     "delayed": 0,
@@ -28,16 +28,16 @@
     "verifiedFinalArtifacts": 10,
     "acceptedVerifiedFinalArtifacts": 10,
     "convergedPlayedFinal": 10,
-    "convergedNonPlayedTerminal": 1,
+    "convergedNonPlayedTerminal": 2,
     "pendingVerifiedFinal": 0,
-    "openRows": 59,
+    "openRows": 58,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 10,
     "scoredSettlementEligible": 10,
-    "voidSettlementEligible": 1
+    "voidSettlementEligible": 2
   },
   "fixtures": [
     {
@@ -490,10 +490,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_IN_PROGRESS",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -2104,12 +2104,12 @@
       "homeTeam": "Hajer",
       "awayTeam": "Al Orubah",
       "kickoffUtc": "2026-10-14T14:55:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PRE_KICKOFF_NON_PLAYED",
+      "operationalState": "NON_PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
+        "status": "STATUS_POSTPONED",
+        "statusType": "STATUS_POSTPONED",
+        "rawStatus": "STATUS_POSTPONED",
         "scoreHome": null,
         "scoreAway": null
       },
@@ -2124,12 +2124,12 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "CONVERGED_NON_PLAYED_TERMINAL",
+        "reason": "explicit_nonplayed_terminal",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
-        "voidSettlementEligible": false,
+        "voidSettlementEligible": true,
         "repairAuthorized": false
       },
       "downstream": {
@@ -3662,7 +3662,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 12680,
+            "count": 12706,
             "informational": true
           }
         },
@@ -7222,7 +7222,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "c1105e6fdfbe36f9cd8e699d273b315457e3884f3315998ffe6c0acfc8615537",
+      "truthFingerprint": "990c22fa1d88b9579a43469f803eabbb7deb3622de0d03d827ea4ec648551e2a",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
