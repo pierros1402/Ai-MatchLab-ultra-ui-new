@@ -374,9 +374,9 @@ function normalizeSelection(pick) {
 }
 
 function evaluatePickResult(pick, finalResult) {
-  const home = Number(finalResult.homeScore);
-  const away = Number(finalResult.awayScore);
-  if (!Number.isFinite(home) || !Number.isFinite(away)) return null;
+  const home = strictFinalScore(finalResult?.homeScore);
+  const away = strictFinalScore(finalResult?.awayScore);
+  if (home === null || away === null) return null;
 
   const market = normalizeMarket(pick?.market || pick?.marketName || pick?.type);
   const selection = normalizeSelection(pick);
@@ -385,14 +385,26 @@ function evaluatePickResult(pick, finalResult) {
   const compactSelection = selection.replace(/[^A-Z0-9.]/gu, '');
 
   const compactOuMatch = compactMarket.match(/^OU([0-9]{2})$/u);
-  if (compactOuMatch) {
-    const line = Number(compactOuMatch[1]) / 10;
-    if (compactSelection === 'OVER' || compactSelection.startsWith('OVER')) {
-      return total > line;
+  if (compactOuMatch || market.includes('OVER') || market.includes('UNDER')) {
+    const marketLine = compactOuMatch ? Number(compactOuMatch[1]) / 10 : Number(market.match(/([0-9]+(?:\.[0-9]+)?)/u)?.[1] ?? NaN);
+    const selectionLine = Number(selection.match(/([0-9]+(?:\.[0-9]+)?)/u)?.[1] ?? NaN);
+    if (Number.isFinite(marketLine) && Number.isFinite(selectionLine) && marketLine !== selectionLine) return null;
+    const line = Number.isFinite(marketLine) ? marketLine : selectionLine;
+    // Only half-goal lines have an unambiguous binary outcome. Integer/quarter
+    // lines require push/partial-win handling instead of a fabricated loss.
+    if (!Number.isFinite(line) || line < 0 || line % 1 !== 0.5) return null;
+    const selectionOver = compactSelection.startsWith('OVER');
+    const selectionUnder = compactSelection.startsWith('UNDER');
+    const marketOver = market.includes('OVER'), marketUnder = market.includes('UNDER');
+    if (selectionOver || selectionUnder) {
+      if (selection.includes('OVER') && selection.includes('UNDER')) return null;
+      if ((marketOver && !marketUnder && selectionUnder) || (marketUnder && !marketOver && selectionOver)) return null;
+      return selectionOver ? total > line : total < line;
     }
-    if (compactSelection === 'UNDER' || compactSelection.startsWith('UNDER')) {
-      return total < line;
-    }
+    if (selection) return null;
+    if (marketOver && !marketUnder) return total > line;
+    if (marketUnder && !marketOver) return total < line;
+    return null;
   }
 
   if (compactMarket === 'BTTS') {
@@ -401,15 +413,6 @@ function evaluatePickResult(pick, finalResult) {
     if (compactSelection === 'NO') return !bothTeamsScored;
   }
 
-
-  if (market.includes('OVER') || market.includes('UNDER')) {
-    const lineMatch = market.match(/([0-9]+(?:\.[0-9]+)?)/u) || selection.match(/([0-9]+(?:\.[0-9]+)?)/u);
-    const line = lineMatch ? Number(lineMatch[1]) : null;
-
-    if (!Number.isFinite(line)) return null;
-    if (market.includes('OVER') || selection.includes('OVER')) return total > line;
-    if (market.includes('UNDER') || selection.includes('UNDER')) return total < line;
-  }
 
   if (market === 'BTTS' || market.includes('BOTH TEAMS')) {
     if (selection === 'YES' || selection === 'Y' || selection.includes('YES')) {
