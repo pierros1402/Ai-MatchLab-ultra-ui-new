@@ -2,14 +2,62 @@
   "dayKey": "2026-10-15",
   "leagueSlug": "col.1",
   "leagueName": "Colombia Primera A",
-  "updatedAt": "2026-10-14T22:45:59.259Z",
-  "count": 2,
+  "updatedAt": "2026-10-15T00:23:42.194Z",
+  "count": 1,
   "sourceMeta": {
-    "acquisitionProvider": "espn_all_scoreboard",
-    "requestedLeagueSlug": "all",
+    "acquisitionProvider": "espn_direct_league_status",
+    "requestedLeagueSlug": "col.1",
     "requestedDayKey": "2026-10-15",
-    "mergedAt": "2026-10-14T22:45:59.259Z",
-    "mode": "supplemental_target_seed_only"
+    "providerFetchSlugs": [
+      "col.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 1,
+      "matches": 0,
+      "fetches": [
+        {
+          "providerSlug": "col.1",
+          "dayKey": "2026-10-14",
+          "ok": true,
+          "events": 1,
+          "matched": 0
+        },
+        {
+          "providerSlug": "col.1",
+          "dayKey": "2026-10-16",
+          "ok": true,
+          "events": 0,
+          "matched": 0
+        }
+      ]
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 1,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 1,
+      "wrongDayRemovedRows": 1,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [
+        {
+          "providerSlug": "col.1",
+          "providerMatchId": "401877844",
+          "ok": true,
+          "kind": "other_day",
+          "authoritativeDayKey": "2026-10-22",
+          "reason": null
+        }
+      ],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-10-15T00:23:42.194Z",
+    "mode": "targeted_live_status_refresh"
   },
   "fixtures": [
     {
@@ -31,50 +79,42 @@
       "awayTeam": "Deportivo Pereira",
       "venue": "Romelio Martínez",
       "firstSeenAt": "2026-09-30T22:18:48.934Z",
-      "lastSeenAt": "2026-10-14T22:45:59.211Z",
+      "lastSeenAt": 1792020862583,
       "canonicalAliases": [
         "cid_col1_junior_pereira_20261015"
       ],
       "providerLeagueSlug": "col.1",
-      "status": "SECOND_HALF",
-      "rawStatus": "STATUS_SECOND_HALF",
-      "minute": "56'",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+6'",
       "scoreHome": 1,
-      "scoreAway": 0,
+      "scoreAway": 1,
       "penalties": null,
-      "decidedBy": null
-    },
-    {
-      "canonicalId": "cid_col1_independientesantafe_jaguarescordoba_20261015",
-      "matchId": "cid_col1_independientesantafe_jaguarescordoba_20261015",
-      "matchKey": "independientesantafe|jaguarescordoba|1792020600000",
-      "source": "espn",
-      "sourceId": "401877844",
-      "sourceMatchId": "401877844",
-      "providerIds": {
-        "espn": "401877844"
-      },
-      "leagueSlug": "col.1",
-      "leagueName": "Colombia Primera A",
-      "dayKey": "2026-10-15",
-      "fetchedDayKey": "2026-10-15",
-      "kickoffUtc": "2026-10-14T23:30Z",
-      "homeTeam": "Independiente Santa Fe",
-      "awayTeam": "Jaguares de Córdoba",
-      "venue": "Estadio Nemesio Camacho El Campín",
-      "firstSeenAt": "2026-09-30T22:18:48.935Z",
-      "lastSeenAt": "2026-10-14T22:45:59.212Z",
-      "canonicalAliases": [
-        "cid_col1_santafe_jaguarescordoba_20261015"
-      ],
-      "providerLeagueSlug": "col.1",
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
-      "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null
+      "decidedBy": null,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-10-14T23:47:21.444Z",
+        "provider": "espn",
+        "providerMatchId": "401878008",
+        "dayKey": "2026-10-15",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 1,
+          "scoreAway": 1
+        }
+      }
     }
   ]
 }

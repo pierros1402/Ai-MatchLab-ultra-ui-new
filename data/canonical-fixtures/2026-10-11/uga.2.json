@@ -2,7 +2,7 @@
   "dayKey": "2026-10-11",
   "leagueSlug": "uga.2",
   "leagueName": "Ugandan Big League",
-  "updatedAt": "2026-10-11T19:57:48.269Z",
+  "updatedAt": "2026-10-14T23:57:29.019Z",
   "count": 6,
   "sourceMeta": {
     "acquisitionProvider": "flashscore",
@@ -17,7 +17,10 @@
       ],
       "changedRows": 1,
       "mergedAt": "2026-10-11T19:57:48.269Z"
-    }
+    },
+    "crossDayVerifiedFinalSupersessionAt": "2026-10-14T23:57:29.019Z",
+    "crossDayVerifiedFinalSupersessionRows": 1,
+    "crossDayVerifiedFinalSupersessionPolicy": "cross-day-provider-verified-final-v1"
   },
   "fixtures": [
     {
@@ -128,12 +131,78 @@
       "scoreAway": null,
       "penalties": null,
       "decidedBy": null,
-      "status": "STATUS_SCHEDULED",
-      "rawStatus": "STATUS_SCHEDULED",
+      "status": "STATUS_POSTPONED",
+      "rawStatus": "STATUS_POSTPONED",
       "minute": null,
       "venue": null,
       "firstSeenAt": "2026-10-08T21:48:59.848Z",
-      "lastSeenAt": "2026-10-11T19:09:58.713Z"
+      "lastSeenAt": "2026-10-11T19:09:58.713Z",
+      "statusType": "STATUS_POSTPONED",
+      "statusCorrection": {
+        "schema": "ai-matchlab.cross-day-verified-final-supersession.v1",
+        "correctedAt": "2026-10-14T23:57:29.019Z",
+        "decisionId": "cross-day-verified-final-pdBk1hy2-cid_uga2_kaarokarungi_rwenzorilions_20261011-v1",
+        "policyVersion": "cross-day-provider-verified-final-v1",
+        "correctedFrom": {
+          "status": "STATUS_SCHEDULED",
+          "statusType": null,
+          "rawStatus": "STATUS_SCHEDULED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "correctedTo": {
+          "status": "STATUS_POSTPONED",
+          "statusType": "STATUS_POSTPONED",
+          "rawStatus": "STATUS_POSTPONED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "reason": "verified_cross_day_provider_reschedule",
+        "decisionBasis": "exact_provider_identity_cross_day_supersession_with_verified_final",
+        "providerEvidence": {
+          "provider": "flashscore",
+          "providerMatchId": "pdBk1hy2",
+          "supersededCanonicalId": "cid_uga2_kaarokarungi_rwenzorilions_20261011",
+          "supersededDayKey": "2026-10-11",
+          "supersededKickoffUtc": "2026-10-11T13:00:00.000Z",
+          "evidenceCanonicalId": "cid_uga2_kaarokarungi_rwenzorilions_20261013",
+          "evidenceDayKey": "2026-10-13",
+          "evidenceKickoffUtc": "2026-10-13T13:00:00.000Z",
+          "evidenceHomeTeam": "Kaaro Karungi",
+          "evidenceAwayTeam": "Rwenzori Lions",
+          "verifiedFinalArtifact": "data/final-results/2026-10-13/cid_uga2_kaarokarungi_rwenzorilions_20261013.json",
+          "verifiedFinalVerdict": "verified_final_result",
+          "verifiedFinalTruth": true,
+          "verifiedFinalScoreHome": 0,
+          "verifiedFinalScoreAway": 0
+        },
+        "guarantees": {
+          "flashscoreProviderOnly": true,
+          "exactProviderIdentity": true,
+          "sameLeague": true,
+          "exactNormalizedOrderedTeamPair": true,
+          "uniqueLatestObservation": true,
+          "strictlyNewerKickoff": true,
+          "minimumKickoffShiftRequired": true,
+          "strictlyNewerObservation": true,
+          "nonOverlappingObservationWindows": true,
+          "oldKickoffPastGraceRequired": true,
+          "oldOccurrenceScorelessScheduledOnly": true,
+          "playedFinalNeverSuperseded": true,
+          "existingExplicitNonPlayedNeverSuperseded": true,
+          "exactVerifiedFinalArtifact": true,
+          "exactVerifiedFinalFlashscoreProviderIdentity": true,
+          "verifiedFinalScoreParity": true,
+          "verifiedFinalTeamPairParity": true,
+          "oldOccurrenceHasNoActiveFinalResult": true,
+          "oldOccurrenceAbsentFromHistory": true,
+          "oldOccurrenceHasNoOfficialValuePick": true,
+          "oldOccurrenceScoreRemainsNull": true,
+          "scoreNeverCopiedBackward": true
+        }
+      }
     },
     {
       "canonicalId": "cid_uga2_kiyindaboys_pakwachyoungstars_20261011",
