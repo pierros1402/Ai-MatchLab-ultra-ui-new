@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-15",
-  "generatedAt": "2026-10-15T01:08:21.862Z",
+  "generatedAt": "2026-10-15T01:37:51.027Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "c3e83d731b5422c2b588c205331a403b3f93fb0215908393465a23c9089692e4",
+  "truthFingerprint": "bd74d5fcad6b4158c8a3fe2eaf9d17ed3ab1857859f6d774744b289a38878c86",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 106,
-    "playedTerminal": 6,
+    "playedTerminal": 8,
     "nonPlayedTerminal": 0,
-    "scheduled": 88,
+    "scheduled": 86,
     "live": 12,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 8,
-    "acceptedVerifiedFinalArtifacts": 8,
-    "convergedPlayedFinal": 6,
+    "verifiedFinalArtifacts": 10,
+    "acceptedVerifiedFinalArtifacts": 10,
+    "convergedPlayedFinal": 8,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 98,
+    "openRows": 96,
     "unresolvedRows": 0,
     "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 6,
-    "scoredSettlementEligible": 6,
+    "historyEligible": 8,
+    "scoredSettlementEligible": 8,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -784,11 +784,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -1516,12 +1516,12 @@
       "homeTeam": "Comunicaciones",
       "awayTeam": "Aurora FC",
       "kickoffUtc": "2026-10-14T23:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 2
       },
@@ -1536,11 +1536,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1565,14 +1565,14 @@
       "homeTeam": "CD Guastatoya",
       "awayTeam": "Antigua GFC",
       "kickoffUtc": "2026-10-15T01:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -1586,7 +1586,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4361,10 +4361,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_IN_PROGRESS",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -4410,10 +4410,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 1,
+        "rawStatus": "STATUS_IN_PROGRESS",
+        "scoreHome": 2,
         "scoreAway": 3
       },
       "verifiedFinal": {
@@ -4511,7 +4511,7 @@
         "status": "SECOND_HALF",
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 1,
+        "scoreHome": 3,
         "scoreAway": 1
       },
       "verifiedFinal": {
@@ -4610,7 +4610,7 @@
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 2,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -4655,9 +4655,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_IN_PROGRESS",
         "scoreHome": 2,
         "scoreAway": 0
       },
@@ -4809,18 +4809,18 @@
         "scoreAway": 3
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-15",
+        "scoreHome": 0,
+        "scoreAway": 3,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4851,10 +4851,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 2,
+        "rawStatus": "STATUS_IN_PROGRESS",
+        "scoreHome": 3,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -5051,7 +5051,7 @@
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 2,
-        "scoreAway": 1
+        "scoreAway": 3
       },
       "verifiedFinal": {
         "present": false,
@@ -5093,14 +5093,14 @@
       "homeTeam": "Hartford Athletic",
       "awayTeam": "Charleston",
       "kickoffUtc": "2026-10-14T23:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": true,
@@ -5110,14 +5110,14 @@
         "dayKey": "2026-10-15",
         "scoreHome": 1,
         "scoreAway": 1,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -5152,18 +5152,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-15",
+        "scoreHome": 1,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -5239,8 +5239,8 @@
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
     "conflictFixtureIds": [
-      "cid_gua1_comunicaciones_aurora_20261015",
-      "cid_usa2_hartfordathletic_charleston_20261015"
+      "cid_usa1_montreal_atlantaunited_20261015",
+      "cid_usa2_rhodeisland_loudoun_20261015"
     ],
     "pendingVerifiedFinalFixtureIds": []
   },
@@ -5451,7 +5451,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 12888,
+            "count": 12892,
             "informational": true
           }
         },
@@ -7754,13 +7754,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "c3e83d731b5422c2b588c205331a403b3f93fb0215908393465a23c9089692e4",
+      "truthFingerprint": "bd74d5fcad6b4158c8a3fe2eaf9d17ed3ab1857859f6d774744b289a38878c86",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 6,
+        "expectedEligibleRows": 8,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_sarmientojunin_riverplate_20261015",
@@ -7768,6 +7768,8 @@
           "cid_col2_realcundinamarca_bogota_20261015",
           "cid_conmebolsudamericana_atleticomg_montevideocitytorque_20261015",
           "cid_crc1_perezzeledon_escorpionesbelen_20261015",
+          "cid_gua1_comunicaciones_aurora_20261015",
+          "cid_usa2_hartfordathletic_charleston_20261015",
           "cid_usa2_sportingjax_birmingham_20261015"
         ],
         "unexpectedFixtureIds": [],
@@ -7828,7 +7830,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-15",
-      "fileCount": 8,
+      "fileCount": 10,
       "authority": "scored_final_evidence"
     },
     "downstream": {
