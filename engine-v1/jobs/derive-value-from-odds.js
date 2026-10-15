@@ -53,6 +53,7 @@
 
 import fs from "fs";
 import { checkpointHistoryIfRequired, writeHistoryJsonAtomic } from "../storage/history-preservation.js";
+import { createValueDecisionEvidence } from "../storage/value-decision-evidence.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import { athensDayKey } from "../core/daykey.js";
@@ -740,7 +741,7 @@ function writeJsonFile(file, payload) {
   ensureDir(path.dirname(file));
   writeHistoryJsonAtomic(file, payload);
 }
-export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, outputMode = "production", readFrozenObservation = readFrozenPlanBObservation } = {}) {
+export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, outputMode = "production", readFrozenObservation = readFrozenPlanBObservation, decisionEvidenceFactory = createValueDecisionEvidence } = {}) {
   const isPlanBObservation = outputMode === "plan-b-observation";
   const isPlanB2Observation = outputMode === "plan-b2-observation";
   const isObservation = isPlanBObservation || isPlanB2Observation;
@@ -828,6 +829,11 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
     )
       ? oddsPayload.matches
       : [];
+  const inputEvidence = decisionEvidenceFactory(dayKey, isPlanB2Observation ? "plan-b2" : "plan-b", {
+    canonicalFixtures,
+    assessmentRows,
+    assessmentInputSource
+  });
 
   const membershipJoin =
     joinCanonicalFixturesWithModelAssessments(
@@ -958,6 +964,7 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
       membership,
       isPlanB2Observation
     });
+    audit.decisionInputEvidence = inputEvidence.summary();
 
     writeJsonFile(canonicalAuditOut, audit);
     writeJsonFile(snapshotAuditOut, audit);
@@ -975,6 +982,7 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
     const diagnosticId = String(originalMatch?.canonicalId || originalMatch?.matchId || "");
     if (!hasModelAssessment(originalMatch)) {
       fixtureDiagnostics.set(diagnosticId, { reasonCode: ambiguousIds.has(diagnosticId) ? "ambiguous_model_assessment" : "missing_model_assessment" });
+      inputEvidence.capture("missing_assessment", { fixture: originalMatch }, diagnosticId);
       continue;
     }
     let match = originalMatch;
@@ -1006,6 +1014,7 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
       };
     }
 
+    inputEvidence.capture("assessment_selector_arguments", { match }, diagnosticId);
     const canonicalId = String(match?.canonicalId || "").trim();
     if (!canonicalId) {
       fixtureDiagnostics.set(diagnosticId, { reasonCode: "missing_canonical_identity" });
@@ -1053,6 +1062,7 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
     ...strictPolicy.rejected,
     ...filtered.rejected
   ];
+  inputEvidence.capture("selector_output", { candidatePicks, finalPicks, rejectedRows, membership });
 
   const audit = buildValueAudit({
     dayKey,
@@ -1065,6 +1075,7 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
     isPlanB2Observation,
     fixtureDiagnostics
   });
+  audit.decisionInputEvidence = inputEvidence.summary();
 
   const outputMembership = validatePicksAgainstCanonicalFixtures(
     finalPicks,

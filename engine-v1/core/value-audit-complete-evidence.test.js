@@ -6,6 +6,7 @@ import crypto from "node:crypto";
 import { buildValueDay, expandValueMarkets } from "./build-value-day.js";
 import { evaluateMatchValue } from "./value-engine-v1.js";
 import { resolveDataPath, getDataRoot } from "../storage/data-root.js";
+import { createValueDecisionEvidence } from "../storage/value-decision-evidence.js";
 
 test("a real Plan A build retains rejection 101 and the raw-sample null diagnostic", async () => {
   const day = "2099-12-30";
@@ -24,7 +25,8 @@ test("a real Plan A build retains rejection 101 and the raw-sample null diagnost
     }));
     fs.writeFileSync(path.join(canonical, "test.1.json"), JSON.stringify({ date: day, fixtures }), { flag: "wx" });
     const result = await buildValueDay(day, {
-      rebuild: true, outputPath: path.join(output, "value.json"), auditPath: path.join(output, "audit.json")
+      rebuild: true, outputPath: path.join(output, "value.json"), auditPath: path.join(output, "audit.json"),
+      decisionEvidenceFactory: (dayKey, planId, inputs) => createValueDecisionEvidence(dayKey, planId, inputs, { dataRoot: output })
     });
     const audit = JSON.parse(fs.readFileSync(path.join(output, "audit.json")));
     assert.deepEqual(result.picks, []);
@@ -43,6 +45,24 @@ test("a real Plan A build retains rejection 101 and the raw-sample null diagnost
     assert.equal(last.minimumRecentSample.homeRawSample, 0);
     assert.equal(last.minimumRecentSample.awayRawSample, 0);
     assert.equal(audit.rejections.sample.some(r => r.matchId === last.matchId), false);
+    assert.ok(audit.decisionInputEvidence.records.some(r => r.stage === "shared_inputs"));
+    const returned = audit.decisionInputEvidence.records.find(r => r.stage === "engine_returned");
+    assert.equal(returned.canonicalMatchId, fixtures[102].canonicalId);
+    const receiptFile = path.join(output, returned.receipt.path.replace(/^data\//u, ""));
+    assert.equal(crypto.createHash("sha256").update(fs.readFileSync(receiptFile)).digest("hex"), returned.receipt.sha256);
+    const receipt = JSON.parse(fs.readFileSync(receiptFile));
+    const inputFile = path.join(output, receipt.inputs.input.path.replace(/^data\//u, ""));
+    const input = JSON.parse(fs.readFileSync(inputFile));
+    assert.ok(Object.hasOwn(input, "ai"), "internal AI detail load must be captured after the engine returns");
+    assert.equal(input.canonicalId, fixtures[102].canonicalId);
+    const beforeFailure = fs.readFileSync(path.join(output, "value.json"));
+    await assert.rejects(buildValueDay(day, {
+      rebuild: true, outputPath: path.join(output, "value.json"), auditPath: path.join(output, "audit.json"),
+      decisionEvidenceFactory: () => ({ capture() {
+        const error = new Error("synthetic evidence I/O failure"); error.code = "VALUE_DECISION_EVIDENCE_FAILED"; throw error;
+      }, summary() { return {}; } })
+    }), { code: "VALUE_DECISION_EVIDENCE_FAILED" });
+    assert.deepEqual(fs.readFileSync(path.join(output, "value.json")), beforeFailure);
   } finally {
     for (const directory of owned) {
       const resolved = fs.realpathSync(directory);

@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "node:path";
 import { checkpointHistoryIfRequired, writeHistoryJsonAtomic } from "../storage/history-preservation.js";
+import { createValueDecisionEvidence } from "../storage/value-decision-evidence.js";
 import { ensureDir, resolveDataPath } from "../storage/data-root.js";
 import {
   evaluateMatchValue,
@@ -848,7 +849,7 @@ function applyIntelligenceToValue(value, intelligence) {
 }
 
 // ------------------------------
-export async function buildValueDay(date, { rebuild = false, env, opponentAdjusted = false, outputPath = null, auditPath = null } = {}) {
+export async function buildValueDay(date, { rebuild = false, env, opponentAdjusted = false, outputPath = null, auditPath = null, decisionEvidenceFactory = createValueDecisionEvidence } = {}) {
   const season = currentSeason();
   const cacheKey = `${season}:${date}:${opponentAdjusted ? "a2" : "a"}`;
 
@@ -962,6 +963,11 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
   }
 
   const { indexes, priors } = await getSeasonResources(season, rebuild);
+  const inputEvidence = decisionEvidenceFactory(date, opponentAdjusted ? "plan-a2" : "plan-a", {
+    canonicalFixtures: sourceMatches,
+    indexes,
+    priors
+  });
 
   const picks = [];
   const evaluatedFixtureIds = new Set();
@@ -1005,6 +1011,7 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
       }
 
       const details = readDetailsSnapshot(date, match.canonicalId, match.matchId);
+      inputEvidence.capture("fixture_context", { fixture: match, details }, evaluatedFixtureId);
       const matchProfile = details?.researchedFacts?.matchProfile || null;
 
             const competitionContext =
@@ -1014,8 +1021,7 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
 
                   const intelligence = await buildMatchIntelligence(match, { season });
 
-                  const value = await evaluateMatchValue(
-                    {
+                  const engineInput = {
                       ...match,
                       kickoff: match.kickoffUtc,
                       season,
@@ -1031,9 +1037,12 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
                         signals: details?.aiContext?.signals || [],
                         matchIntelligence: intelligence
                       }
-                    },
-                    { season, indexes, priors, returnNullDiagnostics: true }
-                  );
+                    };
+                  inputEvidence.capture("engine_arguments", { input: engineInput, intelligence }, evaluatedFixtureId);
+                  const value = await evaluateMatchValue(engineInput, { season, indexes, priors, returnNullDiagnostics: true });
+                  // The evaluator also loads input.ai internally. Capture the
+                  // argument after that load as well as the returned value.
+                  inputEvidence.capture("engine_returned", { input: engineInput, value }, evaluatedFixtureId);
 
       if (!value || value.__valueNullDiagnostic === true) {
         auditRejections.push({
@@ -1080,6 +1089,11 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
           match,
           finalValue
         );
+      inputEvidence.capture("market_expansion", {
+        opponentProfiles: profileBundle,
+        finalValue,
+        expandedMarkets
+      }, evaluatedFixtureId);
 
       if (
         !Array.isArray(expandedMarkets) ||
@@ -1120,6 +1134,10 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
         ...expandedMarkets
       );
     } catch (err) {
+      if (err?.code === "VALUE_DECISION_EVIDENCE_FAILED") {
+        checkpointHistoryIfRequired(date, "value-decision-evidence-failed");
+        throw err;
+      }
       auditRejections.push({ matchId: auditIdOf(match), reason: "evaluation_error", error: err?.message || String(err) });
       console.log("[value] match failed", {
         date,
@@ -1261,6 +1279,12 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
     ok: true,
     date,
     policyVersion: STRICT_VALUE_POLICY_VERSION,
+    decisionInputEvidence: inputEvidence.summary(),
+    modelInputLoadStatus: {
+      historyIndexFoundationGate: indexes?.foundationGate || null,
+      modelPriorsFoundationGate: priors?.foundationGate || null,
+      interpretation: "Null gates mean these runtime objects loaded without a reported foundation block; per-fixture sufficiency is recorded separately."
+    },
     source: opponentAdjusted ? "canonical_fixtures_opponent_adjusted" : inputSource,
     planId: opponentAdjusted ? "plan-a2" : "plan-a",
     outputMode: opponentAdjusted ? "plan-a2-observation" : "production",
