@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-15",
-  "generatedAt": "2026-10-15T00:45:03.719Z",
+  "generatedAt": "2026-10-15T01:08:21.862Z",
   "role": "derived_control_plane",
-  "ledgerState": "INCOMPLETE",
-  "truthFingerprint": "8d70cde117ce5883412c2fc8625aae3e7bbbf736e5ea3d3c1f7f73dbd0e289de",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "c3e83d731b5422c2b588c205331a403b3f93fb0215908393465a23c9089692e4",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 106,
-    "playedTerminal": 4,
+    "playedTerminal": 6,
     "nonPlayedTerminal": 0,
-    "scheduled": 94,
-    "live": 8,
+    "scheduled": 88,
+    "live": 12,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 0,
-    "acceptedVerifiedFinalArtifacts": 0,
-    "convergedPlayedFinal": 0,
+    "verifiedFinalArtifacts": 8,
+    "acceptedVerifiedFinalArtifacts": 8,
+    "convergedPlayedFinal": 6,
     "convergedNonPlayedTerminal": 0,
-    "pendingVerifiedFinal": 4,
-    "openRows": 102,
+    "pendingVerifiedFinal": 0,
+    "openRows": 98,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 0,
-    "scoredSettlementEligible": 0,
+    "historyEligible": 6,
+    "scoredSettlementEligible": 6,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -350,21 +350,21 @@
         "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-15",
+        "scoreHome": 1,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "PENDING_VERIFIED_FINAL",
-        "reason": "played_terminal_requires_verified_final",
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
         "operationallyClosed": true,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -644,21 +644,21 @@
         "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-15",
+        "scoreHome": 1,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "PENDING_VERIFIED_FINAL",
-        "reason": "played_terminal_requires_verified_final",
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
         "operationallyClosed": true,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -742,21 +742,21 @@
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-15",
+        "scoreHome": 0,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "PENDING_VERIFIED_FINAL",
-        "reason": "played_terminal_requires_verified_final",
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
         "operationallyClosed": true,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -781,14 +781,14 @@
       "homeTeam": "Fluminense",
       "awayTeam": "Palmeiras",
       "kickoffUtc": "2026-10-15T00:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -802,7 +802,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -840,21 +840,21 @@
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-15",
+        "scoreHome": 3,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "PENDING_VERIFIED_FINAL",
-        "reason": "played_terminal_requires_verified_final",
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
         "operationallyClosed": true,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -928,31 +928,31 @@
       "homeTeam": "Pérez Zeledón",
       "awayTeam": "Escorpiones Belén",
       "kickoffUtc": "2026-10-14T23:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "LIVE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
-        "scoreAway": 3
+        "scoreAway": 4
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-15",
+        "scoreHome": 1,
+        "scoreAway": 4,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1526,18 +1526,18 @@
         "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-15",
+        "scoreHome": 1,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4358,14 +4358,14 @@
       "homeTeam": "Chicago Fire FC",
       "awayTeam": "Philadelphia Union",
       "kickoffUtc": "2026-10-15T00:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -4379,7 +4379,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4410,11 +4410,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
-        "scoreAway": 1
+        "scoreAway": 3
       },
       "verifiedFinal": {
         "present": false,
@@ -4508,9 +4508,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 1
       },
@@ -4554,14 +4554,14 @@
       "homeTeam": "FC Dallas",
       "awayTeam": "Seattle Sounders FC",
       "kickoffUtc": "2026-10-15T00:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -4575,7 +4575,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4606,10 +4606,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
-        "scoreHome": 1,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 2,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -4655,10 +4655,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 1,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 2,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -4802,11 +4802,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
-        "scoreAway": 2
+        "scoreAway": 3
       },
       "verifiedFinal": {
         "present": false,
@@ -4848,14 +4848,14 @@
       "homeTeam": "Nashville SC",
       "awayTeam": "Sporting Kansas City",
       "kickoffUtc": "2026-10-15T00:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 2,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -4869,7 +4869,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4995,14 +4995,14 @@
       "homeTeam": "St. Louis CITY SC",
       "awayTeam": "Vancouver Whitecaps",
       "kickoffUtc": "2026-10-15T00:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -5016,7 +5016,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -5047,11 +5047,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 1,
-        "scoreAway": 0
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 2,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -5103,18 +5103,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-15",
+        "scoreHome": 1,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -5191,31 +5191,31 @@
       "homeTeam": "Sporting Jax",
       "awayTeam": "Birmingham",
       "kickoffUtc": "2026-10-14T23:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-15",
+        "scoreHome": 0,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -5238,17 +5238,15 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
-    "pendingVerifiedFinalFixtureIds": [
-      "cid_arg1_sarmientojunin_riverplate_20261015",
-      "cid_col1_atleticojunior_deportivopereira_20261015",
-      "cid_col2_realcundinamarca_bogota_20261015",
-      "cid_conmebolsudamericana_atleticomg_montevideocitytorque_20261015"
-    ]
+    "conflictFixtureIds": [
+      "cid_gua1_comunicaciones_aurora_20261015",
+      "cid_usa2_hartfordathletic_charleston_20261015"
+    ],
+    "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
     "historyObserved": false,
-    "settlementObserved": true,
+    "settlementObserved": false,
     "publicationObserved": true,
     "systemHealthObserved": true,
     "systemHealth": {
@@ -5453,7 +5451,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 12886,
+            "count": 12888,
             "informational": true
           }
         },
@@ -5568,8 +5566,8 @@
             "overdue": false,
             "settlementSource": "value-comparison",
             "picks": 3,
-            "settled": 0,
-            "unresolved": 3
+            "settled": 1,
+            "unresolved": 2
           }
         },
         {
@@ -5584,8 +5582,8 @@
             "overdue": false,
             "settlementSource": "value-comparison",
             "picks": 3,
-            "settled": 0,
-            "unresolved": 3
+            "settled": 1,
+            "unresolved": 2
           }
         },
         {
@@ -6039,13 +6037,13 @@
               "summary": {
                 "picks": 3,
                 "uniqueMatches": 3,
-                "settled": 0,
-                "wins": 0,
+                "settled": 1,
+                "wins": 1,
                 "losses": 0,
                 "voids": 0,
-                "unresolved": 3,
+                "unresolved": 2,
                 "unsupported": 0,
-                "hitRate": null,
+                "hitRate": 1,
                 "oddsAvailable": 0,
                 "averageOdds": null,
                 "totalStake": null,
@@ -6059,13 +6057,13 @@
               "summary": {
                 "picks": 3,
                 "uniqueMatches": 3,
-                "settled": 0,
-                "wins": 0,
+                "settled": 1,
+                "wins": 1,
                 "losses": 0,
                 "voids": 0,
-                "unresolved": 3,
+                "unresolved": 2,
                 "unsupported": 0,
-                "hitRate": null,
+                "hitRate": 1,
                 "oddsAvailable": 0,
                 "averageOdds": null,
                 "totalStake": null,
@@ -7755,29 +7753,36 @@
       ]
     },
     "convergence": {
-      "overallState": "INCOMPLETE",
-      "truthFingerprint": "8d70cde117ce5883412c2fc8625aae3e7bbbf736e5ea3d3c1f7f73dbd0e289de",
+      "overallState": "PARTIALLY_OBSERVED",
+      "truthFingerprint": "c3e83d731b5422c2b588c205331a403b3f93fb0215908393465a23c9089692e4",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 0,
+        "expectedEligibleRows": 6,
         "persistedRows": 0,
-        "missingEligibleFixtureIds": [],
+        "missingEligibleFixtureIds": [
+          "cid_arg1_sarmientojunin_riverplate_20261015",
+          "cid_col1_atleticojunior_deportivopereira_20261015",
+          "cid_col2_realcundinamarca_bogota_20261015",
+          "cid_conmebolsudamericana_atleticomg_montevideocitytorque_20261015",
+          "cid_crc1_perezzeledon_escorpionesbelen_20261015",
+          "cid_usa2_sportingjax_birmingham_20261015"
+        ],
         "unexpectedFixtureIds": [],
         "duplicateFixtureIds": [],
         "invalidTruthContractFixtureIds": [],
         "structuralIssues": []
       },
       "settlement": {
-        "state": "PRESENT_UNRESOLVED",
-        "observed": true,
+        "state": "NOT_OBSERVED",
+        "observed": false,
         "bundlePath": "data/football-truth/_diagnostics/value-settlement-daily-cycle/2026-10-15.four-plan-settlement-bundle.json",
         "aggregateSummaryPath": "data/football-truth/_settlement-summaries/2026-10-15.value-settlement-summary.json",
-        "totalRows": 12,
+        "totalRows": 0,
         "settledRows": 0,
-        "unresolvedRows": 12,
+        "unresolvedRows": 0,
         "winRows": 0,
         "lossRows": 0,
         "voidRows": 0,
@@ -7823,7 +7828,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-15",
-      "fileCount": 0,
+      "fileCount": 8,
       "authority": "scored_final_evidence"
     },
     "downstream": {
