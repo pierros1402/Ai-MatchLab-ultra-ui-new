@@ -1,26 +1,50 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-10-15",
-  "generatedAt": "2026-10-15T03:26:27.704Z",
-  "severity": "warning",
+  "generatedAt": "2026-10-15T16:44:54.815Z",
+  "severity": "error",
   "issueCounts": {
-    "error": 0,
-    "warning": 7,
+    "error": 2,
+    "warning": 8,
     "info": 9
   },
-  "alert": false,
+  "alert": true,
   "alertCounts": {
-    "error": 0,
-    "warning": 0,
+    "error": 2,
+    "warning": 2,
     "info": 0
   },
-  "activeIssueCount": 16,
-  "actionableIssueCount": 7,
-  "newIssueCount": 0,
-  "newActionableIssueCount": 0,
-  "resolvedIssueCount": 2,
-  "persistentIssueCount": 16,
+  "activeIssueCount": 19,
+  "actionableIssueCount": 10,
+  "newIssueCount": 4,
+  "newActionableIssueCount": 4,
+  "resolvedIssueCount": 1,
+  "persistentIssueCount": 15,
   "activeIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-10-15.json",
+        "at": "2026-10-15T16:12:21.559Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -8175
+      }
+    },
     {
       "severity": "info",
       "source": "freshness-report",
@@ -200,7 +224,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 13604,
+        "count": 13616,
         "informational": true
       }
     },
@@ -229,6 +253,15 @@
       }
     },
     {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -244,14 +277,13 @@
       }
     },
     {
-      "severity": "warning",
+      "severity": "error",
       "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -835,6 +867,30 @@
   "actionableIssues": [
     {
       "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-10-15.json",
+        "at": "2026-10-15T16:12:21.559Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -8175
+      }
+    },
+    {
+      "severity": "warning",
       "source": "value-input",
       "type": "plan_b_assessment_coverage_incomplete",
       "message": "Plan B ran with incomplete model-assessment coverage; its output is not proof of a fully evaluated zero-pick day.",
@@ -930,6 +986,15 @@
       }
     },
     {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -945,14 +1010,13 @@
       }
     },
     {
-      "severity": "warning",
+      "severity": "error",
       "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -1382,39 +1446,106 @@
       }
     }
   ],
-  "newIssues": [],
-  "newActionableIssues": [],
-  "resolvedIssues": [
+  "newIssues": [
     {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a_unresolved_settlement",
-      "message": "Plan A picks are still unresolved.",
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
       "details": {
-        "dayKey": "2026-10-15",
-        "todayDayKey": "2026-10-15",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 3,
-        "settled": 2,
-        "unresolved": 1
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
       }
     },
     {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a2_unresolved_settlement",
-      "message": "Plan A2 picks are still unresolved.",
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
       "details": {
-        "dayKey": "2026-10-15",
-        "todayDayKey": "2026-10-15",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 3,
-        "settled": 2,
-        "unresolved": 1
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-10-15.json",
+        "at": "2026-10-15T16:12:21.559Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -8175
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-10-15.json",
+        "at": "2026-10-15T16:12:21.559Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -8175
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     }
   ],
@@ -1598,7 +1729,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 12896,
+        "count": 13616,
         "informational": true
       }
     },
@@ -1639,17 +1770,6 @@
         ],
         "raw": "acquisition_skipped_slugs:col.copa,usa.ncaa.m.1,usa.ncaa.w.1",
         "contextOnly": false
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
-      "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
       }
     },
     {
