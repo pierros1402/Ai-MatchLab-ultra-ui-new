@@ -1,0 +1,270 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "irl.1",
+  "homeTeam": "Bohemians",
+  "awayTeam": "Waterford",
+  "homeWinScore": 0.363,
+  "drawScore": 0.228,
+  "awayWinScore": 0.409,
+  "over15Score": 0.62,
+  "over25Score": 0.6000000000000001,
+  "over35Score": 0.471,
+  "bttsScore": 0.48000000000000004,
+  "confidence": 0.755,
+  "signals": [
+    "away_edge",
+    "away_form_decay",
+    "form_influence_reduced",
+    "matchup_goals_history",
+    "priors_applied",
+    "close_strength_gap",
+    "home_rest_2"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.12,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.442,
+    "expectedAwayGoals": 1.201,
+    "expectedTotalGoals": 2.643,
+    "homeStrength": 0.347,
+    "awayStrength": 0.08,
+    "homeEdge": 0.328,
+    "awayPenalty": 0.108,
+    "recency": {
+      "homeOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 161,
+        "daysSinceLastMatch": 2,
+        "spanDays": 32,
+        "maxInternalGap": 25,
+        "gapSeverity": "heavy",
+        "freshnessScore": 1,
+        "continuityScore": 0.1,
+        "formContinuityWeight": 0.685
+      },
+      "awayOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 92,
+        "daysSinceLastMatch": 27,
+        "spanDays": 7,
+        "maxInternalGap": 4,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.33
+      },
+      "homeSide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 161,
+        "daysSinceLastMatch": 2,
+        "spanDays": 32,
+        "maxInternalGap": 25,
+        "gapSeverity": "heavy",
+        "freshnessScore": 1,
+        "continuityScore": 0.1,
+        "formContinuityWeight": 0.565
+      },
+      "awaySide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 92,
+        "daysSinceLastMatch": 27,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.21
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 161,
+      "awayPriorSample": 92,
+      "leaguePriorSample": 814,
+      "matchupPriorSample": 10
+    },
+    "resolution": {
+      "homeInput": "Bohemians",
+      "awayInput": "Waterford",
+      "homeResolvedKey": "Bohemians",
+      "awayResolvedKey": "Waterford",
+      "homeResolveScore": 0.82,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Bohemians::Waterford",
+      "matchupResolveScore": 0.93,
+      "homePriorKey": "irl.1::Bohemians",
+      "awayPriorKey": "irl.1::Waterford",
+      "matchupPriorKey": "irl.1|Bohemians|Waterford"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Bohemians",
+      "awayTeamKey": "Waterford",
+      "leagueKey": "irl.1",
+      "matchupKey": "Bohemians::Waterford"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": -0.03,
+    "contextReasons": [
+      {
+        "code": "form_balanced",
+        "impact": 0.04,
+        "note": "Teams have similar recent form"
+      },
+      {
+        "code": "away_absence_impact",
+        "impact": 0.12,
+        "note": "Away absences reduce away edge"
+      },
+      {
+        "code": "absence_uncertainty",
+        "impact": -0.03,
+        "note": "Absences increase variance"
+      },
+      {
+        "code": "away_lineup_reduced",
+        "impact": 0.05,
+        "note": "Away projected lineup strength reduced"
+      },
+      {
+        "code": "h2h_overlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is open"
+      },
+      {
+        "code": "ai_h2h_over_signal",
+        "impact": 0.07,
+        "note": "AI detected open H2H pattern"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    }
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "form_balanced",
+      "impact": 0.04,
+      "note": "Teams have similar recent form"
+    },
+    {
+      "code": "away_absence_impact",
+      "impact": 0.12,
+      "note": "Away absences reduce away edge"
+    },
+    {
+      "code": "absence_uncertainty",
+      "impact": -0.03,
+      "note": "Absences increase variance"
+    },
+    {
+      "code": "away_lineup_reduced",
+      "impact": 0.05,
+      "note": "Away projected lineup strength reduced"
+    },
+    {
+      "code": "h2h_overlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is open"
+    },
+    {
+      "code": "ai_h2h_over_signal",
+      "impact": 0.07,
+      "note": "AI detected open H2H pattern"
+    }
+  ],
+  "contextDelta": -0.03,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0.08,
+      "awayPenalty": 0,
+      "reasons": [
+        "home_rest_2"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "irl.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 2,
+    "awayRestDays": 27,
+    "homeMatchesLast7": 1,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 1,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
