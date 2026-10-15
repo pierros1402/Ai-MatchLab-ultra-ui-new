@@ -1,0 +1,118 @@
+{
+  "schema": "ai-matchlab.history-backed-standings.v1",
+  "league": "aus.1",
+  "seasonReference": "2025-2026",
+  "updatedAt": "2026-10-15T00:11:08.096Z",
+  "confidence": 0,
+  "completeness": 0,
+  "sourceAudit": [
+    {
+      "type": "history_foundation",
+      "label": "history-2026-2027",
+      "ok": false
+    },
+    {
+      "type": "competition_contract",
+      "label": "aus.1@2025-2026#v1",
+      "ok": false
+    }
+  ],
+  "phaseSummary": {
+    "hasPhaseTables": false,
+    "phaseKeys": []
+  },
+  "phaseTables": {},
+  "phases": {},
+  "table": [],
+  "foundation": {
+    "schema": "ai-matchlab.history-backed-standings-foundation.v1",
+    "status": "GATED",
+    "usable": false,
+    "reasonCodes": [
+      "NO_STRICT_HISTORY_ROWS",
+      "TABLE_EMPTY",
+      "TEAM_COUNT_BELOW_CONTRACT"
+    ],
+    "builtAt": "2026-10-15T00:11:08.096Z",
+    "historySeason": "2026-2027",
+    "historyLeagueRows": 0,
+    "historyLeagueSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "competitionFormatRegistrySha256": "92895cede3edd2079e6230fd2cba67b6e435710a0116374f27a8c47b1d8ecb36",
+    "teamAliasesSha256": "f3d2c2b6b2a1678213025bc72aa87403433abf473944afb91e1a4a1cfd35e12e",
+    "teamIdentityMode": "LEAGUE_SCOPED_CANONICAL_ALIAS_ID_V1",
+    "contractId": "aus.1@2025-2026#v1",
+    "contractSeasonReference": "2025-2026",
+    "contractAuthorityScopes": [
+      "TEAM_COUNT"
+    ],
+    "contractValidation": {
+      "schema": "ai-matchlab.standings-contract-validation.v1",
+      "status": "FAIL",
+      "ok": false,
+      "publicationDecision": "NOT_APPLIED_READ_ONLY",
+      "leagueSlug": "aus.1",
+      "seasonReference": "2025-2026",
+      "contractId": "aus.1@2025-2026#v1",
+      "authority": {
+        "status": "PARTIALLY_VERIFIED",
+        "scopes": [
+          "TEAM_COUNT"
+        ],
+        "verifiedAt": "2026-08-01"
+      },
+      "artifact": {
+        "shape": "OBJECT",
+        "declaredLeague": "aus.1",
+        "observedPhaseKeys": []
+      },
+      "summary": {
+        "primaryUniverseSource": "TABLE",
+        "primaryRowCount": 0,
+        "primaryUniqueTeamCount": 0,
+        "primaryCanonicalIdCount": 0,
+        "primaryFallbackIdentityCount": 0,
+        "primaryCanonicalIdentityComplete": true,
+        "phaseTableCount": 0,
+        "teamCountEvaluation": {
+          "evaluated": true,
+          "pass": false,
+          "expected": {
+            "mode": "EXACT",
+            "value": 12
+          },
+          "observed": 0
+        },
+        "errorCount": 2,
+        "warningCount": 0
+      },
+      "issues": [
+        {
+          "code": "TABLE_EMPTY",
+          "severity": "error",
+          "scope": "primary",
+          "message": "Standings table is empty."
+        },
+        {
+          "code": "TEAM_COUNT_BELOW_CONTRACT",
+          "severity": "error",
+          "scope": "primary-universe",
+          "message": "Observed unique team count 0 does not equal contract count 12.",
+          "details": {
+            "observed": 0,
+            "expected": 12,
+            "delta": -12
+          }
+        }
+      ],
+      "mutationGuard": {
+        "readOnly": true,
+        "mutationAttempted": false,
+        "mutations": []
+      }
+    },
+    "observedRowCount": 0,
+    "observedTable": [],
+    "consumerTableRows": 0,
+    "staleOnSourceChange": true
+  }
+}
