@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-15",
-  "generatedAt": "2026-10-15T15:03:56.656Z",
+  "generatedAt": "2026-10-15T15:23:34.639Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "be375272371da9f4ac3677fea6ee31d8106da80c33fc9a934bb0b8a19c08456d",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "60e7e08d38ddbfa7a2e9814166e75a033f29fc538a4ec83fdc28a206d92e847a",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,9 +17,9 @@
   },
   "summary": {
     "canonicalRows": 106,
-    "playedTerminal": 48,
+    "playedTerminal": 50,
     "nonPlayedTerminal": 0,
-    "scheduled": 56,
+    "scheduled": 54,
     "live": 2,
     "interrupted": 0,
     "delayed": 0,
@@ -27,16 +27,16 @@
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 50,
     "acceptedVerifiedFinalArtifacts": 50,
-    "convergedPlayedFinal": 48,
+    "convergedPlayedFinal": 50,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
     "openRows": 56,
     "unresolvedRows": 0,
-    "conflictRows": 2,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 48,
-    "scoredSettlementEligible": 48,
+    "historyEligible": 50,
+    "scoredSettlementEligible": 50,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -4162,14 +4162,14 @@
       "homeTeam": "Express",
       "awayTeam": "UPDF",
       "kickoffUtc": "2026-10-15T13:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": true,
@@ -4179,14 +4179,14 @@
         "dayKey": "2026-10-15",
         "scoreHome": 1,
         "scoreAway": 2,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4211,14 +4211,14 @@
       "homeTeam": "Kataka",
       "awayTeam": "Vipers",
       "kickoffUtc": "2026-10-15T13:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 0,
+        "scoreAway": 5
       },
       "verifiedFinal": {
         "present": true,
@@ -4228,14 +4228,14 @@
         "dayKey": "2026-10-15",
         "scoreHome": 0,
         "scoreAway": 5,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -5238,10 +5238,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_uga1_express_updf_20261015",
-      "cid_uga1_kataka_vipers_20261015"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -5451,7 +5448,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 13550,
+            "count": 13556,
             "informational": true
           }
         },
@@ -7484,13 +7481,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "be375272371da9f4ac3677fea6ee31d8106da80c33fc9a934bb0b8a19c08456d",
+      "truthFingerprint": "60e7e08d38ddbfa7a2e9814166e75a033f29fc538a4ec83fdc28a206d92e847a",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 48,
+        "expectedEligibleRows": 50,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_afccup_bgpathumunited_adelaideunited_20261015",
@@ -7523,6 +7520,8 @@
           "cid_kaz2_tobol2_jaiyq_20261015",
           "cid_kos1_malisheva_prishtina_20261015",
           "cid_syr1_aljaish_qamishli_20261015",
+          "cid_uga1_express_updf_20261015",
+          "cid_uga1_kataka_vipers_20261015",
           "cid_usa1_chicagofire_philadelphiaunion_20261015",
           "cid_usa1_cincinnati_newenglandrevolution_20261015",
           "cid_usa1_coloradorapids_minnesotaunited_20261015",
