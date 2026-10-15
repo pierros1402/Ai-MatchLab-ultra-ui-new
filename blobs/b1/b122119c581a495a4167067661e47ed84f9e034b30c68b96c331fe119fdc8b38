@@ -1,0 +1,280 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "usa.1",
+  "homeTeam": "Real Salt Lake",
+  "awayTeam": "San Jose Earthquakes",
+  "homeWinScore": 0.329,
+  "drawScore": 0.125,
+  "awayWinScore": 0.5910000000000001,
+  "over15Score": 0.686,
+  "over25Score": 0.73,
+  "over35Score": 0.533,
+  "bttsScore": 0.5815,
+  "confidence": 0.852,
+  "signals": [
+    "away_edge",
+    "home_form_decay",
+    "away_form_decay",
+    "form_influence_reduced",
+    "matchup_goals_history",
+    "priors_applied",
+    "close_strength_gap",
+    "match_profile_applied"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.12,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.505,
+    "expectedAwayGoals": 1.536,
+    "expectedTotalGoals": 3.041,
+    "homeStrength": 0.185,
+    "awayStrength": 0.202,
+    "homeEdge": 0.232,
+    "awayPenalty": 0.112,
+    "recency": {
+      "homeOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 170,
+        "daysSinceLastMatch": 18,
+        "spanDays": 17,
+        "maxInternalGap": 7,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.26,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.618
+      },
+      "awayOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 159,
+        "daysSinceLastMatch": 17,
+        "spanDays": 17,
+        "maxInternalGap": 7,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.295,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.571
+      },
+      "homeSide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 170,
+        "daysSinceLastMatch": 18,
+        "spanDays": 14,
+        "maxInternalGap": 7,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.26,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.498
+      },
+      "awaySide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 159,
+        "daysSinceLastMatch": 34,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.21
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 170,
+      "awayPriorSample": 159,
+      "leaguePriorSample": 2396,
+      "matchupPriorSample": 10
+    },
+    "resolution": {
+      "homeInput": "Real Salt Lake",
+      "awayInput": "San Jose Earthquakes",
+      "homeResolvedKey": "Real Salt Lake",
+      "awayResolvedKey": "San Jose Earthquakes",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Real Salt Lake::San Jose Earthquakes",
+      "matchupResolveScore": 0,
+      "homePriorKey": "usa.1::Real Salt Lake",
+      "awayPriorKey": "usa.1::San Jose Earthquakes",
+      "matchupPriorKey": "usa.1|Real Salt Lake|San Jose Earthquakes"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Real Salt Lake",
+      "awayTeamKey": "San Jose Earthquakes",
+      "leagueKey": "usa.1",
+      "matchupKey": "Real Salt Lake::San Jose Earthquakes"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "h2h_away_edge",
+        "impact": 0.025,
+        "note": "Recent H2H leans away"
+      },
+      {
+        "code": "h2h_overlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is open"
+      },
+      {
+        "code": "ai_h2h_over_signal",
+        "impact": 0.07,
+        "note": "AI detected open H2H pattern"
+      },
+      {
+        "code": "ai_h2h_away_edge",
+        "impact": 0.06,
+        "note": "AI detected away H2H edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    },
+    "matchProfileApplied": true,
+    "matchProfileConfidence": 0.74,
+    "matchProfileReasons": [
+      {
+        "code": "match_profile_h2h_away_edge",
+        "impact": 0.011000000000000001,
+        "note": "MatchProfile H2H trend leans away"
+      },
+      {
+        "code": "match_profile_h2h_overlean",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile H2H goal pattern leans over"
+      }
+    ]
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "h2h_away_edge",
+      "impact": 0.025,
+      "note": "Recent H2H leans away"
+    },
+    {
+      "code": "h2h_overlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is open"
+    },
+    {
+      "code": "ai_h2h_over_signal",
+      "impact": 0.07,
+      "note": "AI detected open H2H pattern"
+    },
+    {
+      "code": "ai_h2h_away_edge",
+      "impact": 0.06,
+      "note": "AI detected away H2H edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "usa.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 18,
+    "awayRestDays": 17,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  },
+  "intelligence": {
+    "applied": true,
+    "mode": "partial",
+    "coverage": {
+      "hasStandings": false,
+      "hasHomeForm": true,
+      "hasAwayForm": true,
+      "hasH2H": false,
+      "hasPhaseContext": false,
+      "coverageCount": 2,
+      "mode": "partial"
+    },
+    "signals": [
+      "away_form_edge",
+      "attack_support"
+    ]
+  }
+}

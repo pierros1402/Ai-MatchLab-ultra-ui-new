@@ -1,0 +1,315 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "usa.1",
+  "homeTeam": "CF Montréal",
+  "awayTeam": "Atlanta United FC",
+  "homeWinScore": 0.265,
+  "drawScore": 0.113,
+  "awayWinScore": 0.6900000000000001,
+  "over15Score": 0.654,
+  "over25Score": 0.7050000000000001,
+  "over35Score": 0.507,
+  "bttsScore": 0.5675,
+  "confidence": 0.85,
+  "signals": [
+    "away_edge",
+    "home_form_decay",
+    "away_form_decay",
+    "form_influence_reduced",
+    "matchup_goals_history",
+    "priors_applied",
+    "close_strength_gap",
+    "match_profile_applied"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.12,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.401,
+    "expectedAwayGoals": 1.521,
+    "expectedTotalGoals": 2.922,
+    "homeStrength": 0.179,
+    "awayStrength": 0.184,
+    "homeEdge": 0.208,
+    "awayPenalty": 0.099,
+    "recency": {
+      "homeOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 162,
+        "daysSinceLastMatch": 18,
+        "spanDays": 17,
+        "maxInternalGap": 7,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.26,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.559
+      },
+      "awayOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 168,
+        "daysSinceLastMatch": 18,
+        "spanDays": 17,
+        "maxInternalGap": 7,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.26,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.559
+      },
+      "homeSide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 162,
+        "daysSinceLastMatch": 18,
+        "spanDays": 17,
+        "maxInternalGap": 10,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.26,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.498
+      },
+      "awaySide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 168,
+        "daysSinceLastMatch": 24,
+        "spanDays": 7,
+        "maxInternalGap": 7,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.27
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 162,
+      "awayPriorSample": 168,
+      "leaguePriorSample": 2396,
+      "matchupPriorSample": 10
+    },
+    "resolution": {
+      "homeInput": "CF Montréal",
+      "awayInput": "Atlanta United FC",
+      "homeResolvedKey": "CF Montréal",
+      "awayResolvedKey": "Atlanta United FC",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "CF Montréal::Atlanta United FC",
+      "matchupResolveScore": 0,
+      "homePriorKey": "usa.1::CF Montreal",
+      "awayPriorKey": "usa.1::Atlanta Utd",
+      "matchupPriorKey": "usa.1|Atlanta Utd|CF Montreal"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "CF Montréal",
+      "awayTeamKey": "Atlanta United FC",
+      "leagueKey": "usa.1",
+      "matchupKey": "CF Montréal::Atlanta United FC"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "form_away_stronger",
+        "impact": 0.08,
+        "note": "Away team has significantly stronger form"
+      },
+      {
+        "code": "home_absence_impact",
+        "impact": 0.03,
+        "note": "Home absences reduce home edge"
+      },
+      {
+        "code": "h2h_away_edge",
+        "impact": 0.025,
+        "note": "Recent H2H leans away"
+      },
+      {
+        "code": "h2h_overlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is open"
+      },
+      {
+        "code": "ai_h2h_over_signal",
+        "impact": 0.07,
+        "note": "AI detected open H2H pattern"
+      },
+      {
+        "code": "ai_h2h_away_edge",
+        "impact": 0.06,
+        "note": "AI detected away H2H edge"
+      },
+      {
+        "code": "ai_away_form_signal",
+        "impact": 0.05,
+        "note": "AI confirmed strong away form edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    },
+    "matchProfileApplied": true,
+    "matchProfileConfidence": 0.74,
+    "matchProfileReasons": [
+      {
+        "code": "match_profile_away_form_edge",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile last5 points: home 7, away 15"
+      },
+      {
+        "code": "match_profile_h2h_away_edge",
+        "impact": 0.011000000000000001,
+        "note": "MatchProfile H2H trend leans away"
+      },
+      {
+        "code": "match_profile_h2h_overlean",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile H2H goal pattern leans over"
+      }
+    ]
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "form_away_stronger",
+      "impact": 0.08,
+      "note": "Away team has significantly stronger form"
+    },
+    {
+      "code": "home_absence_impact",
+      "impact": 0.03,
+      "note": "Home absences reduce home edge"
+    },
+    {
+      "code": "h2h_away_edge",
+      "impact": 0.025,
+      "note": "Recent H2H leans away"
+    },
+    {
+      "code": "h2h_overlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is open"
+    },
+    {
+      "code": "ai_h2h_over_signal",
+      "impact": 0.07,
+      "note": "AI detected open H2H pattern"
+    },
+    {
+      "code": "ai_h2h_away_edge",
+      "impact": 0.06,
+      "note": "AI detected away H2H edge"
+    },
+    {
+      "code": "ai_away_form_signal",
+      "impact": 0.05,
+      "note": "AI confirmed strong away form edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "usa.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 18,
+    "awayRestDays": 18,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  },
+  "intelligence": {
+    "applied": true,
+    "mode": "partial",
+    "coverage": {
+      "hasStandings": false,
+      "hasHomeForm": true,
+      "hasAwayForm": true,
+      "hasH2H": true,
+      "hasPhaseContext": false,
+      "coverageCount": 3,
+      "mode": "partial"
+    },
+    "signals": [
+      "away_form_edge",
+      "attack_support"
+    ]
+  }
+}

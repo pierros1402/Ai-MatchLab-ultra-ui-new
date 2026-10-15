@@ -1,0 +1,310 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "usa.1",
+  "homeTeam": "Chicago Fire FC",
+  "awayTeam": "Philadelphia Union",
+  "homeWinScore": 0.436,
+  "drawScore": 0.161,
+  "awayWinScore": 0.45000000000000007,
+  "over15Score": 0.737,
+  "over25Score": 0.7690000000000001,
+  "over35Score": 0.572,
+  "bttsScore": 0.5945,
+  "confidence": 0.852,
+  "signals": [
+    "home_edge",
+    "over25_support",
+    "away_form_decay",
+    "form_influence_reduced",
+    "matchup_goals_history",
+    "priors_applied",
+    "close_strength_gap",
+    "match_profile_applied"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.383,
+      "awayOverallFormWeight": 0.12,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.233,
+    "expectedAwayGoals": 1.9,
+    "expectedTotalGoals": 3.133,
+    "homeStrength": 0.384,
+    "awayStrength": 0.269,
+    "homeEdge": 0.259,
+    "awayPenalty": 0.081,
+    "recency": {
+      "homeOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 162,
+        "daysSinceLastMatch": 8,
+        "spanDays": 27,
+        "maxInternalGap": 10,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.9,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.913
+      },
+      "awayOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 170,
+        "daysSinceLastMatch": 18,
+        "spanDays": 16,
+        "maxInternalGap": 6,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.26,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.559
+      },
+      "homeSide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 162,
+        "daysSinceLastMatch": 8,
+        "spanDays": 27,
+        "maxInternalGap": 23,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.9,
+        "continuityScore": 0.25,
+        "formContinuityWeight": 0.583
+      },
+      "awaySide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 170,
+        "daysSinceLastMatch": 25,
+        "spanDays": 5,
+        "maxInternalGap": 5,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.27
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 162,
+      "awayPriorSample": 170,
+      "leaguePriorSample": 2396,
+      "matchupPriorSample": 10
+    },
+    "resolution": {
+      "homeInput": "Chicago Fire FC",
+      "awayInput": "Philadelphia Union",
+      "homeResolvedKey": "Chicago Fire FC",
+      "awayResolvedKey": "Philadelphia Union",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Chicago Fire FC::Philadelphia Union",
+      "matchupResolveScore": 0,
+      "homePriorKey": "usa.1::Chicago Fire",
+      "awayPriorKey": "usa.1::Philadelphia Union",
+      "matchupPriorKey": "usa.1|Chicago Fire|Philadelphia Union"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Chicago Fire FC",
+      "awayTeamKey": "Philadelphia Union",
+      "leagueKey": "usa.1",
+      "matchupKey": "Chicago Fire FC::Philadelphia Union"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": -0.03,
+    "contextReasons": [
+      {
+        "code": "form_balanced",
+        "impact": 0.04,
+        "note": "Teams have similar recent form"
+      },
+      {
+        "code": "away_absence_impact",
+        "impact": 0.06,
+        "note": "Away absences reduce away edge"
+      },
+      {
+        "code": "absence_uncertainty",
+        "impact": -0.03,
+        "note": "Absences increase variance"
+      },
+      {
+        "code": "h2h_away_edge",
+        "impact": 0.025,
+        "note": "Recent H2H leans away"
+      },
+      {
+        "code": "h2h_overlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is open"
+      },
+      {
+        "code": "ai_h2h_over_signal",
+        "impact": 0.07,
+        "note": "AI detected open H2H pattern"
+      },
+      {
+        "code": "ai_h2h_away_edge",
+        "impact": 0.06,
+        "note": "AI detected away H2H edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    },
+    "matchProfileApplied": true,
+    "matchProfileConfidence": 0.74,
+    "matchProfileReasons": [
+      {
+        "code": "match_profile_h2h_away_edge",
+        "impact": 0.011000000000000001,
+        "note": "MatchProfile H2H trend leans away"
+      },
+      {
+        "code": "match_profile_h2h_overlean",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile H2H goal pattern leans over"
+      }
+    ]
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "form_balanced",
+      "impact": 0.04,
+      "note": "Teams have similar recent form"
+    },
+    {
+      "code": "away_absence_impact",
+      "impact": 0.06,
+      "note": "Away absences reduce away edge"
+    },
+    {
+      "code": "absence_uncertainty",
+      "impact": -0.03,
+      "note": "Absences increase variance"
+    },
+    {
+      "code": "h2h_away_edge",
+      "impact": 0.025,
+      "note": "Recent H2H leans away"
+    },
+    {
+      "code": "h2h_overlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is open"
+    },
+    {
+      "code": "ai_h2h_over_signal",
+      "impact": 0.07,
+      "note": "AI detected open H2H pattern"
+    },
+    {
+      "code": "ai_h2h_away_edge",
+      "impact": 0.06,
+      "note": "AI detected away H2H edge"
+    }
+  ],
+  "contextDelta": -0.03,
+  "band": {
+    "over15": "MEDIUM",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0.009,
+      "awayDelta": 0,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "usa.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 8,
+    "awayRestDays": 18,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 1,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  },
+  "intelligence": {
+    "applied": true,
+    "mode": "partial",
+    "coverage": {
+      "hasStandings": false,
+      "hasHomeForm": true,
+      "hasAwayForm": true,
+      "hasH2H": false,
+      "hasPhaseContext": false,
+      "coverageCount": 2,
+      "mode": "partial"
+    },
+    "signals": [
+      "away_form_edge",
+      "attack_support"
+    ]
+  }
+}

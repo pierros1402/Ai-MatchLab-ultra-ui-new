@@ -1,0 +1,238 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "usa.1",
+  "homeTeam": "San Diego FC",
+  "awayTeam": "Houston Dynamo FC",
+  "homeWinScore": 0.299,
+  "drawScore": 0.166,
+  "awayWinScore": 0.535,
+  "over15Score": 0.682,
+  "over25Score": 0.584,
+  "over35Score": 0.529,
+  "bttsScore": 0.519,
+  "confidence": 0.803,
+  "signals": [
+    "away_edge",
+    "home_form_decay",
+    "away_form_decay",
+    "form_influence_reduced",
+    "mutual_attack_profile",
+    "priors_applied",
+    "close_strength_gap"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.12,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.647,
+    "expectedAwayGoals": 1.387,
+    "expectedTotalGoals": 3.034,
+    "homeStrength": 0.233,
+    "awayStrength": 0.179,
+    "homeEdge": 0.097,
+    "awayPenalty": 0.109,
+    "recency": {
+      "homeOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 39,
+        "daysSinceLastMatch": 18,
+        "spanDays": 16,
+        "maxInternalGap": 6,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.26,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.559
+      },
+      "awayOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 165,
+        "daysSinceLastMatch": 18,
+        "spanDays": 17,
+        "maxInternalGap": 7,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.26,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.559
+      },
+      "homeSide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 39,
+        "daysSinceLastMatch": 31,
+        "spanDays": 3,
+        "maxInternalGap": 3,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.27
+      },
+      "awaySide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 165,
+        "daysSinceLastMatch": 32,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.21
+      }
+    },
+    "matchupSample": 2,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 39,
+      "awayPriorSample": 165,
+      "leaguePriorSample": 2396,
+      "matchupPriorSample": 2
+    },
+    "resolution": {
+      "homeInput": "San Diego FC",
+      "awayInput": "Houston Dynamo FC",
+      "homeResolvedKey": "San Diego FC",
+      "awayResolvedKey": "Houston Dynamo FC",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "San Diego FC::Houston Dynamo FC",
+      "matchupResolveScore": 0,
+      "homePriorKey": "usa.1::San Diego FC",
+      "awayPriorKey": "usa.1::Houston Dynamo",
+      "matchupPriorKey": "usa.1|Houston Dynamo|San Diego FC"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "San Diego FC",
+      "awayTeamKey": "Houston Dynamo FC",
+      "leagueKey": "usa.1",
+      "matchupKey": "San Diego FC::Houston Dynamo FC"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "form_balanced",
+        "impact": 0.04,
+        "note": "Teams have similar recent form"
+      },
+      {
+        "code": "h2h_away_edge",
+        "impact": 0.025,
+        "note": "Recent H2H leans away"
+      },
+      {
+        "code": "ai_h2h_away_edge",
+        "impact": 0.06,
+        "note": "AI detected away H2H edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    }
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "form_balanced",
+      "impact": 0.04,
+      "note": "Teams have similar recent form"
+    },
+    {
+      "code": "h2h_away_edge",
+      "impact": 0.025,
+      "note": "Recent H2H leans away"
+    },
+    {
+      "code": "ai_h2h_away_edge",
+      "impact": 0.06,
+      "note": "AI detected away H2H edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "usa.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 18,
+    "awayRestDays": 18,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}

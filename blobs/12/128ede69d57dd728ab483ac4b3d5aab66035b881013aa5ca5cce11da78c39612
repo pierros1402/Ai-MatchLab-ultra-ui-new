@@ -1,0 +1,269 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "usa.1",
+  "homeTeam": "D.C. United",
+  "awayTeam": "Red Bull New York",
+  "homeWinScore": 0.317,
+  "drawScore": 0.192,
+  "awayWinScore": 0.491,
+  "over15Score": 0.627,
+  "over25Score": 0.517,
+  "over35Score": 0.488,
+  "bttsScore": 0.51,
+  "confidence": 0.766,
+  "signals": [
+    "away_edge",
+    "home_form_decay",
+    "form_influence_reduced",
+    "priors_applied",
+    "close_strength_gap",
+    "home_next_0"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.14,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.367,
+    "expectedAwayGoals": 1.349,
+    "expectedTotalGoals": 2.716,
+    "homeStrength": 0.188,
+    "awayStrength": 0.25,
+    "homeEdge": 0.077,
+    "awayPenalty": 0.086,
+    "recency": {
+      "homeOverall": {
+        "sample": 4,
+        "rawSample": 4,
+        "priorSample": 0,
+        "daysSinceLastMatch": 17,
+        "spanDays": 17,
+        "maxInternalGap": 7,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.295,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.571
+      },
+      "awayOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 169,
+        "daysSinceLastMatch": 14,
+        "spanDays": 20,
+        "maxInternalGap": 12,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.4,
+        "continuityScore": 0.7,
+        "formContinuityWeight": 0.625
+      },
+      "homeSide": {
+        "sample": 3,
+        "rawSample": 3,
+        "priorSample": 0,
+        "daysSinceLastMatch": 25,
+        "spanDays": 10,
+        "maxInternalGap": 7,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.33
+      },
+      "awaySide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 169,
+        "daysSinceLastMatch": 26,
+        "spanDays": 8,
+        "maxInternalGap": 6,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.33
+      }
+    },
+    "matchupSample": 0,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 0,
+      "awayPriorSample": 169,
+      "leaguePriorSample": 2396,
+      "matchupPriorSample": 0
+    },
+    "resolution": {
+      "homeInput": "D.C. United",
+      "awayInput": "Red Bull New York",
+      "homeResolvedKey": "D.C. United",
+      "awayResolvedKey": "Red Bull New York",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "D.C. United::Red Bull New York",
+      "matchupResolveScore": 0,
+      "homePriorKey": null,
+      "awayPriorKey": "usa.1::New York Red Bulls",
+      "matchupPriorKey": null
+    },
+    "sourceKeys": {
+      "homeTeamKey": "D.C. United",
+      "awayTeamKey": "Red Bull New York",
+      "leagueKey": "usa.1",
+      "matchupKey": "D.C. United::Red Bull New York"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "form_balanced",
+        "impact": 0.04,
+        "note": "Teams have similar recent form"
+      },
+      {
+        "code": "home_absence_impact",
+        "impact": 0.03,
+        "note": "Home absences reduce home edge"
+      },
+      {
+        "code": "away_absence_impact",
+        "impact": 0.03,
+        "note": "Away absences reduce away edge"
+      },
+      {
+        "code": "h2h_home_edge",
+        "impact": 0.025,
+        "note": "Recent H2H leans home"
+      },
+      {
+        "code": "h2h_underlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is tight"
+      },
+      {
+        "code": "ai_h2h_home_edge",
+        "impact": 0.06,
+        "note": "AI detected home H2H edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    }
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "form_balanced",
+      "impact": 0.04,
+      "note": "Teams have similar recent form"
+    },
+    {
+      "code": "home_absence_impact",
+      "impact": 0.03,
+      "note": "Home absences reduce home edge"
+    },
+    {
+      "code": "away_absence_impact",
+      "impact": 0.03,
+      "note": "Away absences reduce away edge"
+    },
+    {
+      "code": "h2h_home_edge",
+      "impact": 0.025,
+      "note": "Recent H2H leans home"
+    },
+    {
+      "code": "h2h_underlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is tight"
+    },
+    {
+      "code": "ai_h2h_home_edge",
+      "impact": 0.06,
+      "note": "AI detected home H2H edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0.04,
+      "awayPenalty": 0,
+      "reasons": [
+        "home_next_0"
+      ]
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "usa.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 17,
+    "awayRestDays": 14,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 1,
+    "homeNextMatchInDays": 0,
+    "awayNextMatchInDays": null
+  }
+}

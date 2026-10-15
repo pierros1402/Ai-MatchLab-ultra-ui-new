@@ -1,0 +1,305 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "usa.1",
+  "homeTeam": "Colorado Rapids",
+  "awayTeam": "Minnesota United FC",
+  "homeWinScore": 0.48400000000000004,
+  "drawScore": 0.129,
+  "awayWinScore": 0.435,
+  "over15Score": 0.687,
+  "over25Score": 0.7270000000000001,
+  "over35Score": 0.532,
+  "bttsScore": 0.5955,
+  "confidence": 0.821,
+  "signals": [
+    "away_edge",
+    "home_form_decay",
+    "away_form_decay",
+    "form_influence_reduced",
+    "matchup_goals_history",
+    "priors_applied",
+    "close_strength_gap",
+    "match_profile_applied"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.12,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.532,
+    "expectedAwayGoals": 1.549,
+    "expectedTotalGoals": 3.081,
+    "homeStrength": 0.192,
+    "awayStrength": 0.18,
+    "homeEdge": 0.103,
+    "awayPenalty": 0.186,
+    "recency": {
+      "homeOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 164,
+        "daysSinceLastMatch": 17,
+        "spanDays": 17,
+        "maxInternalGap": 7,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.295,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.571
+      },
+      "awayOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 168,
+        "daysSinceLastMatch": 18,
+        "spanDays": 17,
+        "maxInternalGap": 7,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.26,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.559
+      },
+      "homeSide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 164,
+        "daysSinceLastMatch": 25,
+        "spanDays": 7,
+        "maxInternalGap": 7,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.27
+      },
+      "awaySide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 168,
+        "daysSinceLastMatch": 18,
+        "spanDays": 14,
+        "maxInternalGap": 14,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.26,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.386
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 164,
+      "awayPriorSample": 168,
+      "leaguePriorSample": 2396,
+      "matchupPriorSample": 10
+    },
+    "resolution": {
+      "homeInput": "Colorado Rapids",
+      "awayInput": "Minnesota United FC",
+      "homeResolvedKey": "Colorado Rapids",
+      "awayResolvedKey": "Minnesota United FC",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Colorado Rapids::Minnesota United FC",
+      "matchupResolveScore": 0,
+      "homePriorKey": "usa.1::Colorado Rapids",
+      "awayPriorKey": "usa.1::Minnesota United",
+      "matchupPriorKey": "usa.1|Colorado Rapids|Minnesota United"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Colorado Rapids",
+      "awayTeamKey": "Minnesota United FC",
+      "leagueKey": "usa.1",
+      "matchupKey": "Colorado Rapids::Minnesota United FC"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": -0.03,
+    "contextReasons": [
+      {
+        "code": "away_absence_impact",
+        "impact": 0.06,
+        "note": "Away absences reduce away edge"
+      },
+      {
+        "code": "absence_uncertainty",
+        "impact": -0.03,
+        "note": "Absences increase variance"
+      },
+      {
+        "code": "h2h_home_edge",
+        "impact": 0.025,
+        "note": "Recent H2H leans home"
+      },
+      {
+        "code": "h2h_overlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is open"
+      },
+      {
+        "code": "ai_h2h_over_signal",
+        "impact": 0.07,
+        "note": "AI detected open H2H pattern"
+      },
+      {
+        "code": "ai_h2h_home_edge",
+        "impact": 0.06,
+        "note": "AI detected home H2H edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    },
+    "matchProfileApplied": true,
+    "matchProfileConfidence": 0.74,
+    "matchProfileReasons": [
+      {
+        "code": "match_profile_home_form_edge",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile last5 points: home 12, away 6"
+      },
+      {
+        "code": "match_profile_h2h_home_edge",
+        "impact": 0.011000000000000001,
+        "note": "MatchProfile H2H trend leans home"
+      },
+      {
+        "code": "match_profile_h2h_overlean",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile H2H goal pattern leans over"
+      }
+    ]
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "away_absence_impact",
+      "impact": 0.06,
+      "note": "Away absences reduce away edge"
+    },
+    {
+      "code": "absence_uncertainty",
+      "impact": -0.03,
+      "note": "Absences increase variance"
+    },
+    {
+      "code": "h2h_home_edge",
+      "impact": 0.025,
+      "note": "Recent H2H leans home"
+    },
+    {
+      "code": "h2h_overlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is open"
+    },
+    {
+      "code": "ai_h2h_over_signal",
+      "impact": 0.07,
+      "note": "AI detected open H2H pattern"
+    },
+    {
+      "code": "ai_h2h_home_edge",
+      "impact": 0.06,
+      "note": "AI detected home H2H edge"
+    }
+  ],
+  "contextDelta": -0.03,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "usa.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 17,
+    "awayRestDays": 18,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  },
+  "intelligence": {
+    "applied": true,
+    "mode": "partial",
+    "coverage": {
+      "hasStandings": false,
+      "hasHomeForm": true,
+      "hasAwayForm": true,
+      "hasH2H": false,
+      "hasPhaseContext": false,
+      "coverageCount": 2,
+      "mode": "partial"
+    },
+    "signals": [
+      "form_balanced",
+      "attack_support"
+    ]
+  }
+}
