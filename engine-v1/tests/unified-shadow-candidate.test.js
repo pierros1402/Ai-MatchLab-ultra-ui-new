@@ -36,7 +36,7 @@ function disk(t,s=sample()){
   }
   write(`value/_audit/${day}.json`,s.sources.A.audit);
   write(`canonical-fixtures/${day}/test.1.json`,{fixtures:s.fixtures});
-  return {root,dataRoot,write,file:path.join(dataRoot,'value-plans',day,'unified-u1.json')};
+  return {root,dataRoot,write,file:path.join(dataRoot,'value-plans',day,`${unifiedSpec.candidateId}.json`)};
 }
 function initGit(root){
   const git=args=>execFileSync('git',args,{cwd:root,encoding:'utf8',windowsHide:true}).trim();
@@ -80,7 +80,7 @@ test('a changed or missing declared universe is incomplete even when selected pa
 test('unknown universe evidence stays unknown and absent forecast time is a missing input rather than ordinary rejection',()=>{
   const unknown=build(s=>{for(const source of Object.values(s.sources))delete source.audit.fixtureUniverse;});
   assert.equal(unknown.upstreamCoverage,'UNKNOWN');
-  const missing=build(s=>{for(const source of Object.values(s.sources))delete source.plan.generatedAt;});
+  const missing=build(s=>{for(const source of Object.values(s.sources))source.plan.generatedAt='invalid';});
   assert.equal(missing.upstreamCoverage,'INCOMPLETE');assert.equal(missing.selectedSourceInputGaps,4);
   assert(missing.decisions.every(d=>d.reason==='required_forecast_time_or_kickoff_missing'));
 });
@@ -97,6 +97,23 @@ test('categorical confidence is retained; categorical model probability is rejec
   const o=build(s=>{s.sources.B.plan.picks[0].modelProb='high';});
   assert.equal(o.count,1);assert.deepEqual(o.picks[0].families,['statistical']);
   assert(o.decisions.some(d=>d.reason==='numeric_score_missing_or_invalid'));
+});
+test('real B/B2 payload shape without a producer timestamp uses observed bytes without inventing creation time',t=>{
+  const s=sample();for(const plan of ['B','B2'])delete s.sources[plan].plan.generatedAt;
+  const f=disk(t,s);captureUnifiedShadow(day,{dataRoot:f.dataRoot,now,checkpoint:noop});
+  const o=JSON.parse(fs.readFileSync(f.file));assert.equal(o.count,1);
+  assert.deepEqual(o.picks[0].families,['statistical','assessment']);
+  const b=o.baselineSelections.B[0];assert.equal(b.producerForecastAt,null);
+  assert.equal(b.observedAt,now);assert.equal(b.forecastTimeBasis,'CAPTURED_SOURCE_BYTES');
+  f.write(`final-results/${day}/${cid}.json`,finalTruth());
+  assert.equal(refreshUnifiedShadowResults(day,{dataRoot:f.dataRoot,now:'2099-12-30T19:00:00Z',proof:()=>({status:'NOT_COMMITTED'})}).metrics.U1.pending,1);
+  assert.equal(refreshUnifiedShadowResults(day,{dataRoot:f.dataRoot,now:'2099-12-30T19:00:00Z',proof:proven}).metrics.U1.wins,1);
+});
+test('earlier candidate artifacts remain separate and are never overwritten or mixed into revision 2',t=>{
+  const f=disk(t);const old=f.write(`value-plans/${day}/unified-u1.json`,{oldCandidate:'preserve_exactly'});
+  const before=fs.readFileSync(old);captureUnifiedShadow(day,{dataRoot:f.dataRoot,now,checkpoint:noop});
+  assert.deepEqual(fs.readFileSync(old),before);assert.notEqual(old,f.file);
+  assert.equal(JSON.parse(fs.readFileSync(f.file)).candidateId,'unified-u1-r2');
 });
 test('a numeric zero score is below the floor, not missing data, and a score of one stays valid',()=>{
   const zero=build(s=>{for(const source of Object.values(s.sources)){source.plan.picks[0].score=0;source.plan.picks[0].modelProb=0;}});
@@ -115,11 +132,11 @@ test('unknown identity, ambiguous canonical rows, unsupported markets and nonfut
     assert.equal(build(alter).count,0);
   }
 });
-test('missing kickoff, different pick kickoff, future-dated source and absent source time cannot enter the sample',()=>{
+test('missing kickoff, different pick kickoff, future-dated source and invalid declared source time cannot enter the sample',()=>{
   for(const alter of [s=>delete s.fixtures[0].kickoffUtc,
     s=>{for(const p of Object.values(s.sources))p.plan.picks[0].kickoffUtc='2099-12-30T16:00:00Z';},
     s=>{for(const p of Object.values(s.sources))p.plan.generatedAt='2099-12-30T08:00:00Z';},
-    s=>{for(const p of Object.values(s.sources))delete p.plan.generatedAt;}])assert.equal(build(alter).count,0);
+    s=>{for(const p of Object.values(s.sources))p.plan.generatedAt='invalid';}])assert.equal(build(alter).count,0);
 });
 test('invalid source count or missing audit throws instead of manufacturing zero picks',()=>{
   assert.throws(()=>build(s=>s.sources.A.plan.count=0),/unified_invalid_source_A/);
@@ -146,9 +163,9 @@ test('missing files create an incident and never freeze a zero-selection day',t=
   const f=disk(t);fs.unlinkSync(path.join(f.dataRoot,'value-plans',day,'plan-b.json'));
   assert.throws(()=>runUnifiedShadowDay(day,{dataRoot:f.dataRoot,now,checkpoint:noop}),/capture_failed_evidence_retained/);
   assert.equal(fs.existsSync(f.file),false);
-  const incidents=fs.readdirSync(path.join(f.dataRoot,'value-plans',day,'unified-u1-incidents'));
+  const incidents=fs.readdirSync(path.join(f.dataRoot,'value-plans',day,`${unifiedSpec.candidateId}-incidents`));
   assert.equal(incidents.length,1);
-  assert.equal(JSON.parse(fs.readFileSync(path.join(f.dataRoot,'value-plans',day,'unified-u1-incidents',incidents[0]))).status,'CAPTURE_FAILED_NOT_A_ZERO_PICK_RESULT');
+  assert.equal(JSON.parse(fs.readFileSync(path.join(f.dataRoot,'value-plans',day,`${unifiedSpec.candidateId}-incidents`,incidents[0]))).status,'CAPTURE_FAILED_NOT_A_ZERO_PICK_RESULT');
 });
 test('missing canonical files are not interpreted as no matches',t=>{
   const f=disk(t);fs.unlinkSync(path.join(f.dataRoot,'canonical-fixtures',day,'test.1.json'));
@@ -206,9 +223,9 @@ test('Under, BTTS No and draw retain their declared selection during settlement'
 });
 test('corrupt existing result reports cause a durable incident rather than a replacement',t=>{
   const f=disk(t);captureUnifiedShadow(day,{dataRoot:f.dataRoot,now,checkpoint:noop});
-  f.write(`value-plans/${day}/unified-u1-results.json`,{schema:'broken'});
+  f.write(`value-plans/${day}/${unifiedSpec.candidateId}-results.json`,{schema:'broken'});
   assert.throws(()=>runUnifiedShadowDay(day,{dataRoot:f.dataRoot,now,checkpoint:noop}),/unified_settlement_failed_evidence_retained/);
-  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(f.dataRoot,'value-plans',day,'unified-u1-results.json'))),{schema:'broken'});
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(f.dataRoot,'value-plans',day,`${unifiedSpec.candidateId}-results.json`))),{schema:'broken'});
 });
 test('both normal workflows capture shadow before their existing staged publication without blocking the plans',()=>{
   for(const name of ['daily-deploy-snapshot.yml','intraday-deploy-snapshot-refresh.yml']) {
@@ -234,7 +251,7 @@ test('original candidate, all inputs, and partial-data accounting survive an ind
   captureUnifiedShadow(day,{dataRoot:f.dataRoot,now,checkpoint:noop});
   const original=fs.readFileSync(f.file),saved=preserveHistoryCheckpoint({root:f.root,dayKey:day,stage:'unified',runId:'test'});
   const dest=path.join(f.root,'independent-restored');restoreHistoryCheckpoint({root:f.root,ref:saved.archiveCommit,manifestPath:saved.manifestPath,destination:dest});
-  const restored=fs.readFileSync(path.join(dest,'data','value-plans',day,'unified-u1.json'));
+  const restored=fs.readFileSync(path.join(dest,'data','value-plans',day,`${unifiedSpec.candidateId}.json`));
   assert.deepEqual(restored,original);assert.equal(validateUnifiedShadow(JSON.parse(restored)).upstreamCoverage,'INCOMPLETE');
   assert.equal(unifiedSpec.minimumEachVariantScore,.75);assert.match(specSha256,/^[a-f0-9]{64}$/u);
 });
