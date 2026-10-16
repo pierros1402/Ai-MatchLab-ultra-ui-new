@@ -1,6 +1,9 @@
-# Unified U1: fixed prospective shadow candidate
+# Unified U1 revision 2: fixed prospective shadow candidate
 
 U1 is a hypothesis, not a certified optimum or replacement for A, A2, B or B2.
+The configured candidate is `unified-u1-r2`. It supersedes the first configuration
+to support the actual timestamp-less B/B2 file format. Earlier candidate files
+remain untouched and are never combined with this revision's sample.
 Its immutable specification is `unified-u1-spec.json`; changing its rules requires
 a new candidate ID and a new prospective period. No historical model is rerun.
 The specification pins SHA256 of the selector and capture/settlement modules
@@ -28,10 +31,15 @@ threshold, pairing rule and conflicts must stay fixed while results accumulate.
 Only Athens today or tomorrow is admissible, with target dates starting
 2026-10-17. Every selected forecast must have an explicit source time before
 capture and kickoff, match the exact canonical fixture and kickoff, and still
-be scheduled with at least 60 seconds to kickoff. Late/unknown inputs are rejected
+be scheduled with at least 60 seconds to kickoff. When the producer does not
+declare a creation timestamp, the copied source bytes' observation time is used
+as evidence of availability, with `producerForecastAt: null`. This is never
+presented as a guessed creation time. Pre-kickoff publication of the exact copied
+bytes remains mandatory for settlement. An explicitly invalid or future producer
+timestamp is rejected. Other late/unknown inputs are rejected
 explicitly. Duplicate source selections are all rejected, never cherry-picked.
 
-`data/value-plans/<day>/unified-u1.json` freezes the first structurally successful
+`data/value-plans/<day>/unified-u1-r2.json` freezes the first structurally successful
 capture. It includes the exact UTF-8 bytes/SHA256 of all four forecast files,
 companion audits, Plan A producer audit and canonical files, the spec hash,
 selector-code hash, eligible baseline rows, decisions and coverage diagnostics.
@@ -59,7 +67,7 @@ No additional schedule, provider calls, model runs, Render service or UI is adde
 ## Settlement and review
 
 The same job refreshes versioned aggregate results in the current target day's
-`unified-u1-results.json`. Old forecasts are never rewritten. Settlement reads
+`unified-u1-r2-results.json`. Old forecasts are never rewritten. Settlement reads
 existing verified final-result files through the established strict guard, and
 requires the exact ID, day and kickoff. Duplicate/conflicting finals remain
 pending. Canonical non-played states are VOID and excluded from hit rates.

@@ -12,6 +12,9 @@ import {unifiedSpec,specSha256,digest,signature,prospectiveDay,buildUnifiedShado
   validateUnifiedShadow,selectionKey,assertUnified,selectorSourceSha256} from '../value/unified-shadow.js';
 
 const schemaResults='ai-matchlab.unified-shadow-results.v1';
+const observationName=`${unifiedSpec.candidateId}.json`;
+const resultsName=`${unifiedSpec.candidateId}-results.json`;
+const incidentsName=`${unifiedSpec.candidateId}-incidents`;
 const selectorCodeSha256=selectorSourceSha256;
 const captureCodeSha256=digest(fs.readFileSync(fileURLToPath(import.meta.url),'utf8').replace(/\r\n?/gu,'\n'));
 assertUnified(captureCodeSha256===unifiedSpec.code?.captureSha256,'unified_pinned_capture_code_mismatch');
@@ -46,7 +49,7 @@ function checkCredentialFields(value) {
 }
 export function captureUnifiedShadow(day,{dataRoot=getDataRoot(),now=new Date().toISOString(),checkpoint=checkpointHistoryIfRequired}={}) {
   if(!prospectiveDay(day,now))return {status:'SKIPPED_OUTSIDE_PROSPECTIVE_WINDOW',date:day};
-  const dir=path.join(dataRoot,'value-plans',day),file=path.join(dir,'unified-u1.json');
+  const dir=path.join(dataRoot,'value-plans',day),file=path.join(dir,observationName);
   if(fs.existsSync(file)) {
     const existing=validateUnifiedShadow(read(file));
     assertUnified(existing.date===day,'unified_existing_date_mismatch');
@@ -112,7 +115,7 @@ export function refreshUnifiedShadowResults(day,{dataRoot=getDataRoot(),now=new 
   const days=fs.readdirSync(plansRoot).filter(d=>/^\d{4}-\d{2}-\d{2}$/u.test(d)&&d>=unifiedSpec.earliestTargetDay).sort();
   let previous=null;
   for(const d of days) {
-    const f=path.join(plansRoot,d,'unified-u1-results.json');
+    const f=path.join(plansRoot,d,resultsName);
     if(!fs.existsSync(f))continue;
     const value=validateResults(read(f));
     if(Date.parse(value.generatedAt)<=Date.parse(now)&&(!previous||value.generatedAt>previous.generatedAt))previous=value;
@@ -120,7 +123,7 @@ export function refreshUnifiedShadowResults(day,{dataRoot=getDataRoot(),now=new 
   const previousRows=new Map((previous?.rows||[]).map(r=>[r.key,r]));
   const rows=[],observations=[],conflicts=[];
   for(const d of days) {
-    const file=path.join(plansRoot,d,'unified-u1.json');if(!fs.existsSync(file))continue;
+    const file=path.join(plansRoot,d,observationName);if(!fs.existsSync(file))continue;
     const o=validateUnifiedShadow(read(file));
     assertUnified(o.date===d&&o.date>=unifiedSpec.earliestTargetDay,'unified_observation_day_mismatch');
     if(Date.parse(o.generatedAt)>Date.parse(now))continue;
@@ -204,7 +207,7 @@ export function refreshUnifiedShadowResults(day,{dataRoot=getDataRoot(),now=new 
   const comparable=Object.fromEntries(Object.entries(body).filter(([k])=>k!=='date'));
   if(previous&&previous.date===day&&signature(priorComparable)===signature(comparable))return {status:'RESULTS_UNCHANGED',metrics};
   const output={...body,generatedAt:now};output.reportSignature=signature(output);
-  writeHistoryJsonAtomic(path.join(plansRoot,day,'unified-u1-results.json'),output);
+  writeHistoryJsonAtomic(path.join(plansRoot,day,resultsName),output);
   return {status:'RESULTS_WRITTEN',metrics,conflictCount:conflicts.length};
 }
 
@@ -213,7 +216,7 @@ export function runUnifiedShadowDay(day,{dataRoot=getDataRoot(),now=new Date().t
   const incident=(e,status)=>{
     const code=String(e.message||'unified_failed');
     const safeCode=/^unified_[A-Za-z0-9_]+$/u.test(code)?code:'unified_source_unavailable_or_invalid';
-    writeHistoryJsonAtomic(path.join(dataRoot,'value-plans',day,'unified-u1-incidents',`${crypto.randomUUID()}.json`),{
+    writeHistoryJsonAtomic(path.join(dataRoot,'value-plans',day,incidentsName,`${crypto.randomUUID()}.json`),{
       schema:'ai-matchlab.unified-shadow-incident.v1',date:day,capturedAt:now,run:runIdentity(),
       status,errorCode:safeCode,specSha256});
     checkpoint(day,'unified-shadow-incident-written');

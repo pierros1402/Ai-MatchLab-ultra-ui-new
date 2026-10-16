@@ -29,7 +29,16 @@ function timestamp(value) {
   if (typeof value === 'number') return Number.isFinite(value) ? value : NaN;
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/u.test(value) ? Date.parse(value) : NaN;
 }
-const forecastTime = p => timestamp(p.frozenAt ?? p.generatedAt ?? p.updatedAt);
+function forecastClock(p,observedAt) {
+  const field=['frozenAt','generatedAt','updatedAt','createdAt'].find(k=>Object.hasOwn(p,k));
+  // Some producers (B/B2) do not publish a creation timestamp. The copied
+  // source bytes and their pre-kickoff Git publication prove availability;
+  // observation time is never presented as an inferred producer creation time.
+  if(!field)return {at:observedAt,producerForecastAt:null,timeBasis:'CAPTURED_SOURCE_BYTES'};
+  const at=timestamp(p[field]);
+  return {at,producerForecastAt:Number.isFinite(at)?new Date(at).toISOString():null,
+    timeBasis:'PRODUCER_DECLARED_TIMESTAMP',sourceTimeField:field};
+}
 const idOf = p => String(p.canonicalId || p.canonicalMatchId || p.matchId || '');
 export function normalizedMarket(p) {
   const market = String(p.market || '').trim().toUpperCase();
@@ -88,7 +97,7 @@ export function buildUnifiedShadow({day, now, sources, fixtures, inputFiles = []
     assertUnified(p.date === day && a.date === day && p.ok !== false && a.ok === true &&
       Array.isArray(p.picks) && Number.isInteger(p.count) && p.count === p.picks.length, `unified_invalid_source_${plan}`);
     const quality = coverage(plan, input);coverageByPlan.push(quality);
-    const at = forecastTime(p);valid[plan] = [];baselineSelections[plan] = [];
+    const clock=forecastClock(p,nowMs),at=clock.at;valid[plan] = [];baselineSelections[plan] = [];
     for (const [index, pick] of p.picks.entries()) {
       const cid = idOf(pick), f = canonicalById.get(cid), market = normalizedMarket(pick);
       const detail = {canonicalMatchId:cid, sourceMarket:pick.market ?? null, sourceSelection:pick.pick ?? pick.selection ?? null};
@@ -113,7 +122,9 @@ export function buildUnifiedShadow({day, now, sources, fixtures, inputFiles = []
       }
       const row = {canonicalMatchId:cid, matchId:cid, market:market[0],pick:market[1],kickoffUtc:new Date(kickoff).toISOString(),
         leagueSlug:f.leagueSlug || pick.leagueSlug || null, score, scoreField:plan.startsWith('A') ? 'score' : 'modelProb',
-        confidence:pick.confidence ?? null, sourceIndex:index, forecastAt:new Date(at).toISOString()};
+        confidence:pick.confidence ?? null, sourceIndex:index, observedAt:now,
+        producerForecastAt:clock.producerForecastAt,forecastTimeBasis:clock.timeBasis,
+        sourceTimeField:clock.sourceTimeField??null};
       baselineSelections[plan].push(row);
     }
     const byKey = new Map();
