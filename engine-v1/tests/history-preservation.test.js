@@ -31,6 +31,25 @@ function fixture(t) {
   return { root, remote, temp, write };
 }
 
+test("log-only capture retains full-data locator and does not infer missing sparse data", t => {
+  const f = fixture(t);
+  f.write("data/value-plans/2026-10-14/plan-a.json", '{"count":1}');
+  git(f.root, ["add", "data/value-plans"]); git(f.root, ["commit", "-m", "data baseline"]);
+  const full = preserveHistoryCheckpoint({ root: f.root, dayKey: "2026-10-14", stage: "full", runId: "1" });
+  fs.rmSync(path.join(f.root, "data/value-plans"), { recursive:true });
+  f.write("data/ingest-state/workflow-logs/2/1.json", '{"runConclusion":"failure","logBytesBase64":"UEs="}');
+  const logs = preserveHistoryCheckpoint({ root:f.root, dayKey:"2026-10-14", stage:"logs", runId:"2", evidenceScope:"workflow-logs" });
+  const manifest = verifyHistoryCheckpoint({root:f.root, ref:logs.archiveCommit, manifestPath:logs.manifestPath});
+  assert.equal(manifest.files.length, 1); assert.deepEqual(manifest.missingBaselineFiles, []);
+  assert.equal(manifest.evidenceScope, "workflow-logs");
+  const dataLocator = JSON.parse(git(f.root, ["show", `${logs.archiveCommit}:latest-checkpoint.json`]));
+  assert.equal(dataLocator.manifestPath, full.manifestPath);
+  assert.equal(JSON.parse(git(f.root, ["show", `${logs.archiveCommit}:latest-workflow-logs.json`])).manifestPath, logs.manifestPath);
+  const destination = path.join(f.temp, "restored logs");
+  assert.equal(restoreHistoryCheckpoint({root:f.root,ref:logs.archiveCommit,manifestPath:logs.manifestPath,destination}).fileCount,1);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(destination,"data/ingest-state/workflow-logs/2/1.json"))).runConclusion,"failure");
+});
+
 test("failed later gate cannot discard original picks, inputs, verified results or malformed evidence", t => {
   const f = fixture(t);
   f.write("data/value/2026-08-19.json", '{"count":2,"picks":[{"id":"one"},{"id":"two"}]}');

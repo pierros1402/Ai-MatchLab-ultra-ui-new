@@ -141,13 +141,15 @@ function remoteArchive(root, remote) {
 export function preserveHistoryCheckpoint({
   root = process.cwd(), dayKey, stage,
   runId = process.env.GITHUB_RUN_ID, attempt = process.env.GITHUB_RUN_ATTEMPT || "1",
-  remote = "origin", retries = 3
+  remote = "origin", retries = 3, evidenceScope = "full"
 } = {}) {
+  if (!["full", "workflow-logs"].includes(evidenceScope)) throw new Error("invalid_history_evidence_scope");
+  const inScope = name => evidenceScope === "full" || name.startsWith("data/ingest-state/workflow-logs/");
   if (!/^\d{4}-\d{2}-\d{2}$/u.test(String(dayKey))) throw new Error("invalid_history_checkpoint_day");
   token(stage, "stage"); token(runId, "run"); token(attempt, "attempt");
   const sourceCommit = git(root, ["rev-parse", "HEAD"]).trim();
   const baseline = git(root, ["ls-tree", "-r", "--name-only", "-z", sourceCommit, "--", "data"])
-    .split("\0").filter(isHistoryEvidencePath);
+    .split("\0").filter(isHistoryEvidencePath).filter(inScope);
   const captureDir = fs.mkdtempSync(path.join(os.tmpdir(), "matchlab-history-"));
   const manifestPath = `checkpoints/${dayKey}/${runId}/${attempt}/${stage}/manifest.json`;
   try {
@@ -159,7 +161,7 @@ export function preserveHistoryCheckpoint({
     const knownObjects = new Set(git(root, ["cat-file", "--batch-all-objects", "--batch-check=%(objectname)"]).trim().split("\n"));
     const newPayloads = [];
     const buffer = Buffer.allocUnsafe(CHUNK_BYTES);
-    for (const name of filesUnder(root).sort()) {
+    for (const name of filesUnder(root).filter(inScope).sort()) {
       const fd = fs.openSync(path.join(root, name), "r");
       const hash = crypto.createHash("sha256"), chunks = [];
       let totalBytes = 0;
@@ -190,6 +192,7 @@ export function preserveHistoryCheckpoint({
     const present = new Set(files.map(file => file.path));
     const missingBaselineFiles = baseline.filter(name => !present.has(name));
     const identity = { schema: "ai-matchlab.history-checkpoint.v1", dayKey, stage, runId: String(runId), attempt: String(attempt), sourceCommit, files, missingBaselineFiles };
+    if (evidenceScope !== "full") identity.evidenceScope = evidenceScope;
     const fingerprint = sha256(Buffer.from(JSON.stringify(identity)));
     const manifest = { ...identity, fingerprint, capturedAt: new Date().toISOString(),
       purpose: "recovery_evidence_only", publicationApproved: false,
@@ -218,7 +221,7 @@ export function preserveHistoryCheckpoint({
       entries.push(`100644 ${manifestOid}\t${manifestPath}\0`);
       // A small locator for off-site backup readers. Immutable older manifests
       // and payloads remain in this tree and in the append-only parent history.
-      entries.push(`100644 ${locatorOid}\tlatest-checkpoint.json\0`);
+      entries.push(`100644 ${locatorOid}\t${evidenceScope === "full" ? "latest-checkpoint.json" : "latest-workflow-logs.json"}\0`);
       git(root, ["update-index", "-z", "--index-info"], { index, input: Buffer.from(entries.join("")) });
       const tree = git(root, ["write-tree"], { index }).trim();
       const parents = [...new Set([parent, sourceCommit].filter(Boolean))];
@@ -247,6 +250,10 @@ export function verifyHistoryCheckpoint({ root = process.cwd(), ref, manifestPat
   if (manifest.schema !== "ai-matchlab.history-checkpoint.v1") throw new Error("history_manifest_schema_invalid");
   const { schema, dayKey, stage, runId, attempt, sourceCommit, files, missingBaselineFiles } = manifest;
   const identity = { schema, dayKey, stage, runId, attempt, sourceCommit, files, missingBaselineFiles };
+  if (manifest.evidenceScope !== undefined) {
+    if (manifest.evidenceScope !== "workflow-logs" || [...files.map(file => file.path), ...missingBaselineFiles].some(name => !name.startsWith("data/ingest-state/workflow-logs/"))) throw new Error("history_manifest_scope_invalid");
+    identity.evidenceScope = manifest.evidenceScope;
+  }
   if (sha256(Buffer.from(JSON.stringify(identity))) !== manifest.fingerprint) throw new Error("history_manifest_hash_mismatch");
   const tree = git(root, ["ls-tree", "-r", "-z", ref, "--", "blobs"]);
   const entries = new Map(tree.split("\0").filter(Boolean).map(entry => {
