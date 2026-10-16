@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-16",
-  "generatedAt": "2026-10-16T12:27:12.243Z",
+  "generatedAt": "2026-10-16T12:56:07.417Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "105eb2e6f530fb24b31f2164274e93ade619aaa26d22d5afe0299d4814576282",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "79cb4ac96d437690f98dc7c0e0293e1f907d3c08d43b98dc89e346dd31829bff",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -25,14 +25,14 @@
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 17,
-    "acceptedVerifiedFinalArtifacts": 17,
+    "verifiedFinalArtifacts": 18,
+    "acceptedVerifiedFinalArtifacts": 18,
     "convergedPlayedFinal": 17,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 141,
+    "openRows": 140,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 17,
@@ -1225,9 +1225,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 1
       },
@@ -4858,18 +4858,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-16",
+        "scoreHome": 5,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -7786,7 +7786,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_kaz2_taraz_kaspijaktau2_20261016"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -8020,7 +8022,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 13904,
+            "count": 13916,
             "informational": true
           }
         },
@@ -11704,7 +11706,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "105eb2e6f530fb24b31f2164274e93ade619aaa26d22d5afe0299d4814576282",
+      "truthFingerprint": "79cb4ac96d437690f98dc7c0e0293e1f907d3c08d43b98dc89e346dd31829bff",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -11789,7 +11791,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-16",
-      "fileCount": 17,
+      "fileCount": 18,
       "authority": "scored_final_evidence"
     },
     "downstream": {
