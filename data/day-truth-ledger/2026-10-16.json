@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-16",
-  "generatedAt": "2026-10-16T04:00:08.679Z",
+  "generatedAt": "2026-10-16T04:30:22.658Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "2069b21ccc318929f9a7bcc33e596ecff626ce9f8e873ef5d280e0075920d360",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "bdcff7575c7902d410b9416d1123c55f5576f51c155a1baa8cdcc04df0f28fa9",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 159,
-    "playedTerminal": 12,
+    "playedTerminal": 13,
     "nonPlayedTerminal": 0,
     "scheduled": 146,
-    "live": 1,
+    "live": 0,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 13,
     "acceptedVerifiedFinalArtifacts": 13,
-    "convergedPlayedFinal": 12,
+    "convergedPlayedFinal": 13,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
     "openRows": 146,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 12,
-    "scoredSettlementEligible": 12,
+    "historyEligible": 13,
+    "scoredSettlementEligible": 13,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -1663,12 +1663,12 @@
       "homeTeam": "Saprissa",
       "awayTeam": "Sporting San José",
       "kickoffUtc": "2026-10-16T02:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 6,
         "scoreAway": 0
       },
@@ -1683,11 +1683,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -7835,9 +7835,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_crc1_saprissa_sportingsanjose_20261016"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -11751,13 +11749,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "2069b21ccc318929f9a7bcc33e596ecff626ce9f8e873ef5d280e0075920d360",
+      "truthFingerprint": "bdcff7575c7902d410b9416d1123c55f5576f51c155a1baa8cdcc04df0f28fa9",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 12,
+        "expectedEligibleRows": 13,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_huracan_gimnasialaplata_20261016",
@@ -11767,6 +11765,7 @@
           "cid_col2_quindio_cartagena_20261016",
           "cid_col2_umagdalena_indvalledelcauca_20261016",
           "cid_conmebollibertadores_estudianteslaplata_flamengo_20261016",
+          "cid_crc1_saprissa_sportingsanjose_20261016",
           "cid_gua1_cobanimperial_municipal_20261016",
           "cid_gua1_suchitepequez_deportivosanpedro_20261016",
           "cid_hon1_deportivomarathon_olancho_20261016",
