@@ -2,13 +2,16 @@
   "dayKey": "2026-10-11",
   "leagueSlug": "usa.2",
   "leagueName": "USL Championship",
-  "updatedAt": "2026-10-11T19:09:38.061Z",
+  "updatedAt": "2026-10-15T23:49:22.612Z",
   "count": 11,
   "sourceMeta": {
     "acquisitionProvider": "flashscore",
     "requestedLeagueSlug": "usa.2",
     "requestedDayKey": "2026-10-26",
-    "mergedAt": "2026-10-11T19:09:38.061Z"
+    "mergedAt": "2026-10-11T19:09:38.061Z",
+    "crossDayVerifiedFinalSupersessionAt": "2026-10-15T23:49:22.612Z",
+    "crossDayVerifiedFinalSupersessionRows": 1,
+    "crossDayVerifiedFinalSupersessionPolicy": "cross-day-provider-verified-final-v1"
   },
   "fixtures": [
     {
@@ -32,12 +35,78 @@
       "scoreAway": null,
       "penalties": null,
       "decidedBy": null,
-      "status": "STATUS_SCHEDULED",
-      "rawStatus": "STATUS_SCHEDULED",
+      "status": "STATUS_POSTPONED",
+      "rawStatus": "STATUS_POSTPONED",
       "minute": null,
       "venue": null,
       "firstSeenAt": "2026-10-08T21:48:30.643Z",
-      "lastSeenAt": "2026-10-08T21:48:30.852Z"
+      "lastSeenAt": "2026-10-08T21:48:30.852Z",
+      "statusType": "STATUS_POSTPONED",
+      "statusCorrection": {
+        "schema": "ai-matchlab.cross-day-verified-final-supersession.v1",
+        "correctedAt": "2026-10-15T23:49:22.612Z",
+        "decisionId": "cross-day-verified-final-Sh9liok3-cid_usa2_sportingjax_birmingham_20261011-v1",
+        "policyVersion": "cross-day-provider-verified-final-v1",
+        "correctedFrom": {
+          "status": "STATUS_SCHEDULED",
+          "statusType": null,
+          "rawStatus": "STATUS_SCHEDULED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "correctedTo": {
+          "status": "STATUS_POSTPONED",
+          "statusType": "STATUS_POSTPONED",
+          "rawStatus": "STATUS_POSTPONED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "reason": "verified_cross_day_provider_reschedule",
+        "decisionBasis": "exact_provider_identity_cross_day_supersession_with_verified_final",
+        "providerEvidence": {
+          "provider": "flashscore",
+          "providerMatchId": "Sh9liok3",
+          "supersededCanonicalId": "cid_usa2_sportingjax_birmingham_20261011",
+          "supersededDayKey": "2026-10-11",
+          "supersededKickoffUtc": "2026-10-10T21:00:00.000Z",
+          "evidenceCanonicalId": "cid_usa2_sportingjax_birmingham_20261015",
+          "evidenceDayKey": "2026-10-15",
+          "evidenceKickoffUtc": "2026-10-14T23:00:00.000Z",
+          "evidenceHomeTeam": "Sporting Jax",
+          "evidenceAwayTeam": "Birmingham",
+          "verifiedFinalArtifact": "data/final-results/2026-10-15/cid_usa2_sportingjax_birmingham_20261015.json",
+          "verifiedFinalVerdict": "verified_final_result",
+          "verifiedFinalTruth": true,
+          "verifiedFinalScoreHome": 0,
+          "verifiedFinalScoreAway": 1
+        },
+        "guarantees": {
+          "flashscoreProviderOnly": true,
+          "exactProviderIdentity": true,
+          "sameLeague": true,
+          "exactNormalizedOrderedTeamPair": true,
+          "uniqueLatestObservation": true,
+          "strictlyNewerKickoff": true,
+          "minimumKickoffShiftRequired": true,
+          "strictlyNewerObservation": true,
+          "nonOverlappingObservationWindows": true,
+          "oldKickoffPastGraceRequired": true,
+          "oldOccurrenceScorelessScheduledOnly": true,
+          "playedFinalNeverSuperseded": true,
+          "existingExplicitNonPlayedNeverSuperseded": true,
+          "exactVerifiedFinalArtifact": true,
+          "exactVerifiedFinalFlashscoreProviderIdentity": true,
+          "verifiedFinalScoreParity": true,
+          "verifiedFinalTeamPairParity": true,
+          "oldOccurrenceHasNoActiveFinalResult": true,
+          "oldOccurrenceAbsentFromHistory": true,
+          "oldOccurrenceHasNoOfficialValuePick": true,
+          "oldOccurrenceScoreRemainsNull": true,
+          "scoreNeverCopiedBackward": true
+        }
+      }
     },
     {
       "canonicalId": "cid_usa2_charleston_louisvillecity_20261011",
