@@ -1,0 +1,370 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "ned.2",
+  "homeTeam": "Helmond Sport",
+  "awayTeam": "NAC Breda",
+  "homeWinScore": 0.324,
+  "drawScore": 0.12300000000000001,
+  "awayWinScore": 0.6210000000000001,
+  "over15Score": 0.687,
+  "over25Score": 0.5695,
+  "over35Score": 0.538,
+  "bttsScore": 0.555,
+  "confidence": 0.839,
+  "signals": [
+    "away_edge",
+    "home_form_decay",
+    "form_influence_reduced",
+    "priors_applied",
+    "close_strength_gap",
+    "match_profile_applied"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.191,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.372,
+    "expectedAwayGoals": 1.703,
+    "expectedTotalGoals": 3.075,
+    "homeStrength": 0.151,
+    "awayStrength": 0.326,
+    "homeEdge": 0.093,
+    "awayPenalty": 0.238,
+    "recency": {
+      "homeOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 190,
+        "daysSinceLastMatch": 20,
+        "spanDays": 15,
+        "maxInternalGap": 8,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.19,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.474
+      },
+      "awayOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 114,
+        "daysSinceLastMatch": 13,
+        "spanDays": 21,
+        "maxInternalGap": 8,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.45,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.695
+      },
+      "homeSide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 190,
+        "daysSinceLastMatch": 35,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.21
+      },
+      "awaySide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 114,
+        "daysSinceLastMatch": 13,
+        "spanDays": 12,
+        "maxInternalGap": 12,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.45,
+        "continuityScore": 0.7,
+        "formContinuityWeight": 0.523
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 190,
+      "awayPriorSample": 114,
+      "leaguePriorSample": 1900,
+      "matchupPriorSample": 6
+    },
+    "resolution": {
+      "homeInput": "Helmond Sport",
+      "awayInput": "NAC Breda",
+      "homeResolvedKey": "Helmond Sport",
+      "awayResolvedKey": "NAC Breda",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Helmond Sport::NAC Breda",
+      "matchupResolveScore": 0,
+      "homePriorKey": "ned.2::Helmond Sport",
+      "awayPriorKey": "ned.2::NAC Breda",
+      "matchupPriorKey": "ned.2|Helmond Sport|NAC Breda"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Helmond Sport",
+      "awayTeamKey": "NAC Breda",
+      "leagueKey": "ned.2",
+      "matchupKey": "Helmond Sport::NAC Breda"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "form_away_stronger",
+        "impact": 0.08,
+        "note": "Away team has significantly stronger form"
+      },
+      {
+        "code": "away_absence_impact",
+        "impact": 0.03,
+        "note": "Away absences reduce away edge"
+      },
+      {
+        "code": "h2h_home_edge",
+        "impact": 0.025,
+        "note": "Recent H2H leans home"
+      },
+      {
+        "code": "h2h_underlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is tight"
+      },
+      {
+        "code": "ai_h2h_home_edge",
+        "impact": 0.06,
+        "note": "AI detected home H2H edge"
+      },
+      {
+        "code": "ai_away_form_signal",
+        "impact": 0.05,
+        "note": "AI confirmed strong away form edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    },
+    "matchProfileApplied": true,
+    "matchProfileConfidence": 0.74,
+    "matchProfileReasons": [
+      {
+        "code": "match_profile_away_form_edge",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile last5 points: home 3, away 9"
+      },
+      {
+        "code": "match_profile_h2h_home_edge",
+        "impact": 0.011000000000000001,
+        "note": "MatchProfile H2H trend leans home"
+      },
+      {
+        "code": "match_profile_h2h_underlean",
+        "impact": -0.0165,
+        "note": "MatchProfile H2H goal pattern leans under"
+      }
+    ]
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "form_away_stronger",
+      "impact": 0.08,
+      "note": "Away team has significantly stronger form"
+    },
+    {
+      "code": "away_absence_impact",
+      "impact": 0.03,
+      "note": "Away absences reduce away edge"
+    },
+    {
+      "code": "h2h_home_edge",
+      "impact": 0.025,
+      "note": "Recent H2H leans home"
+    },
+    {
+      "code": "h2h_underlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is tight"
+    },
+    {
+      "code": "ai_h2h_home_edge",
+      "impact": 0.06,
+      "note": "AI detected home H2H edge"
+    },
+    {
+      "code": "ai_away_form_signal",
+      "impact": 0.05,
+      "note": "AI confirmed strong away form edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "ned.2",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 20,
+    "awayRestDays": 13,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 1,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  },
+  "intelligence": {
+    "applied": true,
+    "mode": "partial",
+    "coverage": {
+      "hasStandings": false,
+      "hasHomeForm": true,
+      "hasAwayForm": true,
+      "hasH2H": false,
+      "hasPhaseContext": false,
+      "coverageCount": 2,
+      "mode": "partial"
+    },
+    "signals": [
+      "away_form_edge",
+      "attack_support"
+    ]
+  },
+  "opponentAdjustedForm": {
+    "home": {
+      "schema": "ai-matchlab.opponent-adjusted-form.v1",
+      "sample": 12,
+      "strongOpponentSample": 0,
+      "peerStrengthSample": 12,
+      "oppositionStrengthMean": 0.179,
+      "sampleReliability": 1,
+      "raw": {
+        "gfRate": 0.8,
+        "gaRate": 1.24,
+        "ppg": 0.743,
+        "over25Rate": 0.253,
+        "bttsRate": 0.511
+      },
+      "adjusted": {
+        "gfRate": 0.8,
+        "gaRate": 1.24,
+        "ppg": 0.743,
+        "over25Rate": 0.253,
+        "bttsRate": 0.511
+      },
+      "impact": {
+        "gfRate": 0,
+        "gaRate": 0,
+        "ppg": 0,
+        "over25Rate": 0,
+        "bttsRate": 0
+      },
+      "reasonCodes": [
+        "no_strong_opposition_sample"
+      ]
+    },
+    "away": {
+      "schema": "ai-matchlab.opponent-adjusted-form.v1",
+      "sample": 12,
+      "strongOpponentSample": 0,
+      "peerStrengthSample": 12,
+      "oppositionStrengthMean": 0.179,
+      "sampleReliability": 1,
+      "raw": {
+        "gfRate": 1.437,
+        "gaRate": 1.652,
+        "ppg": 1.484,
+        "over25Rate": 0.561,
+        "bttsRate": 0.684
+      },
+      "adjusted": {
+        "gfRate": 1.437,
+        "gaRate": 1.652,
+        "ppg": 1.484,
+        "over25Rate": 0.561,
+        "bttsRate": 0.684
+      },
+      "impact": {
+        "gfRate": 0,
+        "gaRate": 0,
+        "ppg": 0,
+        "over25Rate": 0,
+        "bttsRate": 0
+      },
+      "reasonCodes": [
+        "no_strong_opposition_sample"
+      ]
+    },
+    "sampleReliability": 1
+  }
+}

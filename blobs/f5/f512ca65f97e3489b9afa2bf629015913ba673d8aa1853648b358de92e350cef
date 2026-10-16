@@ -1,0 +1,353 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "svn.2",
+  "homeTeam": "Triglav",
+  "awayTeam": "Jadran Dekani",
+  "homeWinScore": 0.48800000000000004,
+  "drawScore": 0.135,
+  "awayWinScore": 0.434,
+  "over15Score": 0.585,
+  "over25Score": 0.628,
+  "over35Score": 0.449,
+  "bttsScore": 0.47150000000000003,
+  "confidence": 0.835,
+  "signals": [
+    "away_edge",
+    "home_form_decay",
+    "away_form_decay",
+    "form_influence_reduced",
+    "priors_applied",
+    "close_strength_gap",
+    "match_profile_applied"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.12,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.555,
+    "expectedAwayGoals": 1.07,
+    "expectedTotalGoals": 2.625,
+    "homeStrength": 0.245,
+    "awayStrength": 0.154,
+    "homeEdge": 0.266,
+    "awayPenalty": 0.093,
+    "recency": {
+      "homeOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 149,
+        "daysSinceLastMatch": 19,
+        "spanDays": 13,
+        "maxInternalGap": 6,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.225,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.546
+      },
+      "awayOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 150,
+        "daysSinceLastMatch": 21,
+        "spanDays": 11,
+        "maxInternalGap": 6,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.155,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.462
+      },
+      "homeSide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 149,
+        "daysSinceLastMatch": 19,
+        "spanDays": 10,
+        "maxInternalGap": 6,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.225,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.486
+      },
+      "awaySide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 150,
+        "daysSinceLastMatch": 26,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.21
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 149,
+      "awayPriorSample": 150,
+      "leaguePriorSample": 1199,
+      "matchupPriorSample": 10
+    },
+    "resolution": {
+      "homeInput": "Triglav",
+      "awayInput": "Jadran Dekani",
+      "homeResolvedKey": "Triglav",
+      "awayResolvedKey": "Jadran Dekani",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Triglav::Jadran Dekani",
+      "matchupResolveScore": 0,
+      "homePriorKey": "svn.2::Triglav Kranj",
+      "awayPriorKey": "svn.2::Jadran Dekani",
+      "matchupPriorKey": "svn.2|Jadran Dekani|Triglav Kranj"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Triglav",
+      "awayTeamKey": "Jadran Dekani",
+      "leagueKey": "svn.2",
+      "matchupKey": "Triglav::Jadran Dekani"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "h2h_home_edge",
+        "impact": 0.025,
+        "note": "Recent H2H leans home"
+      },
+      {
+        "code": "h2h_overlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is open"
+      },
+      {
+        "code": "ai_h2h_over_signal",
+        "impact": 0.07,
+        "note": "AI detected open H2H pattern"
+      },
+      {
+        "code": "ai_h2h_home_edge",
+        "impact": 0.06,
+        "note": "AI detected home H2H edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    },
+    "matchProfileApplied": true,
+    "matchProfileConfidence": 0.6,
+    "matchProfileReasons": [
+      {
+        "code": "match_profile_home_form_edge",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile last5 points: home 7, away 3"
+      },
+      {
+        "code": "match_profile_h2h_home_edge",
+        "impact": 0.011000000000000001,
+        "note": "MatchProfile H2H trend leans home"
+      },
+      {
+        "code": "match_profile_h2h_overlean",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile H2H goal pattern leans over"
+      }
+    ]
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "h2h_home_edge",
+      "impact": 0.025,
+      "note": "Recent H2H leans home"
+    },
+    {
+      "code": "h2h_overlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is open"
+    },
+    {
+      "code": "ai_h2h_over_signal",
+      "impact": 0.07,
+      "note": "AI detected open H2H pattern"
+    },
+    {
+      "code": "ai_h2h_home_edge",
+      "impact": 0.06,
+      "note": "AI detected home H2H edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "svn.2",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 19,
+    "awayRestDays": 21,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  },
+  "intelligence": {
+    "applied": true,
+    "mode": "partial",
+    "coverage": {
+      "hasStandings": false,
+      "hasHomeForm": true,
+      "hasAwayForm": true,
+      "hasH2H": false,
+      "hasPhaseContext": false,
+      "coverageCount": 2,
+      "mode": "partial"
+    },
+    "signals": [
+      "form_balanced",
+      "attack_support",
+      "defensive_resilience"
+    ]
+  },
+  "opponentAdjustedForm": {
+    "home": {
+      "schema": "ai-matchlab.opponent-adjusted-form.v1",
+      "sample": 2,
+      "strongOpponentSample": 0,
+      "peerStrengthSample": 2,
+      "oppositionStrengthMean": 0.179,
+      "sampleReliability": 0.1,
+      "raw": {
+        "gfRate": 0.468,
+        "gaRate": 0.532,
+        "ppg": 1.404,
+        "over25Rate": 0,
+        "bttsRate": 0
+      },
+      "adjusted": {
+        "gfRate": 0.468,
+        "gaRate": 0.532,
+        "ppg": 1.404,
+        "over25Rate": 0,
+        "bttsRate": 0
+      },
+      "impact": {
+        "gfRate": 0,
+        "gaRate": 0,
+        "ppg": 0,
+        "over25Rate": 0,
+        "bttsRate": 0
+      },
+      "reasonCodes": [
+        "insufficient_opponent_strength_coverage",
+        "no_strong_opposition_sample"
+      ]
+    },
+    "away": {
+      "schema": "ai-matchlab.opponent-adjusted-form.v1",
+      "sample": 12,
+      "strongOpponentSample": 0,
+      "peerStrengthSample": 12,
+      "oppositionStrengthMean": 0.179,
+      "sampleReliability": 1,
+      "raw": {
+        "gfRate": 1.557,
+        "gaRate": 1.557,
+        "ppg": 1.226,
+        "over25Rate": 0.486,
+        "bttsRate": 0.388
+      },
+      "adjusted": {
+        "gfRate": 1.557,
+        "gaRate": 1.557,
+        "ppg": 1.226,
+        "over25Rate": 0.486,
+        "bttsRate": 0.388
+      },
+      "impact": {
+        "gfRate": 0,
+        "gaRate": 0,
+        "ppg": 0,
+        "over25Rate": 0,
+        "bttsRate": 0
+      },
+      "reasonCodes": [
+        "no_strong_opposition_sample"
+      ]
+    },
+    "sampleReliability": 0.1
+  }
+}
