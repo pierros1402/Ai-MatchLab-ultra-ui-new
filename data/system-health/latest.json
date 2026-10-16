@@ -1,25 +1,25 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-10-16",
-  "generatedAt": "2026-10-16T14:23:03.518Z",
-  "severity": "warning",
+  "generatedAt": "2026-10-16T17:33:43.908Z",
+  "severity": "error",
   "issueCounts": {
-    "error": 0,
-    "warning": 7,
+    "error": 2,
+    "warning": 6,
     "info": 9
   },
-  "alert": false,
+  "alert": true,
   "alertCounts": {
-    "error": 0,
+    "error": 2,
     "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 16,
-  "actionableIssueCount": 7,
-  "newIssueCount": 0,
-  "newActionableIssueCount": 0,
-  "resolvedIssueCount": 2,
-  "persistentIssueCount": 16,
+  "activeIssueCount": 17,
+  "actionableIssueCount": 8,
+  "newIssueCount": 2,
+  "newActionableIssueCount": 2,
+  "resolvedIssueCount": 1,
+  "persistentIssueCount": 15,
   "activeIssues": [
     {
       "severity": "info",
@@ -224,7 +224,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 14266,
+        "count": 14288,
         "informational": true
       }
     },
@@ -253,6 +253,38 @@
       }
     },
     {
+      "severity": "error",
+      "source": "live-status-completeness",
+      "type": "stale_open_exact_provider_ids",
+      "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
+      "details": {
+        "raw": "live_status_stale_open_exact_provider_ids:cid_cafconfed_welwaloadigrat_alahlitripoli_20261016",
+        "canonicalIds": [
+          "cid_cafconfed_welwaloadigrat_alahlitripoli_20261016"
+        ],
+        "count": 1,
+        "staleAfterHours": 4,
+        "exactProviderIdOnly": true,
+        "heuristicFinalPromotion": false,
+        "fixtures": [
+          {
+            "canonicalId": "cid_cafconfed_welwaloadigrat_alahlitripoli_20261016",
+            "providerId": "401912479",
+            "source": "espn",
+            "leagueSlug": "caf.confed",
+            "providerLeagueSlug": "caf.confed",
+            "kickoffUtc": "2026-10-16T13:00Z",
+            "ageHours": 4.562,
+            "status": "PRE",
+            "rawStatus": "STATUS_SCHEDULED",
+            "statusType": null,
+            "operationalState": null,
+            "classification": "stale_open_exact_provider_id"
+          }
+        ]
+      }
+    },
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -270,14 +302,13 @@
       }
     },
     {
-      "severity": "warning",
+      "severity": "error",
       "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -1187,6 +1218,38 @@
       }
     },
     {
+      "severity": "error",
+      "source": "live-status-completeness",
+      "type": "stale_open_exact_provider_ids",
+      "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
+      "details": {
+        "raw": "live_status_stale_open_exact_provider_ids:cid_cafconfed_welwaloadigrat_alahlitripoli_20261016",
+        "canonicalIds": [
+          "cid_cafconfed_welwaloadigrat_alahlitripoli_20261016"
+        ],
+        "count": 1,
+        "staleAfterHours": 4,
+        "exactProviderIdOnly": true,
+        "heuristicFinalPromotion": false,
+        "fixtures": [
+          {
+            "canonicalId": "cid_cafconfed_welwaloadigrat_alahlitripoli_20261016",
+            "providerId": "401912479",
+            "source": "espn",
+            "leagueSlug": "caf.confed",
+            "providerLeagueSlug": "caf.confed",
+            "kickoffUtc": "2026-10-16T13:00Z",
+            "ageHours": 4.562,
+            "status": "PRE",
+            "rawStatus": "STATUS_SCHEDULED",
+            "statusType": null,
+            "operationalState": null,
+            "classification": "stale_open_exact_provider_id"
+          }
+        ]
+      }
+    },
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -1204,14 +1267,13 @@
       }
     },
     {
-      "severity": "warning",
+      "severity": "error",
       "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -1850,39 +1912,104 @@
       }
     }
   ],
-  "newIssues": [],
-  "newActionableIssues": [],
-  "resolvedIssues": [
+  "newIssues": [
     {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B picks are still unresolved.",
+      "severity": "error",
+      "source": "live-status-completeness",
+      "type": "stale_open_exact_provider_ids",
+      "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
       "details": {
-        "dayKey": "2026-10-16",
-        "todayDayKey": "2026-10-16",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 3,
-        "settled": 0,
-        "unresolved": 3
+        "raw": "live_status_stale_open_exact_provider_ids:cid_cafconfed_welwaloadigrat_alahlitripoli_20261016",
+        "canonicalIds": [
+          "cid_cafconfed_welwaloadigrat_alahlitripoli_20261016"
+        ],
+        "count": 1,
+        "staleAfterHours": 4,
+        "exactProviderIdOnly": true,
+        "heuristicFinalPromotion": false,
+        "fixtures": [
+          {
+            "canonicalId": "cid_cafconfed_welwaloadigrat_alahlitripoli_20261016",
+            "providerId": "401912479",
+            "source": "espn",
+            "leagueSlug": "caf.confed",
+            "providerLeagueSlug": "caf.confed",
+            "kickoffUtc": "2026-10-16T13:00Z",
+            "ageHours": 4.562,
+            "status": "PRE",
+            "rawStatus": "STATUS_SCHEDULED",
+            "statusType": null,
+            "operationalState": null,
+            "classification": "stale_open_exact_provider_id"
+          }
+        ]
       }
     },
     {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_b2_unresolved_settlement",
-      "message": "Plan B2 picks are still unresolved.",
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "dayKey": "2026-10-16",
-        "todayDayKey": "2026-10-16",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 3,
-        "settled": 0,
-        "unresolved": 3
+        "clean": false,
+        "cleanStrict": false
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "error",
+      "source": "live-status-completeness",
+      "type": "stale_open_exact_provider_ids",
+      "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
+      "details": {
+        "raw": "live_status_stale_open_exact_provider_ids:cid_cafconfed_welwaloadigrat_alahlitripoli_20261016",
+        "canonicalIds": [
+          "cid_cafconfed_welwaloadigrat_alahlitripoli_20261016"
+        ],
+        "count": 1,
+        "staleAfterHours": 4,
+        "exactProviderIdOnly": true,
+        "heuristicFinalPromotion": false,
+        "fixtures": [
+          {
+            "canonicalId": "cid_cafconfed_welwaloadigrat_alahlitripoli_20261016",
+            "providerId": "401912479",
+            "source": "espn",
+            "leagueSlug": "caf.confed",
+            "providerLeagueSlug": "caf.confed",
+            "kickoffUtc": "2026-10-16T13:00Z",
+            "ageHours": 4.562,
+            "status": "PRE",
+            "rawStatus": "STATUS_SCHEDULED",
+            "statusType": null,
+            "operationalState": null,
+            "classification": "stale_open_exact_provider_id"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     }
   ],
@@ -2090,7 +2217,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 14060,
+        "count": 14288,
         "informational": true
       }
     },
@@ -2133,17 +2260,6 @@
         ],
         "raw": "acquisition_skipped_slugs:col.copa,ned.w.knvb_cup,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
         "contextOnly": false
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
-      "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
       }
     },
     {
