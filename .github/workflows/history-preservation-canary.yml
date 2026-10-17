@@ -12,7 +12,10 @@ permissions:
   contents: write
 
 concurrency:
-  group: ai-matchlab-data-writer
+  # This workflow never writes main or publication state. Sharing the production
+  # lane lets newer scheduled writers replace and cancel a pending restore drill.
+  # Archive commits already use fast-forward compare-and-retry for concurrency.
+  group: ai-matchlab-history-restore-canary
   cancel-in-progress: false
 
 jobs:

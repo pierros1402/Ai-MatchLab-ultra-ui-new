@@ -26,8 +26,10 @@ write is a dispatch of the existing canary on main for Athens today. A successfu
 dispatch is reported as `RESTORE_REQUESTED`, never `HEALTHY`. The next scheduled
 observation must independently see the successful completed drill. Persistent
 failure produces a failing watchdog job and its GitHub summary; no issue, email
-or third-party message is sent by this controller. Existing writer serialization
-and the six-hour cooldown prevent repeated concurrent recovery requests.
+or third-party message is sent by this controller. The canary has its own serialized
+lane: production writers cannot replace/cancel its pending run. It writes only to
+the append-only archive, whose fast-forward compare-and-retry retains concurrent
+checkpoints. The six-hour cooldown prevents repeated recovery requests.
 
 This deliberately does not activate the broader disabled autonomous repair kernel,
 change A/A2/B/B2 or U1 rules, replay a past model, change frozen predictions, or
