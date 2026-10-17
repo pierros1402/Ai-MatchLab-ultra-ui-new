@@ -110,3 +110,12 @@ test("workflow uses the existing schedule, isolated read-only checkout and no pu
   assert.ok(job.includes(".github/workflows"));
   assert.equal((yaml.match(/cron:/g) || []).length, 1);
 });
+test("restore drill has its own serialized lane and only captures existing evidence", () => {
+  const yaml = fs.readFileSync(new URL("../../.github/workflows/history-preservation-canary.yml", import.meta.url), "utf8");
+  assert.ok(yaml.includes("group: ai-matchlab-history-restore-canary"));
+  assert.ok(yaml.includes("cancel-in-progress: false"));
+  assert.ok(!yaml.includes("group: ai-matchlab-data-writer"));
+  assert.ok(yaml.includes("uses: ./.github/actions/preserve-history"));
+  assert.ok(!/run:.*(?:run-daily-cycle|build-value|sync-public-snapshot)/.test(yaml));
+  assert.ok(!yaml.includes("cron:"));
+});
