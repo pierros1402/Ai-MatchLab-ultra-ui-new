@@ -1,0 +1,275 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "irl.1",
+  "homeTeam": "Drogheda",
+  "awayTeam": "Derry City",
+  "homeWinScore": 0.286,
+  "drawScore": 0.184,
+  "awayWinScore": 0.53,
+  "over15Score": 0.591,
+  "over25Score": 0.469,
+  "over35Score": 0.448,
+  "bttsScore": 0.445,
+  "confidence": 0.862,
+  "signals": [
+    "away_edge",
+    "form_influence_reduced",
+    "priors_applied",
+    "close_strength_gap"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.15,
+      "awayOverallFormWeight": 0.12,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.02,
+    "expectedAwayGoals": 1.387,
+    "expectedTotalGoals": 2.408,
+    "homeStrength": 0.319,
+    "awayStrength": 0.372,
+    "homeEdge": 0.288,
+    "awayPenalty": 0.204,
+    "recency": {
+      "homeOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 162,
+        "daysSinceLastMatch": 0,
+        "spanDays": 35,
+        "maxInternalGap": 20,
+        "gapSeverity": "moderate",
+        "freshnessScore": 1,
+        "continuityScore": 0.3,
+        "formContinuityWeight": 0.755
+      },
+      "awayOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 161,
+        "daysSinceLastMatch": 0,
+        "spanDays": 35,
+        "maxInternalGap": 28,
+        "gapSeverity": "heavy",
+        "freshnessScore": 1,
+        "continuityScore": 0.1,
+        "formContinuityWeight": 0.625
+      },
+      "homeSide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 162,
+        "daysSinceLastMatch": 0,
+        "spanDays": 35,
+        "maxInternalGap": 35,
+        "gapSeverity": "heavy",
+        "freshnessScore": 1,
+        "continuityScore": 0.1,
+        "formContinuityWeight": 0.505
+      },
+      "awaySide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 161,
+        "daysSinceLastMatch": 0,
+        "spanDays": 35,
+        "maxInternalGap": 32,
+        "gapSeverity": "heavy",
+        "freshnessScore": 1,
+        "continuityScore": 0.1,
+        "formContinuityWeight": 0.565
+      }
+    },
+    "matchupSample": 4,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 162,
+      "awayPriorSample": 161,
+      "leaguePriorSample": 814,
+      "matchupPriorSample": 10
+    },
+    "resolution": {
+      "homeInput": "Drogheda",
+      "awayInput": "Derry City",
+      "homeResolvedKey": "Drogheda",
+      "awayResolvedKey": "Derry City",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Derry City::Drogheda",
+      "matchupResolveScore": 0.93,
+      "homePriorKey": "irl.1::Drogheda",
+      "awayPriorKey": "irl.1::Derry City",
+      "matchupPriorKey": "irl.1|Derry City|Drogheda"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Drogheda",
+      "awayTeamKey": "Derry City",
+      "leagueKey": "irl.1",
+      "matchupKey": "Derry City::Drogheda"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": -0.03,
+    "contextReasons": [
+      {
+        "code": "form_balanced",
+        "impact": 0.04,
+        "note": "Teams have similar recent form"
+      },
+      {
+        "code": "home_absence_impact",
+        "impact": 0.06,
+        "note": "Home absences reduce home edge"
+      },
+      {
+        "code": "away_absence_impact",
+        "impact": 0.03,
+        "note": "Away absences reduce away edge"
+      },
+      {
+        "code": "absence_uncertainty",
+        "impact": -0.03,
+        "note": "Absences increase variance"
+      },
+      {
+        "code": "h2h_away_edge",
+        "impact": 0.025,
+        "note": "Recent H2H leans away"
+      },
+      {
+        "code": "h2h_underlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is tight"
+      },
+      {
+        "code": "ai_h2h_away_edge",
+        "impact": 0.06,
+        "note": "AI detected away H2H edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    }
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "form_balanced",
+      "impact": 0.04,
+      "note": "Teams have similar recent form"
+    },
+    {
+      "code": "home_absence_impact",
+      "impact": 0.06,
+      "note": "Home absences reduce home edge"
+    },
+    {
+      "code": "away_absence_impact",
+      "impact": 0.03,
+      "note": "Away absences reduce away edge"
+    },
+    {
+      "code": "absence_uncertainty",
+      "impact": -0.03,
+      "note": "Absences increase variance"
+    },
+    {
+      "code": "h2h_away_edge",
+      "impact": 0.025,
+      "note": "Recent H2H leans away"
+    },
+    {
+      "code": "h2h_underlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is tight"
+    },
+    {
+      "code": "ai_h2h_away_edge",
+      "impact": 0.06,
+      "note": "AI detected away H2H edge"
+    }
+  ],
+  "contextDelta": -0.03,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "irl.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 7,
+    "awayRestDays": 28,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 1,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
