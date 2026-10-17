@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-17",
-  "generatedAt": "2026-10-17T06:06:45.444Z",
+  "generatedAt": "2026-10-17T06:52:47.627Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "d207741bd010ae18fe16befa61784115e4a92499b81a5a64b9574b67254aa73f",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "625d8181294aaf2577dc3e84a8e4d068ead973053f26c668467b671e76d601ba",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 504,
-    "playedTerminal": 21,
+    "playedTerminal": 23,
     "nonPlayedTerminal": 2,
-    "scheduled": 476,
-    "live": 5,
+    "scheduled": 473,
+    "live": 6,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 23,
     "acceptedVerifiedFinalArtifacts": 23,
-    "convergedPlayedFinal": 21,
+    "convergedPlayedFinal": 23,
     "convergedNonPlayedTerminal": 2,
     "pendingVerifiedFinal": 0,
     "openRows": 479,
     "unresolvedRows": 0,
-    "conflictRows": 2,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 21,
-    "scoredSettlementEligible": 21,
+    "historyEligible": 23,
+    "scoredSettlementEligible": 23,
     "voidSettlementEligible": 2
   },
   "fixtures": [
@@ -1075,13 +1075,13 @@
       "homeTeam": "Auckland FC",
       "awayTeam": "Melbourne City FC",
       "kickoffUtc": "2026-10-17T04:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 2,
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 3,
         "scoreAway": 1
       },
       "verifiedFinal": {
@@ -1092,14 +1092,14 @@
         "dayKey": "2026-10-17",
         "scoreHome": 3,
         "scoreAway": 1,
-        "scoreParity": false
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1173,14 +1173,14 @@
       "homeTeam": "Macarthur FC",
       "awayTeam": "Perth Glory",
       "kickoffUtc": "2026-10-17T06:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1194,7 +1194,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -13521,14 +13521,14 @@
       "homeTeam": "Cerezo Osaka",
       "awayTeam": "Kawasaki Frontale",
       "kickoffUtc": "2026-10-17T06:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -13542,7 +13542,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -13573,9 +13573,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -13619,14 +13619,14 @@
       "homeTeam": "Kashima Antlers",
       "awayTeam": "V-Varen Nagasaki",
       "kickoffUtc": "2026-10-17T06:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 2,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -13640,7 +13640,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -13769,10 +13769,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -13815,14 +13815,14 @@
       "homeTeam": "Shimizu S-Pulse",
       "awayTeam": "Gamba Osaka",
       "kickoffUtc": "2026-10-17T04:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 2,
-        "scoreAway": 0
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": true,
@@ -13832,14 +13832,14 @@
         "dayKey": "2026-10-17",
         "scoreHome": 2,
         "scoreAway": 2,
-        "scoreParity": false
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -13867,11 +13867,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 3
       },
       "verifiedFinal": {
         "present": false,
@@ -24740,10 +24740,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_aus1_auckland_melbournecity_20261017",
-      "cid_jpn1_shimizuspulse_gambaosaka_20261017"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -29321,19 +29318,20 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "d207741bd010ae18fe16befa61784115e4a92499b81a5a64b9574b67254aa73f",
+      "truthFingerprint": "625d8181294aaf2577dc3e84a8e4d068ead973053f26c668467b671e76d601ba",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 21,
+        "expectedEligibleRows": 23,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_bocajuniors_tallerescordoba_20261017",
           "cid_arg1_defensayjusticia_institutocordoba_20261017",
           "cid_arg2_atleticorafaela_quilmes_20261017",
           "cid_arg2_gimnasiaytirosalta_atlanta_20261017",
+          "cid_aus1_auckland_melbournecity_20261017",
           "cid_bol1_realtomayapo_gvsanjose_20261017",
           "cid_bra1_mirassol_internacional_20261017",
           "cid_bra2_pontepreta_atleticogoianiense_20261017",
@@ -29342,6 +29340,7 @@
           "cid_can1_vancouver_hfxwanderers_20261017",
           "cid_chi2_swanderers_rangers_20261017",
           "cid_col2_bocajuniors_atletico_20261017",
+          "cid_jpn1_shimizuspulse_gambaosaka_20261017",
           "cid_mex1_atlante_pumasunam_20261017",
           "cid_mex1_necaxa_atlas_20261017",
           "cid_mex1_tijuana_puebla_20261017",
