@@ -2,14 +2,14 @@
   "schema": "ai-matchlab.history-backed-standings.v1",
   "league": "aus.1",
   "seasonReference": "2025-2026",
-  "updatedAt": "2026-10-16T00:03:25.051Z",
+  "updatedAt": "2026-10-16T23:54:10.558Z",
   "confidence": 0,
   "completeness": 0,
   "sourceAudit": [
     {
       "type": "history_foundation",
       "label": "history-2026-2027",
-      "ok": false
+      "ok": true
     },
     {
       "type": "competition_contract",
@@ -29,14 +29,12 @@
     "status": "GATED",
     "usable": false,
     "reasonCodes": [
-      "NO_STRICT_HISTORY_ROWS",
-      "TABLE_EMPTY",
       "TEAM_COUNT_BELOW_CONTRACT"
     ],
-    "builtAt": "2026-10-16T00:03:25.051Z",
+    "builtAt": "2026-10-16T23:54:10.558Z",
     "historySeason": "2026-2027",
-    "historyLeagueRows": 0,
-    "historyLeagueSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "historyLeagueRows": 1,
+    "historyLeagueSha256": "bd0dc8fdcbc1b2d4d308270a7b2b3c142824f57fdc086ec25b89b9a865a9c24f",
     "competitionFormatRegistrySha256": "92895cede3edd2079e6230fd2cba67b6e435710a0116374f27a8c47b1d8ecb36",
     "teamAliasesSha256": "f3d2c2b6b2a1678213025bc72aa87403433abf473944afb91e1a4a1cfd35e12e",
     "teamIdentityMode": "LEAGUE_SCOPED_CANONICAL_ALIAS_ID_V1",
@@ -67,9 +65,9 @@
       },
       "summary": {
         "primaryUniverseSource": "TABLE",
-        "primaryRowCount": 0,
-        "primaryUniqueTeamCount": 0,
-        "primaryCanonicalIdCount": 0,
+        "primaryRowCount": 2,
+        "primaryUniqueTeamCount": 2,
+        "primaryCanonicalIdCount": 2,
         "primaryFallbackIdentityCount": 0,
         "primaryCanonicalIdentityComplete": true,
         "phaseTableCount": 0,
@@ -80,27 +78,21 @@
             "mode": "EXACT",
             "value": 12
           },
-          "observed": 0
+          "observed": 2
         },
-        "errorCount": 2,
+        "errorCount": 1,
         "warningCount": 0
       },
       "issues": [
         {
-          "code": "TABLE_EMPTY",
-          "severity": "error",
-          "scope": "primary",
-          "message": "Standings table is empty."
-        },
-        {
           "code": "TEAM_COUNT_BELOW_CONTRACT",
           "severity": "error",
           "scope": "primary-universe",
-          "message": "Observed unique team count 0 does not equal contract count 12.",
+          "message": "Observed unique team count 2 does not equal contract count 12.",
           "details": {
-            "observed": 0,
+            "observed": 2,
             "expected": 12,
-            "delta": -12
+            "delta": -10
           }
         }
       ],
@@ -110,8 +102,45 @@
         "mutations": []
       }
     },
-    "observedRowCount": 0,
-    "observedTable": [],
+    "observedRowCount": 2,
+    "observedTable": [
+      {
+        "position": 1,
+        "rank": 1,
+        "canonicalTeamId": "stid_9e4fb95a4e31c46d8fc06ae7",
+        "team": "Sydney FC",
+        "teamName": "Sydney FC",
+        "name": "Sydney FC",
+        "played": 1,
+        "wins": 0,
+        "draws": 1,
+        "losses": 0,
+        "goalsFor": 0,
+        "goalsAgainst": 0,
+        "goalDiff": 0,
+        "goalDifference": 0,
+        "points": 1,
+        "confidence": 1
+      },
+      {
+        "position": 2,
+        "rank": 2,
+        "canonicalTeamId": "stid_a36110ae05974ec06163b221",
+        "team": "Western Sydney Wanderers",
+        "teamName": "Western Sydney Wanderers",
+        "name": "Western Sydney Wanderers",
+        "played": 1,
+        "wins": 0,
+        "draws": 1,
+        "losses": 0,
+        "goalsFor": 0,
+        "goalsAgainst": 0,
+        "goalDiff": 0,
+        "goalDifference": 0,
+        "points": 1,
+        "confidence": 1
+      }
+    ],
     "consumerTableRows": 0,
     "staleOnSourceChange": true
   }
