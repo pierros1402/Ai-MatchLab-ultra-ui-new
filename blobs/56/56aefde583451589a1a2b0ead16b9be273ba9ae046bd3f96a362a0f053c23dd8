@@ -1,0 +1,280 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "uru.2",
+  "homeTeam": "Miramar",
+  "awayTeam": "Cerrito",
+  "homeWinScore": 0.43000000000000005,
+  "drawScore": 0.12000000000000001,
+  "awayWinScore": 0.507,
+  "over15Score": 0.621,
+  "over25Score": 0.6500000000000001,
+  "over35Score": 0.464,
+  "bttsScore": 0.49450000000000005,
+  "confidence": 0.831,
+  "signals": [
+    "home_edge",
+    "away_edge",
+    "away_form_decay",
+    "form_influence_reduced",
+    "matchup_goals_history",
+    "priors_applied",
+    "close_strength_gap",
+    "match_profile_applied"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.17,
+      "awayOverallFormWeight": 0.12,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.469,
+    "expectedAwayGoals": 0.953,
+    "expectedTotalGoals": 2.421,
+    "homeStrength": 0.363,
+    "awayStrength": 0.146,
+    "homeEdge": 0.287,
+    "awayPenalty": 0.104,
+    "recency": {
+      "homeOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 61,
+        "daysSinceLastMatch": 14,
+        "spanDays": 21,
+        "maxInternalGap": 8,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.4,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.678
+      },
+      "awayOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 98,
+        "daysSinceLastMatch": 20,
+        "spanDays": 14,
+        "maxInternalGap": 7,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.19,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.474
+      },
+      "homeSide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 61,
+        "daysSinceLastMatch": 14,
+        "spanDays": 14,
+        "maxInternalGap": 14,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.4,
+        "continuityScore": 0.7,
+        "formContinuityWeight": 0.505
+      },
+      "awaySide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 98,
+        "daysSinceLastMatch": 34,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.21
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 61,
+      "awayPriorSample": 98,
+      "leaguePriorSample": 979,
+      "matchupPriorSample": 3
+    },
+    "resolution": {
+      "homeInput": "Miramar",
+      "awayInput": "Cerrito",
+      "homeResolvedKey": "Miramar",
+      "awayResolvedKey": "Cerrito",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Miramar::Cerrito",
+      "matchupResolveScore": 0,
+      "homePriorKey": "uru.2::Miramar",
+      "awayPriorKey": "uru.2::Cerrito",
+      "matchupPriorKey": "uru.2|Cerrito|Miramar"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Miramar",
+      "awayTeamKey": "Cerrito",
+      "leagueKey": "uru.2",
+      "matchupKey": "Miramar::Cerrito"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "form_away_stronger",
+        "impact": 0.08,
+        "note": "Away team has significantly stronger form"
+      },
+      {
+        "code": "h2h_overlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is open"
+      },
+      {
+        "code": "ai_h2h_over_signal",
+        "impact": 0.07,
+        "note": "AI detected open H2H pattern"
+      },
+      {
+        "code": "ai_away_form_signal",
+        "impact": 0.05,
+        "note": "AI confirmed strong away form edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    },
+    "matchProfileApplied": true,
+    "matchProfileConfidence": 0.67,
+    "matchProfileReasons": [
+      {
+        "code": "match_profile_away_form_edge",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile last5 points: home 2, away 6"
+      },
+      {
+        "code": "match_profile_h2h_overlean",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile H2H goal pattern leans over"
+      }
+    ]
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "form_away_stronger",
+      "impact": 0.08,
+      "note": "Away team has significantly stronger form"
+    },
+    {
+      "code": "h2h_overlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is open"
+    },
+    {
+      "code": "ai_h2h_over_signal",
+      "impact": 0.07,
+      "note": "AI detected open H2H pattern"
+    },
+    {
+      "code": "ai_away_form_signal",
+      "impact": 0.05,
+      "note": "AI confirmed strong away form edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0.009,
+      "awayDelta": 0,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "uru.2",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 14,
+    "awayRestDays": 20,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  },
+  "intelligence": {
+    "applied": true,
+    "mode": "partial",
+    "coverage": {
+      "hasStandings": false,
+      "hasHomeForm": true,
+      "hasAwayForm": true,
+      "hasH2H": false,
+      "hasPhaseContext": false,
+      "coverageCount": 2,
+      "mode": "partial"
+    },
+    "signals": [
+      "home_form_edge",
+      "attack_support"
+    ]
+  }
+}
