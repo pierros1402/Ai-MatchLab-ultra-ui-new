@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-17",
-  "generatedAt": "2026-10-17T08:25:46.126Z",
+  "generatedAt": "2026-10-17T09:02:25.401Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "951341bcf507c8d9459514670a7558a3b60fa36d5cce391bb0e45e251db84b0e",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "7986a3671fbda4a5f30d0a22ce4eecb850e0821ea2a681978a0e56cb4f1487ed",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -25,14 +25,14 @@
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 38,
-    "acceptedVerifiedFinalArtifacts": 38,
+    "verifiedFinalArtifacts": 39,
+    "acceptedVerifiedFinalArtifacts": 39,
     "convergedPlayedFinal": 38,
     "convergedNonPlayedTerminal": 2,
     "pendingVerifiedFinal": 0,
-    "openRows": 464,
+    "openRows": 463,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 38,
@@ -4074,18 +4074,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-17",
+        "scoreHome": 5,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -24740,7 +24740,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_chn2_yanbianlongding_foshannanshi_20261017"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -25078,7 +25080,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 14374,
+            "count": 14378,
             "informational": true
           }
         },
@@ -29318,7 +29320,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "951341bcf507c8d9459514670a7558a3b60fa36d5cce391bb0e45e251db84b0e",
+      "truthFingerprint": "7986a3671fbda4a5f30d0a22ce4eecb850e0821ea2a681978a0e56cb4f1487ed",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -29424,7 +29426,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-17",
-      "fileCount": 38,
+      "fileCount": 39,
       "authority": "scored_final_evidence"
     },
     "downstream": {
