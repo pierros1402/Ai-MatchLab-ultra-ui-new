@@ -1,0 +1,206 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "irl.1",
+  "homeTeam": "Derry City",
+  "awayTeam": "St. Patricks",
+  "homeWinScore": 0.339,
+  "drawScore": 0.179,
+  "awayWinScore": 0.481,
+  "over15Score": 0.597,
+  "over25Score": 0.483,
+  "over35Score": 0.454,
+  "bttsScore": 0.423,
+  "confidence": 0.795,
+  "signals": [
+    "away_edge",
+    "form_influence_reduced",
+    "priors_applied",
+    "close_strength_gap",
+    "home_rest_3",
+    "away_rest_3"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.12,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.211,
+    "expectedAwayGoals": 1.225,
+    "expectedTotalGoals": 2.435,
+    "homeStrength": 0.364,
+    "awayStrength": 0.37,
+    "homeEdge": 0.121,
+    "awayPenalty": 0.077,
+    "recency": {
+      "homeOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 161,
+        "daysSinceLastMatch": 3,
+        "spanDays": 32,
+        "maxInternalGap": 28,
+        "gapSeverity": "heavy",
+        "freshnessScore": 1,
+        "continuityScore": 0.1,
+        "formContinuityWeight": 0.565
+      },
+      "awayOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 161,
+        "daysSinceLastMatch": 3,
+        "spanDays": 32,
+        "maxInternalGap": 27,
+        "gapSeverity": "heavy",
+        "freshnessScore": 1,
+        "continuityScore": 0.1,
+        "formContinuityWeight": 0.565
+      },
+      "homeSide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 161,
+        "daysSinceLastMatch": 31,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.21
+      },
+      "awaySide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 161,
+        "daysSinceLastMatch": 30,
+        "spanDays": 5,
+        "maxInternalGap": 5,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.27
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 161,
+      "awayPriorSample": 161,
+      "leaguePriorSample": 814,
+      "matchupPriorSample": 10
+    },
+    "resolution": {
+      "homeInput": "Derry City",
+      "awayInput": "St. Patricks",
+      "homeResolvedKey": "Derry City",
+      "awayResolvedKey": "St. Patricks",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Derry City::St. Patricks",
+      "matchupResolveScore": 0.93,
+      "homePriorKey": "irl.1::Derry City",
+      "awayPriorKey": "irl.1::St. Patricks",
+      "matchupPriorKey": "irl.1|Derry City|St. Patricks"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Derry City",
+      "awayTeamKey": "St. Patricks",
+      "leagueKey": "irl.1",
+      "matchupKey": "Derry City::St. Patricks"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": false,
+    "contextDelta": 0,
+    "contextReasons": [],
+    "aiContext": {
+      "available": true,
+      "importance": "unknown",
+      "stakes": [],
+      "pressure": []
+    }
+  },
+  "contextAdjusted": false,
+  "contextReasons": [],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0.05,
+      "awayPenalty": 0.05,
+      "reasons": [
+        "home_rest_3",
+        "away_rest_3"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "irl.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 3,
+    "awayRestDays": 3,
+    "homeMatchesLast7": 1,
+    "awayMatchesLast7": 1,
+    "homeMatchesLast14": 1,
+    "awayMatchesLast14": 1,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
