@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-17",
-  "generatedAt": "2026-10-17T02:27:00.535Z",
+  "generatedAt": "2026-10-17T03:02:30.216Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "7c120d5b428e1adef4a80dace71cba7d478035d2ea2231475385c2754c4dde46",
+  "truthFingerprint": "aab9cbd4cb2f2f0a437e21e00ed590cd18609d66151d9455de986132f8aa740a",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 504,
-    "playedTerminal": 12,
+    "playedTerminal": 13,
     "nonPlayedTerminal": 2,
     "scheduled": 485,
-    "live": 5,
+    "live": 4,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 12,
-    "acceptedVerifiedFinalArtifacts": 12,
-    "convergedPlayedFinal": 12,
+    "verifiedFinalArtifacts": 13,
+    "acceptedVerifiedFinalArtifacts": 13,
+    "convergedPlayedFinal": 13,
     "convergedNonPlayedTerminal": 2,
     "pendingVerifiedFinal": 0,
-    "openRows": 490,
+    "openRows": 489,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 12,
-    "scoredSettlementEligible": 12,
+    "historyEligible": 13,
+    "scoredSettlementEligible": 13,
     "voidSettlementEligible": 2
   },
   "fixtures": [
@@ -438,31 +438,31 @@
       "homeTeam": "Boca Juniors",
       "awayTeam": "Talleres (Córdoba)",
       "kickoffUtc": "2026-10-17T00:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 2,
         "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-17",
+        "scoreHome": 2,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -833,9 +833,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 1
       },
@@ -16366,9 +16366,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 1
       },
@@ -16513,10 +16513,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
         "scoreAway": 1
       },
       "verifiedFinal": {
@@ -21560,11 +21560,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
-        "scoreAway": 1
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -25078,7 +25078,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 14372,
+            "count": 14374,
             "informational": true
           }
         },
@@ -29318,15 +29318,16 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "7c120d5b428e1adef4a80dace71cba7d478035d2ea2231475385c2754c4dde46",
+      "truthFingerprint": "aab9cbd4cb2f2f0a437e21e00ed590cd18609d66151d9455de986132f8aa740a",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 12,
+        "expectedEligibleRows": 13,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
+          "cid_arg1_bocajuniors_tallerescordoba_20261017",
           "cid_arg1_defensayjusticia_institutocordoba_20261017",
           "cid_arg2_atleticorafaela_quilmes_20261017",
           "cid_bol1_realtomayapo_gvsanjose_20261017",
@@ -29398,7 +29399,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-17",
-      "fileCount": 12,
+      "fileCount": 13,
       "authority": "scored_final_evidence"
     },
     "downstream": {
