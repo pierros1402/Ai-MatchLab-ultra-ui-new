@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-17",
-  "generatedAt": "2026-10-17T20:52:42.281Z",
+  "generatedAt": "2026-10-17T21:16:28.170Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "92358606c67b957f25d85d4c572812319dbeaac0a24d9f9d16a8f4df7c18e581",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "b9cce22805ab54a42a797a2cca925a271c4ddbe3a9dc77326b8c14b0a258aaad",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 504,
-    "playedTerminal": 463,
+    "playedTerminal": 480,
     "nonPlayedTerminal": 3,
-    "scheduled": 15,
-    "live": 23,
+    "scheduled": 10,
+    "live": 11,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 471,
-    "acceptedVerifiedFinalArtifacts": 471,
-    "convergedPlayedFinal": 463,
+    "verifiedFinalArtifacts": 480,
+    "acceptedVerifiedFinalArtifacts": 480,
+    "convergedPlayedFinal": 480,
     "convergedNonPlayedTerminal": 3,
     "pendingVerifiedFinal": 0,
-    "openRows": 30,
+    "openRows": 21,
     "unresolvedRows": 0,
-    "conflictRows": 8,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 463,
-    "scoredSettlementEligible": 463,
+    "historyEligible": 480,
+    "scoredSettlementEligible": 480,
     "voidSettlementEligible": 3
   },
   "fixtures": [
@@ -340,14 +340,14 @@
       "homeTeam": "FC Rangers",
       "awayTeam": "Ordino",
       "kickoffUtc": "2026-10-17T18:30:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": true,
@@ -357,14 +357,14 @@
         "dayKey": "2026-10-17",
         "scoreHome": 0,
         "scoreAway": 1,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -542,8 +542,8 @@
         "status": "FIRST_HALF",
         "statusType": null,
         "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
-        "scoreAway": 0
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -592,7 +592,7 @@
         "statusType": null,
         "rawStatus": "STATUS_FIRST_HALF",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -879,12 +879,12 @@
       "homeTeam": "San Miguel",
       "awayTeam": "Ciudad Bolivar",
       "kickoffUtc": "2026-10-17T18:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "LIVE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 2
       },
@@ -899,11 +899,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -931,9 +931,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -2349,31 +2349,31 @@
       "homeTeam": "Real Oruro",
       "awayTeam": "Aurora",
       "kickoffUtc": "2026-10-17T19:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-17",
+        "scoreHome": 1,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2499,9 +2499,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -4116,9 +4116,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
         "scoreAway": 1
       },
@@ -5338,31 +5338,31 @@
       "homeTeam": "Macará",
       "awayTeam": "Independiente del Valle",
       "kickoffUtc": "2026-10-17T19:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-17",
+        "scoreHome": 1,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -9111,31 +9111,31 @@
       "homeTeam": "Valencia",
       "awayTeam": "athletic club",
       "kickoffUtc": "2026-10-17T19:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 0,
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-17",
+        "scoreHome": 0,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -9258,31 +9258,31 @@
       "homeTeam": "Las Palmas",
       "awayTeam": "Castellón",
       "kickoffUtc": "2026-10-17T19:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 0,
         "scoreAway": 3
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-17",
+        "scoreHome": 0,
+        "scoreAway": 3,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -9993,12 +9993,12 @@
       "homeTeam": "Lille",
       "awayTeam": "Brest",
       "kickoffUtc": "2026-10-17T18:45Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 1
       },
@@ -10013,11 +10013,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -10091,12 +10091,12 @@
       "homeTeam": "Troyes",
       "awayTeam": "Lens",
       "kickoffUtc": "2026-10-17T18:45Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 3
       },
@@ -10111,11 +10111,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -12639,14 +12639,14 @@
       "homeTeam": "Sligo Rovers",
       "awayTeam": "Dundalk",
       "kickoffUtc": "2026-10-17T18:45:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": true,
@@ -12656,14 +12656,14 @@
         "dayKey": "2026-10-17",
         "scoreHome": 1,
         "scoreAway": 1,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -13080,12 +13080,12 @@
       "homeTeam": "AS Roma",
       "awayTeam": "Genoa",
       "kickoffUtc": "2026-10-17T18:45Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 2,
         "scoreAway": 0
       },
@@ -13100,11 +13100,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -17735,31 +17735,31 @@
       "homeTeam": "Sparta Rotterdam",
       "awayTeam": "Willem II",
       "kickoffUtc": "2026-10-17T19:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 3,
         "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-17",
+        "scoreHome": 3,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -18522,9 +18522,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -18571,10 +18571,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_HALFTIME",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -18617,31 +18617,31 @@
       "homeTeam": "Alianza Huanuco",
       "awayTeam": "Carlos Mannucci",
       "kickoffUtc": "2026-10-17T19:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-17",
+        "scoreHome": 1,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -19113,7 +19113,7 @@
         "status": "SECOND_HALF",
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 2,
+        "scoreHome": 3,
         "scoreAway": 2
       },
       "verifiedFinal": {
@@ -19499,31 +19499,31 @@
       "homeTeam": "FC Penafiel",
       "awayTeam": "Leca",
       "kickoffUtc": "2026-10-17T19:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 0,
         "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-17",
+        "scoreHome": 0,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -21165,31 +21165,31 @@
       "homeTeam": "Dundee",
       "awayTeam": "Rangers",
       "kickoffUtc": "2026-10-17T19:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 2,
         "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-17",
+        "scoreHome": 2,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -23811,31 +23811,31 @@
       "homeTeam": "Boston River",
       "awayTeam": "Defensor Sporting",
       "kickoffUtc": "2026-10-17T19:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-17",
+        "scoreHome": 1,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -24154,14 +24154,14 @@
       "homeTeam": "Minnesota United FC",
       "awayTeam": "St. Louis CITY SC",
       "kickoffUtc": "2026-10-17T20:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -24175,7 +24175,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -24203,12 +24203,12 @@
       "homeTeam": "Philadelphia Union",
       "awayTeam": "Charlotte FC",
       "kickoffUtc": "2026-10-17T18:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 2,
         "scoreAway": 2
       },
@@ -24223,11 +24223,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -24255,9 +24255,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -24304,9 +24304,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -24693,14 +24693,14 @@
       "homeTeam": "ZPC Kariba",
       "awayTeam": "Agama",
       "kickoffUtc": "2026-10-17T13:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": true,
@@ -24710,14 +24710,14 @@
         "dayKey": "2026-10-17",
         "scoreHome": 0,
         "scoreAway": 1,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -24740,16 +24740,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_and1_rangers_ordino_20261017",
-      "cid_arg2_sanmiguel_ciudadbolivar_20261017",
-      "cid_fra1_lille_brest_20261017",
-      "cid_fra1_troyes_lens_20261017",
-      "cid_irl1_sligorovers_dundalk_20261017",
-      "cid_ita1_asroma_genoa_20261017",
-      "cid_usa1_philadelphiaunion_charlotte_20261017",
-      "cid_zim1_zpckariba_agama_20261017"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -24760,25 +24751,25 @@
     "systemHealth": {
       "schema": "ai-matchlab.system-health-alerts.v1",
       "dayKey": "2026-10-17",
-      "generatedAt": "2026-10-17T01:02:50.449Z",
+      "generatedAt": "2026-10-17T21:16:27.672Z",
       "severity": "warning",
       "issueCounts": {
         "error": 0,
-        "warning": 7,
-        "info": 11
+        "warning": 9,
+        "info": 9
       },
       "alert": true,
       "alertCounts": {
         "error": 0,
-        "warning": 6,
+        "warning": 2,
         "info": 0
       },
       "activeIssueCount": 18,
-      "actionableIssueCount": 7,
-      "newIssueCount": 12,
-      "newActionableIssueCount": 6,
-      "resolvedIssueCount": 14,
-      "persistentIssueCount": 6,
+      "actionableIssueCount": 9,
+      "newIssueCount": 2,
+      "newActionableIssueCount": 2,
+      "resolvedIssueCount": 2,
+      "persistentIssueCount": 16,
       "activeIssues": [
         {
           "severity": "info",
@@ -24806,7 +24797,7 @@
             "preservation": {
               "reason": "frozen_value_observation_cohort_identity_preserved",
               "requestedDay": "2026-10-17",
-              "currentAthensDay": "2026-10-17",
+              "currentAthensDay": "2026-10-18",
               "fixtureCount": 504,
               "frozenHash": "20e4237435693265e438b5eea431e0c468c7163e56e9b85965c341c08af8d704",
               "currentHash": "18451aee7e0ac4876d375e88a103469621414b5b8482d576b9fe6bd0d5dfb5b7",
@@ -24837,7 +24828,7 @@
             "preservation": {
               "reason": "frozen_value_observation_cohort_identity_preserved",
               "requestedDay": "2026-10-17",
-              "currentAthensDay": "2026-10-17",
+              "currentAthensDay": "2026-10-18",
               "fixtureCount": 504,
               "frozenHash": "20e4237435693265e438b5eea431e0c468c7163e56e9b85965c341c08af8d704",
               "currentHash": "18451aee7e0ac4876d375e88a103469621414b5b8482d576b9fe6bd0d5dfb5b7",
@@ -25087,7 +25078,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 14508,
+            "count": 14510,
             "informational": true
           }
         },
@@ -25211,15 +25202,15 @@
           }
         },
         {
-          "severity": "info",
+          "severity": "warning",
           "source": "value-comparison",
           "type": "plan_b_unresolved_settlement",
-          "message": "Plan B picks are still unresolved.",
+          "message": "Plan B picks remain unresolved 1 day after fixture day.",
           "details": {
             "dayKey": "2026-10-17",
-            "todayDayKey": "2026-10-17",
-            "ageDays": 0,
-            "overdue": false,
+            "todayDayKey": "2026-10-18",
+            "ageDays": 1,
+            "overdue": true,
             "settlementSource": "value-comparison",
             "picks": 5,
             "settled": 4,
@@ -25227,15 +25218,15 @@
           }
         },
         {
-          "severity": "info",
+          "severity": "warning",
           "source": "value-comparison",
           "type": "plan_b2_unresolved_settlement",
-          "message": "Plan B2 picks are still unresolved.",
+          "message": "Plan B2 picks remain unresolved 1 day after fixture day.",
           "details": {
             "dayKey": "2026-10-17",
-            "todayDayKey": "2026-10-17",
-            "ageDays": 0,
-            "overdue": false,
+            "todayDayKey": "2026-10-18",
+            "ageDays": 1,
+            "overdue": true,
             "settlementSource": "value-comparison",
             "picks": 5,
             "settled": 4,
@@ -26300,6 +26291,38 @@
         },
         {
           "severity": "warning",
+          "source": "value-comparison",
+          "type": "plan_b_unresolved_settlement",
+          "message": "Plan B picks remain unresolved 1 day after fixture day.",
+          "details": {
+            "dayKey": "2026-10-17",
+            "todayDayKey": "2026-10-18",
+            "ageDays": 1,
+            "overdue": true,
+            "settlementSource": "value-comparison",
+            "picks": 5,
+            "settled": 4,
+            "unresolved": 1
+          }
+        },
+        {
+          "severity": "warning",
+          "source": "value-comparison",
+          "type": "plan_b2_unresolved_settlement",
+          "message": "Plan B2 picks remain unresolved 1 day after fixture day.",
+          "details": {
+            "dayKey": "2026-10-17",
+            "todayDayKey": "2026-10-18",
+            "ageDays": 1,
+            "overdue": true,
+            "settlementSource": "value-comparison",
+            "picks": 5,
+            "settled": 4,
+            "unresolved": 1
+          }
+        },
+        {
+          "severity": "warning",
           "source": "active-competition-completeness",
           "type": "active_competition_scope_unresolved",
           "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
@@ -26994,6 +27017,108 @@
       ],
       "newIssues": [
         {
+          "severity": "warning",
+          "source": "value-comparison",
+          "type": "plan_b_unresolved_settlement",
+          "message": "Plan B picks remain unresolved 1 day after fixture day.",
+          "details": {
+            "dayKey": "2026-10-17",
+            "todayDayKey": "2026-10-18",
+            "ageDays": 1,
+            "overdue": true,
+            "settlementSource": "value-comparison",
+            "picks": 5,
+            "settled": 4,
+            "unresolved": 1
+          }
+        },
+        {
+          "severity": "warning",
+          "source": "value-comparison",
+          "type": "plan_b2_unresolved_settlement",
+          "message": "Plan B2 picks remain unresolved 1 day after fixture day.",
+          "details": {
+            "dayKey": "2026-10-17",
+            "todayDayKey": "2026-10-18",
+            "ageDays": 1,
+            "overdue": true,
+            "settlementSource": "value-comparison",
+            "picks": 5,
+            "settled": 4,
+            "unresolved": 1
+          }
+        }
+      ],
+      "newActionableIssues": [
+        {
+          "severity": "warning",
+          "source": "value-comparison",
+          "type": "plan_b_unresolved_settlement",
+          "message": "Plan B picks remain unresolved 1 day after fixture day.",
+          "details": {
+            "dayKey": "2026-10-17",
+            "todayDayKey": "2026-10-18",
+            "ageDays": 1,
+            "overdue": true,
+            "settlementSource": "value-comparison",
+            "picks": 5,
+            "settled": 4,
+            "unresolved": 1
+          }
+        },
+        {
+          "severity": "warning",
+          "source": "value-comparison",
+          "type": "plan_b2_unresolved_settlement",
+          "message": "Plan B2 picks remain unresolved 1 day after fixture day.",
+          "details": {
+            "dayKey": "2026-10-17",
+            "todayDayKey": "2026-10-18",
+            "ageDays": 1,
+            "overdue": true,
+            "settlementSource": "value-comparison",
+            "picks": 5,
+            "settled": 4,
+            "unresolved": 1
+          }
+        }
+      ],
+      "resolvedIssues": [
+        {
+          "severity": "info",
+          "source": "value-comparison",
+          "type": "plan_b_unresolved_settlement",
+          "message": "Plan B picks are still unresolved.",
+          "details": {
+            "dayKey": "2026-10-17",
+            "todayDayKey": "2026-10-17",
+            "ageDays": 0,
+            "overdue": false,
+            "settlementSource": "value-comparison",
+            "picks": 5,
+            "settled": 4,
+            "unresolved": 1
+          }
+        },
+        {
+          "severity": "info",
+          "source": "value-comparison",
+          "type": "plan_b2_unresolved_settlement",
+          "message": "Plan B2 picks are still unresolved.",
+          "details": {
+            "dayKey": "2026-10-17",
+            "todayDayKey": "2026-10-17",
+            "ageDays": 0,
+            "overdue": false,
+            "settlementSource": "value-comparison",
+            "picks": 5,
+            "settled": 4,
+            "unresolved": 1
+          }
+        }
+      ],
+      "persistentIssues": [
+        {
           "severity": "info",
           "source": "freshness-report",
           "type": "skipped_freshness_input",
@@ -27019,13 +27144,13 @@
             "preservation": {
               "reason": "frozen_value_observation_cohort_identity_preserved",
               "requestedDay": "2026-10-17",
-              "currentAthensDay": "2026-10-17",
+              "currentAthensDay": "2026-10-18",
               "fixtureCount": 504,
               "frozenHash": "20e4237435693265e438b5eea431e0c468c7163e56e9b85965c341c08af8d704",
-              "currentHash": "20e4237435693265e438b5eea431e0c468c7163e56e9b85965c341c08af8d704",
+              "currentHash": "18451aee7e0ac4876d375e88a103469621414b5b8482d576b9fe6bd0d5dfb5b7",
               "strictFrozenParity": true,
               "membershipParity": true,
-              "descriptorDrift": false,
+              "descriptorDrift": true,
               "publicationMembershipPreserved": false,
               "authorizedShrink": false,
               "removedFixtureIds": [],
@@ -27050,13 +27175,13 @@
             "preservation": {
               "reason": "frozen_value_observation_cohort_identity_preserved",
               "requestedDay": "2026-10-17",
-              "currentAthensDay": "2026-10-17",
+              "currentAthensDay": "2026-10-18",
               "fixtureCount": 504,
               "frozenHash": "20e4237435693265e438b5eea431e0c468c7163e56e9b85965c341c08af8d704",
-              "currentHash": "20e4237435693265e438b5eea431e0c468c7163e56e9b85965c341c08af8d704",
+              "currentHash": "18451aee7e0ac4876d375e88a103469621414b5b8482d576b9fe6bd0d5dfb5b7",
               "strictFrozenParity": true,
               "membershipParity": true,
-              "descriptorDrift": false,
+              "descriptorDrift": true,
               "publicationMembershipPreserved": false,
               "authorizedShrink": false,
               "removedFixtureIds": [],
@@ -27293,6 +27418,66 @@
           }
         },
         {
+          "severity": "info",
+          "source": "foundation-integrity",
+          "type": "age_expired_results_rows_present",
+          "message": "Foundation integrity informational condition.",
+          "details": {
+            "component": "historySemantic",
+            "reason": "age_expired_results_rows_present",
+            "count": 14510,
+            "informational": true
+          }
+        },
+        {
+          "severity": "info",
+          "source": "foundation-integrity",
+          "type": "history_semantic_warnings_present",
+          "message": "Foundation integrity informational condition.",
+          "details": {
+            "component": "historySemantic",
+            "reason": "history_semantic_warnings_present",
+            "count": 4,
+            "informational": true
+          }
+        },
+        {
+          "severity": "info",
+          "source": "foundation-integrity",
+          "type": "score_consistent_alias_mirror_conflicts_present",
+          "message": "Foundation integrity informational condition.",
+          "details": {
+            "component": "historySemantic",
+            "reason": "score_consistent_alias_mirror_conflicts_present",
+            "count": 47,
+            "informational": true
+          }
+        },
+        {
+          "severity": "warning",
+          "source": "build-report",
+          "type": "acquisition_skipped_slugs",
+          "message": "Acquisition skipped slugs during fixture acquisition.",
+          "details": {
+            "slugs": [
+              "aus.w.1",
+              "eng.fa_qual",
+              "eng.w.1",
+              "eng.w.league_cup",
+              "esp.w.1",
+              "fifa.wworld.u17",
+              "fra.w.1",
+              "mex.w.1",
+              "ned.w.knvb_cup",
+              "usa.ncaa.m.1",
+              "usa.ncaa.w.1",
+              "usa.w.usl.1"
+            ],
+            "raw": "acquisition_skipped_slugs:aus.w.1,eng.fa_qual,eng.w.1,eng.w.league_cup,esp.w.1,fifa.wworld.u17,fra.w.1,mex.w.1,ned.w.knvb_cup,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
+            "contextOnly": false
+          }
+        },
+        {
           "severity": "warning",
           "source": "build-report",
           "type": "build_not_strict_clean",
@@ -27305,34 +27490,62 @@
         },
         {
           "severity": "info",
-          "source": "value-comparison",
-          "type": "plan_b_unresolved_settlement",
-          "message": "Plan B picks are still unresolved.",
+          "source": "competition-admission",
+          "type": "competition_admission_active",
+          "message": "Persistent domestic competition admissions are active.",
           "details": {
-            "dayKey": "2026-10-17",
-            "todayDayKey": "2026-10-17",
-            "ageDays": 0,
-            "overdue": false,
-            "settlementSource": "value-comparison",
-            "picks": 5,
-            "settled": 0,
-            "unresolved": 5
+            "admittedSlugs": [
+              "crc.1",
+              "gua.1",
+              "hon.1",
+              "par.1",
+              "slv.1"
+            ],
+            "summary": {
+              "evidenceSlugCount": 21,
+              "admittedCount": 5,
+              "pendingCount": 0,
+              "rejectedCount": 21,
+              "alreadyDeclaredCount": 0
+            }
           }
         },
         {
           "severity": "info",
-          "source": "value-comparison",
-          "type": "plan_b2_unresolved_settlement",
-          "message": "Plan B2 picks are still unresolved.",
+          "source": "competition-admission",
+          "type": "competition_admission_rejected",
+          "message": "Observed competition slugs were rejected by the fail-closed admission policy.",
           "details": {
-            "dayKey": "2026-10-17",
-            "todayDayKey": "2026-10-17",
-            "ageDays": 0,
-            "overdue": false,
-            "settlementSource": "value-comparison",
-            "picks": 5,
-            "settled": 0,
-            "unresolved": 5
+            "rejectedSlugs": [
+              "arg.3",
+              "aus.w.1",
+              "can.w.nsl",
+              "club.friendly",
+              "col.copa",
+              "eng.fa_qual",
+              "eng.w.1",
+              "eng.w.league_cup",
+              "esp.w.1",
+              "fifa.friendly.w",
+              "fifa.wworld.u17",
+              "fifa.wworldq.uefa",
+              "fra.w.1",
+              "mex.w.1",
+              "ned.w.knvb_cup",
+              "usa.ncaa.m.1",
+              "usa.ncaa.w.1",
+              "usa.nwsl",
+              "usa.usl.1",
+              "usa.usl.l1",
+              "usa.w.usl.1"
+            ],
+            "summary": {
+              "evidenceSlugCount": 21,
+              "admittedCount": 5,
+              "pendingCount": 0,
+              "rejectedCount": 21,
+              "alreadyDeclaredCount": 0
+            }
           }
         },
         {
@@ -27342,7 +27555,7 @@
           "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
           "details": {
             "dayKey": "2026-10-17",
-            "count": 274,
+            "count": 271,
             "competitions": [
               {
                 "providerCompetitionId": "dYsyRqp2",
@@ -27576,17 +27789,6 @@
                 "targetDaySourceIds": [
                   "bL8LOYE5",
                   "lbZXo9AO"
-                ]
-              },
-              {
-                "providerCompetitionId": "KdEzKBlI",
-                "providerPath": "/football/austria/regionalliga-south/",
-                "providerCountry": "Austria",
-                "providerName": "Regionalliga South",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "EPOrIaMG"
                 ]
               },
               {
@@ -28007,6 +28209,17 @@
                 "targetDayFixtureCount": 1,
                 "targetDaySourceIds": [
                   "0MmjRHRa"
+                ]
+              },
+              {
+                "providerCompetitionId": "GYVKoqKl",
+                "providerPath": "/football/brazil/serie-c/",
+                "providerCountry": "Brazil",
+                "providerName": "Serie C - Play Offs",
+                "reasonCode": "unmapped_provider_competition",
+                "targetDayFixtureCount": 1,
+                "targetDaySourceIds": [
+                  "l6g6wdlf"
                 ]
               }
             ]
@@ -28093,19 +28306,19 @@
               "summary": {
                 "picks": 5,
                 "uniqueMatches": 4,
-                "settled": 0,
-                "wins": 0,
-                "losses": 0,
+                "settled": 4,
+                "wins": 3,
+                "losses": 1,
                 "voids": 0,
-                "unresolved": 5,
+                "unresolved": 1,
                 "unsupported": 0,
-                "hitRate": null,
-                "oddsAvailable": 0,
-                "averageOdds": null,
-                "totalStake": null,
-                "totalReturn": null,
-                "profit": null,
-                "roi": null
+                "hitRate": 0.75,
+                "oddsAvailable": 2,
+                "averageOdds": 1.35,
+                "totalStake": 2,
+                "totalReturn": 2.7,
+                "profit": 0.7,
+                "roi": 0.35
               }
             },
             "planB2": {
@@ -28113,1213 +28326,20 @@
               "summary": {
                 "picks": 5,
                 "uniqueMatches": 4,
-                "settled": 0,
-                "wins": 0,
-                "losses": 0,
+                "settled": 4,
+                "wins": 3,
+                "losses": 1,
                 "voids": 0,
-                "unresolved": 5,
+                "unresolved": 1,
                 "unsupported": 0,
-                "hitRate": null,
-                "oddsAvailable": 0,
-                "averageOdds": null,
-                "totalStake": null,
-                "totalReturn": null,
-                "profit": null,
-                "roi": null
+                "hitRate": 0.75,
+                "oddsAvailable": 2,
+                "averageOdds": 1.35,
+                "totalStake": 2,
+                "totalReturn": 2.7,
+                "profit": 0.7,
+                "roi": 0.35
               }
-            }
-          }
-        }
-      ],
-      "newActionableIssues": [
-        {
-          "severity": "warning",
-          "source": "value-input",
-          "type": "plan_b_assessment_coverage_incomplete",
-          "message": "Plan B ran with incomplete model-assessment coverage; its output is not proof of a fully evaluated zero-pick day.",
-          "details": {
-            "plan": "B",
-            "missing": 91,
-            "ambiguous": 4,
-            "canonicalFixtures": 504,
-            "joinedMatches": 409,
-            "orphanAssessmentRows": 26,
-            "missingCanonicalIds": [
-              "cid_alb2_beselidhjalezha_kastrioti_20261017",
-              "cid_alb2_iliriafushekruje_burreli_20261017",
-              "cid_alb2_korabipeshkopi_bylis_20261017",
-              "cid_alb2_pogradeci_sopotilibrazhd_20261017",
-              "cid_and1_rangers_ordino_20261017",
-              "cid_aus1_auckland_melbournecity_20261017",
-              "cid_aus1_centralcoastmariners_newcastlejets_20261017",
-              "cid_aus1_macarthur_perthglory_20261017",
-              "cid_cafchampions_africanstars_orlandopirates_20261017",
-              "cid_cafchampions_cffa_youngafricans_20261017",
-              "cid_cafchampions_sanpedro_nouadhibou_20261017",
-              "cid_cafchampions_starsportacademy_rsbberkane_20261017",
-              "cid_cafchampions_tpmazembe_africain_20261017",
-              "cid_cafconfed_academiefadivo_cssfaxientun_20261017",
-              "cid_cafconfed_afadplateau_sportifsfaxien_20261017",
-              "cid_cafconfed_cokorhogo_asfar_20261017",
-              "cid_cafconfed_douanes_crbelouizdad_20261017",
-              "cid_cafconfed_esperencesportivezarzis_realbamako_20261017",
-              "cid_cafconfed_korhogoivo_farrabatmar_20261017",
-              "cid_cafconfed_rayonsport_associacaoblackbulls_20261017",
-              "cid_cafconfed_redarrows_kaizerchiefs_20261017",
-              "cid_cyp1_apollon_neasalamis_20261017",
-              "cid_cyp1_krasava_karmiotissa_20261017",
-              "cid_cyp2_achnas_apeaakrotiriou_20261017",
-              "cid_cyp2_chloraka_iraklisyerolakkou_20261017",
-              "cid_cyp2_doxa_ayianapa_20261017",
-              "cid_cyp2_ermis_meapnisou_20261017",
-              "cid_cyp2_kitiou_anagennisiderynia_20261017",
-              "cid_cyp2_paeek_polemidion_20261017",
-              "cid_engfa_aldershot_tadley_20261017",
-              "cid_engfa_altrincham_united_20261017",
-              "cid_engfa_barrow_gloucester_20261017",
-              "cid_engfa_bedford_craywanderers_20261017",
-              "cid_engfa_bostonutd_scunthorpe_20261017",
-              "cid_engfa_bury_harrogate_20261017",
-              "cid_engfa_chesham_forestgreen_20261017",
-              "cid_engfa_chorley_worcester_20261017",
-              "cid_engfa_eastleigh_brentwood_20261017",
-              "cid_engfa_fylde_atherton_20261017",
-              "cid_engfa_gateshead_stafford_20261017",
-              "cid_engfa_halifax_southshields_20261017",
-              "cid_engfa_hartlepool_marine_20261017",
-              "cid_engfa_kidderminster_solihullmoors_20261017",
-              "cid_engfa_leatherhead_yeovil_20261017",
-              "cid_engfa_leiston_guiseley_20261017",
-              "cid_engfa_macclesfield_ansteynomads_20261017",
-              "cid_engfa_plymouthparkway_chertsey_20261017",
-              "cid_engfa_rushdenanddiamonds_morecambe_20261017",
-              "cid_engfa_salisbury_eastbourneboro_20261017",
-              "cid_engfa_sholing_dons_20261017",
-              "cid_engfa_southend_berkhamsted_20261017",
-              "cid_engfa_spaldingunited_alvechurch_20261017",
-              "cid_engfa_sutton_truro_20261017",
-              "cid_engfa_uxbridge_hornchurch_20261017",
-              "cid_engfa_wimborne_chelmsford_20261017",
-              "cid_ger1_elversberg_augsburg_20261017",
-              "cid_ger1_werderbremen_paderborn07_20261017",
-              "cid_idn1_garudayaksa_arema_20261017",
-              "cid_idn1_persita_persijajakarta_20261017",
-              "cid_idn2_persirajaaceh_bekasicity_20261017",
-              "cid_idn2_psbsbiaknumfor_persipurajayapura_20261017",
-              "cid_idn2_psgcciamis_psissemarang_20261017",
-              "cid_ita1_bologna_internazionale_20261017",
-              "cid_mlt2_fgura_santalucia_20261017",
-              "cid_mlt2_melita_pieta_20261017",
-              "cid_mlt2_standrews_mgarr_20261017",
-              "cid_mlt2_zurrieq_gudja_20261017",
-              "cid_mys1_melaka_kualalumpurcity_20261017",
-              "cid_mys1_negerisembilan_sabah_20261017",
-              "cid_mys1_selangor_penang_20261017",
-              "cid_portacaportugal_acdrlamelas_vitoriaguimaraes_20261017",
-              "cid_portacaportugal_atleticocp_vizela_20261017",
-              "cid_portacaportugal_farense_marco09_20261017",
-              "cid_portacaportugal_fazendense_estrela_20261017",
-              "cid_portacaportugal_florgrade_portimonense_20261017",
-              "cid_portacaportugal_louletano_rioave_20261017",
-              "cid_portacaportugal_penafiel_leca_20261017",
-              "cid_portacaportugal_sanjoanense_nacional_20261017",
-              "cid_portacaportugal_uniaoleiria_braganca_20261017",
-              "cid_portacaportugal_vianense_leixoes_20261017",
-              "cid_qat1_alsailiya_qatar_20261017",
-              "cid_qat1_lusail_shamal_20261017",
-              "cid_rsa2_leicesterfordcity_nwumafikeng_20261017",
-              "cid_syr1_hottin_horriya_20261017",
-              "cid_tun1_hamamsousse_benguerdane_20261017",
-              "cid_tur1_erzurumbb_eyupspor_20261017",
-              "cid_uae1_alnasr_hatta_20261017",
-              "cid_uae1_shababalahlidubai_alain_20261017",
-              "cid_uae2_althaid_aljazirahamra_20261017",
-              "cid_ukr2_ahrobiznesvolochysk_metalistkharkiv_20261017",
-              "cid_ven2_mineros_maritimo_20261017"
-            ]
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "value-input",
-          "type": "plan_b2_assessment_coverage_incomplete",
-          "message": "Plan B2 ran with incomplete model-assessment coverage; its output is not proof of a fully evaluated zero-pick day.",
-          "details": {
-            "plan": "B2",
-            "missing": 91,
-            "ambiguous": 4,
-            "canonicalFixtures": 504,
-            "joinedMatches": 409,
-            "orphanAssessmentRows": 26,
-            "missingCanonicalIds": [
-              "cid_alb2_beselidhjalezha_kastrioti_20261017",
-              "cid_alb2_iliriafushekruje_burreli_20261017",
-              "cid_alb2_korabipeshkopi_bylis_20261017",
-              "cid_alb2_pogradeci_sopotilibrazhd_20261017",
-              "cid_and1_rangers_ordino_20261017",
-              "cid_aus1_auckland_melbournecity_20261017",
-              "cid_aus1_centralcoastmariners_newcastlejets_20261017",
-              "cid_aus1_macarthur_perthglory_20261017",
-              "cid_cafchampions_africanstars_orlandopirates_20261017",
-              "cid_cafchampions_cffa_youngafricans_20261017",
-              "cid_cafchampions_sanpedro_nouadhibou_20261017",
-              "cid_cafchampions_starsportacademy_rsbberkane_20261017",
-              "cid_cafchampions_tpmazembe_africain_20261017",
-              "cid_cafconfed_academiefadivo_cssfaxientun_20261017",
-              "cid_cafconfed_afadplateau_sportifsfaxien_20261017",
-              "cid_cafconfed_cokorhogo_asfar_20261017",
-              "cid_cafconfed_douanes_crbelouizdad_20261017",
-              "cid_cafconfed_esperencesportivezarzis_realbamako_20261017",
-              "cid_cafconfed_korhogoivo_farrabatmar_20261017",
-              "cid_cafconfed_rayonsport_associacaoblackbulls_20261017",
-              "cid_cafconfed_redarrows_kaizerchiefs_20261017",
-              "cid_cyp1_apollon_neasalamis_20261017",
-              "cid_cyp1_krasava_karmiotissa_20261017",
-              "cid_cyp2_achnas_apeaakrotiriou_20261017",
-              "cid_cyp2_chloraka_iraklisyerolakkou_20261017",
-              "cid_cyp2_doxa_ayianapa_20261017",
-              "cid_cyp2_ermis_meapnisou_20261017",
-              "cid_cyp2_kitiou_anagennisiderynia_20261017",
-              "cid_cyp2_paeek_polemidion_20261017",
-              "cid_engfa_aldershot_tadley_20261017",
-              "cid_engfa_altrincham_united_20261017",
-              "cid_engfa_barrow_gloucester_20261017",
-              "cid_engfa_bedford_craywanderers_20261017",
-              "cid_engfa_bostonutd_scunthorpe_20261017",
-              "cid_engfa_bury_harrogate_20261017",
-              "cid_engfa_chesham_forestgreen_20261017",
-              "cid_engfa_chorley_worcester_20261017",
-              "cid_engfa_eastleigh_brentwood_20261017",
-              "cid_engfa_fylde_atherton_20261017",
-              "cid_engfa_gateshead_stafford_20261017",
-              "cid_engfa_halifax_southshields_20261017",
-              "cid_engfa_hartlepool_marine_20261017",
-              "cid_engfa_kidderminster_solihullmoors_20261017",
-              "cid_engfa_leatherhead_yeovil_20261017",
-              "cid_engfa_leiston_guiseley_20261017",
-              "cid_engfa_macclesfield_ansteynomads_20261017",
-              "cid_engfa_plymouthparkway_chertsey_20261017",
-              "cid_engfa_rushdenanddiamonds_morecambe_20261017",
-              "cid_engfa_salisbury_eastbourneboro_20261017",
-              "cid_engfa_sholing_dons_20261017",
-              "cid_engfa_southend_berkhamsted_20261017",
-              "cid_engfa_spaldingunited_alvechurch_20261017",
-              "cid_engfa_sutton_truro_20261017",
-              "cid_engfa_uxbridge_hornchurch_20261017",
-              "cid_engfa_wimborne_chelmsford_20261017",
-              "cid_ger1_elversberg_augsburg_20261017",
-              "cid_ger1_werderbremen_paderborn07_20261017",
-              "cid_idn1_garudayaksa_arema_20261017",
-              "cid_idn1_persita_persijajakarta_20261017",
-              "cid_idn2_persirajaaceh_bekasicity_20261017",
-              "cid_idn2_psbsbiaknumfor_persipurajayapura_20261017",
-              "cid_idn2_psgcciamis_psissemarang_20261017",
-              "cid_ita1_bologna_internazionale_20261017",
-              "cid_mlt2_fgura_santalucia_20261017",
-              "cid_mlt2_melita_pieta_20261017",
-              "cid_mlt2_standrews_mgarr_20261017",
-              "cid_mlt2_zurrieq_gudja_20261017",
-              "cid_mys1_melaka_kualalumpurcity_20261017",
-              "cid_mys1_negerisembilan_sabah_20261017",
-              "cid_mys1_selangor_penang_20261017",
-              "cid_portacaportugal_acdrlamelas_vitoriaguimaraes_20261017",
-              "cid_portacaportugal_atleticocp_vizela_20261017",
-              "cid_portacaportugal_farense_marco09_20261017",
-              "cid_portacaportugal_fazendense_estrela_20261017",
-              "cid_portacaportugal_florgrade_portimonense_20261017",
-              "cid_portacaportugal_louletano_rioave_20261017",
-              "cid_portacaportugal_penafiel_leca_20261017",
-              "cid_portacaportugal_sanjoanense_nacional_20261017",
-              "cid_portacaportugal_uniaoleiria_braganca_20261017",
-              "cid_portacaportugal_vianense_leixoes_20261017",
-              "cid_qat1_alsailiya_qatar_20261017",
-              "cid_qat1_lusail_shamal_20261017",
-              "cid_rsa2_leicesterfordcity_nwumafikeng_20261017",
-              "cid_syr1_hottin_horriya_20261017",
-              "cid_tun1_hamamsousse_benguerdane_20261017",
-              "cid_tur1_erzurumbb_eyupspor_20261017",
-              "cid_uae1_alnasr_hatta_20261017",
-              "cid_uae1_shababalahlidubai_alain_20261017",
-              "cid_uae2_althaid_aljazirahamra_20261017",
-              "cid_ukr2_ahrobiznesvolochysk_metalistkharkiv_20261017",
-              "cid_ven2_mineros_maritimo_20261017"
-            ]
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "value-input",
-          "type": "plan_b2_opponent_adjustment_unavailable",
-          "message": "Plan B2 lacks trusted opponent standings for 400 evaluated fixtures.",
-          "details": {
-            "plan": "B2",
-            "fixtures": 400
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "build-report",
-          "type": "build_not_strict_clean",
-          "message": "Build report is clean but not strict-clean.",
-          "details": {
-            "clean": true,
-            "cleanStrict": false,
-            "contextOnlyWarnings": false
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "active-competition-completeness",
-          "type": "active_competition_scope_unresolved",
-          "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
-          "details": {
-            "dayKey": "2026-10-17",
-            "count": 274,
-            "competitions": [
-              {
-                "providerCompetitionId": "dYsyRqp2",
-                "providerPath": "/football/algeria/ligue-1/",
-                "providerCountry": "Algeria",
-                "providerName": "Ligue 1",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
-                "targetDaySourceIds": [
-                  "nHiHJJ0C",
-                  "vP9OHcVO"
-                ]
-              },
-              {
-                "providerCompetitionId": "CMsJoR6L",
-                "providerPath": "/football/algeria/ligue-2/",
-                "providerCountry": "Algeria",
-                "providerName": "Ligue 2",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 9,
-                "targetDaySourceIds": [
-                  "A93zn1xS",
-                  "E5hEvJU1",
-                  "IeAurhyf",
-                  "QLDmtW56",
-                  "YoHevAzJ",
-                  "prCXqE6s",
-                  "tCp02MM8",
-                  "thf6tu0k",
-                  "xrjTmN7F"
-                ]
-              },
-              {
-                "providerCompetitionId": "tdUWdHKt",
-                "providerPath": "/football/angola/girabola/",
-                "providerCountry": "Angola",
-                "providerName": "Girabola",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 4,
-                "targetDaySourceIds": [
-                  "6XS8zqcT",
-                  "ITNptmTi",
-                  "fZbSzhiC",
-                  "z79Yj4sA"
-                ]
-              },
-              {
-                "providerCompetitionId": "ptHQbUeo",
-                "providerPath": "/football/antigua-barbuda/abfa-premier-league/",
-                "providerCountry": "Antigua & Barbuda",
-                "providerName": "ABFA Premier League",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "Wv0wcSA7"
-                ]
-              },
-              {
-                "providerCompetitionId": "zsav4HyS",
-                "providerPath": "/football/argentina/primera-b/",
-                "providerCountry": "Argentina",
-                "providerName": "Primera B",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 9,
-                "targetDaySourceIds": [
-                  "0ADFX3Bd",
-                  "0S6oUU44",
-                  "8hAgS8ZG",
-                  "OUJyunJM",
-                  "SG51e733",
-                  "U7b2Qn4T",
-                  "fkSKrUJc",
-                  "veP6ZPtp",
-                  "vspYKQRj"
-                ]
-              },
-              {
-                "providerCompetitionId": "SvvJdZT1",
-                "providerPath": "/football/argentina/primera-c/",
-                "providerCountry": "Argentina",
-                "providerName": "Primera C - Promotion - Play Offs",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 4,
-                "targetDaySourceIds": [
-                  "CCYVkFhM",
-                  "fBpyn6il",
-                  "lCI34E7F",
-                  "lhS9rXpd"
-                ]
-              },
-              {
-                "providerCompetitionId": "SvvJdZT1",
-                "providerPath": "/football/argentina/primera-c/",
-                "providerCountry": "Argentina",
-                "providerName": "Primera C - Super final",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "WYWFgcgc"
-                ]
-              },
-              {
-                "providerCompetitionId": "8GrEGw7F",
-                "providerPath": "/football/argentina/torneo-federal/",
-                "providerCountry": "Argentina",
-                "providerName": "Torneo Federal - Promotion - Play Offs",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 3,
-                "targetDaySourceIds": [
-                  "0nCTHuuK",
-                  "StrhiQCF",
-                  "t6DXWeR0"
-                ]
-              },
-              {
-                "providerCompetitionId": "Uc8bs2C5",
-                "providerPath": "/football/argentina/torneo-promocional-amateur/",
-                "providerCountry": "Argentina",
-                "providerName": "Torneo Promocional Amateur - Promotion",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "viAOijbn"
-                ]
-              },
-              {
-                "providerCompetitionId": "AHD8eFup",
-                "providerPath": "/football/asia/afc-challenge-league/",
-                "providerCountry": "Asia",
-                "providerName": "AFC Challenge League",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 6,
-                "targetDaySourceIds": [
-                  "2iC9ui7U",
-                  "2ihClUqo",
-                  "6NVLUZhC",
-                  "AynE8kyH",
-                  "UcpbCXyh",
-                  "bcSDWeOa"
-                ]
-              },
-              {
-                "providerCompetitionId": "Gz0DiT1E",
-                "providerPath": "/football/australia/australian-championship/",
-                "providerCountry": "Australia",
-                "providerName": "Australian Championship",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 3,
-                "targetDaySourceIds": [
-                  "4ELbtBFM",
-                  "rNFxZS7d",
-                  "zcCUzkwp"
-                ]
-              },
-              {
-                "providerCompetitionId": "U3ZwHCRa",
-                "providerPath": "/football/austria/burgenland/",
-                "providerCountry": "Austria",
-                "providerName": "Burgenland",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 4,
-                "targetDaySourceIds": [
-                  "82EWqRwg",
-                  "GfdPom9t",
-                  "jFuEvW1D",
-                  "tGCvr585"
-                ]
-              },
-              {
-                "providerCompetitionId": "QVSnFjdC",
-                "providerPath": "/football/austria/karnten/",
-                "providerCountry": "Austria",
-                "providerName": "Karnten",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 6,
-                "targetDaySourceIds": [
-                  "Sp8SqUhe",
-                  "joOfVUw2",
-                  "lxEliC0L",
-                  "nkZGxDoS",
-                  "rLKnXj9k",
-                  "vPV8vZGF"
-                ]
-              },
-              {
-                "providerCompetitionId": "bqRfDUQO",
-                "providerPath": "/football/austria/niederosterreich/",
-                "providerCountry": "Austria",
-                "providerName": "Niederosterreich",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 3,
-                "targetDaySourceIds": [
-                  "0nS7IsoL",
-                  "QXy9EDSk",
-                  "fkowKZ4S"
-                ]
-              },
-              {
-                "providerCompetitionId": "tSKDXXBt",
-                "providerPath": "/football/austria/oberosterreich/",
-                "providerCountry": "Austria",
-                "providerName": "Oberosterreich",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 3,
-                "targetDaySourceIds": [
-                  "2qp2InAd",
-                  "CWdGRjmA",
-                  "GSofK8up"
-                ]
-              },
-              {
-                "providerCompetitionId": "xO5c0isJ",
-                "providerPath": "/football/austria/regionalliga-east/",
-                "providerCountry": "Austria",
-                "providerName": "Regionalliga East",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 3,
-                "targetDaySourceIds": [
-                  "GAE0hZy3",
-                  "dlGGliyS",
-                  "l4MEUVqd"
-                ]
-              },
-              {
-                "providerCompetitionId": "nqGSLXJ5",
-                "providerPath": "/football/austria/regionalliga-north/",
-                "providerCountry": "Austria",
-                "providerName": "Regionalliga North",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
-                "targetDaySourceIds": [
-                  "bL8LOYE5",
-                  "lbZXo9AO"
-                ]
-              },
-              {
-                "providerCompetitionId": "KdEzKBlI",
-                "providerPath": "/football/austria/regionalliga-south/",
-                "providerCountry": "Austria",
-                "providerName": "Regionalliga South",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "EPOrIaMG"
-                ]
-              },
-              {
-                "providerCompetitionId": "hKcOIYdm",
-                "providerPath": "/football/austria/regionalliga-west/",
-                "providerCountry": "Austria",
-                "providerName": "Regionalliga West",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 3,
-                "targetDaySourceIds": [
-                  "faCrTjwe",
-                  "j3N4zZpL",
-                  "pWkOuUM0"
-                ]
-              },
-              {
-                "providerCompetitionId": "KMwoSTuI",
-                "providerPath": "/football/austria/steiermark/",
-                "providerCountry": "Austria",
-                "providerName": "Steiermark",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 3,
-                "targetDaySourceIds": [
-                  "4APMqQ3m",
-                  "tKW5RrlJ",
-                  "xONUs4Ya"
-                ]
-              },
-              {
-                "providerCompetitionId": "GlXgQ7AU",
-                "providerPath": "/football/austria/tirol/",
-                "providerCountry": "Austria",
-                "providerName": "Tirol",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 3,
-                "targetDaySourceIds": [
-                  "2XFLQsw2",
-                  "GGHDS38k",
-                  "YZdos3Nr"
-                ]
-              },
-              {
-                "providerCompetitionId": "zJVBpBen",
-                "providerPath": "/football/austria/vorarlberg/",
-                "providerCountry": "Austria",
-                "providerName": "Vorarlberg",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 3,
-                "targetDaySourceIds": [
-                  "EmqJ4aEG",
-                  "MDnR2wqT",
-                  "MLzIpvNp"
-                ]
-              },
-              {
-                "providerCompetitionId": "fLoDrkQb",
-                "providerPath": "/football/austria/wien/",
-                "providerCountry": "Austria",
-                "providerName": "Wien",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 4,
-                "targetDaySourceIds": [
-                  "40vxv5QO",
-                  "IqYScaHc",
-                  "KCEob8Bt",
-                  "n7E9h4uI"
-                ]
-              },
-              {
-                "providerCompetitionId": "0UIVeJQh",
-                "providerPath": "/football/bahrain/premier-league/",
-                "providerCountry": "Bahrain",
-                "providerName": "Premier League",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
-                "targetDaySourceIds": [
-                  "2NrVrNR6",
-                  "2sZO44lQ"
-                ]
-              },
-              {
-                "providerCompetitionId": "hElpptsm",
-                "providerPath": "/football/bangladesh/bfl/",
-                "providerCountry": "Bangladesh",
-                "providerName": "BFL",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 3,
-                "targetDaySourceIds": [
-                  "nZzWRmu1",
-                  "rPWhZVnR",
-                  "v9XNT9Al"
-                ]
-              },
-              {
-                "providerCompetitionId": "bPpRunJc",
-                "providerPath": "/football/belgium/belgian-cup/",
-                "providerCountry": "Belgium",
-                "providerName": "Belgian Cup",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 7,
-                "targetDaySourceIds": [
-                  "2ufgKRbJ",
-                  "8OLOIZvC",
-                  "G4kVPVUs",
-                  "KKzrOUGi",
-                  "d2TxSwIP",
-                  "lImwO9af",
-                  "zBNGKeAa"
-                ]
-              },
-              {
-                "providerCompetitionId": "W4NRuwPE",
-                "providerPath": "/football/belgium/national-division-1-acff/",
-                "providerCountry": "Belgium",
-                "providerName": "National Division 1 - ACFF",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 3,
-                "targetDaySourceIds": [
-                  "I5R6XuOO",
-                  "U1Mrwpfm",
-                  "xSPjyOOa"
-                ]
-              },
-              {
-                "providerCompetitionId": "SKQEYfHl",
-                "providerPath": "/football/belgium/national-division-1-vv/",
-                "providerCountry": "Belgium",
-                "providerName": "National Division 1 - VV",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 5,
-                "targetDaySourceIds": [
-                  "G60zfsO7",
-                  "GQjUFOpR",
-                  "Uk2Se3ge",
-                  "dx4KcPOr",
-                  "rDhMHpGE"
-                ]
-              },
-              {
-                "providerCompetitionId": "trXUUCGD",
-                "providerPath": "/football/belgium/second-amateur-division-group-acff/",
-                "providerCountry": "Belgium",
-                "providerName": "Second Amateur Division Group ACFF",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 3,
-                "targetDaySourceIds": [
-                  "0UfjNCA5",
-                  "KjgzRfBt",
-                  "h4irPYug"
-                ]
-              },
-              {
-                "providerCompetitionId": "C6mPhG8K",
-                "providerPath": "/football/belgium/second-amateur-division-group-vfv-a/",
-                "providerCountry": "Belgium",
-                "providerName": "Second Amateur Division Group VFV A",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 3,
-                "targetDaySourceIds": [
-                  "GMUWFdFU",
-                  "WnKuz00n",
-                  "r9WOHIpI"
-                ]
-              },
-              {
-                "providerCompetitionId": "WjUemfWs",
-                "providerPath": "/football/belgium/second-amateur-division-group-vfv-b/",
-                "providerCountry": "Belgium",
-                "providerName": "Second Amateur Division Group VFV B",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 5,
-                "targetDaySourceIds": [
-                  "8fSS7BtT",
-                  "SGQCBgs4",
-                  "jRPqQhdc",
-                  "vwJb2k4j",
-                  "zsUK9XBG"
-                ]
-              },
-              {
-                "providerCompetitionId": "ETxOBRJN",
-                "providerPath": "/football/benin/ligue-1/",
-                "providerCountry": "Benin",
-                "providerName": "Ligue 1",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 5,
-                "targetDaySourceIds": [
-                  "6gIwCOuf",
-                  "CjLoA2A6",
-                  "SthbWhR8",
-                  "bTEVDpBs",
-                  "p4Jg8tuJ"
-                ]
-              },
-              {
-                "providerCompetitionId": "xjthQLy1",
-                "providerPath": "/football/bermuda/premier-league/",
-                "providerCountry": "Bermuda",
-                "providerName": "Premier League",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
-                "targetDaySourceIds": [
-                  "8dy4A4sg",
-                  "GMvC8rC5"
-                ]
-              },
-              {
-                "providerCompetitionId": "tK1nS6Lk",
-                "providerPath": "/football/bolivia/copa-simon-bolivar/",
-                "providerCountry": "Bolivia",
-                "providerName": "Copa Simon Bolivar - Play Offs",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 3,
-                "targetDaySourceIds": [
-                  "MwfRjLJE",
-                  "UVitTHR7",
-                  "YanDsHt1"
-                ]
-              },
-              {
-                "providerCompetitionId": "6cSiQCsI",
-                "providerPath": "/football/bosnia-and-herzegovina/prva-liga-rs/",
-                "providerCountry": "Bosnia and Herzegovina",
-                "providerName": "Prva Liga - RS",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 6,
-                "targetDaySourceIds": [
-                  "6i5nTWC7",
-                  "KEyakNT9",
-                  "MNo5Tu7j",
-                  "QD3WWEDr",
-                  "Yw7vVhre",
-                  "n1wiiqac"
-                ]
-              },
-              {
-                "providerCompetitionId": "vkHZvCdB",
-                "providerPath": "/football/botswana/premier-league/",
-                "providerCountry": "Botswana",
-                "providerName": "Premier League",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 6,
-                "targetDaySourceIds": [
-                  "2adB96r4",
-                  "G6MXCKXb",
-                  "OWPuBb2B",
-                  "QaEJ3Gfo",
-                  "UTSm9xXN",
-                  "zDfJ7pDG"
-                ]
-              },
-              {
-                "providerCompetitionId": "0OadQWs9",
-                "providerPath": "/football/brazil/brasiliense-2/",
-                "providerCountry": "Brazil",
-                "providerName": "Brasiliense 2 - Play Offs",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "baJsJldl"
-                ]
-              },
-              {
-                "providerCompetitionId": "WORytiEa",
-                "providerPath": "/football/brazil/carioca-b1/",
-                "providerCountry": "Brazil",
-                "providerName": "Carioca B1",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 4,
-                "targetDaySourceIds": [
-                  "KrXNLiMO",
-                  "UeF3YU5U",
-                  "drHeziyI",
-                  "lIDmxD65"
-                ]
-              },
-              {
-                "providerCompetitionId": "SQkxg4qh",
-                "providerPath": "/football/brazil/copa-fmf-mato-grosso/",
-                "providerCountry": "Brazil",
-                "providerName": "Copa FMF (Mato Grosso)",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
-                "targetDaySourceIds": [
-                  "0OqmdYzp",
-                  "4hbH1fDM"
-                ]
-              },
-              {
-                "providerCompetitionId": "MslCUCFa",
-                "providerPath": "/football/brazil/copa-parana/",
-                "providerCountry": "Brazil",
-                "providerName": "Copa Parana",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 4,
-                "targetDaySourceIds": [
-                  "OEdQPpnf",
-                  "Wv0YNOG6",
-                  "j1bIR6Hs",
-                  "v53tM2oJ"
-                ]
-              },
-              {
-                "providerCompetitionId": "SSPNdsBd",
-                "providerPath": "/football/brazil/copa-santa-catarina/",
-                "providerCountry": "Brazil",
-                "providerName": "Copa Santa Catarina",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
-                "targetDaySourceIds": [
-                  "IZbvlX6C",
-                  "OW1nnByP"
-                ]
-              },
-              {
-                "providerCompetitionId": "0EFQW51m",
-                "providerPath": "/football/brazil/gaucho-2/",
-                "providerCountry": "Brazil",
-                "providerName": "Gaucho 2 - Play Offs",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "hzlwhe3m"
-                ]
-              },
-              {
-                "providerCompetitionId": "vNQFjfyJ",
-                "providerPath": "/football/brazil/gaucho-3/",
-                "providerCountry": "Brazil",
-                "providerName": "Gaucho 3",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
-                "targetDaySourceIds": [
-                  "82nlbA6c",
-                  "x05OskMG"
-                ]
-              },
-              {
-                "providerCompetitionId": "pIWVNRBc",
-                "providerPath": "/football/brazil/goiano-3/",
-                "providerCountry": "Brazil",
-                "providerName": "Goiano 3",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "6PzMu3Hk"
-                ]
-              },
-              {
-                "providerCompetitionId": "hSiQjx3b",
-                "providerPath": "/football/brazil/mineiro-3/",
-                "providerCountry": "Brazil",
-                "providerName": "Mineiro 3",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 6,
-                "targetDaySourceIds": [
-                  "4OEC4bPb",
-                  "80HXiLug",
-                  "dbB46Kfn",
-                  "lvJmlwuI",
-                  "tEFujaA5",
-                  "tnyenH9U"
-                ]
-              },
-              {
-                "providerCompetitionId": "Mu9JYqqL",
-                "providerPath": "/football/brazil/paraense-a3/",
-                "providerCountry": "Brazil",
-                "providerName": "Paraense A3 - Play Offs",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
-                "targetDaySourceIds": [
-                  "hIAjIUZO",
-                  "j7g8zCkg"
-                ]
-              },
-              {
-                "providerCompetitionId": "UXbfvQAd",
-                "providerPath": "/football/brazil/pernambucano/",
-                "providerCountry": "Brazil",
-                "providerName": "Pernambucano - First stage",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 3,
-                "targetDaySourceIds": [
-                  "2uf8rAw1",
-                  "QHiNiEGE",
-                  "WEzYbVNs"
-                ]
-              },
-              {
-                "providerCompetitionId": "E5CB3Akl",
-                "providerPath": "/football/brazil/piauiense-2/",
-                "providerCountry": "Brazil",
-                "providerName": "Piauiense 2 - Play Offs",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "0zOoChE4"
-                ]
-              },
-              {
-                "providerCompetitionId": "fypoKMun",
-                "providerPath": "/football/brazil/potiguar-2/",
-                "providerCountry": "Brazil",
-                "providerName": "Potiguar 2",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "Qqn4kFKM"
-                ]
-              },
-              {
-                "providerCompetitionId": "pv7V3RRE",
-                "providerPath": "/football/brazil/serie-a/",
-                "providerCountry": "Brazil",
-                "providerName": "Serie A",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "0MmjRHRa"
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "active-competition-completeness",
-          "type": "active_competition_structural_adapter_gap",
-          "message": "Effective competition slugs still rely on supplemental acquisition because no league adapter is enabled.",
-          "details": {
-            "dayKey": "2026-10-17",
-            "slugs": [
-              "crc.1",
-              "gua.1",
-              "hon.1",
-              "par.1",
-              "slv.1"
-            ]
-          }
-        }
-      ],
-      "resolvedIssues": [
-        {
-          "severity": "error",
-          "source": "manifest",
-          "type": "artifact_missing",
-          "message": "Snapshot manifest is missing.",
-          "details": {
-            "artifact": "data/deploy-snapshots/2026-10-17/manifest.json"
-          }
-        },
-        {
-          "severity": "error",
-          "source": "invariant-report",
-          "type": "artifact_missing",
-          "message": "Invariant report is missing.",
-          "details": {
-            "artifact": "data/deploy-snapshots/2026-10-17/invariant-report.json"
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "freshness-report",
-          "type": "artifact_missing",
-          "message": "Freshness report is missing.",
-          "details": {
-            "artifact": "data/deploy-snapshots/2026-10-17/freshness-report.json"
-          }
-        },
-        {
-          "severity": "error",
-          "source": "foundation-integrity",
-          "type": "foundation_publication_not_ready",
-          "message": "Publication foundation is not ready.",
-          "details": {
-            "blocked": [
-              {
-                "component": "details",
-                "reason": "details_foundation_not_ready"
-              }
-            ]
-          }
-        },
-        {
-          "severity": "error",
-          "source": "build-report",
-          "type": "build_hard_failure",
-          "message": "manifest_missing",
-          "details": {
-            "failure": "manifest_missing"
-          }
-        },
-        {
-          "severity": "error",
-          "source": "build-report",
-          "type": "build_hard_failure",
-          "message": "foundation_publication_not_ready",
-          "details": {
-            "failure": "foundation_publication_not_ready"
-          }
-        },
-        {
-          "severity": "error",
-          "source": "build-report",
-          "type": "build_hard_failure",
-          "message": "snapshot_stale",
-          "details": {
-            "failure": "snapshot_stale"
-          }
-        },
-        {
-          "severity": "error",
-          "source": "build-report",
-          "type": "build_hard_failure",
-          "message": "value_plan_comparison_missing",
-          "details": {
-            "failure": "value_plan_comparison_missing"
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "build-report",
-          "type": "build_warning",
-          "message": "canonical_leagues_missing_from_published:alb.1,alb.2,and.1,arg.1,arg.2,arm.1,aus.1,aut.1,aut.2,aze.1,bih.1,bih.2,blr.1,blr.2,bol.1,bra.1,bra.2,caf.champions,caf.confed,can.1,chi.2,chn.1,chn.2,col.1,col.2,cro.1,cro.2,cyp.1,cyp.2,cze.1,den.2,ecu.1,ecu.2,eng.1,eng.2,eng.3,eng.4,eng.fa,esp.1,esp.2,est.1,fin.1,fin.2,fra.1,fra.2,fro.2,geo.1,geo.2,ger.1,ger.2,ger.3,gre.1,gre.2,hun.1,hun.2,idn.1,idn.2,ind.1,irl.1,isl.1,isr.1,ita.1,ita.2,jpn.1,jpn.2,kaz.1,kor.1,kor.2,kos.1,kos.2,ksa.1,ltu.1,ltu.2,lux.1,lva.1,lva.2,mar.1,mar.2,mda.1,mda.2,mex.1,mex.2,mkd.1,mkd.2,mlt.1,mlt.2,mne.1,mne.2,mwi.1,mys.1,ned.1,ned.2,nir.1,nir.2,nor.1,par.1,per.1,per.2,pol.1,pol.2,por.taca.portugal,qat.1,rou.1,rou.2,rsa.1,rsa.2,rus.1,rus.2,sco.1,sco.2,slv.1,srb.1,srb.2,svk.1,svk.2,svn.1,svn.2,swe.1,swe.2,syr.1,tun.1,tur.1,tur.2,uae.1,uae.2,ukr.1,ukr.2,uru.1,uru.2,usa.1,ven.1,ven.2,zim.1",
-          "details": {
-            "raw": "canonical_leagues_missing_from_published:alb.1,alb.2,and.1,arg.1,arg.2,arm.1,aus.1,aut.1,aut.2,aze.1,bih.1,bih.2,blr.1,blr.2,bol.1,bra.1,bra.2,caf.champions,caf.confed,can.1,chi.2,chn.1,chn.2,col.1,col.2,cro.1,cro.2,cyp.1,cyp.2,cze.1,den.2,ecu.1,ecu.2,eng.1,eng.2,eng.3,eng.4,eng.fa,esp.1,esp.2,est.1,fin.1,fin.2,fra.1,fra.2,fro.2,geo.1,geo.2,ger.1,ger.2,ger.3,gre.1,gre.2,hun.1,hun.2,idn.1,idn.2,ind.1,irl.1,isl.1,isr.1,ita.1,ita.2,jpn.1,jpn.2,kaz.1,kor.1,kor.2,kos.1,kos.2,ksa.1,ltu.1,ltu.2,lux.1,lva.1,lva.2,mar.1,mar.2,mda.1,mda.2,mex.1,mex.2,mkd.1,mkd.2,mlt.1,mlt.2,mne.1,mne.2,mwi.1,mys.1,ned.1,ned.2,nir.1,nir.2,nor.1,par.1,per.1,per.2,pol.1,pol.2,por.taca.portugal,qat.1,rou.1,rou.2,rsa.1,rsa.2,rus.1,rus.2,sco.1,sco.2,slv.1,srb.1,srb.2,svk.1,svk.2,svn.1,svn.2,swe.1,swe.2,syr.1,tun.1,tur.1,tur.2,uae.1,uae.2,ukr.1,ukr.2,uru.1,uru.2,usa.1,ven.1,ven.2,zim.1"
-          }
-        },
-        {
-          "severity": "error",
-          "source": "build-report",
-          "type": "build_not_clean",
-          "message": "Build report is not clean.",
-          "details": {
-            "clean": false,
-            "cleanStrict": false
-          }
-        },
-        {
-          "severity": "error",
-          "source": "active-competition-completeness",
-          "type": "active_competition_completeness_missing",
-          "message": "Independent target-day active competition coverage proof is missing.",
-          "details": {
-            "dayKey": "2026-10-17",
-            "artifact": "data/coverage-readiness/2026-10-17.json"
-          }
-        },
-        {
-          "severity": "error",
-          "source": "value",
-          "type": "artifact_missing",
-          "message": "Production value artifact is missing.",
-          "details": {
-            "artifact": "data/deploy-snapshots/2026-10-17/value.json"
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "value-audit",
-          "type": "artifact_missing",
-          "message": "Production value audit artifact is missing.",
-          "details": {
-            "artifact": "data/deploy-snapshots/2026-10-17/value-audit.json"
-          }
-        },
-        {
-          "severity": "info",
-          "source": "value-comparison",
-          "type": "artifact_missing",
-          "message": "Four-plan Value comparison artifact is missing.",
-          "details": {
-            "artifact": "data/value-comparison/2026-10-17.json",
-            "requiredPlans": [
-              "A",
-              "A2",
-              "B",
-              "B2"
-            ]
-          }
-        }
-      ],
-      "persistentIssues": [
-        {
-          "severity": "info",
-          "source": "foundation-integrity",
-          "type": "age_expired_results_rows_present",
-          "message": "Foundation integrity informational condition.",
-          "details": {
-            "component": "historySemantic",
-            "reason": "age_expired_results_rows_present",
-            "count": 14370,
-            "informational": true
-          }
-        },
-        {
-          "severity": "info",
-          "source": "foundation-integrity",
-          "type": "history_semantic_warnings_present",
-          "message": "Foundation integrity informational condition.",
-          "details": {
-            "component": "historySemantic",
-            "reason": "history_semantic_warnings_present",
-            "count": 4,
-            "informational": true
-          }
-        },
-        {
-          "severity": "info",
-          "source": "foundation-integrity",
-          "type": "score_consistent_alias_mirror_conflicts_present",
-          "message": "Foundation integrity informational condition.",
-          "details": {
-            "component": "historySemantic",
-            "reason": "score_consistent_alias_mirror_conflicts_present",
-            "count": 47,
-            "informational": true
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "build-report",
-          "type": "acquisition_skipped_slugs",
-          "message": "Acquisition skipped slugs during fixture acquisition.",
-          "details": {
-            "slugs": [
-              "aus.w.1",
-              "eng.fa_qual",
-              "eng.w.1",
-              "eng.w.league_cup",
-              "esp.w.1",
-              "fifa.wworld.u17",
-              "fra.w.1",
-              "mex.w.1",
-              "ned.w.knvb_cup",
-              "usa.ncaa.m.1",
-              "usa.ncaa.w.1",
-              "usa.w.usl.1"
-            ],
-            "raw": "acquisition_skipped_slugs:aus.w.1,eng.fa_qual,eng.w.1,eng.w.league_cup,esp.w.1,fifa.wworld.u17,fra.w.1,mex.w.1,ned.w.knvb_cup,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
-            "contextOnly": false
-          }
-        },
-        {
-          "severity": "info",
-          "source": "competition-admission",
-          "type": "competition_admission_active",
-          "message": "Persistent domestic competition admissions are active.",
-          "details": {
-            "admittedSlugs": [
-              "crc.1",
-              "gua.1",
-              "hon.1",
-              "par.1",
-              "slv.1"
-            ],
-            "summary": {
-              "evidenceSlugCount": 21,
-              "admittedCount": 5,
-              "pendingCount": 0,
-              "rejectedCount": 21,
-              "alreadyDeclaredCount": 0
-            }
-          }
-        },
-        {
-          "severity": "info",
-          "source": "competition-admission",
-          "type": "competition_admission_rejected",
-          "message": "Observed competition slugs were rejected by the fail-closed admission policy.",
-          "details": {
-            "rejectedSlugs": [
-              "arg.3",
-              "aus.w.1",
-              "can.w.nsl",
-              "club.friendly",
-              "col.copa",
-              "eng.fa_qual",
-              "eng.w.1",
-              "eng.w.league_cup",
-              "esp.w.1",
-              "fifa.friendly.w",
-              "fifa.wworld.u17",
-              "fifa.wworldq.uefa",
-              "fra.w.1",
-              "mex.w.1",
-              "ned.w.knvb_cup",
-              "usa.ncaa.m.1",
-              "usa.ncaa.w.1",
-              "usa.nwsl",
-              "usa.usl.1",
-              "usa.usl.l1",
-              "usa.w.usl.1"
-            ],
-            "summary": {
-              "evidenceSlugCount": 21,
-              "admittedCount": 5,
-              "pendingCount": 0,
-              "rejectedCount": 21,
-              "alreadyDeclaredCount": 0
             }
           }
         }
@@ -29327,13 +28347,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "92358606c67b957f25d85d4c572812319dbeaac0a24d9f9d16a8f4df7c18e581",
+      "truthFingerprint": "b9cce22805ab54a42a797a2cca925a271c4ddbe3a9dc77326b8c14b0a258aaad",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 463,
+        "expectedEligibleRows": 480,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_alb1_kftirana_laci_20261017",
@@ -29342,6 +28362,7 @@
           "cid_alb2_iliriafushekruje_burreli_20261017",
           "cid_alb2_korabipeshkopi_bylis_20261017",
           "cid_alb2_pogradeci_sopotilibrazhd_20261017",
+          "cid_and1_rangers_ordino_20261017",
           "cid_arg1_banfield_argentinosjuniors_20261017",
           "cid_arg1_bocajuniors_tallerescordoba_20261017",
           "cid_arg1_defensayjusticia_institutocordoba_20261017",
@@ -29350,6 +28371,7 @@
           "cid_arg2_atleticorafaela_quilmes_20261017",
           "cid_arg2_chacaritajuniors_deportivomaipu_20261017",
           "cid_arg2_gimnasiaytirosalta_atlanta_20261017",
+          "cid_arg2_sanmiguel_ciudadbolivar_20261017",
           "cid_arm1_ararat_shirakgyumri_20261017",
           "cid_arm1_urartu_van_20261017",
           "cid_aus1_auckland_melbournecity_20261017",
@@ -29378,6 +28400,7 @@
           "cid_blr2_ostrovets_soligorsk_20261017",
           "cid_blr2_smorgon_bumpromgomel_20261017",
           "cid_blr2_unixlabs_ska1938_20261017",
+          "cid_bol1_realoruro_aurora_20261017",
           "cid_bol1_realtomayapo_gvsanjose_20261017",
           "cid_bra1_mirassol_internacional_20261017",
           "cid_bra2_pontepreta_atleticogoianiense_20261017",
@@ -29433,6 +28456,7 @@
           "cid_den2_aalborg_vejle_20261017",
           "cid_den2_fredericia_hobro_20261017",
           "cid_ecu1_libertadecuador_guayaquilcity_20261017",
+          "cid_ecu1_macara_independientedelvalle_20261017",
           "cid_ecu2_elnacional_depsantodomingo_20261017",
           "cid_ecu2_nueveoctubre_vinotinto_20261017",
           "cid_eng1_brentford_liverpool_20261017",
@@ -29508,8 +28532,10 @@
           "cid_engfa_wimborne_chelmsford_20261017",
           "cid_esp1_espanyol_atleticomadrid_20261017",
           "cid_esp1_realbetis_barcelona_20261017",
+          "cid_esp1_valencia_athletic_20261017",
           "cid_esp1_villarreal_elche_20261017",
           "cid_esp2_eibar_mallorca_20261017",
+          "cid_esp2_laspalmas_castellon_20261017",
           "cid_esp2_realsociedadb_almeria_20261017",
           "cid_esp2_realsociedadii_almeria_20261017",
           "cid_esp2_sportinggijon_albacete_20261017",
@@ -29524,7 +28550,9 @@
           "cid_fin2_ktp_klubi04_20261017",
           "cid_fin2_mikkeli_japs_20261017",
           "cid_fin2_pk35_sjkakatemia_20261017",
+          "cid_fra1_lille_brest_20261017",
           "cid_fra1_strasbourg_parissaintgermain_20261017",
+          "cid_fra1_troyes_lens_20261017",
           "cid_fra2_metz_sochaux_20261017",
           "cid_fra2_nantes_dunkerque_20261017",
           "cid_fra2_redstar93_saintetienne_20261017",
@@ -29575,6 +28603,7 @@
           "cid_idn2_semenpadang_psmsmedan_20261017",
           "cid_ind1_bengaluru_chennaiyin_20261017",
           "cid_ind1_interkashi_odisha_20261017",
+          "cid_irl1_sligorovers_dundalk_20261017",
           "cid_isl1_keflavik_krreykjavik_20261017",
           "cid_isl1_thorakureyri_stjarnan_20261017",
           "cid_isl1_valur_kaakureyri_20261017",
@@ -29583,6 +28612,7 @@
           "cid_isr1_maccabipetahtikva_maccabihaifa_20261017",
           "cid_isr1_netanya_kiryatshmona_20261017",
           "cid_isr1_sakhnin_hapoelpetahtikva_20261017",
+          "cid_ita1_asroma_genoa_20261017",
           "cid_ita1_bologna_internazionale_20261017",
           "cid_ita1_venezia_napoli_20261017",
           "cid_ita2_ascoli_empoli_20261017",
@@ -29674,6 +28704,7 @@
           "cid_mys1_negerisembilan_sabah_20261017",
           "cid_mys1_selangor_penang_20261017",
           "cid_ned1_adodenhaag_psveindhoven_20261017",
+          "cid_ned1_spartarotterdam_willemii_20261017",
           "cid_ned1_telstar_feyenoordrotterdam_20261017",
           "cid_ned2_emmen_almerecity_20261017",
           "cid_nir1_ballymena_crusaders_20261017",
@@ -29689,6 +28720,7 @@
           "cid_nor1_kristiansund_aalesund_20261017",
           "cid_nor1_viking_fredrikstad_20261017",
           "cid_par1_deportivorecoleta_rubionu_20261017",
+          "cid_per2_alianzahuanuco_carlosmannucci_20261017",
           "cid_pol1_cracovia_legia_20261017",
           "cid_pol1_gkskatowice_pogonszczecin_20261017",
           "cid_pol1_motorlublin_slaskwroclaw_20261017",
@@ -29702,6 +28734,7 @@
           "cid_portacaportugal_fazendense_estrela_20261017",
           "cid_portacaportugal_florgrade_portimonense_20261017",
           "cid_portacaportugal_louletano_rioave_20261017",
+          "cid_portacaportugal_penafiel_leca_20261017",
           "cid_portacaportugal_sanjoanense_nacional_20261017",
           "cid_portacaportugal_uniaoleiria_braganca_20261017",
           "cid_portacaportugal_vianense_leixoes_20261017",
@@ -29734,6 +28767,7 @@
           "cid_rus2_ufa_arsenaltula_20261017",
           "cid_rus2_yenisey_torpedomoscow_20261017",
           "cid_sco1_aberdeen_stmirren_20261017",
+          "cid_sco1_dundee_rangers_20261017",
           "cid_sco1_hibernian_falkirk_20261017",
           "cid_sco1_kilmarnock_motherwell_20261017",
           "cid_sco1_stjohnstone_dundeeunited_20261017",
@@ -29787,18 +28821,21 @@
           "cid_ukr2_koloskovalivka2_ucsa_20261017",
           "cid_ukr2_poltava_prykarpattya_20261017",
           "cid_ukr2_viktoria_chernihiv_20261017",
+          "cid_uru1_bostonriver_defensorsporting_20261017",
           "cid_uru1_cerro_cerrolargo_20261017",
           "cid_uru1_progreso_juventud_20261017",
           "cid_uru1_racingmontevideo_montevideowanderers_20261017",
           "cid_uru2_colon_huracan_20261017",
           "cid_uru2_fenix_paysandu_20261017",
+          "cid_usa1_philadelphiaunion_charlotte_20261017",
           "cid_ven2_mineros_maritimo_20261017",
           "cid_zim1_bulawayochiefs_ngeziplatinum_20261017",
           "cid_zim1_dynamos_hardrock_20261017",
           "cid_zim1_mwos_triangle_20261017",
           "cid_zim1_platinum_capsutd_20261017",
           "cid_zim1_simbabhora_herentals_20261017",
-          "cid_zim1_telone_hunters_20261017"
+          "cid_zim1_telone_hunters_20261017",
+          "cid_zim1_zpckariba_agama_20261017"
         ],
         "unexpectedFixtureIds": [],
         "duplicateFixtureIds": [],
@@ -29839,7 +28876,7 @@
         "severity": "warning",
         "alert": true,
         "activeIssueCount": 18,
-        "actionableIssueCount": 7
+        "actionableIssueCount": 9
       },
       "authority": {
         "footballTruthMutable": false,
@@ -29858,7 +28895,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-17",
-      "fileCount": 471,
+      "fileCount": 480,
       "authority": "scored_final_evidence"
     },
     "downstream": {
