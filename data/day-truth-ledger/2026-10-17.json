@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-17",
-  "generatedAt": "2026-10-17T05:25:10.651Z",
+  "generatedAt": "2026-10-17T06:06:45.444Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "51e311e031e31cda801ba82620b8c8d523955fc5c1ef34d36d423fa35363a57c",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "d207741bd010ae18fe16befa61784115e4a92499b81a5a64b9574b67254aa73f",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -25,14 +25,14 @@
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 21,
-    "acceptedVerifiedFinalArtifacts": 21,
+    "verifiedFinalArtifacts": 23,
+    "acceptedVerifiedFinalArtifacts": 23,
     "convergedPlayedFinal": 21,
     "convergedNonPlayedTerminal": 2,
     "pendingVerifiedFinal": 0,
-    "openRows": 481,
+    "openRows": 479,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 21,
@@ -1081,22 +1081,22 @@
         "status": "SECOND_HALF",
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 1,
+        "scoreHome": 2,
         "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-17",
+        "scoreHome": 3,
+        "scoreAway": 1,
+        "scoreParity": false
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -13825,18 +13825,18 @@
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-17",
+        "scoreHome": 2,
+        "scoreAway": 2,
+        "scoreParity": false
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -24740,7 +24740,10 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_aus1_auckland_melbournecity_20261017",
+      "cid_jpn1_shimizuspulse_gambaosaka_20261017"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -29318,7 +29321,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "51e311e031e31cda801ba82620b8c8d523955fc5c1ef34d36d423fa35363a57c",
+      "truthFingerprint": "d207741bd010ae18fe16befa61784115e4a92499b81a5a64b9574b67254aa73f",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -29407,7 +29410,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-17",
-      "fileCount": 21,
+      "fileCount": 23,
       "authority": "scored_final_evidence"
     },
     "downstream": {
