@@ -37,10 +37,14 @@ jobs:
         with:
           fetch-depth: 1
           persist-credentials: false
-          sparse-checkout: engine-v1
+          sparse-checkout: |
+            engine-v1
+            .github/workflows
       - uses: actions/setup-node@v7
         with:
           node-version: "24"
+      - name: Check the history controller before granting its bounded action
+        run: node --test engine-v1/tests/history-protection-watchdog.test.js
       - name: Check archive freshness and request a bounded restore drill
         env:
           GITHUB_TOKEN: ${{ github.token }}

@@ -3,6 +3,8 @@
 The existing Publication rollover watchdog runs the history check in a separate
 job on its existing half-hour cadence. Publication failure cannot skip the check.
 No new schedule, provider requests, forecast execution or Render service is added.
+The controller's synthetic safety tests run before every scheduled check; their
+failure prevents its automatic action. They do not access providers or execute models.
 
 The check reads an immutable archive commit, validates its small checkpoint
 locator and checks that the referenced manifest is available. This is a metadata

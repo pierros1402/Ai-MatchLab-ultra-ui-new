@@ -106,5 +106,7 @@ test("workflow uses the existing schedule, isolated read-only checkout and no pu
   const job = yaml.split("  history-protection:\n")[1].split("  publication-watchdog:\n")[0];
   assert.ok(job.includes("contents: read")); assert.ok(job.includes("persist-credentials: false"));
   assert.ok(job.includes("run-history-protection-watchdog.js --apply")); assert.ok(!job.includes("CRON_SECRET"));
+  assert.ok(job.includes("node --test engine-v1/tests/history-protection-watchdog.test.js"));
+  assert.ok(job.includes(".github/workflows"));
   assert.equal((yaml.match(/cron:/g) || []).length, 1);
 });
