@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-17",
-  "generatedAt": "2026-10-17T03:42:30.852Z",
+  "generatedAt": "2026-10-17T04:23:39.200Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "fa3a0dc1702fd52bba0c64f88162176a37ef6d6984bacf6e34557a3a33c644bb",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "b7b4c827722458fbfbeea977ee4984797b90d4af27cb25ab7f465d576a1e8512",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -25,14 +25,14 @@
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 17,
-    "acceptedVerifiedFinalArtifacts": 17,
+    "verifiedFinalArtifacts": 18,
+    "acceptedVerifiedFinalArtifacts": 18,
     "convergedPlayedFinal": 17,
     "convergedNonPlayedTerminal": 2,
     "pendingVerifiedFinal": 0,
-    "openRows": 485,
+    "openRows": 484,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 17,
@@ -3486,18 +3486,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-17",
+        "scoreHome": 2,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -16317,11 +16317,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
-        "scoreAway": 0
+        "rawStatus": "STATUS_HALFTIME",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -16415,9 +16415,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -16464,11 +16464,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
-        "scoreAway": 1
+        "rawStatus": "STATUS_HALFTIME",
+        "scoreHome": 1,
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -24740,7 +24740,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_can1_vancouver_hfxwanderers_20261017"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -29318,7 +29320,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "fa3a0dc1702fd52bba0c64f88162176a37ef6d6984bacf6e34557a3a33c644bb",
+      "truthFingerprint": "b7b4c827722458fbfbeea977ee4984797b90d4af27cb25ab7f465d576a1e8512",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -29403,7 +29405,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-17",
-      "fileCount": 17,
+      "fileCount": 18,
       "authority": "scored_final_evidence"
     },
     "downstream": {
