@@ -34,7 +34,9 @@ concurrency:
 jobs:
   alarm:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    # Cold recovery also verifies the full immutable history after each producer.
+    # The measured repair + publication path exceeds 40 minutes; keep all checks.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v7
         with:
