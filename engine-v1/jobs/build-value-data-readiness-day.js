@@ -5,6 +5,7 @@ import {canonicalFixturesForDay} from '../core/day-fixture-universe.js';
 import {getDeployedOddsDay} from '../storage/odds-memory-db.js';
 import {readTrustedStandingsState} from '../storage/trusted-standings-db.js';
 import {resolveDataPath} from '../storage/data-root.js';
+import {auditDetailsFoundationDay} from './audit-details-foundation-day.js';
 import {buildValueDataReadiness} from '../core/value-data-readiness.js';
 function read(file){try{return JSON.parse(fs.readFileSync(file,'utf8'));}catch{return null;}}
 export function buildValueDataReadinessDay(day,{write=false,dependencies={}}={}) {
@@ -13,7 +14,7 @@ export function buildValueDataReadinessDay(day,{write=false,dependencies={}}={})
   const coverage=(dependencies.coverage||(()=>read(resolveDataPath('value','_coverage-reports',`${day}.json`))))(day);
   const assessments=(dependencies.assessments||getDeployedOddsDay)(day)?.matches||[];
   const standings=Object.fromEntries([...new Set(fixtures.map(row=>row.leagueSlug))].map(slug=>[slug,(dependencies.standings||readTrustedStandingsState)(slug)]));
-  const report=buildValueDataReadiness({day,fixtures,assessments,coverage,standings,now:dependencies.now});
+  const report=buildValueDataReadiness({day,fixtures,assessments,coverage,standings,detailsAudit:(dependencies.detailsAudit||auditDetailsFoundationDay)(day),now:dependencies.now});
   if(write){const dir=resolveDataPath('value-data-readiness');fs.mkdirSync(dir,{recursive:true});const file=path.join(dir,`${day}.json`),previous=read(file);const stable=x=>{if(!x)return null;const {generatedAt,...body}=x;return JSON.stringify(body);};if(stable(previous)===stable(report))report.generatedAt=previous.generatedAt;fs.writeFileSync(file,JSON.stringify(report,null,2)+'\n');}
   return report;
 }

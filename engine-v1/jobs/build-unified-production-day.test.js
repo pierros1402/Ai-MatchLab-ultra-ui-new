@@ -16,7 +16,7 @@ test('producer isolates all candidate writes, survives an initial zero and commi
   fs.writeFileSync(path.join(scratch,`plan-${key}-audit.json`),JSON.stringify({ok:true,date:day,fixtureUniverse:{count:1,hash:'same'},evaluationAccounting:{complete:true,inputGapFixtures:0}}));
  };
  const readiness={date:day,complete:true,status:'COMPLETE',summary:{fixtures:1,ready:1},rows:[{canonicalId:'cid_capture',status:'READY',reasons:[],modelAssessmentAvailable:true}]};
- const dependencies={root,fixtures:()=>[fixture],buildA:async(d,options)=>{calls++;assert.equal(options.prospectiveOnly,true);assert.ok(options.outputPath.startsWith(path.join(root,'scratch')));emit(options.opponentAdjusted?'a2':'a',path.dirname(options.outputPath));},
+ const dependencies={root,detailsAudit:()=>({ok:true}),fixtures:()=>[fixture],buildA:async(d,options)=>{calls++;assert.equal(options.prospectiveOnly,true);assert.ok(options.outputPath.startsWith(path.join(root,'scratch')));emit(options.opponentAdjusted?'a2':'a',path.dirname(options.outputPath));},
   buildB:(d,options)=>{calls++;assert.ok(options.publicationRunId);emit(options.outputMode==='plan-b2-observation'?'b2':'b',options.scratchPath);},coverage:async()=>{},readiness:()=>readiness,
   checkpoint:()=>{},finals:()=>({rows:[],canonicalById:new Map(),canonicalIdentityAmbiguities:[]}),proof:()=>({status:'UNPROVEN'})};
  try{
@@ -35,6 +35,7 @@ test('producer isolates all candidate writes, survives an initial zero and commi
   await buildUnifiedProductionDay(day,{capture:false,nowFn:()=>day+'T22:01Z',dependencies});
   const preserved=JSON.parse(fs.readFileSync(path.join(root,'public-plan.json')));assert.equal(preserved.summary.wins,1);assert.ok(preserved.conflicts.some(c=>c.reason==='settlement_truth_changed_existing_result_preserved'));
 
+  const beforeStale=calls;dependencies.detailsAudit=()=>({ok:false});await assert.rejects(buildUnifiedProductionDay(day,{nowFn:()=>now,dependencies}),/details_foundation_not_verified/);assert.equal(calls,beforeStale);
   const before=calls;await assert.rejects(buildUnifiedProductionDay(shiftDay(today,-1),{nowFn:()=>now,dependencies}),/prospective_window|invalid_unified_production_day/);assert.equal(calls,before);
  }finally{assert.ok(path.resolve(root).startsWith(path.resolve(os.tmpdir())+path.sep));fs.rmSync(root,{recursive:true,force:true});}
 });

@@ -9,6 +9,7 @@ import {canonicalFixturesForDay} from '../core/day-fixture-universe.js';
 import {buildValueDay} from '../core/build-value-day.js';
 import {deriveValueFromOdds} from './derive-value-from-odds.js';
 import {buildValueCoverageReportDay} from './build-value-coverage-report-day.js';
+import {auditDetailsFoundationDay} from './audit-details-foundation-day.js';
 import {buildValueDataReadinessDay} from './build-value-data-readiness-day.js';
 import {buildUnifiedShadow,signature,digest,specSha256,selectionKey} from '../value/unified-shadow.js';
 import {projectUnifiedProduction,validateProductionProjection} from '../value/unified-production-journal.js';
@@ -53,6 +54,7 @@ export async function buildUnifiedProductionDay(day,{capture=true,nowFn=()=>new 
  if(!/^\d{4}-\d{2}-\d{2}$/.test(day)||day<'2026-10-18')throw Error('invalid_unified_production_day');
  const today=athensDayKey(new Date(nowFn()));
  if(capture&&(day<today||day>shiftDay(today,1)))throw Error('unified_capture_outside_prospective_window');
+ if(capture&&(dependencies.detailsAudit||auditDetailsFoundationDay)(day).ok!==true)throw Error('production_details_foundation_not_verified');
  const root=dependencies.root||resolveDataPath('value-unified',day),observations=path.join(root,'observations');
  fs.mkdirSync(observations,{recursive:true});
  let readiness=null;
