@@ -1,8 +1,8 @@
 {
   "schema": "ai-matchlab.history-backed-standings.v1",
   "league": "eng.1",
-  "seasonReference": "2025-2026",
-  "updatedAt": "2026-10-18T04:11:40.926Z",
+  "seasonReference": "2026-2027",
+  "updatedAt": "2026-10-18T06:36:37.410Z",
   "confidence": 0,
   "completeness": 0,
   "sourceAudit": [
@@ -13,7 +13,7 @@
     },
     {
       "type": "competition_contract",
-      "label": "eng.1@2025-2026#v1",
+      "label": "eng.1@2026-2027#v2",
       "ok": false
     }
   ],
@@ -29,30 +29,34 @@
     "status": "GATED",
     "usable": false,
     "reasonCodes": [
-      "TEAM_COUNT_AUTHORITY_MISSING"
+      "TEAM_COUNT_ABOVE_CONTRACT"
     ],
-    "builtAt": "2026-10-18T04:11:40.926Z",
+    "builtAt": "2026-10-18T06:36:37.410Z",
     "historySeason": "2026-2027",
     "historyLeagueRows": 156,
     "historyLeagueSha256": "9a0d51874ddbdb58c4b176b980c9ce7037e9d78cae010bddb0b2be7b35855445",
-    "competitionFormatRegistrySha256": "92895cede3edd2079e6230fd2cba67b6e435710a0116374f27a8c47b1d8ecb36",
+    "competitionFormatRegistrySha256": "d72c3d0c06ee39b4a08e5f9f33513a5802ab4d0b1abb795b28942fb4868fd74b",
     "teamAliasesSha256": "MISSING",
     "teamIdentityMode": "LEAGUE_SCOPED_CANONICAL_ALIAS_ID_V1",
-    "contractId": "eng.1@2025-2026#v1",
-    "contractSeasonReference": "2025-2026",
-    "contractAuthorityScopes": [],
+    "contractId": "eng.1@2026-2027#v2",
+    "contractSeasonReference": "2026-2027",
+    "contractAuthorityScopes": [
+      "TEAM_COUNT"
+    ],
     "contractValidation": {
       "schema": "ai-matchlab.standings-contract-validation.v1",
-      "status": "UNVERIFIED",
+      "status": "FAIL",
       "ok": false,
       "publicationDecision": "NOT_APPLIED_READ_ONLY",
       "leagueSlug": "eng.1",
-      "seasonReference": "2025-2026",
-      "contractId": "eng.1@2025-2026#v1",
+      "seasonReference": "2026-2027",
+      "contractId": "eng.1@2026-2027#v2",
       "authority": {
-        "status": "UNVERIFIED",
-        "scopes": [],
-        "verifiedAt": null
+        "status": "PARTIALLY_VERIFIED",
+        "scopes": [
+          "TEAM_COUNT"
+        ],
+        "verifiedAt": "2026-10-18"
       },
       "artifact": {
         "shape": "OBJECT",
@@ -68,20 +72,28 @@
         "primaryCanonicalIdentityComplete": true,
         "phaseTableCount": 0,
         "teamCountEvaluation": {
-          "evaluated": false,
-          "pass": null,
-          "expected": null,
+          "evaluated": true,
+          "pass": false,
+          "expected": {
+            "mode": "EXACT",
+            "value": 20
+          },
           "observed": 115
         },
-        "errorCount": 0,
-        "warningCount": 1
+        "errorCount": 1,
+        "warningCount": 0
       },
       "issues": [
         {
-          "code": "TEAM_COUNT_CONTRACT_UNVERIFIED",
-          "severity": "warning",
-          "scope": "contract.teamCount",
-          "message": "Team count is not authoritative for this league/season; count mismatch is not evaluated as compliance failure."
+          "code": "TEAM_COUNT_ABOVE_CONTRACT",
+          "severity": "error",
+          "scope": "primary-universe",
+          "message": "Observed unique team count 115 does not equal contract count 20.",
+          "details": {
+            "observed": 115,
+            "expected": 20,
+            "delta": 95
+          }
         }
       ],
       "mutationGuard": {
