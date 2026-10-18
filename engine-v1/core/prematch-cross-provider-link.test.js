@@ -59,3 +59,54 @@ test("duplicate canonical or provider claims remain ambiguous even when scores a
   assert.equal(b.summary.providerIdentityLinks.length, 0);
   assert.equal(b.summary.rejected.CROSS_PROVIDER_IDENTITY_NOT_UNIQUE, 2);
 });
+
+function espnOnlySetup() {
+ const s=setup();
+ for(let i=0;i<s.canonicals.length;i++){
+  s.canonicals[i].providerIds={espn:String(401123450+i)};
+  s.candidates[i].home=s.canonicals[i].homeTeam;
+ }
+ return s;
+}
+
+test('ESPN-only exact metadata and original final scores link only with two OTHER verified games',()=>{
+ const s=espnOnlySetup(),before=JSON.stringify(s),r=run(s);
+ assert.equal(r.summary.exactNameBootstrapSeeds,3);assert.equal(r.summary.accepted,3);
+ assert.equal(r.summary.providerIdentityLinks.length,3);
+ for(const proof of r.summary.providerIdentityLinks){
+  assert.equal(proof.evidencePolicy,'exact_names_and_two_other_original_verified_finals');
+  assert.equal(proof.currentMatchExcludedFromSeeds,true);
+  assert.equal(proof.sides.home.canonicalIds.length,2);
+  assert.equal(proof.sides.home.canonicalIds.includes(proof.canonicalId),false);
+  assert.equal(proof.sides.home.providerMatchIds.includes(proof.providerMatchId),false);
+ }
+ assert.equal(JSON.stringify(s),before,'canonical IDs, names, stored finals and original forecasts remain unchanged');
+});
+
+test('two original ESPN finals may identify a future anchor but cannot certify themselves',()=>{
+ const s=espnOnlySetup();s.canonicals.pop();s.candidates.pop();const r=run(s);
+ assert.equal(r.summary.accepted,0);
+ const canonical={...fixture(24,'espn'),canonicalId:'cid_future_anchor',kickoffUtc:'2026-10-05T12:00Z',providerIds:{espn:'401999999'},status:'PRE'};
+ const candidate={...s.candidates[0],providerMatchId:'future01',kickoffUtc:canonical.kickoffUtc};
+ const proof=r.providerIdentityLinker(candidate,canonical);assert.ok(proof);assert.equal(proof.sides.home.canonicalIds.length,2);
+});
+
+test('ESPN bootstrap rejects score, identity, final-availability and ambiguous-claim contradictions',()=>{
+ const mutations=[
+  s=>{s.candidates[2].scoreHome=3;},
+  s=>{s.finals.cid_proof_24.verifiedFinalTruth=false;},
+  s=>{delete s.finals.cid_proof_24;},
+  s=>{s.candidates[2].kickoffUtc='2026-09-24T12:01Z';},
+  s=>{s.candidates[2].home='Home Reserves';},
+  s=>{s.canonicals[2].hasConflict=true;},
+  s=>{s.canonicals[2].providerIds.flashscore='other001';},
+  s=>{s.canonicals[2].homeGlobalClubId='different';},
+  s=>{s.candidates[2].homeProviderTeamId='different';},
+  s=>{s.canonicals[2].providerIds.espn=s.canonicals[1].providerIds.espn;},
+  s=>{s.finals.cid_proof_24.generatedAt='2026-10-05T12:00Z';},
+  s=>{s.canonicals[2].rawStatus='STATUS_FINAL_AET';},
+  s=>{s.candidates.push({...s.candidates[2],providerMatchId:'duplicate'});},
+  s=>{s.canonicals.push({...s.canonicals[2],canonicalId:'cid_duplicate'});}
+ ];
+ for(const mutate of mutations){const s=espnOnlySetup();mutate(s);assert.equal(run(s).summary.accepted,0,mutate.toString());}
+});

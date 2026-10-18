@@ -81,7 +81,39 @@ export function collectPrematchFinalForm(baseIndex, candidates, nowMs, { fixture
     }
     validated.push({ candidate, row: result.row });
   }
-  const link = createPrematchCrossProviderLinker(validated);
+  // Bootstrap ESPN-only leagues from original, committed final truth. Exact
+  // names, league, kickoff and both scores must agree; identity claims must be
+  // unique. Linked read views are never used as seeds, and a candidate cannot
+  // count itself among the two other games proving its team identity.
+  const nameKey = value => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/\s+/g, " ");
+  const bootstrap = [];
+  for (const { candidate, day } of pending) {
+    if (!nameKey(candidate.home) || !nameKey(candidate.away) || nameKey(candidate.home) === nameKey(candidate.away) ||
+      ![candidate.providerMatchId,candidate.homeProviderTeamId,candidate.awayProviderTeamId].every(id => /^[a-zA-Z0-9]{6,16}$/.test(id || "")) ||
+      candidate.homeProviderTeamId === candidate.awayProviderTeamId) continue;
+    const matches = byDay.get(day).filter(c => c.leagueSlug === candidate.leagueSlug &&
+      Date.parse(c.kickoffUtc) === Date.parse(candidate.kickoffUtc) && !c.providerIds?.flashscore && c.source !== "flashscore" &&
+      nameKey(c.homeTeam) === nameKey(candidate.home) && nameKey(c.awayTeam) === nameKey(candidate.away));
+    if (matches.length !== 1) continue;
+    const canonical = matches[0];
+    const espnIds = [canonical.providerIds?.espn, canonical.source === "espn" ? canonical.sourceMatchId || canonical.sourceId : null].filter(Boolean).map(String);
+    if (!espnIds.length || !espnIds.every(id => /^\d+$/.test(id) && id === espnIds[0])) continue;
+    const result = validateFinal(candidate, canonical, finalForFixture(day, canonical.canonicalId), nowMs, null, false);
+    if (!result.ok) continue;
+    bootstrap.push({ candidate, row: { ...result.row, source: "prematch_exact_name_verified_final_seed", identitySeedEspnMatchId: espnIds[0] } });
+  }
+  const bootstrapClaims = new Map(), espnClaims = new Map();
+  for (const seed of bootstrap) {
+    bootstrapClaims.set(seed.row.id, (bootstrapClaims.get(seed.row.id) || 0) + 1);
+    const ids = espnClaims.get(seed.row.identitySeedEspnMatchId) || new Set(); ids.add(seed.row.id); espnClaims.set(seed.row.identitySeedEspnMatchId, ids);
+  }
+  const uniqueBootstrap = bootstrap.filter(seed => bootstrapClaims.get(seed.row.id) === 1 && espnClaims.get(seed.row.identitySeedEspnMatchId).size === 1);
+  summary.exactNameBootstrapSeeds = uniqueBootstrap.length;
+  const nativeLink = createPrematchCrossProviderLinker(validated);
+  const bootstrapLink = createPrematchCrossProviderLinker(uniqueBootstrap, {
+    seedSource: "prematch_exact_name_verified_final_seed", excludeCurrentMatch: true, requireExactNames: true
+  });
+  const link = (candidate, canonical) => nativeLink(candidate, canonical) || bootstrapLink(candidate, canonical);
   summary.providerIdentityLinks = [];
   const proposals = pending.map(({ candidate, day }) => ({ candidate, day,
     matches: byDay.get(day).map(canonical => ({ canonical, proof: link(candidate, canonical) })).filter(x => x.proof) }));
