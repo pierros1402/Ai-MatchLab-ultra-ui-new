@@ -118,3 +118,31 @@ test("alarm scans previous-day readiness for the next week, persists before rese
     fs.rmSync(root, { recursive: true });
   }
 });
+
+test('an existing model assessment cannot hide a known recent-history gap',async()=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'aiml-known-history-gap-'));
+ const day='2099-10-04',nowMs=Date.parse(day+'T08:00Z');
+ const fixture={canonicalId:'cid_known_history_gap',leagueSlug:'eng.1',homeTeam:'H',awayTeam:'A',kickoffUtc:day+'T18:00Z'};
+ let missing=true;
+ const dependencies={queueRoot:root,fixtures:()=>[fixture],standings:()=>({ok:false}),
+  assessments:()=>[{...fixture,aiAssessment:{markets:{OU25:{probs:{over:.8}}}}}],
+  valueCoverage:()=>({rows:[{matchId:fixture.canonicalId,nullReason:missing?'minimum_recent_sample':null,minimumSample:{homeRawSample:1,awayRawSample:6}}]})};
+ try{
+  const bad=await runValueDataAlarmDay(day,{write:true,lookAheadDays:0,nowMs,dependencies});
+  assert.equal(bad.report.futureOpen,1);assert.deepEqual(bad.queue.incidents[fixture.canonicalId].requiredInputs,['model_assessment','recent_team_history']);
+  missing=false;const good=await runValueDataAlarmDay(day,{write:true,lookAheadDays:0,nowMs:nowMs+1000,dependencies});
+  assert.equal(good.queue.incidents[fixture.canonicalId].status,'RESOLVED');
+ }finally{fs.rmSync(root,{recursive:true,force:true});}
+});
+
+test("expired research budget preserves unresolved work for the next automatic cycle",async()=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),"alarm-budget-"));
+ let calls=0;
+ try{
+ const {report}=await runValueDataAlarmDay("2099-10-04",{write:true,research:true,researchBudgetMs:0,lookAheadDays:0,nowMs:Date.parse("2099-10-04T08:00Z"),dependencies:{
+ queueRoot:root,fixtures:()=>[{canonicalId:"cid_budget",leagueSlug:"eng.1",homeTeam:"A",awayTeam:"B",kickoffUtc:"2099-10-04T14:00Z"}],
+ assessments:()=>[],standings:()=>({ok:false}),supplement:()=>({assessmentRowsWritten:0,unavailableEvidence:[]}),
+ primarySearch:async()=>({ok:true}),search:async()=>{calls++;return {status:"NO_SOURCE"};},resultsSearch:async()=>{calls++;return {rows:[]};}}});
+ assert.equal(calls,0);assert.equal(report.attemptedResearchTasks.length,0);assert.ok(report.deferredResearchTasks.length>0);assert.ok(report.openIncidents>0);
+ }finally{fs.rmSync(root,{recursive:true});}
+});

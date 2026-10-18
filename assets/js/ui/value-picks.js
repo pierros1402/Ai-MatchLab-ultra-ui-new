@@ -695,6 +695,7 @@ function renderPlanSummary(plan) {
 }
 
 function renderPlanBlock(plan, title, information) {
+    const inputIncomplete=plan?.analysisComplete===false||plan?.upstreamCoverage==='INCOMPLETE';
     const unavailable =
       planIsUnavailable(plan);
 
@@ -742,7 +743,7 @@ function renderPlanBlock(plan, title, information) {
         (
           unavailable
             ? '<div class="panel-empty">Plan unavailable for this date.</div>'
-            : '<div class="panel-empty">No qualifying picks.</div>'
+            : inputIncomplete ? '<div class="panel-empty">Ανεπαρκή δεδομένα — η αξιολόγηση δεν είναι πλήρης.</div>' : '<div class="panel-empty">No qualifying picks.</div>'
         ),
       '  </div>',
       '</div>'
@@ -759,7 +760,7 @@ function renderPlanBlock(plan, title, information) {
       const plan=supplied?.id==='plan-u1'&&supplied.date===payload.date&&supplied.status==='AVAILABLE'&&Array.isArray(supplied.picks)&&supplied.count===supplied.picks.length?supplied:
         {status:'NOT_AVAILABLE',availability:'not_available',picks:[],count:0};
       const heading='<div class="value-head"><div class="value-head-title">Ενιαίο πλάνο</div><div class="value-head-sub">'+esc(payload.date)+'</div></div>';
-      const coverage=plan.upstreamCoverage==='INCOMPLETE'?'<div class="panel-empty">Περιορισμένη κάλυψη δεδομένων εισόδου.</div>':'';
+      const coverage=plan.analysisComplete===false||plan.upstreamCoverage==='INCOMPLETE'?'<div class="panel-empty">Η τροφοδότηση δεδομένων δεν είναι πλήρης.</div>':'';
       const html=coverage+renderPlanBlock(plan,'Ενιαίο πλάνο',
         'Συμφωνία A/A2 ή B/B2 με βαθμολογία τουλάχιστον 0,75 σε κάθε παραλλαγή. Κάθε επιλογή εμφανίζεται μία φορά και οι αντίθετες επιλογές αποκλείονται. Οι επιμέρους βαθμολογίες δεν είναι μία ενιαία πιθανότητα επιτυχίας.');
       if(headWrapEl){headWrapEl.innerHTML=heading;bodyEl.innerHTML=html;}else bodyEl.innerHTML=heading+html;

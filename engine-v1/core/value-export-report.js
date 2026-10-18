@@ -377,6 +377,7 @@ export function comparisonToValueExportDay({ date, comparison, source = "value_c
           available
         ),
       source,
+      analysisComplete: rawPlan?.analysisComplete,
       declaredSummary: available && rawPlan.summary && typeof rawPlan.summary === "object"
         ? rawPlan.summary
         : null,
@@ -508,6 +509,7 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
     missingDays: [],
     unavailablePlanDays: [],
     unverifiedZeroPickDays: [],
+    incompleteInputDays: [],
     unresolvedClosedDays: [],
     unsupportedRows: [],
     duplicatePicks: [],
@@ -536,6 +538,7 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
       }
 
       const planDay = record.plans?.[plan.key];
+      if(planDay?.analysisComplete===false)integrity.incompleteInputDays.push({date,plan:plan.key});
       const available = Boolean(planDay?.available);
       const rows = available && Array.isArray(planDay.picks) ? planDay.picks : [];
       const summary = summarizeValueRows(rows);
@@ -636,6 +639,7 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
 
   integrity.missingDays = [...new Set(integrity.missingDays)].sort();
   integrity.issues = [
+    ...integrity.incompleteInputDays.map(issue=>({code:"VALUE_EXPORT_INPUT_COVERAGE_INCOMPLETE",...issue})),
     ...integrity.missingDays.map(date => ({ code: "VALUE_EXPORT_DAY_MISSING", date })),
     ...integrity.unresolvedClosedDays.map(issue => ({ code: "VALUE_EXPORT_CLOSED_DAY_UNRESOLVED", ...issue })),
     ...integrity.unsupportedRows.map(issue => ({ code: "VALUE_EXPORT_UNSUPPORTED_SETTLEMENT", ...issue })),
