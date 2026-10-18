@@ -212,6 +212,13 @@
   }
 
   function comparisonPayloadFrom(comparison, date) {
+    if(date >= '2026-10-18') {
+      const plan=comparison.date===date?comparison.unifiedPlan:null;
+      const available=plan?.id==='plan-u1'&&plan.date===date&&plan.status==='AVAILABLE'&&Array.isArray(plan.picks)&&plan.count===plan.picks.length;
+      const rows=available?plan.picks:[];
+      return {ok:available,source:'unified-plan',mode:'unified-plan',date,total:rows.length,picks:rows,items:rows,
+        comparison,unifiedPlan:available?plan:{id:'plan-u1',date,status:'NOT_AVAILABLE',picks:[],count:0}};
+    }
     const planA = comparisonRows(comparison, "A");
     const planB = comparisonRows(comparison, "B");
     const planA2 = comparisonRows(comparison, "A2");

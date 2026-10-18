@@ -42,6 +42,7 @@ import { verifyStuckLiveFinals } from "./core/live-ft-verifier.js";
 import { currentSeason } from "./core/season.js";
 import { validateDeploySnapshotManifest } from "./core/deploy-snapshot-release-contract.js";
 import { validatePlanCShadowExportPayload } from "./value/plan-c-shadow-export.js";
+import {isUnifiedPublicDay} from './value/unified-public-plan.js';
 import {
   requestTimeDisplayOverlaysEnabled,
   reusableDisplayRevision,
@@ -49,6 +50,7 @@ import {
 } from "./core/runtime-display-policy.js";
 import {
   VALUE_EXPORT_PLAN_ORDER,
+  valueExportPlanOrder,
   buildValueExportReport,
   comparisonToValueExportDay,
   fallbackPlanAToValueExportDay,
@@ -2994,6 +2996,16 @@ app.get("/value-picks", async (req, res) => {
   const date = String(req.query.date || athensDayKey());
   const rebuild = boolParam(req.query.rebuild, false);
 
+  if(isUnifiedPublicDay(date)) {
+    if(rebuild)return rejectRuntimeBuild(res,'/value-picks?rebuild=true',date);
+    const artifact=readValueComparisonArtifact(date),plan=artifact.payload?.unifiedPlan;
+    if(!artifact.ok||plan?.id!=='plan-u1'||plan.date!==date||plan.status!=='AVAILABLE'||!Array.isArray(plan.picks)||plan.count!==plan.picks.length) {
+      return res.status(404).json({ok:false,date,source:'unified-plan',reason:'unified_plan_not_available',picks:[]});
+    }
+    return res.json({ok:true,date,source:'unified-plan',mode:'unified-plan',total:plan.count,count:plan.count,
+      picks:plan.picks,items:plan.picks,unifiedPlan:plan});
+  }
+
   if (runtimeBuildsDisabled()) {
     if (rebuild) {
       return rejectRuntimeBuild(res, "/value-picks?rebuild=true", date);
@@ -3193,7 +3205,7 @@ function valueExportSourcePicks(result) {
 }
 
 function valueExportDecorateDay(day, oddsMap) {
-  for (const plan of VALUE_EXPORT_PLAN_ORDER) {
+  for (const plan of valueExportPlanOrder([day.date])) {
     const planDay = day?.plans?.[plan.key];
     if (!planDay?.available || !Array.isArray(planDay.picks)) continue;
 

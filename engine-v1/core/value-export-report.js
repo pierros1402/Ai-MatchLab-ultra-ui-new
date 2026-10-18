@@ -1,9 +1,16 @@
+import {isUnifiedPublicDay} from '../value/unified-public-plan.js';
 export const VALUE_EXPORT_PLAN_ORDER = Object.freeze([
   Object.freeze({ key: "A", id: "plan-a", label: "Plan A" }),
   Object.freeze({ key: "A2", id: "plan-a2", label: "Plan A2" }),
   Object.freeze({ key: "B", id: "plan-b", label: "Plan B" }),
   Object.freeze({ key: "B2", id: "plan-b2", label: "Plan B2" })
 ]);
+
+const UNIFIED_EXPORT_PLAN=Object.freeze({key:'U1',id:'plan-u1',label:'Ενιαίο πλάνο'});
+export function valueExportPlanOrder(days){
+  const old=days.some(d=>!isUnifiedPublicDay(d)),unified=days.some(isUnifiedPublicDay);
+  return [...(old?VALUE_EXPORT_PLAN_ORDER:[]),...(unified?[UNIFIED_EXPORT_PLAN]:[])];
+}
 
 function finiteNumber(value) {
   if (
@@ -349,15 +356,15 @@ function normalizePickRow(date, plan, source, pick) {
 
 export function comparisonToValueExportDay({ date, comparison, source = "value_comparison" }) {
   const plans = {};
-  const sourcePlans = comparison?.plans && typeof comparison.plans === "object"
+  const sourcePlans = isUnifiedPublicDay(date) ? {U1:comparison?.unifiedPlan} : comparison?.plans && typeof comparison.plans === "object"
     ? comparison.plans
     : {};
 
-  for (const plan of VALUE_EXPORT_PLAN_ORDER) {
+  for (const plan of valueExportPlanOrder([date])) {
     const rawPlan = Object.prototype.hasOwnProperty.call(sourcePlans, plan.key)
       ? sourcePlans[plan.key]
       : undefined;
-    const available = rawPlan !== undefined && rawPlan !== null && typeof rawPlan === "object";
+    const available = rawPlan !== undefined && rawPlan !== null && typeof rawPlan === "object" && (plan.key!=="U1" || rawPlan.date===date && rawPlan.status==="AVAILABLE" && Array.isArray(rawPlan.picks) && rawPlan.count===rawPlan.picks.length);
     const rawPicks = available && Array.isArray(rawPlan.picks) ? rawPlan.picks : [];
 
     plans[plan.key] = {
@@ -383,7 +390,7 @@ export function comparisonToValueExportDay({ date, comparison, source = "value_c
 export function fallbackPlanAToValueExportDay({ date, picks = [], source = "snapshot_value" }) {
   const plans = {};
 
-  for (const plan of VALUE_EXPORT_PLAN_ORDER) {
+  for (const plan of valueExportPlanOrder([date])) {
     const available = plan.key === "A";
     plans[plan.key] = {
       ...plan,
@@ -509,7 +516,8 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
   const plans = {};
   let totalRows = 0;
 
-  for (const plan of VALUE_EXPORT_PLAN_ORDER) {
+  const planOrder=valueExportPlanOrder(days);
+  for (const plan of planOrder) {
     const picks = [];
     const daily = [];
     const rangeCounts = emptyCounts();
@@ -518,6 +526,7 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
     let missingDayRecords = 0;
 
     for (const date of days) {
+      if((plan.key==='U1')!==isUnifiedPublicDay(date))continue;
       const record = recordsByDay.get(date);
       if (!record) {
         missingDayRecords += 1;
@@ -610,7 +619,7 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
       recordedPlanDays: availableDays,
       noPlanRecordDays: notAvailableDays,
       missingDayRecords,
-      totalDays: days.length,
+      totalDays: days.filter(d=>(plan.key==='U1')===isUnifiedPublicDay(d)).length,
       dayCountBasis: "stored_plan_records_not_execution_or_plan_availability",
       ...finalizeCounts(rangeCounts)
     };
@@ -645,7 +654,7 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
     dayCount: days.length,
     days: [...days],
     totalRows,
-    planOrder: VALUE_EXPORT_PLAN_ORDER.map(plan => plan.key),
+    planOrder: planOrder.map(plan => plan.key),
     plans,
     integrity
   };
