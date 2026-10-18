@@ -12,7 +12,10 @@ test('prospective eligibility accounts for played, cancelled and near-kickoff fi
  const fixtures=[make('played','FT','17:00'),make('passed','PRE','17:30'),make('near','PRE','18:00:30'),make('cancelled','CANCELLED','20:00'),make('future','PRE','21:00')];
  try{
   await buildValueDay(day,{buildUniverse:()=>buildValueFixtureUniverse(day,{fixtures}),rebuild:true,prospectiveOnly:true,outputPath:path.join(temp,'value.json'),auditPath:path.join(temp,'audit.json'),decisionEvidenceFactory:()=>({capture(){},summary(){return {};}})});
-  const a=JSON.parse(fs.readFileSync(path.join(temp,'audit.json'))).evaluationAccounting;
+  const audit=JSON.parse(fs.readFileSync(path.join(temp,'audit.json'))),a=audit.evaluationAccounting;
+  assert.equal(audit.rejections.details.some(r=>r.matchId==='cid_prospective_future'&&r.reason==='prospective_publication_window_closed'),false);
+  assert.equal(audit.rejections.details.filter(r=>r.matchId==='cid_prospective_cancelled').length,1);
+  assert.ok(audit.rejections.details.some(r=>r.matchId==='cid_prospective_near'&&r.reason==='prospective_publication_window_closed'));
   assert.equal(a.evaluatedFixtureCount,fixtures.length);assert.equal(a.terminalOutcomeCount,fixtures.length);assert.equal(a.unaccountedFixtureCount,0);assert.equal(a.duplicateOutcomeCount,0);
  }finally{Date.now=oldNow;fs.rmSync(temp,{recursive:true});}
 });
