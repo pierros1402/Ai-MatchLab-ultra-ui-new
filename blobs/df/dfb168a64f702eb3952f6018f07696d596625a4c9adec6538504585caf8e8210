@@ -1,0 +1,266 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "fin.2",
+  "homeTeam": "Mikkeli",
+  "awayTeam": "JaPS",
+  "homeWinScore": 0.35600000000000004,
+  "drawScore": 0.13699999999999998,
+  "awayWinScore": 0.533,
+  "over15Score": 0.706,
+  "over25Score": 0.5545,
+  "over35Score": 0.546,
+  "bttsScore": 0.528,
+  "confidence": 0.908,
+  "signals": [
+    "away_edge",
+    "form_influence_reduced",
+    "priors_applied",
+    "close_strength_gap",
+    "match_profile_applied"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.15,
+      "awayOverallFormWeight": 0.15,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.546,
+    "expectedAwayGoals": 1.468,
+    "expectedTotalGoals": 3.015,
+    "homeStrength": 0.302,
+    "awayStrength": 0.317,
+    "homeEdge": 0.245,
+    "awayPenalty": 0.373,
+    "recency": {
+      "homeOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 100,
+        "daysSinceLastMatch": 0,
+        "spanDays": 35,
+        "maxInternalGap": 21,
+        "gapSeverity": "moderate",
+        "freshnessScore": 1,
+        "continuityScore": 0.3,
+        "formContinuityWeight": 0.695
+      },
+      "awayOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 108,
+        "daysSinceLastMatch": 0,
+        "spanDays": 35,
+        "maxInternalGap": 20,
+        "gapSeverity": "moderate",
+        "freshnessScore": 1,
+        "continuityScore": 0.3,
+        "formContinuityWeight": 0.695
+      },
+      "homeSide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 100,
+        "daysSinceLastMatch": 0,
+        "spanDays": 35,
+        "maxInternalGap": 28,
+        "gapSeverity": "heavy",
+        "freshnessScore": 1,
+        "continuityScore": 0.1,
+        "formContinuityWeight": 0.565
+      },
+      "awaySide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 108,
+        "daysSinceLastMatch": 0,
+        "spanDays": 35,
+        "maxInternalGap": 20,
+        "gapSeverity": "moderate",
+        "freshnessScore": 1,
+        "continuityScore": 0.3,
+        "formContinuityWeight": 0.635
+      }
+    },
+    "matchupSample": 4,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 100,
+      "awayPriorSample": 108,
+      "leaguePriorSample": 712,
+      "matchupPriorSample": 7
+    },
+    "resolution": {
+      "homeInput": "Mikkeli",
+      "awayInput": "JaPS",
+      "homeResolvedKey": "Mikkeli",
+      "awayResolvedKey": "JaPS",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "JaPS::Mikkeli",
+      "matchupResolveScore": 0.93,
+      "homePriorKey": "fin.2::Mikkeli",
+      "awayPriorKey": "fin.2::JaPS",
+      "matchupPriorKey": "fin.2|JaPS|Mikkeli"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Mikkeli",
+      "awayTeamKey": "JaPS",
+      "leagueKey": "fin.2",
+      "matchupKey": "JaPS::Mikkeli"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "h2h_away_edge",
+        "impact": 0.025,
+        "note": "Recent H2H leans away"
+      },
+      {
+        "code": "h2h_underlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is tight"
+      },
+      {
+        "code": "ai_h2h_away_edge",
+        "impact": 0.06,
+        "note": "AI detected away H2H edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    },
+    "matchProfileApplied": true,
+    "matchProfileConfidence": 0.6,
+    "matchProfileReasons": [
+      {
+        "code": "match_profile_h2h_away_edge",
+        "impact": 0.011000000000000001,
+        "note": "MatchProfile H2H trend leans away"
+      },
+      {
+        "code": "match_profile_h2h_underlean",
+        "impact": -0.0165,
+        "note": "MatchProfile H2H goal pattern leans under"
+      }
+    ]
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "h2h_away_edge",
+      "impact": 0.025,
+      "note": "Recent H2H leans away"
+    },
+    {
+      "code": "h2h_underlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is tight"
+    },
+    {
+      "code": "ai_h2h_away_edge",
+      "impact": 0.06,
+      "note": "AI detected away H2H edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "MEDIUM",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "fin.2",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 21,
+    "awayRestDays": 20,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  },
+  "intelligence": {
+    "applied": true,
+    "mode": "partial",
+    "coverage": {
+      "hasStandings": false,
+      "hasHomeForm": true,
+      "hasAwayForm": true,
+      "hasH2H": true,
+      "hasPhaseContext": false,
+      "coverageCount": 3,
+      "mode": "partial"
+    },
+    "signals": [
+      "form_balanced"
+    ]
+  }
+}

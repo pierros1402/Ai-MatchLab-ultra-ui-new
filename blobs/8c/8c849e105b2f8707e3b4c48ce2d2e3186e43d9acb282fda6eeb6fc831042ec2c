@@ -1,0 +1,218 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "par.1",
+  "homeTeam": "Guaraní",
+  "awayTeam": "Nacional Asunción",
+  "homeWinScore": 0.226,
+  "drawScore": 0.15,
+  "awayWinScore": 0.624,
+  "over15Score": 0.443,
+  "over25Score": 0.357,
+  "over35Score": 0.317,
+  "bttsScore": 0.38,
+  "confidence": 0.776,
+  "signals": [
+    "away_edge",
+    "under25_lean",
+    "defensive_profile",
+    "close_strength_gap",
+    "away_rest_4"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.25,
+      "awayOverallFormWeight": 0.35,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 0.6,
+    "expectedAwayGoals": 1.2,
+    "expectedTotalGoals": 1.8,
+    "homeStrength": 0.402,
+    "awayStrength": 0.635,
+    "homeEdge": 0.11,
+    "awayPenalty": 0.074,
+    "recency": {
+      "homeOverall": {
+        "sample": 5,
+        "rawSample": 5,
+        "priorSample": 0,
+        "daysSinceLastMatch": 0,
+        "spanDays": 35,
+        "maxInternalGap": 14,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.825
+      },
+      "awayOverall": {
+        "sample": 5,
+        "rawSample": 5,
+        "priorSample": 0,
+        "daysSinceLastMatch": 0,
+        "spanDays": 28,
+        "maxInternalGap": 11,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.7,
+        "formContinuityWeight": 0.895
+      },
+      "homeSide": {
+        "sample": 3,
+        "rawSample": 3,
+        "priorSample": 0,
+        "daysSinceLastMatch": 0,
+        "spanDays": 35,
+        "maxInternalGap": 21,
+        "gapSeverity": "moderate",
+        "freshnessScore": 1,
+        "continuityScore": 0.3,
+        "formContinuityWeight": 0.635
+      },
+      "awaySide": {
+        "sample": 3,
+        "rawSample": 3,
+        "priorSample": 0,
+        "daysSinceLastMatch": 0,
+        "spanDays": 33,
+        "maxInternalGap": 23,
+        "gapSeverity": "heavy",
+        "freshnessScore": 1,
+        "continuityScore": 0.1,
+        "formContinuityWeight": 0.565
+      }
+    },
+    "matchupSample": 1,
+    "priorsUsed": false,
+    "priors": {
+      "used": false,
+      "homePriorSample": 0,
+      "awayPriorSample": 0,
+      "leaguePriorSample": 0,
+      "matchupPriorSample": 0
+    },
+    "resolution": {
+      "homeInput": "Guaraní",
+      "awayInput": "Nacional Asunción",
+      "homeResolvedKey": "Guaraní",
+      "awayResolvedKey": "Nacional Asunción",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Guaraní::Nacional Asunción",
+      "matchupResolveScore": 0.93,
+      "homePriorKey": null,
+      "awayPriorKey": null,
+      "matchupPriorKey": null
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Guaraní",
+      "awayTeamKey": "Nacional Asunción",
+      "leagueKey": "par.1",
+      "matchupKey": "Guaraní::Nacional Asunción"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "form_balanced",
+        "impact": 0.04,
+        "note": "Teams have similar recent form"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    }
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "form_balanced",
+      "impact": 0.04,
+      "note": "Teams have similar recent form"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0.025,
+      "reasons": [
+        "away_rest_4"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "par.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 14,
+    "awayRestDays": 4,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 1,
+    "homeMatchesLast14": 1,
+    "awayMatchesLast14": 2,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}

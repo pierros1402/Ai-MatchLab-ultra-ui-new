@@ -1,0 +1,279 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "fin.1",
+  "homeTeam": "Jaro",
+  "awayTeam": "Mariehamn",
+  "homeWinScore": 0.374,
+  "drawScore": 0.114,
+  "awayWinScore": 0.5800000000000001,
+  "over15Score": 0.65,
+  "over25Score": 0.5820000000000001,
+  "over35Score": 0.499,
+  "bttsScore": 0.535,
+  "confidence": 0.869,
+  "signals": [
+    "away_edge",
+    "form_influence_reduced",
+    "priors_applied",
+    "playoff_pressure",
+    "close_strength_gap",
+    "match_profile_applied"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.12,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.378,
+    "expectedAwayGoals": 1.369,
+    "expectedTotalGoals": 2.746,
+    "homeStrength": 0.273,
+    "awayStrength": 0.262,
+    "homeEdge": 0.189,
+    "awayPenalty": 0.353,
+    "recency": {
+      "homeOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 30,
+        "daysSinceLastMatch": 0,
+        "spanDays": 34,
+        "maxInternalGap": 28,
+        "gapSeverity": "heavy",
+        "freshnessScore": 1,
+        "continuityScore": 0.1,
+        "formContinuityWeight": 0.565
+      },
+      "awayOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 126,
+        "daysSinceLastMatch": 0,
+        "spanDays": 34,
+        "maxInternalGap": 28,
+        "gapSeverity": "heavy",
+        "freshnessScore": 1,
+        "continuityScore": 0.1,
+        "formContinuityWeight": 0.565
+      },
+      "homeSide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 30,
+        "daysSinceLastMatch": 0,
+        "spanDays": 34,
+        "maxInternalGap": 34,
+        "gapSeverity": "heavy",
+        "freshnessScore": 1,
+        "continuityScore": 0.1,
+        "formContinuityWeight": 0.505
+      },
+      "awaySide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 126,
+        "daysSinceLastMatch": 0,
+        "spanDays": 28,
+        "maxInternalGap": 28,
+        "gapSeverity": "heavy",
+        "freshnessScore": 1,
+        "continuityScore": 0.25,
+        "formContinuityWeight": 0.557
+      }
+    },
+    "matchupSample": 4,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 30,
+      "awayPriorSample": 126,
+      "leaguePriorSample": 792,
+      "matchupPriorSample": 3
+    },
+    "resolution": {
+      "homeInput": "Jaro",
+      "awayInput": "Mariehamn",
+      "homeResolvedKey": "Jaro",
+      "awayResolvedKey": "Mariehamn",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Jaro::Mariehamn",
+      "matchupResolveScore": 0.93,
+      "homePriorKey": "fin.1::Jaro",
+      "awayPriorKey": "fin.1::Mariehamn",
+      "matchupPriorKey": "fin.1|Jaro|Mariehamn"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Jaro",
+      "awayTeamKey": "Mariehamn",
+      "leagueKey": "fin.1",
+      "matchupKey": "Jaro::Mariehamn"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "form_away_stronger",
+        "impact": 0.08,
+        "note": "Away team has significantly stronger form"
+      },
+      {
+        "code": "h2h_home_edge",
+        "impact": 0.025,
+        "note": "Recent H2H leans home"
+      },
+      {
+        "code": "ai_h2h_home_edge",
+        "impact": 0.06,
+        "note": "AI detected home H2H edge"
+      },
+      {
+        "code": "ai_away_form_signal",
+        "impact": 0.05,
+        "note": "AI confirmed strong away form edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    },
+    "matchProfileApplied": true,
+    "matchProfileConfidence": 0.6,
+    "matchProfileReasons": [
+      {
+        "code": "match_profile_away_form_edge",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile last5 points: home 3, away 7"
+      },
+      {
+        "code": "match_profile_h2h_home_edge",
+        "impact": 0.011000000000000001,
+        "note": "MatchProfile H2H trend leans home"
+      }
+    ]
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "form_away_stronger",
+      "impact": 0.08,
+      "note": "Away team has significantly stronger form"
+    },
+    {
+      "code": "h2h_home_edge",
+      "impact": 0.025,
+      "note": "Recent H2H leans home"
+    },
+    {
+      "code": "ai_h2h_home_edge",
+      "impact": 0.06,
+      "note": "AI detected home H2H edge"
+    },
+    {
+      "code": "ai_away_form_signal",
+      "impact": 0.05,
+      "note": "AI confirmed strong away form edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0.02025,
+      "awayDelta": 0.02925,
+      "drawDelta": 0.022,
+      "reasons": [
+        "playoff_pressure",
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "fin.1",
+    "competitionType": "league",
+    "phase": "relegation",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 28,
+    "awayRestDays": 28,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  },
+  "intelligence": {
+    "applied": true,
+    "mode": "partial",
+    "coverage": {
+      "hasStandings": false,
+      "hasHomeForm": true,
+      "hasAwayForm": true,
+      "hasH2H": false,
+      "hasPhaseContext": false,
+      "coverageCount": 2,
+      "mode": "partial"
+    },
+    "signals": [
+      "away_form_edge",
+      "attack_support"
+    ]
+  }
+}
