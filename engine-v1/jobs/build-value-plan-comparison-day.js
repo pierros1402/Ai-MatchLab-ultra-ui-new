@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {buildUnifiedPublicPlan} from '../value/unified-public-plan.js';
 
 import {
   isPlanAObservationDay,
@@ -1464,6 +1465,10 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
     },
     comparison
   };
+
+  payload.unifiedPlan=buildUnifiedPublicPlan(dayKey,
+    readJsonSafe(dataPath('value-plans',dayKey,'unified-u1-r2.json')),payload.plans,
+    readJsonSafe(dataPath('value-plans',dayKey,'unified-u1-r2-results.json')));
 
   if (options.write === true) {
     writeJsonPretty(outputPath, payload);

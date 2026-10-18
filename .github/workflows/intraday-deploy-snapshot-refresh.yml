@@ -945,6 +945,14 @@ jobs:
         shell: bash
         run: node engine-v1/jobs/capture-unified-shadow-day.js --date="$DAY_KEY"
 
+      - name: Publish the single unified plan for activated days
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          if [[ "$DAY_KEY" > "2026-10-17" ]]; then
+            node engine-v1/jobs/build-value-plan-comparison-day.js --date="$DAY_KEY" --write
+          fi
+
       - name: Stage allowed generated files only
         if: env.SKIP_BUILD != 'true'
         shell: bash

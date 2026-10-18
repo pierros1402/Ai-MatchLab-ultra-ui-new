@@ -6,7 +6,7 @@ import {
   comparisonToValueExportDay
 } from "../core/value-export-report.js";
 
-test("closed-day postponed picks export as VOID and keep the report complete", () => {
+test("postponed picks remain VOID without certifying empty companion plans", () => {
   const date = "2026-08-08";
   const comparison = {
     plans: {
@@ -52,6 +52,7 @@ test("closed-day postponed picks export as VOID and keep the report complete", (
   assert.equal(report.plans.A.daily[0].voids, 1);
   assert.equal(report.plans.A.daily[0].unresolved, 0);
   assert.equal(report.plans.A.daily[0].status, "COMPLETE_WITH_PICKS");
-  assert.equal(report.integrity.status, "COMPLETE");
+  assert.equal(report.integrity.status, "INCOMPLETE");
+  assert.equal(report.integrity.unverifiedZeroPickDays.length, 3);
   assert.equal(report.integrity.unresolvedClosedDays.length, 0);
 });

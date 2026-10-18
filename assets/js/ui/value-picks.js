@@ -636,7 +636,7 @@ function renderComparisonRow(p) {
   const countryLeague = [country, league].filter(Boolean).join(" • ") || "Unknown League";
   const home = p?.homeTeam || p?.home || "—";
   const away = p?.awayTeam || p?.away || "—";
-  const conf = confidenceKey(p?.band || p?.confidence);
+  const conf = p?.unified ? 'CONSENSUS' : confidenceKey(p?.band || p?.confidence);
   const pick = comparisonPickLabel(p);
   const resultBadge = resultBadgeHtml(p?.result);
   const hasVerifiedFinal = Boolean(p?.finalScore?.scoreKey);
@@ -673,7 +673,7 @@ function renderComparisonRow(p) {
     '      <span class="value-score-pick">' + esc(pick) + '</span>',
     '      ' + mktHtml,
     '    </div>',
-    '    <div class="value-conf">' + esc(conf) + '</div>',
+    '    <div class="value-conf">' + esc(p?.unified ? 'Συμφωνία' : conf) + '</div>',
     '  </div>',
     '</div>'
   ].join("");
@@ -753,6 +753,18 @@ function renderPlanBlock(plan, title, information) {
     if (!resolveDomRefs()) return;
 
     lastPayload = payload;
+
+    if(String(payload?.date||'') >= '2026-10-18') {
+      const supplied=payload.unifiedPlan||payload.comparison?.unifiedPlan;
+      const plan=supplied?.id==='plan-u1'&&supplied.date===payload.date&&supplied.status==='AVAILABLE'&&Array.isArray(supplied.picks)&&supplied.count===supplied.picks.length?supplied:
+        {status:'NOT_AVAILABLE',availability:'not_available',picks:[],count:0};
+      const heading='<div class="value-head"><div class="value-head-title">Ενιαίο πλάνο</div><div class="value-head-sub">'+esc(payload.date)+'</div></div>';
+      const coverage=plan.upstreamCoverage==='INCOMPLETE'?'<div class="panel-empty">Περιορισμένη κάλυψη δεδομένων εισόδου.</div>':'';
+      const html=coverage+renderPlanBlock(plan,'Ενιαίο πλάνο',
+        'Συμφωνία A/A2 ή B/B2 με βαθμολογία τουλάχιστον 0,75 σε κάθε παραλλαγή. Κάθε επιλογή εμφανίζεται μία φορά και οι αντίθετες επιλογές αποκλείονται. Οι επιμέρους βαθμολογίες δεν είναι μία ενιαία πιθανότητα επιτυχίας.');
+      if(headWrapEl){headWrapEl.innerHTML=heading;bodyEl.innerHTML=html;}else bodyEl.innerHTML=heading+html;
+      hideAnalyzingIfHasPicks(1);window.AIML_PANEL?.set(root,'data');return;
+    }
 
     const comparison =
       payload?.comparison || {};
@@ -904,6 +916,10 @@ function renderPlanBlock(plan, title, information) {
   //window.AIML_PANEL?.set(root, "loading", "Loading value picks...");
     lastPayload = payload;
 
+    if(String(payload?.date||'') >= '2026-10-18') {
+      renderPlanComparison(payload);return;
+    }
+
     const comparisonPlans =
       payload?.comparison?.plans;
 
@@ -1042,7 +1058,8 @@ if (!filtered.length) {
         picks,
         source: payload?.source || "",
         mode: payload?.mode || "",
-        comparison: payload?.comparison || null
+        comparison: payload?.comparison || null,
+        unifiedPlan: payload?.unifiedPlan || null
       };
     }
 

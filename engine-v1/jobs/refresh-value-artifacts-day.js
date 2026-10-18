@@ -39,6 +39,9 @@ import {
   shouldFreezeAdjustedValueObservations
 } from "./build-value-a2-b2-day.js";
 import { buildValuePlanComparisonDay } from "./build-value-plan-comparison-day.js";
+import {captureUnifiedShadow} from './capture-unified-shadow-day.js';
+import {isUnifiedPublicDay} from '../value/unified-public-plan.js';
+import {prospectiveDay} from '../value/unified-shadow.js';
 import { verifyArtifactFreshnessDay } from "./verify-artifact-freshness-day.js";
 import { runSnapshotInvariantCheck } from "./run-snapshot-invariant-check.js";
 import { buildDayReport } from "./build-day-report.js";
@@ -1170,6 +1173,9 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
       planB2
     });
 
+  if(isUnifiedPublicDay(date)&&prospectiveDay(date,new Date().toISOString())) {
+    captureUnifiedShadow(date);
+  }
   const comparison = options.skipComparison === true
     ? null
     : buildValuePlanComparisonDay(date, { write: true });
