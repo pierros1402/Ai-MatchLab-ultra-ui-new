@@ -3,6 +3,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { resolveDataPath } from "../storage/data-root.js";
 import { priorArchiveSeasons } from "./season-model.js";
+import { HISTORY_COMPETITION_POLICY } from './history-competition-provenance.js';
 
 export const DERIVED_FOUNDATION_SCHEMA = "ai-matchlab.derived-history-foundation.v1";
 
@@ -253,6 +254,7 @@ export function writeHistoryIndexFoundationSync(season) {
   const artifact = {
     schema: DERIVED_FOUNDATION_SCHEMA,
     artifactType: "history-index",
+    competitionPolicy: HISTORY_COMPETITION_POLICY,
     season,
     generatedAt: new Date().toISOString(),
     source,
@@ -275,7 +277,7 @@ export function validateHistoryIndexFoundationSync(season) {
     resolveDataPath("history-index", "matchups", `${season}.json`),
   ]);
   const expected = sha256Buffer(`${source.sha256}\0${outputs.sha256}`);
-  const ok = source.sha256 === artifact.source?.sha256 && outputs.sha256 === artifact.outputs?.sha256 && expected === artifact.foundationFingerprint;
+  const ok = artifact.competitionPolicy === HISTORY_COMPETITION_POLICY && source.sha256 === artifact.source?.sha256 && outputs.sha256 === artifact.outputs?.sha256 && expected === artifact.foundationFingerprint;
   return { ok, reason: ok ? null : "history_index_foundation_stale", artifact, current: { source, outputs, foundationFingerprint: expected } };
 }
 
@@ -285,6 +287,7 @@ export function writeModelPriorsFoundationSync(season) {
   const artifact = {
     schema: DERIVED_FOUNDATION_SCHEMA,
     artifactType: "model-priors",
+    competitionPolicy: HISTORY_COMPETITION_POLICY,
     season,
     generatedAt: new Date().toISOString(),
     source,
@@ -303,7 +306,7 @@ export function validateModelPriorsFoundationSync(season) {
   const source = computeModelPriorsSourceFingerprintSync();
   const outputs = outputAggregate([resolveDataPath("model-priors", `${season}.json`)]);
   const expected = sha256Buffer(`${source.sha256}\0${outputs.sha256}`);
-  const ok = source.sha256 === artifact.source?.sha256 && outputs.sha256 === artifact.outputs?.sha256 && expected === artifact.foundationFingerprint;
+  const ok = artifact.competitionPolicy === HISTORY_COMPETITION_POLICY && source.sha256 === artifact.source?.sha256 && outputs.sha256 === artifact.outputs?.sha256 && expected === artifact.foundationFingerprint;
   return { ok, reason: ok ? null : "model_priors_foundation_stale", artifact, current: { source, outputs, foundationFingerprint: expected } };
 }
 
@@ -316,6 +319,7 @@ export function writeH2HFoundationSync() {
   const artifact = {
     schema: DERIVED_FOUNDATION_SCHEMA,
     artifactType: "h2h",
+    competitionPolicy: HISTORY_COMPETITION_POLICY,
     generatedAt: new Date().toISOString(),
     source,
     outputs,
@@ -336,7 +340,7 @@ export function validateH2HFoundationSync() {
     resolveDataPath(),
   );
   const expected = sha256Buffer(`${source.sha256}\0${outputs.sha256}`);
-  const ok = source.sha256 === artifact.source?.sha256 && outputs.sha256 === artifact.outputs?.sha256 && expected === artifact.foundationFingerprint;
+  const ok = artifact.competitionPolicy === HISTORY_COMPETITION_POLICY && source.sha256 === artifact.source?.sha256 && outputs.sha256 === artifact.outputs?.sha256 && expected === artifact.foundationFingerprint;
   return { ok, reason: ok ? null : "h2h_foundation_stale", artifact, current: { source, outputs, foundationFingerprint: expected } };
 }
 
