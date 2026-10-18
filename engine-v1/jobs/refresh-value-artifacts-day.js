@@ -838,6 +838,19 @@ export function updateSnapshotValueArtifacts(dayKey, planAResult, options = {}) 
   };
 }
 
+export function snapshotCompanionFileHashes(snapshotRoot, files = {}) {
+  const hashes = {};
+  for (const field of ["planCShadow", "planCShadowAudit"]) {
+    const name = files[field];
+    if (!name) continue;
+    if (!/^[A-Za-z0-9._~-]+\.json$/.test(name) || name.includes("..")) {
+      throw new Error(`snapshot_companion_name_invalid:${field}`);
+    }
+    hashes[name] = canonicalFileSha256(path.join(snapshotRoot, name));
+  }
+  return hashes;
+}
+
 export function updateManifestValueMetadata(dayKey, valueOut, valueAuditPresent, options = {}) {
   const snapshotRoot = resolveDataPath("deploy-snapshots", dayKey);
   const manifestFile = path.join(snapshotRoot, "manifest.json");
@@ -973,7 +986,8 @@ export function updateManifestValueMetadata(dayKey, valueOut, valueAuditPresent,
             path.join(snapshotRoot, "value-audit.json")
           )
         }
-      : {})
+      : {}),
+    ...snapshotCompanionFileHashes(snapshotRoot, manifest.files)
   };
 
   const detailsDir = path.join(snapshotRoot, "details");
