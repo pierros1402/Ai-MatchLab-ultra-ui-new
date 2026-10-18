@@ -150,6 +150,17 @@ export function resolveCanonicalAssessmentOwnership(canonicalFixtures = [], rows
     const a = row[key] || row.productionIdentityBinding?.[key], b = fixture[key] || fixture.productionIdentityBinding?.[key];
     return a && b && a !== b;
   });
+  const providerConflict = (row, fixture) => Object.entries(row.providerIds || {}).some(([provider,id]) =>
+    fixture.providerIds?.[provider] && clean(id) !== clean(fixture.providerIds[provider]));
+  const primaryProviderBound = (row, fixture) => {
+    const provider = clean(fixture.source).toLowerCase(), id = clean(fixture.providerIds?.[provider]);
+    return Boolean((provider === "espn" ? /^\d+$/.test(id) : provider === "flashscore" && /^[a-zA-Z0-9]{6,16}$/.test(id))
+      && clean(row.providerIds?.[provider]) === id && !providerConflict(row, fixture));
+  };
+  const approvedCanonicalAlias = (row, fixture, leader) => Boolean(!fixture.hasConflict && !row.hasConflict && !leader.hasConflict
+    && canonicalOutputId(row) !== canonicalOutputId(fixture)
+    && Array.isArray(fixture.canonicalAliases) && fixture.canonicalAliases.includes(canonicalOutputId(row))
+    && row.leagueSlug === fixture.leagueSlug && primaryProviderBound(leader, fixture) && !providerConflict(row, fixture));
   for (const [fixture, group] of groups) {
     if (group.length < 2) continue;
     const leaders = group.filter(row => canonicalOutputId(row) === canonicalOutputId(fixture)
@@ -158,14 +169,20 @@ export function resolveCanonicalAssessmentOwnership(canonicalFixtures = [], rows
       && teamName(row, "away") === teamName(fixture, "away") && !globalConflict(row, fixture));
     if (leaders.length !== 1) continue;
     const leader = leaders[0];
-    // An explicit canonical producer may supersede legacy aliases, never another
-    // canonical producer or a conflicting time/global identity. Preserve all
-    // original evidence and bookmaker data for audit; no averaging or best-odds choice.
+    // Another canonical producer stays ambiguous unless acquisition explicitly
+    // made its old ID an alias and the primary provider binds the unique current
+    // producer. Conflicting times, providers or global identities never qualify.
+    // Preserve both original models and bookmaker data; never average scores.
     const legacy = group.filter(row => row !== leader);
-    if (legacy.some(row => authoritativeSources.has(row.aiAssessment?.inputSource)
+    if (legacy.some(row => authoritativeSources.has(row.aiAssessment?.inputSource) && !approvedCanonicalAlias(row, fixture, leader)
       || !sameTimeAndDay(row, fixture) || globalConflict(row, fixture) || globalConflict(row, leader))) continue;
     for (const row of legacy) suppressed.set(row, { canonicalId: canonicalOutputId(fixture),
-      selectedInputSource: leader.aiAssessment.inputSource, reason: "EXPLICIT_CANONICAL_PRODUCER_SUPERSEDES_LEGACY_ALIAS" });
+      selectedInputSource: leader.aiAssessment.inputSource,
+      reason: authoritativeSources.has(row.aiAssessment?.inputSource)
+        ? "PRIMARY_CANONICAL_PRODUCER_SUPERSEDES_EXPLICIT_ACQUISITION_ALIAS"
+        : "EXPLICIT_CANONICAL_PRODUCER_SUPERSEDES_LEGACY_ALIAS",
+      ...(authoritativeSources.has(row.aiAssessment?.inputSource) ? { previousCanonicalId: canonicalOutputId(row),
+        primaryProvider: clean(fixture.source).toLowerCase(), primaryProviderId: fixture.providerIds[clean(fixture.source).toLowerCase()], canonicalIdentityUnchanged: true } : {}) });
   }
   return { matches: rows.map(row => suppressed.has(row) ? { ...row, supersededAiAssessment: row.aiAssessment,
     aiAssessment: null, assessmentOwnership: suppressed.get(row) } : row), superseded: [...suppressed.values()] };

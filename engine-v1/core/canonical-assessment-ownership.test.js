@@ -31,3 +31,31 @@ test("two canonical producers, changed time, global identity conflict, or no aut
 test("shared provider identity across canonical fixtures cannot authorize supersession", () => {
   assert.equal(resolveCanonicalAssessmentOwnership([fixture, { ...fixture, canonicalId: "cid_other" }], [leader, old]).superseded.length, 0);
 });
+
+function renamedCase(){
+ const current={...fixture,source:'espn',providerIds:{espn:'401123456'},canonicalAliases:['cid_renamed']};
+ const selected={...current,aiAssessment:leader.aiAssessment};
+ const previous={...old,canonicalId:'cid_renamed',leagueSlug:current.leagueSlug,providerIds:{flashscore:'native01'},homeTeam:'Portugal Alias',aiAssessment:leader.aiAssessment};
+ return {current,selected,previous};
+}
+test('an explicit acquisition alias yields to the unique native-bound primary canonical producer without destroying either model',()=>{
+ const {current,selected,previous}=renamedCase(),before=JSON.stringify([current,selected,previous]);
+ const result=resolveCanonicalAssessmentOwnership([current],[previous,selected]);
+ assert.equal(result.superseded.length,1);assert.equal(result.matches[0].aiAssessment,null);
+ assert.deepEqual(result.matches[0].supersededAiAssessment,previous.aiAssessment);assert.deepEqual(result.matches[0].market,previous.market);
+ assert.equal(result.matches[0].assessmentOwnership.reason,'PRIMARY_CANONICAL_PRODUCER_SUPERSEDES_EXPLICIT_ACQUISITION_ALIAS');
+ assert.equal(joinCanonicalFixturesWithModelAssessments([current],result.matches).summary.joinedMatches,1);
+ assert.equal(JSON.stringify([current,selected,previous]),before);
+});
+test('primary-alias ownership still rejects missing proof, conflicting native/global identities, time changes and shared owners',()=>{
+ const mutations=[
+  s=>{delete s.current.canonicalAliases;},s=>{s.current.canonicalAliases='cid_renamed';},s=>{delete s.current.source;},
+  s=>{s.selected.providerIds={espn:'999999999'};},s=>{s.previous.providerIds.espn='999999999';},
+  s=>{s.previous.kickoffUtc='2026-10-04T20:00Z';},s=>{s.previous.dayKey='2026-10-05';},
+  s=>{s.previous.homeGlobalClubId='wrong';s.selected.homeGlobalClubId='correct';},
+  s=>{s.previous.leagueSlug='different';},s=>{s.current.hasConflict=true;},s=>{s.previous.hasConflict=true;}
+ ];
+ for(const mutate of mutations){const s=renamedCase();mutate(s);assert.equal(resolveCanonicalAssessmentOwnership([s.current],[s.previous,s.selected]).superseded.length,0,mutate.toString());}
+ const s=renamedCase();assert.equal(resolveCanonicalAssessmentOwnership([s.current,{...s.current,canonicalId:'cid_another'}],[s.previous,s.selected]).superseded.length,0);
+ assert.equal(resolveCanonicalAssessmentOwnership([s.current],[s.previous,s.selected,{...s.selected}]).superseded.length,0);
+});
