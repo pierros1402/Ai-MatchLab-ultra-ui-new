@@ -36,7 +36,8 @@ function unchanged(baseline, current) {
 export async function recoverValueDataDay(dayKey, { apply = false, maxFixtures = 500, nowMs = Date.now(), dependencies = {} } = {}) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dayKey)) throw new Error("invalid_day_key");
   const { auditDetailsFoundationDay } = await import("./audit-details-foundation-day.js");
-  const audit = dependencies.audit || auditDetailsFoundationDay;
+  const auditSource = dependencies.audit || auditDetailsFoundationDay;
+  const audit = key => auditSource(key, { includeAllIssues: true });
   const snapshotRoot = resolveDataPath("deploy-snapshots", dayKey);
   const fixtures = read(path.join(snapshotRoot, "fixtures.json")).fixtures;
   if (!Array.isArray(fixtures)) throw new Error("publication_fixtures_missing");
