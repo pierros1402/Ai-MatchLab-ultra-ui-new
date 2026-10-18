@@ -21,3 +21,11 @@ test('missing unified releases cannot fall back to a legacy Plan A export',()=>{
  assert.equal(absent.plans.U1.available,false);
  assert.equal(fallbackPlanAToValueExportDay({date:day,picks:comparison.unifiedPlan.picks}).plans.U1.available,false);
 });
+
+test('partial data remains INCOMPLETE even when a selection exists',()=>{
+ const partial=structuredClone(comparison);partial.unifiedPlan.analysisComplete=false;
+ const record=comparisonToValueExportDay({date:day,comparison:partial});
+ const report=buildValueExportReport({from:day,to:day,days:[day],dayRecords:[record],today:day});
+ assert.equal(report.integrity.status,'INCOMPLETE');
+ assert.ok(report.integrity.issues.some(row=>row.code==='VALUE_EXPORT_INPUT_COVERAGE_INCOMPLETE'));
+});

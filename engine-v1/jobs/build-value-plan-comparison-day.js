@@ -1,7 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import {buildUnifiedPublicPlan} from '../value/unified-public-plan.js';
+import {buildUnifiedPublicPlan,isUnifiedPublicDay,unavailableUnifiedPlan} from '../value/unified-public-plan.js';
+import {buildValueDataReadinessDay} from './build-value-data-readiness-day.js';
+import {refreshUnifiedProductionProjection} from './build-unified-production-day.js';
+import {validateProductionProjection} from '../value/unified-production-journal.js';
+import {signature} from '../value/unified-shadow.js';
 
 import {
   isPlanAObservationDay,
@@ -1469,6 +1473,26 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
   payload.unifiedPlan=buildUnifiedPublicPlan(dayKey,
     readJsonSafe(dataPath('value-plans',dayKey,'unified-u1-r2.json')),payload.plans,
     readJsonSafe(dataPath('value-plans',dayKey,'unified-u1-r2-results.json')));
+  if(isUnifiedPublicDay(dayKey)) {
+    payload.dataReadiness=buildValueDataReadinessDay(dayKey);
+    let productionVerified=false;
+    try{
+      const result=refreshUnifiedProductionProjection(dayKey);
+      if(result.status==='AVAILABLE'){
+        payload.unifiedPlan=validateProductionProjection(readJsonSafe(dataPath('value-unified',dayKey,'public-plan.json')),dayKey);
+        productionVerified=true;
+      }
+    }catch(error){payload.unifiedPlan=unavailableUnifiedPlan(dayKey,error.message);}
+
+    if(payload.unifiedPlan){
+      payload.unifiedPlan.analysisComplete=productionVerified&&payload.dataReadiness.complete;
+      payload.unifiedPlan.dataReadiness={status:payload.dataReadiness.status,complete:payload.dataReadiness.complete,
+        checkedAt:payload.dataReadiness.generatedAt,...payload.dataReadiness.summary};
+      payload.unifiedPlan.zeroPicksCertified=productionVerified&&payload.unifiedPlan.count===0&&payload.dataReadiness.complete;
+      if(productionVerified){const {projectionSignature,...body}=payload.unifiedPlan;payload.unifiedPlan.projectionSignature=signature(body);}
+    }
+  }
+
 
   if (options.write === true) {
     writeJsonPretty(outputPath, payload);

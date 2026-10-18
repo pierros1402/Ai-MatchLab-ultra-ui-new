@@ -56,7 +56,7 @@ import { checkpointHistoryIfRequired, writeHistoryJsonAtomic } from "../storage/
 import { createValueDecisionEvidence } from "../storage/value-decision-evidence.js";
 import path from "path";
 import { fileURLToPath } from "url";
-import { athensDayKey } from "../core/daykey.js";
+import { athensDayKey,shiftDay } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { getOddsForDay } from "../storage/odds-memory-db.js";
 import {
@@ -741,37 +741,40 @@ function writeJsonFile(file, payload) {
   ensureDir(path.dirname(file));
   writeHistoryJsonAtomic(file, payload);
 }
-export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, outputMode = "production", readFrozenObservation = readFrozenPlanBObservation, decisionEvidenceFactory = createValueDecisionEvidence } = {}) {
+export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, outputMode = "production", readFrozenObservation = readFrozenPlanBObservation, decisionEvidenceFactory = createValueDecisionEvidence, publicationRunId = null } = {}) {
   const isPlanBObservation = outputMode === "plan-b-observation";
   const isPlanB2Observation = outputMode === "plan-b2-observation";
   const isObservation = isPlanBObservation || isPlanB2Observation;
+  if(publicationRunId&&(!isObservation||freeze||!/^[a-f0-9-]{36}$/.test(publicationRunId)||dayKey<athensDayKey()||dayKey>shiftDay(athensDayKey(),1)))throw Error('invalid_prospective_publication_candidate');
+  const candidateRoot=publicationRunId?resolveDataPath('value-unified',dayKey,'scratch',publicationRunId):null;
 
-  const outFile = isObservation
+
+  const outFile = candidateRoot ? path.join(candidateRoot,isPlanB2Observation ? "plan-b2.json" : "plan-b.json") : isObservation
     ? resolveDataPath("value-plans", dayKey, isPlanB2Observation ? "plan-b2.json" : "plan-b.json")
     : resolveDataPath("deploy-snapshots", dayKey, "value.json");
 
-  const canonicalOut = isObservation
+  const canonicalOut = candidateRoot ? path.join(candidateRoot,isPlanB2Observation ? "plan-b2.json" : "plan-b.json") : isObservation
     ? resolveDataPath("value-plans", dayKey, isPlanB2Observation ? "plan-b2.json" : "plan-b.json")
     : resolveDataPath("value", `${dayKey}.json`);
 
-  const canonicalAuditOut = isObservation
+  const canonicalAuditOut = candidateRoot ? path.join(candidateRoot,isPlanB2Observation ? "plan-b2-audit.json" : "plan-b-audit.json") : isObservation
     ? resolveDataPath("value-plans", dayKey, isPlanB2Observation ? "plan-b2-audit.json" : "plan-b-audit.json")
     : resolveDataPath("value", "_audit", `${dayKey}.json`);
 
-  const snapshotAuditOut = isObservation
+  const snapshotAuditOut = candidateRoot ? path.join(candidateRoot,isPlanB2Observation ? "plan-b2-audit.json" : "plan-b-audit.json") : isObservation
     ? resolveDataPath("value-plans", dayKey, isPlanB2Observation ? "plan-b2-audit.json" : "plan-b-audit.json")
     : resolveDataPath("deploy-snapshots", dayKey, "value-audit.json");
 
-  const snapshotDir = isObservation
+  const snapshotDir = candidateRoot || (isObservation
     ? resolveDataPath("value-plans", dayKey)
-    : resolveDataPath("deploy-snapshots", dayKey);
+    : resolveDataPath("deploy-snapshots", dayKey));
 
-  const valueDir = isObservation
+  const valueDir = candidateRoot || (isObservation
     ? resolveDataPath("value-plans", dayKey)
-    : resolveDataPath("value");
+    : resolveDataPath("value"));
 
   const auditFileName = isPlanB2Observation ? "plan-b2-audit.json" : "plan-b-audit.json";
-  const auditPaths = isObservation
+  const auditPaths = candidateRoot ? {canonical:canonicalAuditOut,snapshot:null,observation:canonicalAuditOut} : isObservation
     ? {
         canonical: `data/value-plans/${dayKey}/${auditFileName}`,
         snapshot: null,
@@ -783,7 +786,7 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
       };
 
   const calendarDay = athensDayKey();
-  if (isObservation && (freeze || dayKey <= calendarDay)) {
+  if (isObservation && !candidateRoot && (freeze || dayKey <= calendarDay)) {
     const frozen = readFrozenObservation({ dayKey, outputMode, observationFile: outFile, auditFile: canonicalAuditOut });
     if (frozen) return frozen;
     if (dayKey < calendarDay) throw new Error("missing_historical_plan_b_observation");
@@ -980,6 +983,10 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
 
   for (const originalMatch of sourceMatches) {
     const diagnosticId = String(originalMatch?.canonicalId || originalMatch?.matchId || "");
+    if(candidateRoot&&(!Number.isFinite(Date.parse(originalMatch.kickoffUtc))||Date.parse(originalMatch.kickoffUtc)<=Date.now()+60000)){
+      fixtureDiagnostics.set(diagnosticId,{reasonCode:'prospective_publication_window_closed'});continue;
+    }
+
     if (!hasModelAssessment(originalMatch)) {
       fixtureDiagnostics.set(diagnosticId, { reasonCode: ambiguousIds.has(diagnosticId) ? "ambiguous_model_assessment" : "missing_model_assessment" });
       inputEvidence.capture("missing_assessment", { fixture: originalMatch }, diagnosticId);

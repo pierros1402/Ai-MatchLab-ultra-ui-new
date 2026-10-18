@@ -19,10 +19,13 @@ function save(file, data) {
   const temporary = `${file}.tmp`; fs.writeFileSync(temporary, bytes); fs.renameSync(temporary, file);
 }
 
-export async function runValueDataAlarmDay(dayKey, { write = false, research = false, applyVerifiedContracts = false, nowMs = Date.now(), lookAheadDays = 7, maxResearchLeagues = 2, dependencies = {} } = {}) {
+export async function runValueDataAlarmDay(dayKey, { write = false, research = false, applyVerifiedContracts = false, nowMs = Date.now(), lookAheadDays = 7, maxResearchLeagues = 2, researchBudgetMs = 600000, dependencies = {} } = {}) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dayKey) || lookAheadDays < 0 || lookAheadDays > 14) throw new Error("invalid_alarm_window");
   if (!Number.isInteger(maxResearchLeagues) || maxResearchLeagues < 1 || maxResearchLeagues > 12) throw new Error("invalid_research_league_limit");
   if (research && !write) throw new Error("research_requires_persisted_alarm");
+  if (!Number.isFinite(researchBudgetMs) || researchBudgetMs < 0 || researchBudgetMs > 1200000) throw new Error("invalid_research_budget");
+  const researchStarted = Date.now();
+  const attemptedResearchTasks = [];
   const root = dependencies.queueRoot || resolveDataPath("value-data-acquisition");
   const queueFile = path.join(root, "queue.json");
   let queue = fs.existsSync(queueFile) ? load(queueFile) : null;
@@ -37,6 +40,20 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
       const { prepareVerifiedCompetitionContracts } = await import("./prepare-verified-competition-contracts.js");
       competitionContractPreparation = await prepareVerifiedCompetitionContracts(dayKey, nowMs);
     } catch (error) { acquisitionErrors.push({ day: dayKey, stage: "official_contract_preparation", error: error.message }); }
+  }
+  if(write&&research&&!dependencies.supplement){
+    try{
+      const slugs=[];
+      for(let offset=0;offset<=lookAheadDays;offset++){
+        const target=new Date(Date.parse(`${dayKey}T12:00Z`)+offset*86400000).toISOString().slice(0,10);
+        slugs.push(...canonicalFixturesForDay(target).map(row=>row.leagueSlug));
+      }
+      const {preparePrimaryCompetitionContracts}=await import('./prepare-primary-competition-contracts.js');
+      const primary=await preparePrimaryCompetitionContracts(dayKey,slugs,{nowMs});
+      for(const result of primary.evidence||[])save(path.join(root,dayKey,`${result.proof?.slug||result.slug}.primary-contract.research.json`),result);
+      competitionContractPreparation={...(competitionContractPreparation||{}),changed:primary.changed||competitionContractPreparation?.changed,
+        writePaths:[...new Set([...(competitionContractPreparation?.writePaths||[]),...primary.writePaths])],primary};
+    }catch(error){acquisitionErrors.push({day:dayKey,stage:'primary_contract_preparation',error:error.message});}
   }
   for (let offset = 0; offset <= lookAheadDays; offset++) {
     const day = new Date(Date.parse(`${dayKey}T12:00:00Z`) + offset * 86400000).toISOString().slice(0, 10);
@@ -57,7 +74,18 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
     const assessmentRows = dependencies.assessments ? dependencies.assessments(day) : fs.existsSync(persistedOdds) ? getDeployedOddsDay(day).matches : [];
     const join = joinCanonicalFixturesWithModelAssessments(fixtures, assessmentRows || []);
     let persistedJoined = join.summary.joinedMatches;
-    queue = updateValueDataAlarm(queue, { dayKey: day, fixtures, joinedIds: join.joinedMatches.map(row => row.canonicalId), nowMs, diagnoses });
+    const coverageFile=resolveDataPath("value","_coverage-reports",`${day}.json`);
+    const valueCoverage=dependencies.valueCoverage ? dependencies.valueCoverage(day) : fs.existsSync(coverageFile) ? load(coverageFile) : null;
+    const insufficientHistory=new Map((valueCoverage?.rows||[]).filter(row=>row.nullReason==='minimum_recent_sample').map(row=>[row.matchId,row]));
+    const usableJoinedIds=join.joinedMatches.filter(row=>!insufficientHistory.has(row.canonicalId)).map(row=>row.canonicalId);
+    queue = updateValueDataAlarm(queue, { dayKey: day, fixtures, joinedIds: usableJoinedIds, nowMs, diagnoses });
+    for(const fixture of fixtures){
+      const incident=queue.incidents[fixture.canonicalId];
+      if(incident&&insufficientHistory.has(fixture.canonicalId)){
+        incident.requiredInputs=["model_assessment","recent_team_history"];
+        incident.recentHistoryDiagnosis=insufficientHistory.get(fixture.canonicalId).minimumSample||null;
+      }
+    }
     if (write) save(queueFile, queue); // Durable alarm is checkpointed before attempting acquisition.
     let supplement = null;
     const upcoming = join.canonicalRowsWithoutAssessment.filter(row => Date.parse(row.kickoffUtc) > nowMs);
@@ -81,7 +109,7 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
         const persisted = dependencies.persistedOdds ? dependencies.persistedOdds(day) : load(resolveDataPath("deploy-snapshots", day, "odds.json"));
         const verified = joinCanonicalFixturesWithModelAssessments(fixtures, persisted.matches || []);
         persistedJoined = verified.summary.joinedMatches;
-        queue = updateValueDataAlarm(queue, { dayKey: day, fixtures, joinedIds: verified.joinedMatches.map(row => row.canonicalId), nowMs, diagnoses });
+        queue = updateValueDataAlarm(queue, { dayKey: day, fixtures, joinedIds: verified.joinedMatches.filter(row=>!insufficientHistory.has(row.canonicalId)).map(row => row.canonicalId), nowMs, diagnoses });
         save(queueFile, queue);
       }
       } catch (error) {
@@ -124,6 +152,8 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
     const search = dependencies.search || (await import("../source-discovery/standings-researcher.js")).researchStandings;
     const resultsSearch = dependencies.resultsSearch || (await import("../source-discovery/recent-results-researcher.js")).researchRecentResults;
     for (const task of researchTasks) {
+      if (Date.now() - researchStarted >= researchBudgetMs) break;
+      attemptedResearchTasks.push(task.key);
       const incident = task.incidents[0], meta = getLeagueMeta(incident.leagueSlug);
       let recentResults;
       try {
@@ -182,7 +212,11 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
     futureOpen: open.filter(row => Date.parse(row.kickoffUtc) > nowMs).length,
     urgentWithin24Hours: open.filter(row => Date.parse(row.kickoffUtc) > nowMs && Date.parse(row.kickoffUtc) - nowMs <= 86400000).length,
     researchTasks: researchTasks.map(task => ({ key: task.key, fixtures: task.incidents.length })),
+    attemptedResearchTasks, deferredResearchTasks: researchTasks.filter(task => !attemptedResearchTasks.includes(task.key)).map(task => task.key),
+    researchBudgetMs,
     fixtureDiscoveryPendingDays: days.filter(row => row.status === "FIXTURE_DISCOVERY_PENDING").map(row => row.day),
+    fullValueInputCoverageCertified: false,
+    readinessCompleteScope: "assessment_join_and_known_recent_history_gaps; not all optional data",
     readinessComplete: open.length === 0 && days.every(row => row.status !== "FIXTURE_DISCOVERY_PENDING"),
     days, oddsWrittenDays, acquisitionErrors, teamHistoryResearch, competitionContractPreparation, historicalFormPreparation: historicalFormPreparation || null,
     verifiedFinalForm: verifiedEvidence?.verifiedFinalForm || null,
@@ -194,7 +228,7 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
     // so research crossing kickoff cannot create a post-kickoff prediction.
     const consumed = await runValueDataAlarmDay(dayKey, { write, research: false, nowMs: Math.max(nowMs, Date.now()),
       lookAheadDays, maxResearchLeagues, dependencies });
-    Object.assign(consumed.report, { research: true, researchTasks: report.researchTasks, teamHistoryResearch,
+    Object.assign(consumed.report, { research: true, researchTasks: report.researchTasks, attemptedResearchTasks, deferredResearchTasks: report.deferredResearchTasks, researchBudgetMs, teamHistoryResearch,
       postResearchReevaluation: true, oddsWrittenDays: [...new Set([...oddsWrittenDays, ...consumed.report.oddsWrittenDays])],
       acquisitionErrors: [...acquisitionErrors, ...consumed.report.acquisitionErrors], competitionContractPreparation,
       historicalFormPreparation: historicalFormPreparation?.changed ? historicalFormPreparation : consumed.report.historicalFormPreparation });

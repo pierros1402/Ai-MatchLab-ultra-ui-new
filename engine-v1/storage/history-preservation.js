@@ -7,7 +7,7 @@ import { spawnSync } from "node:child_process";
 export const HISTORY_ARCHIVE_BRANCH = "codex/history-archive";
 // Only application evidence, never .env, credentials, source code or arbitrary files.
 const STORES = new Set([
-  "value", "value-plans", "value-comparison", "final-results", "final-result-conflicts",
+  "value", "value-plans", "value-comparison", "value-unified", "value-data-readiness", "final-results", "final-result-conflicts",
   "canonical-fixtures", "canonical-registry", "canonical-memory", "expected-matches",
   "deploy-snapshots", "details", "history", "history-archive", "history-index",
   "history-resolutions", "history-truth-repair-quarantine", "historical-integrity",
@@ -29,6 +29,7 @@ const ROOT_FILES = new Set([
 
 export function isHistoryEvidencePath(value) {
   const parts = String(value).split("/");
+  if(parts[1]==="value-unified"&&parts.includes("scratch"))return false;
   if (parts.length === 2 && parts[0] === "data") return ROOT_FILES.has(parts[1]);
   return parts[0] === "data" && STORES.has(parts[1]) && parts.length >= 3 &&
     parts.every(part => part && part !== "." && part !== ".." && !/[\\\x00-\x1f]/u.test(part)) &&

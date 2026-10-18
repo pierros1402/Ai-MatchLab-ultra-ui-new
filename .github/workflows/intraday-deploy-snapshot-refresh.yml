@@ -25,40 +25,35 @@ jobs:
     outputs:
       allow_writer: ${{ steps.daily-priority.outputs.allow_writer }}
     steps:
-      - name: Protect Daily writer priority
+      - name: Protect Daily and data preparation writer priority
         id: daily-priority
         shell: bash
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          API_URL="https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/daily-deploy-snapshot.yml/runs?branch=main&per_page=20"
-          RESPONSE_FILE="$RUNNER_TEMP/daily-writer-priority.json"
-
-          if ! curl -fsSL \
-            -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            -o "$RESPONSE_FILE" \
-            "$API_URL"; then
-            echo "Daily writer lookup failed; failing closed and skipping lower-priority writer."
-            echo "allow_writer=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          ACTIVE_COUNT="$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1], encoding="utf-8")); print(sum(1 for r in d.get("workflow_runs", []) if str(r.get("status", "")).lower() != "completed"))' "$RESPONSE_FILE" 2>/dev/null || true)"
-
-          if ! [[ "$ACTIVE_COUNT" =~ ^[0-9]+$ ]]; then
-            echo "Daily writer response could not be parsed; failing closed."
-            echo "allow_writer=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
+          ACTIVE_COUNT=0
+          for WORKFLOW in daily-deploy-snapshot.yml value-data-alarm.yml; do
+            API_URL="https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/$WORKFLOW/runs?branch=main&per_page=20"
+            RESPONSE_FILE="$RUNNER_TEMP/$WORKFLOW.priority.json"
+            if ! curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" -o "$RESPONSE_FILE" "$API_URL"; then
+              echo "Writer priority lookup failed; skipping lower-priority writer."
+              echo "allow_writer=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            COUNT="$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1], encoding="utf-8")); print(sum(1 for r in d.get("workflow_runs", []) if str(r.get("status", "")).lower() != "completed"))' "$RESPONSE_FILE" 2>/dev/null || true)"
+            if ! [[ "$COUNT" =~ ^[0-9]+$ ]]; then
+              echo "allow_writer=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            ACTIVE_COUNT=$((ACTIVE_COUNT + COUNT))
+          done
 
           if [ "$ACTIVE_COUNT" -gt 0 ]; then
-            echo "Daily publication is queued/in progress; lower-priority writer will not enter the shared queue."
+            echo "Daily publication or data preparation is queued/in progress; lower-priority writer will not enter the shared queue."
             echo "allow_writer=false" >> "$GITHUB_OUTPUT"
           else
-            echo "No active Daily publication; lower-priority writer may enter the shared queue."
+            echo "No active Daily publication or data preparation; lower-priority writer may enter the shared queue."
             echo "allow_writer=true" >> "$GITHUB_OUTPUT"
           fi
 
@@ -950,7 +945,22 @@ jobs:
         shell: bash
         run: |
           if [[ "$DAY_KEY" > "2026-10-17" ]]; then
+            ATHENS_TODAY="$(TZ=Europe/Athens date +%F)"
+            if [[ "$DAY_KEY" < "$ATHENS_TODAY" ]]; then
+              node engine-v1/jobs/build-unified-production-day.js "$DAY_KEY" --settle-only
+            else
+              node engine-v1/jobs/build-unified-production-day.js "$DAY_KEY"
+            fi
             node engine-v1/jobs/build-value-plan-comparison-day.js --date="$DAY_KEY" --write
+            if [[ -d "data/value-unified/$DAY_KEY/" ]]; then
+              if [[ -d "data/value-unified/$DAY_KEY/observations/" ]]; then
+                find "data/value-unified/$DAY_KEY/observations/" -maxdepth 1 -type f -name "*.json" -exec git add -- {} +
+              fi
+              if [[ -f "data/value-unified/$DAY_KEY/public-plan.json" ]]; then git add "data/value-unified/$DAY_KEY/public-plan.json"; fi
+            fi
+            for FILE in "data/value-data-readiness/$DAY_KEY.json" "data/value/_coverage-reports/$DAY_KEY.json"; do
+              if [[ -f "$FILE" ]]; then git add "$FILE"; fi
+            done
           fi
 
       - name: Stage allowed generated files only
@@ -1038,9 +1048,9 @@ jobs:
             node engine-v1/jobs/guard-staged-data-boundary.js \
               --label=intraday-deploy-snapshot-refresh \
               --dayKey="${DAY_KEY}" \
-              --allow="^(data/canonical-fixtures/${DAY_KEY}/[^/]+\.json$|data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/foundation-integrity/${DAY_KEY}\.json$|data/foundation-integrity/latest\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/day-truth-ledger/${DAY_KEY}\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-plans/${DAY_KEY}/|data/final-results/${DAY_KEY}/|data/final-result-conflicts/${DAY_KEY}\.json$|data/value-comparison/(${DAY_KEY}\.json|cumulative\.json)$)"
+              --allow="^(data/canonical-fixtures/${DAY_KEY}/[^/]+\.json$|data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/foundation-integrity/${DAY_KEY}\.json$|data/foundation-integrity/latest\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/day-truth-ledger/${DAY_KEY}\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-unified/${DAY_KEY}/(observations/[a-f0-9]{64}\.json|public-plan\.json)$|data/value-data-readiness/${DAY_KEY}\.json$|data/value/_coverage-reports/${DAY_KEY}\.json$|data/value-plans/${DAY_KEY}/|data/final-results/${DAY_KEY}/|data/final-result-conflicts/${DAY_KEY}\.json$|data/value-comparison/(${DAY_KEY}\.json|cumulative\.json)$)"
 
-            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/canonical-fixtures/|data/deploy-snapshots/|data/build-reports/|data/foundation-integrity/|data/system-health/|data/day-truth-ledger/|data/value/|data/value-plans/|data/final-results/|data/final-result-conflicts/|data/value-comparison/)' || true)"
+            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/canonical-fixtures/|data/deploy-snapshots/|data/build-reports/|data/foundation-integrity/|data/system-health/|data/day-truth-ledger/|data/value/|data/value-unified/|data/value-data-readiness/|data/value-plans/|data/final-results/|data/final-result-conflicts/|data/value-comparison/)' || true)"
             if [ -n "$BAD" ]; then
               echo "ERROR: unexpected staged files:"
               echo "$BAD"
@@ -1339,8 +1349,9 @@ jobs:
               filePath.endsWith(".json")
             );
 
+          const unifiedPublicationChanged=stagedFiles.some(filePath=>filePath.startsWith(`data/value-unified/${day}/`));
           const finalCommitNeeded =
-            commitNeeded || canonicalStatusChanged;
+            commitNeeded || canonicalStatusChanged || unifiedPublicationChanged;
 
           console.log(JSON.stringify({
             materialChanged,

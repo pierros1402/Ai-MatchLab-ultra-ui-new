@@ -174,3 +174,10 @@ test("evidence boundaries reject traversal, secrets and arbitrary stores; hooks 
   assert.equal(isHistoryEvidencePath("data/fixtures.json"), true);
   assert.deepEqual(checkpointHistoryIfRequired("2026-10-13", "test"), { enabled: false });
 });
+
+ test("new production evidence is archived while temporary candidates stay excluded",()=>{
+  assert.equal(isHistoryEvidencePath("data/value-unified/2026-10-18/observations/abc.json"),true);
+  assert.equal(isHistoryEvidencePath("data/value-unified/2026-10-18/public-plan.json"),true);
+  assert.equal(isHistoryEvidencePath("data/value-data-readiness/2026-10-18.json"),true);
+  assert.equal(isHistoryEvidencePath("data/value-unified/2026-10-18/scratch/id/plan-a.json"),false);
+ });

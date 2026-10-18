@@ -849,7 +849,7 @@ function applyIntelligenceToValue(value, intelligence) {
 }
 
 // ------------------------------
-export async function buildValueDay(date, { rebuild = false, env, opponentAdjusted = false, outputPath = null, auditPath = null, decisionEvidenceFactory = createValueDecisionEvidence } = {}) {
+export async function buildValueDay(date, { rebuild = false, env, opponentAdjusted = false, outputPath = null, auditPath = null, prospectiveOnly = false, decisionEvidenceFactory = createValueDecisionEvidence } = {}) {
   const season = currentSeason();
   const cacheKey = `${season}:${date}:${opponentAdjusted ? "a2" : "a"}`;
 
@@ -974,6 +974,11 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
   const fixturesWithCandidateMarkets = new Set();
 
   for (const match of matches) {
+    if(prospectiveOnly&&(!isPreMatchFixtureStatus(match)||!Number.isFinite(Date.parse(match.kickoffUtc))||Date.parse(match.kickoffUtc)<=Date.now()+60000)){
+      if(Date.parse(match.kickoffUtc)>now) auditRejections.push({matchId:auditIdOf(match),reason:'prospective_publication_window_closed'});
+      continue;
+    }
+
     const evaluatedFixtureId =
       auditIdOf(match);
 

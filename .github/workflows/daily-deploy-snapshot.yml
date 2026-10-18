@@ -329,6 +329,13 @@ jobs:
           done
 
 
+      - name: Prepare upcoming Value inputs before the long daily cycle
+        if: env.SKIP_BUILD != 'true'
+        continue-on-error: true
+        env:
+          VALUE_MAX_RESEARCH_LEAGUES: "12"
+        run: bash tools/persist-value-data-alarm.sh "$DAY_KEY"
+
       - name: Run daily cycle
         if: env.SKIP_BUILD != 'true'
         env:
@@ -1035,7 +1042,22 @@ jobs:
         shell: bash
         run: |
           if [[ "$DAY_KEY" > "2026-10-17" ]]; then
+            ATHENS_TODAY="$(TZ=Europe/Athens date +%F)"
+            if [[ "$DAY_KEY" < "$ATHENS_TODAY" ]]; then
+              node engine-v1/jobs/build-unified-production-day.js "$DAY_KEY" --settle-only
+            else
+              node engine-v1/jobs/build-unified-production-day.js "$DAY_KEY"
+            fi
             node engine-v1/jobs/build-value-plan-comparison-day.js --date="$DAY_KEY" --write
+            if [[ -d "data/value-unified/$DAY_KEY/" ]]; then
+              if [[ -d "data/value-unified/$DAY_KEY/observations/" ]]; then
+                find "data/value-unified/$DAY_KEY/observations/" -maxdepth 1 -type f -name "*.json" -exec git add -- {} +
+              fi
+              if [[ -f "data/value-unified/$DAY_KEY/public-plan.json" ]]; then git add "data/value-unified/$DAY_KEY/public-plan.json"; fi
+            fi
+            for FILE in "data/value-data-readiness/$DAY_KEY.json" "data/value/_coverage-reports/$DAY_KEY.json"; do
+              if [[ -f "$FILE" ]]; then git add "$FILE"; fi
+            done
           fi
 
       - name: Stage allowed snapshot files only
@@ -1175,10 +1197,10 @@ jobs:
             --label=daily-deploy-snapshot \
             --dayKey="${DAY_KEY}" \
             --extra-days="${RECENT_CSV}" \
-            --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/(${DAY_KEY}|${RECENT_ALT})/|data/build-reports/${DAY_KEY}\.json$|data/foundation-integrity/${DAY_KEY}\.json$|data/foundation-integrity/latest\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/day-truth-ledger/${DAY_KEY}\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value/_coverage-reports/${DAY_KEY}\.json$|data/plan-c-shadow/${DAY_KEY}\.json$|data/plan-c-shadow/_audit/${DAY_KEY}\.json$|data/plan-c-shadow/frozen/i2b-20260825/|data/plan-c-shadow/clubelo-snapshots/|data/plan-c-shadow/clubelo-refresh/_audit/${DAY_KEY}\.json$|data/plan-c-shadow/generation/_audit/${DAY_KEY}\.json$|data/plan-c-shadow/settlement/latest\.json$|data/plan-c-shadow/settlement/_audit/${DAY_KEY}\.json$|data/value-plans/(${DAY_KEY}|${RECENT_ALT})/|data/value-comparison/(${DAY_KEY}|${RECENT_ALT})\.json$|data/value-comparison/cumulative\.json$|data/final-results/(${DAY_KEY}|${RECENT_ALT})/|data/final-result-conflicts/(${DAY_KEY}|${RECENT_ALT})\.json$)"
+            --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/(${DAY_KEY}|${RECENT_ALT})/|data/build-reports/${DAY_KEY}\.json$|data/foundation-integrity/${DAY_KEY}\.json$|data/foundation-integrity/latest\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/day-truth-ledger/${DAY_KEY}\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value/_coverage-reports/${DAY_KEY}\.json$|data/plan-c-shadow/${DAY_KEY}\.json$|data/plan-c-shadow/_audit/${DAY_KEY}\.json$|data/plan-c-shadow/frozen/i2b-20260825/|data/plan-c-shadow/clubelo-snapshots/|data/plan-c-shadow/clubelo-refresh/_audit/${DAY_KEY}\.json$|data/plan-c-shadow/generation/_audit/${DAY_KEY}\.json$|data/plan-c-shadow/settlement/latest\.json$|data/plan-c-shadow/settlement/_audit/${DAY_KEY}\.json$|data/value-unified/${DAY_KEY}/(observations/[a-f0-9]{64}\.json|public-plan\.json)$|data/value-data-readiness/${DAY_KEY}\.json$|data/value-plans/(${DAY_KEY}|${RECENT_ALT})/|data/value-comparison/(${DAY_KEY}|${RECENT_ALT})\.json$|data/value-comparison/cumulative\.json$|data/final-results/(${DAY_KEY}|${RECENT_ALT})/|data/final-result-conflicts/(${DAY_KEY}|${RECENT_ALT})\.json$)"
 
           echo "=== STAGED FILES OUTSIDE ALLOWLIST - SHOULD BE EMPTY ==="
-          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/build-reports/|data/foundation-integrity/|data/system-health/|data/day-truth-ledger/|data/value/|data/plan-c-shadow/|data/value-plans/|data/value-comparison/|data/final-results/|data/final-result-conflicts/)' || true)"
+          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/build-reports/|data/foundation-integrity/|data/system-health/|data/day-truth-ledger/|data/value/|data/value-unified/|data/value-data-readiness/|data/plan-c-shadow/|data/value-plans/|data/value-comparison/|data/final-results/|data/final-result-conflicts/)' || true)"
 
           if [ -n "$DISALLOWED" ]; then
             echo "ERROR: disallowed files staged:"
