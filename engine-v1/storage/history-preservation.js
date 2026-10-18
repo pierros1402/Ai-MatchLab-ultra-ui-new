@@ -44,7 +44,7 @@ function git(root, args, { input, index, allowFailure = false, binary = false } 
   const result = spawnSync("git", args, {
     cwd: root, input, encoding: binary || input instanceof Buffer ? undefined : "utf8",
     env: { ...process.env, ...(index ? { GIT_INDEX_FILE: index } : {}) },
-    timeout: 120_000, maxBuffer: 128 * 1024 * 1024,
+    timeout: args[0] === "write-tree" ? 600_000 : 120_000, maxBuffer: 128 * 1024 * 1024,
     windowsHide: true
   });
   if (result.error || result.status !== 0) {
