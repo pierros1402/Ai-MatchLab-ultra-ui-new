@@ -25,3 +25,10 @@ test('cancelled fixtures are explicit exclusions; empty fixture discovery is nev
  assert.equal(buildValueDataReadiness({day,fixtures:[]}).complete,false);
  const r=buildValueDataReadiness({day,fixtures:[{...fixtures[0],status:'CANCELLED'}]});assert.equal(r.rows[0].status,'NOT_APPLICABLE');assert.equal(r.complete,false);
 });
+
+test('stale or unauditable details cannot be certified even when models and diagnostic rows exist',()=>{
+ for(const detailsAudit of [{ok:false,issues:[{id:'cid_ready',code:'DETAIL_HISTORY_INDEX_FINGERPRINT_STALE'}]},{ok:false,issues:[]}]){
+  const r=buildValueDataReadiness({day,fixtures,assessments:[assessment],coverage,detailsAudit});
+  assert.equal(r.complete,false);assert.ok(r.rows[0].reasons.includes('details_foundation_not_verified'));
+ }
+});

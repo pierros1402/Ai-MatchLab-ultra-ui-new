@@ -33,7 +33,7 @@ jobs:
         run: |
           set -euo pipefail
           ACTIVE_COUNT=0
-          for WORKFLOW in daily-deploy-snapshot.yml value-data-alarm.yml; do
+          for WORKFLOW in daily-deploy-snapshot.yml value-data-alarm.yml value-data-recovery.yml; do
             API_URL="https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/$WORKFLOW/runs?branch=main&per_page=20"
             RESPONSE_FILE="$RUNNER_TEMP/$WORKFLOW.priority.json"
             if ! curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" -o "$RESPONSE_FILE" "$API_URL"; then
@@ -920,6 +920,11 @@ jobs:
           # Intraday settlement may change a day artifact after the last Daily
           # cumulative build, so refresh the rollup in the same bounded step.
           node ./engine-v1/jobs/build-value-comparison-cumulative.js --write
+
+      - name: Repair derived details after verified history preparation
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: node engine-v1/jobs/recover-value-data-day.js "$DAY_KEY" --apply
 
       - name: Refresh and enforce intraday foundation health
         if: env.SKIP_BUILD != 'true'

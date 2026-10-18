@@ -1,7 +1,7 @@
 import {buildValueFixtureUniverse,valueFixtureUniverseContract} from './value-fixture-universe.js';
 import {joinCanonicalFixturesWithModelAssessments} from './plan-b-canonical-membership.js';
 const idOf=row=>String(row?.canonicalId||row?.matchId||'');
-export function buildValueDataReadiness({day,fixtures=[],assessments=[],coverage=null,standings={},now=new Date().toISOString()}) {
+export function buildValueDataReadiness({day,fixtures=[],assessments=[],coverage=null,standings={},detailsAudit=null,now=new Date().toISOString()}) {
   const universe=buildValueFixtureUniverse(day,{fixtures});
   const contract=valueFixtureUniverseContract(universe);
   const join=joinCanonicalFixturesWithModelAssessments(fixtures,assessments);
@@ -10,6 +10,8 @@ export function buildValueDataReadiness({day,fixtures=[],assessments=[],coverage
   const coverageRows=new Map(),duplicates=new Set();
   for(const row of coverage?.rows||[]){const id=idOf(row);if(coverageRows.has(id))duplicates.add(id);coverageRows.set(id,row);}
   const coverageBound=coverage?.dayKey===day&&coverage?.source?.fixtureUniverse?.hash===contract.hash;
+  const detailProblems=new Set((detailsAudit?.issues||[]).map(issue=>issue.id).filter(Boolean));
+  const globalDetailFailure=detailsAudit&&detailsAudit.ok!==true&&(!(detailsAudit.issues||[]).length||(detailsAudit.issues||[]).some(issue=>!issue.id));
   const rows=fixtures.map(fixture=>{
     const id=idOf(fixture),row=coverageRows.get(id),assessment=joined.get(id),reasons=[];
     const excluded=/POSTPONED|CANCELLED|CANCELED/.test(String(fixture.status||'').toUpperCase());
@@ -18,6 +20,7 @@ export function buildValueDataReadiness({day,fixtures=[],assessments=[],coverage
       if(!coverageBound)reasons.push('coverage_missing_or_wrong_universe');
       if(!row||duplicates.has(id))reasons.push('fixture_coverage_missing_or_ambiguous');
       if(row?.detailsFound!==true)reasons.push('details_missing');
+      if(globalDetailFailure||detailProblems.has(id))reasons.push('details_foundation_not_verified');
       if(row?.valueReturned!==true)reasons.push(row?.nullReason||'value_input_not_evaluated');
       if(ambiguous.has(id))reasons.push('ambiguous_model_assessment');
       else if(!assessment)reasons.push('missing_model_assessment');
