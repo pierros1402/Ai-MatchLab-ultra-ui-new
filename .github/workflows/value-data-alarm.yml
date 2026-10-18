@@ -34,7 +34,7 @@ concurrency:
 jobs:
   alarm:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
@@ -53,6 +53,7 @@ jobs:
           [[ "$DAY_KEY" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]
           echo "DAY_KEY=$DAY_KEY" >> "$GITHUB_ENV"
       - name: Read-only pre-match readiness diagnosis
+        if: ${{ !inputs.publishOnly }}
         run: node engine-v1/jobs/run-value-data-alarm-day.js "$DAY_KEY"
       - name: Persist alarms and execute source research
         if: (github.event_name == 'schedule' || inputs.apply) && !inputs.publishOnly
