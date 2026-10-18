@@ -11,7 +11,7 @@ export function buildValueDataReadiness({day,fixtures=[],assessments=[],coverage
   for(const row of coverage?.rows||[]){const id=idOf(row);if(coverageRows.has(id))duplicates.add(id);coverageRows.set(id,row);}
   const coverageBound=coverage?.dayKey===day&&coverage?.source?.fixtureUniverse?.hash===contract.hash;
   const detailProblems=new Set((detailsAudit?.issues||[]).map(issue=>issue.id).filter(Boolean));
-  const globalDetailFailure=detailsAudit&&detailsAudit.ok!==true&&(!(detailsAudit.issues||[]).length||(detailsAudit.issues||[]).some(issue=>!issue.id));
+  const globalDetailFailure=detailsAudit&&detailsAudit.ok!==true&&(Number(detailsAudit.summary?.issueCount||0)>(detailsAudit.issues||[]).length||!(detailsAudit.issues||[]).length||(detailsAudit.issues||[]).some(issue=>!issue.id));
   const rows=fixtures.map(fixture=>{
     const id=idOf(fixture),row=coverageRows.get(id),assessment=joined.get(id),reasons=[];
     const excluded=/POSTPONED|CANCELLED|CANCELED/.test(String(fixture.status||'').toUpperCase());

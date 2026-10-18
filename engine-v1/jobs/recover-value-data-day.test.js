@@ -18,7 +18,8 @@ test("bounded detail recovery verifies results, preserves frozen bytes, and roll
     write(path.join(snapshot, "value.json"), { picks: [{ canonicalId: id, pick: "over" }] });
     write(path.join(snapshot, "details", `${id}.json`), { marker: "old" });
     const valueBefore = fs.readFileSync(path.join(snapshot, "value.json"));
-    const audit = () => {
+    const audit = (_day, options) => {
+      if (options) assert.equal(options.includeAllIssues, true);
       const ok = JSON.parse(fs.readFileSync(path.join(snapshot, "details", `${id}.json`))).marker === "new";
       return { ok, summary: { issueCount: ok ? 0 : 1 }, issues: ok ? [] : [{ code: "DETAIL_H2H_FINGERPRINT_STALE", id }] };
     };

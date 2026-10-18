@@ -6,6 +6,7 @@ const REPAIRABLE_DETAIL_CODES = new Set([
 
 export function planValueDataRecovery(audit, fixtures, { maxFixtures = 500 } = {}) {
   const issues = Array.isArray(audit?.issues) ? audit.issues : [];
+  if (Number(audit?.summary?.issueCount || 0) > issues.length) return { status: "BLOCKED", fixtureIds: [], reasons: ["incomplete_audit_issues"] };
   const validUniverse = Array.isArray(fixtures) && fixtures.length > 0 && fixtures.every(row => /^cid_[a-zA-Z0-9_]+$/.test(String(row?.canonicalId || row?.matchId || ""))) && new Set(fixtures.map(row => row.canonicalId || row.matchId)).size === fixtures.length;
   if (!validUniverse) return { status: "BLOCKED", fixtureIds: [], reasons: ["invalid_publication_identity"] };
   if (audit?.ok === true && issues.length === 0) return { status: "HEALTHY", fixtureIds: [], reasons: [] };

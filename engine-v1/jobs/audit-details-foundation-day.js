@@ -171,7 +171,7 @@ export function evaluateDetailFoundationRecord({
   return issues;
 }
 
-export function auditDetailsFoundationDay(dayKey) {
+export function auditDetailsFoundationDay(dayKey, { includeAllIssues = false } = {}) {
   const snapshotRoot = resolveDataPath("deploy-snapshots", dayKey);
   const manifest = readJson(path.join(snapshotRoot, "manifest.json"));
   const snapshotFixturesPayload = readJson(path.join(snapshotRoot, "fixtures.json"));
@@ -242,7 +242,7 @@ export function auditDetailsFoundationDay(dayKey) {
       checked,
       issueCount: issues.length,
     },
-    issues: issues.slice(0, 500),
+    issues: includeAllIssues ? issues : issues.slice(0, 500),
   };
 }
 
