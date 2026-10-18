@@ -1,17 +1,26 @@
 {
   "schema": "ai-matchlab.foundation-integrity.v1",
-  "generatedAt": "2026-10-18T01:55:46.089Z",
+  "generatedAt": "2026-10-18T19:56:53.130Z",
   "dayKey": "2026-10-18",
   "season": "2026-2027",
-  "ok": true,
-  "modelReady": true,
-  "publicationReady": true,
-  "blocked": [],
+  "ok": false,
+  "modelReady": false,
+  "publicationReady": false,
+  "blocked": [
+    {
+      "component": "standings",
+      "reason": "standings_foundation_not_ready"
+    },
+    {
+      "component": "details",
+      "reason": "details_foundation_not_ready"
+    }
+  ],
   "warnings": [
     {
       "component": "historySemantic",
       "reason": "age_expired_results_rows_present",
-      "count": 14528,
+      "count": 14632,
       "informational": true
     },
     {
@@ -35,7 +44,7 @@
         "ok": false,
         "clean": false,
         "schema": "ai-matchlab.history-semantic-integrity.v1",
-        "generatedAt": "2026-10-18T01:55:44.674Z",
+        "generatedAt": "2026-10-18T19:56:51.703Z",
         "sourceContract": {
           "readOnlyTruthLayers": true,
           "truthWrites": 0,
@@ -83,7 +92,7 @@
           {
             "type": "results_expired_entries",
             "severity": "info",
-            "count": 14528,
+            "count": 14632,
             "detail": "Age-expired rows are reported separately and are not treated as duplicates."
           }
         ],
@@ -92,7 +101,7 @@
           "teamKeyCount": 17737,
           "entryCount": 434235,
           "reconstructedMatchIdCount": 216997,
-          "expiredEntryCount": 14528,
+          "expiredEntryCount": 14632,
           "invalidEntryCount": 0,
           "orphanMatchIdCount": 1,
           "multiSideMatchIdCount": 194,
@@ -1333,7 +1342,7 @@
             {
               "slug": "eng.4",
               "actionable": 3,
-              "expiredEntryCount": 196,
+              "expiredEntryCount": 220,
               "invalidEntryCount": 0,
               "orphanMatchIdCount": 0,
               "mirrorConflictCount": 3,
@@ -1955,7 +1964,7 @@
             {
               "slug": "pol.2",
               "actionable": 2,
-              "expiredEntryCount": 132,
+              "expiredEntryCount": 134,
               "invalidEntryCount": 0,
               "orphanMatchIdCount": 0,
               "mirrorConflictCount": 0,
@@ -2042,7 +2051,7 @@
             {
               "slug": "rsa.1",
               "actionable": 2,
-              "expiredEntryCount": 70,
+              "expiredEntryCount": 74,
               "invalidEntryCount": 0,
               "orphanMatchIdCount": 0,
               "mirrorConflictCount": 2,
@@ -2248,7 +2257,7 @@
             {
               "slug": "arg.1",
               "actionable": 1,
-              "expiredEntryCount": 208,
+              "expiredEntryCount": 210,
               "invalidEntryCount": 0,
               "orphanMatchIdCount": 0,
               "mirrorConflictCount": 0,
@@ -2370,7 +2379,7 @@
             {
               "slug": "eng.2",
               "actionable": 1,
-              "expiredEntryCount": 192,
+              "expiredEntryCount": 202,
               "invalidEntryCount": 0,
               "orphanMatchIdCount": 0,
               "mirrorConflictCount": 1,
@@ -2445,7 +2454,7 @@
             {
               "slug": "eng.3",
               "actionable": 1,
-              "expiredEntryCount": 192,
+              "expiredEntryCount": 216,
               "invalidEntryCount": 0,
               "orphanMatchIdCount": 0,
               "mirrorConflictCount": 1,
@@ -4592,8 +4601,8 @@
         "currentHistory": {
           "kind": "current-history",
           "fileCount": 2,
-          "rowCount": 27245,
-          "validRowCount": 27245,
+          "rowCount": 27246,
+          "validRowCount": 27246,
           "invalidRowCount": 0,
           "duplicateIdCount": 0,
           "selfPairCount": 0,
@@ -4620,7 +4629,7 @@
         },
         "h2h": {
           "fileCount": 18990,
-          "matchCount": 27244,
+          "matchCount": 27245,
           "nonCanonicalFileNameCount": 0,
           "degradedPairKeyCount": 0,
           "storedPairMismatchCount": 0,
@@ -4647,25 +4656,22 @@
       }
     },
     "standings": {
-      "ok": true,
-      "reason": null,
+      "ok": false,
+      "reason": "standings_foundation_not_ready",
       "detail": {
         "schema": "ai-matchlab.standings-foundation-audit.v1",
-        "generatedAt": "2026-10-18T01:55:44.729Z",
-        "ok": true,
+        "generatedAt": "2026-10-18T19:56:51.782Z",
+        "ok": false,
         "season": "2026-2027",
         "summary": {
           "artifacts": 197,
-          "pass": 4,
-          "gated": 193,
-          "invalid": 0,
-          "unsafeGatedConsumerTables": 0
+          "pass": 1,
+          "gated": 192,
+          "invalid": 4,
+          "unsafeGatedConsumerTables": 4
         },
         "passSlugs": [
-          "arg.1",
-          "col.1",
-          "isr.2",
-          "mex.1"
+          "esp.1"
         ],
         "results": [
           {
@@ -4745,11 +4751,13 @@
           },
           {
             "slug": "arg.1",
-            "status": "PASS",
-            "ok": true,
+            "status": "INVALID_PASS",
+            "ok": false,
             "consumerRows": 30,
             "observedRows": 30,
-            "issues": []
+            "issues": [
+              "REGISTRY_FINGERPRINT_STALE"
+            ]
           },
           {
             "slug": "arg.2",
@@ -5080,11 +5088,13 @@
           },
           {
             "slug": "col.1",
-            "status": "PASS",
-            "ok": true,
+            "status": "INVALID_PASS",
+            "ok": false,
             "consumerRows": 20,
             "observedRows": 20,
-            "issues": []
+            "issues": [
+              "REGISTRY_FINGERPRINT_STALE"
+            ]
           },
           {
             "slug": "col.2",
@@ -5289,9 +5299,9 @@
             "observedRows": 115,
             "issues": [],
             "reasonCodes": [
-              "TEAM_COUNT_AUTHORITY_MISSING"
+              "TEAM_COUNT_ABOVE_CONTRACT"
             ],
-            "contractStatus": "UNVERIFIED"
+            "contractStatus": "FAIL"
           },
           {
             "slug": "eng.2",
@@ -5382,15 +5392,11 @@
           },
           {
             "slug": "esp.1",
-            "status": "GATED",
+            "status": "PASS",
             "ok": true,
-            "consumerRows": 0,
+            "consumerRows": 20,
             "observedRows": 20,
-            "issues": [],
-            "reasonCodes": [
-              "TEAM_COUNT_AUTHORITY_MISSING"
-            ],
-            "contractStatus": "UNVERIFIED"
+            "issues": []
           },
           {
             "slug": "esp.2",
@@ -5852,11 +5858,13 @@
           },
           {
             "slug": "isr.2",
-            "status": "PASS",
-            "ok": true,
+            "status": "INVALID_PASS",
+            "ok": false,
             "consumerRows": 16,
             "observedRows": 16,
-            "issues": []
+            "issues": [
+              "REGISTRY_FINGERPRINT_STALE"
+            ]
           },
           {
             "slug": "ita.1",
@@ -6125,11 +6133,13 @@
           },
           {
             "slug": "mex.1",
-            "status": "PASS",
-            "ok": true,
+            "status": "INVALID_PASS",
+            "ok": false,
             "consumerRows": 18,
             "observedRows": 18,
-            "issues": []
+            "issues": [
+              "REGISTRY_FINGERPRINT_STALE"
+            ]
           },
           {
             "slug": "mex.2",
@@ -7070,11 +7080,11 @@
           "schema": "ai-matchlab.derived-history-foundation.v1",
           "artifactType": "history-index",
           "season": "2026-2027",
-          "generatedAt": "2026-10-17T23:05:32.872Z",
+          "generatedAt": "2026-10-18T04:11:36.176Z",
           "source": {
-            "sha256": "0ee18a097a85af50fae8a12e9bd833b9d1991bd9a68609d3e11386283085baf2",
+            "sha256": "34667e9d23023c3142bdfc13adb25db252222c8300cdd90857ebf53a24ef9a1b",
             "fileCount": 1219,
-            "bytes": 110246819,
+            "bytes": 110247959,
             "members": [
               {
                 "path": "history-archive/afc.champions/2021-2022.json",
@@ -12578,8 +12588,8 @@
               },
               {
                 "path": "history/2026-2027.json",
-                "bytes": 9799856,
-                "sha256": "36208ab320cb2237c5df57b0c419b31c365af998992300bc7e5d88f1285a81e0"
+                "bytes": 9800996,
+                "sha256": "be4fc2a10c80bbe63d42298a07ddbfc796e717516fd4afbcfa761d5b2ba6c366"
               },
               {
                 "path": "identity-decisions/fixture-retention-decision-ledger.v1.json",
@@ -13174,34 +13184,34 @@
             ]
           },
           "outputs": {
-            "sha256": "45056855df376a1766995ada49d986d63a5b789f585d33b71f5a623cf825bc46",
+            "sha256": "af8ad9a5bd5f2108286efdac1b91db75dcc4b6087c76d08b9564a8afb87f4166",
             "fileCount": 3,
-            "bytes": 50629817,
+            "bytes": 50632703,
             "members": [
               {
                 "path": "history-index/league-form/2026-2027.json",
-                "bytes": 44357,
-                "sha256": "6cad4d8ccb998e24f6cea69bf6a35babb194284c428a0461373c6a4328135f11"
+                "bytes": 44356,
+                "sha256": "ac468f2d5d7dc4f2880c659e8b8ba21dc89ab4888a76db9d154dab626bb02336"
               },
               {
                 "path": "history-index/matchups/2026-2027.json",
-                "bytes": 36427201,
-                "sha256": "8ea38b03c7355046c730551156a691297126b6afa6bac30fb2887451a0e57e30"
+                "bytes": 36429084,
+                "sha256": "8d0da7ea869a4cd4569838247c7704882af1d5a6d7c341085c1ed275570da09a"
               },
               {
                 "path": "history-index/team-form/2026-2027.json",
-                "bytes": 14158259,
-                "sha256": "ee13ed6692587bca71e52b53a11fd143ad217733b4f492119719a96eca8f02bf"
+                "bytes": 14159263,
+                "sha256": "234663dfc6d2aef8b5007f25d5b794ee1d5645c0458341fe7e4bd6e76954dfdd"
               }
             ]
           },
-          "foundationFingerprint": "7b3b90b4123fe9b0a931beba4a03034a0d05bfde8a076980d1d5f6e8b193d52c"
+          "foundationFingerprint": "ac6c1fc9105c77e8ae64d2032ad8d81b84e2829fd1b406a7296e5ec2d01b5efc"
         },
         "current": {
           "source": {
-            "sha256": "0ee18a097a85af50fae8a12e9bd833b9d1991bd9a68609d3e11386283085baf2",
+            "sha256": "34667e9d23023c3142bdfc13adb25db252222c8300cdd90857ebf53a24ef9a1b",
             "fileCount": 1219,
-            "bytes": 110246819,
+            "bytes": 110247959,
             "members": [
               {
                 "path": "history-archive/afc.champions/2021-2022.json",
@@ -18705,8 +18715,8 @@
               },
               {
                 "path": "history/2026-2027.json",
-                "bytes": 9799856,
-                "sha256": "36208ab320cb2237c5df57b0c419b31c365af998992300bc7e5d88f1285a81e0"
+                "bytes": 9800996,
+                "sha256": "be4fc2a10c80bbe63d42298a07ddbfc796e717516fd4afbcfa761d5b2ba6c366"
               },
               {
                 "path": "identity-decisions/fixture-retention-decision-ledger.v1.json",
@@ -19301,28 +19311,28 @@
             ]
           },
           "outputs": {
-            "sha256": "45056855df376a1766995ada49d986d63a5b789f585d33b71f5a623cf825bc46",
+            "sha256": "af8ad9a5bd5f2108286efdac1b91db75dcc4b6087c76d08b9564a8afb87f4166",
             "fileCount": 3,
-            "bytes": 50629817,
+            "bytes": 50632703,
             "members": [
               {
                 "path": "history-index/league-form/2026-2027.json",
-                "bytes": 44357,
-                "sha256": "6cad4d8ccb998e24f6cea69bf6a35babb194284c428a0461373c6a4328135f11"
+                "bytes": 44356,
+                "sha256": "ac468f2d5d7dc4f2880c659e8b8ba21dc89ab4888a76db9d154dab626bb02336"
               },
               {
                 "path": "history-index/matchups/2026-2027.json",
-                "bytes": 36427201,
-                "sha256": "8ea38b03c7355046c730551156a691297126b6afa6bac30fb2887451a0e57e30"
+                "bytes": 36429084,
+                "sha256": "8d0da7ea869a4cd4569838247c7704882af1d5a6d7c341085c1ed275570da09a"
               },
               {
                 "path": "history-index/team-form/2026-2027.json",
-                "bytes": 14158259,
-                "sha256": "ee13ed6692587bca71e52b53a11fd143ad217733b4f492119719a96eca8f02bf"
+                "bytes": 14159263,
+                "sha256": "234663dfc6d2aef8b5007f25d5b794ee1d5645c0458341fe7e4bd6e76954dfdd"
               }
             ]
           },
-          "foundationFingerprint": "7b3b90b4123fe9b0a931beba4a03034a0d05bfde8a076980d1d5f6e8b193d52c"
+          "foundationFingerprint": "ac6c1fc9105c77e8ae64d2032ad8d81b84e2829fd1b406a7296e5ec2d01b5efc"
         }
       }
     },
@@ -19336,7 +19346,7 @@
           "schema": "ai-matchlab.derived-history-foundation.v1",
           "artifactType": "model-priors",
           "season": "2026-2027",
-          "generatedAt": "2026-10-17T23:05:41.730Z",
+          "generatedAt": "2026-10-18T04:11:48.526Z",
           "source": {
             "sha256": "d4dbd6756a440d1dad5f8d41b30ab6d593c45e8908c51244a4706be8087f7b66",
             "fileCount": 1055,
@@ -24620,18 +24630,18 @@
             ]
           },
           "outputs": {
-            "sha256": "64bac584382c43cf9601ee9aad6211a73d3d972f9c7acea40fe141803d9d1f60",
+            "sha256": "36e0dbcbb07907ca64f5300a3657544bb55b92c095e5d00e7eb35c86873ba8e5",
             "fileCount": 1,
             "bytes": 20687203,
             "members": [
               {
                 "path": "model-priors/2026-2027.json",
                 "bytes": 20687203,
-                "sha256": "c88229f0822eca2929c4bd1acb405681a4cceb17269bfdab8f3d87efb517dc7c"
+                "sha256": "b1c845dccf040e1cf022c4d55cb9fb6ec3fd7e578c20cc07cdc4768d33b9d596"
               }
             ]
           },
-          "foundationFingerprint": "dcb05fe07793d150d7a105a46e3976a91abdb623bf98181340fa31eff4c5588a"
+          "foundationFingerprint": "cc3ade956ca77ec4b73136154bf5eeb97b215114a92b9d696be374cf49d58f65"
         },
         "current": {
           "source": {
@@ -29917,18 +29927,18 @@
             ]
           },
           "outputs": {
-            "sha256": "64bac584382c43cf9601ee9aad6211a73d3d972f9c7acea40fe141803d9d1f60",
+            "sha256": "36e0dbcbb07907ca64f5300a3657544bb55b92c095e5d00e7eb35c86873ba8e5",
             "fileCount": 1,
             "bytes": 20687203,
             "members": [
               {
                 "path": "model-priors/2026-2027.json",
                 "bytes": 20687203,
-                "sha256": "c88229f0822eca2929c4bd1acb405681a4cceb17269bfdab8f3d87efb517dc7c"
+                "sha256": "b1c845dccf040e1cf022c4d55cb9fb6ec3fd7e578c20cc07cdc4768d33b9d596"
               }
             ]
           },
-          "foundationFingerprint": "dcb05fe07793d150d7a105a46e3976a91abdb623bf98181340fa31eff4c5588a"
+          "foundationFingerprint": "cc3ade956ca77ec4b73136154bf5eeb97b215114a92b9d696be374cf49d58f65"
         }
       }
     },
@@ -29941,11 +29951,11 @@
         "artifact": {
           "schema": "ai-matchlab.derived-history-foundation.v1",
           "artifactType": "h2h",
-          "generatedAt": "2026-10-17T23:05:37.293Z",
+          "generatedAt": "2026-10-18T04:11:40.627Z",
           "source": {
-            "sha256": "fb7f3ba969dab02dee796c76be5f465c4acaf21110ac14da7e4e586e974bd6a2",
+            "sha256": "cf4fc487deac71be4c640045a800f62a36bde54392b6fbd56e7b8ea8d87b7742",
             "fileCount": 2,
-            "bytes": 22876789,
+            "bytes": 22877929,
             "members": [
               {
                 "path": "history/2025-2026.json",
@@ -29954,15 +29964,15 @@
               },
               {
                 "path": "history/2026-2027.json",
-                "bytes": 9799856,
-                "sha256": "36208ab320cb2237c5df57b0c419b31c365af998992300bc7e5d88f1285a81e0"
+                "bytes": 9800996,
+                "sha256": "be4fc2a10c80bbe63d42298a07ddbfc796e717516fd4afbcfa761d5b2ba6c366"
               }
             ]
           },
           "outputs": {
-            "sha256": "ccc4bdcdb4a9dc350ed949cffbc5f105ec3b9214d49b6eafa835c747565ca1f6",
+            "sha256": "af15b7013d0dbfd7899357502be6e5bc1695b66ffea263f843dd206d5d6514a3",
             "fileCount": 18990,
-            "bytes": 31860479,
+            "bytes": 31861526,
             "members": [
               {
                 "path": "h2h/07elversberg~1kaiserslautern.json",
@@ -61216,8 +61226,8 @@
               },
               {
                 "path": "h2h/cantolao~santos.json",
-                "bytes": 1328,
-                "sha256": "4994a269bc239abeaad88abff83d9396e68f0d5a44983745eaee3fb154dbd8e4"
+                "bytes": 2375,
+                "sha256": "dd63ddab412d65d9cf9bb6574e0492fdaee4963bb5d91d6572be1abab58da913"
               },
               {
                 "path": "h2h/cantolao~unioncomercio.json",
@@ -124916,13 +124926,13 @@
               }
             ]
           },
-          "foundationFingerprint": "7fcf1b03a0ea83035ce0a90e8e4f65596f741897477bc69170ca50234da3ecc0"
+          "foundationFingerprint": "856a28222a95da48051571f5bb32e2571b265332e6c6e7a83bcb199a4a187da2"
         },
         "current": {
           "source": {
-            "sha256": "fb7f3ba969dab02dee796c76be5f465c4acaf21110ac14da7e4e586e974bd6a2",
+            "sha256": "cf4fc487deac71be4c640045a800f62a36bde54392b6fbd56e7b8ea8d87b7742",
             "fileCount": 2,
-            "bytes": 22876789,
+            "bytes": 22877929,
             "members": [
               {
                 "path": "history/2025-2026.json",
@@ -124931,15 +124941,15 @@
               },
               {
                 "path": "history/2026-2027.json",
-                "bytes": 9799856,
-                "sha256": "36208ab320cb2237c5df57b0c419b31c365af998992300bc7e5d88f1285a81e0"
+                "bytes": 9800996,
+                "sha256": "be4fc2a10c80bbe63d42298a07ddbfc796e717516fd4afbcfa761d5b2ba6c366"
               }
             ]
           },
           "outputs": {
-            "sha256": "ccc4bdcdb4a9dc350ed949cffbc5f105ec3b9214d49b6eafa835c747565ca1f6",
+            "sha256": "af15b7013d0dbfd7899357502be6e5bc1695b66ffea263f843dd206d5d6514a3",
             "fileCount": 18990,
-            "bytes": 31860479,
+            "bytes": 31861526,
             "members": [
               {
                 "path": "h2h/07elversberg~1kaiserslautern.json",
@@ -156193,8 +156203,8 @@
               },
               {
                 "path": "h2h/cantolao~santos.json",
-                "bytes": 1328,
-                "sha256": "4994a269bc239abeaad88abff83d9396e68f0d5a44983745eaee3fb154dbd8e4"
+                "bytes": 2375,
+                "sha256": "dd63ddab412d65d9cf9bb6574e0492fdaee4963bb5d91d6572be1abab58da913"
               },
               {
                 "path": "h2h/cantolao~unioncomercio.json",
@@ -219893,32 +219903,47 @@
               }
             ]
           },
-          "foundationFingerprint": "7fcf1b03a0ea83035ce0a90e8e4f65596f741897477bc69170ca50234da3ecc0"
+          "foundationFingerprint": "856a28222a95da48051571f5bb32e2571b265332e6c6e7a83bcb199a4a187da2"
         }
       }
     },
     "details": {
-      "ok": true,
-      "reason": null,
+      "ok": false,
+      "reason": "details_foundation_not_ready",
       "detail": {
         "schema": "ai-matchlab.details-foundation-audit.v2",
-        "generatedAt": "2026-10-18T01:55:46.088Z",
+        "generatedAt": "2026-10-18T19:56:53.130Z",
         "dayKey": "2026-10-18",
-        "ok": true,
+        "ok": false,
         "publicationUniverse": {
           "mode": "intraday_status_only",
-          "currentFixtureCount": 418,
-          "publishedFixtureCount": 418,
+          "currentFixtureCount": 417,
+          "publishedFixtureCount": 417,
           "deferredFixtureCount": 0,
           "deferredFixtureIds": []
         },
         "summary": {
-          "expectedFixtures": 418,
-          "detailFiles": 418,
-          "checked": 418,
-          "issueCount": 0
+          "expectedFixtures": 417,
+          "detailFiles": 417,
+          "checked": 417,
+          "issueCount": 2
         },
-        "issues": []
+        "issues": [
+          {
+            "code": "PUBLISHED_FIXTURE_NOT_IN_CURRENT_UNIVERSE",
+            "ids": [
+              "cid_ven2_atleticobarinas_frontera_20261018",
+              "cid_ven2_puertocabellob_elvigia_20261018"
+            ]
+          },
+          {
+            "code": "CURRENT_FIXTURE_UNACCOUNTED",
+            "ids": [
+              "cid_ven2_atleticobarinas_elvigia_20261018",
+              "cid_ven2_zamora2_frontera_20261018"
+            ]
+          }
+        ]
       }
     }
   },
