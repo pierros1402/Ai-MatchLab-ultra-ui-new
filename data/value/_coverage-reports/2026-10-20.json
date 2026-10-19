@@ -2,8 +2,8 @@
   "ok": true,
   "dayKey": "2026-10-20",
   "season": "2026-2027",
-  "generatedAt": "2026-10-19T22:06:32.373Z",
-  "startedAt": "2026-10-19T22:04:30.319Z",
+  "generatedAt": "2026-10-19T23:03:58.669Z",
+  "startedAt": "2026-10-19T23:00:31.808Z",
   "source": {
     "inputSource": "canonical_fixtures",
     "canonicalMatches": 86,
@@ -21,17 +21,17 @@
     "totalRows": 86,
     "detailsFound": 86,
     "intelligenceOk": 86,
-    "valueReturned": 38,
-    "valueNull": 48,
+    "valueReturned": 36,
+    "valueNull": 50,
     "valueFailed": 0,
-    "minimumRecentSampleNull": 48
+    "minimumRecentSampleNull": 50
   },
   "breakdown": {
     "nullByReason": {
-      "minimum_recent_sample": 48
+      "minimum_recent_sample": 50
     },
     "nullByClass": {
-      "low_recent_sample_prior_backed": 40,
+      "low_recent_sample_prior_backed": 42,
       "low_recent_sample": 4,
       "missing_both_team_history_and_priors": 2,
       "missing_team_history_and_prior": 2
@@ -46,11 +46,13 @@
       "ksa.2": 3,
       "arg.1": 2,
       "arm.2": 1,
+      "bra.1": 1,
       "caf.champions": 1,
       "caf.confed": 1,
       "chi.2": 1,
       "rou.2": 1,
-      "swe.2": 1
+      "swe.2": 1,
+      "uru.1": 1
     },
     "returnedByLeague": {
       "eng.fa": 7,
@@ -62,15 +64,13 @@
       "eng.3": 2,
       "uga.1": 2,
       "arg.1": 1,
-      "bra.1": 1,
       "bra.2": 1,
       "col.1": 1,
       "eng.2": 1,
       "eng.4": 1,
       "gua.1": 1,
       "nir.1": 1,
-      "sco.2": 1,
-      "uru.1": 1
+      "sco.2": 1
     }
   },
   "rows": [
@@ -161,7 +161,7 @@
       "leagueSlug": "arg.1",
       "homeTeam": "Newell's Old Boys",
       "awayTeam": "Central Córdoba (Santiago del Estero)",
-      "status": "PRE",
+      "status": "FIRST_HALF",
       "kickoffUtc": "2026-10-19T22:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -203,7 +203,7 @@
       "leagueSlug": "arg.1",
       "homeTeam": "Sarmiento (Junín)",
       "awayTeam": "Barracas Central",
-      "status": "PRE",
+      "status": "FIRST_HALF",
       "kickoffUtc": "2026-10-19T22:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -446,81 +446,44 @@
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.873,
-        "homeWinScore": 0.5,
-        "drawScore": 0.147,
-        "awayWinScore": 0.353,
-        "over15Score": 0.662,
-        "over25Score": 0.527,
-        "bttsScore": 0.503,
-        "signals": [
-          "home_edge",
-          "priors_applied",
-          "close_strength_gap"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "HOME",
-            "score": 0.5,
-            "gap": 0.14700000000000002,
-            "drawScore": 0.147,
-            "reasons": [
-              "best_below_0.68"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": false,
-            "pick": "Over 1.5",
-            "score": 0.662,
-            "reasons": [
-              "score_below_0.70"
-            ]
-          },
-          "Over / Under 2.5": {
-            "eligible": false,
-            "pick": "Over 2.5",
-            "score": 0.527,
-            "expectedTotalGoals": 2.55,
-            "reasons": [
-              "score_below_0.65",
-              "expected_goals_below_2.75",
-              "missing_goal_support"
-            ]
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.502,
-            "reasons": [
-              "score_below_0.74",
-              "missing_strong_goal_support"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.503,
-            "reasons": [
-              "score_below_0.68",
-              "missing_btts_support"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample_prior_backed",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Corinthians",
+        "awayTeam": "Vitória",
+        "leagueSlug": "bra.1",
+        "fixtureDate": "2026-10-19T23:00:00.000Z",
+        "homeResolvedKey": "Corinthians",
+        "awayResolvedKey": "Vitória",
+        "homeRawSample": 2,
+        "awayRawSample": 2,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": 181,
+        "awayPriorSample": 60,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_bra2_goias_nautico_20261020",
       "leagueSlug": "bra.2",
       "homeTeam": "Goias",
       "awayTeam": "Nautico",
-      "status": "PRE",
+      "status": "FIRST_HALF",
       "kickoffUtc": "2026-10-19T22:30Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -531,15 +494,17 @@
       "nullClass": null,
       "minimumSample": null,
       "valuePreview": {
-        "confidence": 0.899,
-        "homeWinScore": 0.354,
-        "drawScore": 0.129,
-        "awayWinScore": 0.517,
-        "over15Score": 0.716,
-        "over25Score": 0.584,
-        "bttsScore": 0.495,
+        "confidence": 0.82,
+        "homeWinScore": 0.296,
+        "drawScore": 0.13,
+        "awayWinScore": 0.573,
+        "over15Score": 0.692,
+        "over25Score": 0.564,
+        "bttsScore": 0.481,
         "signals": [
           "away_edge",
+          "away_form_decay",
+          "form_influence_reduced",
           "priors_applied",
           "close_strength_gap"
         ],
@@ -547,24 +512,27 @@
           "1X2": {
             "eligible": false,
             "pick": "AWAY",
-            "score": 0.517,
-            "gap": 0.16300000000000003,
-            "drawScore": 0.129,
+            "score": 0.573,
+            "gap": 0.27699999999999997,
+            "drawScore": 0.13,
             "reasons": [
-              "best_below_0.68"
+              "best_below_0.68",
+              "side_negative_form"
             ]
           },
           "Over / Under 1.5": {
-            "eligible": true,
+            "eligible": false,
             "pick": "Over 1.5",
-            "score": 0.716,
-            "reasons": []
+            "score": 0.692,
+            "reasons": [
+              "score_below_0.70"
+            ]
           },
           "Over / Under 2.5": {
             "eligible": false,
             "pick": "Over 2.5",
-            "score": 0.584,
-            "expectedTotalGoals": 2.512,
+            "score": 0.564,
+            "expectedTotalGoals": 2.677,
             "reasons": [
               "score_below_0.65",
               "expected_goals_below_2.75",
@@ -574,7 +542,7 @@
           "Over / Under 3.5": {
             "eligible": false,
             "pick": "Over 3.5",
-            "score": 0.534,
+            "score": 0.52,
             "reasons": [
               "score_below_0.74",
               "missing_strong_goal_support"
@@ -583,7 +551,7 @@
           "BTTS": {
             "eligible": false,
             "pick": "BTTS YES",
-            "score": 0.495,
+            "score": 0.481,
             "reasons": [
               "score_below_0.68",
               "missing_btts_support"
@@ -897,13 +865,13 @@
       "nullClass": null,
       "minimumSample": null,
       "valuePreview": {
-        "confidence": 0.904,
-        "homeWinScore": 0.289,
+        "confidence": 0.876,
+        "homeWinScore": 0.323,
         "drawScore": 0.188,
-        "awayWinScore": 0.524,
-        "over15Score": 0.615,
-        "over25Score": 0.591,
-        "bttsScore": 0.458,
+        "awayWinScore": 0.49,
+        "over15Score": 0.621,
+        "over25Score": 0.595,
+        "bttsScore": 0.461,
         "signals": [
           "away_edge",
           "matchup_goals_history",
@@ -916,8 +884,8 @@
           "1X2": {
             "eligible": false,
             "pick": "AWAY",
-            "score": 0.524,
-            "gap": 0.23500000000000004,
+            "score": 0.49,
+            "gap": 0.16699999999999998,
             "drawScore": 0.188,
             "reasons": [
               "best_below_0.68"
@@ -926,7 +894,7 @@
           "Over / Under 1.5": {
             "eligible": false,
             "pick": "Over 1.5",
-            "score": 0.615,
+            "score": 0.621,
             "reasons": [
               "score_below_0.70"
             ]
@@ -934,8 +902,8 @@
           "Over / Under 2.5": {
             "eligible": false,
             "pick": "Over 2.5",
-            "score": 0.591,
-            "expectedTotalGoals": 2.201,
+            "score": 0.595,
+            "expectedTotalGoals": 2.243,
             "reasons": [
               "score_below_0.65",
               "expected_goals_below_2.75"
@@ -944,7 +912,7 @@
           "Over / Under 3.5": {
             "eligible": false,
             "pick": "Over 3.5",
-            "score": 0.458,
+            "score": 0.463,
             "reasons": [
               "score_below_0.74"
             ]
@@ -952,7 +920,7 @@
           "BTTS": {
             "eligible": false,
             "pick": "BTTS YES",
-            "score": 0.458,
+            "score": 0.461,
             "reasons": [
               "score_below_0.68",
               "missing_btts_support"
@@ -5059,77 +5027,37 @@
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.856,
-        "homeWinScore": 0.397,
-        "drawScore": 0.111,
-        "awayWinScore": 0.492,
-        "over15Score": 0.671,
-        "over25Score": 0.633,
-        "bttsScore": 0.47300000000000003,
-        "signals": [
-          "home_edge_strong",
-          "priors_applied",
-          "ai_context_medium_importance",
-          "close_strength_gap",
-          "home_rest_2"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "AWAY",
-            "score": 0.492,
-            "gap": 0.09499999999999997,
-            "drawScore": 0.111,
-            "reasons": [
-              "best_below_0.68",
-              "gap_below_0.10"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": false,
-            "pick": "Over 1.5",
-            "score": 0.671,
-            "reasons": [
-              "score_below_0.70"
-            ]
-          },
-          "Over / Under 2.5": {
-            "eligible": false,
-            "pick": "Over 2.5",
-            "score": 0.633,
-            "expectedTotalGoals": 2.476,
-            "reasons": [
-              "score_below_0.65",
-              "expected_goals_below_2.75",
-              "missing_goal_support"
-            ]
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.502,
-            "reasons": [
-              "score_below_0.74",
-              "missing_strong_goal_support"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.47300000000000003,
-            "reasons": [
-              "score_below_0.68",
-              "missing_btts_support"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample_prior_backed",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Nacional",
+        "awayTeam": "Deportivo Maldonado",
+        "leagueSlug": "uru.1",
+        "fixtureDate": "2026-10-19T23:00:00.000Z",
+        "homeResolvedKey": "Nacional",
+        "awayResolvedKey": "Deportivo Maldonado",
+        "homeRawSample": 2,
+        "awayRawSample": 2,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": 175,
+        "awayPriorSample": 133,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     }
   ]
 }
