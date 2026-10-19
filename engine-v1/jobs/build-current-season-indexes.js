@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { currentSeason } from "../core/season.js";
+import { filterHistoryCompetitionRows } from '../core/history-competition-provenance.js';
 import { isCalendarYearLeague } from "../core/season-model.js";
 import { canonicalTeamName } from "../storage/team-aliases-db.js";
 import { LEAGUE_NAME_MAP } from "../../workers/_shared/leagues-registry.js";
@@ -1793,8 +1794,8 @@ export async function buildCurrentSeasonIndexes(options = {}) {
     );
   }
 
-  const allMatches =
-    lineage.rows;
+  const competitionValidation = filterHistoryCompetitionRows(lineage.rows);
+  const allMatches = competitionValidation.rows;
 
   console.log(
     `[index] matches: ${allMatches.length} ` +
@@ -1842,6 +1843,7 @@ export async function buildCurrentSeasonIndexes(options = {}) {
   await writeJson(leagueOut, leagueIndex);
   await writeJson(matchupOut, matchupIndex);
   const foundation = writeHistoryIndexFoundationSync(season);
+  await writeJson(path.join(OUT_DIR, 'competition-validation', `${season}.json`), competitionValidation.summary);
 
   console.log("[index] done");
   console.log("[index] wrote:", teamOut);
@@ -1853,6 +1855,7 @@ export async function buildCurrentSeasonIndexes(options = {}) {
     season,
     targetDay: target.targetDay,
     matchCount: allMatches.length,
+    competitionValidation: competitionValidation.summary,
     teamCount: Object.keys(teamIndex).length,
     leagueCount: Object.keys(leagueIndex).length,
     matchupCount: Object.keys(matchupIndex).length,

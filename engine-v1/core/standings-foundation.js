@@ -3,6 +3,7 @@ import fs from "node:fs";
 
 import { resolveDataPath } from "../storage/data-root.js";
 import { canonicalTeamName } from "../storage/team-aliases-db.js";
+import { historyCompetitionDecision } from './history-competition-provenance.js';
 import {
   buildCompetitionFormatRegistryIndex,
   resolveCompetitionFormatContract,
@@ -79,6 +80,7 @@ export function deriveStandingsCanonicalTeamId(slug, canonicalName) {
 export function isStrictStandingsHistoryRow(row, slug = null) {
   if (!row || typeof row !== "object" || Array.isArray(row)) return false;
   if (slug && clean(row.leagueSlug) !== clean(slug)) return false;
+  if (!historyCompetitionDecision(row).accepted) return false;
 
   const status = clean(row.status).toUpperCase();
   if (!["FT", "FINAL", "STATUS_FULL_TIME", "FULL_TIME"].includes(status)) {

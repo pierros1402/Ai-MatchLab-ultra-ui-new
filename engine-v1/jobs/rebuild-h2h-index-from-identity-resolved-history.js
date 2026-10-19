@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { historyCompetitionDecision } from '../core/history-competition-provenance.js';
 import {
   canonicalH2HPairIdentity,
 } from "../core/h2h-canonical-key-policy.js";
@@ -138,6 +139,7 @@ export function buildH2HArtifactsFromHistory({
     skippedWithoutTeams: 0,
     suppressedAliasesResolved: 0,
     duplicateRows: 0,
+    skippedCompetitionContradiction: 0,
   };
 
   for (const { row, fallbackDay } of rowsFromHistoryDocuments(
@@ -145,6 +147,7 @@ export function buildH2HArtifactsFromHistory({
   )) {
     stats.sourceRows++;
     if (!row || typeof row !== "object") continue;
+    if (!historyCompetitionDecision(row).accepted) { stats.skippedCompetitionContradiction++; continue; }
 
     const scoreHome = firstScore(row, [
       "scoreHome",

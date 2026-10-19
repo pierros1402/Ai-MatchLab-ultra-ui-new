@@ -5,6 +5,7 @@ import { historicalFormRowsBeforeKickoff } from "./details-rich-blocks.js";
 import { currentSeason, seasonBefore } from "./season.js";
 import { createCrossCompetitionFormResolver } from "../storage/cross-competition-form-db.js";
 import { readPrematchFinalForm } from "./prematch-verified-final-form.js";
+import { historyCompetitionDecision } from './history-competition-provenance.js';
 
 const NATIONAL_COMPETITIONS = new Set(["fifa.world", "fifa.world.qual", "uefa.nations", "uefa.euro", "uefa.euro.qual", "caf.nations", "afc.asian_cup", "conmebol.copa_america", "concacaf.nations"]);
 
@@ -17,7 +18,7 @@ export function filterPrematchCompetitionContradictions(index) {
   const filtered = Object.fromEntries(Object.entries(index).map(([team, entry]) => [team, { ...entry,
     matches: (entry.matches || []).filter(row => {
       const name = String(row.leagueName || "").trim().replace(/\s+/g, " ");
-      if (row.leagueSlug !== "eng.1" || !/^(Isthmian League Premier Division|Southern League Premier Central|Southern League Premier South)$/i.test(name)) return true;
+      if (historyCompetitionDecision(row).accepted) return true;
       const id = row.canonicalId || row.matchId || row.id || [row.kickoff || row.kickoffUtc, row.homeTeam, row.awayTeam].join("|");
       excluded.set(id, { id, leagueSlug: row.leagueSlug, leagueName: name, homeTeam: row.homeTeam, awayTeam: row.awayTeam,
         reason: "LEGACY_COMPETITION_IDENTITY_CONTRADICTION" });

@@ -14,6 +14,7 @@
 import { LEAGUES_COVERAGE } from "../../workers/_shared/leagues-coverage.js";
 import { leagueName } from "../../workers/_shared/leagues-registry.js";
 import { isDisabledLeague } from "../source-discovery/disabled-leagues.js";
+import { domesticCompetitionNameContradiction } from '../core/competition-name-scope.js';
 
 const MATCH_THRESHOLD = 0.45;
 
@@ -96,6 +97,7 @@ export function resolveSlug(country, leagueName_) {
   const c = normCountry(country);
   const key = `${c}|${String(leagueName_ || "").toLowerCase()}`;
   if (learned.has(key)) return learned.get(key);
+  if (domesticCompetitionNameContradiction(country, leagueName_)) { learned.set(key, null); return null; }
 
   // Never map non-senior-men competitions to our (men's) league slugs.
   if (REJECT_RE.test(String(leagueName_ || ""))) { learned.set(key, null); return null; }

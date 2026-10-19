@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveDataPath } from "../storage/data-root.js";
 import { currentSeason } from "../core/season.js";
+import { historyCompetitionDecision } from '../core/history-competition-provenance.js';
 import { priorArchiveSeasons } from "../core/season-model.js";
 import {
   overlayProductionEvidenceDocumentReadView,
@@ -34,6 +35,7 @@ function safeNum(v, d = 0) {
 
 export function isUsableModelPriorRow(row) {
   if (!row || typeof row !== "object") return false;
+  if (!historyCompetitionDecision(row).accepted) return false;
   if (classifyMatchState(row) !== MATCH_STATE_CLASS.PLAYED_FINAL) return false;
   const rawHome = row.scoreHome;
   const rawAway = row.scoreAway;
