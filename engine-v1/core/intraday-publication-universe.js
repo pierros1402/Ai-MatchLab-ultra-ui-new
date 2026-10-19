@@ -1,3 +1,5 @@
+import { teamNamesMatch } from "./team-identity.js";
+
 function clean(value) {
   return String(value ?? "").trim();
 }
@@ -331,6 +333,52 @@ export function collectAuthoritativeWrongDayPublishedFixtureIds({
   return [
     ...authorizedFixtureIds
   ].sort();
+}
+
+// A deduplicated alias may leave publication only when its already-published
+// survivor retains exact provider lineage. Names alone never authorize removal.
+export function collectMergedPublishedFixtureIds({ dayKey, publishedFixtures = [], currentFixtures = [], publishedDetailIds = [] } = {}) {
+  if (!isDayKey(dayKey)) return [];
+  const published = collectFixtureIds(publishedFixtures);
+  const current = collectFixtureIds(currentFixtures);
+  if (published.duplicateIds.length || current.duplicateIds.length || published.missingIndexes.length || current.missingIndexes.length) return [];
+  const details = new Set(publishedDetailIds);
+  const candidates = new Map();
+  for (const survivor of currentFixtures) {
+    const id = intradayPublicationFixtureId(survivor);
+    for (const alias of Array.isArray(survivor.canonicalAliases) ? survivor.canonicalAliases : []) {
+      const key = clean(alias);
+      const rows = candidates.get(key) || [];
+      rows.push(survivor);
+      candidates.set(key, rows);
+    }
+  }
+  const removed = [];
+  for (const row of publishedFixtures) {
+    const id = intradayPublicationFixtureId(row);
+    if (!id || current.idSet.has(id)) continue;
+    const matches = candidates.get(id) || [];
+    if (matches.length !== 1) continue;
+    const survivor = matches[0];
+    const survivorId = intradayPublicationFixtureId(survivor);
+    if (!published.idSet.has(survivorId) || !details.has(survivorId)) continue;
+    if (clean(row.dayKey) !== dayKey || clean(survivor.dayKey) !== dayKey || !clean(row.leagueSlug) || clean(row.leagueSlug) !== clean(survivor.leagueSlug)) continue;
+    const kickoff = Date.parse(row.kickoffUtc);
+    if (!Number.isFinite(kickoff) || kickoff !== Date.parse(survivor.kickoffUtc)) continue;
+    if (!teamNamesMatch(row.homeTeam, survivor.homeTeam) || !teamNamesMatch(row.awayTeam, survivor.awayTeam)) continue;
+    if (row.hasConflict === true || survivor.hasConflict === true || row.reconcileMeta?.disagreement === true || survivor.reconcileMeta?.disagreement === true) continue;
+    const terminal = value => /^(FT|AET|PEN|FINISHED|STATUS_FINAL|STATUS_FULL_TIME)$/u.test(clean(value).toUpperCase());
+    if (terminal(row.status)) {
+      if (!terminal(survivor.status)) continue;
+      if (["scoreHome", "scoreAway"].some(key => row[key] === null || row[key] === undefined || survivor[key] === null || survivor[key] === undefined || Number(row[key]) !== Number(survivor[key]))) continue;
+    }
+    const providers = Object.entries(row.providerIds || {}).filter(([provider, value]) => ["espn", "flashscore", "sofascore"].includes(provider) && clean(value));
+    if (!providers.length || providers.some(([provider, value]) => clean(survivor.providerIds?.[provider]) !== clean(value))) continue;
+    // Never resolve conflicting known club IDs through a spelling alias.
+    if (["homeGlobalClubId", "awayGlobalClubId"].some(key => row[key] && survivor[key] && row[key] !== survivor[key])) continue;
+    removed.push(id);
+  }
+  return removed.sort();
 }
 
 export function resolveIntradayPublishedUniverse({
