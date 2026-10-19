@@ -18,6 +18,7 @@ import { applyValueContextModifiers } from "./value-context-modifiers.js";
 import { applyValueContextIntegration } from "./value-context-integration.js";
 import { currentSeason } from "./season.js";
 import { sameSquadMarkers } from './team-identity.js';
+import { LEAGUES_COVERAGE } from '../../workers/_shared/leagues-coverage.js';
 import {
   overlayProductionEvidenceDocumentReadView,
 } from "./production-evidence-identity-overlay.js";
@@ -600,7 +601,36 @@ function entryLeagueScore(entry, leagueSlug) {
 // ------------------------------------------------------------
 // RESOLUTION HELPERS
 // ------------------------------------------------------------
-function resolveTeamEntry(teamFormIndex, leagueSlug, teamName) {
+const valueFormCompetitions = new Map(LEAGUES_COVERAGE.map(meta => [meta.slug,meta]));
+
+export function scopeValueFormEntry(entry, teamKey, leagueSlug, globalClubId = null) {
+  const fixture = valueFormCompetitions.get(leagueSlug);
+  const rows = extractRecentMatches(entry);
+  const domestic = meta => meta && ['league','cup'].includes(meta.type) && meta.country;
+  const countries = new Set(rows.map(row => valueFormCompetitions.get(row.leagueSlug)).filter(domestic).map(meta => meta.country));
+  const selected = rows.filter(row => {
+    const home = normalizeName(row.homeTeam) === normalizeName(teamKey);
+    const away = normalizeName(row.awayTeam) === normalizeName(teamKey);
+    if (home === away) return false;
+    const side = home ? 'home' : 'away';
+    const observed = row[`${side}GlobalClubId`] || row.productionIdentityBinding?.[`${side}GlobalClubId`];
+    if (globalClubId && observed) return globalClubId === observed;
+    const source = valueFormCompetitions.get(row.leagueSlug);
+    // Same-name clubs in different countries are not interchangeable. Match
+    // the existing country-bound cross-competition evidence policy.
+    if (domestic(fixture)) return domestic(source) && source.country === fixture.country;
+    if (fixture?.type === 'continental') return countries.size === 1 && domestic(source) && countries.has(source.country);
+    return row.leagueSlug === leagueSlug;
+  });
+  const selectedIds = new Set(selected.map(row => {
+    const side = normalizeName(row.homeTeam) === normalizeName(teamKey) ? 'home' : 'away';
+    return row[`${side}GlobalClubId`] || row.productionIdentityBinding?.[`${side}GlobalClubId`];
+  }).filter(Boolean));
+  const field = ['lastMatches','recentMatches','matches','form','history'].find(key => Array.isArray(entry?.[key])) || 'matches';
+  return { ...entry, [field]:!globalClubId && selectedIds.size > 1 ? [] : selected };
+}
+
+function resolveTeamEntry(teamFormIndex, leagueSlug, teamName, globalClubId = null) {
   const entries = Object.entries(teamFormIndex || {});
   if (!entries.length) {
     return { key: teamName, value: null, leagueKey: leagueSlug, score: 0 };
@@ -612,13 +642,16 @@ function resolveTeamEntry(teamFormIndex, leagueSlug, teamName) {
     const nameScore = scoreTeamNameMatch(teamName, teamKey);
     if (nameScore < 0.45) continue;
 
-    const leagueScore = entryLeagueScore(value, leagueSlug);
+    const scopedValue = scopeValueFormEntry(value, teamKey, leagueSlug, globalClubId);
+    if (!extractRecentMatches(scopedValue).length) continue;
+
+    const leagueScore = entryLeagueScore(scopedValue, leagueSlug);
     const totalScore = (nameScore * 0.82) + (leagueScore * 0.18);
 
     if (!best || totalScore > best.totalScore) {
       best = {
         key: teamKey,
-        value,
+        value: scopedValue,
         leagueKey: leagueSlug,
         totalScore
       };
@@ -1984,8 +2017,8 @@ export function diagnoseValueRecentSample(input, indexes, season = DEFAULT_SEASO
   const fixtureDate = parseDateSafe(pickFirstDefined(input?.kickoff, input?.kickoffUtc, input?.date));
   if (!(fixtureDate instanceof Date)) throw new Error('invalid_recent_sample_fixture_date');
   const leagueSlug = String(input.leagueSlug || '');
-  const home = resolveTeamEntry(indexes.teamForm, leagueSlug, input.homeTeam);
-  const away = resolveTeamEntry(indexes.teamForm, leagueSlug, input.awayTeam);
+  const home = resolveTeamEntry(indexes.teamForm, leagueSlug, input.homeTeam, input.homeGlobalClubId || input.productionIdentityBinding?.homeGlobalClubId);
+  const away = resolveTeamEntry(indexes.teamForm, leagueSlug, input.awayTeam, input.awayGlobalClubId || input.productionIdentityBinding?.awayGlobalClubId);
   const select = resolved => selectValidFormMatches(extractRecentMatches(resolved.value), resolved.key, 'all', season, fixtureDate, FORM_WINDOW);
   const h = select(home), a = select(away);
   const gate = evaluateMinimumRecentSampleGate({rawHomeMetrics:{sample:h.sample},rawAwayMetrics:{sample:a.sample}});
@@ -2027,8 +2060,8 @@ export async function evaluateMatchValue(input, opts = {}) {
     throw new Error("evaluateMatchValue: missing/invalid fixture date");
   }
 
-  const homeResolved = resolveTeamEntry(indexes.teamForm, leagueSlug, homeTeam);
-  const awayResolved = resolveTeamEntry(indexes.teamForm, leagueSlug, awayTeam);
+  const homeResolved = resolveTeamEntry(indexes.teamForm, leagueSlug, homeTeam, input.homeGlobalClubId || input.productionIdentityBinding?.homeGlobalClubId);
+  const awayResolved = resolveTeamEntry(indexes.teamForm, leagueSlug, awayTeam, input.awayGlobalClubId || input.productionIdentityBinding?.awayGlobalClubId);
   const leagueResolved = resolveLeagueEntry(indexes.leagueForm, leagueSlug);
   const matchupResolved = resolveMatchupEntry(indexes.matchups, homeTeam, awayTeam, leagueSlug);
 

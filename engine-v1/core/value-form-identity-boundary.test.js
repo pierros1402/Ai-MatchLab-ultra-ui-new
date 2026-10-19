@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {scoreTeamNameMatch,evaluateMatchValue,diagnoseValueRecentSample} from './value-engine-v1.js';
+import {scoreTeamNameMatch,evaluateMatchValue,diagnoseValueRecentSample,scopeValueFormEntry} from './value-engine-v1.js';
 
 test('a character substring cannot bind Estudiantes to UDI 19',()=>{
  assert.equal(scoreTeamNameMatch('Estudiantes (Buenos Aires)','UDI 19'),0);
@@ -29,4 +29,26 @@ test('read-only sample census has the same raw gate and identities as the evalua
  assert.equal(census.ok,false);assert.equal(census.homeRawSample,value.minimumRecentSample.homeRawSample);
  assert.equal(census.awayRawSample,value.minimumRecentSample.awayRawSample);assert.equal(census.awayResolvedKey,value.minimumRecentSample.awayResolvedKey);
  assert.equal(census.predictionCreated,false);
+});
+
+test('Liverpool Uruguay and River Plate Argentina cannot inherit namesake domestic results',()=>{
+ for(const [team,league,foreign] of [['Liverpool','uru.1','eng.1'],['River Plate','arg.1','uru.2']]){
+  const entry={matches:[{id:'local',leagueSlug:league,homeTeam:team,awayTeam:'Other'},
+    {id:'foreign',leagueSlug:foreign,homeTeam:'Other',awayTeam:team}]};
+  assert.deepEqual(scopeValueFormEntry(entry,team,league).matches.map(r=>r.id),['local']);
+  assert.equal(entry.matches.length,2);
+ }
+});
+
+test('explicit club IDs are a cross-competition proof and a mismatch veto',()=>{
+ const entry={matches:[{id:'continental',leagueSlug:'uefa.champions',homeTeam:'Liverpool',awayTeam:'Other',homeGlobalClubId:'english-club'},
+  {id:'wrong-id',leagueSlug:'eng.1',homeTeam:'Liverpool',awayTeam:'Other',homeGlobalClubId:'different-club'}]};
+ assert.deepEqual(scopeValueFormEntry(entry,'Liverpool','eng.1','english-club').matches.map(r=>r.id),['continental']);
+ assert.deepEqual(scopeValueFormEntry(entry,'Liverpool','uru.1','uruguayan-club').matches,[]);
+});
+
+test('continental same-name ambiguity requires explicit club identity',()=>{
+ const entry={matches:[{id:'english',leagueSlug:'eng.1',homeTeam:'Liverpool',awayTeam:'Other'},
+  {id:'uruguayan',leagueSlug:'uru.1',homeTeam:'Liverpool',awayTeam:'Other'}]};
+ assert.deepEqual(scopeValueFormEntry(entry,'Liverpool','uefa.champions').matches,[]);
 });
