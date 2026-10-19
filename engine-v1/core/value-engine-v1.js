@@ -17,6 +17,7 @@ import { resolveDataPath } from "../storage/data-root.js";
 import { applyValueContextModifiers } from "./value-context-modifiers.js";
 import { applyValueContextIntegration } from "./value-context-integration.js";
 import { currentSeason } from "./season.js";
+import { sameSquadMarkers } from './team-identity.js';
 import {
   overlayProductionEvidenceDocumentReadView,
 } from "./production-evidence-identity-overlay.js";
@@ -351,7 +352,8 @@ function isSubsetTokenMatch(aTokens, bTokens) {
   return aInB || bInA;
 }
 
-function scoreTeamNameMatch(inputName, candidateName) {
+export function scoreTeamNameMatch(inputName, candidateName) {
+  if (!sameSquadMarkers(inputName, candidateName)) return 0;
   const inputKey = canonicalTeamKey(inputName);
   const candKey = canonicalTeamKey(candidateName);
 
@@ -367,10 +369,8 @@ function scoreTeamNameMatch(inputName, candidateName) {
 
   const overlap = tokenOverlapScore(inputTokens, candTokens);
 
-  if (inputKey.includes(candKey) || candKey.includes(inputKey)) {
-    return Math.max(overlap, 0.88);
-  }
-
+  // Character substrings are not club identities: "udi" occurs inside
+  // "estudiantes", but UDI 19 is not Estudiantes (Buenos Aires).
   return overlap;
 }
 
@@ -1978,6 +1978,26 @@ function buildSignals({
 // ------------------------------------------------------------
 // PUBLIC EVALUATOR
 // ------------------------------------------------------------
+// Read-only census of the SAME raw observation selection used below. This
+// returns identities and sample counts, never a market score or prediction.
+export function diagnoseValueRecentSample(input, indexes, season = DEFAULT_SEASON) {
+  const fixtureDate = parseDateSafe(pickFirstDefined(input?.kickoff, input?.kickoffUtc, input?.date));
+  if (!(fixtureDate instanceof Date)) throw new Error('invalid_recent_sample_fixture_date');
+  const leagueSlug = String(input.leagueSlug || '');
+  const home = resolveTeamEntry(indexes.teamForm, leagueSlug, input.homeTeam);
+  const away = resolveTeamEntry(indexes.teamForm, leagueSlug, input.awayTeam);
+  const select = resolved => selectValidFormMatches(extractRecentMatches(resolved.value), resolved.key, 'all', season, fixtureDate, FORM_WINDOW);
+  const h = select(home), a = select(away);
+  const gate = evaluateMinimumRecentSampleGate({rawHomeMetrics:{sample:h.sample},rawAwayMetrics:{sample:a.sample}});
+  const evidence = selection => selection.selected.map(row => ({
+    canonicalId:row.canonicalId || row.matchId || row.id, leagueSlug:row.leagueSlug,
+    homeTeam:row.homeTeam, awayTeam:row.awayTeam, kickoff:row.kickoff || row.kickoffUtc,
+    source:row.source, verifiedFinalGeneratedAt:row.verifiedFinalGeneratedAt || null
+  }));
+  return {...gate, formMaxAgeDays:FORM_MAX_AGE_DAYS, homeResolvedKey:home.key, awayResolvedKey:away.key,
+    homeSelected:evidence(h), awaySelected:evidence(a), predictionCreated:false};
+}
+
 export async function evaluateMatchValue(input, opts = {}) {
   const season = String(opts.season || input?.season || DEFAULT_SEASON);
   const indexes = opts.indexes || await loadValueIndexes(season);
