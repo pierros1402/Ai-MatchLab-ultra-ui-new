@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-10-19",
-  "generatedAt": "2026-10-18T23:48:39.027Z",
+  "generatedAt": "2026-10-19T00:13:18.862Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,7 +18,7 @@
   "inputs": {
     "fixturesPath": "data/canonical-fixtures/2026-10-19",
     "finalResultsDir": "data/final-results/2026-10-19",
-    "verifiedFinalResults": 0,
+    "verifiedFinalResults": 17,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-10-19",
     "canonicalContradictionsRejected": [],
     "canonicalIdentityAmbiguities": [],
@@ -30,7 +30,7 @@
       "validPicks": 0,
       "orphanPicks": 0,
       "ambiguousPicks": 0,
-      "canonicalFixtures": 109,
+      "canonicalFixtures": 108,
       "ambiguousCanonicalAliases": 0
     },
     "planAFreeze": null,
@@ -178,61 +178,47 @@
     "id": "plan-u1",
     "label": "Ενιαίο πλάνο",
     "date": "2026-10-19",
-    "status": "AVAILABLE",
-    "availability": "available",
-    "publicationMode": "production",
-    "productionPublication": true,
-    "policyId": "unified-public-u1-incremental-v1",
-    "generatedAt": "2026-10-18T23:48:38.677Z",
+    "status": "NOT_AVAILABLE",
+    "availability": "not_available",
+    "reason": "unified_results_invalid",
+    "activationDay": "2026-10-18",
     "count": 0,
     "picks": [],
-    "analysisComplete": false,
-    "upstreamCoverage": "INCOMPLETE",
-    "zeroPicksCertified": false,
-    "dataReadiness": {
-      "status": "PARTIAL",
-      "complete": false,
-      "checkedAt": "2026-10-18T23:48:40.368Z",
-      "fixtures": 109,
-      "applicable": 109,
-      "ready": 29,
-      "insufficient": 80,
-      "byReason": {
-        "minimum_recent_sample": 79,
-        "missing_model_assessment": 13
-      }
-    },
-    "records": [
-      {
-        "signature": "88edd6e4ac91ce04067fcba976f5b8f8323f07070412846f039e6c2eded19d2f",
-        "generatedAt": "2026-10-18T23:47:42.488Z"
-      }
-    ],
-    "conflicts": [],
-    "combinedCalibratedProbability": null,
-    "performanceCertified": false,
-    "sourcePolicy": "paired_variant_agreement_each_score_at_least_0.75",
     "summary": {
       "picks": 0,
-      "uniqueMatches": 0,
       "settled": 0,
       "wins": 0,
       "losses": 0,
-      "voids": 0,
       "unresolved": 0,
       "hitRate": null
     },
-    "projectionSignature": "35924b4f5bd27de43be68f1f39b669dfcfec47421b5e5ad1671e0370d3d09367"
+    "analysisComplete": false,
+    "dataReadiness": {
+      "status": "INSUFFICIENT_DATA",
+      "complete": false,
+      "checkedAt": "2026-10-19T00:13:19.925Z",
+      "fixtures": 108,
+      "applicable": 108,
+      "ready": 0,
+      "insufficient": 108,
+      "byReason": {
+        "coverage_missing_or_wrong_universe": 108,
+        "details_foundation_not_verified": 108,
+        "minimum_recent_sample": 78,
+        "missing_model_assessment": 13
+      }
+    },
+    "zeroPicksCertified": false
   },
   "dataReadiness": {
     "schema": "ai-matchlab.value-data-readiness.v1",
     "date": "2026-10-19",
-    "generatedAt": "2026-10-18T23:48:40.368Z",
+    "generatedAt": "2026-10-19T00:13:19.925Z",
     "fixtureUniverse": {
       "schema": "ai-matchlab.value-fixture-universe.v1",
       "source": "canonical_fixtures",
-      "count": 109,
-      "hash": "e4e49a42bbd2820cf5b1418122fd1206fd26742ec874c3c2c006c63db819b116",
+      "count": 108,
+      "hash": "3b8211d98f06c825822af0fcc03cbdd1f426b5efae1ce41f870cf28aa12e8077",
       "canonicalIds": [
         "cid_arg1_belgranocordoba_riverplate_20261019",
         "cid_arg1_estudianteslaplata_sanlorenzo_20261019",
@@ -292,7 +278,6 @@
         "cid_ita1_parma_torino_20261019",
         "cid_kos1_ballkani_prishtina_20261019",
         "cid_kos1_dukagjini_drenica_20261019",
-        "cid_ksa1_abha_alkholood_20261019",
         "cid_ksa1_alfayha_alahli_20261019",
         "cid_ksa1_alhilal_alhazem_20261019",
         "cid_ksa1_alshabab_alfaisaly_20261019",
@@ -348,14 +333,16 @@
     "certifies": "configured_statistical_value_required_inputs_only",
     "allLeagueDataCertified": false,
     "complete": false,
-    "status": "PARTIAL",
+    "status": "INSUFFICIENT_DATA",
     "summary": {
-      "fixtures": 109,
-      "applicable": 109,
-      "ready": 29,
-      "insufficient": 80,
+      "fixtures": 108,
+      "applicable": 108,
+      "ready": 0,
+      "insufficient": 108,
       "byReason": {
-        "minimum_recent_sample": 79,
+        "coverage_missing_or_wrong_universe": 108,
+        "details_foundation_not_verified": 108,
+        "minimum_recent_sample": 78,
         "missing_model_assessment": 13
       }
     },
@@ -364,8 +351,11 @@
         "canonicalId": "cid_usa2_birmingham_loudoun_20261019",
         "leagueSlug": "usa.2",
         "kickoffUtc": "2026-10-18T21:00:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -384,6 +374,8 @@
         "kickoffUtc": "2026-10-18T21:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -425,6 +417,8 @@
         "kickoffUtc": "2026-10-18T21:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -464,8 +458,11 @@
         "canonicalId": "cid_arg2_godoycruzantoniotomba_estudiantesbuenosaires_20261019",
         "leagueSlug": "arg.2",
         "kickoffUtc": "2026-10-18T21:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -482,8 +479,11 @@
         "canonicalId": "cid_arg2_sanmartinsanjuan_temperley_20261019",
         "leagueSlug": "arg.2",
         "kickoffUtc": "2026-10-18T21:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -500,8 +500,11 @@
         "canonicalId": "cid_bra2_vilanova_novorizontino_20261019",
         "leagueSlug": "bra.2",
         "kickoffUtc": "2026-10-18T21:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -518,8 +521,11 @@
         "canonicalId": "cid_col1_atleticobucaramanga_americacali_20261019",
         "leagueSlug": "col.1",
         "kickoffUtc": "2026-10-18T21:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -532,8 +538,11 @@
         "canonicalId": "cid_gua1_deportivomixco_cobanimperial_20261019",
         "leagueSlug": "gua.1",
         "kickoffUtc": "2026-10-18T21:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -552,6 +561,8 @@
         "kickoffUtc": "2026-10-18T21:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -596,8 +607,11 @@
         "canonicalId": "cid_slv1_atleticobalboa_aguila_20261019",
         "leagueSlug": "slv.1",
         "kickoffUtc": "2026-10-18T21:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -614,8 +628,11 @@
         "canonicalId": "cid_usa1_cincinnati_columbuscrew_20261019",
         "leagueSlug": "usa.1",
         "kickoffUtc": "2026-10-18T21:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -634,6 +651,8 @@
         "kickoffUtc": "2026-10-18T21:15Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -677,8 +696,11 @@
         "canonicalId": "cid_arg2_sanmartintucuman_midland_20261019",
         "leagueSlug": "arg.2",
         "kickoffUtc": "2026-10-18T21:30Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -697,6 +719,8 @@
         "kickoffUtc": "2026-10-18T21:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -742,6 +766,8 @@
         "kickoffUtc": "2026-10-18T21:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -785,8 +811,11 @@
         "canonicalId": "cid_uru1_liverpool_penarol_20261019",
         "leagueSlug": "uru.1",
         "kickoffUtc": "2026-10-18T21:30Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -805,6 +834,8 @@
         "kickoffUtc": "2026-10-18T22:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -848,8 +879,11 @@
         "canonicalId": "cid_par1_sportivoluqueno_sportivosanlorenzo_20261019",
         "leagueSlug": "par.1",
         "kickoffUtc": "2026-10-18T22:20Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -868,6 +902,8 @@
         "kickoffUtc": "2026-10-18T22:20Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -911,8 +947,11 @@
         "canonicalId": "cid_ven2_barquisimeto_lara_20261019",
         "leagueSlug": "ven.2",
         "kickoffUtc": "2026-10-18T22:30:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -929,8 +968,11 @@
         "canonicalId": "cid_bra1_remo_redbullbragantino_20261019",
         "leagueSlug": "bra.1",
         "kickoffUtc": "2026-10-18T22:30Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -949,6 +991,8 @@
         "kickoffUtc": "2026-10-18T23:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -992,8 +1036,11 @@
         "canonicalId": "cid_col1_llaneros_independientesantafe_20261019",
         "leagueSlug": "col.1",
         "kickoffUtc": "2026-10-18T23:05Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1008,6 +1055,8 @@
         "kickoffUtc": "2026-10-18T23:15Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1049,6 +1098,8 @@
         "kickoffUtc": "2026-10-18T23:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1094,6 +1145,8 @@
         "kickoffUtc": "2026-10-18T23:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1137,8 +1190,11 @@
         "canonicalId": "cid_slv1_fas_platense_20261019",
         "leagueSlug": "slv.1",
         "kickoffUtc": "2026-10-18T23:30Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1155,8 +1211,11 @@
         "canonicalId": "cid_gua1_municipal_guastatoya_20261019",
         "leagueSlug": "gua.1",
         "kickoffUtc": "2026-10-19T00:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1175,6 +1234,8 @@
         "kickoffUtc": "2026-10-19T01:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1214,8 +1275,11 @@
         "canonicalId": "cid_col1_deportivocali_atleticojunior_20261019",
         "leagueSlug": "col.1",
         "kickoffUtc": "2026-10-19T01:10Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1228,8 +1292,11 @@
         "canonicalId": "cid_gua1_marquense_suchitepequez_20261019",
         "leagueSlug": "gua.1",
         "kickoffUtc": "2026-10-19T02:10Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1248,6 +1315,8 @@
         "kickoffUtc": "2026-10-19T10:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1291,8 +1360,11 @@
         "canonicalId": "cid_arm2_araratarmenia2_araratyerevan2_20261019",
         "leagueSlug": "arm.2",
         "kickoffUtc": "2026-10-19T11:30:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1309,8 +1381,11 @@
         "canonicalId": "cid_gre2_nikivolos_panionios_20261019",
         "leagueSlug": "gre.2",
         "kickoffUtc": "2026-10-19T11:45:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1327,8 +1402,11 @@
         "canonicalId": "cid_gre2_paokb_kalamaria_20261019",
         "leagueSlug": "gre.2",
         "kickoffUtc": "2026-10-19T12:00:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1345,8 +1423,11 @@
         "canonicalId": "cid_kos1_ballkani_prishtina_20261019",
         "leagueSlug": "kos.1",
         "kickoffUtc": "2026-10-19T12:00:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1365,6 +1446,8 @@
         "kickoffUtc": "2026-10-19T12:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1410,6 +1493,8 @@
         "kickoffUtc": "2026-10-19T12:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -1456,6 +1541,8 @@
         "kickoffUtc": "2026-10-19T12:30:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1501,6 +1588,8 @@
         "kickoffUtc": "2026-10-19T13:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1546,6 +1635,8 @@
         "kickoffUtc": "2026-10-19T13:30:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -1592,6 +1683,8 @@
         "kickoffUtc": "2026-10-19T13:30:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -1638,6 +1731,8 @@
         "kickoffUtc": "2026-10-19T13:30:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -1684,6 +1779,8 @@
         "kickoffUtc": "2026-10-19T13:30:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -1730,6 +1827,8 @@
         "kickoffUtc": "2026-10-19T13:30:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -1776,6 +1875,8 @@
         "kickoffUtc": "2026-10-19T13:30:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -1822,6 +1923,8 @@
         "kickoffUtc": "2026-10-19T13:30:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -1868,6 +1971,8 @@
         "kickoffUtc": "2026-10-19T14:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1913,6 +2018,8 @@
         "kickoffUtc": "2026-10-19T14:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1958,6 +2065,8 @@
         "kickoffUtc": "2026-10-19T14:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2003,6 +2112,8 @@
         "kickoffUtc": "2026-10-19T14:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2046,8 +2157,11 @@
         "canonicalId": "cid_arm2_urartu2_andranik_20261019",
         "leagueSlug": "arm.2",
         "kickoffUtc": "2026-10-19T15:00:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2066,6 +2180,8 @@
         "kickoffUtc": "2026-10-19T15:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2111,6 +2227,8 @@
         "kickoffUtc": "2026-10-19T15:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -2157,6 +2275,8 @@
         "kickoffUtc": "2026-10-19T15:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2202,6 +2322,8 @@
         "kickoffUtc": "2026-10-19T15:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2247,6 +2369,8 @@
         "kickoffUtc": "2026-10-19T15:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2292,6 +2416,8 @@
         "kickoffUtc": "2026-10-19T15:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2337,6 +2463,8 @@
         "kickoffUtc": "2026-10-19T15:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2380,8 +2508,11 @@
         "canonicalId": "cid_svk2_presov_zilinab_20261019",
         "leagueSlug": "svk.2",
         "kickoffUtc": "2026-10-19T15:00:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2400,6 +2531,8 @@
         "kickoffUtc": "2026-10-19T15:05:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2445,6 +2578,8 @@
         "kickoffUtc": "2026-10-19T15:05Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2490,6 +2625,8 @@
         "kickoffUtc": "2026-10-19T15:20:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2530,56 +2667,13 @@
         "predictionCreated": false
       },
       {
-        "canonicalId": "cid_ksa1_abha_alkholood_20261019",
-        "leagueSlug": "ksa.1",
-        "kickoffUtc": "2026-10-19T15:20Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "modelAssessmentAvailable": true,
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Abha",
-          "awayTeam": "Al Kholood",
-          "leagueSlug": "ksa.1",
-          "fixtureDate": "2026-10-19T15:20:00.000Z",
-          "homeResolvedKey": "Abha",
-          "awayResolvedKey": "Al Kholood",
-          "homeRawSample": 2,
-          "awayRawSample": 2,
-          "homeBlendedSample": 5,
-          "awayBlendedSample": 5,
-          "homeSideRawSample": 0,
-          "awaySideRawSample": 2,
-          "homeSideBlendedSample": 3,
-          "awaySideBlendedSample": 5,
-          "homePriorSample": 94,
-          "awayPriorSample": 68,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        },
-        "standings": {
-          "usable": false,
-          "reasons": [
-            "CONSUMER_TABLE_EMPTY",
-            "CONTRACT_NOT_PASS",
-            "FOUNDATION_NOT_PASS"
-          ]
-        },
-        "predictionCreated": false
-      },
-      {
         "canonicalId": "cid_ltu1_suduva_kaunozalgiris_20261019",
         "leagueSlug": "ltu.1",
         "kickoffUtc": "2026-10-19T15:45:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2625,6 +2719,8 @@
         "kickoffUtc": "2026-10-19T16:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -2671,6 +2767,8 @@
         "kickoffUtc": "2026-10-19T16:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2716,6 +2814,8 @@
         "kickoffUtc": "2026-10-19T16:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2757,6 +2857,8 @@
         "kickoffUtc": "2026-10-19T16:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2798,6 +2900,8 @@
         "kickoffUtc": "2026-10-19T16:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2839,6 +2943,8 @@
         "kickoffUtc": "2026-10-19T16:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2884,6 +2990,8 @@
         "kickoffUtc": "2026-10-19T16:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2929,6 +3037,8 @@
         "kickoffUtc": "2026-10-19T16:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2974,6 +3084,8 @@
         "kickoffUtc": "2026-10-19T16:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3017,8 +3129,11 @@
         "canonicalId": "cid_srb2_spsubotica_borac1926_20261019",
         "leagueSlug": "srb.2",
         "kickoffUtc": "2026-10-19T16:00:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -3037,6 +3152,8 @@
         "kickoffUtc": "2026-10-19T16:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3082,6 +3199,8 @@
         "kickoffUtc": "2026-10-19T16:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3127,6 +3246,8 @@
         "kickoffUtc": "2026-10-19T16:50:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3172,6 +3293,8 @@
         "kickoffUtc": "2026-10-19T17:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3217,6 +3340,8 @@
         "kickoffUtc": "2026-10-19T17:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3262,6 +3387,8 @@
         "kickoffUtc": "2026-10-19T17:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3307,6 +3434,8 @@
         "kickoffUtc": "2026-10-19T17:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3352,6 +3481,8 @@
         "kickoffUtc": "2026-10-19T17:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3397,6 +3528,8 @@
         "kickoffUtc": "2026-10-19T17:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3442,6 +3575,8 @@
         "kickoffUtc": "2026-10-19T17:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3487,6 +3622,8 @@
         "kickoffUtc": "2026-10-19T17:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3532,6 +3669,8 @@
         "kickoffUtc": "2026-10-19T17:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3577,6 +3716,8 @@
         "kickoffUtc": "2026-10-19T17:05:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3622,6 +3763,8 @@
         "kickoffUtc": "2026-10-19T17:30:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3667,6 +3810,8 @@
         "kickoffUtc": "2026-10-19T17:30:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3712,6 +3857,8 @@
         "kickoffUtc": "2026-10-19T18:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3757,6 +3904,8 @@
         "kickoffUtc": "2026-10-19T18:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3802,6 +3951,8 @@
         "kickoffUtc": "2026-10-19T18:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3847,6 +3998,8 @@
         "kickoffUtc": "2026-10-19T18:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3892,6 +4045,8 @@
         "kickoffUtc": "2026-10-19T18:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3937,6 +4092,8 @@
         "kickoffUtc": "2026-10-19T18:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3980,8 +4137,11 @@
         "canonicalId": "cid_esp2_celtavigob_tenerife_20261019",
         "leagueSlug": "esp.2",
         "kickoffUtc": "2026-10-19T18:30:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -4000,6 +4160,8 @@
         "kickoffUtc": "2026-10-19T18:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -4045,6 +4207,8 @@
         "kickoffUtc": "2026-10-19T18:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "missing_model_assessment"
         ],
         "modelAssessmentAvailable": false,
@@ -4063,8 +4227,11 @@
         "canonicalId": "cid_irl1_waterford_galway_20261019",
         "leagueSlug": "irl.1",
         "kickoffUtc": "2026-10-19T18:45:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -4083,6 +4250,8 @@
         "kickoffUtc": "2026-10-19T18:45Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -4128,6 +4297,8 @@
         "kickoffUtc": "2026-10-19T18:45Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -4171,8 +4342,11 @@
         "canonicalId": "cid_col2_realsantander_leones_20261019",
         "leagueSlug": "col.2",
         "kickoffUtc": "2026-10-19T19:00:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -4189,8 +4363,11 @@
         "canonicalId": "cid_irl1_derrycity_stpatricks_20261019",
         "leagueSlug": "irl.1",
         "kickoffUtc": "2026-10-19T19:00:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -4209,6 +4386,8 @@
         "kickoffUtc": "2026-10-19T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4255,6 +4434,8 @@
         "kickoffUtc": "2026-10-19T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -4296,6 +4477,8 @@
         "kickoffUtc": "2026-10-19T19:15:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -4341,6 +4524,8 @@
         "kickoffUtc": "2026-10-19T19:15Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -4386,6 +4571,8 @@
         "kickoffUtc": "2026-10-19T20:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
