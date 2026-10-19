@@ -7,6 +7,7 @@ const schema = "ai-matchlab.value-decision-input-evidence.v1";
 const digest = bytes => crypto.createHash("sha256").update(bytes).digest("hex");
 const codeFiles = [
   "../core/build-value-day.js", "../core/value-engine-v1.js", "../core/build-match-intelligence.js",
+  "../core/prospective-value-form-view.js", "../core/prematch-verified-final-form.js", "../core/history-competition-provenance.js",
   "../core/opponent-strength-adjusted-form.js", "../core/opponent-strength-profile-loader.js",
   "../core/plan-b-canonical-membership.js", "../core/plan-b-evaluation-accounting.js",
   "../jobs/derive-value-from-odds.js", "./value-decision-evidence.js"

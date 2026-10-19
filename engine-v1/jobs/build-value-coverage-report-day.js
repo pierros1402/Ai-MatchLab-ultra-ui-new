@@ -295,6 +295,10 @@ export async function buildValueCoverageReportDay(dayKey = athensDayKey(), optio
 
   const rows = [];
   const startedAt = new Date().toISOString();
+  const diagnosticNow = Date.parse(startedAt);
+  const prospectiveIndexes = playable.some(match => Date.parse(match.kickoffUtc) > diagnosticNow)
+    ? (await import('../core/prospective-value-form-view.js')).prospectiveValueFormView(indexes, season, diagnosticNow)
+    : indexes;
 
   for (const match of playable) {
     const details = readDetailsForValueCoverage(dayKey, match.matchId);
@@ -335,7 +339,7 @@ export async function buildValueCoverageReportDay(dayKey = athensDayKey(), optio
         },
         {
           season,
-          indexes,
+          indexes: Date.parse(match.kickoffUtc) > diagnosticNow ? prospectiveIndexes : indexes,
           priors,
           returnNullDiagnostics: true
         }
