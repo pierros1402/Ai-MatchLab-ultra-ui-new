@@ -2,13 +2,48 @@
   "dayKey": "2026-10-19",
   "leagueSlug": "rus.1",
   "leagueName": "Russian Premier League",
-  "updatedAt": "2026-10-19T17:49:16.462Z",
+  "updatedAt": "2026-10-19T18:46:15.806Z",
   "count": 1,
   "sourceMeta": {
-    "acquisitionProvider": "flashscore",
+    "acquisitionProvider": "espn_direct_league_status",
     "requestedLeagueSlug": "rus.1",
-    "requestedDayKey": "2026-11-03",
-    "mergedAt": "2026-10-19T17:49:16.462Z"
+    "requestedDayKey": "2026-10-19",
+    "providerFetchSlugs": [
+      "rus.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 0,
+      "matches": 0,
+      "fetches": []
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-10-19T18:46:15.806Z",
+    "mode": "targeted_live_status_refresh",
+    "authoritativeTerminalOverlayPromotion": {
+      "schema": "ai-matchlab.authoritative-terminal-overlay-promotion.v1",
+      "promotedAt": "2026-10-19T18:46:41.084Z",
+      "exactProviderIdOnly": true,
+      "orderedTeamIdentityRequired": true,
+      "athensDayRequired": true,
+      "explicitTerminalStatusRequired": true,
+      "numericScoreRequired": true,
+      "heuristicIdentity": false
+    }
   },
   "fixtures": [
     {
@@ -32,15 +67,41 @@
       "awayTeam": "Gazovik Orenburg",
       "venue": "Arena Khimki",
       "firstSeenAt": "2026-10-16T21:55:21.095Z",
-      "lastSeenAt": "2026-10-19T17:49:16.462Z",
+      "lastSeenAt": "2026-10-19T18:46:15.806Z",
       "canonicalAliases": [
         "cid_rus1_rodinamoscow_orenburg_20261019"
       ],
-      "status": "HALF_TIME",
-      "rawStatus": "STATUS_HALFTIME",
-      "minute": "45'+4'",
-      "scoreHome": 1,
-      "scoreAway": 1
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+5'",
+      "scoreHome": 2,
+      "scoreAway": 2,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
+      "penalties": null,
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-10-19T18:46:41.084Z",
+        "provider": "espn",
+        "providerMatchId": "401879833",
+        "dayKey": "2026-10-19",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 2,
+          "scoreAway": 2
+        }
+      }
     }
   ]
 }
