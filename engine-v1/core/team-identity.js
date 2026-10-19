@@ -62,7 +62,16 @@ function explicitAliasKey(name) {
 
 /** Tokenize a team name into identity tokens (diacritics/affixes stripped). */
 export function teamTokens(name) {
-  const base = String(name || "")
+  // Exact senior-club abbreviation observed in the two provider rows for
+  // Bundesliga 2026-10-18 (BMG–TSG). The full club identity is independently
+  // listed at https://www.bundesliga.com/en/bundesliga/matchday/2026-2027/6.
+  // Expand ONLY this complete name; never remove a general B squad marker or
+  // alter normalize.js / canonical-id generation.
+  const text = String(name || "");
+  const expanded = /^b\.\s*m[oö]nchengladbach$/iu.test(text.trim())
+    ? "Borussia Mönchengladbach"
+    : text;
+  const base = expanded
     .normalize("NFD").replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/&/g, " and ")
