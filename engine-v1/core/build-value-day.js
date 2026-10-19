@@ -962,7 +962,13 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
     }
   }
 
-  const { indexes, priors } = await getSeasonResources(season, rebuild);
+  const resources = await getSeasonResources(season, rebuild);
+  const { priors } = resources;
+  // Only the existing prospective publication path may consume observations
+  // acquired today. Historical rebuilds keep their original input boundary.
+  const indexes = prospectiveOnly
+    ? (await import('./prospective-value-form-view.js')).prospectiveValueFormView(resources.indexes, season, now)
+    : resources.indexes;
   const inputEvidence = decisionEvidenceFactory(date, opponentAdjusted ? "plan-a2" : "plan-a", {
     canonicalFixtures: sourceMatches,
     indexes,
