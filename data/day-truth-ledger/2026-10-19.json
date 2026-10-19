@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-19",
-  "generatedAt": "2026-10-19T02:21:37.814Z",
+  "generatedAt": "2026-10-19T04:00:03.557Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "281b6f2b382a86f693e629d48cb2e136870452110d816fee17d57319b3cf20c3",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "c6035a27fb2dbfe458b7f47f3e490e010f193539d124aa7f349260fdffacf6dc",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 108,
-    "playedTerminal": 27,
+    "playedTerminal": 30,
     "nonPlayedTerminal": 0,
-    "scheduled": 78,
-    "live": 3,
+    "scheduled": 77,
+    "live": 1,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 28,
-    "acceptedVerifiedFinalArtifacts": 28,
-    "convergedPlayedFinal": 27,
+    "verifiedFinalArtifacts": 30,
+    "acceptedVerifiedFinalArtifacts": 30,
+    "convergedPlayedFinal": 30,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 80,
+    "openRows": 78,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 27,
-    "scoredSettlementEligible": 27,
+    "historyEligible": 30,
+    "scoredSettlementEligible": 30,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -928,31 +928,31 @@
       "homeTeam": "Deportivo Cali",
       "awayTeam": "Atlético Junior",
       "kickoffUtc": "2026-10-19T01:10Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 0,
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-19",
+        "scoreHome": 0,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2104,14 +2104,14 @@
       "homeTeam": "Marquense",
       "awayTeam": "Suchitepequez",
       "kickoffUtc": "2026-10-19T02:10Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -2125,7 +2125,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -2153,12 +2153,12 @@
       "homeTeam": "Municipal",
       "awayTeam": "CD Guastatoya",
       "kickoffUtc": "2026-10-19T00:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 1
       },
@@ -2173,11 +2173,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3329,31 +3329,31 @@
       "homeTeam": "Monterrey",
       "awayTeam": "Pachuca",
       "kickoffUtc": "2026-10-19T01:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 2,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-19",
+        "scoreHome": 2,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -5336,9 +5336,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_gua1_municipal_guastatoya_20261019"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -5524,7 +5522,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 14676,
+            "count": 14678,
             "informational": true
           }
         },
@@ -8986,13 +8984,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "281b6f2b382a86f693e629d48cb2e136870452110d816fee17d57319b3cf20c3",
+      "truthFingerprint": "c6035a27fb2dbfe458b7f47f3e490e010f193539d124aa7f349260fdffacf6dc",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 27,
+        "expectedEligibleRows": 30,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_belgranocordoba_riverplate_20261019",
@@ -9007,11 +9005,14 @@
           "cid_bra1_remo_redbullbragantino_20261019",
           "cid_bra2_vilanova_novorizontino_20261019",
           "cid_col1_atleticobucaramanga_americacali_20261019",
+          "cid_col1_deportivocali_atleticojunior_20261019",
           "cid_col1_llaneros_independientesantafe_20261019",
           "cid_crc1_perezzeledon_herediano_20261019",
           "cid_ecu1_barcelona_universidadcatolicaquito_20261019",
           "cid_gua1_deportivomixco_cobanimperial_20261019",
+          "cid_gua1_municipal_guastatoya_20261019",
           "cid_hon1_genesispn_estrellaroja_20261019",
+          "cid_mex1_monterrey_pachuca_20261019",
           "cid_par1_sportivoluqueno_sportivosanlorenzo_20261019",
           "cid_par1_sportivotrinidense_libertad_20261019",
           "cid_per1_ciencianodelcusco_utc_20261019",
@@ -9081,7 +9082,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-19",
-      "fileCount": 28,
+      "fileCount": 30,
       "authority": "scored_final_evidence"
     },
     "downstream": {
