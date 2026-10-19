@@ -68,9 +68,14 @@ export function teamTokens(name) {
   // Expand ONLY this complete name; never remove a general B squad marker or
   // alter normalize.js / canonical-id generation.
   const text = String(name || "");
-  const expanded = /^b\.\s*m[oö]nchengladbach$/iu.test(text.trim())
+  let expanded = /^b\.\s*m[oö]nchengladbach$/iu.test(text.trim())
     ? "Borussia Mönchengladbach"
     : text;
+  // The club officially renamed its reserve team Celta B to Celta Fortuna.
+  // Preserve the B identity in this exact reviewed alias, so the senior team
+  // and women's/youth teams cannot enter the same identity class.
+  // https://rccelta.es/club/actualidad/el-filial-celeste-se-denominara-desde-la-proxima-temporada-celta-fortuna-como-homenaje-a-los-origenes-del-club/
+  if (/^(?:rc\s+)?celta\s+fortuna$/iu.test(text.trim())) expanded = 'Celta Vigo B';
   const base = expanded
     .normalize("NFD").replace(/[̀-ͯ]/g, "")
     .toLowerCase()
