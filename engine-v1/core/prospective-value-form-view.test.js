@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { prospectiveValueFormView } from './prospective-value-form-view.js';
 import { collectPrematchFinalForm } from './prematch-verified-final-form.js';
 import { evaluateMatchValue } from './value-engine-v1.js';
+import { diagnoseValueRecentSample } from './value-engine-v1.js';
 
 const now = Date.parse('2026-10-19T06:00Z');
 function evidence({ wrongScore = false, generatedAfterCutoff = false } = {}) {
@@ -19,6 +20,44 @@ function evidence({ wrongScore = false, generatedAfterCutoff = false } = {}) {
 const base = () => ({teamForm:{},leagueForm:{},matchups:{}});
 const input = {leagueSlug:'egy.2',homeTeam:'Home',awayTeam:'Away',kickoff:'2026-10-19T14:00Z'};
 const options = {season:'2026-2027',priors:{teamPriors:{},leaguePriors:{},matchupPriors:{}},returnNullDiagnostics:true};
+
+test('punctuation-only complete-name variants combine real observations at the consumer without source changes',()=>{
+  const make=(id,name)=>({id,canonicalId:id,leagueSlug:'isr.1',homeTeam:name,awayTeam:'Opponent',kickoff:`2026-10-${id==='one'?'01':id==='two'?'08':'15'}T14:00Z`,season:'2026-2027',scoreHome:1,scoreAway:0});
+  const original={teamForm:{'Maccabi Tel-Aviv':{matches:[make('one','Maccabi Tel-Aviv'),make('two','Maccabi Tel-Aviv')]},'Maccabi Tel Aviv':{matches:[make('three','Maccabi Tel Aviv')]},Opponent:{matches:[make('one','Maccabi Tel-Aviv'),make('two','Maccabi Tel-Aviv'),make('three','Maccabi Tel Aviv')]}},leagueForm:{},matchups:{}};
+  const before=JSON.stringify(original);
+  const target={leagueSlug:'isr.1',homeTeam:'Maccabi Tel Aviv',awayTeam:'Opponent',kickoff:'2026-10-19T14:00Z'};
+  assert.equal(diagnoseValueRecentSample(target,original,'2026-2027').homeRawSample,2);
+  const view=prospectiveValueFormView(original,'2026-2027',now,{readFinalForm:()=>({index:{},summary:{}})});
+  assert.equal(diagnoseValueRecentSample(target,view,'2026-2027').homeRawSample,3);
+  assert.equal(JSON.stringify(original),before);
+});
+
+test('spelling consolidation preserves full distinctive names and squad numbers',()=>{
+  const row={id:'x',scoreHome:1,scoreAway:0};
+  const names=['Omonia','Omonia 29th May','Omonia Aradippou','Kauno Zalgiris','Zalgiris','Ajax','Ajax U21','Ajax B'];
+  const original={teamForm:Object.fromEntries(names.map((name,i)=>[name,{matches:[{...row,id:String(i)}]}]))};
+  const view=prospectiveValueFormView(original,'2026-2027',now,{readFinalForm:()=>({index:{},summary:{}})});
+  for(const name of names) assert.equal(view.teamForm[name].matches.length,1);
+});
+
+test('equivalent spelling never overrides country or explicit club identity boundaries',()=>{
+  const make=(id,leagueSlug,homeTeam,homeGlobalClubId)=>({id,leagueSlug,homeTeam,awayTeam:'Opponent',homeGlobalClubId,kickoff:'2026-10-10T14:00Z',season:'2026-2027',scoreHome:1,scoreAway:0});
+  const entries={'Liverpool':{matches:[make('eng1','eng.1','Liverpool','english')]},'Liverpool.':{matches:[make('uru1','uru.1','Liverpool.','uruguayan'),make('uru2','uru.1','Liverpool.','uruguayan')]}};
+  const view=prospectiveValueFormView({teamForm:entries},'2026-2027',now,{readFinalForm:()=>({index:{},summary:{}})});
+  const result=diagnoseValueRecentSample({leagueSlug:'uru.1',homeTeam:'Liverpool',awayTeam:'Opponent',kickoff:'2026-10-19T14:00Z'},view,'2026-2027');
+  assert.equal(result.homeRawSample,2);
+  assert.equal(result.ok,false);
+});
+
+test('equivalent spelling cannot double-count IDs or conceal contradictory scores',()=>{
+  const row={id:'same',scoreHome:1,scoreAway:0};
+  const base={teamForm:{'Al-Ula':{lastMatches:[row]},'Al Ula':{matches:[{...row}]}}};
+  const opts={readFinalForm:()=>({index:{},summary:{}})};
+  const view=prospectiveValueFormView(base,'2026-2027',now,opts);
+  assert.equal(view.teamForm['Al-Ula'].lastMatches.length,1);
+  base.teamForm['Al Ula'].matches[0].scoreHome=2;
+  assert.throws(()=>prospectiveValueFormView(base,'2026-2027',now,opts),/value_form_spelling_score_conflict/);
+});
 
 test('actual canonical-final validation supplies three real observations to the unchanged Value gate',async()=>{
   const original=base(),before=structuredClone(original);
