@@ -14,6 +14,7 @@ import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { fixturesForSnapshotDay } from "../core/day-fixture-universe.js";
 import {
   collectAuthoritativeWrongDayPublishedFixtureIds,
+  collectMergedPublishedFixtureIds,
   intradayPublicationFixtureId,
   resolveIntradayPublishedUniverse
 } from "../core/intraday-publication-universe.js";
@@ -695,7 +696,7 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
    * day. Only that exact evidence may shrink the status-only publication lock.
    */
   const authoritativelyRemovedFixtureIds =
-    collectAuthoritativeWrongDayPublishedFixtureIds({
+    [...new Set([...collectAuthoritativeWrongDayPublishedFixtureIds({
       dayKey:
         safeDayKey,
       publishedFixtures:
@@ -704,7 +705,12 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
         canonicalLeaguePayloadsForDay(
           safeDayKey
         )
-    });
+    }), ...collectMergedPublishedFixtureIds({
+      dayKey: safeDayKey,
+      publishedFixtures: previousSnapshot.publishedFixtures,
+      currentFixtures: publishableStatusRows,
+      publishedDetailIds: previousSnapshot.publishedDetailIds
+    })])].sort();
 
   const authoritativeRemovalLedger =
     [
