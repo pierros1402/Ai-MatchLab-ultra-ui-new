@@ -62,6 +62,7 @@ jobs:
     if: needs.admission.outputs.allow_writer == 'true'
     concurrency:
       group: ai-matchlab-data-writer
+      queue: max
       cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 45
