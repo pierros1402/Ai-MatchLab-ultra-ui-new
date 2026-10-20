@@ -6,7 +6,7 @@
     "daysBack": 1,
     "daysForward": 14
   },
-  "sourceLatestUpdatedAt": "2026-10-20T19:05:11.645Z",
+  "sourceLatestUpdatedAt": "2026-10-20T22:09:53.224Z",
   "resolver": {
     "schema": "ai-matchlab.production-identity-resolver-runtime.v2",
     "extensionLedgerSha256": "b145cabfff6db37c72b7b9f4c79b4eda01ac2fc08ab17f39c54a0a35952b2a64",
@@ -17,7 +17,7 @@
       "sourceFixtureIds": 196
     }
   },
-  "status": "CLEAN",
+  "status": "REVIEW_REQUIRED",
   "promotionPolicy": {
     "broadFuzzyAllowed": false,
     "unresolvedTwoSidedAutoPromotionAllowed": false,
@@ -25,13 +25,15 @@
   },
   "summary": {
     "scannedDays": 16,
-    "scannedLeagueFiles": 367,
-    "inputRows": 1308,
+    "scannedLeagueFiles": 424,
+    "inputRows": 1448,
     "autoPromotable": 0,
-    "pendingIndependentConfirmation": 0,
+    "pendingIndependentConfirmation": 1,
     "ambiguous": 0,
     "conflictRejected": 0,
-    "alreadyManagedPairs": 0
+    "alreadyManagedPairs": 0,
+    "independentConfirmed": 0,
+    "independentConfirmationRetryPending": 1
   },
   "targetDays": [
     {
@@ -51,8 +53,79 @@
     },
     {
       "dayKey": "2026-10-23",
-      "leagueFiles": 29,
-      "recoveryLeagueReports": []
+      "leagueFiles": 86,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "caf.champions",
+          "inputRows": 5,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [
+            {
+              "leagueSlug": "caf.champions",
+              "kickoffUtc": "2026-10-23T14:30:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "ljZURIam",
+                "canonicalId": "cid_cafchampions_petroatleticoang_scottlandzim_20261023",
+                "kickoffUtc": "2026-10-23T14:30:00.000Z",
+                "homeTeam": "Petro Atletico (Ang)",
+                "awayTeam": "Scottland (Zim)"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401914219",
+                "canonicalId": "cid_cafchampions_petroluanda_scottlandmabvuku_20261023",
+                "kickoffUtc": "2026-10-23T14:30Z",
+                "homeTeam": "Petro de Luanda",
+                "awayTeam": "Scottland Mabvuku"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "away": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "stableSides": 0,
+                "conflict": false
+              },
+              "recoveryStatus": "PENDING_INDEPENDENT_CONFIRMATION",
+              "promotionAuthorized": false,
+              "requiresIndependentConfirmation": true,
+              "independentConfirmation": {
+                "status": "PENDING_RETRY",
+                "source": "api_football",
+                "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
+                "oddsUsed": false,
+                "attempts": 1,
+                "lastAttemptAt": "2026-10-20T22:09:53.551Z",
+                "retryable": true,
+                "providerStatus": "MISSING_API_KEY",
+                "evaluationStatus": null,
+                "thirdSourceKickoffRows": 0
+              }
+            }
+          ],
+          "ambiguous": [],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 1,
+            "ambiguous": 0,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
     },
     {
       "dayKey": "2026-10-24",
@@ -114,5 +187,22 @@
       "leagueFiles": 9,
       "recoveryLeagueReports": []
     }
-  ]
+  ],
+  "independentConfirmation": {
+    "source": "api_football",
+    "evidenceEndpoint": "fixtures",
+    "oddsAllowed": false,
+    "fuzzyMatchingAllowed": false,
+    "runAt": "2026-10-20T22:09:53.552Z",
+    "attempts": [
+      {
+        "dayKey": "2026-10-23",
+        "leagueSlug": "caf.champions",
+        "key": "cid_cafchampions_petroatleticoang_scottlandzim_20261023|cid_cafchampions_petroluanda_scottlandmabvuku_20261023",
+        "status": "PENDING_RETRY",
+        "providerStatus": "MISSING_API_KEY",
+        "evaluationStatus": null
+      }
+    ]
+  }
 }
