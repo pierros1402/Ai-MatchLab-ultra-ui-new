@@ -1,0 +1,206 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "usa.2",
+  "homeTeam": "Brooklyn",
+  "awayTeam": "Birmingham",
+  "homeWinScore": 0.151,
+  "drawScore": 0.163,
+  "awayWinScore": 0.686,
+  "over15Score": 0.789,
+  "over25Score": 0.661,
+  "over35Score": 0.627,
+  "bttsScore": 0.472,
+  "confidence": 0.729,
+  "signals": [
+    "away_edge",
+    "over25_support",
+    "home_form_decay",
+    "form_influence_reduced",
+    "priors_applied",
+    "close_strength_gap",
+    "away_rest_3"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.25,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.04,
+    "expectedAwayGoals": 2.329,
+    "expectedTotalGoals": 3.368,
+    "homeStrength": 0.051,
+    "awayStrength": 0.403,
+    "homeEdge": 0.061,
+    "awayPenalty": 0.292,
+    "recency": {
+      "homeOverall": {
+        "sample": 4,
+        "rawSample": 4,
+        "priorSample": 0,
+        "daysSinceLastMatch": 20,
+        "spanDays": 15,
+        "maxInternalGap": 7,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.19,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.534
+      },
+      "awayOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 157,
+        "daysSinceLastMatch": 3,
+        "spanDays": 28,
+        "maxInternalGap": 21,
+        "gapSeverity": "moderate",
+        "freshnessScore": 1,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.765
+      },
+      "homeSide": {
+        "sample": 2,
+        "rawSample": 2,
+        "priorSample": 0,
+        "daysSinceLastMatch": 20,
+        "spanDays": 11,
+        "maxInternalGap": 11,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.19,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.361
+      },
+      "awaySide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 157,
+        "daysSinceLastMatch": 6,
+        "spanDays": 24,
+        "maxInternalGap": 24,
+        "gapSeverity": "heavy",
+        "freshnessScore": 1,
+        "continuityScore": 0.25,
+        "formContinuityWeight": 0.557
+      }
+    },
+    "matchupSample": 1,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 0,
+      "awayPriorSample": 157,
+      "leaguePriorSample": 2046,
+      "matchupPriorSample": 0
+    },
+    "resolution": {
+      "homeInput": "Brooklyn",
+      "awayInput": "Birmingham",
+      "homeResolvedKey": "Brooklyn",
+      "awayResolvedKey": "Birmingham",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Birmingham::Brooklyn",
+      "matchupResolveScore": 0.93,
+      "homePriorKey": null,
+      "awayPriorKey": "usa.2::Birmingham",
+      "matchupPriorKey": null
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Brooklyn",
+      "awayTeamKey": "Birmingham",
+      "leagueKey": "usa.2",
+      "matchupKey": "Birmingham::Brooklyn"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": false,
+    "contextDelta": 0,
+    "contextReasons": [],
+    "aiContext": {
+      "available": true,
+      "importance": "unknown",
+      "stakes": [],
+      "pressure": []
+    }
+  },
+  "contextAdjusted": false,
+  "contextReasons": [],
+  "contextDelta": 0,
+  "band": {
+    "over15": "MEDIUM",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0.05,
+      "reasons": [
+        "away_rest_3"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "usa.2",
+    "competitionType": "continental",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 20,
+    "awayRestDays": 3,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 2,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 2,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
