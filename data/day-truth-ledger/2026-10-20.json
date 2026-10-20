@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-20",
-  "generatedAt": "2026-10-20T16:43:56.641Z",
+  "generatedAt": "2026-10-20T17:31:25.139Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "559d7686f0c1b822dd6d8b8013b30a2142277c5c784f7034b06e0ca9b4b434e5",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "b70533a07a6d7676cca4fcb985233ec2957eff6176b4a7f86103397e9d33f65e",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 86,
-    "playedTerminal": 23,
+    "playedTerminal": 26,
     "nonPlayedTerminal": 0,
-    "scheduled": 61,
-    "live": 2,
+    "scheduled": 57,
+    "live": 3,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 24,
-    "acceptedVerifiedFinalArtifacts": 24,
-    "convergedPlayedFinal": 23,
+    "verifiedFinalArtifacts": 26,
+    "acceptedVerifiedFinalArtifacts": 26,
+    "convergedPlayedFinal": 26,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 62,
+    "openRows": 60,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 23,
-    "scoredSettlementEligible": 23,
+    "historyEligible": 26,
+    "scoredSettlementEligible": 26,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -3133,31 +3133,31 @@
       "homeTeam": "Al Diriyah",
       "awayTeam": "Al Riyadh",
       "kickoffUtc": "2026-10-20T15:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-20",
+        "scoreHome": 1,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3287,7 +3287,7 @@
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -3427,31 +3427,31 @@
       "homeTeam": "Hajer",
       "awayTeam": "Al Najma",
       "kickoffUtc": "2026-10-20T14:45:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 4
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-20",
+        "scoreHome": 2,
+        "scoreAway": 4,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3525,14 +3525,14 @@
       "homeTeam": "FC ASA Tg. Mures",
       "awayTeam": "Chindia Targoviste",
       "kickoffUtc": "2026-10-20T14:30:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 4
       },
       "verifiedFinal": {
         "present": true,
@@ -3542,14 +3542,14 @@
         "dayKey": "2026-10-20",
         "scoreHome": 2,
         "scoreAway": 4,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3721,14 +3721,14 @@
       "homeTeam": "Fenerbahce",
       "awayTeam": "Slavia Prague",
       "kickoffUtc": "2026-10-20T16:45Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 2,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -3742,7 +3742,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4015,14 +4015,14 @@
       "homeTeam": "Sabah FK",
       "awayTeam": "Borussia Dortmund",
       "kickoffUtc": "2026-10-20T16:45Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -4036,7 +4036,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4258,9 +4258,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_rou2_asatgmures_chindiatargoviste_20261020"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -4456,7 +4454,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 14938,
+            "count": 14942,
             "informational": true
           }
         },
@@ -7264,13 +7262,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "559d7686f0c1b822dd6d8b8013b30a2142277c5c784f7034b06e0ca9b4b434e5",
+      "truthFingerprint": "b70533a07a6d7676cca4fcb985233ec2957eff6176b4a7f86103397e9d33f65e",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 23,
+        "expectedEligibleRows": 26,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_deportivoriestra_unionsantafe_20261020",
@@ -7294,6 +7292,9 @@
           "cid_idn1_bhayangkara_psimyogyakarta_20261020",
           "cid_idn1_dewaunited_persijapjepara_20261020",
           "cid_idn1_isenmulangkalteng_javaunited_20261020",
+          "cid_ksa1_aldiriyah_alriyadh_20261020",
+          "cid_ksa2_hajer_alnajma_20261020",
+          "cid_rou2_asatgmures_chindiatargoviste_20261020",
           "cid_uga1_maroons_kataka_20261020",
           "cid_uru1_nacional_deportivomaldonado_20261020"
         ],
@@ -7355,7 +7356,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-20",
-      "fileCount": 24,
+      "fileCount": 26,
       "authority": "scored_final_evidence"
     },
     "downstream": {
