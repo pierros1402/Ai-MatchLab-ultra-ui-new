@@ -1,0 +1,208 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "jpn.2",
+  "homeTeam": "Tokushima",
+  "awayTeam": "Vanraure",
+  "homeWinScore": 0.484,
+  "drawScore": 0.163,
+  "awayWinScore": 0.354,
+  "over15Score": 0.76,
+  "over25Score": 0.62,
+  "over35Score": 0.579,
+  "bttsScore": 0.488,
+  "confidence": 0.797,
+  "signals": [
+    "home_edge",
+    "over25_support",
+    "priors_applied",
+    "close_strength_gap",
+    "home_rest_4",
+    "away_rest_4"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.425,
+      "awayOverallFormWeight": 0.325,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.762,
+    "expectedAwayGoals": 1.07,
+    "expectedTotalGoals": 2.832,
+    "homeStrength": 0.463,
+    "awayStrength": 0.254,
+    "homeEdge": 0.27,
+    "awayPenalty": 0.449,
+    "recency": {
+      "homeOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 162,
+        "daysSinceLastMatch": 4,
+        "spanDays": 27,
+        "maxInternalGap": 7,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.948
+      },
+      "awayOverall": {
+        "sample": 5,
+        "rawSample": 5,
+        "priorSample": 0,
+        "daysSinceLastMatch": 4,
+        "spanDays": 29,
+        "maxInternalGap": 8,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.878
+      },
+      "homeSide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 162,
+        "daysSinceLastMatch": 11,
+        "spanDays": 13,
+        "maxInternalGap": 13,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.55,
+        "continuityScore": 0.7,
+        "formContinuityWeight": 0.557
+      },
+      "awaySide": {
+        "sample": 3,
+        "rawSample": 3,
+        "priorSample": 0,
+        "daysSinceLastMatch": 4,
+        "spanDays": 20,
+        "maxInternalGap": 13,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.827
+      }
+    },
+    "matchupSample": 0,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 162,
+      "awayPriorSample": 0,
+      "leaguePriorSample": 1695,
+      "matchupPriorSample": 0
+    },
+    "resolution": {
+      "homeInput": "Tokushima",
+      "awayInput": "Vanraure",
+      "homeResolvedKey": "Tokushima",
+      "awayResolvedKey": "Vanraure",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Tokushima::Vanraure",
+      "matchupResolveScore": 0,
+      "homePriorKey": "jpn.2::Tokushima Vortis",
+      "awayPriorKey": null,
+      "matchupPriorKey": null
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Tokushima",
+      "awayTeamKey": "Vanraure",
+      "leagueKey": "jpn.2",
+      "matchupKey": "Tokushima::Vanraure"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": false,
+    "contextDelta": 0,
+    "contextReasons": [],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    }
+  },
+  "contextAdjusted": false,
+  "contextReasons": [],
+  "contextDelta": 0,
+  "band": {
+    "over15": "MEDIUM",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0.009,
+      "awayDelta": 0,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0.025,
+      "awayPenalty": 0.025,
+      "reasons": [
+        "home_rest_4",
+        "away_rest_4"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "jpn.2",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 4,
+    "awayRestDays": 4,
+    "homeMatchesLast7": 1,
+    "awayMatchesLast7": 1,
+    "homeMatchesLast14": 1,
+    "awayMatchesLast14": 1,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
