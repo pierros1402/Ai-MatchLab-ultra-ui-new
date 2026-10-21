@@ -135,3 +135,33 @@ test("accepts provider display aliases only after exact canonical match-id parit
   assert.equal(built.ok, true);
   assert.equal(built.acceptedRows, 1);
 });
+
+test('finalized exact club aliases retain location qualifiers when validating history',()=>{
+ const result=buildVerifiedHistoryDay({dayKey:'2026-08-08',
+  canonicalRows:[canonical({leagueSlug:'arg.2',homeTeam:'Gimnasia y Esgrima (Jujuy)',awayTeam:'Atletico Rafaela'})],
+  finalResultRows:[finalResult({leagueSlug:'arg.2',homeTeam:'Gimnasia Jujuy',awayTeam:'Atl. Rafaela'})]});
+ assert.equal(result.ok,true);assert.equal(result.acceptedRows,1);
+ assert.equal(result.rows[0].scoreHome,2);assert.equal(result.rows[0].scoreAway,1);
+});
+
+test('different finalized global club identities veto legacy names that otherwise match',()=>{
+ const identityResolver={resolveTeamReference:({alias})=>({ok:true,globalClubId:alias==='Home'?'club-one':alias==='Home FC'?'club-two':'away-club'})};
+ const result=buildVerifiedHistoryDay({dayKey:'2026-08-08',canonicalRows:[canonical()],
+  finalResultRows:[finalResult({homeTeam:'Home FC'})],identityResolver});
+ assert.equal(result.ok,false);assert.ok(result.errors.some(e=>e.reason==='canonical_verified_final_team_mismatch'));
+});
+
+test('unregistered history aliases retain the existing conservative name validation',()=>{
+ const identityResolver={resolveTeamReference:()=>({ok:false,status:'NORMALIZED_EXACT_ALIAS_NOT_FOUND'})};
+ const result=buildVerifiedHistoryDay({dayKey:'2026-08-08',canonicalRows:[canonical()],
+  finalResultRows:[finalResult({homeTeam:'Home FC'})],identityResolver});
+ assert.equal(result.ok,true);assert.equal(result.acceptedRows,1);
+});
+
+test('squad markers veto history aliases before any global identity match',()=>{
+ const identityResolver={resolveTeamReference:()=>({ok:true,globalClubId:'same-club'})};
+ for(const name of ['Home B','Home U21','Home W']){
+  const result=buildVerifiedHistoryDay({dayKey:'2026-08-08',canonicalRows:[canonical()],finalResultRows:[finalResult({homeTeam:name})],identityResolver});
+  assert.equal(result.ok,false);assert.ok(result.errors.some(e=>e.reason==='canonical_verified_final_team_mismatch'));
+ }
+});
