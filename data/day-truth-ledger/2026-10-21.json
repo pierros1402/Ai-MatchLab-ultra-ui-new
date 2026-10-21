@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-21",
-  "generatedAt": "2026-10-21T01:57:03.443Z",
+  "generatedAt": "2026-10-21T02:52:56.591Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "c546eed8fa3f1189bde25fe82f31d8fb77776dd0086aded631313cabbfa42e08",
+  "truthFingerprint": "a5c84652aa6c5ef945491f123c9226abfb4220ec76c50762df4a7efa1cf289ca",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 78,
-    "playedTerminal": 4,
+    "playedTerminal": 5,
     "nonPlayedTerminal": 0,
-    "scheduled": 69,
+    "scheduled": 68,
     "live": 5,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 4,
-    "acceptedVerifiedFinalArtifacts": 4,
-    "convergedPlayedFinal": 4,
+    "verifiedFinalArtifacts": 5,
+    "acceptedVerifiedFinalArtifacts": 5,
+    "convergedPlayedFinal": 5,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 74,
+    "openRows": 73,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 4,
-    "scoredSettlementEligible": 4,
+    "historyEligible": 5,
+    "scoredSettlementEligible": 5,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -490,9 +490,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -539,11 +539,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 0,
-        "scoreAway": 2
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
+        "scoreAway": 3
       },
       "verifiedFinal": {
         "present": false,
@@ -1222,14 +1222,14 @@
       "homeTeam": "CD Malacateco",
       "awayTeam": "Comunicaciones",
       "kickoffUtc": "2026-10-21T02:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_IN_PROGRESS",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1243,7 +1243,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -2891,10 +2891,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -2937,31 +2937,31 @@
       "homeTeam": "Guadalajara",
       "awayTeam": "Necaxa",
       "kickoffUtc": "2026-10-21T00:07Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-21",
+        "scoreHome": 1,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2989,11 +2989,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
-        "scoreAway": 1
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -6823,19 +6823,20 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "c546eed8fa3f1189bde25fe82f31d8fb77776dd0086aded631313cabbfa42e08",
+      "truthFingerprint": "a5c84652aa6c5ef945491f123c9226abfb4220ec76c50762df4a7efa1cf289ca",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 4,
+        "expectedEligibleRows": 5,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_bra2_londrina_cuiaba_20261021",
           "cid_col1_cucutadeportivo_atleticonacional_20261021",
           "cid_col1_deportivopereira_boyacachico_20261021",
-          "cid_col1_internacionalbogota_fortalezaceif_20261021"
+          "cid_col1_internacionalbogota_fortalezaceif_20261021",
+          "cid_mex1_guadalajara_necaxa_20261021"
         ],
         "unexpectedFixtureIds": [],
         "duplicateFixtureIds": [],
@@ -6895,7 +6896,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-21",
-      "fileCount": 4,
+      "fileCount": 5,
       "authority": "scored_final_evidence"
     },
     "downstream": {
