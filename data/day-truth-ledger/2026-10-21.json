@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-21",
-  "generatedAt": "2026-10-21T17:19:32.970Z",
+  "generatedAt": "2026-10-21T18:17:27.190Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "9b59c9e38329eaf211be7d4d1408adb8ef1c0befc17d8ed3ce7e3d8d6d82d3e5",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "36379009a8eb4a71af0628e8a83b334a57efb20d23f06f18981c1f2ffb50bdf7",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 78,
-    "playedTerminal": 47,
+    "playedTerminal": 51,
     "nonPlayedTerminal": 2,
-    "scheduled": 26,
+    "scheduled": 22,
     "live": 2,
     "interrupted": 1,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 47,
-    "acceptedVerifiedFinalArtifacts": 47,
-    "convergedPlayedFinal": 47,
+    "verifiedFinalArtifacts": 52,
+    "acceptedVerifiedFinalArtifacts": 52,
+    "convergedPlayedFinal": 51,
     "convergedNonPlayedTerminal": 2,
     "pendingVerifiedFinal": 0,
-    "openRows": 29,
+    "openRows": 24,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 47,
-    "scoredSettlementEligible": 47,
+    "historyEligible": 51,
+    "scoredSettlementEligible": 51,
     "voidSettlementEligible": 2
   },
   "fixtures": [
@@ -301,18 +301,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-21",
+        "scoreHome": 4,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1173,31 +1173,31 @@
       "homeTeam": "PK-35",
       "awayTeam": "Jaro",
       "kickoffUtc": "2026-10-21T15:30:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-21",
+        "scoreHome": 1,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2643,31 +2643,31 @@
       "homeTeam": "Trepca 89",
       "awayTeam": "Dinamo Ferizaj",
       "kickoffUtc": "2026-10-21T12:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-21",
+        "scoreHome": 1,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3084,31 +3084,31 @@
       "homeTeam": "Birzebbuga",
       "awayTeam": "Marsaxlokk",
       "kickoffUtc": "2026-10-21T16:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-21",
+        "scoreHome": 2,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3133,31 +3133,31 @@
       "homeTeam": "Hamrun",
       "awayTeam": "Balzan",
       "kickoffUtc": "2026-10-21T16:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-21",
+        "scoreHome": 1,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3479,10 +3479,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 1,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 2,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -3577,11 +3577,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
-        "scoreHome": 1,
-        "scoreAway": 1
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 2,
+        "scoreAway": 3
       },
       "verifiedFinal": {
         "present": false,
@@ -3866,7 +3866,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_cafchampions_youngafricans_cffa_20261021"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -4034,7 +4036,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 15148,
+            "count": 15172,
             "informational": true
           }
         },
@@ -6823,13 +6825,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "9b59c9e38329eaf211be7d4d1408adb8ef1c0befc17d8ed3ce7e3d8d6d82d3e5",
+      "truthFingerprint": "36379009a8eb4a71af0628e8a83b334a57efb20d23f06f18981c1f2ffb50bdf7",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 47,
+        "expectedEligibleRows": 51,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arm2_bentonit_sardarapat2_20261021",
@@ -6844,6 +6846,7 @@
           "cid_conmebolsudamericana_vascogama_bocajuniors_20261021",
           "cid_egy1_ghazlelmahallah_alittihad_20261021",
           "cid_est1_harjujklaagri_flora_20261021",
+          "cid_fin1_pk35_jaro_20261021",
           "cid_idn1_baliunited_garudayaksa_20261021",
           "cid_idn1_persijajakarta_arema_20261021",
           "cid_jpn1_avispafukuoka_gambaosaka_20261021",
@@ -6871,12 +6874,15 @@
           "cid_kos2_istogu_ramizsadiku_20261021",
           "cid_kos2_prishtinare_kflepencikacanik_20261021",
           "cid_kos2_suhareka_rilindja_20261021",
+          "cid_kos2_trepca89_dinamoferizaj_20261021",
           "cid_kos2_vellaznimi_2korriku_20261021",
           "cid_ksa2_alanwar_alwehda_20261021",
           "cid_mex1_atleticosanluis_queretaro_20261021",
           "cid_mex1_guadalajara_necaxa_20261021",
           "cid_mex1_juarez_atlante_20261021",
           "cid_mex1_tigresuanl_leon_20261021",
+          "cid_mlt1_birzebbuga_marsaxlokk_20261021",
+          "cid_mlt1_hamrun_balzan_20261021",
           "cid_uga1_bul_nec_20261021",
           "cid_uga1_lugazi_express_20261021"
         ],
@@ -6938,7 +6944,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-21",
-      "fileCount": 47,
+      "fileCount": 52,
       "authority": "scored_final_evidence"
     },
     "downstream": {
