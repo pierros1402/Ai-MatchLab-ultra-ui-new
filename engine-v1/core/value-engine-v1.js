@@ -603,7 +603,7 @@ function entryLeagueScore(entry, leagueSlug) {
 // ------------------------------------------------------------
 const valueFormCompetitions = new Map(LEAGUES_COVERAGE.map(meta => [meta.slug,meta]));
 
-export function scopeValueFormEntry(entry, teamKey, leagueSlug, globalClubId = null) {
+export function scopeValueFormEntry(entry, teamKey, leagueSlug, globalClubId = null, includeSameCompetition = true) {
   const fixture = valueFormCompetitions.get(leagueSlug);
   const rows = extractRecentMatches(entry);
   const domestic = meta => meta && ['league','cup'].includes(meta.type) && meta.country;
@@ -615,6 +615,10 @@ export function scopeValueFormEntry(entry, teamKey, leagueSlug, globalClubId = n
     const side = home ? 'home' : 'away';
     const observed = row[`${side}GlobalClubId`] || row.productionIdentityBinding?.[`${side}GlobalClubId`];
     if (globalClubId && observed) return globalClubId === observed;
+    // Direct history from this exact competition is not cross-competition
+    // evidence. Keep it after the side/identity veto, including continental
+    // finals; the country rule below applies only to other competitions.
+    if (includeSameCompetition && row.leagueSlug === leagueSlug) return true;
     const source = valueFormCompetitions.get(row.leagueSlug);
     // Same-name clubs in different countries are not interchangeable. Match
     // the existing country-bound cross-competition evidence policy.
@@ -630,7 +634,14 @@ export function scopeValueFormEntry(entry, teamKey, leagueSlug, globalClubId = n
   return { ...entry, [field]:!globalClubId && selectedIds.size > 1 ? [] : selected };
 }
 
-function resolveTeamEntry(teamFormIndex, leagueSlug, teamName, globalClubId = null) {
+function resolveTeamEntry(teamFormIndex, leagueSlug, teamName, globalClubId = null, legacyOnly = false) {
+  // Preserve the existing identity anchor before extending its observations.
+  // An isolated continental spelling must not displace a resolved club.
+  if (!legacyOnly) {
+    const anchored = resolveTeamEntry(teamFormIndex, leagueSlug, teamName, globalClubId, true);
+    if (anchored.value) return { ...anchored,
+      value: scopeValueFormEntry(teamFormIndex[anchored.key], anchored.key, leagueSlug, globalClubId) };
+  }
   const entries = Object.entries(teamFormIndex || {});
   if (!entries.length) {
     return { key: teamName, value: null, leagueKey: leagueSlug, score: 0 };
@@ -642,7 +653,7 @@ function resolveTeamEntry(teamFormIndex, leagueSlug, teamName, globalClubId = nu
     const nameScore = scoreTeamNameMatch(teamName, teamKey);
     if (nameScore < 0.45) continue;
 
-    const scopedValue = scopeValueFormEntry(value, teamKey, leagueSlug, globalClubId);
+    const scopedValue = scopeValueFormEntry(value, teamKey, leagueSlug, globalClubId, !legacyOnly);
     if (!extractRecentMatches(scopedValue).length) continue;
 
     const leagueScore = entryLeagueScore(scopedValue, leagueSlug);

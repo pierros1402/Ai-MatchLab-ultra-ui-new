@@ -52,3 +52,37 @@ test('continental same-name ambiguity requires explicit club identity',()=>{
   {id:'uruguayan',leagueSlug:'uru.1',homeTeam:'Liverpool',awayTeam:'Other'}]};
  assert.deepEqual(scopeValueFormEntry(entry,'Liverpool','uefa.champions').matches,[]);
 });
+
+test('same-competition continental finals remain usable while ambiguous foreign domestic history stays excluded',()=>{
+ const entry={matches:[{id:'own',leagueSlug:'uefa.champions',homeTeam:'Liverpool',awayTeam:'Other'},
+  {id:'english',leagueSlug:'eng.1',homeTeam:'Liverpool',awayTeam:'Other'},
+  {id:'uruguayan',leagueSlug:'uru.1',homeTeam:'Liverpool',awayTeam:'Other'}]};
+ assert.deepEqual(scopeValueFormEntry(entry,'Liverpool','uefa.champions').matches.map(r=>r.id),['own']);
+ const managed={matches:[{...entry.matches[0],homeGlobalClubId:'wrong-club'}]};
+ assert.deepEqual(scopeValueFormEntry(managed,'Liverpool','uefa.champions','expected-club').matches,[]);
+ const conflicting={matches:[{...entry.matches[0],homeGlobalClubId:'club-one'},
+  {...entry.matches[0],id:'conflict',homeGlobalClubId:'club-two'}]};
+ assert.deepEqual(scopeValueFormEntry(conflicting,'Liverpool','uefa.champions').matches,[]);
+});
+
+test('three real same-competition continental matches satisfy the unchanged actual Value gate',async()=>{
+ const matches=[1,8,15].map(day=>({id:`cid_own_continental_${day}`,leagueSlug:'uefa.champions',homeTeam:'Home',awayTeam:'Away',
+  kickoff:`2026-10-${String(day).padStart(2,'0')}T12:00Z`,season:'2026-2027',scoreHome:2,scoreAway:1}));
+ const input={leagueSlug:'uefa.champions',homeTeam:'Home',awayTeam:'Away',kickoff:'2026-10-21T18:30Z'};
+ const indexes={teamForm:{Home:{matches},Away:{matches}},leagueForm:{},matchups:{}};
+ const census=diagnoseValueRecentSample(input,indexes,'2026-2027');
+ assert.equal(census.ok,true);assert.equal(census.homeRawSample,3);assert.equal(census.awayRawSample,3);
+ const value=await evaluateMatchValue(input,{season:'2026-2027',indexes,priors:{teamPriors:{},leaguePriors:{},matchupPriors:{}},returnNullDiagnostics:true});
+ assert.ok(value&&!value.__valueNullDiagnostic);assert.equal(value.meta.recency.homeOverall.rawSample,3);
+ assert.equal(census.predictionCreated,false);
+});
+
+test('isolated continental spelling cannot displace the established domestic club anchor',()=>{
+ const domestic=[1,8,15].map(day=>({id:`cid_viking_${day}`,leagueSlug:'nor.1',homeTeam:'Viking FK',awayTeam:'Other',kickoff:`2026-10-${String(day).padStart(2,'0')}T12:00Z`,season:'2026-2027',scoreHome:2,scoreAway:1}));
+ const stale={id:'cid_viking_old',leagueSlug:'uefa.champions',homeTeam:'Viking (Nor)',awayTeam:'Other',kickoff:'2026-08-01T12:00Z',season:'2026-2027',scoreHome:1,scoreAway:0};
+ const input={leagueSlug:'uefa.champions',homeTeam:'Other',awayTeam:'Viking (Nor)',kickoff:'2026-10-21T18:30Z'};
+ const indexes={teamForm:{'Viking FK':{matches:domestic},'Viking (Nor)':{matches:[stale]}},leagueForm:{},matchups:{}};
+ const census=diagnoseValueRecentSample(input,indexes,'2026-2027');
+ assert.equal(census.awayResolvedKey,'Viking FK');assert.equal(census.awayRawSample,3);
+ assert.deepEqual(indexes.teamForm['Viking (Nor)'].matches,[stale]);
+});
