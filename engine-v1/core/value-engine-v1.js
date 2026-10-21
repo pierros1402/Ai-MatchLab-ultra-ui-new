@@ -648,11 +648,20 @@ function resolveTeamEntry(teamFormIndex, leagueSlug, teamName, globalClubId = nu
   }
 
   let best = null;
+  const exactNameKnown = entries.some(([key]) => normalizeName(key) === normalizeName(teamName));
 
   for (const [teamKey, value] of entries) {
     const nameScore = scoreTeamNameMatch(teamName, teamKey);
     if (nameScore < 0.45) continue;
 
+    // A known complete club name cannot inherit an extended namesake's
+    // distinctive words (Simba SC is not Simba Bhora). Country qualifiers
+    // on the requested name can still resolve to its shorter club spelling.
+    if (exactNameKnown && nameScore < 1) {
+      const requested = normalizeName(teamName).split(' ');
+      const candidate = normalizeName(teamKey).split(' ');
+      if (candidate.length > requested.length && requested.every(token => candidate.includes(token))) continue;
+    }
     const scopedValue = scopeValueFormEntry(value, teamKey, leagueSlug, globalClubId, !legacyOnly);
     if (!extractRecentMatches(scopedValue).length) continue;
 
