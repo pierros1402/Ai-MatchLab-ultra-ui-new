@@ -86,3 +86,12 @@ test('isolated continental spelling cannot displace the established domestic clu
  assert.equal(census.awayResolvedKey,'Viking FK');assert.equal(census.awayRawSample,3);
  assert.deepEqual(indexes.teamForm['Viking (Nor)'].matches,[stale]);
 });
+
+test('known Simba SC cannot inherit the distinctive Simba Bhora namesake sample',()=>{
+ const other=[1,8,15].map(day=>({id:`cid_bhora_${day}`,leagueSlug:'zim.1',homeTeam:'Simba Bhora',awayTeam:'Other',kickoff:`2026-10-${String(day).padStart(2,'0')}T12:00Z`,season:'2026-2027',scoreHome:2,scoreAway:1}));
+ const own={id:'cid_simba_old',leagueSlug:'caf.champions',homeTeam:'Simba SC',awayTeam:'Other',kickoff:'2026-09-13T13:00Z',season:'2026-2027',scoreHome:6,scoreAway:1};
+ const indexes={teamForm:{'Simba Bhora':{matches:other},'Simba SC':{matches:[own]}},leagueForm:{},matchups:{}};
+ const census=diagnoseValueRecentSample({leagueSlug:'caf.champions',homeTeam:'Other',awayTeam:'Simba SC',kickoff:'2026-10-21T12:00Z'},indexes,'2026-2027');
+ assert.equal(census.awayResolvedKey,'Simba SC');assert.equal(census.awayRawSample,0);assert.equal(census.ok,false);
+ assert.equal(indexes.teamForm['Simba Bhora'].matches.length,3);
+});
