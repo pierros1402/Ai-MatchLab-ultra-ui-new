@@ -51,6 +51,13 @@ function readJsonSafe(file, fallback = null) {
   }
 }
 
+// Signed production projections must be verified exactly as persisted.
+// Generic evidence read overlays may add identity/display fields to picks,
+// changing the signed content even when the original file is valid.
+export function readVerifiedProductionPlan(file, dayKey) {
+  return validateProductionProjection(JSON.parse(fs.readFileSync(file, "utf8")), dayKey);
+}
+
 function writeJsonPretty(file, payload) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
@@ -1479,7 +1486,7 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
     try{
       const result=refreshUnifiedProductionProjection(dayKey);
       if(result.status==='AVAILABLE'){
-        payload.unifiedPlan=validateProductionProjection(readJsonSafe(dataPath('value-unified',dayKey,'public-plan.json')),dayKey);
+        payload.unifiedPlan=readVerifiedProductionPlan(dataPath('value-unified',dayKey,'public-plan.json'),dayKey);
         productionVerified=true;
       }
     }catch(error){payload.unifiedPlan=unavailableUnifiedPlan(dayKey,error.message);}
