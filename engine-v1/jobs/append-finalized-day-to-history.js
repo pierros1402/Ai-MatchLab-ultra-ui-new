@@ -7,6 +7,8 @@ import { currentSeason } from "../core/season.js";
 import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
 import { athensDayFromKickoff } from "../core/daykey.js";
 import { sameTeamName } from "../core/fixture-dedup.js";
+import { sameSquadMarkers } from "../core/team-identity.js";
+import { getProductionIdentityResolver } from "../core/production-identity-resolver-runtime.js";
 import {
   classifyMatchState,
   MATCH_STATE_CLASS
@@ -121,12 +123,23 @@ function normalizeHistoryDays(history) {
     .sort((a, b) => a.dayKey.localeCompare(b.dayKey));
 }
 
+function verifiedHistoryTeamNameMatches(slug, canonicalName, finalName, identityResolver) {
+  if (!sameSquadMarkers(canonicalName, finalName)) return false;
+  // Resolve complete original names before legacy qualifier stripping. A
+  // location such as (Jujuy) is part of the finalized exact club identity.
+  const canonical = identityResolver.resolveTeamReference({ leagueSlug: slug, alias: canonicalName });
+  const final = identityResolver.resolveTeamReference({ leagueSlug: slug, alias: finalName });
+  if (canonical?.ok && final?.ok) return Boolean(clean(canonical.globalClubId)) && clean(canonical.globalClubId) === clean(final.globalClubId);
+  return sameTeamName(slug, canonicalName, finalName) || sameTeamName(slug, finalName, canonicalName);
+}
+
 export function buildVerifiedHistoryDay({
   dayKey,
   canonicalRows = [],
   finalResultRows = [],
   season = resolveSeasonFromDay(dayKey),
-  rebuiltAt = Date.now()
+  rebuiltAt = Date.now(),
+  identityResolver = getProductionIdentityResolver()
 } = {}) {
   if (!/^\d{4}-\d{2}-\d{2}$/u.test(clean(dayKey))) {
     return { ok: false, reason: "invalid_day_key", dayKey };
@@ -229,14 +242,12 @@ export function buildVerifiedHistoryDay({
     const finalAwayTeam = clean(final.row?.awayTeam || final.row?.teams?.awayTeam);
     const slug = clean(canonical?.leagueSlug || final.row?.leagueSlug);
     // Exact match-id parity is already required above. Provider display aliases
-    // are accepted only when the conservative name matcher agrees in either
+    // use exact finalized identities, or the conservative name matcher in either
     // direction; some legacy abbreviation comparisons are order-sensitive.
     const homeTeamMatches =
-      sameTeamName(slug, canonical?.homeTeam, finalHomeTeam) ||
-      sameTeamName(slug, finalHomeTeam, canonical?.homeTeam);
+      verifiedHistoryTeamNameMatches(slug, canonical?.homeTeam, finalHomeTeam, identityResolver);
     const awayTeamMatches =
-      sameTeamName(slug, canonical?.awayTeam, finalAwayTeam) ||
-      sameTeamName(slug, finalAwayTeam, canonical?.awayTeam);
+      verifiedHistoryTeamNameMatches(slug, canonical?.awayTeam, finalAwayTeam, identityResolver);
     if (!homeTeamMatches || !awayTeamMatches) {
       errors.push({ reason: "canonical_verified_final_team_mismatch", matchId: id });
       continue;
