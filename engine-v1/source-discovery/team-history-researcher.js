@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { parseFlashscoreFeed } from "../odds/flashscore-fixtures-source.js";
-import { resolveSlugFromPath } from "../odds/flashscore-league-map.js";
+import { resolveResearchCompetition } from "../odds/flashscore-league-map.js";
 import { parseRecentResultEvidence } from "./recent-results-researcher.js";
 
 // Team profiles are followed only from an exact, future canonical fixture's
@@ -62,9 +62,9 @@ export async function researchTeamHistory(target, { nowMs = Date.now(), fetchFn 
     const teamRows = raw.filter(r => [r.homeProviderTeamId, r.awayProviderTeamId].includes(target.providerTeamId));
     if (raw.length && !teamRows.length) return { ...base, status: "TEAM_PROFILE_IDENTITY_MISMATCH" };
     const recent = teamRows.filter(r => r.playedFinal && r.statusDetailCode === "3" && Date.parse(r.kickoffUtc) < nowMs && Date.parse(r.kickoffUtc) >= nowMs - 180 * 86400000);
-    const unmapped = [...new Set(recent.filter(r => !resolveSlugFromPath(r.leaguePath)).map(r => r.leaguePath || r.leagueName))];
+    const unmapped = [...new Set(recent.filter(r => !resolveResearchCompetition(r)).map(r => r.leaguePath || r.leagueName))];
     const responseSha256 = crypto.createHash("sha256").update(html).digest("hex");
-    const documents = [...new Set(recent.map(r => resolveSlugFromPath(r.leaguePath)).filter(Boolean))].map(leagueSlug => {
+    const documents = [...new Set(recent.map(r => resolveResearchCompetition(r)).filter(Boolean))].map(leagueSlug => {
       const parsed = parseRecentResultEvidence(html, leagueSlug, nowMs);
       return { schema: "ai-matchlab.recent-results-research.v1", source: "flashscore", status: "RESULTS_AWAIT_IDENTITY_VALIDATION",
         leagueSlug, acquiredAt: base.acquiredAt, url, responseSha256, teamBinding: target, canonicalWrites: 0,

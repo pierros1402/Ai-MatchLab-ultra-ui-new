@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { knownLeaguePaths, resolveSlugFromPath } from "../odds/flashscore-league-map.js";
+import { knownLeaguePaths, resolveSlugFromPath, resolveResearchCompetition } from "../odds/flashscore-league-map.js";
 import { parseFlashscoreFeed } from "../odds/flashscore-fixtures-source.js";
 
 const PATHS = Object.fromEntries(knownLeaguePaths().map(route => [resolveSlugFromPath(route), route]).filter(([slug]) => slug));
@@ -12,7 +12,7 @@ export function parseRecentResultEvidence(html, slug, nowMs) {
   const reject = reason => { rejected[reason] = (rejected[reason] || 0) + 1; };
   for (const row of candidates) {
     const kickoff = Date.parse(row.kickoffUtc);
-    if (resolveSlugFromPath(row.leaguePath) !== slug) { reject("COMPETITION_MISMATCH"); continue; }
+    if (resolveResearchCompetition(row) !== slug) { reject("COMPETITION_MISMATCH"); continue; }
     if (!row.playedFinal || row.statusDetailCode !== "3") { reject("REGULATION_FINAL_UNCONFIRMED"); continue; }
     if (!Number.isFinite(kickoff) || kickoff >= nowMs || kickoff < nowMs - 180 * 86400000) { reject("OUTSIDE_RECENT_PAST_WINDOW"); continue; }
     if (!/^[a-zA-Z0-9]{6,16}$/.test(row.matchId) || !row.home || !row.away || row.home === row.away) { reject("INVALID_RESULT_IDENTITY"); continue; }
@@ -29,7 +29,7 @@ export function parseRecentResultEvidence(html, slug, nowMs) {
   const fixtureBlocks = [...String(html).matchAll(/initialFeeds\[['"](?:summary-fixtures|fixtures)['"]\]\s*=\s*\{\s*data:\s*`([^`]*)`/g)];
   for (const block of fixtureBlocks) for (const row of parseFlashscoreFeed(block[1])) {
     const kickoff = Date.parse(row.kickoffUtc);
-    if (resolveSlugFromPath(row.leaguePath) !== slug || row.statusCode !== "1" || row.statusDetailCode !== "1"
+    if (resolveResearchCompetition(row) !== slug || row.statusCode !== "1" || row.statusDetailCode !== "1"
       || !Number.isFinite(kickoff) || kickoff <= nowMs || kickoff > nowMs + 8 * 86400000) continue;
     if (![row.matchId, row.homeProviderTeamId, row.awayProviderTeamId].every(value => /^[a-zA-Z0-9]{6,16}$/.test(value || ""))) continue;
     const anchor = { providerMatchId: row.matchId, leagueSlug: slug, home: row.home, away: row.away,

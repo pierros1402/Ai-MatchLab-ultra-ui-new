@@ -42,6 +42,21 @@ test("an ESPN-only fixture can research exact native teams using independently v
 });
 const row = (id, native = "home0001", extra = "") => `AA÷${id}¬AE÷Home¬AF÷Opponent¬PX÷${native}¬PY÷other001¬AD÷1790769600¬AB÷3¬AC÷3¬AG÷2¬AH÷1¬${extra}~`;
 const page = feed => "cjs.initialFeeds['results'] = {data: `" + feed + "`};";
+
+test("a mixed modern Conference profile produces separate quarantined competition documents", async () => {
+  const stage = label => `ZA÷EUROPE: Conference League - ${label}¬ZL÷/football/europe/conference-league/¬~`;
+  const html = page(stage('League phase') + row('main0001') + stage('Qualification') + row('qual0001'));
+  const result = await researchTeamHistory(target, { nowMs: now, fetchFn: async () => ({ ok: true, text: async () => html }) });
+  assert.deepEqual(result.documents.map(d => [d.leagueSlug, d.rows.map(r => r.providerMatchId)]), [
+    ['uefa.europa.conf', ['main0001']], ['uecl.q', ['qual0001']]
+  ]);
+  assert.deepEqual(result.unmappedCompetitions, []);
+  for (const document of result.documents) {
+    assert.equal(document.canonicalWrites, 0);
+    assert.equal(document.valueInputVerified, false);
+    assert.equal(document.authorityPromotionAllowed, false);
+  }
+});
 test("profile candidates retain exact competition and team identity, with no truth promotion", async () => {
   const html = page("ZA÷ENGLAND: National League¬ZL÷/football/england/national-league/¬~" + row("valid001") + row("foreign1", "other002")
     + row("live0001", "home0001", "AB÷2¬") + "ZA÷ENGLAND: Unknown League¬ZL÷/football/england/unmapped-regional/¬~" + row("unknown1"));

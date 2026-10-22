@@ -400,6 +400,19 @@ export function resolveSlugFromPath(leaguePath) {
   return slug;
 }
 
+// Research/result pages redirect to the modern Conference League path and can
+// embed both league-phase and qualifying feeds under that same URL. Require
+// the native stage label; a path alias alone would mix two competitions.
+export function resolveResearchCompetition(row) {
+  const regular=['/football/europe/conference-league/','/football/europe/europa-conference-league/'];
+  const qualifier='/football/europe/europa-conference-league-qualification/';
+  if(!regular.includes(row?.leaguePath)&&row?.leaguePath!==qualifier)return resolveSlugFromPath(row?.leaguePath);
+  const label=String(row?.leagueName||'').trim().replace(/\s+/g,' ');
+  if(/^(?:UEFA )?(?:Europa )?Conference League - Qualification(?: - .+)?$/i.test(label))return 'uecl.q';
+  if(row.leaguePath===qualifier)return null;
+  return /^(?:UEFA )?(?:Europa )?Conference League(?: - (?:League phase|Group stage|Round \d+))?$/i.test(label)?'uefa.europa.conf':null;
+}
+
 /** All leaguePaths we have an explicit mapping for (cups/continental + domestic). */
 export function knownLeaguePaths() {
   return [...Object.keys(PATH_SLUG_MAP), ...Object.keys(DOMESTIC_PATH_SLUG)];
