@@ -1,17 +1,22 @@
 {
   "schema": "ai-matchlab.foundation-integrity.v1",
-  "generatedAt": "2026-10-22T13:09:30.249Z",
+  "generatedAt": "2026-10-22T14:30:50.840Z",
   "dayKey": "2026-10-22",
   "season": "2026-2027",
-  "ok": true,
+  "ok": false,
   "modelReady": true,
-  "publicationReady": true,
-  "blocked": [],
+  "publicationReady": false,
+  "blocked": [
+    {
+      "component": "details",
+      "reason": "details_foundation_not_ready"
+    }
+  ],
   "warnings": [
     {
       "component": "historySemantic",
       "reason": "age_expired_results_rows_present",
-      "count": 15562,
+      "count": 15708,
       "informational": true
     },
     {
@@ -35,7 +40,7 @@
         "ok": false,
         "clean": false,
         "schema": "ai-matchlab.history-semantic-integrity.v1",
-        "generatedAt": "2026-10-22T13:09:29.263Z",
+        "generatedAt": "2026-10-22T14:30:49.836Z",
         "sourceContract": {
           "readOnlyTruthLayers": true,
           "truthWrites": 0,
@@ -83,7 +88,7 @@
           {
             "type": "results_expired_entries",
             "severity": "info",
-            "count": 15562,
+            "count": 15708,
             "detail": "Age-expired rows are reported separately and are not treated as duplicates."
           }
         ],
@@ -92,7 +97,7 @@
           "teamKeyCount": 17737,
           "entryCount": 434235,
           "reconstructedMatchIdCount": 216997,
-          "expiredEntryCount": 15562,
+          "expiredEntryCount": 15708,
           "invalidEntryCount": 0,
           "orphanMatchIdCount": 1,
           "multiSideMatchIdCount": 194,
@@ -108,7 +113,7 @@
             {
               "slug": "eng.5",
               "actionable": 7,
-              "expiredEntryCount": 220,
+              "expiredEntryCount": 240,
               "invalidEntryCount": 0,
               "orphanMatchIdCount": 0,
               "mirrorConflictCount": 7,
@@ -656,7 +661,7 @@
             {
               "slug": "ned.2",
               "actionable": 5,
-              "expiredEntryCount": 178,
+              "expiredEntryCount": 180,
               "invalidEntryCount": 0,
               "orphanMatchIdCount": 0,
               "mirrorConflictCount": 5,
@@ -2042,7 +2047,7 @@
             {
               "slug": "rsa.1",
               "actionable": 2,
-              "expiredEntryCount": 78,
+              "expiredEntryCount": 80,
               "invalidEntryCount": 0,
               "orphanMatchIdCount": 0,
               "mirrorConflictCount": 2,
@@ -4651,7 +4656,7 @@
       "reason": null,
       "detail": {
         "schema": "ai-matchlab.standings-foundation-audit.v1",
-        "generatedAt": "2026-10-22T13:09:29.314Z",
+        "generatedAt": "2026-10-22T14:30:49.917Z",
         "ok": true,
         "season": "2026-2027",
         "summary": {
@@ -217825,16 +217830,16 @@
       }
     },
     "details": {
-      "ok": true,
-      "reason": null,
+      "ok": false,
+      "reason": "details_foundation_not_ready",
       "detail": {
         "schema": "ai-matchlab.details-foundation-audit.v2",
-        "generatedAt": "2026-10-22T13:09:30.248Z",
+        "generatedAt": "2026-10-22T14:30:50.840Z",
         "dayKey": "2026-10-22",
-        "ok": true,
+        "ok": false,
         "publicationUniverse": {
           "mode": "intraday_status_only",
-          "currentFixtureCount": 90,
+          "currentFixtureCount": 89,
           "publishedFixtureCount": 90,
           "deferredFixtureCount": 0,
           "deferredFixtureIds": []
@@ -217843,9 +217848,22 @@
           "expectedFixtures": 90,
           "detailFiles": 90,
           "checked": 90,
-          "issueCount": 0
+          "issueCount": 2
         },
-        "issues": []
+        "issues": [
+          {
+            "code": "PUBLISHED_FIXTURE_NOT_IN_CURRENT_UNIVERSE",
+            "ids": [
+              "cid_ksa1_alahli_alkhaleej_20261022"
+            ]
+          },
+          {
+            "code": "PUBLICATION_COUNT_MISMATCH",
+            "field": "currentFixtureCount",
+            "declared": 90,
+            "actual": 89
+          }
+        ]
       }
     }
   },
