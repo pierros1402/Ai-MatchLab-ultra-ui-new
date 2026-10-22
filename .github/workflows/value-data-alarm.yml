@@ -26,6 +26,14 @@ on:
         type: string
         default: "12"
         description: "Bounded catch-up research: 1–12 leagues. Scheduled runs research up to 12 leagues."
+      archivedImportManifest:
+        type: string
+        default: ""
+        description: "Optional reviewed data/value-data-acquisition/import-review/*.json batch."
+      archivedImportSha256:
+        type: string
+        default: ""
+        description: "Exact SHA-256 of the reviewed manifest (canonical LF bytes)."
 permissions:
   contents: write
 concurrency:
@@ -57,6 +65,8 @@ jobs:
           engine-v1/core/value-publication-integrity.test.js
           engine-v1/core/value-publication-sync-preflight.test.js
           engine-v1/value/unified-production-journal.test.js
+          engine-v1/core/archived-match-page-import.test.js
+          engine-v1/jobs/apply-reviewed-archived-match-import.test.js
       - name: Resolve preparation day
         shell: bash
         env:
@@ -66,6 +76,13 @@ jobs:
           DAY_KEY="${REQUESTED_DAY:-$(TZ=Europe/Athens date +%F)}"
           [[ "$DAY_KEY" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]
           echo "DAY_KEY=$DAY_KEY" >> "$GITHUB_ENV"
+      - name: Import an explicitly reviewed historical batch
+        id: archived-import
+        if: inputs.apply && inputs.archivedImportManifest != ''
+        env:
+          VALUE_ARCHIVED_IMPORT_MANIFEST: ${{ inputs.archivedImportManifest }}
+          VALUE_ARCHIVED_IMPORT_SHA256: ${{ inputs.archivedImportSha256 }}
+        run: bash tools/persist-reviewed-archived-import.sh
       - name: Rebuild statistical inputs with explicit competition provenance
         id: competition-foundations
         if: github.event_name == 'schedule' || inputs.apply
@@ -80,10 +97,10 @@ jobs:
           VALUE_MAX_RESEARCH_LEAGUES: ${{ inputs.maxResearchLeagues || '12' }}
         run: bash tools/persist-value-data-alarm.sh "$DAY_KEY"
       - name: Repair verified derived inputs before prospective publication
-        if: ${{ always() && steps.competition-foundations.outcome != 'failure' && (github.event_name == 'schedule' || inputs.apply) && env.DAY_KEY != '' }}
+        if: ${{ always() && steps.archived-import.outcome != 'failure' && steps.competition-foundations.outcome != 'failure' && (github.event_name == 'schedule' || inputs.apply) && env.DAY_KEY != '' }}
         run: bash tools/persist-value-detail-recovery.sh "$DAY_KEY"
       - name: Publish the prospective unified plan from verified inputs
-        if: ${{ always() && steps.competition-foundations.outcome != 'failure' && (github.event_name == 'schedule' || inputs.apply) && env.DAY_KEY != '' }}
+        if: ${{ always() && steps.archived-import.outcome != 'failure' && steps.competition-foundations.outcome != 'failure' && (github.event_name == 'schedule' || inputs.apply) && env.DAY_KEY != '' }}
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: bash tools/publish-unified-value-day.sh "$DAY_KEY"
