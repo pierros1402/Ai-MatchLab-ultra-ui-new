@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import {requireValuePublicationIntegrity} from '../engine-v1/core/value-publication-integrity.js';
 import { setTimeout as sleep } from "node:timers/promises";
 import {
   canonicalBufferSha256
@@ -115,6 +116,18 @@ async function fetchJson(
   return JSON.parse(text);
 }
 
+// Validate the immutable candidate before requesting any public write.
+const rawUrl =
+  `https://raw.githubusercontent.com/${repo}/${ref}/data/value-comparison/${day}.json`;
+const rawResponse = await fetchWithTimeout(rawUrl, {}, 45000);
+if (!rawResponse.ok) throw new Error(`source_comparison_fetch_failed:${rawResponse.status}`);
+const sourceBuffer = Buffer.from(await rawResponse.arrayBuffer());
+const sourceSha = canonicalBufferSha256(sourceBuffer);
+const source = JSON.parse(sourceBuffer.toString('utf8'));
+assert.equal(source.ok, true);
+assert.equal(source.date, day);
+if (day >= '2026-10-18') requireValuePublicationIntegrity(source);
+
 const start =
   await fetchJson(
     `${engineBase}/ops/sync-value-comparison?date=${encodeURIComponent(day)}&ref=${encodeURIComponent(ref)}`,
@@ -228,42 +241,11 @@ assert.match(
   "comparison sync SHA invalid"
 );
 
-const rawUrl =
-  `https://raw.githubusercontent.com/${repo}/${ref}/data/value-comparison/${day}.json`;
-
-const rawResponse =
-  await fetchWithTimeout(
-    rawUrl,
-    {},
-    45000
-  );
-
-if (!rawResponse.ok) {
-  throw new Error(
-    `source_comparison_fetch_failed:${rawResponse.status}`
-  );
-}
-
-const sourceBuffer =
-  Buffer.from(
-    await rawResponse.arrayBuffer()
-  );
-
-const sourceSha =
-  canonicalBufferSha256(
-    sourceBuffer
-  );
-
 assert.equal(
   result.comparisonSha256,
   sourceSha,
   "comparison sync result/source SHA mismatch"
 );
-
-const source =
-  JSON.parse(
-    sourceBuffer.toString("utf8")
-  );
 
 const served =
   await fetchJson(
@@ -314,6 +296,15 @@ assert.deepStrictEqual(
   normalizedSource,
   "public comparison differs from immutable source"
 );
+
+// Byte parity does not establish that the coverage and selection claims agree.
+// An honestly incomplete day passes; contradictory certification must fail.
+if (day >= '2026-10-18') {
+  requireValuePublicationIntegrity(source);
+  const audit = requireValuePublicationIntegrity(served);
+  console.log(`VALUE_PUBLICATION_COVERAGE=${audit.coverageStatus}`);
+  console.log(`VALUE_PUBLICATION_OPEN_INPUTS=${audit.summary.insufficient}`);
+}
 
 console.log(
   "VALUE_COMPARISON_SYNC_VERIFIED=true"

@@ -47,6 +47,16 @@ jobs:
         with:
           node-version: "24"
       - run: npm ci --no-audit --no-fund
+      - name: Verify Value input and publication regression guards
+        run: >-
+          node --test
+          engine-v1/core/value-data-alarm.test.js
+          engine-v1/core/value-data-readiness.test.js
+          engine-v1/core/prematch-readiness-evidence.test.js
+          engine-v1/core/prematch-verified-final-form.test.js
+          engine-v1/core/value-publication-integrity.test.js
+          engine-v1/core/value-publication-sync-preflight.test.js
+          engine-v1/value/unified-production-journal.test.js
       - name: Resolve preparation day
         shell: bash
         env:
