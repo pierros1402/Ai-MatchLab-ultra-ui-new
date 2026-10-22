@@ -8,6 +8,19 @@ const header = "ZA÷EUROPE: UEFA Nations League¬ZY÷Europe¬ZL÷/football/europ
 const row = (id, extras = "") => `AA÷${id}¬AE÷Greece¬AF÷Israel¬AD÷1790272800¬AB÷3¬AC÷3¬AG÷2¬AH÷1¬${extras}~`;
 const page = feed => "cjs.initialFeeds['results'] = { data: `" + feed + "`, allEventsCount: 2 };";
 
+test("redirected Conference feeds keep qualification results and future anchors separate", () => {
+  const phase = label => `ZA÷EUROPE: Conference League - ${label}¬ZY÷Europe¬ZL÷/football/europe/conference-league/¬~`;
+  const feeds = phase('League phase') + row('main0001') + phase('Qualification') + row('qual0001');
+  const future = id => row(id, `AB÷1¬AC÷1¬AD÷${Math.floor(now / 1000) + 86400}¬PX÷home0001¬PY÷away0001¬`);
+  const html = page(feeds) + "cjs.initialFeeds['fixtures'] = { data: `" + phase('League phase') + future('mainnext') + phase('Qualification') + future('qualnext') + "` };";
+  for (const [slug, resultId, anchorId] of [['uefa.europa.conf', 'main0001', 'mainnext'], ['uecl.q', 'qual0001', 'qualnext']]) {
+    const parsed = parseRecentResultEvidence(html, slug, now);
+    assert.deepEqual(parsed.rows.map(r => r.providerMatchId), [resultId]);
+    assert.deepEqual(parsed.upcomingAnchors.map(r => r.providerMatchId), [anchorId]);
+    assert.equal(parsed.rejected.COMPETITION_MISMATCH, 1);
+  }
+});
+
 test("native team IDs survive research and only unambiguous upcoming anchors inside eight days are retained", () => {
   const timestamp = Math.floor((now + 86400000) / 1000);
   const future = (id, extras = "") => row(id, `AB÷1¬AC÷1¬AD÷${timestamp}¬PX÷home0001¬PY÷away0001¬${extras}`);

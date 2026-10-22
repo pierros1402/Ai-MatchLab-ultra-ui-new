@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import {resolveSlugFromPath} from '../odds/flashscore-league-map.js';
+import {resolveResearchCompetition} from '../odds/flashscore-league-map.js';
 import {isDisabledLeague} from '../source-discovery/disabled-leagues.js';
 import {athensDayFromKickoff} from './daykey.js';
 import {buildCanonicalId} from './canonical-id.js';
@@ -27,7 +27,7 @@ export function proposeArchivedMatchImport({html,candidate,sourceUrl,acquiredAt,
   if(h?.length!==1||a?.length!==1||h[0].id===a[0].id)return deny('NATIVE_TEAM_IDENTITY_NOT_UNIQUE');
   const kickoff=Number(f.DC)*1000;
   if(!Number.isFinite(kickoff)||kickoff>=acquired||kickoff>=nowMs||kickoff<nowMs-180*86400000)return deny('OUTSIDE_VERIFIED_PAST_WINDOW');
-  const slug=resolveSlugFromPath(e.header?.tournament?.link);
+  const slug=resolveResearchCompetition({leaguePath:e.header?.tournament?.link,leagueName:e.header?.tournament?.tournament});
   if(e.sport_id!==1||e.eventStageId!==3||e.eventStageTypeId!==3||f.DA!==3||f.DB!==3)return deny('REGULATION_FINAL_REQUIRED');
   const source={providerMatchId:e.event_id_c,leagueSlug:slug,home:h[0].name,away:a[0].name,homeProviderTeamId:h[0].id,awayProviderTeamId:a[0].id,scoreHome:Number(f.DE),scoreAway:Number(f.DF)};
   if(![h[0].id,a[0].id].every(id=>/^[A-Za-z0-9]{6,16}$/.test(id||'')))return deny('INVALID_NATIVE_TEAM_ID');
