@@ -2,8 +2,8 @@
   "ok": true,
   "dayKey": "2026-10-22",
   "season": "2026-2027",
-  "generatedAt": "2026-10-22T02:34:34.051Z",
-  "startedAt": "2026-10-22T02:30:58.460Z",
+  "generatedAt": "2026-10-22T04:31:39.693Z",
+  "startedAt": "2026-10-22T04:27:54.081Z",
   "source": {
     "inputSource": "canonical_fixtures",
     "canonicalMatches": 90,
@@ -21,25 +21,25 @@
     "totalRows": 90,
     "detailsFound": 90,
     "intelligenceOk": 90,
-    "valueReturned": 69,
-    "valueNull": 21,
+    "valueReturned": 67,
+    "valueNull": 23,
     "valueFailed": 0,
-    "minimumRecentSampleNull": 21
+    "minimumRecentSampleNull": 23
   },
   "breakdown": {
     "nullByReason": {
-      "minimum_recent_sample": 21
+      "minimum_recent_sample": 23
     },
     "nullByClass": {
-      "low_recent_sample_prior_backed": 14,
+      "low_recent_sample_prior_backed": 16,
       "low_recent_sample": 6,
       "missing_team_history_and_prior": 1
     },
     "nullByLeague": {
+      "mex.1": 4,
       "uefa.europa.conf": 3,
       "uga.1": 3,
       "ksa.1": 2,
-      "mex.1": 2,
       "qat.1": 2,
       "conmebol.libertadores": 1,
       "conmebol.sudamericana": 1,
@@ -59,13 +59,13 @@
       "ecu.2": 4,
       "aze.2": 3,
       "idn.1": 3,
-      "mex.1": 3,
       "col.1": 2,
       "mlt.1": 2,
       "arm.1": 1,
       "gua.1": 1,
       "ksa.1": 1,
       "lva.2": 1,
+      "mex.1": 1,
       "mne.1": 1,
       "rou.2": 1,
       "usa.1": 1,
@@ -390,7 +390,7 @@
       "leagueSlug": "col.1",
       "homeTeam": "Independiente Santa Fe",
       "awayTeam": "Jaguares de Córdoba",
-      "status": "PRE",
+      "status": "FT",
       "kickoffUtc": "2026-10-22T01:20Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -557,7 +557,7 @@
       "leagueSlug": "conmebol.libertadores",
       "homeTeam": "Palmeiras",
       "awayTeam": "Fluminense",
-      "status": "FIRST_HALF",
+      "status": "FT",
       "kickoffUtc": "2026-10-22T00:30Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -2536,7 +2536,7 @@
       "leagueSlug": "mex.1",
       "homeTeam": "Atlas",
       "awayTeam": "América",
-      "status": "FIRST_HALF",
+      "status": "FT",
       "kickoffUtc": "2026-10-22T01:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -2578,87 +2578,49 @@
       "leagueSlug": "mex.1",
       "homeTeam": "Pachuca",
       "awayTeam": "Cruz Azul",
-      "status": "PRE",
+      "status": "FIRST_HALF",
       "kickoffUtc": "2026-10-22T03:10Z",
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.867,
-        "homeWinScore": 0.368,
-        "drawScore": 0.195,
-        "awayWinScore": 0.437,
-        "over15Score": 0.712,
-        "over25Score": 0.593,
-        "bttsScore": 0.549,
-        "signals": [
-          "home_edge",
-          "away_edge",
-          "priors_applied",
-          "ai_context_medium_importance",
-          "close_strength_gap",
-          "home_rest_3"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "AWAY",
-            "score": 0.437,
-            "gap": 0.069,
-            "drawScore": 0.195,
-            "reasons": [
-              "best_below_0.68",
-              "gap_below_0.10"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": true,
-            "pick": "Over 1.5",
-            "score": 0.712,
-            "reasons": []
-          },
-          "Over / Under 2.5": {
-            "eligible": false,
-            "pick": "Over 2.5",
-            "score": 0.593,
-            "expectedTotalGoals": 2.931,
-            "reasons": [
-              "score_below_0.65",
-              "missing_goal_support"
-            ]
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.55,
-            "reasons": [
-              "score_below_0.74",
-              "missing_strong_goal_support"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.549,
-            "reasons": [
-              "score_below_0.68",
-              "missing_btts_support"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample_prior_backed",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Pachuca",
+        "awayTeam": "Cruz Azul",
+        "leagueSlug": "mex.1",
+        "fixtureDate": "2026-10-22T03:10:00.000Z",
+        "homeResolvedKey": "Pachuca",
+        "awayResolvedKey": "Cruz Azul",
+        "homeRawSample": 3,
+        "awayRawSample": 2,
+        "homeBlendedSample": 6,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": 44,
+        "awayPriorSample": 45,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_mex1_puebla_monterrey_20261022",
       "leagueSlug": "mex.1",
       "homeTeam": "Puebla",
       "awayTeam": "Monterrey",
-      "status": "LIVE",
+      "status": "FT",
       "kickoffUtc": "2026-10-22T01:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -2738,86 +2700,49 @@
       "leagueSlug": "mex.1",
       "homeTeam": "Santos",
       "awayTeam": "Pumas UNAM",
-      "status": "PRE",
+      "status": "FIRST_HALF",
       "kickoffUtc": "2026-10-22T03:10Z",
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.803,
-        "homeWinScore": 0.491,
-        "drawScore": 0.11,
-        "awayWinScore": 0.399,
-        "over15Score": 0.83,
-        "over25Score": 0.813,
-        "bttsScore": 0.645,
-        "signals": [
-          "home_edge_strong",
-          "over25_support",
-          "btts_support",
-          "mutual_attack_profile",
-          "priors_applied",
-          "ai_context_medium_importance",
-          "close_strength_gap",
-          "home_rest_4"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "HOME",
-            "score": 0.491,
-            "gap": 0.09199999999999997,
-            "drawScore": 0.11,
-            "reasons": [
-              "best_below_0.68",
-              "gap_below_0.10"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": false,
-            "pick": "Over 1.5",
-            "score": 0.83,
-            "reasons": [
-              "suppressed_by_over25"
-            ]
-          },
-          "Over / Under 2.5": {
-            "eligible": true,
-            "pick": "Over 2.5",
-            "score": 0.813,
-            "expectedTotalGoals": 3.609,
-            "reasons": []
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.677,
-            "reasons": [
-              "score_below_0.74"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.645,
-            "reasons": [
-              "score_below_0.68"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample_prior_backed",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Santos",
+        "awayTeam": "Pumas UNAM",
+        "leagueSlug": "mex.1",
+        "fixtureDate": "2026-10-22T03:10:00.000Z",
+        "homeResolvedKey": "Santos",
+        "awayResolvedKey": "Pumas UNAM",
+        "homeRawSample": 2,
+        "awayRawSample": 3,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 6,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 2,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": 2,
+        "awayPriorSample": 33,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_mex1_toluca_tijuana_20261022",
       "leagueSlug": "mex.1",
       "homeTeam": "Toluca",
       "awayTeam": "Tijuana",
-      "status": "FIRST_HALF",
+      "status": "FT",
       "kickoffUtc": "2026-10-22T01:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -3295,7 +3220,7 @@
       "leagueSlug": "slv.1",
       "homeTeam": "CD FAS",
       "awayTeam": "Isidro Metapán",
-      "status": "PRE",
+      "status": "LIVE",
       "kickoffUtc": "2026-10-22T01:30Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -6350,7 +6275,7 @@
       "leagueSlug": "usa.2",
       "homeTeam": "Sporting Jax",
       "awayTeam": "Louisville City",
-      "status": "STATUS_SCHEDULED",
+      "status": "FT",
       "kickoffUtc": "2026-10-21T23:30:00.000Z",
       "detailsFound": true,
       "intelligenceOk": true,
