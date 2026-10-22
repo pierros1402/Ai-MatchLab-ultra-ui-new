@@ -56,6 +56,7 @@ jobs:
           node-version: "24"
       - run: npm ci --no-audit --no-fund
       - name: Verify Value input and publication regression guards
+        id: regression-guards
         run: >-
           node --test
           engine-v1/core/value-data-alarm.test.js
@@ -100,10 +101,10 @@ jobs:
           VALUE_MAX_RESEARCH_LEAGUES: ${{ inputs.maxResearchLeagues || '12' }}
         run: bash tools/persist-value-data-alarm.sh "$DAY_KEY"
       - name: Repair verified derived inputs before prospective publication
-        if: ${{ always() && steps.archived-import.outcome != 'failure' && steps.competition-foundations.outcome != 'failure' && (github.event_name == 'schedule' || inputs.apply) && env.DAY_KEY != '' }}
+        if: ${{ always() && steps.regression-guards.outcome == 'success' && steps.archived-import.outcome != 'failure' && steps.competition-foundations.outcome != 'failure' && (github.event_name == 'schedule' || inputs.apply) && env.DAY_KEY != '' }}
         run: bash tools/persist-value-detail-recovery.sh "$DAY_KEY"
       - name: Publish the prospective unified plan from verified inputs
-        if: ${{ always() && steps.archived-import.outcome != 'failure' && steps.competition-foundations.outcome != 'failure' && (github.event_name == 'schedule' || inputs.apply) && env.DAY_KEY != '' }}
+        if: ${{ always() && steps.regression-guards.outcome == 'success' && steps.archived-import.outcome != 'failure' && steps.competition-foundations.outcome != 'failure' && (github.event_name == 'schedule' || inputs.apply) && env.DAY_KEY != '' }}
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: bash tools/publish-unified-value-day.sh "$DAY_KEY"
