@@ -221,7 +221,13 @@ export function preserveHistoryCheckpoint({
       // and payloads remain in this tree and in the append-only parent history.
       entries.push(`100644 ${locatorOid}\tlatest-checkpoint.json\0`);
       git(root, ["update-index", "-z", "--index-info"], { index, input: Buffer.from(entries.join("")) });
-      const tree = git(root, ["write-tree"], { index }).trim();
+      // The inherited tree belongs to the already durable remote archive parent.
+      // In a blob-filtered checkout, checking every inherited blob here lazily
+      // downloads the entire old archive, one object at a time. Current payloads
+      // and both metadata blobs were written locally above. Keep old references
+      // without fetching them; the normal fast-forward push still checks remote
+      // connectivity and verifyHistoryCheckpoint hashes every current payload.
+      const tree = git(root, ["write-tree", "--missing-ok"], { index }).trim();
       const parents = [...new Set([parent, sourceCommit].filter(Boolean))];
       const commit = git(root, ["-c", "user.name=History preservation", "-c", "user.email=history-preservation@users.noreply.github.com",
         "commit-tree", tree, ...parents.flatMap(value => ["-p", value])],

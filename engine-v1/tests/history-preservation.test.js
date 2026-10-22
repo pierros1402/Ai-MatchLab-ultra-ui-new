@@ -7,6 +7,7 @@ import { execFileSync, execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { gzipSync } from "node:zlib";
 import crypto from "node:crypto";
+import { pathToFileURL } from "node:url";
 import {
   HISTORY_ARCHIVE_BRANCH, isHistoryEvidencePath, preserveHistoryCheckpoint,
   verifyHistoryCheckpoint, restoreHistoryCheckpoint, prepareHistoryRecoveryBundle,
@@ -30,6 +31,28 @@ function fixture(t) {
   };
   return { root, remote, temp, write };
 }
+
+test("partial-clone checkpoints preserve inherited payloads without downloading unrelated old blobs", t => {
+  const f = fixture(t);
+  f.write('data/value/old.json', '{"original":"retained history"}');
+  const first = preserveHistoryCheckpoint({root:f.root,dayKey:'2026-10-13',stage:'old',runId:'partial'});
+  const manifest = verifyHistoryCheckpoint({root:f.root,ref:first.archiveCommit,manifestPath:first.manifestPath});
+  const oldOid = manifest.files[0].chunks[0].oid;
+  git(f.root, ['push','--quiet','origin','main']);
+  git(f.remote, ['config','uploadpack.allowFilter','true']);
+  const partial = path.join(f.temp,'partial');
+  git(f.root, ['clone','--quiet','--filter=blob:none','--single-branch','--branch','main',pathToFileURL(f.remote).href,partial]);
+  const absent = () => assert.throws(() => git(partial, ['--no-lazy-fetch','cat-file','-e',oldOid]));
+  absent();
+  fs.mkdirSync(path.join(partial,'data/value'),{recursive:true});
+  fs.writeFileSync(path.join(partial,'data/value/new.json'),'{"current":"verified"}');
+  const next = preserveHistoryCheckpoint({root:partial,dayKey:'2026-10-13',stage:'new',runId:'partial'});
+  assert.equal(verifyHistoryCheckpoint({root:partial,ref:next.archiveCommit,manifestPath:next.manifestPath}).files.length,1);
+  absent();
+  const restored = path.join(f.temp,'restored-partial');
+  restoreHistoryCheckpoint({root:partial,ref:next.archiveCommit,manifestPath:first.manifestPath,destination:restored});
+  assert.equal(fs.readFileSync(path.join(restored,'data/value/old.json'),'utf8'),'{"original":"retained history"}');
+});
 
 test("failed later gate cannot discard original picks, inputs, verified results or malformed evidence", t => {
   const f = fixture(t);
