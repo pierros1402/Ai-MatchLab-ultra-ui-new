@@ -47,5 +47,9 @@ test('the existing workflow retains the common queue and blocks downstream publi
  const file=new URL('../../.github/workflows/value-data-alarm.yml',import.meta.url),source=fs.readFileSync(file,'utf8');
  assert.match(source,/group: ai-matchlab-data-writer\s+queue: max\s+cancel-in-progress: false/);
  assert.equal((source.match(/steps\.archived-import\.outcome != 'failure'/g)||[]).length,2);
+ assert.match(source,/name: Verify Value input and publication regression guards\s+id: regression-guards/);
+ const recoverySteps=source.split(/\r?\n      - /).filter(step=>/name: (Repair verified derived inputs|Publish the prospective unified plan)/.test(step));
+ assert.equal(recoverySteps.length,2);
+ for(const step of recoverySteps)assert.match(step,/if:.*always\(\).*steps\.regression-guards\.outcome == 'success'/);
  assert.match(source,/if: inputs\.apply && inputs\.archivedImportManifest != ''/);
 });
