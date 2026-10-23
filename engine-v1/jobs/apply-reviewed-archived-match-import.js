@@ -8,10 +8,22 @@ import {prepareArchivedMatchImport} from './prepare-archived-match-import.js';
 
 const allowed=/^data\/(?:canonical-fixtures\/\d{4}-\d{2}-\d{2}\/[a-z0-9_.-]+\.json|final-results\/\d{4}-\d{2}-\d{2}\/cid_[a-zA-Z0-9_]+\.json|value-data-acquisition\/\d{4}-\d{2}-\d{2}\/[a-z0-9_.-]+\.archived-[A-Za-z0-9]{6,16}\.results\.research\.json)$/;
 
-export function applyPreparedArchivedImport(report,{root,writeFn=writeHistoryJsonAtomic}={}) {
+export function applyPreparedArchivedImport(report,{root,writeFn=writeHistoryJsonAtomic,afterWrite}={}) {
+  return applyPreparedHistoryEvidence(report,{root,writeFn,afterWrite,authorization:'reviewed_manifest'});
+}
+
+// Both callers use the same path boundaries and rollback transaction. Automatic
+// policy authorization is explicit and must never masquerade as a reviewed row.
+export function applyPreparedHistoryEvidence(report,{root,writeFn=writeHistoryJsonAtomic,afterWrite,authorization}={}) {
+  if(!['reviewed_manifest','exact-native-future-team-v1'].includes(authorization))throw Error('HISTORY_EVIDENCE_AUTHORIZATION_REQUIRED');
+  const policy=authorization!=='reviewed_manifest';
+  if(policy&&(report.authorization!==authorization||report.reviewRequired!==false))throw Error('HISTORY_EVIDENCE_SOURCE_POLICY_REQUIRED');
   if(report?.batch?.ok!==true||report.productionWrites!==0||!Array.isArray(report.batch.files)||!Array.isArray(report.proposals)||!report.batch.files.length||!root)throw Error('UNVERIFIED_ARCHIVED_IMPORT_BATCH');
   const operations=[],seen=new Set();
   for(const entry of report.batch.files){
+    const mergeMode=policy?'MERGE_ADDITIVE_ONLY_AFTER_SOURCE_POLICY_VALIDATION':'MERGE_ADDITIVE_ONLY_AFTER_REVIEW';
+    const createMode=policy?'CREATE_ONLY_AFTER_SOURCE_POLICY_VALIDATION':'CREATE_ONLY_AFTER_REVIEW';
+    if(![mergeMode,createMode].includes(entry.mode))throw Error('ARCHIVED_IMPORT_WRITE_MODE_INVALID');
     if(!allowed.test(entry.path)||entry.path.split('/').some(p=>p==='..'||p==='.')||seen.has(entry.path))throw Error('ARCHIVED_IMPORT_WRITE_SCOPE_INVALID');
     seen.add(entry.path);
     const target=path.resolve(root,entry.path),relative=path.relative(root,target);
@@ -19,7 +31,7 @@ export function applyPreparedArchivedImport(report,{root,writeFn=writeHistoryJso
     const exists=fs.existsSync(target),before=exists?fs.readFileSync(target):null;
     let payload=entry.payload;
     if(exists){
-      if(entry.mode!=='MERGE_ADDITIVE_ONLY_AFTER_REVIEW')throw Error('ARCHIVED_IMPORT_EXISTING_TRUTH_CONFLICT');
+      if(entry.mode!==mergeMode)throw Error('ARCHIVED_IMPORT_EXISTING_TRUTH_CONFLICT');
       const old=JSON.parse(before.toString('utf8'));
       if(!Array.isArray(old.fixtures)||!Array.isArray(payload.fixtures))throw Error('ARCHIVED_IMPORT_CANONICAL_SHAPE_INVALID');
       const ids=new Set(old.fixtures.map(r=>r.canonicalId));
@@ -36,6 +48,9 @@ export function applyPreparedArchivedImport(report,{root,writeFn=writeHistoryJso
       if(current?.toString('hex')!==op.before?.toString('hex'))throw Error('ARCHIVED_IMPORT_TRUTH_CHANGED_DURING_PREPARATION');
       applied.push(op);writeFn(op.target,op.payload);
     }
+    // Durability is part of the transaction for automatic recovery. A failed
+    // after-write checkpoint rolls back before any assessment can consume it.
+    afterWrite?.();
   }catch(error){
     for(const op of applied.reverse()){
       if(op.before===null){if(fs.existsSync(op.target))fs.unlinkSync(op.target);}
@@ -46,7 +61,7 @@ export function applyPreparedArchivedImport(report,{root,writeFn=writeHistoryJso
   return {writtenPaths:operations.map(op=>op.path),canonicalAdditions:report.proposals.length,existingPredictionsChanged:false};
 }
 
-function canonicalRowsInCheckout(root){
+export function canonicalRowsInCheckout(root){
   const dir=path.join(root,'data','canonical-fixtures');
   if(!fs.existsSync(dir))throw Error('ARCHIVED_IMPORT_CANONICAL_SCAN_REQUIRED');
   const rows=[];

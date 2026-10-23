@@ -142,7 +142,32 @@ test("expired research budget preserves unresolved work for the next automatic c
  const {report}=await runValueDataAlarmDay("2099-10-04",{write:true,research:true,researchBudgetMs:0,lookAheadDays:0,nowMs:Date.parse("2099-10-04T08:00Z"),dependencies:{
  queueRoot:root,fixtures:()=>[{canonicalId:"cid_budget",leagueSlug:"eng.1",homeTeam:"A",awayTeam:"B",kickoffUtc:"2099-10-04T14:00Z"}],
  assessments:()=>[],standings:()=>({ok:false}),supplement:()=>({assessmentRowsWritten:0,unavailableEvidence:[]}),
- primarySearch:async()=>({ok:true}),search:async()=>{calls++;return {status:"NO_SOURCE"};},resultsSearch:async()=>{calls++;return {rows:[]};}}});
+  primarySearch:async()=>{calls++;return {ok:true};},search:async()=>{calls++;return {status:"NO_SOURCE"};},resultsSearch:async()=>{calls++;return {rows:[]};}}});
  assert.equal(calls,0);assert.equal(report.attemptedResearchTasks.length,0);assert.ok(report.deferredResearchTasks.length>0);assert.ok(report.openIncidents>0);
  }finally{fs.rmSync(root,{recursive:true});}
+});
+
+test('capacity-deferred groups remain visible even when the selected cycle has no budget',async t=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'alarm-capacity-backlog-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+ const day='2099-10-04',nowMs=Date.parse(day+'T08:00Z');
+ const fixtures=Array.from({length:5},(_,i)=>({canonicalId:`cid_backlog_${i}`,leagueSlug:`backlog.${i}`,homeTeam:'A',awayTeam:'B',kickoffUtc:day+'T14:00Z'}));
+ const {report}=await runValueDataAlarmDay(day,{write:true,research:true,maxResearchLeagues:2,researchBudgetMs:0,lookAheadDays:0,nowMs,dependencies:{queueRoot:root,fixtures:()=>fixtures,assessments:()=>[],standings:()=>({ok:false}),supplement:()=>({assessmentRowsWritten:0}),primarySearch:async()=>{throw Error('must not acquire');}}});
+ assert.equal(report.researchBacklog.dueGroups,5);assert.equal(report.researchBacklog.selectedGroups,2);
+ assert.equal(report.researchBacklog.deferredByCapacity.length,3);assert.equal(report.researchBacklog.deferredByBudget.length,2);
+ assert.equal(report.deferredResearchTasks.length,5);assert.equal(report.futureOpen,5);
+});
+
+test('source-policy recovery runs after native profile persistence and cannot close an unconsumed assessment',async t=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'alarm-source-policy-cycle-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+ const day='2099-10-04',nowMs=Date.parse(day+'T08:00Z'),fixture={canonicalId:'cid_policy_future',leagueSlug:'egy.2',homeTeam:'A',awayTeam:'B',kickoffUtc:day+'T14:00Z',providerIds:{flashscore:'future01'}};
+ let recoveryCalls=0;
+ const {report,queue}=await runValueDataAlarmDay(day,{write:true,research:true,verifiedHistoryPolicy:'exact-native-future-team-v1',lookAheadDays:0,nowMs,dependencies:{
+  queueRoot:root,fixtures:()=>[fixture],assessments:()=>[],standings:()=>({ok:false}),supplement:()=>({assessmentRowsWritten:0,unavailableEvidence:[{canonicalId:fixture.canonicalId,homeSample:1,awaySample:6}]}),
+  primarySearch:async()=>({ok:true}),search:async()=>({status:'NO_SOURCE'}),
+  resultsSearch:async()=>({rows:[],upcomingAnchors:[{leagueSlug:'egy.2',providerMatchId:'future01',kickoffUtc:fixture.kickoffUtc,home:'A',away:'B',homeProviderTeamId:'native01',homeProviderTeamSlug:'team-a'}]}),
+  teamHistorySearch:async()=>({documents:[{leagueSlug:'egy.2',rows:[{providerMatchId:'past0001'}]}]}),
+  verifiedHistoryRecovery:async(_day,bindings)=>{recoveryCalls++;assert.equal(bindings[0].target.nativeAnchor.providerMatchId,'future01');assert.ok(fs.existsSync(path.join(root,day,'egy.2.team-native01.egy.2.results.research.json')));return {appliedMatches:0,writePaths:[],fullCoverageCertified:false};}
+ }});
+ assert.equal(recoveryCalls,1);assert.equal(report.postResearchReevaluation,true);assert.equal(report.verifiedHistoryRecovery.appliedMatches,0);
+ assert.equal(report.futureOpen,1);assert.notEqual(queue.incidents[fixture.canonicalId].status,'RESOLVED');
 });

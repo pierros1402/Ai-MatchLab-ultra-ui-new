@@ -33,7 +33,7 @@ export function updateValueDataAlarm(previous, { dayKey, fixtures, joinedIds, no
   return queue;
 }
 
-export function dueValueDataResearch(queue, nowMs, maxLeagues = 2) {
+export function dueValueDataResearch(queue, nowMs, maxLeagues = 12) {
   const groups = new Map();
   for (const incident of Object.values(queue.incidents)) {
     if (incident.status === "RESOLVED") continue;
@@ -63,6 +63,13 @@ export function dueValueDataResearch(queue, nowMs, maxLeagues = 2) {
   if (maxLeagues >= 2 && selected.length === maxLeagues && early && !selected.includes(early)
     && selected.every(task => task.deadline - nowMs <= 86400000)) selected[selected.length - 1] = early;
   return selected;
+}
+
+export function planValueDataResearch(queue, nowMs, maxLeagues = 12) {
+  const due=dueValueDataResearch(queue,nowMs,Number.MAX_SAFE_INTEGER);
+  const selected=dueValueDataResearch(queue,nowMs,maxLeagues);
+  const keys=new Set(selected.map(task=>task.key));
+  return {selected,due,deferredByCapacity:due.filter(task=>!keys.has(task.key))};
 }
 
 export function recordValueDataResearch(queue, task, result, nowMs) {

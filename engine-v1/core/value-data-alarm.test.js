@@ -1,8 +1,17 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { updateValueDataAlarm, dueValueDataResearch, recordValueDataResearch } from "./value-data-alarm.js";
+import { updateValueDataAlarm, dueValueDataResearch, planValueDataResearch, recordValueDataResearch } from "./value-data-alarm.js";
 const now = Date.parse("2026-10-01T08:00Z");
 const fixture = { canonicalId: "cid_alarm_a_20261001", leagueSlug: "test.1", kickoffUtc: "2026-10-01T10:00Z", homeTeam: "A", awayTeam: "B" };
+
+test('capacity-limited research exposes every remaining due group and defaults to twelve',()=>{
+ const rows=Array.from({length:15},(_,i)=>({...fixture,canonicalId:`cid_due_${i}`,leagueSlug:`due.${i}`}));
+ const queue=updateValueDataAlarm(null,{dayKey:'2026-10-01',fixtures:rows,joinedIds:[],nowMs:now});
+ const plan=planValueDataResearch(queue,now,2);
+ assert.equal(plan.selected.length,2);assert.equal(plan.due.length,15);assert.equal(plan.deferredByCapacity.length,13);
+ assert.equal(dueValueDataResearch(queue,now).length,12);
+ assert.equal(new Set([...plan.selected,...plan.deferredByCapacity].map(t=>t.key)).size,15);
+});
 function update(q, fixtures = [fixture], joinedIds = [], nowMs = now, dayKey = "2026-10-01") {
   return updateValueDataAlarm(q, { dayKey, fixtures, joinedIds, nowMs });
 }

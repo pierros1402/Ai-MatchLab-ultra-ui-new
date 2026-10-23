@@ -30,6 +30,7 @@ export function selectTeamHistoryTargets(evidence, incidents, fixtures, attempts
       }
       const key = `${fixture.leagueSlug}|${providerTeamId}`;
       const target = { key, providerTeamId, providerTeamSlug, leagueSlug: fixture.leagueSlug, team: fixture[`${side}Team`],
+        nativeAnchor: matched[0].anchor,
         canonicalId: fixture.canonicalId, providerMatchId: matched[0].anchor.providerMatchId, kickoffUtc: fixture.kickoffUtc,
         ...(matched[0].proof ? { identityProof: matched[0].proof } : {}),
         previousAttemptAt: attempts[key]?.attemptedAt || null };
