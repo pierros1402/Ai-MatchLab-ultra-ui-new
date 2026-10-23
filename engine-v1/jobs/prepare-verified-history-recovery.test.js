@@ -52,6 +52,21 @@ test('primary-page disagreement cannot be promoted; a separate valid result rema
   assert.equal(result.productionWrites,0);assert.equal(result.reviewRequired,true);
 });
 
+for(const store of ['final-results','value-data-acquisition'])test(`an existing ${store} artifact is quarantined before the batch while unrelated results still apply`,async t=>{
+  const root=temporary(t),planned=await prepare();
+  const occupied=planned.batch.files.find(file=>file.path.startsWith(`data/${store}/`)).path;
+  const target=path.join(root,occupied);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,'existing original bytes');
+  const other={...candidate,providerMatchId:'match002',kickoffUtc:'2026-10-02T08:30Z'};
+  const result=await prepare([binding([candidate,other])],{pathExists:file=>fs.existsSync(path.join(root,file)),
+    fetchFn:async url=>({ok:true,text:async()=>html(url.includes('match002')?other:candidate)})});
+  assert.equal(result.accepted,1);assert.equal(result.batch.ok,true);
+  assert.equal(result.proposals[0].canonicalProposal.providerIds.flashscore,'match002');
+  assert.deepEqual(result.rejected,[{providerMatchId:'match001',reason:'EXISTING_EVIDENCE_RECONCILIATION_REQUIRED',paths:[occupied]}]);
+  const applied=applyVerifiedHistoryRecovery(result,{root,dayKey:'2026-10-22',sourcePolicy:result.sourcePolicy,nowFn:()=>now,checkpoint:()=>{}});
+  assert.equal(applied.canonicalAdditions,1);assert.equal(fs.readFileSync(target,'utf8'),'existing original bytes');
+  assert.ok(!applied.writtenPaths.includes(occupied));
+});
+
 test('crossing target kickoff during source acquisition prevents preparation of that target history',async()=>{
   let clock=now;
   const result=await prepare(undefined,{nowFn:()=>clock,fetchFn:async()=>{clock=Date.parse(fixture.kickoffUtc)+1;return {ok:true,text:async()=>html(candidate)};}});

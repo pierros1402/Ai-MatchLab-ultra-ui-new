@@ -58,7 +58,7 @@ export function selectVerifiedHistoryRecovery(bindings,{fixtures,canonicalRows=[
 
 // This remains a read-only proposal. Activation and the shared writer transaction
 // are separate from acquisition. Every native match page is freshly rechecked.
-export async function prepareVerifiedHistoryRecovery(bindings,{fixtures,canonicalRows=[],nowFn=()=>Date.now(),fetchFn=fetch,resolveProviderIdentity=null,maxCandidates=40,budgetMs=120000}={}) {
+export async function prepareVerifiedHistoryRecovery(bindings,{fixtures,canonicalRows=[],nowFn=()=>Date.now(),fetchFn=fetch,resolveProviderIdentity=null,maxCandidates=40,budgetMs=120000,pathExists=()=>false}={}) {
   if(!Number.isInteger(budgetMs)||budgetMs<0||budgetMs>120000)throw Error('INVALID_HISTORY_RECOVERY_BUDGET');
   const selection=selectVerifiedHistoryRecovery(bindings,{fixtures,canonicalRows,nowMs:nowFn(),maxCandidates,resolveProviderIdentity});
   const start=Date.now(),accepted=[],rejected=[...selection.rejected];
@@ -74,6 +74,11 @@ export async function prepareVerifiedHistoryRecovery(bindings,{fixtures,canonica
     for(const {item,report} of results){
       if(!item.bindings.some(b=>Date.parse(b.kickoffUtc)>nowFn())){rejected.push({providerMatchId:item.candidate.providerMatchId,reason:'TARGET_KICKOFF_PASSED_DURING_ACQUISITION'});continue;}
       if(!report.batch.ok){rejected.push({providerMatchId:item.candidate.providerMatchId,reason:report.proposals[0]?.reason||report.batch.conflicts.join(',')});continue;}
+      const occupied=report.batch.files.filter(file=>file.mode==='CREATE_ONLY_AFTER_REVIEW'&&pathExists(file.path));
+      if(occupied.length){
+        rejected.push({providerMatchId:item.candidate.providerMatchId,reason:'EXISTING_EVIDENCE_RECONCILIATION_REQUIRED',paths:occupied.map(file=>file.path)});
+        continue;
+      }
       accepted.push({item,report});
     }
   }
