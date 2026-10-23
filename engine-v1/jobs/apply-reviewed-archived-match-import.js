@@ -31,7 +31,7 @@ export function applyPreparedHistoryEvidence(report,{root,writeFn=writeHistoryJs
     const exists=fs.existsSync(target),before=exists?fs.readFileSync(target):null;
     let payload=entry.payload;
     if(exists){
-      if(entry.mode!==mergeMode)throw Error('ARCHIVED_IMPORT_EXISTING_TRUTH_CONFLICT');
+      if(entry.mode!==mergeMode)throw Error('ARCHIVED_IMPORT_EXISTING_TRUTH_CONFLICT:'+entry.path);
       const old=JSON.parse(before.toString('utf8'));
       if(!Array.isArray(old.fixtures)||!Array.isArray(payload.fixtures))throw Error('ARCHIVED_IMPORT_CANONICAL_SHAPE_INVALID');
       const ids=new Set(old.fixtures.map(r=>r.canonicalId));

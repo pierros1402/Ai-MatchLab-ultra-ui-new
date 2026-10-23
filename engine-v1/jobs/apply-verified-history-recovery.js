@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import {getProjectRoot} from '../storage/data-root.js';
 import {checkpointHistoryIfRequired} from '../storage/history-preservation.js';
 import {VERIFIED_HISTORY_POLICY,prepareVerifiedHistoryRecovery} from './prepare-verified-history-recovery.js';
@@ -27,7 +29,8 @@ export async function recoverVerifiedHistory(dayKey,bindings,{fixtures,sourcePol
     throw Error('VERIFIED_HISTORY_SHARED_WRITER_REQUIRED');
   }
   const root=getProjectRoot();
-  const prepared=await prepareVerifiedHistoryRecovery(bindings,{fixtures,canonicalRows:canonicalRowsInCheckout(root),nowFn,resolveProviderIdentity});
+  const prepared=await prepareVerifiedHistoryRecovery(bindings,{fixtures,canonicalRows:canonicalRowsInCheckout(root),nowFn,resolveProviderIdentity,
+    pathExists:file=>fs.existsSync(path.join(root,file))});
   const summary={sourcePolicy,attempted:prepared.attempted,verified:prepared.accepted,deferred:prepared.deferred,rejected:prepared.rejected,
     conflicts:prepared.batch.conflicts,sourceBindings:prepared.scope,individualRowsHumanReviewed:false,
     appliedMatches:0,writePaths:[],frozenPredictionsRegenerated:false,fullCoverageCertified:false};
