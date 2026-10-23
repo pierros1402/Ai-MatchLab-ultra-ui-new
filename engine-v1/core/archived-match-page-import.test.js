@@ -9,6 +9,19 @@ const run=(e=environment(),overrides={})=>proposeArchivedMatchImport({html:page(
 test('native page and profile agreement produce review-only proposals passing the existing final consumer',()=>{
  const input=environment(),before=JSON.stringify(input),r=run(input);assert.equal(r.ok,true);assert.equal(r.productionWrites,0);assert.equal(r.authorityPromoted,false);assert.equal(r.reviewRequired,true);assert.equal(r.consumerValidation,'PASSED');assert.equal(r.canonicalProposal.providerIds.flashscore,candidate.providerMatchId);assert.equal(r.finalProposal.matchId,r.canonicalProposal.canonicalId);assert.equal(r.finalProposal.generatedAt,new Date(nowMs).toISOString());assert.equal(r.finalProposal.verification.method,'flashscore_archived_match_page_exact_native_parity');assert.equal(JSON.stringify(input),before);
 });
+
+test('only country-code suffix capitalization may differ under the same exact native identities',()=>{
+ const e=environment();e.participantsData.home[0].name='Bali United (IDN)';e.participantsData.away[0].name='PSM Makassar (IDN)';
+ const c={...candidate,home:'Bali United (Idn)',away:'PSM Makassar (Idn)'};
+ const accepted=run(e,{candidate:c});assert.equal(accepted.ok,true);
+ assert.equal(accepted.canonicalProposal.homeTeam,'Bali United (IDN)');
+ assert.equal(accepted.finalProposal.homeTeam,'Bali United (IDN)');
+ assert.deepEqual(accepted.canonicalProposal.archivedSourceEvidence.labelRepresentation,{policy:'trailing_country_code_case_only',profileHome:c.home,profileAway:c.away});
+ for(const home of ['bali United (Idn)','Bali United (Mne)','Bali United U21 (Idn)','Bali United','BaliUnited (Idn)']){
+  assert.equal(run(e,{candidate:{...c,home}}).reason,'PROFILE_MATCH_PAGE_PARITY_FAILED');
+ }
+ e.participantsData.home[0].id='wrong001';assert.equal(run(e,{candidate:c}).reason,'PROFILE_MATCH_PAGE_PARITY_FAILED');
+});
 for(const [name,mutate,reason] of [
  ['wrong native match',e=>e.event_id_c='another1','PROFILE_MATCH_PAGE_PARITY_FAILED'],
  ['namesake native club',e=>e.participantsData.home[0].id='namesake','PROFILE_MATCH_PAGE_PARITY_FAILED'],

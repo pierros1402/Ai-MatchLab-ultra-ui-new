@@ -169,7 +169,7 @@ function getHistorySeason(season = currentSeason()) {
   return [];
 }
 
-export function getRecentTeamMatches(historyRows, teamName, leagueSlug, limit = 5, excludeMatchId = null) {
+export function getRecentTeamMatches(historyRows, teamName, leagueSlug, limit = 5, excludeMatchId = null, fixturesForFallback = getAllFixturesLocal) {
   const matches = historyRows
     .filter(row => {
       if (excludeMatchId && String(row?.id || row?.matchId) === String(excludeMatchId)) {
@@ -191,7 +191,7 @@ export function getRecentTeamMatches(historyRows, teamName, leagueSlug, limit = 
     return matches;
   }
 
-  const fixtures = getAllFixturesLocal();
+  const fixtures = fixturesForFallback();
 
   return fixtures
     .filter(row => {
@@ -248,7 +248,7 @@ export function summarizeTeamForm(matches, teamName) {
   };
 }
 
-export function getH2H(historyRows, homeTeam, awayTeam, leagueSlug, limit = 5, excludeMatchId = null) {
+export function getH2H(historyRows, homeTeam, awayTeam, leagueSlug, limit = 5, excludeMatchId = null, fixturesForFallback = getAllFixturesLocal) {
   const fromHistory = historyRows
     .filter(row => {
       if (excludeMatchId && String(row?.id || row?.matchId) === String(excludeMatchId)) {
@@ -276,7 +276,7 @@ export function getH2H(historyRows, homeTeam, awayTeam, leagueSlug, limit = 5, e
     return fromHistory;
   }
 
-  const fixtures = getAllFixturesLocal();
+  const fixtures = fixturesForFallback();
 
   return fixtures
     .filter(row => {
@@ -438,7 +438,19 @@ function buildFinalAssessment({
   };
 }
 
-export async function buildMatchIntelligence(fixture, { season = currentSeason() } = {}) {
+// One context belongs to one build invocation, never to the process or a later
+// acquisition cycle. Every new invocation still loads and validates fresh data.
+export function createMatchIntelligenceContext(season = currentSeason(), {
+  standings = getStandingsMap, history = getHistorySeason, fixtures = getAllFixturesLocal
+} = {}) {
+  const once = load => {
+    let loaded = false, value;
+    return () => { if (!loaded) { value = load(); loaded = true; } return value; };
+  };
+  return { season, readStandings: once(standings), readHistory: once(() => history(season)), readFixtures: once(fixtures) };
+}
+
+export async function buildMatchIntelligence(fixture, { season = currentSeason(), context = null } = {}) {
   if (!fixture?.matchId || !fixture?.leagueSlug) {
     return {
       ok: false,
@@ -446,15 +458,17 @@ export async function buildMatchIntelligence(fixture, { season = currentSeason()
     };
   }
 
-  const standingsByLeague = getStandingsMap();
-  const historyRows = getHistorySeason(season);
+  const inputs = context || createMatchIntelligenceContext(season);
+  if (inputs.season !== season) throw new Error('intelligence_context_season_mismatch');
+  const standingsByLeague = inputs.readStandings();
+  const historyRows = inputs.readHistory();
 
   const leagueStandings = standingsByLeague.get(fixture.leagueSlug) || null;
   const phaseSummary = getPhaseSummary(leagueStandings);
 
-  const homeRecent = getRecentTeamMatches(historyRows, fixture.homeTeam, fixture.leagueSlug, 5, fixture.matchId);
-  const awayRecent = getRecentTeamMatches(historyRows, fixture.awayTeam, fixture.leagueSlug, 5, fixture.matchId);
-  const h2h = getH2H(historyRows, fixture.homeTeam, fixture.awayTeam, fixture.leagueSlug, 5, fixture.matchId);
+  const homeRecent = getRecentTeamMatches(historyRows, fixture.homeTeam, fixture.leagueSlug, 5, fixture.matchId, inputs.readFixtures);
+  const awayRecent = getRecentTeamMatches(historyRows, fixture.awayTeam, fixture.leagueSlug, 5, fixture.matchId, inputs.readFixtures);
+  const h2h = getH2H(historyRows, fixture.homeTeam, fixture.awayTeam, fixture.leagueSlug, 5, fixture.matchId, inputs.readFixtures);
 
   const homeForm = summarizeTeamForm(homeRecent, fixture.homeTeam);
   const awayForm = summarizeTeamForm(awayRecent, fixture.awayTeam);

@@ -19,7 +19,8 @@ export const valueDataRegressionTests=[
   'engine-v1/jobs/run-value-data-alarm-day.test.js',
   'engine-v1/jobs/prepare-verified-history-recovery.test.js',
   'engine-v1/core/verified-history-recovery-boundary.test.js',
-  'tools/run-prospective-value-step.test.mjs'
+  'tools/run-prospective-value-step.test.mjs',
+  'engine-v1/core/build-match-intelligence-context.test.js'
 ];
 
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
