@@ -14,6 +14,10 @@ import {
   checkpointHistoryIfRequired, writeHistoryJsonAtomic
 } from "../storage/history-preservation.js";
 
+// This test process must never invoke the real checkout's automatic backup hook.
+// Explicit-root fixture checkpoints below still exercise real local Git remotes.
+delete process.env.HISTORY_PRESERVATION_REQUIRED;
+
 function git(root, args) { return execFileSync("git", args, { cwd: root, encoding: "utf8", windowsHide: true }).trim(); }
 function fixture(t) {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), "matchlab-history-test-"));
@@ -102,7 +106,7 @@ test("missing remote blocks durability and an independent recovery bundle still 
   git(f.root, ["remote", "set-url", "origin", path.join(f.temp, "unavailable.git")]);
   assert.throws(() => preserveHistoryCheckpoint({ root: f.root, dayKey: "2026-10-13", stage: "built", runId: "13" }), /git_failed/);
   const dest = path.join(f.temp, "bundle");
-  const result = prepareHistoryRecoveryBundle({ root: f.root, destination: dest, dayKey: "2026-10-13" });
+  const result = prepareHistoryRecoveryBundle({ root: f.root, destination: dest, dayKey: "2026-10-13", baseline: "HEAD" });
   assert.equal(result.fileCount, 1); assert.equal(result.publicationApproved, false);
   assert.equal(fs.readFileSync(path.join(dest, "data/value/2026-10-13.json"), "utf8"), '{"count":3}');
 });

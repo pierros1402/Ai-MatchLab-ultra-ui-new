@@ -57,6 +57,8 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - name: Verify Value input and publication regression guards
         id: regression-guards
+        env:
+          HISTORY_PRESERVATION_REQUIRED: "0"
         run: >-
           node --test
           engine-v1/core/value-data-alarm.test.js
