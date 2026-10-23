@@ -6,6 +6,11 @@ import {buildCanonicalId} from './canonical-id.js';
 import {buildVerifiedFinalResult} from '../jobs/export-verified-final-results-day.js';
 import {validatePrematchFinalForm} from './prematch-verified-final-form.js';
 
+// The same native event's profile uses (Gib), while its match page uses (GIB).
+// Only the case of an unchanged, trailing three-letter country code differs;
+// club spelling, squad markers and all native identities still match exactly.
+const countryCodeCase = name => typeof name==='string' ? name.replace(/\(([A-Za-z]{3})\)$/,(_,code)=>`(${code.toUpperCase()})`) : name;
+
 // Quarantined import proposal only. Callers must acquire the exact native page;
 // no source scripts execute and no existing canonical/final truth is written.
 export function proposeArchivedMatchImport({html,candidate,sourceUrl,acquiredAt,nowMs=Date.now()}) {
@@ -32,10 +37,12 @@ export function proposeArchivedMatchImport({html,candidate,sourceUrl,acquiredAt,
   const source={providerMatchId:e.event_id_c,leagueSlug:slug,home:h[0].name,away:a[0].name,homeProviderTeamId:h[0].id,awayProviderTeamId:a[0].id,scoreHome:Number(f.DE),scoreAway:Number(f.DF)};
   if(![h[0].id,a[0].id].every(id=>/^[A-Za-z0-9]{6,16}$/.test(id||'')))return deny('INVALID_NATIVE_TEAM_ID');
   if(![f.DE,f.DF].every(n=>/^\d+$/.test(String(n)))||![source.scoreHome,source.scoreAway].every(n=>Number.isSafeInteger(n)&&n>=0))return deny('REGULATION_SCORE_REQUIRED');
-  if(Object.keys(source).some(key=>source[key]!==candidate[key])||Date.parse(candidate.kickoffUtc)!==kickoff)return deny('PROFILE_MATCH_PAGE_PARITY_FAILED');
+  if(Object.keys(source).some(key=>['home','away'].includes(key)
+    ? countryCodeCase(source[key])!==countryCodeCase(candidate[key]) : source[key]!==candidate[key])||Date.parse(candidate.kickoffUtc)!==kickoff)return deny('PROFILE_MATCH_PAGE_PARITY_FAILED');
   const kickoffUtc=new Date(kickoff).toISOString(),dayKey=athensDayFromKickoff(kickoffUtc);
   const canonicalId=buildCanonicalId(slug,source.home,source.away,dayKey);
   const proof={sourceUrl,acquiredAt,sourceSha256:crypto.createHash('sha256').update(html).digest('hex'),providerMatchId:source.providerMatchId,homeProviderTeamId:source.homeProviderTeamId,awayProviderTeamId:source.awayProviderTeamId,tournamentId:e.stats2_config?.tournament,stageId:e.stats2_config?.tournamentStage};
+  if(source.home!==candidate.home||source.away!==candidate.away)proof.labelRepresentation={policy:'trailing_country_code_case_only',profileHome:candidate.home,profileAway:candidate.away};
   const canonical={canonicalId,matchId:canonicalId,matchKey:canonicalId,source:'flashscore',sourceId:source.providerMatchId,sourceMatchId:source.providerMatchId,providerIds:{flashscore:source.providerMatchId},leagueSlug:slug,leagueName:e.header?.tournament?.tournament,dayKey,kickoffUtc,homeTeam:source.home,awayTeam:source.away,status:'FT',statusType:'STATUS_FINAL',rawStatus:'STATUS_FINAL',scoreHome:source.scoreHome,scoreAway:source.scoreAway,firstSeenAt:acquiredAt,lastSeenAt:acquiredAt,archivedSourceEvidence:proof};
   const final=buildVerifiedFinalResult(dayKey,canonical,{...source,matchId:source.providerMatchId,kickoffUtc,home:source.home,away:source.away,finished:true,playedFinal:true,nonPlayedTerminal:false,statusCode:String(e.eventStageTypeId),statusDetailCode:String(e.eventStageId),leaguePath:e.header?.tournament?.link,leagueName:canonical.leagueName,country:e.header?.country_name});
   // Report this adapter's real provenance, never claim it was a daily feed.

@@ -8,7 +8,7 @@ import {
   loadValueIndexes,
   loadModelPriors
 } from "./value-engine-v1.js";
-import { buildMatchIntelligence } from "./build-match-intelligence.js";
+import { buildMatchIntelligence, createMatchIntelligenceContext } from "./build-match-intelligence.js";
 import { currentSeason } from "./season.js";
 import {
   buildValueFixtureUniverse,
@@ -976,6 +976,7 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
   });
 
   const picks = [];
+  const intelligenceContext = createMatchIntelligenceContext(season);
   const evaluatedFixtureIds = new Set();
   const fixturesWithCandidateMarkets = new Set();
 
@@ -1031,7 +1032,7 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
 
             const competitionData = competitionContext?.data || {};
 
-                  const intelligence = await buildMatchIntelligence(match, { season });
+                  const intelligence = await buildMatchIntelligence(match, { season, context: intelligenceContext });
 
                   const engineInput = {
                       ...match,
