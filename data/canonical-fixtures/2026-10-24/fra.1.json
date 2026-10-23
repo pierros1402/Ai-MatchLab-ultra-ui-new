@@ -2,44 +2,64 @@
   "dayKey": "2026-10-24",
   "leagueSlug": "fra.1",
   "leagueName": "Ligue 1",
-  "updatedAt": "2026-10-23T19:03:03.922Z",
-  "count": 2,
+  "updatedAt": "2026-10-23T21:22:48.183Z",
+  "count": 1,
   "sourceMeta": {
-    "acquisitionProvider": "espn_all_scoreboard",
-    "requestedLeagueSlug": "all",
+    "acquisitionProvider": "espn_direct_league_status",
+    "requestedLeagueSlug": "fra.1",
     "requestedDayKey": "2026-10-24",
-    "mergedAt": "2026-10-23T19:03:03.922Z",
-    "mode": "supplemental_target_seed_only"
+    "providerFetchSlugs": [
+      "fra.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 1,
+      "matches": 0,
+      "fetches": [
+        {
+          "providerSlug": "fra.1",
+          "dayKey": "2026-10-23",
+          "ok": true,
+          "events": 1,
+          "matched": 0
+        },
+        {
+          "providerSlug": "fra.1",
+          "dayKey": "2026-10-25",
+          "ok": true,
+          "events": 6,
+          "matched": 0
+        }
+      ]
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 1,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 1,
+      "wrongDayRemovedRows": 1,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [
+        {
+          "providerSlug": "fra.1",
+          "providerMatchId": "401876423",
+          "ok": true,
+          "kind": "other_day",
+          "authoritativeDayKey": "2026-10-25",
+          "reason": null
+        }
+      ],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-10-23T21:22:48.183Z",
+    "mode": "targeted_live_status_refresh"
   },
   "fixtures": [
-    {
-      "canonicalId": "cid_fra1_toulouse_troyes_20261024",
-      "matchId": "cid_fra1_toulouse_troyes_20261024",
-      "matchKey": "toulouse|troyes|1792855200000",
-      "source": "espn",
-      "sourceId": "401876423",
-      "sourceMatchId": "401876423",
-      "providerIds": {
-        "espn": "401876423"
-      },
-      "leagueSlug": "fra.1",
-      "leagueName": "Ligue 1",
-      "dayKey": "2026-10-24",
-      "fetchedDayKey": "2026-10-24",
-      "kickoffUtc": "2026-10-24T15:15Z",
-      "homeTeam": "Toulouse",
-      "awayTeam": "Troyes",
-      "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null,
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
-      "venue": "Stadium Municipal de Toulouse",
-      "firstSeenAt": "2026-10-09T23:40:42.693Z",
-      "lastSeenAt": "2026-10-20T22:08:55.113Z"
-    },
     {
       "canonicalId": "cid_fra1_lens_paris_20261024",
       "matchId": "cid_fra1_lens_paris_20261024",
@@ -59,15 +79,13 @@
       "awayTeam": "Paris FC",
       "venue": "Stade Bollaert-Delelis",
       "firstSeenAt": "2026-10-09T23:40:42.693Z",
-      "lastSeenAt": "2026-10-23T19:03:03.440Z",
+      "lastSeenAt": "2026-10-23T21:22:48.045Z",
+      "providerLeagueSlug": "fra.1",
       "status": "PRE",
       "rawStatus": "STATUS_SCHEDULED",
       "minute": "0'",
       "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null,
-      "providerLeagueSlug": "fra.1"
+      "scoreAway": null
     }
   ]
 }
