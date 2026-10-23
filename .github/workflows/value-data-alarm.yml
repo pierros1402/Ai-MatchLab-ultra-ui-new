@@ -2,6 +2,7 @@ name: Autonomous Value data preparation
 env:
   HISTORY_PRESERVATION_REQUIRED: "1"
   DAY_KEY: ${{ inputs.dayKey }}
+  VALUE_VERIFIED_HISTORY_POLICY: "exact-native-future-team-v1"
 on:
   schedule:
     - cron: "11 * * * *"
@@ -59,21 +60,7 @@ jobs:
         id: regression-guards
         env:
           HISTORY_PRESERVATION_REQUIRED: "0"
-        run: >-
-          node --test
-          engine-v1/core/value-data-alarm.test.js
-          engine-v1/core/value-data-readiness.test.js
-          engine-v1/core/prematch-readiness-evidence.test.js
-          engine-v1/core/prematch-verified-final-form.test.js
-          engine-v1/core/value-publication-integrity.test.js
-          engine-v1/core/value-publication-sync-preflight.test.js
-          engine-v1/value/unified-production-journal.test.js
-          engine-v1/core/archived-match-page-import.test.js
-          engine-v1/jobs/apply-reviewed-archived-match-import.test.js
-          engine-v1/odds/flashscore-research-competition.test.js
-          engine-v1/source-discovery/recent-results-researcher.test.js
-          engine-v1/source-discovery/team-history-researcher.test.js
-          engine-v1/tests/history-preservation.test.js
+        run: node tools/run-value-data-regression-guards.mjs
       - name: Resolve preparation day
         shell: bash
         env:
@@ -105,12 +92,12 @@ jobs:
         run: bash tools/persist-value-data-alarm.sh "$DAY_KEY"
       - name: Repair verified derived inputs before prospective publication
         if: ${{ always() && steps.regression-guards.outcome == 'success' && steps.archived-import.outcome != 'failure' && steps.competition-foundations.outcome != 'failure' && (github.event_name == 'schedule' || inputs.apply) && env.DAY_KEY != '' }}
-        run: bash tools/persist-value-detail-recovery.sh "$DAY_KEY"
+        run: node tools/run-prospective-value-step.mjs repair "$DAY_KEY"
       - name: Publish the prospective unified plan from verified inputs
         if: ${{ always() && steps.regression-guards.outcome == 'success' && steps.archived-import.outcome != 'failure' && steps.competition-foundations.outcome != 'failure' && (github.event_name == 'schedule' || inputs.apply) && env.DAY_KEY != '' }}
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
-        run: bash tools/publish-unified-value-day.sh "$DAY_KEY"
+        run: node tools/run-prospective-value-step.mjs publish "$DAY_KEY"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

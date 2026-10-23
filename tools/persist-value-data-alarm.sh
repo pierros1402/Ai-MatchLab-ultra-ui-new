@@ -8,7 +8,7 @@ if ! git diff --cached --quiet; then
 fi
 EXTRA_ARGS=()
 if [ "${VALUE_APPLY_VERIFIED_CONTRACTS:-false}" = "true" ]; then EXTRA_ARGS+=(--apply-verified-contracts); fi
-node engine-v1/jobs/run-value-data-alarm-day.js "$DAY_KEY" --write --research --max-research-leagues "${VALUE_MAX_RESEARCH_LEAGUES:-2}" "${EXTRA_ARGS[@]}"
+node engine-v1/jobs/run-value-data-alarm-day.js "$DAY_KEY" --write --research --max-research-leagues "${VALUE_MAX_RESEARCH_LEAGUES:-12}" "${EXTRA_ARGS[@]}"
 git add "data/value-data-acquisition/queue.json" "data/value-data-acquisition/${DAY_KEY}.json"
 if [ -d "data/value-data-acquisition/${DAY_KEY}" ]; then git add "data/value-data-acquisition/${DAY_KEY}/"; fi
 export DAY_KEY
@@ -16,8 +16,12 @@ node --input-type=module <<'NODE'
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { currentSeason, seasonBefore } from './engine-v1/core/season.js';
+import {verifiedHistoryRecoveryWritePaths} from './engine-v1/core/verified-history-recovery-boundary.js';
 const day = process.env.DAY_KEY;
 const report = JSON.parse(fs.readFileSync(`data/value-data-acquisition/${day}.json`, 'utf8'));
+for(const file of verifiedHistoryRecoveryWritePaths(report)){
+  execFileSync('git',['add','--',file],{stdio:'inherit'});
+}
 for (const file of report.competitionContractPreparation?.writePaths || []) {
   if (!/^(data\/competition-format-registry\/registry\.v1\.json|data\/standings\/[a-zA-Z0-9_.-]+\.json)$/.test(file)) throw new Error('official_contract_write_scope_invalid');
   execFileSync('git', ['add', file], { stdio: 'inherit' });
@@ -36,9 +40,16 @@ for (const target of report.oddsWrittenDays) {
 }
 NODE
 EXTRA_DAYS="$(node -e 'const fs=require("fs"); const r=JSON.parse(fs.readFileSync(`data/value-data-acquisition/${process.env.DAY_KEY}.json`)); console.log(r.oddsWrittenDays.join(","))')"
+HISTORY_RECOVERY_ALLOW="$(node --input-type=module <<'NODE'
+import fs from 'node:fs';
+import {verifiedHistoryRecoveryWritePattern} from './engine-v1/core/verified-history-recovery-boundary.js';
+const report=JSON.parse(fs.readFileSync(`data/value-data-acquisition/${process.env.DAY_KEY}.json`,'utf8'));
+console.log(verifiedHistoryRecoveryWritePattern(report));
+NODE
+)"
 node engine-v1/jobs/guard-staged-data-boundary.js --label=value-data-alarm --dayKey="$DAY_KEY" \
   --extra-days="$EXTRA_DAYS" \
-  --allow="^(data/value-data-acquisition/(queue\.json|${DAY_KEY}\.json|${DAY_KEY}/[^/]+\.research\.json)$|data/deploy-snapshots/[0-9]{4}-[0-9]{2}-[0-9]{2}/odds\.json$|data/history-index/(team-form|league-form|matchups|foundation)/[0-9]{4}-[0-9]{4}\.json$|data/competition-format-registry/registry\.v1\.json$|data/standings/[a-zA-Z0-9_.-]+\.json$)"
+  --allow="^(data/value-data-acquisition/(queue\.json|${DAY_KEY}\.json|${DAY_KEY}/[^/]+\.research\.json)$|data/deploy-snapshots/[0-9]{4}-[0-9]{2}-[0-9]{2}/odds\.json$|data/history-index/(team-form|league-form|matchups|foundation)/[0-9]{4}-[0-9]{4}\.json$|data/competition-format-registry/registry\.v1\.json$|data/standings/[a-zA-Z0-9_.-]+\.json$|${HISTORY_RECOVERY_ALLOW})$"
 if ! git diff --cached --quiet; then
   git config user.name "github-actions[bot]"
   git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
