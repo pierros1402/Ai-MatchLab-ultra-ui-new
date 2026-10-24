@@ -1,0 +1,360 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "esp.2",
+  "homeTeam": "Almería",
+  "awayTeam": "Real Oviedo",
+  "homeWinScore": 0.553,
+  "drawScore": 0.117,
+  "awayWinScore": 0.398,
+  "over15Score": 0.731,
+  "over25Score": 0.5785,
+  "over35Score": 0.553,
+  "bttsScore": 0.541,
+  "confidence": 0.92,
+  "signals": [
+    "home_edge",
+    "mutual_attack_profile",
+    "priors_applied",
+    "close_strength_gap",
+    "match_profile_applied"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.5,
+      "awayOverallFormWeight": 0.425,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.491,
+    "expectedAwayGoals": 1.192,
+    "expectedTotalGoals": 2.683,
+    "homeStrength": 0.672,
+    "awayStrength": 0.516,
+    "homeEdge": 0.417,
+    "awayPenalty": 0.351,
+    "recency": {
+      "homeOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 86,
+        "daysSinceLastMatch": 7,
+        "spanDays": 19,
+        "maxInternalGap": 8,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 1,
+        "formContinuityWeight": 1
+      },
+      "awayOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 176,
+        "daysSinceLastMatch": 6,
+        "spanDays": 28,
+        "maxInternalGap": 9,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.948
+      },
+      "homeSide": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 86,
+        "daysSinceLastMatch": 13,
+        "spanDays": 20,
+        "maxInternalGap": 12,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.45,
+        "continuityScore": 0.7,
+        "formContinuityWeight": 0.643
+      },
+      "awaySide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 176,
+        "daysSinceLastMatch": 6,
+        "spanDays": 28,
+        "maxInternalGap": 15,
+        "gapSeverity": "moderate",
+        "freshnessScore": 1,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.705
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 86,
+      "awayPriorSample": 176,
+      "leaguePriorSample": 2333,
+      "matchupPriorSample": 6
+    },
+    "resolution": {
+      "homeInput": "Almería",
+      "awayInput": "Real Oviedo",
+      "homeResolvedKey": "Almería",
+      "awayResolvedKey": "Real Oviedo",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Almería::Real Oviedo",
+      "matchupResolveScore": 0,
+      "homePriorKey": "esp.2::Almería",
+      "awayPriorKey": "esp.2::Real Oviedo",
+      "matchupPriorKey": "esp.2|Almería|Real Oviedo"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Almería",
+      "awayTeamKey": "Real Oviedo",
+      "leagueKey": "esp.2",
+      "matchupKey": "Almería::Real Oviedo"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "form_home_stronger",
+        "impact": 0.08,
+        "note": "Home team has significantly stronger form"
+      },
+      {
+        "code": "h2h_away_edge",
+        "impact": 0.025,
+        "note": "Recent H2H leans away"
+      },
+      {
+        "code": "h2h_underlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is tight"
+      },
+      {
+        "code": "ai_h2h_away_edge",
+        "impact": 0.06,
+        "note": "AI detected away H2H edge"
+      },
+      {
+        "code": "ai_home_form_signal",
+        "impact": 0.05,
+        "note": "AI confirmed strong home form edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    },
+    "matchProfileApplied": true,
+    "matchProfileConfidence": 0.67,
+    "matchProfileReasons": [
+      {
+        "code": "match_profile_home_form_edge",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile last5 points: home 6, away 2"
+      },
+      {
+        "code": "match_profile_h2h_away_edge",
+        "impact": 0.011000000000000001,
+        "note": "MatchProfile H2H trend leans away"
+      },
+      {
+        "code": "match_profile_h2h_underlean",
+        "impact": -0.0165,
+        "note": "MatchProfile H2H goal pattern leans under"
+      }
+    ]
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "form_home_stronger",
+      "impact": 0.08,
+      "note": "Home team has significantly stronger form"
+    },
+    {
+      "code": "h2h_away_edge",
+      "impact": 0.025,
+      "note": "Recent H2H leans away"
+    },
+    {
+      "code": "h2h_underlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is tight"
+    },
+    {
+      "code": "ai_h2h_away_edge",
+      "impact": 0.06,
+      "note": "AI detected away H2H edge"
+    },
+    {
+      "code": "ai_home_form_signal",
+      "impact": 0.05,
+      "note": "AI confirmed strong home form edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "MEDIUM",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0.009,
+      "awayDelta": 0,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "esp.2",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 7,
+    "awayRestDays": 27,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 1,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  },
+  "intelligence": {
+    "applied": true,
+    "mode": "partial",
+    "coverage": {
+      "hasStandings": false,
+      "hasHomeForm": true,
+      "hasAwayForm": true,
+      "hasH2H": false,
+      "hasPhaseContext": false,
+      "coverageCount": 2,
+      "mode": "partial"
+    },
+    "signals": [
+      "home_form_edge",
+      "attack_support"
+    ]
+  },
+  "opponentAdjustedForm": {
+    "home": {
+      "schema": "ai-matchlab.opponent-adjusted-form.v1",
+      "sample": 12,
+      "strongOpponentSample": 0,
+      "peerStrengthSample": 12,
+      "oppositionStrengthMean": 0.179,
+      "sampleReliability": 1,
+      "raw": {
+        "gfRate": 1.551,
+        "gaRate": 1.386,
+        "ppg": 1.534,
+        "over25Rate": 0.61,
+        "bttsRate": 0.476
+      },
+      "adjusted": {
+        "gfRate": 1.551,
+        "gaRate": 1.386,
+        "ppg": 1.534,
+        "over25Rate": 0.61,
+        "bttsRate": 0.476
+      },
+      "impact": {
+        "gfRate": 0,
+        "gaRate": 0,
+        "ppg": 0,
+        "over25Rate": 0,
+        "bttsRate": 0
+      },
+      "reasonCodes": [
+        "no_strong_opposition_sample"
+      ]
+    },
+    "away": {
+      "schema": "ai-matchlab.opponent-adjusted-form.v1",
+      "sample": 2,
+      "strongOpponentSample": 0,
+      "peerStrengthSample": 2,
+      "oppositionStrengthMean": 0.179,
+      "sampleReliability": 0.1,
+      "raw": {
+        "gfRate": 0,
+        "gaRate": 0.532,
+        "ppg": 0.468,
+        "over25Rate": 0,
+        "bttsRate": 0
+      },
+      "adjusted": {
+        "gfRate": 0,
+        "gaRate": 0.532,
+        "ppg": 0.468,
+        "over25Rate": 0,
+        "bttsRate": 0
+      },
+      "impact": {
+        "gfRate": 0,
+        "gaRate": 0,
+        "ppg": 0,
+        "over25Rate": 0,
+        "bttsRate": 0
+      },
+      "reasonCodes": [
+        "insufficient_opponent_strength_coverage",
+        "no_strong_opposition_sample"
+      ]
+    },
+    "sampleReliability": 0.1
+  }
+}
