@@ -1,0 +1,336 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "srb.2",
+  "homeTeam": "Loznica",
+  "awayTeam": "Vrsac",
+  "homeWinScore": 0.227,
+  "drawScore": 0.13099999999999998,
+  "awayWinScore": 0.6980000000000001,
+  "over15Score": 0.503,
+  "over25Score": 0.3975,
+  "over35Score": 0.376,
+  "bttsScore": 0.383,
+  "confidence": 0.834,
+  "signals": [
+    "away_edge",
+    "btts_no_lean",
+    "home_form_decay",
+    "form_influence_reduced",
+    "priors_applied",
+    "close_strength_gap",
+    "match_profile_applied"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.225,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.002,
+    "expectedAwayGoals": 1.043,
+    "expectedTotalGoals": 2.045,
+    "homeStrength": 0.192,
+    "awayStrength": 0.36,
+    "homeEdge": 0.114,
+    "awayPenalty": 0.101,
+    "recency": {
+      "homeOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 109,
+        "daysSinceLastMatch": 19,
+        "spanDays": 13,
+        "maxInternalGap": 7,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.225,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.486
+      },
+      "awayOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 146,
+        "daysSinceLastMatch": 8,
+        "spanDays": 24,
+        "maxInternalGap": 20,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.9,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.67
+      },
+      "homeSide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 109,
+        "daysSinceLastMatch": 25,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.21
+      },
+      "awaySide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 146,
+        "daysSinceLastMatch": 28,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.21
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 109,
+      "awayPriorSample": 146,
+      "leaguePriorSample": 1484,
+      "matchupPriorSample": 6
+    },
+    "resolution": {
+      "homeInput": "Loznica",
+      "awayInput": "Vrsac",
+      "homeResolvedKey": "Loznica",
+      "awayResolvedKey": "Vrsac",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Loznica::Vrsac",
+      "matchupResolveScore": 0,
+      "homePriorKey": "srb.2::FK Loznica",
+      "awayPriorKey": "srb.2::OFK Vršac",
+      "matchupPriorKey": "srb.2|FK Loznica|OFK Vršac"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Loznica",
+      "awayTeamKey": "Vrsac",
+      "leagueKey": "srb.2",
+      "matchupKey": "Loznica::Vrsac"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "form_away_stronger",
+        "impact": 0.08,
+        "note": "Away team has significantly stronger form"
+      },
+      {
+        "code": "h2h_underlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is tight"
+      },
+      {
+        "code": "ai_away_form_signal",
+        "impact": 0.05,
+        "note": "AI confirmed strong away form edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    },
+    "matchProfileApplied": true,
+    "matchProfileConfidence": 0.6,
+    "matchProfileReasons": [
+      {
+        "code": "match_profile_away_form_edge",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile last5 points: home 4, away 12"
+      },
+      {
+        "code": "match_profile_h2h_underlean",
+        "impact": -0.0165,
+        "note": "MatchProfile H2H goal pattern leans under"
+      }
+    ]
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "form_away_stronger",
+      "impact": 0.08,
+      "note": "Away team has significantly stronger form"
+    },
+    {
+      "code": "h2h_underlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is tight"
+    },
+    {
+      "code": "ai_away_form_signal",
+      "impact": 0.05,
+      "note": "AI confirmed strong away form edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "srb.2",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 19,
+    "awayRestDays": 8,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 1,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  },
+  "intelligence": {
+    "applied": true,
+    "mode": "partial",
+    "coverage": {
+      "hasStandings": false,
+      "hasHomeForm": true,
+      "hasAwayForm": true,
+      "hasH2H": false,
+      "hasPhaseContext": false,
+      "coverageCount": 2,
+      "mode": "partial"
+    },
+    "signals": [
+      "away_form_edge",
+      "attack_support"
+    ]
+  },
+  "opponentAdjustedForm": {
+    "home": {
+      "schema": "ai-matchlab.opponent-adjusted-form.v1",
+      "sample": 12,
+      "strongOpponentSample": 0,
+      "peerStrengthSample": 12,
+      "oppositionStrengthMean": 0.179,
+      "sampleReliability": 1,
+      "raw": {
+        "gfRate": 1.007,
+        "gaRate": 0.738,
+        "ppg": 1.439,
+        "over25Rate": 0.324,
+        "bttsRate": 0.324
+      },
+      "adjusted": {
+        "gfRate": 1.007,
+        "gaRate": 0.738,
+        "ppg": 1.439,
+        "over25Rate": 0.324,
+        "bttsRate": 0.324
+      },
+      "impact": {
+        "gfRate": 0,
+        "gaRate": 0,
+        "ppg": 0,
+        "over25Rate": 0,
+        "bttsRate": 0
+      },
+      "reasonCodes": [
+        "no_strong_opposition_sample"
+      ]
+    },
+    "away": {
+      "schema": "ai-matchlab.opponent-adjusted-form.v1",
+      "sample": 5,
+      "strongOpponentSample": 0,
+      "peerStrengthSample": 5,
+      "oppositionStrengthMean": 0.179,
+      "sampleReliability": 0.5,
+      "raw": {
+        "gfRate": 1.776,
+        "gaRate": 0.827,
+        "ppg": 2.543,
+        "over25Rate": 0.674,
+        "bttsRate": 0.674
+      },
+      "adjusted": {
+        "gfRate": 1.776,
+        "gaRate": 0.827,
+        "ppg": 2.543,
+        "over25Rate": 0.674,
+        "bttsRate": 0.674
+      },
+      "impact": {
+        "gfRate": 0,
+        "gaRate": 0,
+        "ppg": 0,
+        "over25Rate": 0,
+        "bttsRate": 0
+      },
+      "reasonCodes": [
+        "no_strong_opposition_sample"
+      ]
+    },
+    "sampleReliability": 0.5
+  }
+}
