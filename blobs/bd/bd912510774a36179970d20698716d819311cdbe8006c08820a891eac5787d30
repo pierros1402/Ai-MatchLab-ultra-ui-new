@@ -1,0 +1,217 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "esp.2",
+  "homeTeam": "Cádiz",
+  "awayTeam": "Ceuta",
+  "homeWinScore": 0.247,
+  "drawScore": 0.139,
+  "awayWinScore": 0.614,
+  "over15Score": 0.637,
+  "over25Score": 0.529,
+  "over35Score": 0.483,
+  "bttsScore": 0.459,
+  "confidence": 0.757,
+  "signals": [
+    "away_edge",
+    "home_form_decay",
+    "away_form_decay",
+    "form_influence_reduced",
+    "priors_applied",
+    "close_strength_gap"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.12,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.417,
+    "expectedAwayGoals": 1.294,
+    "expectedTotalGoals": 2.711,
+    "homeStrength": 0.169,
+    "awayStrength": 0.098,
+    "homeEdge": 0.159,
+    "awayPenalty": 0.11,
+    "recency": {
+      "homeOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 42,
+        "daysSinceLastMatch": 21,
+        "spanDays": 13,
+        "maxInternalGap": 7,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.155,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.462
+      },
+      "awayOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 42,
+        "daysSinceLastMatch": 29,
+        "spanDays": 5,
+        "maxInternalGap": 5,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.33
+      },
+      "homeSide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 42,
+        "daysSinceLastMatch": 21,
+        "spanDays": 13,
+        "maxInternalGap": 13,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.155,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.349
+      },
+      "awaySide": {
+        "sample": 3,
+        "rawSample": 0,
+        "priorSample": 42,
+        "daysSinceLastMatch": null,
+        "spanDays": null,
+        "maxInternalGap": null,
+        "gapSeverity": "missing",
+        "freshnessScore": 0.2,
+        "continuityScore": 0.2,
+        "formContinuityWeight": 0
+      }
+    },
+    "matchupSample": 2,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 42,
+      "awayPriorSample": 42,
+      "leaguePriorSample": 2333,
+      "matchupPriorSample": 2
+    },
+    "resolution": {
+      "homeInput": "Cádiz",
+      "awayInput": "Ceuta",
+      "homeResolvedKey": "Cádiz",
+      "awayResolvedKey": "Ceuta",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Cádiz::Ceuta",
+      "matchupResolveScore": 0,
+      "homePriorKey": "esp.2::Cádiz",
+      "awayPriorKey": "esp.2::Ceuta",
+      "matchupPriorKey": "esp.2|Cadiz|Ceuta"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Cádiz",
+      "awayTeamKey": "Ceuta",
+      "leagueKey": "esp.2",
+      "matchupKey": "Cádiz::Ceuta"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "ai_h2h_away_edge",
+        "impact": 0.06,
+        "note": "AI detected away H2H edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    }
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "ai_h2h_away_edge",
+      "impact": 0.06,
+      "note": "AI detected away H2H edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "esp.2",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 21,
+    "awayRestDays": 29,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
