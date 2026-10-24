@@ -1,0 +1,503 @@
+{
+  "schema": "ai-matchlab.identity-recovery-window.v1",
+  "runDayKey": "2026-10-25",
+  "source": "raw_canonical_fixtures_pre_dedup",
+  "window": {
+    "daysBack": 1,
+    "daysForward": 14
+  },
+  "sourceLatestUpdatedAt": "2026-10-24T22:00:36.440Z",
+  "resolver": {
+    "schema": "ai-matchlab.production-identity-resolver-runtime.v2",
+    "extensionLedgerSha256": "8d370644c71f2f018048fe9d259c19e1570f0f7a8904f82060e556f81ec112e9",
+    "effectiveCounts": {
+      "identityBindings": 135,
+      "retainedFixtureIds": 99,
+      "suppressedFixtureAliases": 99,
+      "sourceFixtureIds": 198
+    }
+  },
+  "status": "REVIEW_REQUIRED",
+  "promotionPolicy": {
+    "broadFuzzyAllowed": false,
+    "unresolvedTwoSidedAutoPromotionAllowed": false,
+    "independentConfirmationRequiredForTwoSidedUnknown": true
+  },
+  "summary": {
+    "scannedDays": 16,
+    "scannedLeagueFiles": 596,
+    "inputRows": 2112,
+    "autoPromotable": 0,
+    "pendingIndependentConfirmation": 0,
+    "ambiguous": 8,
+    "conflictRejected": 3,
+    "alreadyManagedPairs": 0
+  },
+  "targetDays": [
+    {
+      "dayKey": "2026-10-24",
+      "leagueFiles": 143,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "caf.champions",
+          "inputRows": 6,
+          "temporalCrossProviderPairs": 3,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [
+            {
+              "leagueSlug": "caf.champions",
+              "kickoffUtc": "2026-10-24T17:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_cafchampions_almerreikhsud_horoyagui_20261024",
+                "cid_cafchampions_almerrikh_horoya_20261024",
+                "cid_cafchampions_pyramids_elmerriekhbentiu_20261024",
+                "cid_cafchampions_zamalek_apr_20261024"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 1,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "caf.confed",
+          "inputRows": 8,
+          "temporalCrossProviderPairs": 6,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [
+            {
+              "leagueSlug": "caf.confed",
+              "kickoffUtc": "2026-10-24T17:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_cafconfed_alahlitripoli_welwaloadigrat_20261024",
+                "cid_cafconfed_alahlytripolilby_welwaloadigrateth_20261024",
+                "cid_cafconfed_associacaoblackbulls_rayonsport_20261024",
+                "cid_cafconfed_cssfaxientun_academiefadivo_20261024",
+                "cid_cafconfed_sportifsfaxien_afadplateau_20261024"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 1,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "esp.2",
+          "inputRows": 6,
+          "temporalCrossProviderPairs": 2,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [
+            {
+              "leagueSlug": "esp.2",
+              "kickoffUtc": "2026-10-24T16:30:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_esp2_girona_rcceltafortuna_20261024",
+                "cid_esp2_laspalmas_realsociedadb_20261024",
+                "cid_esp2_laspalmas_realsociedadii_20261024"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [
+            {
+              "leagueSlug": "esp.2",
+              "kickoffUtc": "2026-10-24T16:30:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "GxJAZIGb",
+                "canonicalId": "cid_esp2_laspalmas_realsociedadb_20261024",
+                "kickoffUtc": "2026-10-24T16:30:00.000Z",
+                "homeTeam": "Las Palmas",
+                "awayTeam": "Real Sociedad B"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401883150",
+                "canonicalId": "cid_esp2_laspalmas_realsociedadii_20261024",
+                "kickoffUtc": "2026-10-24T16:30Z",
+                "homeTeam": "Las Palmas",
+                "awayTeam": "Real Sociedad II"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "NORMALIZED_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": null,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null,
+                  "productionIdentityComplete": false
+                },
+                "away": {
+                  "kind": "SQUAD_CONFLICT",
+                  "stable": false,
+                  "conflict": true
+                },
+                "stableSides": 1,
+                "conflict": true
+              },
+              "recoveryStatus": "REJECTED_IDENTITY_CONFLICT",
+              "promotionAuthorized": false
+            }
+          ],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 1,
+            "conflictRejected": 1,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "sco.tennents",
+          "inputRows": 18,
+          "temporalCrossProviderPairs": 32,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [
+            {
+              "leagueSlug": "sco.tennents",
+              "kickoffUtc": "2026-10-24T14:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_scotennents_bonessunited_forfarathletic_20261024",
+                "cid_scotennents_bonnytonthistle_clachnacuddin_20261024",
+                "cid_scotennents_brechincity_strathspeythistle_20261024",
+                "cid_scotennents_brorarangers_cowdenbeath_20261024",
+                "cid_scotennents_clydebank_tranent_20261024",
+                "cid_scotennents_clydebank_tranentjuniors_20261024",
+                "cid_scotennents_cumbernauldcolts_banksodee_20261024",
+                "cid_scotennents_dumbarton_keith_20261024",
+                "cid_scotennents_dunipace_largsthistle_20261024",
+                "cid_scotennents_edinburghcity_keltyhearts_20261024",
+                "cid_scotennents_gretna2008_cumnock_20261024",
+                "cid_scotennents_gretna2008_cumnockjuniors_20261024",
+                "cid_scotennents_huntly_annanathletic_20261024",
+                "cid_scotennents_locheeunited_spartans_20261024",
+                "cid_scotennents_renfrew_stirlingalbion_20261024",
+                "cid_scotennents_stirlinguniversity_elgincity_20261024",
+                "cid_scotennents_stranraer_tayport_20261024",
+                "cid_scotennents_troon_caledonianbraves_20261024"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [
+            {
+              "leagueSlug": "sco.tennents",
+              "kickoffUtc": "2026-10-24T14:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "lOYoLkzh",
+                "canonicalId": "cid_scotennents_clydebank_tranent_20261024",
+                "kickoffUtc": "2026-10-24T14:00:00.000Z",
+                "homeTeam": "Clydebank FC",
+                "awayTeam": "Tranent"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401928407",
+                "canonicalId": "cid_scotennents_clydebank_tranentjuniors_20261024",
+                "kickoffUtc": "2026-10-24T14:00Z",
+                "homeTeam": "Clydebank",
+                "awayTeam": "Tranent Juniors"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "NORMALIZED_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": null,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null,
+                  "productionIdentityComplete": false
+                },
+                "away": {
+                  "kind": "SQUAD_CONFLICT",
+                  "stable": false,
+                  "conflict": true
+                },
+                "stableSides": 1,
+                "conflict": true
+              },
+              "recoveryStatus": "REJECTED_IDENTITY_CONFLICT",
+              "promotionAuthorized": false
+            },
+            {
+              "leagueSlug": "sco.tennents",
+              "kickoffUtc": "2026-10-24T14:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "61KZV6lA",
+                "canonicalId": "cid_scotennents_gretna2008_cumnockjuniors_20261024",
+                "kickoffUtc": "2026-10-24T14:00:00.000Z",
+                "homeTeam": "Gretna 2008",
+                "awayTeam": "Cumnock Juniors"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401928411",
+                "canonicalId": "cid_scotennents_gretna2008_cumnock_20261024",
+                "kickoffUtc": "2026-10-24T14:00Z",
+                "homeTeam": "Gretna 2008",
+                "awayTeam": "Cumnock"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "NORMALIZED_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": null,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null,
+                  "productionIdentityComplete": false
+                },
+                "away": {
+                  "kind": "SQUAD_CONFLICT",
+                  "stable": false,
+                  "conflict": true
+                },
+                "stableSides": 1,
+                "conflict": true
+              },
+              "recoveryStatus": "REJECTED_IDENTITY_CONFLICT",
+              "promotionAuthorized": false
+            }
+          ],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 1,
+            "conflictRejected": 2,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
+    },
+    {
+      "dayKey": "2026-10-25",
+      "leagueFiles": 113,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "caf.champions",
+          "inputRows": 8,
+          "temporalCrossProviderPairs": 4,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [
+            {
+              "leagueSlug": "caf.champions",
+              "kickoffUtc": "2026-10-25T16:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_cafchampions_alhilalomdurman_sidamacoffee_20261025",
+                "cid_cafchampions_alhilalomdurmansud_sidamabunnaeth_20261025",
+                "cid_cafchampions_asecmimosas_maghrebasfes_20261025",
+                "cid_cafchampions_asecmimosasivo_maghrebfezmar_20261025"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 1,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "caf.confed",
+          "inputRows": 9,
+          "temporalCrossProviderPairs": 4,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [
+            {
+              "leagueSlug": "caf.confed",
+              "kickoffUtc": "2026-10-25T13:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_cafconfed_asmaniemaunion_kabuscorp_20261025",
+                "cid_cafconfed_aspl2000_durbancity_20261025",
+                "cid_cafconfed_portlouismus_durbancityrsa_20261025"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            },
+            {
+              "leagueSlug": "caf.confed",
+              "kickoffUtc": "2026-10-25T19:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_cafconfed_asfar_cokorhogo_20261025",
+                "cid_cafconfed_farrabatmar_korhogoivo_20261025",
+                "cid_cafconfed_usmalger_thepanthers_20261025"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 2,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
+    },
+    {
+      "dayKey": "2026-10-26",
+      "leagueFiles": 47,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-27",
+      "leagueFiles": 42,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "afc.champions",
+          "inputRows": 9,
+          "temporalCrossProviderPairs": 4,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [
+            {
+              "leagueSlug": "afc.champions",
+              "kickoffUtc": "2026-10-27T10:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_afcchampions_daejeonhanacitizen_visselkobe_20261027",
+                "cid_afcchampions_johordarultazim_port_20261027",
+                "cid_afcchampions_johordtmys_portmtitha_20261027",
+                "cid_afcchampions_kyotosanga_newcastlejets_20261027",
+                "cid_afcchampions_shanghaiport_conganhanoi_20261027"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 1,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
+    },
+    {
+      "dayKey": "2026-10-28",
+      "leagueFiles": 15,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-29",
+      "leagueFiles": 13,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-30",
+      "leagueFiles": 22,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-31",
+      "leagueFiles": 38,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-01",
+      "leagueFiles": 30,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-02",
+      "leagueFiles": 20,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-03",
+      "leagueFiles": 16,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-04",
+      "leagueFiles": 10,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-05",
+      "leagueFiles": 7,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-06",
+      "leagueFiles": 22,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-07",
+      "leagueFiles": 30,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-08",
+      "leagueFiles": 28,
+      "recoveryLeagueReports": []
+    }
+  ]
+}
