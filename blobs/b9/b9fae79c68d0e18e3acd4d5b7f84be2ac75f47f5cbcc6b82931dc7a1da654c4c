@@ -1,0 +1,305 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "eng.1",
+  "homeTeam": "Arsenal",
+  "awayTeam": "Everton",
+  "homeWinScore": 0.52,
+  "drawScore": 0.152,
+  "awayWinScore": 0.386,
+  "over15Score": 0.638,
+  "over25Score": 0.4725,
+  "over35Score": 0.492,
+  "bttsScore": 0.44,
+  "confidence": 0.8,
+  "signals": [
+    "home_edge",
+    "away_edge",
+    "form_influence_reduced",
+    "priors_applied",
+    "ai_context_medium_importance",
+    "close_strength_gap",
+    "home_rest_2",
+    "match_profile_applied"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.15,
+      "awayOverallFormWeight": 0.25,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.635,
+    "expectedAwayGoals": 1.038,
+    "expectedTotalGoals": 2.673,
+    "homeStrength": 0.491,
+    "awayStrength": 0.333,
+    "homeEdge": 0.457,
+    "awayPenalty": 0.305,
+    "recency": {
+      "homeOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 190,
+        "daysSinceLastMatch": 5,
+        "spanDays": 29,
+        "maxInternalGap": 20,
+        "gapSeverity": "moderate",
+        "freshnessScore": 1,
+        "continuityScore": 0.3,
+        "formContinuityWeight": 0.635
+      },
+      "awayOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 190,
+        "daysSinceLastMatch": 7,
+        "spanDays": 27,
+        "maxInternalGap": 21,
+        "gapSeverity": "moderate",
+        "freshnessScore": 1,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.705
+      },
+      "homeSide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 190,
+        "daysSinceLastMatch": 14,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.4,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.497
+      },
+      "awaySide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 190,
+        "daysSinceLastMatch": 13,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.45,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.515
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 190,
+      "awayPriorSample": 190,
+      "leaguePriorSample": 1900,
+      "matchupPriorSample": 10
+    },
+    "resolution": {
+      "homeInput": "Arsenal",
+      "awayInput": "Everton",
+      "homeResolvedKey": "Arsenal",
+      "awayResolvedKey": "Everton",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Arsenal::Everton",
+      "matchupResolveScore": 0,
+      "homePriorKey": "eng.1::Arsenal",
+      "awayPriorKey": "eng.1::Everton",
+      "matchupPriorKey": "eng.1|Arsenal|Everton"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Arsenal",
+      "awayTeamKey": "Everton",
+      "leagueKey": "eng.1",
+      "matchupKey": "Arsenal::Everton"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "form_home_stronger",
+        "impact": 0.08,
+        "note": "Home team has significantly stronger form"
+      },
+      {
+        "code": "h2h_home_edge",
+        "impact": 0.025,
+        "note": "Recent H2H leans home"
+      },
+      {
+        "code": "h2h_underlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is tight"
+      },
+      {
+        "code": "ai_h2h_home_edge",
+        "impact": 0.06,
+        "note": "AI detected home H2H edge"
+      },
+      {
+        "code": "ai_home_form_signal",
+        "impact": 0.05,
+        "note": "AI confirmed strong home form edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "medium",
+      "stakes": {
+        "home": "europe",
+        "away": "europe",
+        "tags": [
+          "playoff_race",
+          "direct_rival_match"
+        ]
+      },
+      "pressure": [
+        "chasing_cutoff",
+        "cannot_lose"
+      ]
+    },
+    "matchProfileApplied": true,
+    "matchProfileConfidence": 0.74,
+    "matchProfileReasons": [
+      {
+        "code": "match_profile_home_form_edge",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile last5 points: home 15, away 5"
+      },
+      {
+        "code": "match_profile_h2h_home_edge",
+        "impact": 0.011000000000000001,
+        "note": "MatchProfile H2H trend leans home"
+      },
+      {
+        "code": "match_profile_h2h_underlean",
+        "impact": -0.0165,
+        "note": "MatchProfile H2H goal pattern leans under"
+      }
+    ]
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "form_home_stronger",
+      "impact": 0.08,
+      "note": "Home team has significantly stronger form"
+    },
+    {
+      "code": "h2h_home_edge",
+      "impact": 0.025,
+      "note": "Recent H2H leans home"
+    },
+    {
+      "code": "h2h_underlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is tight"
+    },
+    {
+      "code": "ai_h2h_home_edge",
+      "impact": 0.06,
+      "note": "AI detected home H2H edge"
+    },
+    {
+      "code": "ai_home_form_signal",
+      "impact": 0.05,
+      "note": "AI confirmed strong home form edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0.009,
+      "awayDelta": 0,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0.08,
+      "awayPenalty": 0,
+      "reasons": [
+        "home_rest_2"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "eng.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 2,
+    "awayRestDays": 41,
+    "homeMatchesLast7": 1,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 2,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  },
+  "intelligence": {
+    "applied": true,
+    "mode": "partial",
+    "coverage": {
+      "hasStandings": true,
+      "hasHomeForm": true,
+      "hasAwayForm": true,
+      "hasH2H": false,
+      "hasPhaseContext": false,
+      "coverageCount": 3,
+      "mode": "partial"
+    },
+    "signals": [
+      "form_balanced",
+      "defensive_resilience"
+    ]
+  }
+}

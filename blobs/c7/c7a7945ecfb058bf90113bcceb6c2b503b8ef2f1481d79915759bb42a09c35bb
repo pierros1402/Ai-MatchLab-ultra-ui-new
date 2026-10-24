@@ -1,0 +1,215 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "kor.1",
+  "homeTeam": "Incheon",
+  "awayTeam": "Jeju SK",
+  "homeWinScore": 0.431,
+  "drawScore": 0.16,
+  "awayWinScore": 0.41,
+  "over15Score": 0.611,
+  "over25Score": 0.491,
+  "over35Score": 0.463,
+  "bttsScore": 0.477,
+  "confidence": 0.918,
+  "signals": [
+    "home_edge",
+    "away_edge",
+    "priors_applied",
+    "close_strength_gap"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.35,
+      "awayOverallFormWeight": 0.25,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.252,
+    "expectedAwayGoals": 1.112,
+    "expectedTotalGoals": 2.364,
+    "homeStrength": 0.409,
+    "awayStrength": 0.354,
+    "homeEdge": 0.177,
+    "awayPenalty": 0.387,
+    "recency": {
+      "homeOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 134,
+        "daysSinceLastMatch": 5,
+        "spanDays": 27,
+        "maxInternalGap": 11,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.7,
+        "formContinuityWeight": 0.835
+      },
+      "awayOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 173,
+        "daysSinceLastMatch": 6,
+        "spanDays": 27,
+        "maxInternalGap": 19,
+        "gapSeverity": "moderate",
+        "freshnessScore": 1,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.705
+      },
+      "homeSide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 134,
+        "daysSinceLastMatch": 14,
+        "spanDays": 18,
+        "maxInternalGap": 18,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.4,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.435
+      },
+      "awaySide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 173,
+        "daysSinceLastMatch": 6,
+        "spanDays": 27,
+        "maxInternalGap": 19,
+        "gapSeverity": "moderate",
+        "freshnessScore": 1,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.705
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 134,
+      "awayPriorSample": 173,
+      "leaguePriorSample": 1055,
+      "matchupPriorSample": 10
+    },
+    "resolution": {
+      "homeInput": "Incheon",
+      "awayInput": "Jeju SK",
+      "homeResolvedKey": "Incheon",
+      "awayResolvedKey": "Jeju SK",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Incheon::Jeju SK",
+      "matchupResolveScore": 0.93,
+      "homePriorKey": "kor.1::Incheon United",
+      "awayPriorKey": "kor.1::Jeju SK",
+      "matchupPriorKey": "kor.1|Incheon United|Jeju SK"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Incheon",
+      "awayTeamKey": "Jeju SK",
+      "leagueKey": "kor.1",
+      "matchupKey": "Incheon::Jeju SK"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "h2h_underlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is tight"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    }
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "h2h_underlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is tight"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0.009,
+      "awayDelta": 0,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "kor.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 26,
+    "awayRestDays": 33,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
