@@ -2,14 +2,38 @@
   "dayKey": "2026-10-24",
   "leagueSlug": "fra.2",
   "leagueName": "Ligue 2",
-  "updatedAt": "2026-10-24T13:42:41.894Z",
+  "updatedAt": "2026-10-24T16:26:45.098Z",
   "count": 2,
   "sourceMeta": {
-    "acquisitionProvider": "espn_all_scoreboard",
-    "requestedLeagueSlug": "all",
+    "acquisitionProvider": "espn_direct_league_status",
+    "requestedLeagueSlug": "fra.2",
     "requestedDayKey": "2026-10-24",
-    "mergedAt": "2026-10-24T13:42:41.894Z",
-    "mode": "supplemental_target_seed_only"
+    "providerFetchSlugs": [
+      "fra.2"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 0,
+      "matches": 0,
+      "fetches": []
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-10-24T16:26:45.098Z",
+    "mode": "targeted_live_status_refresh"
   },
   "fixtures": [
     {
@@ -31,18 +55,38 @@
       "awayTeam": "Rodez Aveyron",
       "venue": "Stade Gaston-Gérard",
       "firstSeenAt": "2026-10-09T23:40:44.024Z",
-      "lastSeenAt": "2026-10-24T13:42:41.636Z",
+      "lastSeenAt": "2026-10-24T16:26:45.098Z",
       "canonicalAliases": [
         "cid_fra2_dijon_rodez_20261024"
       ],
       "providerLeagueSlug": "fra.2",
-      "status": "SECOND_HALF",
-      "rawStatus": "STATUS_SECOND_HALF",
-      "minute": "83'",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+5'",
       "scoreHome": 1,
-      "scoreAway": 1,
-      "penalties": null,
-      "decidedBy": null
+      "scoreAway": 2,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-10-24T15:23:43.092Z",
+        "provider": "espn",
+        "providerMatchId": "401876716",
+        "dayKey": "2026-10-24",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 1,
+          "scoreAway": 2
+        }
+      }
     },
     {
       "canonicalId": "cid_fra2_saintetienne_nantes_20261024",
@@ -63,7 +107,7 @@
       "awayTeam": "Nantes",
       "venue": "Stade Geoffroy Guichard",
       "firstSeenAt": "2026-10-09T23:40:44.025Z",
-      "lastSeenAt": "2026-10-24T13:42:41.638Z",
+      "lastSeenAt": "2026-10-24T16:26:45.098Z",
       "canonicalAliases": [
         "cid_fra2_stetienne_nantes_20261024"
       ],
@@ -72,9 +116,7 @@
       "rawStatus": "STATUS_SCHEDULED",
       "minute": "0'",
       "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null
+      "scoreAway": null
     }
   ]
 }
