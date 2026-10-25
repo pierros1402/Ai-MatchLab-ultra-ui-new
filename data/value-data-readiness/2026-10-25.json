@@ -1,12 +1,12 @@
 {
   "schema": "ai-matchlab.value-data-readiness.v1",
   "date": "2026-10-25",
-  "generatedAt": "2026-10-25T12:12:28.218Z",
+  "generatedAt": "2026-10-25T13:14:57.835Z",
   "fixtureUniverse": {
     "schema": "ai-matchlab.value-fixture-universe.v1",
     "source": "canonical_fixtures",
-    "count": 396,
-    "hash": "ba0d99107a1cbb771d36016c4b8b8e898839e74c56c8c6d7db89c1f47748a02a",
+    "count": 397,
+    "hash": "697cd060a54a52e290b856972dccfe9cc990cbf54d52f48abb6a9a04e4cb6f44",
     "canonicalIds": [
       "cid_alb1_dinamocity_egnatia_20261025",
       "cid_and1_atleticescaldes_rangers_20261025",
@@ -286,6 +286,7 @@
       "cid_nor2_strommen_stromsgodset_20261025",
       "cid_par1_2mayo_deportivorecoleta_20261025",
       "cid_par1_sportivoameliano_olimpia_20261025",
+      "cid_par1_sportivosanlorenzo_cerroporteno_20261025",
       "cid_per1_comerciantesunidos_ciencianodelcusco_20261025",
       "cid_per1_deportivomoquegua_alianzalima_20261025",
       "cid_per1_sportboys_cajamarca_20261025",
@@ -411,13 +412,14 @@
   "complete": false,
   "status": "PARTIAL",
   "summary": {
-    "fixtures": 396,
-    "applicable": 396,
-    "ready": 214,
-    "insufficient": 182,
+    "fixtures": 397,
+    "applicable": 397,
+    "ready": 169,
+    "insufficient": 228,
     "byReason": {
-      "minimum_recent_sample": 172,
-      "missing_model_assessment": 44
+      "minimum_recent_sample": 224,
+      "missing_model_assessment": 43,
+      "details_missing": 1
     }
   },
   "rows": [
@@ -2578,55 +2580,42 @@
       "canonicalId": "cid_mex1_pumasunam_tigresuanl_20261025",
       "leagueSlug": "mex.1",
       "kickoffUtc": "2026-10-25T03:10Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Pumas UNAM",
+        "awayTeam": "Tigres UANL",
+        "leagueSlug": "mex.1",
+        "fixtureDate": "2026-10-25T03:10:00.000Z",
+        "homeResolvedKey": "Pumas UNAM",
+        "awayResolvedKey": "Tigres UANL",
+        "homeRawSample": 3,
+        "awayRawSample": 2,
+        "homeBlendedSample": 6,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": 33,
+        "awayPriorSample": 46,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": true,
         "reasons": []
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T03:10Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Pumas UNAM",
-          "awayTeam": "Tigres UANL",
-          "leagueSlug": "mex.1",
-          "fixtureDate": "2026-10-25T03:10:00.000Z",
-          "homeResolvedKey": "Pumas UNAM",
-          "awayResolvedKey": "Tigres UANL",
-          "homeRawSample": 3,
-          "awayRawSample": 2,
-          "homeBlendedSample": 6,
-          "awayBlendedSample": 5,
-          "homeSideRawSample": 1,
-          "awaySideRawSample": 0,
-          "homeSideBlendedSample": 4,
-          "awaySideBlendedSample": 3,
-          "homePriorSample": 33,
-          "awayPriorSample": 46,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_aus1_sydney_adelaideunited_20261025",
@@ -2786,10 +2775,37 @@
       "canonicalId": "cid_kor2_busan_gyeongnam_20261025",
       "leagueSlug": "kor.2",
       "kickoffUtc": "2026-10-25T05:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Busan",
+        "awayTeam": "Gyeongnam",
+        "leagueSlug": "kor.2",
+        "fixtureDate": "2026-10-25T05:00:00.000Z",
+        "homeResolvedKey": "Busan",
+        "awayResolvedKey": "Gyeongnam",
+        "homeRawSample": 1,
+        "awayRawSample": 2,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": 169,
+        "awayPriorSample": 169,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -2798,47 +2814,7 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T05:00:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Busan",
-          "awayTeam": "Gyeongnam",
-          "leagueSlug": "kor.2",
-          "fixtureDate": "2026-10-25T05:00:00.000Z",
-          "homeResolvedKey": "Busan",
-          "awayResolvedKey": "Gyeongnam",
-          "homeRawSample": 1,
-          "awayRawSample": 2,
-          "homeBlendedSample": 4,
-          "awayBlendedSample": 5,
-          "homeSideRawSample": 0,
-          "awaySideRawSample": 1,
-          "homeSideBlendedSample": 3,
-          "awaySideBlendedSample": 4,
-          "homePriorSample": 169,
-          "awayPriorSample": 169,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_kor2_seongnam_suwonbluewings_20261025",
@@ -2889,10 +2865,37 @@
       "canonicalId": "cid_kor2_suwon_asan_20261025",
       "leagueSlug": "kor.2",
       "kickoffUtc": "2026-10-25T05:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Suwon FC",
+        "awayTeam": "Asan",
+        "leagueSlug": "kor.2",
+        "fixtureDate": "2026-10-25T05:00:00.000Z",
+        "homeResolvedKey": "Suwon FC",
+        "awayResolvedKey": "Asan",
+        "homeRawSample": 2,
+        "awayRawSample": 2,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": 75,
+        "awayPriorSample": 169,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -2901,47 +2904,7 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T05:00:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Suwon FC",
-          "awayTeam": "Asan",
-          "leagueSlug": "kor.2",
-          "fixtureDate": "2026-10-25T05:00:00.000Z",
-          "homeResolvedKey": "Suwon FC",
-          "awayResolvedKey": "Asan",
-          "homeRawSample": 2,
-          "awayRawSample": 2,
-          "homeBlendedSample": 5,
-          "awayBlendedSample": 5,
-          "homeSideRawSample": 0,
-          "awaySideRawSample": 1,
-          "homeSideBlendedSample": 3,
-          "awaySideBlendedSample": 4,
-          "homePriorSample": 75,
-          "awayPriorSample": 169,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_jpn1_nagoyagrampus_yokohamafmarinos_20261025",
@@ -3019,10 +2982,37 @@
       "canonicalId": "cid_jpn1_kawasakifrontale_fagianookayama_20261025",
       "leagueSlug": "jpn.1",
       "kickoffUtc": "2026-10-25T07:00Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Kawasaki Frontale",
+        "awayTeam": "Okayama",
+        "leagueSlug": "jpn.1",
+        "fixtureDate": "2026-10-25T07:00:00.000Z",
+        "homeResolvedKey": "Kawasaki Frontale",
+        "awayResolvedKey": "Okayama",
+        "homeRawSample": 3,
+        "awayRawSample": 2,
+        "homeBlendedSample": 6,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 2,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 5,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": 161,
+        "awayPriorSample": 39,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -3031,47 +3021,7 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T07:00Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Kawasaki Frontale",
-          "awayTeam": "Okayama",
-          "leagueSlug": "jpn.1",
-          "fixtureDate": "2026-10-25T07:00:00.000Z",
-          "homeResolvedKey": "Kawasaki Frontale",
-          "awayResolvedKey": "Okayama",
-          "homeRawSample": 3,
-          "awayRawSample": 2,
-          "homeBlendedSample": 6,
-          "awayBlendedSample": 5,
-          "homeSideRawSample": 2,
-          "awaySideRawSample": 0,
-          "homeSideBlendedSample": 5,
-          "awaySideBlendedSample": 3,
-          "homePriorSample": 161,
-          "awayPriorSample": 39,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_jpn1_tokyo_mitohollyhock_20261025",
@@ -3140,10 +3090,37 @@
       "canonicalId": "cid_kor2_cheongju_yongin_20261025",
       "leagueSlug": "kor.2",
       "kickoffUtc": "2026-10-25T07:30:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Cheongju",
+        "awayTeam": "Yongin",
+        "leagueSlug": "kor.2",
+        "fixtureDate": "2026-10-25T07:30:00.000Z",
+        "homeResolvedKey": "Cheongju",
+        "awayResolvedKey": "Yongin",
+        "homeRawSample": 2,
+        "awayRawSample": 2,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 2,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 0,
+        "homePriorSample": 111,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -3152,56 +3129,43 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T07:30:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Cheongju",
-          "awayTeam": "Yongin",
-          "leagueSlug": "kor.2",
-          "fixtureDate": "2026-10-25T07:30:00.000Z",
-          "homeResolvedKey": "Cheongju",
-          "awayResolvedKey": "Yongin",
-          "homeRawSample": 2,
-          "awayRawSample": 2,
-          "homeBlendedSample": 5,
-          "awayBlendedSample": 2,
-          "homeSideRawSample": 0,
-          "awaySideRawSample": 0,
-          "homeSideBlendedSample": 3,
-          "awaySideBlendedSample": 0,
-          "homePriorSample": 111,
-          "awayPriorSample": null,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_kor2_pajufrontier_hwaseong_20261025",
       "leagueSlug": "kor.2",
       "kickoffUtc": "2026-10-25T07:30:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Paju Frontier",
+        "awayTeam": "Hwaseong",
+        "leagueSlug": "kor.2",
+        "fixtureDate": "2026-10-25T07:30:00.000Z",
+        "homeResolvedKey": "Paju Frontier",
+        "awayResolvedKey": "Hwaseong",
+        "homeRawSample": 2,
+        "awayRawSample": 1,
+        "homeBlendedSample": 2,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 0,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": null,
+        "awayPriorSample": 39,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -3210,56 +3174,43 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T07:30:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Paju Frontier",
-          "awayTeam": "Hwaseong",
-          "leagueSlug": "kor.2",
-          "fixtureDate": "2026-10-25T07:30:00.000Z",
-          "homeResolvedKey": "Paju Frontier",
-          "awayResolvedKey": "Hwaseong",
-          "homeRawSample": 2,
-          "awayRawSample": 1,
-          "homeBlendedSample": 2,
-          "awayBlendedSample": 4,
-          "homeSideRawSample": 0,
-          "awaySideRawSample": 1,
-          "homeSideBlendedSample": 0,
-          "awaySideBlendedSample": 4,
-          "homePriorSample": null,
-          "awayPriorSample": 39,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_idn1_arema_dewaunited_20261025",
       "leagueSlug": "idn.1",
       "kickoffUtc": "2026-10-25T08:30:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Arema FC",
+        "awayTeam": "Dewa United",
+        "leagueSlug": "idn.1",
+        "fixtureDate": "2026-10-25T08:30:00.000Z",
+        "homeResolvedKey": "Arema FC",
+        "awayResolvedKey": "Dewa United",
+        "homeRawSample": 2,
+        "awayRawSample": 2,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": 170,
+        "awayPriorSample": 136,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -3268,47 +3219,7 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T08:30:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Arema FC",
-          "awayTeam": "Dewa United",
-          "leagueSlug": "idn.1",
-          "fixtureDate": "2026-10-25T08:30:00.000Z",
-          "homeResolvedKey": "Arema FC",
-          "awayResolvedKey": "Dewa United",
-          "homeRawSample": 2,
-          "awayRawSample": 2,
-          "homeBlendedSample": 5,
-          "awayBlendedSample": 5,
-          "homeSideRawSample": 0,
-          "awaySideRawSample": 0,
-          "homeSideBlendedSample": 3,
-          "awaySideBlendedSample": 3,
-          "homePriorSample": 170,
-          "awayPriorSample": 136,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_idn1_persita_baliunited_20261025",
@@ -3359,10 +3270,37 @@
       "canonicalId": "cid_idn2_perselalamongan_red_20261025",
       "leagueSlug": "idn.2",
       "kickoffUtc": "2026-10-25T08:30:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Persela Lamongan",
+        "awayTeam": "De Red",
+        "leagueSlug": "idn.2",
+        "fixtureDate": "2026-10-25T08:30:00.000Z",
+        "homeResolvedKey": "Persela Lamongan",
+        "awayResolvedKey": "De Red",
+        "homeRawSample": 3,
+        "awayRawSample": 0,
+        "homeBlendedSample": 6,
+        "awayBlendedSample": 0,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 0,
+        "homePriorSample": 47,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -3371,47 +3309,7 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T08:30:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Persela Lamongan",
-          "awayTeam": "De Red",
-          "leagueSlug": "idn.2",
-          "fixtureDate": "2026-10-25T08:30:00.000Z",
-          "homeResolvedKey": "Persela Lamongan",
-          "awayResolvedKey": "De Red",
-          "homeRawSample": 3,
-          "awayRawSample": 0,
-          "homeBlendedSample": 6,
-          "awayBlendedSample": 0,
-          "homeSideRawSample": 1,
-          "awaySideRawSample": 0,
-          "homeSideBlendedSample": 4,
-          "awaySideBlendedSample": 0,
-          "homePriorSample": 47,
-          "awayPriorSample": null,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_jpn2_shonanbellmare_tochigicity_20261025",
@@ -3651,10 +3549,37 @@
       "canonicalId": "cid_and1_penya_esperanca_20261025",
       "leagueSlug": "and.1",
       "kickoffUtc": "2026-10-25T10:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Penya",
+        "awayTeam": "Esperanca",
+        "leagueSlug": "and.1",
+        "fixtureDate": "2026-10-25T10:00:00.000Z",
+        "homeResolvedKey": "Penya",
+        "awayResolvedKey": "Esperanca",
+        "homeRawSample": 1,
+        "awayRawSample": 1,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": 105,
+        "awayPriorSample": 81,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -3663,47 +3588,7 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T10:00:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Penya",
-          "awayTeam": "Esperanca",
-          "leagueSlug": "and.1",
-          "fixtureDate": "2026-10-25T10:00:00.000Z",
-          "homeResolvedKey": "Penya",
-          "awayResolvedKey": "Esperanca",
-          "homeRawSample": 1,
-          "awayRawSample": 1,
-          "homeBlendedSample": 4,
-          "awayBlendedSample": 4,
-          "homeSideRawSample": 0,
-          "awaySideRawSample": 0,
-          "homeSideBlendedSample": 3,
-          "awaySideBlendedSample": 3,
-          "homePriorSample": 105,
-          "awayPriorSample": 81,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_blr1_arsenaldzerzhinsk_dneprmogilev_20261025",
@@ -3799,10 +3684,37 @@
       "canonicalId": "cid_rus2_chelyabinsk_ural_20261025",
       "leagueSlug": "rus.2",
       "kickoffUtc": "2026-10-25T10:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Chelyabinsk",
+        "awayTeam": "Ural",
+        "leagueSlug": "rus.2",
+        "fixtureDate": "2026-10-25T10:00:00.000Z",
+        "homeResolvedKey": "Chelyabinsk",
+        "awayResolvedKey": "Ural",
+        "homeRawSample": 1,
+        "awayRawSample": 1,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": 34,
+        "awayPriorSample": 68,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -3811,47 +3723,7 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T10:00:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Chelyabinsk",
-          "awayTeam": "Ural",
-          "leagueSlug": "rus.2",
-          "fixtureDate": "2026-10-25T10:00:00.000Z",
-          "homeResolvedKey": "Chelyabinsk",
-          "awayResolvedKey": "Ural",
-          "homeRawSample": 1,
-          "awayRawSample": 1,
-          "homeBlendedSample": 4,
-          "awayBlendedSample": 4,
-          "homeSideRawSample": 1,
-          "awaySideRawSample": 1,
-          "homeSideBlendedSample": 4,
-          "awaySideBlendedSample": 4,
-          "homePriorSample": 34,
-          "awayPriorSample": 68,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_svk2_slovanbratislavab_ibratislava_20261025",
@@ -3893,10 +3765,37 @@
       "canonicalId": "cid_est2_elva_levadiau21_20261025",
       "leagueSlug": "est.2",
       "kickoffUtc": "2026-10-25T10:30:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Elva",
+        "awayTeam": "Levadia U21",
+        "leagueSlug": "est.2",
+        "fixtureDate": "2026-10-25T10:30:00.000Z",
+        "homeResolvedKey": "Elva",
+        "awayResolvedKey": "Levadia U21",
+        "homeRawSample": 1,
+        "awayRawSample": 2,
+        "homeBlendedSample": 2,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 2,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": 1,
+        "awayPriorSample": 165,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -3905,47 +3804,7 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T10:30:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Elva",
-          "awayTeam": "Levadia U21",
-          "leagueSlug": "est.2",
-          "fixtureDate": "2026-10-25T10:30:00.000Z",
-          "homeResolvedKey": "Elva",
-          "awayResolvedKey": "Levadia U21",
-          "homeRawSample": 1,
-          "awayRawSample": 2,
-          "homeBlendedSample": 2,
-          "awayBlendedSample": 5,
-          "homeSideRawSample": 1,
-          "awaySideRawSample": 1,
-          "homeSideBlendedSample": 2,
-          "awaySideBlendedSample": 4,
-          "homePriorSample": 1,
-          "awayPriorSample": 165,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_est2_nommeutdu21_maardu_20261025",
@@ -3996,10 +3855,37 @@
       "canonicalId": "cid_rus2_ulyanovsk_velesmoscow_20261025",
       "leagueSlug": "rus.2",
       "kickoffUtc": "2026-10-25T10:30:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Ulyanovsk",
+        "awayTeam": "Veles Moscow",
+        "leagueSlug": "rus.2",
+        "fixtureDate": "2026-10-25T10:30:00.000Z",
+        "homeResolvedKey": "Ulyanovsk",
+        "awayResolvedKey": "Veles Moscow",
+        "homeRawSample": 1,
+        "awayRawSample": 0,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 3,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": 68,
+        "awayPriorSample": 72,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -4008,56 +3894,43 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T10:30:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Ulyanovsk",
-          "awayTeam": "Veles Moscow",
-          "leagueSlug": "rus.2",
-          "fixtureDate": "2026-10-25T10:30:00.000Z",
-          "homeResolvedKey": "Ulyanovsk",
-          "awayResolvedKey": "Veles Moscow",
-          "homeRawSample": 1,
-          "awayRawSample": 0,
-          "homeBlendedSample": 4,
-          "awayBlendedSample": 3,
-          "homeSideRawSample": 1,
-          "awaySideRawSample": 0,
-          "homeSideBlendedSample": 4,
-          "awaySideBlendedSample": 3,
-          "homePriorSample": 68,
-          "awayPriorSample": 72,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_tur2_batmanpetrolspor_erokspor_20261025",
       "leagueSlug": "tur.2",
       "kickoffUtc": "2026-10-25T10:30:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Batman Petrolspor",
+        "awayTeam": "Erokspor",
+        "leagueSlug": "tur.2",
+        "fixtureDate": "2026-10-25T10:30:00.000Z",
+        "homeResolvedKey": "Batman Petrolspor",
+        "awayResolvedKey": "Erokspor",
+        "homeRawSample": 2,
+        "awayRawSample": 3,
+        "homeBlendedSample": 2,
+        "awayBlendedSample": 6,
+        "homeSideRawSample": 2,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 2,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": null,
+        "awayPriorSample": 77,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -4066,56 +3939,43 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T10:30:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Batman Petrolspor",
-          "awayTeam": "Erokspor",
-          "leagueSlug": "tur.2",
-          "fixtureDate": "2026-10-25T10:30:00.000Z",
-          "homeResolvedKey": "Batman Petrolspor",
-          "awayResolvedKey": "Erokspor",
-          "homeRawSample": 2,
-          "awayRawSample": 3,
-          "homeBlendedSample": 2,
-          "awayBlendedSample": 6,
-          "homeSideRawSample": 2,
-          "awaySideRawSample": 1,
-          "homeSideBlendedSample": 2,
-          "awaySideBlendedSample": 4,
-          "homePriorSample": null,
-          "awayPriorSample": 77,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_tur2_pendikspor_kayserispor_20261025",
       "leagueSlug": "tur.2",
       "kickoffUtc": "2026-10-25T10:30:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Pendikspor",
+        "awayTeam": "Kayserispor",
+        "leagueSlug": "tur.2",
+        "fixtureDate": "2026-10-25T10:30:00.000Z",
+        "homeResolvedKey": "Pendikspor",
+        "awayResolvedKey": "Kayserispor",
+        "homeRawSample": 3,
+        "awayRawSample": 2,
+        "homeBlendedSample": 6,
+        "awayBlendedSample": 2,
+        "homeSideRawSample": 2,
+        "awaySideRawSample": 2,
+        "homeSideBlendedSample": 5,
+        "awaySideBlendedSample": 2,
+        "homePriorSample": 111,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -4124,47 +3984,7 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T10:30:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Pendikspor",
-          "awayTeam": "Kayserispor",
-          "leagueSlug": "tur.2",
-          "fixtureDate": "2026-10-25T10:30:00.000Z",
-          "homeResolvedKey": "Pendikspor",
-          "awayResolvedKey": "Kayserispor",
-          "homeRawSample": 3,
-          "awayRawSample": 2,
-          "homeBlendedSample": 6,
-          "awayBlendedSample": 2,
-          "homeSideRawSample": 2,
-          "awaySideRawSample": 2,
-          "homeSideBlendedSample": 5,
-          "awaySideBlendedSample": 2,
-          "homePriorSample": 111,
-          "awayPriorSample": null,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_rus1_rostov_lokomotivmoscow_20261025",
@@ -4215,10 +4035,37 @@
       "canonicalId": "cid_aze1_imisli_shamakhi_20261025",
       "leagueSlug": "aze.1",
       "kickoffUtc": "2026-10-25T11:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Imisli FK",
+        "awayTeam": "Shamakhi",
+        "leagueSlug": "aze.1",
+        "fixtureDate": "2026-10-25T11:00:00.000Z",
+        "homeResolvedKey": "Imisli FK",
+        "awayResolvedKey": "Shamakhi",
+        "homeRawSample": 1,
+        "awayRawSample": 2,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 2,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 0,
+        "homePriorSample": 33,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -4227,47 +4074,7 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T11:00:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Imisli FK",
-          "awayTeam": "Shamakhi",
-          "leagueSlug": "aze.1",
-          "fixtureDate": "2026-10-25T11:00:00.000Z",
-          "homeResolvedKey": "Imisli FK",
-          "awayResolvedKey": "Shamakhi",
-          "homeRawSample": 1,
-          "awayRawSample": 2,
-          "homeBlendedSample": 4,
-          "awayBlendedSample": 2,
-          "homeSideRawSample": 0,
-          "awaySideRawSample": 0,
-          "homeSideBlendedSample": 3,
-          "awaySideBlendedSample": 0,
-          "homePriorSample": 33,
-          "awayPriorSample": null,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_blr2_nivadolbizno_unixlabs_20261025",
@@ -4291,10 +4098,37 @@
       "canonicalId": "cid_chn2_wuxiwugou_shaanxiunion_20261025",
       "leagueSlug": "chn.2",
       "kickoffUtc": "2026-10-25T11:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Wuxi Wugou",
+        "awayTeam": "Shaanxi Union",
+        "leagueSlug": "chn.2",
+        "fixtureDate": "2026-10-25T11:00:00.000Z",
+        "homeResolvedKey": "Wuxi Wugou",
+        "awayResolvedKey": "Shaanxi Union",
+        "homeRawSample": 4,
+        "awayRawSample": 2,
+        "homeBlendedSample": 7,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 3,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 6,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": 60,
+        "awayPriorSample": 30,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -4303,56 +4137,43 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T11:00:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Wuxi Wugou",
-          "awayTeam": "Shaanxi Union",
-          "leagueSlug": "chn.2",
-          "fixtureDate": "2026-10-25T11:00:00.000Z",
-          "homeResolvedKey": "Wuxi Wugou",
-          "awayResolvedKey": "Shaanxi Union",
-          "homeRawSample": 4,
-          "awayRawSample": 2,
-          "homeBlendedSample": 7,
-          "awayBlendedSample": 5,
-          "homeSideRawSample": 3,
-          "awaySideRawSample": 1,
-          "homeSideBlendedSample": 6,
-          "awaySideBlendedSample": 4,
-          "homePriorSample": 60,
-          "awayPriorSample": 30,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_kaz1_atyrau_ertispavlodar_20261025",
       "leagueSlug": "kaz.1",
       "kickoffUtc": "2026-10-25T11:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Atyrau",
+        "awayTeam": "Ertis Pavlodar",
+        "leagueSlug": "kaz.1",
+        "fixtureDate": "2026-10-25T11:00:00.000Z",
+        "homeResolvedKey": "Atyrau",
+        "awayResolvedKey": "Ertis Pavlodar",
+        "homeRawSample": 1,
+        "awayRawSample": 1,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 1,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 0,
+        "homePriorSample": 109,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -4361,56 +4182,43 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T11:00:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Atyrau",
-          "awayTeam": "Ertis Pavlodar",
-          "leagueSlug": "kaz.1",
-          "fixtureDate": "2026-10-25T11:00:00.000Z",
-          "homeResolvedKey": "Atyrau",
-          "awayResolvedKey": "Ertis Pavlodar",
-          "homeRawSample": 1,
-          "awayRawSample": 1,
-          "homeBlendedSample": 4,
-          "awayBlendedSample": 1,
-          "homeSideRawSample": 1,
-          "awaySideRawSample": 0,
-          "homeSideBlendedSample": 4,
-          "awaySideBlendedSample": 0,
-          "homePriorSample": 109,
-          "awayPriorSample": null,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_lva1_ogreunited_auda_20261025",
       "leagueSlug": "lva.1",
       "kickoffUtc": "2026-10-25T11:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Ogre United",
+        "awayTeam": "Auda",
+        "leagueSlug": "lva.1",
+        "fixtureDate": "2026-10-25T11:00:00.000Z",
+        "homeResolvedKey": "Ogre United",
+        "awayResolvedKey": "Auda",
+        "homeRawSample": 2,
+        "awayRawSample": 2,
+        "homeBlendedSample": 2,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 1,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": null,
+        "awayPriorSample": 144,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -4419,56 +4227,43 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T11:00:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Ogre United",
-          "awayTeam": "Auda",
-          "leagueSlug": "lva.1",
-          "fixtureDate": "2026-10-25T11:00:00.000Z",
-          "homeResolvedKey": "Ogre United",
-          "awayResolvedKey": "Auda",
-          "homeRawSample": 2,
-          "awayRawSample": 2,
-          "homeBlendedSample": 2,
-          "awayBlendedSample": 5,
-          "homeSideRawSample": 1,
-          "awaySideRawSample": 1,
-          "homeSideBlendedSample": 1,
-          "awaySideBlendedSample": 4,
-          "homePriorSample": null,
-          "awayPriorSample": 144,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_mkd1_arsimi_bregalnicastip_20261025",
       "leagueSlug": "mkd.1",
       "kickoffUtc": "2026-10-25T11:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Arsimi",
+        "awayTeam": "Bregalnica Stip",
+        "leagueSlug": "mkd.1",
+        "fixtureDate": "2026-10-25T11:00:00.000Z",
+        "homeResolvedKey": "Arsimi",
+        "awayResolvedKey": "Bregalnica Stip",
+        "homeRawSample": 2,
+        "awayRawSample": 2,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": 33,
+        "awayPriorSample": 96,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -4477,56 +4272,43 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T11:00:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Arsimi",
-          "awayTeam": "Bregalnica Stip",
-          "leagueSlug": "mkd.1",
-          "fixtureDate": "2026-10-25T11:00:00.000Z",
-          "homeResolvedKey": "Arsimi",
-          "awayResolvedKey": "Bregalnica Stip",
-          "homeRawSample": 2,
-          "awayRawSample": 2,
-          "homeBlendedSample": 5,
-          "awayBlendedSample": 5,
-          "homeSideRawSample": 1,
-          "awaySideRawSample": 0,
-          "homeSideBlendedSample": 4,
-          "awaySideBlendedSample": 3,
-          "homePriorSample": 33,
-          "awayPriorSample": 96,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_pol2_odraopole_pogonsiedlce_20261025",
       "leagueSlug": "pol.2",
       "kickoffUtc": "2026-10-25T11:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Odra Opole",
+        "awayTeam": "Pogon Siedlce",
+        "leagueSlug": "pol.2",
+        "fixtureDate": "2026-10-25T11:00:00.000Z",
+        "homeResolvedKey": "Odra Opole",
+        "awayResolvedKey": "Pogon Siedlce",
+        "homeRawSample": 2,
+        "awayRawSample": 2,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": 172,
+        "awayPriorSample": 68,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -4535,47 +4317,7 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T11:00:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Odra Opole",
-          "awayTeam": "Pogon Siedlce",
-          "leagueSlug": "pol.2",
-          "fixtureDate": "2026-10-25T11:00:00.000Z",
-          "homeResolvedKey": "Odra Opole",
-          "awayResolvedKey": "Pogon Siedlce",
-          "homeRawSample": 2,
-          "awayRawSample": 2,
-          "homeBlendedSample": 5,
-          "awayBlendedSample": 5,
-          "homeSideRawSample": 0,
-          "awaySideRawSample": 0,
-          "homeSideBlendedSample": 3,
-          "awaySideBlendedSample": 3,
-          "homePriorSample": 172,
-          "awayPriorSample": 68,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_por2_afs_tondela_20261025",
@@ -4716,10 +4458,37 @@
       "canonicalId": "cid_ukr2_inhulets_koloskovalivka2_20261025",
       "leagueSlug": "ukr.2",
       "kickoffUtc": "2026-10-25T11:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Inhulets",
+        "awayTeam": "Kolos Kovalivka 2",
+        "leagueSlug": "ukr.2",
+        "fixtureDate": "2026-10-25T11:00:00.000Z",
+        "homeResolvedKey": "Inhulets",
+        "awayResolvedKey": "Kolos Kovalivka 2",
+        "homeRawSample": 3,
+        "awayRawSample": 2,
+        "homeBlendedSample": 6,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 2,
+        "homePriorSample": 46,
+        "awayPriorSample": 2,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -4728,47 +4497,7 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T11:00:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Inhulets",
-          "awayTeam": "Kolos Kovalivka 2",
-          "leagueSlug": "ukr.2",
-          "fixtureDate": "2026-10-25T11:00:00.000Z",
-          "homeResolvedKey": "Inhulets",
-          "awayResolvedKey": "Kolos Kovalivka 2",
-          "homeRawSample": 3,
-          "awayRawSample": 2,
-          "homeBlendedSample": 6,
-          "awayBlendedSample": 4,
-          "homeSideRawSample": 1,
-          "awaySideRawSample": 1,
-          "homeSideBlendedSample": 4,
-          "awaySideBlendedSample": 2,
-          "homePriorSample": 46,
-          "awayPriorSample": 2,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_pol1_slaskwroclaw_wieczystakrakow_20261025",
@@ -4819,10 +4548,37 @@
       "canonicalId": "cid_ned1_fortunasittard_excelsior_20261025",
       "leagueSlug": "ned.1",
       "kickoffUtc": "2026-10-25T11:15Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Fortuna Sittard",
+        "awayTeam": "Excelsior",
+        "leagueSlug": "ned.1",
+        "fixtureDate": "2026-10-25T11:15:00.000Z",
+        "homeResolvedKey": "Fortuna Sittard",
+        "awayResolvedKey": "Excelsior",
+        "homeRawSample": 1,
+        "awayRawSample": 2,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 2,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 5,
+        "homePriorSample": 136,
+        "awayPriorSample": 102,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -4831,56 +4587,43 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T11:15Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Fortuna Sittard",
-          "awayTeam": "Excelsior",
-          "leagueSlug": "ned.1",
-          "fixtureDate": "2026-10-25T11:15:00.000Z",
-          "homeResolvedKey": "Fortuna Sittard",
-          "awayResolvedKey": "Excelsior",
-          "homeRawSample": 1,
-          "awayRawSample": 2,
-          "homeBlendedSample": 4,
-          "awayBlendedSample": 5,
-          "homeSideRawSample": 0,
-          "awaySideRawSample": 2,
-          "homeSideBlendedSample": 3,
-          "awaySideBlendedSample": 5,
-          "homePriorSample": 136,
-          "awayPriorSample": 102,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_arm1_syunik_bkma_20261025",
       "leagueSlug": "arm.1",
       "kickoffUtc": "2026-10-25T11:30:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Syunik",
+        "awayTeam": "BKMA",
+        "leagueSlug": "arm.1",
+        "fixtureDate": "2026-10-25T11:30:00.000Z",
+        "homeResolvedKey": "Syunik",
+        "awayResolvedKey": "BKMA",
+        "homeRawSample": 2,
+        "awayRawSample": 1,
+        "homeBlendedSample": 2,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 0,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": null,
+        "awayPriorSample": 150,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -4889,47 +4632,7 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T11:30:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Syunik",
-          "awayTeam": "BKMA",
-          "leagueSlug": "arm.1",
-          "fixtureDate": "2026-10-25T11:30:00.000Z",
-          "homeResolvedKey": "Syunik",
-          "awayResolvedKey": "BKMA",
-          "homeRawSample": 2,
-          "awayRawSample": 1,
-          "homeBlendedSample": 2,
-          "awayBlendedSample": 4,
-          "homeSideRawSample": 0,
-          "awaySideRawSample": 0,
-          "homeSideBlendedSample": 0,
-          "awaySideBlendedSample": 3,
-          "homePriorSample": null,
-          "awayPriorSample": 150,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_blr2_ska1938_bate2_20261025",
@@ -4953,10 +4656,37 @@
       "canonicalId": "cid_chn2_dingnanganlian_yanbianlongding_20261025",
       "leagueSlug": "chn.2",
       "kickoffUtc": "2026-10-25T11:30:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Dingnan Ganlian",
+        "awayTeam": "Yanbian Longding",
+        "leagueSlug": "chn.2",
+        "fixtureDate": "2026-10-25T11:30:00.000Z",
+        "homeResolvedKey": "Dingnan Ganlian",
+        "awayResolvedKey": "Yanbian Longding",
+        "homeRawSample": 1,
+        "awayRawSample": 1,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": 147,
+        "awayPriorSample": 90,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -4965,56 +4695,43 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T11:30:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Dingnan Ganlian",
-          "awayTeam": "Yanbian Longding",
-          "leagueSlug": "chn.2",
-          "fixtureDate": "2026-10-25T11:30:00.000Z",
-          "homeResolvedKey": "Dingnan Ganlian",
-          "awayResolvedKey": "Yanbian Longding",
-          "homeRawSample": 1,
-          "awayRawSample": 1,
-          "homeBlendedSample": 4,
-          "awayBlendedSample": 4,
-          "homeSideRawSample": 0,
-          "awaySideRawSample": 0,
-          "homeSideBlendedSample": 3,
-          "awaySideBlendedSample": 3,
-          "homePriorSample": 147,
-          "awayPriorSample": 90,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_chn2_guangdonggzpower_suzhoudongwu_20261025",
       "leagueSlug": "chn.2",
       "kickoffUtc": "2026-10-25T11:30:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Guangdong GZ-Power",
+        "awayTeam": "Suzhou Dongwu",
+        "leagueSlug": "chn.2",
+        "fixtureDate": "2026-10-25T11:30:00.000Z",
+        "homeResolvedKey": "Guangdong GZ-Power",
+        "awayResolvedKey": "Suzhou Dongwu",
+        "homeRawSample": 1,
+        "awayRawSample": 1,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": 30,
+        "awayPriorSample": 148,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -5023,47 +4740,7 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T11:30:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Guangdong GZ-Power",
-          "awayTeam": "Suzhou Dongwu",
-          "leagueSlug": "chn.2",
-          "fixtureDate": "2026-10-25T11:30:00.000Z",
-          "homeResolvedKey": "Guangdong GZ-Power",
-          "awayResolvedKey": "Suzhou Dongwu",
-          "homeRawSample": 1,
-          "awayRawSample": 1,
-          "homeBlendedSample": 4,
-          "awayBlendedSample": 4,
-          "homeSideRawSample": 0,
-          "awaySideRawSample": 1,
-          "homeSideBlendedSample": 3,
-          "awaySideBlendedSample": 4,
-          "homePriorSample": 30,
-          "awayPriorSample": 148,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_ind1_churchillbrothers_punjab_20261025",
@@ -5115,10 +4792,37 @@
       "canonicalId": "cid_ita1_internazionale_fiorentina_20261025",
       "leagueSlug": "ita.1",
       "kickoffUtc": "2026-10-25T11:30Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Internazionale",
+        "awayTeam": "Fiorentina",
+        "leagueSlug": "ita.1",
+        "fixtureDate": "2026-10-25T11:30:00.000Z",
+        "homeResolvedKey": "Internazionale",
+        "awayResolvedKey": "Fiorentina",
+        "homeRawSample": 2,
+        "awayRawSample": 1,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": 152,
+        "awayPriorSample": 190,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -5127,47 +4831,7 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "b9666f3c7db19e8fa1c0dac99edd9ef1b5982e0d4e5701b5519d0ccc26dee398",
-        "observedAt": "2026-10-25T03:02:53.674Z",
-        "kickoffUtc": "2026-10-25T11:30Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Internazionale",
-          "awayTeam": "Fiorentina",
-          "leagueSlug": "ita.1",
-          "fixtureDate": "2026-10-25T11:30:00.000Z",
-          "homeResolvedKey": "Internazionale",
-          "awayResolvedKey": "Fiorentina",
-          "homeRawSample": 2,
-          "awayRawSample": 1,
-          "homeBlendedSample": 5,
-          "awayBlendedSample": 4,
-          "homeSideRawSample": 0,
-          "awaySideRawSample": 0,
-          "homeSideBlendedSample": 3,
-          "awaySideBlendedSample": 3,
-          "homePriorSample": 152,
-          "awayPriorSample": 190,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_blr1_slaviamozyr_zhodino_20261025",
@@ -5191,10 +4855,37 @@
       "canonicalId": "cid_blr2_osipovichi_gomel2_20261025",
       "leagueSlug": "blr.2",
       "kickoffUtc": "2026-10-25T12:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Osipovichi",
+        "awayTeam": "FC Gomel 2",
+        "leagueSlug": "blr.2",
+        "fixtureDate": "2026-10-25T12:00:00.000Z",
+        "homeResolvedKey": "Osipovichi",
+        "awayResolvedKey": "FC Gomel 2",
+        "homeRawSample": 4,
+        "awayRawSample": 2,
+        "homeBlendedSample": 7,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": 90,
+        "awayPriorSample": 36,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -5203,56 +4894,43 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "7fe4abd96aa7ea90132b0c55dc32b987aeb8f15f10f986a702a1cf11fa11e88e",
-        "observedAt": "2026-10-25T11:32:42.452Z",
-        "kickoffUtc": "2026-10-25T12:00:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Osipovichi",
-          "awayTeam": "FC Gomel 2",
-          "leagueSlug": "blr.2",
-          "fixtureDate": "2026-10-25T12:00:00.000Z",
-          "homeResolvedKey": "Osipovichi",
-          "awayResolvedKey": "FC Gomel 2",
-          "homeRawSample": 4,
-          "awayRawSample": 2,
-          "homeBlendedSample": 7,
-          "awayBlendedSample": 5,
-          "homeSideRawSample": 1,
-          "awaySideRawSample": 1,
-          "homeSideBlendedSample": 4,
-          "awaySideBlendedSample": 4,
-          "homePriorSample": 90,
-          "awayPriorSample": 36,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_cze1_hradeckralove_jablonec_20261025",
       "leagueSlug": "cze.1",
       "kickoffUtc": "2026-10-25T12:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Hradec Kralove",
+        "awayTeam": "Jablonec",
+        "leagueSlug": "cze.1",
+        "fixtureDate": "2026-10-25T12:00:00.000Z",
+        "homeResolvedKey": "Hradec Kralove",
+        "awayResolvedKey": "Jablonec",
+        "homeRawSample": 2,
+        "awayRawSample": 1,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": 173,
+        "awayPriorSample": 175,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -5261,56 +4939,43 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "7fe4abd96aa7ea90132b0c55dc32b987aeb8f15f10f986a702a1cf11fa11e88e",
-        "observedAt": "2026-10-25T11:32:42.452Z",
-        "kickoffUtc": "2026-10-25T12:00:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Hradec Kralove",
-          "awayTeam": "Jablonec",
-          "leagueSlug": "cze.1",
-          "fixtureDate": "2026-10-25T12:00:00.000Z",
-          "homeResolvedKey": "Hradec Kralove",
-          "awayResolvedKey": "Jablonec",
-          "homeRawSample": 2,
-          "awayRawSample": 1,
-          "homeBlendedSample": 5,
-          "awayBlendedSample": 4,
-          "homeSideRawSample": 1,
-          "awaySideRawSample": 0,
-          "homeSideBlendedSample": 4,
-          "awaySideBlendedSample": 3,
-          "homePriorSample": 173,
-          "awayPriorSample": 175,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_fin1_jaro_pk35_20261025",
       "leagueSlug": "fin.1",
       "kickoffUtc": "2026-10-25T12:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Jaro",
+        "awayTeam": "PK-35",
+        "leagueSlug": "fin.1",
+        "fixtureDate": "2026-10-25T12:00:00.000Z",
+        "homeResolvedKey": "Jaro",
+        "awayResolvedKey": "PK-35",
+        "homeRawSample": 2,
+        "awayRawSample": 4,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 1,
+        "homePriorSample": 30,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -5319,56 +4984,43 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "7fe4abd96aa7ea90132b0c55dc32b987aeb8f15f10f986a702a1cf11fa11e88e",
-        "observedAt": "2026-10-25T11:32:42.452Z",
-        "kickoffUtc": "2026-10-25T12:00:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Jaro",
-          "awayTeam": "PK-35",
-          "leagueSlug": "fin.1",
-          "fixtureDate": "2026-10-25T12:00:00.000Z",
-          "homeResolvedKey": "Jaro",
-          "awayResolvedKey": "PK-35",
-          "homeRawSample": 2,
-          "awayRawSample": 4,
-          "homeBlendedSample": 5,
-          "awayBlendedSample": 4,
-          "homeSideRawSample": 1,
-          "awaySideRawSample": 1,
-          "homeSideBlendedSample": 4,
-          "awaySideBlendedSample": 1,
-          "homePriorSample": 30,
-          "awayPriorSample": null,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_idn1_garudayaksa_persibbandung_20261025",
       "leagueSlug": "idn.1",
       "kickoffUtc": "2026-10-25T12:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Garudayaksa",
+        "awayTeam": "Persib Bandung",
+        "leagueSlug": "idn.1",
+        "fixtureDate": "2026-10-25T12:00:00.000Z",
+        "homeResolvedKey": "Garudayaksa",
+        "awayResolvedKey": "Persib Bandung",
+        "homeRawSample": 2,
+        "awayRawSample": 1,
+        "homeBlendedSample": 2,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 1,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": null,
+        "awayPriorSample": 174,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -5377,47 +5029,7 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "7fe4abd96aa7ea90132b0c55dc32b987aeb8f15f10f986a702a1cf11fa11e88e",
-        "observedAt": "2026-10-25T11:32:42.452Z",
-        "kickoffUtc": "2026-10-25T12:00:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Garudayaksa",
-          "awayTeam": "Persib Bandung",
-          "leagueSlug": "idn.1",
-          "fixtureDate": "2026-10-25T12:00:00.000Z",
-          "homeResolvedKey": "Garudayaksa",
-          "awayResolvedKey": "Persib Bandung",
-          "homeRawSample": 2,
-          "awayRawSample": 1,
-          "homeBlendedSample": 2,
-          "awayBlendedSample": 4,
-          "homeSideRawSample": 1,
-          "awaySideRawSample": 1,
-          "homeSideBlendedSample": 1,
-          "awaySideBlendedSample": 4,
-          "homePriorSample": null,
-          "awayPriorSample": 174,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_idn2_psmsmedan_psissemarang_20261025",
@@ -5441,10 +5053,37 @@
       "canonicalId": "cid_kos1_feronikeli_dukagjini_20261025",
       "leagueSlug": "kos.1",
       "kickoffUtc": "2026-10-25T12:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Feronikeli",
+        "awayTeam": "Dukagjini",
+        "leagueSlug": "kos.1",
+        "fixtureDate": "2026-10-25T12:00:00.000Z",
+        "homeResolvedKey": "Feronikeli",
+        "awayResolvedKey": "Dukagjini",
+        "homeRawSample": 2,
+        "awayRawSample": 3,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 6,
+        "homeSideRawSample": 2,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 5,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": 109,
+        "awayPriorSample": 180,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -5453,56 +5092,43 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "7fe4abd96aa7ea90132b0c55dc32b987aeb8f15f10f986a702a1cf11fa11e88e",
-        "observedAt": "2026-10-25T11:32:42.452Z",
-        "kickoffUtc": "2026-10-25T12:00:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Feronikeli",
-          "awayTeam": "Dukagjini",
-          "leagueSlug": "kos.1",
-          "fixtureDate": "2026-10-25T12:00:00.000Z",
-          "homeResolvedKey": "Feronikeli",
-          "awayResolvedKey": "Dukagjini",
-          "homeRawSample": 2,
-          "awayRawSample": 3,
-          "homeBlendedSample": 5,
-          "awayBlendedSample": 6,
-          "homeSideRawSample": 2,
-          "awaySideRawSample": 0,
-          "homeSideBlendedSample": 5,
-          "awaySideBlendedSample": 3,
-          "homePriorSample": 109,
-          "awayPriorSample": 180,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_kos1_prishtina_drita_20261025",
       "leagueSlug": "kos.1",
       "kickoffUtc": "2026-10-25T12:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Prishtina",
+        "awayTeam": "Drita",
+        "leagueSlug": "kos.1",
+        "fixtureDate": "2026-10-25T12:00:00.000Z",
+        "homeResolvedKey": "Prishtina",
+        "awayResolvedKey": "Drita",
+        "homeRawSample": 2,
+        "awayRawSample": 3,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 6,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 3,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 6,
+        "homePriorSample": 180,
+        "awayPriorSample": 180,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -5511,47 +5137,7 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "7fe4abd96aa7ea90132b0c55dc32b987aeb8f15f10f986a702a1cf11fa11e88e",
-        "observedAt": "2026-10-25T11:32:42.452Z",
-        "kickoffUtc": "2026-10-25T12:00:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Prishtina",
-          "awayTeam": "Drita",
-          "leagueSlug": "kos.1",
-          "fixtureDate": "2026-10-25T12:00:00.000Z",
-          "homeResolvedKey": "Prishtina",
-          "awayResolvedKey": "Drita",
-          "homeRawSample": 2,
-          "awayRawSample": 3,
-          "homeBlendedSample": 5,
-          "awayBlendedSample": 6,
-          "homeSideRawSample": 0,
-          "awaySideRawSample": 3,
-          "homeSideBlendedSample": 3,
-          "awaySideBlendedSample": 6,
-          "homePriorSample": 180,
-          "awayPriorSample": 180,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_kos2_dinamoferizaj_vjosa_20261025",
@@ -5575,10 +5161,37 @@
       "canonicalId": "cid_kos2_kflepencikacanik_liria_20261025",
       "leagueSlug": "kos.2",
       "kickoffUtc": "2026-10-25T12:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "KF Lepenci Kacanik",
+        "awayTeam": "Liria",
+        "leagueSlug": "kos.2",
+        "fixtureDate": "2026-10-25T12:00:00.000Z",
+        "homeResolvedKey": "KF Lepenci Kacanik",
+        "awayResolvedKey": "Liria",
+        "homeRawSample": 5,
+        "awayRawSample": 2,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 3,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": null,
+        "awayPriorSample": 114,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -5587,47 +5200,7 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "7fe4abd96aa7ea90132b0c55dc32b987aeb8f15f10f986a702a1cf11fa11e88e",
-        "observedAt": "2026-10-25T11:32:42.452Z",
-        "kickoffUtc": "2026-10-25T12:00:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "KF Lepenci Kacanik",
-          "awayTeam": "Liria",
-          "leagueSlug": "kos.2",
-          "fixtureDate": "2026-10-25T12:00:00.000Z",
-          "homeResolvedKey": "KF Lepenci Kacanik",
-          "awayResolvedKey": "Liria",
-          "homeRawSample": 5,
-          "awayRawSample": 2,
-          "homeBlendedSample": 5,
-          "awayBlendedSample": 5,
-          "homeSideRawSample": 3,
-          "awaySideRawSample": 1,
-          "homeSideBlendedSample": 3,
-          "awaySideBlendedSample": 4,
-          "homePriorSample": null,
-          "awayPriorSample": 114,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_kos2_kika_ferizaj_20261025",
@@ -5795,10 +5368,37 @@
       "canonicalId": "cid_lva2_albertsjdfs_rezekne_20261025",
       "leagueSlug": "lva.2",
       "kickoffUtc": "2026-10-25T12:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Alberts JDFS",
+        "awayTeam": "Rezekne",
+        "leagueSlug": "lva.2",
+        "fixtureDate": "2026-10-25T12:00:00.000Z",
+        "homeResolvedKey": "Alberts JDFS",
+        "awayResolvedKey": "Rezekne",
+        "homeRawSample": 1,
+        "awayRawSample": 1,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 1,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 1,
+        "homePriorSample": 117,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -5807,47 +5407,7 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "7fe4abd96aa7ea90132b0c55dc32b987aeb8f15f10f986a702a1cf11fa11e88e",
-        "observedAt": "2026-10-25T11:32:42.452Z",
-        "kickoffUtc": "2026-10-25T12:00:00.000Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Alberts JDFS",
-          "awayTeam": "Rezekne",
-          "leagueSlug": "lva.2",
-          "fixtureDate": "2026-10-25T12:00:00.000Z",
-          "homeResolvedKey": "Alberts JDFS",
-          "awayResolvedKey": "Rezekne",
-          "homeRawSample": 1,
-          "awayRawSample": 1,
-          "homeBlendedSample": 4,
-          "awayBlendedSample": 1,
-          "homeSideRawSample": 1,
-          "awaySideRawSample": 1,
-          "homeSideBlendedSample": 4,
-          "awaySideBlendedSample": 1,
-          "homePriorSample": 117,
-          "awayPriorSample": null,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_mne2_kompodgorica_lovcen_20261025",
@@ -5934,10 +5494,37 @@
       "canonicalId": "cid_sco1_hibernian_celtic_20261025",
       "leagueSlug": "sco.1",
       "kickoffUtc": "2026-10-25T12:00Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Hibernian",
+        "awayTeam": "Celtic",
+        "leagueSlug": "sco.1",
+        "fixtureDate": "2026-10-25T12:00:00.000Z",
+        "homeResolvedKey": "Hibernian",
+        "awayResolvedKey": "Celtic",
+        "homeRawSample": 2,
+        "awayRawSample": 1,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 2,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 5,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": 161,
+        "awayPriorSample": 159,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -5946,56 +5533,43 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false,
-      "readinessBasis": "signed_prematch_observation",
-      "prematchEvidence": {
-        "recordSignature": "7fe4abd96aa7ea90132b0c55dc32b987aeb8f15f10f986a702a1cf11fa11e88e",
-        "observedAt": "2026-10-25T11:32:42.452Z",
-        "kickoffUtc": "2026-10-25T12:00Z",
-        "scope": "diagnostics_only_no_selector_inputs_changed"
-      },
-      "currentDiagnostic": {
-        "generatedAt": "2026-10-25T12:12:28.218Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "minimum_recent_sample"
-        ],
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Hibernian",
-          "awayTeam": "Celtic",
-          "leagueSlug": "sco.1",
-          "fixtureDate": "2026-10-25T12:00:00.000Z",
-          "homeResolvedKey": "Hibernian",
-          "awayResolvedKey": "Celtic",
-          "homeRawSample": 2,
-          "awayRawSample": 1,
-          "homeBlendedSample": 5,
-          "awayBlendedSample": 4,
-          "homeSideRawSample": 2,
-          "awaySideRawSample": 0,
-          "homeSideBlendedSample": 5,
-          "awaySideBlendedSample": 3,
-          "homePriorSample": 161,
-          "awayPriorSample": 159,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        }
-      }
+      "predictionCreated": false
     },
     {
       "canonicalId": "cid_hun1_vasas_paks_20261025",
       "leagueSlug": "hun.1",
       "kickoffUtc": "2026-10-25T12:15:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Vasas",
+        "awayTeam": "Paks",
+        "leagueSlug": "hun.1",
+        "fixtureDate": "2026-10-25T12:15:00.000Z",
+        "homeResolvedKey": "Vasas",
+        "awayResolvedKey": "Paks",
+        "homeRawSample": 2,
+        "awayRawSample": 2,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 2,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 1,
+        "homePriorSample": 33,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -6091,10 +5665,37 @@
       "canonicalId": "cid_ger3_tsvhavelse_saarbrucken_20261025",
       "leagueSlug": "ger.3",
       "kickoffUtc": "2026-10-25T12:30:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "TSV Havelse",
+        "awayTeam": "Saarbrucken",
+        "leagueSlug": "ger.3",
+        "fixtureDate": "2026-10-25T12:30:00.000Z",
+        "homeResolvedKey": "TSV Havelse",
+        "awayResolvedKey": "Saarbrucken",
+        "homeRawSample": 2,
+        "awayRawSample": 3,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 6,
+        "homeSideRawSample": 2,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 5,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": 74,
+        "awayPriorSample": 188,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -6109,10 +5710,37 @@
       "canonicalId": "cid_ukr2_nyvaternopil_kulikiv_20261025",
       "leagueSlug": "ukr.2",
       "kickoffUtc": "2026-10-25T12:30:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Nyva Ternopil",
+        "awayTeam": "Kulikiv",
+        "leagueSlug": "ukr.2",
+        "fixtureDate": "2026-10-25T12:30:00.000Z",
+        "homeResolvedKey": "Nyva Ternopil",
+        "awayResolvedKey": "Kulikiv",
+        "homeRawSample": 3,
+        "awayRawSample": 2,
+        "homeBlendedSample": 6,
+        "awayBlendedSample": 2,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 1,
+        "homePriorSample": 113,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -6143,13 +5771,13 @@
         "fixtureDate": "2026-10-25T12:30:00.000Z",
         "homeResolvedKey": "Racing Genk",
         "awayResolvedKey": "Standard Liège",
-        "homeRawSample": 2,
-        "awayRawSample": 1,
-        "homeBlendedSample": 5,
-        "awayBlendedSample": 4,
-        "homeSideRawSample": 1,
+        "homeRawSample": 1,
+        "awayRawSample": 0,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 3,
+        "homeSideRawSample": 0,
         "awaySideRawSample": 0,
-        "homeSideBlendedSample": 4,
+        "homeSideBlendedSample": 3,
         "awaySideBlendedSample": 3,
         "homePriorSample": 161,
         "awayPriorSample": 153,
@@ -6188,14 +5816,14 @@
         "fixtureDate": "2026-10-25T12:30:00.000Z",
         "homeResolvedKey": "Holstein Kiel",
         "awayResolvedKey": "Dynamo Dresden",
-        "homeRawSample": 2,
-        "awayRawSample": 3,
-        "homeBlendedSample": 5,
-        "awayBlendedSample": 6,
+        "homeRawSample": 1,
+        "awayRawSample": 1,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 4,
         "homeSideRawSample": 1,
-        "awaySideRawSample": 1,
+        "awaySideRawSample": 0,
         "homeSideBlendedSample": 4,
-        "awaySideBlendedSample": 4,
+        "awaySideBlendedSample": 3,
         "homePriorSample": 115,
         "awayPriorSample": 34,
         "homeRecentSelected": null,
@@ -6233,14 +5861,14 @@
         "fixtureDate": "2026-10-25T12:30:00.000Z",
         "homeResolvedKey": "TSV Eintracht Braunschweig",
         "awayResolvedKey": "Hannover 96",
-        "homeRawSample": 2,
-        "awayRawSample": 3,
-        "homeBlendedSample": 5,
-        "awayBlendedSample": 6,
-        "homeSideRawSample": 1,
-        "awaySideRawSample": 1,
-        "homeSideBlendedSample": 4,
-        "awaySideBlendedSample": 4,
+        "homeRawSample": 1,
+        "awayRawSample": 2,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 3,
         "homePriorSample": 82,
         "awayPriorSample": 118,
         "homeRecentSelected": null,
@@ -6278,14 +5906,14 @@
         "fixtureDate": "2026-10-25T12:30:00.000Z",
         "homeResolvedKey": "VfL Osnabruck",
         "awayResolvedKey": "SpVgg Greuther Fürth",
-        "homeRawSample": 2,
-        "awayRawSample": 2,
-        "homeBlendedSample": 5,
-        "awayBlendedSample": 5,
-        "homeSideRawSample": 1,
-        "awaySideRawSample": 1,
-        "homeSideBlendedSample": 4,
-        "awaySideBlendedSample": 4,
+        "homeRawSample": 0,
+        "awayRawSample": 1,
+        "homeBlendedSample": 3,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 3,
         "homePriorSample": 15,
         "awayPriorSample": 81,
         "homeRecentSelected": null,
@@ -6327,10 +5955,36 @@
       "kickoffUtc": "2026-10-25T13:00:00.000Z",
       "status": "INSUFFICIENT_DATA",
       "reasons": [
+        "minimum_recent_sample",
         "missing_model_assessment"
       ],
       "modelAssessmentAvailable": false,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Atlètic Club d'Escaldes",
+        "awayTeam": "FC Rangers",
+        "leagueSlug": "and.1",
+        "fixtureDate": "2026-10-25T13:00:00.000Z",
+        "homeResolvedKey": "Atlètic Club d'Escaldes",
+        "awayResolvedKey": "FC Rangers",
+        "homeRawSample": 1,
+        "awayRawSample": 2,
+        "homeBlendedSample": 1,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 0,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": null,
+        "awayPriorSample": 53,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -6362,10 +6016,10 @@
         "fixtureDate": "2026-10-25T13:00:00.000Z",
         "homeResolvedKey": "Port Louis (Mus)",
         "awayResolvedKey": "Durban City",
-        "homeRawSample": 1,
-        "awayRawSample": 3,
-        "homeBlendedSample": 1,
-        "awayBlendedSample": 3,
+        "homeRawSample": 0,
+        "awayRawSample": 2,
+        "homeBlendedSample": 0,
+        "awayBlendedSample": 2,
         "homeSideRawSample": 0,
         "awaySideRawSample": 1,
         "homeSideBlendedSample": 0,
@@ -6391,10 +6045,37 @@
       "canonicalId": "cid_fin1_hjk_kups_20261025",
       "leagueSlug": "fin.1",
       "kickoffUtc": "2026-10-25T13:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "HJK",
+        "awayTeam": "KuPS",
+        "leagueSlug": "fin.1",
+        "fixtureDate": "2026-10-25T13:00:00.000Z",
+        "homeResolvedKey": "HJK",
+        "awayResolvedKey": "KuPS",
+        "homeRawSample": 2,
+        "awayRawSample": 2,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 2,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 5,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": 130,
+        "awayPriorSample": 130,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -6409,10 +6090,37 @@
       "canonicalId": "cid_gre2_karditsa_paokb_20261025",
       "leagueSlug": "gre.2",
       "kickoffUtc": "2026-10-25T13:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Karditsa",
+        "awayTeam": "PAOK B",
+        "leagueSlug": "gre.2",
+        "fixtureDate": "2026-10-25T13:00:00.000Z",
+        "homeResolvedKey": "Karditsa",
+        "awayResolvedKey": "PAOK B",
+        "homeRawSample": 1,
+        "awayRawSample": 4,
+        "homeBlendedSample": 1,
+        "awayBlendedSample": 7,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 0,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": null,
+        "awayPriorSample": 143,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -6461,10 +6169,10 @@
         "fixtureDate": "2026-10-25T13:00:00.000Z",
         "homeResolvedKey": "Aktobe",
         "awayResolvedKey": "Kairat Almaty",
-        "homeRawSample": 2,
-        "awayRawSample": 2,
-        "homeBlendedSample": 5,
-        "awayBlendedSample": 5,
+        "homeRawSample": 1,
+        "awayRawSample": 0,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 3,
         "homeSideRawSample": 1,
         "awaySideRawSample": 0,
         "homeSideBlendedSample": 4,
@@ -6490,10 +6198,37 @@
       "canonicalId": "cid_ltu2_dainavaalytus_kaunozalgiris2_20261025",
       "leagueSlug": "ltu.2",
       "kickoffUtc": "2026-10-25T13:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Dainava Alytus",
+        "awayTeam": "Kauno Zalgiris 2",
+        "leagueSlug": "ltu.2",
+        "fixtureDate": "2026-10-25T13:00:00.000Z",
+        "homeResolvedKey": "Dainava Alytus",
+        "awayResolvedKey": "Kauno Zalgiris 2",
+        "homeRawSample": 1,
+        "awayRawSample": 3,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 6,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": 30,
+        "awayPriorSample": 103,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -6524,13 +6259,13 @@
         "fixtureDate": "2026-10-25T13:00:00.000Z",
         "homeResolvedKey": "Tikves",
         "awayResolvedKey": "Bashkimi",
-        "homeRawSample": 2,
-        "awayRawSample": 2,
-        "homeBlendedSample": 5,
-        "awayBlendedSample": 5,
-        "homeSideRawSample": 1,
+        "homeRawSample": 1,
+        "awayRawSample": 0,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 3,
+        "homeSideRawSample": 0,
         "awaySideRawSample": 0,
-        "homeSideBlendedSample": 4,
+        "homeSideBlendedSample": 3,
         "awaySideBlendedSample": 3,
         "homePriorSample": 162,
         "awayPriorSample": 34,
@@ -6570,14 +6305,14 @@
         "fixtureDate": "2026-10-25T13:00:00.000Z",
         "homeResolvedKey": "Victoria Hotspurs",
         "awayResolvedKey": "Swieqi",
-        "homeRawSample": 3,
-        "awayRawSample": 2,
-        "homeBlendedSample": 3,
-        "awayBlendedSample": 5,
-        "homeSideRawSample": 1,
-        "awaySideRawSample": 1,
-        "homeSideBlendedSample": 1,
-        "awaySideBlendedSample": 4,
+        "homeRawSample": 1,
+        "awayRawSample": 0,
+        "homeBlendedSample": 1,
+        "awayBlendedSample": 3,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 0,
+        "awaySideBlendedSample": 3,
         "homePriorSample": null,
         "awayPriorSample": 117,
         "homeRecentSelected": null,
@@ -6669,14 +6404,14 @@
         "fixtureDate": "2026-10-25T13:00:00.000Z",
         "homeResolvedKey": "Creck Sporting",
         "awayResolvedKey": "Red Lions",
-        "homeRawSample": 2,
-        "awayRawSample": 2,
-        "homeBlendedSample": 2,
-        "awayBlendedSample": 2,
-        "homeSideRawSample": 1,
-        "awaySideRawSample": 1,
-        "homeSideBlendedSample": 1,
-        "awaySideBlendedSample": 1,
+        "homeRawSample": 1,
+        "awayRawSample": 0,
+        "homeBlendedSample": 1,
+        "awayBlendedSample": 0,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 0,
+        "awaySideBlendedSample": 0,
         "homePriorSample": null,
         "awayPriorSample": null,
         "homeRecentSelected": null,
@@ -6714,14 +6449,14 @@
         "fixtureDate": "2026-10-25T13:00:00.000Z",
         "homeResolvedKey": "Dedza Dynamos",
         "awayResolvedKey": "Moyale Barracks",
-        "homeRawSample": 2,
-        "awayRawSample": 2,
-        "homeBlendedSample": 2,
-        "awayBlendedSample": 2,
-        "homeSideRawSample": 1,
-        "awaySideRawSample": 1,
-        "homeSideBlendedSample": 1,
-        "awaySideBlendedSample": 1,
+        "homeRawSample": 1,
+        "awayRawSample": 0,
+        "homeBlendedSample": 1,
+        "awayBlendedSample": 0,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 0,
+        "awaySideBlendedSample": 0,
         "homePriorSample": null,
         "awayPriorSample": null,
         "homeRecentSelected": null,
@@ -6759,14 +6494,14 @@
         "fixtureDate": "2026-10-25T13:00:00.000Z",
         "homeResolvedKey": "Karonga United",
         "awayResolvedKey": "Mighty Wanderers",
-        "homeRawSample": 2,
-        "awayRawSample": 2,
-        "homeBlendedSample": 2,
-        "awayBlendedSample": 2,
-        "homeSideRawSample": 1,
-        "awaySideRawSample": 1,
-        "homeSideBlendedSample": 1,
-        "awaySideBlendedSample": 1,
+        "homeRawSample": 0,
+        "awayRawSample": 1,
+        "homeBlendedSample": 0,
+        "awayBlendedSample": 1,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 0,
+        "awaySideBlendedSample": 0,
         "homePriorSample": null,
         "awayPriorSample": null,
         "homeRecentSelected": null,
@@ -6804,13 +6539,13 @@
         "fixtureDate": "2026-10-25T13:00:00.000Z",
         "homeResolvedKey": "Neftekhimik",
         "awayResolvedKey": "Leningradets",
-        "homeRawSample": 2,
-        "awayRawSample": 3,
-        "homeBlendedSample": 5,
-        "awayBlendedSample": 6,
-        "homeSideRawSample": 1,
+        "homeRawSample": 1,
+        "awayRawSample": 2,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 0,
         "awaySideRawSample": 2,
-        "homeSideBlendedSample": 4,
+        "homeSideBlendedSample": 3,
         "awaySideBlendedSample": 5,
         "homePriorSample": 174,
         "awayPriorSample": 34,
@@ -6849,10 +6584,10 @@
         "fixtureDate": "2026-10-25T13:00:00.000Z",
         "homeResolvedKey": "Thun",
         "awayResolvedKey": "Lugano",
-        "homeRawSample": 2,
-        "awayRawSample": 2,
-        "homeBlendedSample": 5,
-        "awayBlendedSample": 5,
+        "homeRawSample": 1,
+        "awayRawSample": 1,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 4,
         "homeSideRawSample": 0,
         "awaySideRawSample": 1,
         "homeSideBlendedSample": 3,
@@ -6878,10 +6613,37 @@
       "canonicalId": "cid_tur2_antalyaspor_bodrumspor_20261025",
       "leagueSlug": "tur.2",
       "kickoffUtc": "2026-10-25T13:00:00.000Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Antalyaspor",
+        "awayTeam": "Bodrumspor",
+        "leagueSlug": "tur.2",
+        "fixtureDate": "2026-10-25T13:00:00.000Z",
+        "homeResolvedKey": "Antalyaspor",
+        "awayResolvedKey": "Bodrumspor",
+        "homeRawSample": 2,
+        "awayRawSample": 3,
+        "homeBlendedSample": 2,
+        "awayBlendedSample": 3,
+        "homeSideRawSample": 2,
+        "awaySideRawSample": 2,
+        "homeSideBlendedSample": 2,
+        "awaySideBlendedSample": 2,
+        "homePriorSample": null,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -6898,10 +6660,36 @@
       "kickoffUtc": "2026-10-25T13:00:00.000Z",
       "status": "INSUFFICIENT_DATA",
       "reasons": [
+        "minimum_recent_sample",
         "missing_model_assessment"
       ],
       "modelAssessmentAvailable": false,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Catda",
+        "awayTeam": "Buwambo",
+        "leagueSlug": "uga.2",
+        "fixtureDate": "2026-10-25T13:00:00.000Z",
+        "homeResolvedKey": "Catda",
+        "awayResolvedKey": "Buwambo",
+        "homeRawSample": 1,
+        "awayRawSample": 1,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 1,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 0,
+        "homePriorSample": 30,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -6918,10 +6706,36 @@
       "kickoffUtc": "2026-10-25T13:00:00.000Z",
       "status": "INSUFFICIENT_DATA",
       "reasons": [
+        "minimum_recent_sample",
         "missing_model_assessment"
       ],
       "modelAssessmentAvailable": false,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Iganga United",
+        "awayTeam": "Amus College",
+        "leagueSlug": "uga.2",
+        "fixtureDate": "2026-10-25T13:00:00.000Z",
+        "homeResolvedKey": "Iganga United",
+        "awayResolvedKey": "Amus College",
+        "homeRawSample": 2,
+        "awayRawSample": 0,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 0,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 0,
+        "homePriorSample": 30,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -6938,10 +6752,36 @@
       "kickoffUtc": "2026-10-25T13:00:00.000Z",
       "status": "INSUFFICIENT_DATA",
       "reasons": [
+        "minimum_recent_sample",
         "missing_model_assessment"
       ],
       "modelAssessmentAvailable": false,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Kaaro Karungi",
+        "awayTeam": "Young Elephant Academy",
+        "leagueSlug": "uga.2",
+        "fixtureDate": "2026-10-25T13:00:00.000Z",
+        "homeResolvedKey": "Kaaro Karungi",
+        "awayResolvedKey": "Young Elephant Academy",
+        "homeRawSample": 3,
+        "awayRawSample": 1,
+        "homeBlendedSample": 6,
+        "awayBlendedSample": 1,
+        "homeSideRawSample": 2,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 5,
+        "awaySideBlendedSample": 1,
+        "homePriorSample": 115,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -6958,10 +6798,36 @@
       "kickoffUtc": "2026-10-25T13:00:00.000Z",
       "status": "INSUFFICIENT_DATA",
       "reasons": [
+        "minimum_recent_sample",
         "missing_model_assessment"
       ],
       "modelAssessmentAvailable": false,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Kiyinda Boys",
+        "awayTeam": "Volcanoes",
+        "leagueSlug": "uga.2",
+        "fixtureDate": "2026-10-25T13:00:00.000Z",
+        "homeResolvedKey": "Kiyinda Boys",
+        "awayResolvedKey": "Volcanoes",
+        "homeRawSample": 1,
+        "awayRawSample": 0,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 0,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 0,
+        "homePriorSample": 85,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -6978,10 +6844,36 @@
       "kickoffUtc": "2026-10-25T13:00:00.000Z",
       "status": "INSUFFICIENT_DATA",
       "reasons": [
+        "minimum_recent_sample",
         "missing_model_assessment"
       ],
       "modelAssessmentAvailable": false,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Onduparaka",
+        "awayTeam": "Rwenzori Lions",
+        "leagueSlug": "uga.2",
+        "fixtureDate": "2026-10-25T13:00:00.000Z",
+        "homeResolvedKey": "Onduparaka",
+        "awayResolvedKey": "Rwenzori Lions",
+        "homeRawSample": 1,
+        "awayRawSample": 2,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 2,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 2,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 2,
+        "homePriorSample": 85,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -6998,10 +6890,36 @@
       "kickoffUtc": "2026-10-25T13:00:00.000Z",
       "status": "INSUFFICIENT_DATA",
       "reasons": [
+        "minimum_recent_sample",
         "missing_model_assessment"
       ],
       "modelAssessmentAvailable": false,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Paidha Black Angels",
+        "awayTeam": "Pakwach Young Stars",
+        "leagueSlug": "uga.2",
+        "fixtureDate": "2026-10-25T13:00:00.000Z",
+        "homeResolvedKey": "Paidha Black Angels",
+        "awayResolvedKey": "Pakwach Young Stars",
+        "homeRawSample": 2,
+        "awayRawSample": 1,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 1,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 1,
+        "homePriorSample": 58,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -7050,14 +6968,14 @@
         "fixtureDate": "2026-10-25T13:00:00.000Z",
         "homeResolvedKey": "Agama",
         "awayResolvedKey": "TelOne",
-        "homeRawSample": 3,
-        "awayRawSample": 2,
-        "homeBlendedSample": 3,
-        "awayBlendedSample": 2,
-        "homeSideRawSample": 1,
-        "awaySideRawSample": 1,
-        "homeSideBlendedSample": 1,
-        "awaySideBlendedSample": 1,
+        "homeRawSample": 2,
+        "awayRawSample": 1,
+        "homeBlendedSample": 2,
+        "awayBlendedSample": 1,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 0,
+        "awaySideBlendedSample": 0,
         "homePriorSample": null,
         "awayPriorSample": null,
         "homeRecentSelected": null,
@@ -7095,14 +7013,14 @@
         "fixtureDate": "2026-10-25T13:00:00.000Z",
         "homeResolvedKey": "Hardrock",
         "awayResolvedKey": "MWOS",
-        "homeRawSample": 2,
-        "awayRawSample": 2,
-        "homeBlendedSample": 2,
-        "awayBlendedSample": 2,
-        "homeSideRawSample": 1,
-        "awaySideRawSample": 1,
-        "homeSideBlendedSample": 1,
-        "awaySideBlendedSample": 1,
+        "homeRawSample": 1,
+        "awayRawSample": 1,
+        "homeBlendedSample": 1,
+        "awayBlendedSample": 1,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 0,
+        "awaySideBlendedSample": 0,
         "homePriorSample": null,
         "awayPriorSample": null,
         "homeRecentSelected": null,
@@ -7140,10 +7058,10 @@
         "fixtureDate": "2026-10-25T13:00:00.000Z",
         "homeResolvedKey": "Hunters",
         "awayResolvedKey": "Highlanders",
-        "homeRawSample": 2,
-        "awayRawSample": 2,
-        "homeBlendedSample": 2,
-        "awayBlendedSample": 2,
+        "homeRawSample": 1,
+        "awayRawSample": 1,
+        "homeBlendedSample": 1,
+        "awayBlendedSample": 1,
         "homeSideRawSample": 0,
         "awaySideRawSample": 1,
         "homeSideBlendedSample": 0,
@@ -7185,14 +7103,14 @@
         "fixtureDate": "2026-10-25T13:00:00.000Z",
         "homeResolvedKey": "Manica",
         "awayResolvedKey": "Bulawayo Chiefs",
-        "homeRawSample": 2,
-        "awayRawSample": 3,
-        "homeBlendedSample": 2,
-        "awayBlendedSample": 3,
-        "homeSideRawSample": 1,
-        "awaySideRawSample": 1,
-        "homeSideBlendedSample": 1,
-        "awaySideBlendedSample": 1,
+        "homeRawSample": 0,
+        "awayRawSample": 2,
+        "homeBlendedSample": 0,
+        "awayBlendedSample": 2,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 0,
+        "awaySideBlendedSample": 0,
         "homePriorSample": null,
         "awayPriorSample": null,
         "homeRecentSelected": null,
@@ -7231,13 +7149,13 @@
         "homeResolvedKey": "Triangle",
         "awayResolvedKey": "Simba Bhora",
         "homeRawSample": 3,
-        "awayRawSample": 2,
+        "awayRawSample": 1,
         "homeBlendedSample": 3,
-        "awayBlendedSample": 2,
+        "awayBlendedSample": 1,
         "homeSideRawSample": 1,
-        "awaySideRawSample": 1,
+        "awaySideRawSample": 0,
         "homeSideBlendedSample": 1,
-        "awaySideBlendedSample": 1,
+        "awaySideBlendedSample": 0,
         "homePriorSample": null,
         "awayPriorSample": null,
         "homeRecentSelected": null,
@@ -7322,10 +7240,10 @@
         "fixtureDate": "2026-10-25T13:00:00.000Z",
         "homeResolvedKey": "AS Maniema Union",
         "awayResolvedKey": "Kabuscorp",
-        "homeRawSample": 1,
-        "awayRawSample": 1,
-        "homeBlendedSample": 1,
-        "awayBlendedSample": 1,
+        "homeRawSample": 0,
+        "awayRawSample": 0,
+        "homeBlendedSample": 0,
+        "awayBlendedSample": 0,
         "homeSideRawSample": 0,
         "awaySideRawSample": 0,
         "homeSideBlendedSample": 0,
@@ -7368,10 +7286,10 @@
         "fixtureDate": "2026-10-25T13:00:00.000Z",
         "homeResolvedKey": "ASPL 2000",
         "awayResolvedKey": "Durban City",
-        "homeRawSample": 1,
-        "awayRawSample": 3,
-        "homeBlendedSample": 1,
-        "awayBlendedSample": 3,
+        "homeRawSample": 0,
+        "awayRawSample": 2,
+        "homeBlendedSample": 0,
+        "awayBlendedSample": 2,
         "homeSideRawSample": 0,
         "awaySideRawSample": 1,
         "homeSideBlendedSample": 0,
@@ -7413,14 +7331,14 @@
         "fixtureDate": "2026-10-25T13:00:00.000Z",
         "homeResolvedKey": "FC Midtjylland",
         "awayResolvedKey": "Lyngby Boldklub",
-        "homeRawSample": 3,
-        "awayRawSample": 2,
-        "homeBlendedSample": 6,
-        "awayBlendedSample": 5,
-        "homeSideRawSample": 1,
-        "awaySideRawSample": 1,
-        "homeSideBlendedSample": 4,
-        "awaySideBlendedSample": 4,
+        "homeRawSample": 2,
+        "awayRawSample": 0,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 3,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 3,
         "homePriorSample": 129,
         "awayPriorSample": 96,
         "homeRecentSelected": null,
@@ -7458,14 +7376,14 @@
         "fixtureDate": "2026-10-25T13:00:00.000Z",
         "homeResolvedKey": "Silkeborg IF",
         "awayResolvedKey": "FC Nordsjælland",
-        "homeRawSample": 2,
-        "awayRawSample": 3,
-        "homeBlendedSample": 5,
-        "awayBlendedSample": 6,
-        "homeSideRawSample": 1,
-        "awaySideRawSample": 2,
-        "homeSideBlendedSample": 4,
-        "awaySideBlendedSample": 5,
+        "homeRawSample": 0,
+        "awayRawSample": 1,
+        "homeBlendedSample": 3,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 4,
         "homePriorSample": 129,
         "awayPriorSample": 128,
         "homeRecentSelected": null,
@@ -7487,10 +7405,37 @@
       "canonicalId": "cid_esp1_athletic_getafe_20261025",
       "leagueSlug": "esp.1",
       "kickoffUtc": "2026-10-25T13:00Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "athletic club",
+        "awayTeam": "Getafe",
+        "leagueSlug": "esp.1",
+        "fixtureDate": "2026-10-25T13:00:00.000Z",
+        "homeResolvedKey": "athletic club",
+        "awayResolvedKey": "Getafe",
+        "homeRawSample": 3,
+        "awayRawSample": 2,
+        "homeBlendedSample": 6,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": 150,
+        "awayPriorSample": 189,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": true,
         "reasons": []
@@ -7501,10 +7446,37 @@
       "canonicalId": "cid_esp2_sabadell_tenerife_20261025",
       "leagueSlug": "esp.2",
       "kickoffUtc": "2026-10-25T13:00Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "CD Sabadell",
+        "awayTeam": "Tenerife",
+        "leagueSlug": "esp.2",
+        "fixtureDate": "2026-10-25T13:00:00.000Z",
+        "homeResolvedKey": "CD Sabadell",
+        "awayResolvedKey": "Tenerife",
+        "homeRawSample": 2,
+        "awayRawSample": 4,
+        "homeBlendedSample": 2,
+        "awayBlendedSample": 7,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 3,
+        "homeSideBlendedSample": 1,
+        "awaySideBlendedSample": 6,
+        "homePriorSample": null,
+        "awayPriorSample": 172,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -7519,10 +7491,37 @@
       "canonicalId": "cid_par1_sportivoameliano_olimpia_20261025",
       "leagueSlug": "par.1",
       "kickoffUtc": "2026-10-25T13:00Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Sportivo Ameliano",
+        "awayTeam": "Club Olimpia",
+        "leagueSlug": "par.1",
+        "fixtureDate": "2026-10-25T13:00:00.000Z",
+        "homeResolvedKey": "Sportivo Ameliano",
+        "awayResolvedKey": "Club Olimpia",
+        "homeRawSample": 2,
+        "awayRawSample": 3,
+        "homeBlendedSample": 2,
+        "awayBlendedSample": 3,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 2,
+        "homeSideBlendedSample": 0,
+        "awaySideBlendedSample": 2,
+        "homePriorSample": null,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -7553,14 +7552,14 @@
         "fixtureDate": "2026-10-25T13:00:00.000Z",
         "homeResolvedKey": "CSKA Moscow",
         "awayResolvedKey": "Spartak Moscow",
-        "homeRawSample": 2,
-        "awayRawSample": 2,
-        "homeBlendedSample": 5,
-        "awayBlendedSample": 5,
-        "homeSideRawSample": 1,
-        "awaySideRawSample": 1,
-        "homeSideBlendedSample": 4,
-        "awaySideBlendedSample": 4,
+        "homeRawSample": 0,
+        "awayRawSample": 0,
+        "homeBlendedSample": 3,
+        "awayBlendedSample": 3,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 3,
         "homePriorSample": 150,
         "awayPriorSample": 150,
         "homeRecentSelected": null,
@@ -7598,13 +7597,13 @@
         "fixtureDate": "2026-10-25T13:00:00.000Z",
         "homeResolvedKey": "GAIS",
         "awayResolvedKey": "IFK Göteborg",
-        "homeRawSample": 3,
-        "awayRawSample": 2,
-        "homeBlendedSample": 6,
-        "awayBlendedSample": 3,
-        "homeSideRawSample": 1,
+        "homeRawSample": 1,
+        "awayRawSample": 1,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 2,
+        "homeSideRawSample": 0,
         "awaySideRawSample": 1,
-        "homeSideBlendedSample": 4,
+        "homeSideBlendedSample": 3,
         "awaySideBlendedSample": 2,
         "homePriorSample": 60,
         "awayPriorSample": 1,
@@ -7643,13 +7642,13 @@
         "fixtureDate": "2026-10-25T13:00:00.000Z",
         "homeResolvedKey": "Konyaspor",
         "awayResolvedKey": "Genclerbirligi",
-        "homeRawSample": 2,
-        "awayRawSample": 3,
-        "homeBlendedSample": 5,
-        "awayBlendedSample": 6,
-        "homeSideRawSample": 1,
+        "homeRawSample": 1,
+        "awayRawSample": 2,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 0,
         "awaySideRawSample": 1,
-        "homeSideBlendedSample": 4,
+        "homeSideBlendedSample": 3,
         "awaySideBlendedSample": 4,
         "homePriorSample": 182,
         "awayPriorSample": 34,
@@ -7926,10 +7925,9 @@
       "kickoffUtc": "2026-10-25T14:00:00.000Z",
       "status": "INSUFFICIENT_DATA",
       "reasons": [
-        "minimum_recent_sample",
-        "missing_model_assessment"
+        "minimum_recent_sample"
       ],
-      "modelAssessmentAvailable": false,
+      "modelAssessmentAvailable": true,
       "recentHistory": {
         "minRequiredRecentMatches": 3,
         "sampleBasis": "current_season_raw",
@@ -13175,6 +13173,26 @@
       "predictionCreated": false
     },
     {
+      "canonicalId": "cid_par1_sportivosanlorenzo_cerroporteno_20261025",
+      "leagueSlug": "par.1",
+      "kickoffUtc": "2026-10-25T20:00Z",
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "details_missing"
+      ],
+      "modelAssessmentAvailable": true,
+      "recentHistory": null,
+      "standings": {
+        "usable": false,
+        "reasons": [
+          "CONSUMER_TABLE_EMPTY",
+          "CONTRACT_NOT_PASS",
+          "FOUNDATION_NOT_PASS"
+        ]
+      },
+      "predictionCreated": false
+    },
+    {
       "canonicalId": "cid_per2_tacnaheroica_alianzahuanuco_20261025",
       "leagueSlug": "per.2",
       "kickoffUtc": "2026-10-25T20:15:00.000Z",
@@ -13577,7 +13595,7 @@
   },
   "readinessTimeBasis": "signed_prematch_evidence_for_started_fixtures_current_diagnostics_for_future_fixtures",
   "prematchEvidence": {
-    "preservedRows": 35,
+    "preservedRows": 0,
     "invalidRecords": 0,
     "predictionCreated": false
   }
