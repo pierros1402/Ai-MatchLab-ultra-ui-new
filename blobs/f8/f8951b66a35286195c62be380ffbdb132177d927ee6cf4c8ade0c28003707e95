@@ -1,0 +1,44 @@
+{
+  "schema": "ai-matchlab.durable-multi-odds.v1",
+  "dayKey": "2026-10-25",
+  "runId": "40168559845",
+  "attempt": "1",
+  "scope": "display_odds_collection_only",
+  "valueExecution": null,
+  "historicalReplay": false,
+  "startedAt": "2026-10-25T07:16:42.261Z",
+  "status": "RUNNING",
+  "stages": [
+    {
+      "provider": "oddspapi",
+      "date": "2026-10-25",
+      "status": "INCOMPLETE_PROVIDER_RATE_LIMIT",
+      "result": {
+        "ok": false,
+        "reason": "provider_request_failed",
+        "errorCode": "provider_http_failed",
+        "httpStatus": 429,
+        "limitHit": true
+      },
+      "capturedAt": "2026-10-25T07:17:41.916Z"
+    },
+    {
+      "provider": "oddsapiio",
+      "date": "2026-10-25",
+      "status": "INCOMPLETE_PROVIDER_COVERAGE",
+      "result": {
+        "ok": true,
+        "fetched": 6,
+        "skipped": 229,
+        "matched": 44,
+        "unmatchedFixtures": 90,
+        "requestFailures": 0,
+        "missingMarkets": 38,
+        "limitHit": false,
+        "budgetExhausted": false,
+        "requestsUsed": 7
+      },
+      "capturedAt": "2026-10-25T07:18:43.582Z"
+    }
+  ]
+}
