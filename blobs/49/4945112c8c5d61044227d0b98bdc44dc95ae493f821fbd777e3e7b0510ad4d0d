@@ -1,0 +1,282 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "aut.1",
+  "homeTeam": "SK Sturm Graz",
+  "awayTeam": "SV Josko Ried",
+  "homeWinScore": 0.6,
+  "drawScore": 0.125,
+  "awayWinScore": 0.323,
+  "over15Score": 0.726,
+  "over25Score": 0.754,
+  "over35Score": 0.559,
+  "bttsScore": 0.6035,
+  "confidence": 0.857,
+  "signals": [
+    "home_edge_strong",
+    "mutual_attack_profile",
+    "priors_applied",
+    "close_strength_gap",
+    "match_profile_applied"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.25,
+      "awayOverallFormWeight": 0.25,
+      "homeSideFormWeight": 0.16,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.786,
+    "expectedAwayGoals": 1.203,
+    "expectedTotalGoals": 2.989,
+    "homeStrength": 0.527,
+    "awayStrength": 0.339,
+    "homeEdge": 0.722,
+    "awayPenalty": 0.326,
+    "recency": {
+      "homeOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 128,
+        "daysSinceLastMatch": 6,
+        "spanDays": 28,
+        "maxInternalGap": 20,
+        "gapSeverity": "moderate",
+        "freshnessScore": 1,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.705
+      },
+      "awayOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 64,
+        "daysSinceLastMatch": 7,
+        "spanDays": 27,
+        "maxInternalGap": 20,
+        "gapSeverity": "moderate",
+        "freshnessScore": 1,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.705
+      },
+      "homeSide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 128,
+        "daysSinceLastMatch": 6,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 1,
+        "formContinuityWeight": 0.76
+      },
+      "awaySide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 64,
+        "daysSinceLastMatch": 14,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.4,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.497
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 128,
+      "awayPriorSample": 64,
+      "leaguePriorSample": 972,
+      "matchupPriorSample": 4
+    },
+    "resolution": {
+      "homeInput": "SK Sturm Graz",
+      "awayInput": "SV Josko Ried",
+      "homeResolvedKey": "SK Sturm Graz",
+      "awayResolvedKey": "SV Josko Ried",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "SK Sturm Graz::SV Josko Ried",
+      "matchupResolveScore": 0,
+      "homePriorKey": "aut.1::SK Sturm Graz",
+      "awayPriorKey": "aut.1::SV Josko Ried",
+      "matchupPriorKey": "aut.1|SK Sturm Graz|SV Josko Ried"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "SK Sturm Graz",
+      "awayTeamKey": "SV Josko Ried",
+      "leagueKey": "aut.1",
+      "matchupKey": "SK Sturm Graz::SV Josko Ried"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "h2h_home_edge",
+        "impact": 0.025,
+        "note": "Recent H2H leans home"
+      },
+      {
+        "code": "h2h_overlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is open"
+      },
+      {
+        "code": "ai_h2h_over_signal",
+        "impact": 0.07,
+        "note": "AI detected open H2H pattern"
+      },
+      {
+        "code": "ai_h2h_home_edge",
+        "impact": 0.06,
+        "note": "AI detected home H2H edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    },
+    "matchProfileApplied": true,
+    "matchProfileConfidence": 0.67,
+    "matchProfileReasons": [
+      {
+        "code": "match_profile_home_form_edge",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile last5 points: home 9, away 6"
+      },
+      {
+        "code": "match_profile_h2h_home_edge",
+        "impact": 0.011000000000000001,
+        "note": "MatchProfile H2H trend leans home"
+      },
+      {
+        "code": "match_profile_h2h_overlean",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile H2H goal pattern leans over"
+      }
+    ]
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "h2h_home_edge",
+      "impact": 0.025,
+      "note": "Recent H2H leans home"
+    },
+    {
+      "code": "h2h_overlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is open"
+    },
+    {
+      "code": "ai_h2h_over_signal",
+      "impact": 0.07,
+      "note": "AI detected open H2H pattern"
+    },
+    {
+      "code": "ai_h2h_home_edge",
+      "impact": 0.06,
+      "note": "AI detected home H2H edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "MEDIUM",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0.009,
+      "awayDelta": 0,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "aut.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 9,
+    "awayRestDays": 7,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 1,
+    "awayMatchesLast14": 1,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  },
+  "intelligence": {
+    "applied": true,
+    "mode": "partial",
+    "coverage": {
+      "hasStandings": false,
+      "hasHomeForm": true,
+      "hasAwayForm": true,
+      "hasH2H": false,
+      "hasPhaseContext": false,
+      "coverageCount": 2,
+      "mode": "partial"
+    },
+    "signals": [
+      "form_balanced",
+      "attack_support"
+    ]
+  }
+}
