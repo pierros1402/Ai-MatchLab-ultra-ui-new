@@ -1,8 +1,8 @@
 {
-  "ok": true,
+  "ok": false,
   "schema": "ai-matchlab.day-build-report.v1",
   "dayKey": "2026-10-26",
-  "generatedAt": "2026-10-26T13:45:14.766Z",
+  "generatedAt": "2026-10-26T13:53:06.990Z",
   "universe": {
     "expected": null,
     "canonical": 84,
@@ -581,10 +581,16 @@
     }
   },
   "freshness": {
-    "ok": true,
+    "ok": false,
     "manifestGeneratedAt": "2026-10-26T07:01:08.997Z",
-    "reasons": [],
-    "staleInputs": []
+    "reasons": [
+      "snapshot_stale_against_canonical",
+      "snapshot_value_stale_against_canonical",
+      "value_plan_comparison_stale_against_canonical"
+    ],
+    "staleInputs": [
+      "canonical-fixtures/2026-10-26/afc.champions.json"
+    ]
   },
   "invariant": {
     "ok": true,
@@ -699,7 +705,7 @@
   },
   "foundationIntegrity": {
     "schema": "ai-matchlab.foundation-integrity.v1",
-    "generatedAt": "2026-10-26T13:45:14.474Z",
+    "generatedAt": "2026-10-26T13:53:06.719Z",
     "season": "2026-2027",
     "modelReady": true,
     "publicationReady": true,
@@ -708,7 +714,7 @@
       {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 17070,
+        "count": 17072,
         "informational": true
       },
       {
@@ -741,10 +747,12 @@
     "supersededOpenCanonicalIds": [],
     "supersededOpenFixtures": []
   },
-  "hardFailures": [],
+  "hardFailures": [
+    "snapshot_stale"
+  ],
   "warnings": [
     "acquisition_skipped_slugs:aus.w.1,eng.w.1,eng.w.fa,esp.w.1,fifa.w.champions_cup,fifa.wworld.u17,mex.w.1,ned.w.1,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1"
   ],
-  "clean": true,
+  "clean": false,
   "cleanStrict": false
 }
