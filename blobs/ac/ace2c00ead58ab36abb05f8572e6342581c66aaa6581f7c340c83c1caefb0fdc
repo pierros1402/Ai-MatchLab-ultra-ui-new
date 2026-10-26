@@ -1,0 +1,406 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "col.1",
+  "homeTeam": "Atlético Nacional",
+  "awayTeam": "Independiente Medellín",
+  "homeWinScore": 0.55472,
+  "drawScore": 0.128698,
+  "awayWinScore": 0.38528,
+  "over15Score": 0.601198,
+  "over25Score": 0.62336,
+  "over35Score": 0.450252,
+  "bttsScore": 0.49393000000000004,
+  "confidence": 0.784,
+  "signals": [
+    "away_edge",
+    "away_form_decay",
+    "form_influence_reduced",
+    "priors_applied",
+    "ai_context_medium_importance",
+    "close_strength_gap",
+    "home_rest_4",
+    "home_next_0",
+    "away_next_0",
+    "match_profile_applied"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.15,
+      "awayOverallFormWeight": 0.12,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.296,
+    "expectedAwayGoals": 1.164,
+    "expectedTotalGoals": 2.46,
+    "homeStrength": 0.41,
+    "awayStrength": 0.1,
+    "homeEdge": 0.13,
+    "awayPenalty": 0.095,
+    "recency": {
+      "homeOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 226,
+        "daysSinceLastMatch": 4,
+        "spanDays": 29,
+        "maxInternalGap": 16,
+        "gapSeverity": "moderate",
+        "freshnessScore": 1,
+        "continuityScore": 0.3,
+        "formContinuityWeight": 0.755
+      },
+      "awayOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 220,
+        "daysSinceLastMatch": 25,
+        "spanDays": 7,
+        "maxInternalGap": 4,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.33
+      },
+      "homeSide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 226,
+        "daysSinceLastMatch": 24,
+        "spanDays": 6,
+        "maxInternalGap": 6,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.27
+      },
+      "awaySide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 220,
+        "daysSinceLastMatch": 28,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.21
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 226,
+      "awayPriorSample": 220,
+      "leaguePriorSample": 2010,
+      "matchupPriorSample": 10
+    },
+    "resolution": {
+      "homeInput": "Atlético Nacional",
+      "awayInput": "Independiente Medellín",
+      "homeResolvedKey": "Atlético Nacional",
+      "awayResolvedKey": "Independiente Medellín",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Atlético Nacional::Independiente Medellín",
+      "matchupResolveScore": 0,
+      "homePriorKey": "col.1::Atlético Nacional",
+      "awayPriorKey": "col.1::Independiente Medellín",
+      "matchupPriorKey": "col.1|Atlético Nacional|Independiente Medellín"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Atlético Nacional",
+      "awayTeamKey": "Independiente Medellín",
+      "leagueKey": "col.1",
+      "matchupKey": "Atlético Nacional::Independiente Medellín"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "form_home_stronger",
+        "impact": 0.08,
+        "note": "Home team has significantly stronger form"
+      },
+      {
+        "code": "home_motivation_boost",
+        "impact": 0.03,
+        "note": "Home stake: title"
+      },
+      {
+        "code": "away_motivation_boost",
+        "impact": 0.03,
+        "note": "Away stake: promotion"
+      },
+      {
+        "code": "h2h_home_edge",
+        "impact": 0.025,
+        "note": "Recent H2H leans home"
+      },
+      {
+        "code": "h2h_overlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is open"
+      },
+      {
+        "code": "ai_h2h_over_signal",
+        "impact": 0.07,
+        "note": "AI detected open H2H pattern"
+      },
+      {
+        "code": "ai_h2h_home_edge",
+        "impact": 0.06,
+        "note": "AI detected home H2H edge"
+      },
+      {
+        "code": "ai_home_form_signal",
+        "impact": 0.05,
+        "note": "AI confirmed strong home form edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "medium",
+      "stakes": {
+        "home": "title",
+        "away": "promotion",
+        "tags": [
+          "playoff_race"
+        ]
+      },
+      "pressure": [
+        "chasing_cutoff"
+      ]
+    },
+    "matchProfileApplied": true,
+    "matchProfileConfidence": 0.74,
+    "matchProfileReasons": [
+      {
+        "code": "match_profile_home_form_edge",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile last5 points: home 12, away 9"
+      },
+      {
+        "code": "match_profile_home_table_edge",
+        "impact": 0.027500000000000004,
+        "note": "MatchProfile table positions: home #5, away #12"
+      },
+      {
+        "code": "match_profile_h2h_home_edge",
+        "impact": 0.011000000000000001,
+        "note": "MatchProfile H2H trend leans home"
+      },
+      {
+        "code": "match_profile_h2h_overlean",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile H2H goal pattern leans over"
+      }
+    ]
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "form_home_stronger",
+      "impact": 0.08,
+      "note": "Home team has significantly stronger form"
+    },
+    {
+      "code": "home_motivation_boost",
+      "impact": 0.03,
+      "note": "Home stake: title"
+    },
+    {
+      "code": "away_motivation_boost",
+      "impact": 0.03,
+      "note": "Away stake: promotion"
+    },
+    {
+      "code": "h2h_home_edge",
+      "impact": 0.025,
+      "note": "Recent H2H leans home"
+    },
+    {
+      "code": "h2h_overlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is open"
+    },
+    {
+      "code": "ai_h2h_over_signal",
+      "impact": 0.07,
+      "note": "AI detected open H2H pattern"
+    },
+    {
+      "code": "ai_h2h_home_edge",
+      "impact": 0.06,
+      "note": "AI detected home H2H edge"
+    },
+    {
+      "code": "ai_home_form_signal",
+      "impact": 0.05,
+      "note": "AI confirmed strong home form edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0.025,
+      "awayPenalty": 0,
+      "reasons": [
+        "home_rest_4"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0.04,
+      "awayPenalty": 0.04,
+      "reasons": [
+        "home_next_0",
+        "away_next_0"
+      ]
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "col.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 4,
+    "awayRestDays": 25,
+    "homeMatchesLast7": 1,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 2,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": 0,
+    "awayNextMatchInDays": 0
+  },
+  "intelligence": {
+    "applied": true,
+    "mode": "partial",
+    "coverage": {
+      "hasStandings": true,
+      "hasHomeForm": true,
+      "hasAwayForm": true,
+      "hasH2H": false,
+      "hasPhaseContext": false,
+      "coverageCount": 3,
+      "mode": "partial"
+    },
+    "signals": [
+      "form_balanced",
+      "attack_support"
+    ]
+  },
+  "opponentAdjustedForm": {
+    "home": {
+      "schema": "ai-matchlab.opponent-adjusted-form.v1",
+      "sample": 12,
+      "strongOpponentSample": 1,
+      "peerStrengthSample": 7,
+      "oppositionStrengthMean": 0.397,
+      "sampleReliability": 1,
+      "raw": {
+        "gfRate": 2.005,
+        "gaRate": 0.87,
+        "ppg": 2.377,
+        "over25Rate": 0.655,
+        "bttsRate": 0.416
+      },
+      "adjusted": {
+        "gfRate": 2.071,
+        "gaRate": 0.876,
+        "ppg": 2.405,
+        "over25Rate": 0.64,
+        "bttsRate": 0.434
+      },
+      "impact": {
+        "gfRate": 0.066,
+        "gaRate": 0.006,
+        "ppg": 0.028,
+        "over25Rate": -0.015,
+        "bttsRate": 0.018
+      },
+      "reasonCodes": []
+    },
+    "away": {
+      "schema": "ai-matchlab.opponent-adjusted-form.v1",
+      "sample": 12,
+      "strongOpponentSample": 3,
+      "peerStrengthSample": 4,
+      "oppositionStrengthMean": 0.48,
+      "sampleReliability": 1,
+      "raw": {
+        "gfRate": 1.345,
+        "gaRate": 1.007,
+        "ppg": 1.803,
+        "over25Rate": 0.392,
+        "bttsRate": 0.447
+      },
+      "adjusted": {
+        "gfRate": 1.326,
+        "gaRate": 1.042,
+        "ppg": 1.769,
+        "over25Rate": 0.411,
+        "bttsRate": 0.456
+      },
+      "impact": {
+        "gfRate": -0.019,
+        "gaRate": 0.035,
+        "ppg": -0.034,
+        "over25Rate": 0.019,
+        "bttsRate": 0.009
+      },
+      "reasonCodes": []
+    },
+    "sampleReliability": 1
+  }
+}
