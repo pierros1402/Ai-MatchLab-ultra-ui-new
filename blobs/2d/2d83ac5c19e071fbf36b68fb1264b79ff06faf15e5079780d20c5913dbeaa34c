@@ -1,0 +1,264 @@
+{
+  "schema": "ai-matchlab.identity-recovery-window.v1",
+  "runDayKey": "2026-10-27",
+  "source": "raw_canonical_fixtures_pre_dedup",
+  "window": {
+    "daysBack": 1,
+    "daysForward": 14
+  },
+  "sourceLatestUpdatedAt": "2026-10-27T02:26:23.921Z",
+  "resolver": {
+    "schema": "ai-matchlab.production-identity-resolver-runtime.v2",
+    "extensionLedgerSha256": "22ecd17e876ae01f786d95f1ef9742d5740a619dde5acbcdf233601a94cbfbb2",
+    "effectiveCounts": {
+      "identityBindings": 141,
+      "retainedFixtureIds": 102,
+      "suppressedFixtureAliases": 102,
+      "sourceFixtureIds": 204
+    }
+  },
+  "status": "REVIEW_REQUIRED",
+  "promotionPolicy": {
+    "broadFuzzyAllowed": false,
+    "unresolvedTwoSidedAutoPromotionAllowed": false,
+    "independentConfirmationRequiredForTwoSidedUnknown": true
+  },
+  "summary": {
+    "scannedDays": 16,
+    "scannedLeagueFiles": 397,
+    "inputRows": 1331,
+    "autoPromotable": 0,
+    "pendingIndependentConfirmation": 0,
+    "ambiguous": 3,
+    "conflictRejected": 1,
+    "alreadyManagedPairs": 0
+  },
+  "targetDays": [
+    {
+      "dayKey": "2026-10-26",
+      "leagueFiles": 53,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-27",
+      "leagueFiles": 42,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "afc.champions",
+          "inputRows": 9,
+          "temporalCrossProviderPairs": 4,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [
+            {
+              "leagueSlug": "afc.champions",
+              "kickoffUtc": "2026-10-27T10:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_afcchampions_daejeonhanacitizen_visselkobe_20261027",
+                "cid_afcchampions_johordarultazim_port_20261027",
+                "cid_afcchampions_johordtmys_portmtitha_20261027",
+                "cid_afcchampions_kyotosanga_newcastlejets_20261027",
+                "cid_afcchampions_shanghaiport_conganhanoi_20261027"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 1,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
+    },
+    {
+      "dayKey": "2026-10-28",
+      "leagueFiles": 34,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "ger.dfb_pokal",
+          "inputRows": 9,
+          "temporalCrossProviderPairs": 4,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [
+            {
+              "leagueSlug": "ger.dfb_pokal",
+              "kickoffUtc": "2026-10-28T17:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_gerdfbpokal_dynamodresden_schalke04_20261028",
+                "cid_gerdfbpokal_freiburg_vflwolfsburg_20261028",
+                "cid_gerdfbpokal_jeddeloh_herthaberlin_20261028",
+                "cid_gerdfbpokal_paderborn07_vfbstuttgart_20261028",
+                "cid_gerdfbpokal_ssvjeddelohii_herthaberlin_20261028"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [
+            {
+              "leagueSlug": "ger.dfb_pokal",
+              "kickoffUtc": "2026-10-28T17:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "ri3NzK4d",
+                "canonicalId": "cid_gerdfbpokal_jeddeloh_herthaberlin_20261028",
+                "kickoffUtc": "2026-10-28T17:00:00.000Z",
+                "homeTeam": "Jeddeloh",
+                "awayTeam": "Hertha Berlin"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401916919",
+                "canonicalId": "cid_gerdfbpokal_ssvjeddelohii_herthaberlin_20261028",
+                "kickoffUtc": "2026-10-28T17:00Z",
+                "homeTeam": "SSV Jeddeloh II",
+                "awayTeam": "Hertha Berlin"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "SQUAD_CONFLICT",
+                  "stable": false,
+                  "conflict": true
+                },
+                "away": {
+                  "kind": "NORMALIZED_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": null,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null,
+                  "productionIdentityComplete": false
+                },
+                "stableSides": 1,
+                "conflict": true
+              },
+              "recoveryStatus": "REJECTED_IDENTITY_CONFLICT",
+              "promotionAuthorized": false
+            }
+          ],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 1,
+            "conflictRejected": 1,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
+    },
+    {
+      "dayKey": "2026-10-29",
+      "leagueFiles": 32,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "esp.copa_del_rey",
+          "inputRows": 15,
+          "temporalCrossProviderPairs": 4,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [
+            {
+              "leagueSlug": "esp.copa_del_rey",
+              "kickoffUtc": "2026-10-29T20:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_espcopadelrey_aeprat_athletic_20261029",
+                "cid_espcopadelrey_auriense_depacoruna_20261029",
+                "cid_espcopadelrey_auriensecentedacademy_deportivo_20261029",
+                "cid_espcopadelrey_ribadesella_racingsantander_20261029",
+                "cid_espcopadelrey_sportinghortaleza_sevilla_20261029"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 1,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
+    },
+    {
+      "dayKey": "2026-10-30",
+      "leagueFiles": 22,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-10-31",
+      "leagueFiles": 38,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-01",
+      "leagueFiles": 30,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-02",
+      "leagueFiles": 20,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-03",
+      "leagueFiles": 16,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-04",
+      "leagueFiles": 11,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-05",
+      "leagueFiles": 7,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-06",
+      "leagueFiles": 23,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-07",
+      "leagueFiles": 33,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-08",
+      "leagueFiles": 28,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-09",
+      "leagueFiles": 6,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-10",
+      "leagueFiles": 2,
+      "recoveryLeagueReports": []
+    }
+  ]
+}
