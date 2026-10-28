@@ -35,6 +35,14 @@ const MULTI_ODDS_DAYS_FORWARD = Math.max(0, Number(process.env.SNAPSHOT_SYNC_MUL
 const SHA_RE = /^[0-9a-f]{40}$/i;
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+// A closed historical day may be served without a never-published comparison.
+// This never relaxes the current/latest release gate or validates missing Value.
+export function mayOmitMissingHistoricalComparison(day, latestDay) {
+  const current = String(day || "");
+  const published = String(latestDay || "");
+  return DAY_RE.test(current) && DAY_RE.test(published) && current < published;
+}
+
 const CORE_OPTIONAL_FILES = [
   "fixtures-all.json",
   "odds.json",
@@ -552,22 +560,30 @@ async function stageRuntimeReleaseArtifacts({
   day,
   stageDayDir,
   stats,
-  requireDiagnostics
+  requireDiagnostics,
+  allowMissingHistoricalComparison = false
 }) {
   const runtimeDir = path.join(stageDayDir, "runtime");
   await fsp.mkdir(runtimeDir, { recursive: true });
 
-  // Value comparison is part of the served day release for every synchronized day.
+  // Current/latest always requires its Value comparison. A closed historical
+  // day may lack one; preserve that absence instead of inventing predictions.
   const comparisonBuffer = await fetchBuffer(
-    rawUrl(repo, ref, `data/value-comparison/${day}.json`)
+    rawUrl(repo, ref, `data/value-comparison/${day}.json`),
+    { optional: allowMissingHistoricalComparison }
   );
-  validateValueComparisonPayload(
-    parseJsonBuffer(
-      comparisonBuffer,
-      "value_comparison"
-    ),
-    day
-  );
+  if (comparisonBuffer) {
+    validateValueComparisonPayload(
+      parseJsonBuffer(comparisonBuffer, "value_comparison"),
+      day
+    );
+  } else {
+    // Do not leave a stale, previously mirrored comparison for this day.
+    if (fs.existsSync(resolveDataPath("value-comparison", `${day}.json`))) {
+      throw new Error("historical_value_comparison_stale_runtime_mirror");
+    }
+    log("HISTORICAL_VALUE_COMPARISON_UNAVAILABLE", day, ref);
+  }
 
   // Current/latest releases must carry diagnostics. Historical days may predate
   // those artifacts; when present they are still embedded and mirrored.
@@ -608,7 +624,7 @@ async function stageRuntimeReleaseArtifacts({
     comparisonBuffer,
     buildBuffer,
     alertsBuffer,
-    comparisonPresent: true,
+    comparisonPresent: Boolean(comparisonBuffer),
     buildReportPresent: Boolean(buildBuffer),
     systemHealthPresent: Boolean(alertsBuffer)
   };
@@ -824,7 +840,8 @@ export async function syncDeploySnapshotFromGithub(dayKey = athensDayKey(), opti
       day,
       stageDayDir,
       stats,
-      requireDiagnostics: promoteLatest
+      requireDiagnostics: promoteLatest,
+      allowMissingHistoricalComparison: mayOmitMissingHistoricalComparison(day, latest?.date)
     });
 
     await promoteDirectory(stageDayDir, targetDayDir, backupDir);
