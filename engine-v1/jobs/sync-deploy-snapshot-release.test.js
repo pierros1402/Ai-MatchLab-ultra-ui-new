@@ -9,6 +9,7 @@ import {
 } from "../core/deploy-snapshot-release-contract.js";
 import {
   expectedCoreFiles,
+  mayOmitMissingHistoricalComparison,
   promoteDirectory,
   validateStagedRelease
 } from "./sync-deploy-snapshot-from-github.js";
@@ -137,4 +138,13 @@ test("runtime sync downloads declared Plan C shadow files as required core artif
   });
   assert.ok(files.required.includes("plan-c-shadow.json"));
   assert.ok(files.required.includes("plan-c-shadow-audit.json"));
+});
+
+
+test("historical comparison may be absent only before immutable latest day", () => {
+  assert.equal(mayOmitMissingHistoricalComparison("2026-10-27", "2026-10-28"), true);
+  assert.equal(mayOmitMissingHistoricalComparison("2026-10-28", "2026-10-28"), false);
+  assert.equal(mayOmitMissingHistoricalComparison("2026-10-29", "2026-10-28"), false);
+  assert.equal(mayOmitMissingHistoricalComparison("2026-10-27", ""), false);
+  assert.equal(mayOmitMissingHistoricalComparison("bad-date", "2026-10-28"), false);
 });
