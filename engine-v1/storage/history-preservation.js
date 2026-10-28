@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
+import { scanGitDelimited } from "./history-git-scan.js";
 
 export const HISTORY_ARCHIVE_BRANCH = "codex/history-archive";
 // Only application evidence, never .env, credentials, source code or arbitrary files.
@@ -147,8 +148,10 @@ export function preserveHistoryCheckpoint({
   if (!/^\d{4}-\d{2}-\d{2}$/u.test(String(dayKey))) throw new Error("invalid_history_checkpoint_day");
   token(stage, "stage"); token(runId, "run"); token(attempt, "attempt");
   const sourceCommit = git(root, ["rev-parse", "HEAD"]).trim();
-  const baseline = git(root, ["ls-tree", "-r", "--name-only", "-z", sourceCommit, "--", "data"])
-    .split("\0").filter(isHistoryEvidencePath);
+  const baseline = [];
+  scanGitDelimited(root, ["ls-tree", "-r", "--name-only", "-z", sourceCommit, "--", "data"], name => {
+    if (isHistoryEvidencePath(name)) baseline.push(name);
+  });
   const captureDir = fs.mkdtempSync(path.join(os.tmpdir(), "matchlab-history-"));
   const manifestPath = `checkpoints/${dayKey}/${runId}/${attempt}/${stage}/manifest.json`;
   try {
@@ -157,7 +160,11 @@ export function preserveHistoryCheckpoint({
     // Reuse existing content-addressed Git objects rather than copying the entire
     // evidence store for every checkpoint (intraday/result writers run often).
     const objectFormat = git(root, ["rev-parse", "--show-object-format"]).trim();
-    const knownObjects = new Set(git(root, ["cat-file", "--batch-all-objects", "--batch-check=%(objectname)"]).trim().split("\n"));
+    const knownObjects = new Set();
+    scanGitDelimited(root, ["cat-file", "--batch-all-objects", "--batch-check=%(objectname)"], oid => {
+      if (!/^[0-9a-f]{40,64}$/u.test(oid)) throw new Error("history_object_inventory_invalid");
+      knownObjects.add(oid);
+    }, { delimiter: 10 });
     const newPayloads = [];
     const buffer = Buffer.allocUnsafe(CHUNK_BYTES);
     for (const name of filesUnder(root).sort()) {
@@ -255,19 +262,41 @@ export function verifyHistoryCheckpoint({ root = process.cwd(), ref, manifestPat
   const { schema, dayKey, stage, runId, attempt, sourceCommit, files, missingBaselineFiles } = manifest;
   const identity = { schema, dayKey, stage, runId, attempt, sourceCommit, files, missingBaselineFiles };
   if (sha256(Buffer.from(JSON.stringify(identity))) !== manifest.fingerprint) throw new Error("history_manifest_hash_mismatch");
-  const tree = git(root, ["ls-tree", "-r", "-z", ref, "--", "blobs"]);
-  const entries = new Map(tree.split("\0").filter(Boolean).map(entry => {
-    const [metadata, name] = entry.split("\t");
-    return [name, metadata.split(" ")[2]];
-  }));
+  // Search only relevant content-addressed bucket trees, not the complete
+  // growing archive; bound the output of each Git command as well.
+  const expected = new Map();
   const seen = new Set();
   for (const file of manifest.files) {
     if (!isHistoryEvidencePath(file.path) || seen.has(file.path)) throw new Error("history_manifest_unsafe_data_path");
     seen.add(file.path);
     if (!Array.isArray(file.chunks) || !file.chunks.length) throw new Error("history_manifest_chunks_missing");
     for (const chunk of file.chunks) {
-      if (entries.get(`blobs/${chunk.sha256.slice(0, 2)}/${chunk.sha256}`) !== chunk.oid) throw new Error(`history_archive_file_missing:${file.path}`);
+      if (!/^[0-9a-f]{64}$/u.test(String(chunk?.sha256 || "")) ||
+          !/^[0-9a-f]{40,64}$/u.test(String(chunk?.oid || ""))) {
+        throw new Error("history_archive_blob_binding_invalid");
+      }
+      const name = `blobs/${chunk.sha256.slice(0, 2)}/${chunk.sha256}`;
+      const prior = expected.get(name);
+      if (prior !== undefined && prior !== chunk.oid) throw new Error("history_archive_duplicate_blob_binding");
+      expected.set(name, chunk.oid);
     }
+  }
+  const found = new Set();
+  const prefixes = [...new Set([...expected.keys()].map(name => name.slice(6, 8)))].sort();
+  for (const prefix of prefixes) {
+    scanGitDelimited(root, ["ls-tree", "-r", "-z", ref, "--", `blobs/${prefix}`], row => {
+      const tab = row.indexOf("\t");
+      if (tab < 0) throw new Error("history_archive_tree_row_invalid");
+      const name = row.slice(tab + 1);
+      const wanted = expected.get(name);
+      if (wanted === undefined) return;
+      const actual = row.slice(0, tab).split(" ")[2];
+      if (actual !== wanted) throw new Error(`history_archive_file_missing:${name}`);
+      found.add(name);
+    });
+  }
+  for (const name of expected.keys()) {
+    if (!found.has(name)) throw new Error(`history_archive_file_missing:${name}`);
   }
   readBlobs(root, manifest.files, () => {});
   return manifest;
@@ -309,11 +338,16 @@ export function prepareHistoryRecoveryBundle({ root = process.cwd(), destination
   const baselineCommit = git(root, ["rev-parse", `${baseline}^{commit}`]).trim();
   // The committed baseline is already durable. Upload changed, new and ignored
   // bytes instead of charging for another multi-gigabyte full artifact each tick.
-  const candidates = full ? filesUnder(root) : [
-    ...git(root, ["diff", "--name-only", "--no-renames", "-z", baselineCommit, "--", "data"]).split("\0"),
-    ...git(root, ["ls-files", "--others", "--exclude-standard", "-z", "--", "data"]).split("\0"),
-    ...git(root, ["ls-files", "--others", "--ignored", "--exclude-standard", "-z", "--", "data"]).split("\0")
-  ];
+  const candidates = full ? filesUnder(root) : [];
+  if (!full) {
+    for (const args of [
+      ["diff", "--name-only", "--no-renames", "-z", baselineCommit, "--", "data"],
+      ["ls-files", "--others", "--exclude-standard", "-z", "--", "data"],
+      ["ls-files", "--others", "--ignored", "--exclude-standard", "-z", "--", "data"]
+    ]) {
+      scanGitDelimited(root, args, name => candidates.push(name));
+    }
+  }
   const absentPaths = [];
   for (const name of [...new Set(candidates.filter(isHistoryEvidencePath))].sort()) {
     const source = path.join(root, name);
