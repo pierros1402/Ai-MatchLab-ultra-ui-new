@@ -2,7 +2,7 @@
   "dayKey": "2026-10-25",
   "leagueSlug": "uga.2",
   "leagueName": "Ugandan Big League",
-  "updatedAt": "2026-10-25T20:52:12.496Z",
+  "updatedAt": "2026-10-28T17:10:44.442Z",
   "count": 6,
   "sourceMeta": {
     "acquisitionProvider": "flashscore",
@@ -17,7 +17,10 @@
       ],
       "changedRows": 3,
       "mergedAt": "2026-10-25T20:52:12.496Z"
-    }
+    },
+    "crossDayVerifiedFinalSupersessionAt": "2026-10-28T17:10:44.442Z",
+    "crossDayVerifiedFinalSupersessionRows": 1,
+    "crossDayVerifiedFinalSupersessionPolicy": "cross-day-provider-verified-final-v1"
   },
   "fixtures": [
     {
@@ -70,12 +73,78 @@
       "scoreAway": null,
       "penalties": null,
       "decidedBy": null,
-      "status": "STATUS_SCHEDULED",
-      "rawStatus": "STATUS_SCHEDULED",
+      "status": "STATUS_POSTPONED",
+      "rawStatus": "STATUS_POSTPONED",
       "minute": null,
       "venue": null,
       "firstSeenAt": "2026-10-23T19:02:57.372Z",
-      "lastSeenAt": "2026-10-24T22:00:32.478Z"
+      "lastSeenAt": "2026-10-24T22:00:32.478Z",
+      "statusType": "STATUS_POSTPONED",
+      "statusCorrection": {
+        "schema": "ai-matchlab.cross-day-verified-final-supersession.v1",
+        "correctedAt": "2026-10-28T17:10:44.442Z",
+        "decisionId": "cross-day-verified-final-C0vdlCdK-cid_uga2_igangaunited_amuscollege_20261025-v1",
+        "policyVersion": "cross-day-provider-verified-final-v1",
+        "correctedFrom": {
+          "status": "STATUS_SCHEDULED",
+          "statusType": null,
+          "rawStatus": "STATUS_SCHEDULED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "correctedTo": {
+          "status": "STATUS_POSTPONED",
+          "statusType": "STATUS_POSTPONED",
+          "rawStatus": "STATUS_POSTPONED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "reason": "verified_cross_day_provider_reschedule",
+        "decisionBasis": "exact_provider_identity_cross_day_supersession_with_verified_final",
+        "providerEvidence": {
+          "provider": "flashscore",
+          "providerMatchId": "C0vdlCdK",
+          "supersededCanonicalId": "cid_uga2_igangaunited_amuscollege_20261025",
+          "supersededDayKey": "2026-10-25",
+          "supersededKickoffUtc": "2026-10-25T13:00:00.000Z",
+          "evidenceCanonicalId": "cid_uga2_igangaunited_amuscollege_20261026",
+          "evidenceDayKey": "2026-10-26",
+          "evidenceKickoffUtc": "2026-10-26T07:00:00.000Z",
+          "evidenceHomeTeam": "Iganga United",
+          "evidenceAwayTeam": "Amus College",
+          "verifiedFinalArtifact": "data/final-results/2026-10-26/cid_uga2_igangaunited_amuscollege_20261026.json",
+          "verifiedFinalVerdict": "verified_final_result",
+          "verifiedFinalTruth": true,
+          "verifiedFinalScoreHome": 0,
+          "verifiedFinalScoreAway": 1
+        },
+        "guarantees": {
+          "flashscoreProviderOnly": true,
+          "exactProviderIdentity": true,
+          "sameLeague": true,
+          "exactNormalizedOrderedTeamPair": true,
+          "uniqueLatestObservation": true,
+          "strictlyNewerKickoff": true,
+          "minimumKickoffShiftRequired": true,
+          "strictlyNewerObservation": true,
+          "nonOverlappingObservationWindows": true,
+          "oldKickoffPastGraceRequired": true,
+          "oldOccurrenceScorelessScheduledOnly": true,
+          "playedFinalNeverSuperseded": true,
+          "existingExplicitNonPlayedNeverSuperseded": true,
+          "exactVerifiedFinalArtifact": true,
+          "exactVerifiedFinalFlashscoreProviderIdentity": true,
+          "verifiedFinalScoreParity": true,
+          "verifiedFinalTeamPairParity": true,
+          "oldOccurrenceHasNoActiveFinalResult": true,
+          "oldOccurrenceAbsentFromHistory": true,
+          "oldOccurrenceHasNoOfficialValuePick": true,
+          "oldOccurrenceScoreRemainsNull": true,
+          "scoreNeverCopiedBackward": true
+        }
+      }
     },
     {
       "canonicalId": "cid_uga2_kaarokarungi_youngelephantacademy_20261025",
