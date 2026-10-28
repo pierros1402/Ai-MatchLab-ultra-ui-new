@@ -1,0 +1,245 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "eng.league_cup",
+  "homeTeam": "Liverpool",
+  "awayTeam": "Chelsea",
+  "homeWinScore": 0.459,
+  "drawScore": 0.144,
+  "awayWinScore": 0.397,
+  "over15Score": 0.651,
+  "over25Score": 0.542,
+  "over35Score": 0.498,
+  "bttsScore": 0.481,
+  "confidence": 0.857,
+  "signals": [
+    "home_edge",
+    "mutual_attack_profile",
+    "priors_applied",
+    "ai_context_medium_importance",
+    "cup_intensity",
+    "close_strength_gap",
+    "home_rest_2"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.5,
+      "awayOverallFormWeight": 0.5,
+      "homeSideFormWeight": 0.17,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.347,
+    "expectedAwayGoals": 1.294,
+    "expectedTotalGoals": 2.641,
+    "homeStrength": 0.679,
+    "awayStrength": 0.617,
+    "homeEdge": 0.59,
+    "awayPenalty": 0.27,
+    "recency": {
+      "homeOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 20,
+        "daysSinceLastMatch": 3,
+        "spanDays": 13,
+        "maxInternalGap": 8,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 1,
+        "formContinuityWeight": 0.88
+      },
+      "awayOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 16,
+        "daysSinceLastMatch": 4,
+        "spanDays": 14,
+        "maxInternalGap": 7,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 1,
+        "formContinuityWeight": 0.88
+      },
+      "homeSide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 20,
+        "daysSinceLastMatch": 3,
+        "spanDays": 13,
+        "maxInternalGap": 13,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.768
+      },
+      "awaySide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 16,
+        "daysSinceLastMatch": 11,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.55,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.55
+      }
+    },
+    "matchupSample": 2,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 20,
+      "awayPriorSample": 16,
+      "leaguePriorSample": 371,
+      "matchupPriorSample": 2
+    },
+    "resolution": {
+      "homeInput": "Liverpool",
+      "awayInput": "Chelsea",
+      "homeResolvedKey": "Liverpool",
+      "awayResolvedKey": "Chelsea",
+      "homeResolveScore": 0.82,
+      "awayResolveScore": 0.82,
+      "matchupResolvedKey": "Liverpool::Chelsea",
+      "matchupResolveScore": 0,
+      "homePriorKey": "eng.league_cup::Liverpool",
+      "awayPriorKey": "eng.league_cup::Chelsea",
+      "matchupPriorKey": "eng.league_cup|Chelsea|Liverpool"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Liverpool",
+      "awayTeamKey": "Chelsea",
+      "leagueKey": "eng.league_cup",
+      "matchupKey": "Liverpool::Chelsea"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "home_motivation_boost",
+        "impact": 0.03,
+        "note": "Home stake: promotion"
+      },
+      {
+        "code": "away_motivation_boost",
+        "impact": 0.03,
+        "note": "Away stake: promotion"
+      },
+      {
+        "code": "ai_h2h_home_edge",
+        "impact": 0.06,
+        "note": "AI detected home H2H edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "medium",
+      "stakes": {
+        "home": "promotion",
+        "away": "promotion",
+        "tags": [
+          "promotion"
+        ]
+      },
+      "pressure": []
+    }
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "home_motivation_boost",
+      "impact": 0.03,
+      "note": "Home stake: promotion"
+    },
+    {
+      "code": "away_motivation_boost",
+      "impact": 0.03,
+      "note": "Away stake: promotion"
+    },
+    {
+      "code": "ai_h2h_home_edge",
+      "impact": 0.06,
+      "note": "AI detected home H2H edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0.021,
+      "awayDelta": 0.012,
+      "drawDelta": 0.02,
+      "reasons": [
+        "cup_intensity",
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0.08,
+      "awayPenalty": 0,
+      "reasons": [
+        "home_rest_2"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "eng.league_cup",
+    "competitionType": "cup",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 2,
+    "awayRestDays": 11,
+    "homeMatchesLast7": 1,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 4,
+    "awayMatchesLast14": 1,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
