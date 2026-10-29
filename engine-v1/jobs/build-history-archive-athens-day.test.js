@@ -65,3 +65,14 @@ test("Athens DST and explicit-offset inputs are stable", () => {
   }
   assert.equal(rowDayKey({ kickoff: "2026-08-20T02:30:00+03:00" }), "2026-08-20");
 });
+
+test("results-memory archive rejects naive timestamps rather than using the runner timezone", () => {
+  for (const date of ["2026-08-20T02:30:00", "2026-08-20", "2026-08-20 02:30:00", "invalid"]) {
+    assert.throws(
+      () => bucketLeagueMatches("eng.1", { teams: {
+        Home: [{ ha: "H", date, matchId: "ambiguous", opp: "Away", gf: 2, ga: 1 }],
+      } }, new Set(["2026-2027"])),
+      /results_memory_timestamp_/,
+    );
+  }
+});
