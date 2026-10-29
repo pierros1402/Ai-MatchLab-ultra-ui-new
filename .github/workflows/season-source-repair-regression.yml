@@ -1,0 +1,58 @@
+name: Season Athens-day source repair (read-only regression)
+
+on:
+  pull_request:
+    paths:
+      - "engine-v1/jobs/build-history-archive-from-results.js"
+      - "engine-v1/jobs/build-current-season-indexes.js"
+      - "engine-v1/jobs/build-history-archive-athens-day.test.js"
+      - ".github/workflows/season-source-repair-regression.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: season-athens-source-regression-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  full-engine-read-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CI: "true"
+      TZ: "UTC"
+    steps:
+      - name: Check out proposed source without Git write credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install pinned dependencies without package lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Check all engine JavaScript syntax
+        run: |
+          find engine-v1 -type f -name '*.js' -print0 \
+            | xargs -0 -r -P 4 -n 1 node --check
+
+      - name: Verify Athens-day tests across host timezones
+        run: |
+          TZ=UTC node --test engine-v1/jobs/build-history-archive-athens-day.test.js
+          TZ=America/Los_Angeles node --test engine-v1/jobs/build-history-archive-athens-day.test.js
+
+      - name: Run all engine tests without publishing artifacts
+        shell: bash
+        run: |
+          mapfile -d '' -t tests < <(find engine-v1 -type f -name '*.test.js' -print0 | sort -z)
+          if (( ${#tests[@]} == 0 )); then
+            echo "No engine tests found" >&2
+            exit 1
+          fi
+          node --test --test-concurrency=4 "${tests[@]}"
