@@ -6,6 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import {
   isHistoricalSnapshotComparisonOptional,
+  shouldSyncRollingOddsForRelease,
   stageRuntimeReleaseArtifacts
 } from "./sync-deploy-snapshot-from-github.js";
 
@@ -93,4 +94,11 @@ test("historical comparison present and complete is retained byte-exact", async 
       comparison
     );
   });
+});
+
+test("historical release never overwrites rolling odds for newer days", () => {
+  assert.equal(shouldSyncRollingOddsForRelease(false), false);
+  assert.equal(shouldSyncRollingOddsForRelease(true), true);
+  assert.equal(shouldSyncRollingOddsForRelease(undefined), false);
+  assert.equal(shouldSyncRollingOddsForRelease("true"), false);
 });
