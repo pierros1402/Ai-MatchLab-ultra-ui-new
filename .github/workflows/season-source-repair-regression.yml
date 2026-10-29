@@ -56,3 +56,31 @@ jobs:
             exit 1
           fi
           node --test --test-concurrency=4 "${tests[@]}"
+
+  immutable-base-regression-control:
+    # This job is intentionally independent: compare the proposed engine against
+    # the exact pre-patch commit. It is read-only and cannot deploy or push.
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CI: "true"
+      TZ: "UTC"
+    steps:
+      - name: Check out immutable original commit without credentials
+        uses: actions/checkout@v4
+        with:
+          ref: "277f4554ec46619700c9b6e7a2a0099239af89df"
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install exact baseline dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Reproduce full baseline engine test failures for comparison
+        shell: bash
+        run: |
+          mapfile -d '' -t tests < <(find engine-v1 -type f -name '*.test.js' -print0 | sort -z)
+          if (( ${#tests[@]} == 0 )); then exit 1; fi
+          node --test --test-concurrency=4 "${tests[@]}"
