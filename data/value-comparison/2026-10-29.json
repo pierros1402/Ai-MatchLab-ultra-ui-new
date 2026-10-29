@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-10-29",
-  "generatedAt": "2026-10-29T19:44:32.749Z",
+  "generatedAt": "2026-10-29T22:00:11.553Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,12 +18,14 @@
   "inputs": {
     "fixturesPath": "data/canonical-fixtures/2026-10-29",
     "finalResultsDir": "data/final-results/2026-10-29",
-    "verifiedFinalResults": 62,
+    "verifiedFinalResults": 98,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-10-29",
     "canonicalContradictionsRejected": [],
     "canonicalIdentityAmbiguities": [],
     "fixtureIdentityAmbiguities": [],
-    "finalIdentityAmbiguities": [],
+    "finalIdentityAmbiguities": [
+      "401912776"
+    ],
     "planAPath": "data/value-plans/2026-10-29/plan-a.json",
     "planBMembership": {
       "picks": 0,
@@ -183,7 +185,7 @@
     "publicationMode": "production",
     "productionPublication": true,
     "policyId": "unified-public-u1-incremental-v1",
-    "generatedAt": "2026-10-29T18:02:51.845Z",
+    "generatedAt": "2026-10-29T22:00:13.347Z",
     "count": 2,
     "picks": [
       {
@@ -419,9 +421,15 @@
         "modelProb": null,
         "marketProb": null,
         "aiFairOdds": null,
-        "result": "UNRESOLVED",
-        "finalScore": null,
-        "settlementTruth": null,
+        "result": "WIN",
+        "settlementTruth": {
+          "path": "data/final-results/2026-10-29/cid_ksa1_alnassr_alkholood_20261029.json",
+          "sha256": "c5d9544582bf0ddf671e970848fecfb58e7fc74829f9101cbb66abdbe6223572",
+          "matchId": "cid_ksa1_alnassr_alkholood_20261029",
+          "date": "2026-10-29",
+          "scoreHome": 5,
+          "scoreAway": 3
+        },
         "publicationRecord": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
         "firstObservedAt": "2026-10-29T07:48:33.931Z"
       },
@@ -658,9 +666,15 @@
         "modelProb": null,
         "marketProb": null,
         "aiFairOdds": null,
-        "result": "UNRESOLVED",
-        "finalScore": null,
-        "settlementTruth": null,
+        "result": "LOSS",
+        "settlementTruth": {
+          "path": "data/final-results/2026-10-29/cid_per1_loschankas_cusco_20261029.json",
+          "sha256": "176d974841a71b372b8892ce3f2bc73304eeea56cdbff3dd92227cf9732793a1",
+          "matchId": "cid_per1_loschankas_cusco_20261029",
+          "date": "2026-10-29",
+          "scoreHome": 0,
+          "scoreAway": 1
+        },
         "publicationRecord": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
         "firstObservedAt": "2026-10-29T07:48:33.931Z"
       }
@@ -669,16 +683,21 @@
     "upstreamCoverage": "INCOMPLETE",
     "zeroPicksCertified": false,
     "dataReadiness": {
-      "status": "PARTIAL",
+      "status": "INSUFFICIENT_DATA",
       "complete": false,
-      "checkedAt": "2026-10-29T19:44:33.633Z",
+      "checkedAt": "2026-10-29T22:00:12.674Z",
       "fixtures": 116,
       "applicable": 115,
-      "ready": 42,
-      "insufficient": 73,
+      "ready": 0,
+      "insufficient": 115,
       "byReason": {
-        "minimum_recent_sample": 72,
-        "missing_model_assessment": 38
+        "coverage_missing_or_wrong_universe": 115,
+        "details_foundation_not_verified": 115,
+        "minimum_recent_sample": 90,
+        "missing_model_assessment": 38,
+        "fixture_coverage_missing_or_ambiguous": 1,
+        "details_missing": 1,
+        "value_input_not_evaluated": 1
       }
     },
     "records": [
@@ -698,31 +717,31 @@
     "summary": {
       "picks": 2,
       "uniqueMatches": 2,
-      "settled": 0,
-      "wins": 0,
-      "losses": 0,
+      "settled": 2,
+      "wins": 1,
+      "losses": 1,
       "voids": 0,
-      "unresolved": 2,
-      "hitRate": null
+      "unresolved": 0,
+      "hitRate": 0.5
     },
-    "projectionSignature": "775dd09896ac55af0839ea955ead1f4abe92323058c88a2601e84fc5e5651fbf"
+    "projectionSignature": "7767a93ea7088bbded682d150c9e6c828106245f5cf380b33cf0326ddd7eb349"
   },
   "dataReadiness": {
     "schema": "ai-matchlab.value-data-readiness.v1",
     "date": "2026-10-29",
-    "generatedAt": "2026-10-29T19:44:33.633Z",
+    "generatedAt": "2026-10-29T22:00:12.674Z",
     "fixtureUniverse": {
       "schema": "ai-matchlab.value-fixture-universe.v1",
       "source": "canonical_fixtures",
       "count": 116,
-      "hash": "5f58203b39e69bd62a79048f43e912c3332ee2e0d21edb89f272005679e66250",
+      "hash": "26269b4caafe288252a316266dd256167fb19674773664f492ffd56bec9c1ac6",
       "canonicalIds": [
         "cid_afccup_adelaideunited_lioncitysailors_20261029",
         "cid_afccup_gangwon_kuchingcity_20261029",
         "cid_afccup_phnompenhcrown_kitchee_20261029",
         "cid_afccup_shanghaishenhua_machidazelvia_20261029",
         "cid_afccup_taipo_bgpathumunited_20261029",
-        "cid_afccup_tampinesrovers_preahkhanreachsvayrieng_20261029",
+        "cid_afccup_tampinesrovers_pkrsvayrieng_20261029",
         "cid_alb1_egnatia_teuta_20261029",
         "cid_alb1_kftirana_dinamocity_20261029",
         "cid_alb2_iliriafushekruje_flamurtari_20261029",
@@ -838,15 +857,20 @@
     "certifies": "configured_statistical_value_required_inputs_only",
     "allLeagueDataCertified": false,
     "complete": false,
-    "status": "PARTIAL",
+    "status": "INSUFFICIENT_DATA",
     "summary": {
       "fixtures": 116,
       "applicable": 115,
-      "ready": 42,
-      "insufficient": 73,
+      "ready": 0,
+      "insufficient": 115,
       "byReason": {
-        "minimum_recent_sample": 72,
-        "missing_model_assessment": 38
+        "coverage_missing_or_wrong_universe": 115,
+        "details_foundation_not_verified": 115,
+        "minimum_recent_sample": 90,
+        "missing_model_assessment": 38,
+        "fixture_coverage_missing_or_ambiguous": 1,
+        "details_missing": 1,
+        "value_input_not_evaluated": 1
       }
     },
     "rows": [
@@ -856,6 +880,8 @@
         "kickoffUtc": "2026-10-28T22:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -901,6 +927,8 @@
         "kickoffUtc": "2026-10-28T22:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -946,6 +974,8 @@
         "kickoffUtc": "2026-10-28T22:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -989,8 +1019,11 @@
         "canonicalId": "cid_col1_oncecaldas_alianza_20261029",
         "leagueSlug": "col.1",
         "kickoffUtc": "2026-10-28T23:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1005,6 +1038,8 @@
         "kickoffUtc": "2026-10-28T23:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1050,6 +1085,8 @@
         "kickoffUtc": "2026-10-28T23:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1095,6 +1132,8 @@
         "kickoffUtc": "2026-10-28T23:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1140,6 +1179,8 @@
         "kickoffUtc": "2026-10-28T23:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1185,6 +1226,8 @@
         "kickoffUtc": "2026-10-28T23:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1230,6 +1273,8 @@
         "kickoffUtc": "2026-10-28T23:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1275,6 +1320,8 @@
         "kickoffUtc": "2026-10-28T23:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1320,6 +1367,8 @@
         "kickoffUtc": "2026-10-28T23:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1365,6 +1414,8 @@
         "kickoffUtc": "2026-10-29T00:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -1411,6 +1462,8 @@
         "kickoffUtc": "2026-10-29T00:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1456,6 +1509,8 @@
         "kickoffUtc": "2026-10-29T00:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1501,6 +1556,8 @@
         "kickoffUtc": "2026-10-29T00:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1546,6 +1603,8 @@
         "kickoffUtc": "2026-10-29T00:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1591,6 +1650,8 @@
         "kickoffUtc": "2026-10-29T00:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1636,6 +1697,8 @@
         "kickoffUtc": "2026-10-29T00:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1679,8 +1742,11 @@
         "canonicalId": "cid_usa1_minnesotaunited_sportingkansascity_20261029",
         "leagueSlug": "usa.1",
         "kickoffUtc": "2026-10-29T00:30Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1699,6 +1765,8 @@
         "kickoffUtc": "2026-10-29T00:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1744,6 +1812,8 @@
         "kickoffUtc": "2026-10-29T00:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1787,8 +1857,11 @@
         "canonicalId": "cid_col2_quindio_realcundinamarca_20261029",
         "leagueSlug": "col.2",
         "kickoffUtc": "2026-10-29T01:05:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1805,8 +1878,11 @@
         "canonicalId": "cid_col1_internacionalbogota_independientemedellin_20261029",
         "leagueSlug": "col.1",
         "kickoffUtc": "2026-10-29T01:05Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1821,6 +1897,8 @@
         "kickoffUtc": "2026-10-29T02:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "missing_model_assessment"
         ],
         "modelAssessmentAvailable": false,
@@ -1841,6 +1919,8 @@
         "kickoffUtc": "2026-10-29T02:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1886,6 +1966,8 @@
         "kickoffUtc": "2026-10-29T02:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1931,6 +2013,8 @@
         "kickoffUtc": "2026-10-29T02:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1976,6 +2060,8 @@
         "kickoffUtc": "2026-10-29T03:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2017,6 +2103,8 @@
         "kickoffUtc": "2026-10-29T07:45Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -2061,8 +2149,11 @@
         "canonicalId": "cid_idn2_ransnusantara_tornadopekanbaru_20261029",
         "leagueSlug": "idn.2",
         "kickoffUtc": "2026-10-29T08:30:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2081,6 +2172,8 @@
         "kickoffUtc": "2026-10-29T10:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2121,41 +2214,20 @@
         "predictionCreated": false
       },
       {
-        "canonicalId": "cid_afccup_tampinesrovers_preahkhanreachsvayrieng_20261029",
+        "canonicalId": "cid_afccup_tampinesrovers_pkrsvayrieng_20261029",
         "leagueSlug": "afc.cup",
         "kickoffUtc": "2026-10-29T10:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "minimum_recent_sample",
+          "coverage_missing_or_wrong_universe",
+          "fixture_coverage_missing_or_ambiguous",
+          "details_missing",
+          "details_foundation_not_verified",
+          "value_input_not_evaluated",
           "missing_model_assessment"
         ],
         "modelAssessmentAvailable": false,
-        "recentHistory": {
-          "minRequiredRecentMatches": 3,
-          "sampleBasis": "current_season_raw",
-          "formMaxAgeDays": 35,
-          "formWindow": 5,
-          "homeTeam": "Tampines Rovers FC",
-          "awayTeam": "Preah Khan Reach Svay Rieng FC",
-          "leagueSlug": "afc.cup",
-          "fixtureDate": "2026-10-29T10:00:00.000Z",
-          "homeResolvedKey": "BG Tampines Rovers FC",
-          "awayResolvedKey": "Preah Khan Reach Svay Rieng FC",
-          "homeRawSample": 1,
-          "awayRawSample": 1,
-          "homeBlendedSample": 1,
-          "awayBlendedSample": 1,
-          "homeSideRawSample": 1,
-          "awaySideRawSample": 0,
-          "homeSideBlendedSample": 1,
-          "awaySideBlendedSample": 0,
-          "homePriorSample": null,
-          "awayPriorSample": null,
-          "homeRecentSelected": null,
-          "awayRecentSelected": null,
-          "homeSideSelected": null,
-          "awaySideSelected": null
-        },
+        "recentHistory": null,
         "standings": {
           "usable": false,
           "reasons": [
@@ -2172,6 +2244,8 @@
         "kickoffUtc": "2026-10-29T11:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2215,10 +2289,39 @@
         "canonicalId": "cid_idn2_balikpapan_psbsbiaknumfor_20261029",
         "leagueSlug": "idn.2",
         "kickoffUtc": "2026-10-29T12:00:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Balikpapan",
+          "awayTeam": "PSBS Biak Numfor",
+          "leagueSlug": "idn.2",
+          "fixtureDate": "2026-10-29T12:00:00.000Z",
+          "homeResolvedKey": "Balikpapan",
+          "awayResolvedKey": "PSBS Biak Numfor",
+          "homeRawSample": 2,
+          "awayRawSample": 3,
+          "homeBlendedSample": 5,
+          "awayBlendedSample": 3,
+          "homeSideRawSample": 2,
+          "awaySideRawSample": 1,
+          "homeSideBlendedSample": 5,
+          "awaySideBlendedSample": 1,
+          "homePriorSample": 28,
+          "awayPriorSample": null,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": false,
           "reasons": [
@@ -2227,47 +2330,7 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
-          "observedAt": "2026-10-29T07:48:33.931Z",
-          "kickoffUtc": "2026-10-29T12:00:00.000Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-10-29T19:44:33.633Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "Balikpapan",
-            "awayTeam": "PSBS Biak Numfor",
-            "leagueSlug": "idn.2",
-            "fixtureDate": "2026-10-29T12:00:00.000Z",
-            "homeResolvedKey": "Balikpapan",
-            "awayResolvedKey": "PSBS Biak Numfor",
-            "homeRawSample": 2,
-            "awayRawSample": 3,
-            "homeBlendedSample": 5,
-            "awayBlendedSample": 3,
-            "homeSideRawSample": 2,
-            "awaySideRawSample": 1,
-            "homeSideBlendedSample": 5,
-            "awaySideBlendedSample": 1,
-            "homePriorSample": 28,
-            "awayPriorSample": null,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       },
       {
         "canonicalId": "cid_afccup_phnompenhcrown_kitchee_20261029",
@@ -2275,6 +2338,8 @@
         "kickoffUtc": "2026-10-29T12:15Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -2319,10 +2384,39 @@
         "canonicalId": "cid_afccup_shanghaishenhua_machidazelvia_20261029",
         "leagueSlug": "afc.cup",
         "kickoffUtc": "2026-10-29T12:15Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Shanghai Shenhua FC",
+          "awayTeam": "Machida Zelvia",
+          "leagueSlug": "afc.cup",
+          "fixtureDate": "2026-10-29T12:15:00.000Z",
+          "homeResolvedKey": "Shanghai Shenhua",
+          "awayResolvedKey": "Machida Zelvia",
+          "homeRawSample": 1,
+          "awayRawSample": 2,
+          "homeBlendedSample": 1,
+          "awayBlendedSample": 2,
+          "homeSideRawSample": 0,
+          "awaySideRawSample": 2,
+          "homeSideBlendedSample": 0,
+          "awaySideBlendedSample": 2,
+          "homePriorSample": null,
+          "awayPriorSample": null,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": false,
           "reasons": [
@@ -2331,47 +2425,7 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
-          "observedAt": "2026-10-29T07:48:33.931Z",
-          "kickoffUtc": "2026-10-29T12:15Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-10-29T19:44:33.633Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "Shanghai Shenhua FC",
-            "awayTeam": "Machida Zelvia",
-            "leagueSlug": "afc.cup",
-            "fixtureDate": "2026-10-29T12:15:00.000Z",
-            "homeResolvedKey": "Shanghai Shenhua",
-            "awayResolvedKey": "Machida Zelvia",
-            "homeRawSample": 1,
-            "awayRawSample": 2,
-            "homeBlendedSample": 1,
-            "awayBlendedSample": 2,
-            "homeSideRawSample": 0,
-            "awaySideRawSample": 2,
-            "homeSideBlendedSample": 0,
-            "awaySideBlendedSample": 2,
-            "homePriorSample": null,
-            "awayPriorSample": null,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       },
       {
         "canonicalId": "cid_afccup_taipo_bgpathumunited_20261029",
@@ -2379,6 +2433,8 @@
         "kickoffUtc": "2026-10-29T12:15Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -2423,10 +2479,39 @@
         "canonicalId": "cid_alb1_kftirana_dinamocity_20261029",
         "leagueSlug": "alb.1",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "KF Tirana",
+          "awayTeam": "Dinamo City",
+          "leagueSlug": "alb.1",
+          "fixtureDate": "2026-10-29T12:30:00.000Z",
+          "homeResolvedKey": "KF Tirana",
+          "awayResolvedKey": "Dinamo City",
+          "homeRawSample": 1,
+          "awayRawSample": 1,
+          "homeBlendedSample": 4,
+          "awayBlendedSample": 4,
+          "homeSideRawSample": 1,
+          "awaySideRawSample": 0,
+          "homeSideBlendedSample": 4,
+          "awaySideBlendedSample": 3,
+          "homePriorSample": 181,
+          "awayPriorSample": 149,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": false,
           "reasons": [
@@ -2435,56 +2520,45 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
-          "observedAt": "2026-10-29T07:48:33.931Z",
-          "kickoffUtc": "2026-10-29T12:30:00.000Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-10-29T19:44:33.633Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "KF Tirana",
-            "awayTeam": "Dinamo City",
-            "leagueSlug": "alb.1",
-            "fixtureDate": "2026-10-29T12:30:00.000Z",
-            "homeResolvedKey": "KF Tirana",
-            "awayResolvedKey": "Dinamo City",
-            "homeRawSample": 1,
-            "awayRawSample": 1,
-            "homeBlendedSample": 4,
-            "awayBlendedSample": 4,
-            "homeSideRawSample": 1,
-            "awaySideRawSample": 0,
-            "homeSideBlendedSample": 4,
-            "awaySideBlendedSample": 3,
-            "homePriorSample": 181,
-            "awayPriorSample": 149,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       },
       {
         "canonicalId": "cid_alb2_iliriafushekruje_flamurtari_20261029",
         "leagueSlug": "alb.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Iliria Fushe-Kruje",
+          "awayTeam": "Flamurtari",
+          "leagueSlug": "alb.2",
+          "fixtureDate": "2026-10-29T12:30:00.000Z",
+          "homeResolvedKey": "Iliria Fushe-Kruje",
+          "awayResolvedKey": "Flamurtari",
+          "homeRawSample": 1,
+          "awayRawSample": 1,
+          "homeBlendedSample": 4,
+          "awayBlendedSample": 4,
+          "homeSideRawSample": 1,
+          "awaySideRawSample": 1,
+          "homeSideBlendedSample": 4,
+          "awaySideBlendedSample": 4,
+          "homePriorSample": 35,
+          "awayPriorSample": 94,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": false,
           "reasons": [
@@ -2493,56 +2567,45 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
-          "observedAt": "2026-10-29T07:48:33.931Z",
-          "kickoffUtc": "2026-10-29T12:30:00.000Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-10-29T19:44:33.633Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "Iliria Fushe-Kruje",
-            "awayTeam": "Flamurtari",
-            "leagueSlug": "alb.2",
-            "fixtureDate": "2026-10-29T12:30:00.000Z",
-            "homeResolvedKey": "Iliria Fushe-Kruje",
-            "awayResolvedKey": "Flamurtari",
-            "homeRawSample": 1,
-            "awayRawSample": 1,
-            "homeBlendedSample": 4,
-            "awayBlendedSample": 4,
-            "homeSideRawSample": 1,
-            "awaySideRawSample": 1,
-            "homeSideBlendedSample": 4,
-            "awaySideBlendedSample": 4,
-            "homePriorSample": 35,
-            "awayPriorSample": 94,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       },
       {
         "canonicalId": "cid_egy2_alsekka_tanta_20261029",
         "leagueSlug": "egy.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Al Sekka",
+          "awayTeam": "Tanta",
+          "leagueSlug": "egy.2",
+          "fixtureDate": "2026-10-29T12:30:00.000Z",
+          "homeResolvedKey": "Al-Sekka",
+          "awayResolvedKey": "Tanta",
+          "homeRawSample": 2,
+          "awayRawSample": 3,
+          "homeBlendedSample": 2,
+          "awayBlendedSample": 6,
+          "homeSideRawSample": 1,
+          "awaySideRawSample": 1,
+          "homeSideBlendedSample": 1,
+          "awaySideBlendedSample": 4,
+          "homePriorSample": null,
+          "awayPriorSample": 99,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": false,
           "reasons": [
@@ -2551,54 +2614,17 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
-          "observedAt": "2026-10-29T07:48:33.931Z",
-          "kickoffUtc": "2026-10-29T12:30:00.000Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-10-29T19:44:33.633Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "Al Sekka",
-            "awayTeam": "Tanta",
-            "leagueSlug": "egy.2",
-            "fixtureDate": "2026-10-29T12:30:00.000Z",
-            "homeResolvedKey": "Al-Sekka",
-            "awayResolvedKey": "Tanta",
-            "homeRawSample": 2,
-            "awayRawSample": 3,
-            "homeBlendedSample": 2,
-            "awayBlendedSample": 6,
-            "homeSideRawSample": 1,
-            "awaySideRawSample": 1,
-            "homeSideBlendedSample": 1,
-            "awaySideBlendedSample": 4,
-            "homePriorSample": null,
-            "awayPriorSample": 99,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       },
       {
         "canonicalId": "cid_egy2_baladiyatelmahalla_alnasr_20261029",
         "leagueSlug": "egy.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2615,8 +2641,11 @@
         "canonicalId": "cid_egy2_eldaklyeh_elentagelharby_20261029",
         "leagueSlug": "egy.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2633,8 +2662,11 @@
         "canonicalId": "cid_egy2_elmansoura_haraselhodood_20261029",
         "leagueSlug": "egy.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2651,8 +2683,11 @@
         "canonicalId": "cid_egy2_kahrabaaismailia_masar_20261029",
         "leagueSlug": "egy.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2669,8 +2704,11 @@
         "canonicalId": "cid_egy2_laviena_dayrout_20261029",
         "leagueSlug": "egy.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2687,8 +2725,11 @@
         "canonicalId": "cid_egy2_pharco_we_20261029",
         "leagueSlug": "egy.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2705,8 +2746,11 @@
         "canonicalId": "cid_egy2_proxy_elismaily_20261029",
         "leagueSlug": "egy.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2723,8 +2767,11 @@
         "canonicalId": "cid_egy2_team_deltaunited_20261029",
         "leagueSlug": "egy.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2741,8 +2788,11 @@
         "canonicalId": "cid_egy2_tersana_maleyeitkafrelzayiat_20261029",
         "leagueSlug": "egy.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2759,10 +2809,39 @@
         "canonicalId": "cid_mne1_sutjeska_jezero_20261029",
         "leagueSlug": "mne.1",
         "kickoffUtc": "2026-10-29T13:00:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Sutjeska",
+          "awayTeam": "Jezero",
+          "leagueSlug": "mne.1",
+          "fixtureDate": "2026-10-29T13:00:00.000Z",
+          "homeResolvedKey": "Sutjeska",
+          "awayResolvedKey": "Jezero",
+          "homeRawSample": 1,
+          "awayRawSample": 1,
+          "homeBlendedSample": 4,
+          "awayBlendedSample": 4,
+          "homeSideRawSample": 1,
+          "awaySideRawSample": 1,
+          "homeSideBlendedSample": 4,
+          "awaySideBlendedSample": 4,
+          "homePriorSample": 180,
+          "awayPriorSample": 184,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": false,
           "reasons": [
@@ -2771,47 +2850,7 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
-          "observedAt": "2026-10-29T07:48:33.931Z",
-          "kickoffUtc": "2026-10-29T13:00:00.000Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-10-29T19:44:33.633Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "Sutjeska",
-            "awayTeam": "Jezero",
-            "leagueSlug": "mne.1",
-            "fixtureDate": "2026-10-29T13:00:00.000Z",
-            "homeResolvedKey": "Sutjeska",
-            "awayResolvedKey": "Jezero",
-            "homeRawSample": 1,
-            "awayRawSample": 1,
-            "homeBlendedSample": 4,
-            "awayBlendedSample": 4,
-            "homeSideRawSample": 1,
-            "awaySideRawSample": 1,
-            "homeSideBlendedSample": 4,
-            "awaySideBlendedSample": 4,
-            "homePriorSample": 180,
-            "awayPriorSample": 184,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       },
       {
         "canonicalId": "cid_syr1_alittihadaleppo_qamishli_20261029",
@@ -2819,6 +2858,8 @@
         "kickoffUtc": "2026-10-29T13:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -2865,6 +2906,8 @@
         "kickoffUtc": "2026-10-29T13:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2910,6 +2953,8 @@
         "kickoffUtc": "2026-10-29T13:30:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2955,6 +3000,8 @@
         "kickoffUtc": "2026-10-29T13:30:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3000,6 +3047,8 @@
         "kickoffUtc": "2026-10-29T13:30:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3045,6 +3094,8 @@
         "kickoffUtc": "2026-10-29T14:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3106,10 +3157,39 @@
         "canonicalId": "cid_ksa1_alkhaleej_alhazem_20261029",
         "leagueSlug": "ksa.1",
         "kickoffUtc": "2026-10-29T14:35Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Al Khaleej",
+          "awayTeam": "Al Hazem",
+          "leagueSlug": "ksa.1",
+          "fixtureDate": "2026-10-29T14:35:00.000Z",
+          "homeResolvedKey": "Al Khaleej",
+          "awayResolvedKey": "Al Hazem",
+          "homeRawSample": 1,
+          "awayRawSample": 2,
+          "homeBlendedSample": 4,
+          "awayBlendedSample": 5,
+          "homeSideRawSample": 1,
+          "awaySideRawSample": 1,
+          "homeSideBlendedSample": 4,
+          "awaySideBlendedSample": 4,
+          "homePriorSample": 132,
+          "awayPriorSample": 98,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": false,
           "reasons": [
@@ -3118,47 +3198,7 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
-          "observedAt": "2026-10-29T07:48:33.931Z",
-          "kickoffUtc": "2026-10-29T14:35Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-10-29T19:44:33.633Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "Al Khaleej",
-            "awayTeam": "Al Hazem",
-            "leagueSlug": "ksa.1",
-            "fixtureDate": "2026-10-29T14:35:00.000Z",
-            "homeResolvedKey": "Al Khaleej",
-            "awayResolvedKey": "Al Hazem",
-            "homeRawSample": 1,
-            "awayRawSample": 2,
-            "homeBlendedSample": 4,
-            "awayBlendedSample": 5,
-            "homeSideRawSample": 1,
-            "awaySideRawSample": 1,
-            "homeSideBlendedSample": 4,
-            "awaySideBlendedSample": 4,
-            "homePriorSample": 132,
-            "awayPriorSample": 98,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       },
       {
         "canonicalId": "cid_blr2_dinminsk2_molodechno_20261029",
@@ -3166,6 +3206,8 @@
         "kickoffUtc": "2026-10-29T15:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3209,10 +3251,39 @@
         "canonicalId": "cid_bul2_yantragabrovo_hebar_20261029",
         "leagueSlug": "bul.2",
         "kickoffUtc": "2026-10-29T16:00:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Yantra Gabrovo",
+          "awayTeam": "Hebar",
+          "leagueSlug": "bul.2",
+          "fixtureDate": "2026-10-29T16:00:00.000Z",
+          "homeResolvedKey": "Yantra Gabrovo",
+          "awayResolvedKey": "Hebar",
+          "homeRawSample": 1,
+          "awayRawSample": 1,
+          "homeBlendedSample": 4,
+          "awayBlendedSample": 4,
+          "homeSideRawSample": 0,
+          "awaySideRawSample": 0,
+          "homeSideBlendedSample": 3,
+          "awaySideBlendedSample": 3,
+          "homePriorSample": 175,
+          "awayPriorSample": 69,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": false,
           "reasons": [
@@ -3221,47 +3292,7 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
-          "observedAt": "2026-10-29T07:48:33.931Z",
-          "kickoffUtc": "2026-10-29T16:00:00.000Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-10-29T19:44:33.633Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "Yantra Gabrovo",
-            "awayTeam": "Hebar",
-            "leagueSlug": "bul.2",
-            "fixtureDate": "2026-10-29T16:00:00.000Z",
-            "homeResolvedKey": "Yantra Gabrovo",
-            "awayResolvedKey": "Hebar",
-            "homeRawSample": 1,
-            "awayRawSample": 1,
-            "homeBlendedSample": 4,
-            "awayBlendedSample": 4,
-            "homeSideRawSample": 0,
-            "awaySideRawSample": 0,
-            "homeSideBlendedSample": 3,
-            "awaySideBlendedSample": 3,
-            "homePriorSample": 175,
-            "awayPriorSample": 69,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       },
       {
         "canonicalId": "cid_est2_maardu_elva_20261029",
@@ -3269,6 +3300,8 @@
         "kickoffUtc": "2026-10-29T16:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3312,10 +3345,39 @@
         "canonicalId": "cid_fin1_interturku_hjk_20261029",
         "leagueSlug": "fin.1",
         "kickoffUtc": "2026-10-29T16:00:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Inter Turku",
+          "awayTeam": "HJK",
+          "leagueSlug": "fin.1",
+          "fixtureDate": "2026-10-29T16:00:00.000Z",
+          "homeResolvedKey": "Inter Turku",
+          "awayResolvedKey": "HJK",
+          "homeRawSample": 2,
+          "awayRawSample": 2,
+          "homeBlendedSample": 5,
+          "awayBlendedSample": 5,
+          "homeSideRawSample": 1,
+          "awaySideRawSample": 0,
+          "homeSideBlendedSample": 4,
+          "awaySideBlendedSample": 3,
+          "homePriorSample": 133,
+          "awayPriorSample": 130,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": false,
           "reasons": [
@@ -3324,47 +3386,7 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
-          "observedAt": "2026-10-29T07:48:33.931Z",
-          "kickoffUtc": "2026-10-29T16:00:00.000Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-10-29T19:44:33.633Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "Inter Turku",
-            "awayTeam": "HJK",
-            "leagueSlug": "fin.1",
-            "fixtureDate": "2026-10-29T16:00:00.000Z",
-            "homeResolvedKey": "Inter Turku",
-            "awayResolvedKey": "HJK",
-            "homeRawSample": 2,
-            "awayRawSample": 2,
-            "homeBlendedSample": 5,
-            "awayBlendedSample": 5,
-            "homeSideRawSample": 1,
-            "awaySideRawSample": 0,
-            "homeSideBlendedSample": 4,
-            "awaySideBlendedSample": 3,
-            "homePriorSample": 133,
-            "awayPriorSample": 130,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       },
       {
         "canonicalId": "cid_mne1_decic_otrant_20261029",
@@ -3372,6 +3394,8 @@
         "kickoffUtc": "2026-10-29T16:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3417,6 +3441,8 @@
         "kickoffUtc": "2026-10-29T16:30:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3462,6 +3488,8 @@
         "kickoffUtc": "2026-10-29T17:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -3505,10 +3533,39 @@
         "canonicalId": "cid_est2_tallinnakalev_nommekaljuu21_20261029",
         "leagueSlug": "est.2",
         "kickoffUtc": "2026-10-29T17:00:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Tallinna Kalev",
+          "awayTeam": "Nomme Kalju U21",
+          "leagueSlug": "est.2",
+          "fixtureDate": "2026-10-29T17:00:00.000Z",
+          "homeResolvedKey": "Tallinna Kalev",
+          "awayResolvedKey": "Nomme Kalju U21",
+          "homeRawSample": 1,
+          "awayRawSample": 1,
+          "homeBlendedSample": 4,
+          "awayBlendedSample": 4,
+          "homeSideRawSample": 1,
+          "awaySideRawSample": 1,
+          "homeSideBlendedSample": 4,
+          "awaySideBlendedSample": 4,
+          "homePriorSample": 20,
+          "awayPriorSample": 36,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": false,
           "reasons": [
@@ -3517,54 +3574,64 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
-          "observedAt": "2026-10-29T07:48:33.931Z",
-          "kickoffUtc": "2026-10-29T17:00:00.000Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-10-29T19:44:33.633Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "Tallinna Kalev",
-            "awayTeam": "Nomme Kalju U21",
-            "leagueSlug": "est.2",
-            "fixtureDate": "2026-10-29T17:00:00.000Z",
-            "homeResolvedKey": "Tallinna Kalev",
-            "awayResolvedKey": "Nomme Kalju U21",
-            "homeRawSample": 1,
-            "awayRawSample": 1,
-            "homeBlendedSample": 4,
-            "awayBlendedSample": 4,
-            "homeSideRawSample": 1,
-            "awaySideRawSample": 1,
-            "homeSideBlendedSample": 4,
-            "awaySideBlendedSample": 4,
-            "homePriorSample": 20,
-            "awayPriorSample": 36,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       },
       {
         "canonicalId": "cid_fin1_kups_gnistan_20261029",
         "leagueSlug": "fin.1",
         "kickoffUtc": "2026-10-29T17:00:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
+        "modelAssessmentAvailable": true,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "KuPS",
+          "awayTeam": "Gnistan",
+          "leagueSlug": "fin.1",
+          "fixtureDate": "2026-10-29T17:00:00.000Z",
+          "homeResolvedKey": "KuPS",
+          "awayResolvedKey": "Gnistan",
+          "homeRawSample": 1,
+          "awayRawSample": 2,
+          "homeBlendedSample": 4,
+          "awayBlendedSample": 5,
+          "homeSideRawSample": 1,
+          "awaySideRawSample": 1,
+          "homeSideBlendedSample": 4,
+          "awaySideBlendedSample": 4,
+          "homePriorSample": 130,
+          "awayPriorSample": 61,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
+        "standings": {
+          "usable": false,
+          "reasons": [
+            "CONSUMER_TABLE_EMPTY",
+            "CONTRACT_NOT_PASS",
+            "FOUNDATION_NOT_PASS"
+          ]
+        },
+        "predictionCreated": false
+      },
+      {
+        "canonicalId": "cid_mar1_maghrebfez_berkane_20261029",
+        "leagueSlug": "mar.1",
+        "kickoffUtc": "2026-10-29T17:00:00.000Z",
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -3575,47 +3642,7 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
-          "observedAt": "2026-10-29T07:48:33.931Z",
-          "kickoffUtc": "2026-10-29T17:00:00.000Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-10-29T19:44:33.633Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "KuPS",
-            "awayTeam": "Gnistan",
-            "leagueSlug": "fin.1",
-            "fixtureDate": "2026-10-29T17:00:00.000Z",
-            "homeResolvedKey": "KuPS",
-            "awayResolvedKey": "Gnistan",
-            "homeRawSample": 1,
-            "awayRawSample": 2,
-            "homeBlendedSample": 4,
-            "awayBlendedSample": 5,
-            "homeSideRawSample": 1,
-            "awaySideRawSample": 1,
-            "homeSideBlendedSample": 4,
-            "awaySideBlendedSample": 4,
-            "homePriorSample": 130,
-            "awayPriorSample": 61,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       },
       {
         "canonicalId": "cid_espcopadelrey_numancia_realoviedo_20261029",
@@ -3623,6 +3650,8 @@
         "kickoffUtc": "2026-10-29T17:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3669,6 +3698,8 @@
         "kickoffUtc": "2026-10-29T17:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3713,8 +3744,11 @@
         "canonicalId": "cid_gua1_deportivomixco_xelajumc_20261029",
         "leagueSlug": "gua.1",
         "kickoffUtc": "2026-10-29T17:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -3731,10 +3765,39 @@
         "canonicalId": "cid_alb1_egnatia_teuta_20261029",
         "leagueSlug": "alb.1",
         "kickoffUtc": "2026-10-29T17:30:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Egnatia",
+          "awayTeam": "Teuta",
+          "leagueSlug": "alb.1",
+          "fixtureDate": "2026-10-29T17:30:00.000Z",
+          "homeResolvedKey": "Egnatia",
+          "awayResolvedKey": "Teuta",
+          "homeRawSample": 0,
+          "awayRawSample": 1,
+          "homeBlendedSample": 3,
+          "awayBlendedSample": 4,
+          "homeSideRawSample": 0,
+          "awaySideRawSample": 1,
+          "homeSideBlendedSample": 3,
+          "awaySideBlendedSample": 4,
+          "homePriorSample": 188,
+          "awayPriorSample": 181,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": false,
           "reasons": [
@@ -3743,56 +3806,45 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
-          "observedAt": "2026-10-29T07:48:33.931Z",
-          "kickoffUtc": "2026-10-29T17:30:00.000Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-10-29T19:44:33.633Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "Egnatia",
-            "awayTeam": "Teuta",
-            "leagueSlug": "alb.1",
-            "fixtureDate": "2026-10-29T17:30:00.000Z",
-            "homeResolvedKey": "Egnatia",
-            "awayResolvedKey": "Teuta",
-            "homeRawSample": 0,
-            "awayRawSample": 1,
-            "homeBlendedSample": 3,
-            "awayBlendedSample": 4,
-            "homeSideRawSample": 0,
-            "awaySideRawSample": 1,
-            "homeSideBlendedSample": 3,
-            "awaySideBlendedSample": 4,
-            "homePriorSample": 188,
-            "awayPriorSample": 181,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       },
       {
         "canonicalId": "cid_ita1_frosinone_lecce_20261029",
         "leagueSlug": "ita.1",
         "kickoffUtc": "2026-10-29T17:30Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Frosinone",
+          "awayTeam": "Lecce",
+          "leagueSlug": "ita.1",
+          "fixtureDate": "2026-10-29T17:30:00.000Z",
+          "homeResolvedKey": "Frosinone",
+          "awayResolvedKey": "Lecce",
+          "homeRawSample": 1,
+          "awayRawSample": 0,
+          "homeBlendedSample": 4,
+          "awayBlendedSample": 3,
+          "homeSideRawSample": 1,
+          "awaySideRawSample": 0,
+          "homeSideBlendedSample": 4,
+          "awaySideBlendedSample": 3,
+          "homePriorSample": 38,
+          "awayPriorSample": 152,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": false,
           "reasons": [
@@ -3801,56 +3853,45 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
-          "observedAt": "2026-10-29T07:48:33.931Z",
-          "kickoffUtc": "2026-10-29T17:30Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-10-29T19:44:33.633Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "Frosinone",
-            "awayTeam": "Lecce",
-            "leagueSlug": "ita.1",
-            "fixtureDate": "2026-10-29T17:30:00.000Z",
-            "homeResolvedKey": "Frosinone",
-            "awayResolvedKey": "Lecce",
-            "homeRawSample": 1,
-            "awayRawSample": 0,
-            "homeBlendedSample": 4,
-            "awayBlendedSample": 3,
-            "homeSideRawSample": 1,
-            "awaySideRawSample": 0,
-            "homeSideBlendedSample": 4,
-            "awaySideBlendedSample": 3,
-            "homePriorSample": 38,
-            "awayPriorSample": 152,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       },
       {
         "canonicalId": "cid_swe1_hammarby_iksirius_20261029",
         "leagueSlug": "swe.1",
         "kickoffUtc": "2026-10-29T17:30Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Hammarby IF",
+          "awayTeam": "IK Sirius",
+          "leagueSlug": "swe.1",
+          "fixtureDate": "2026-10-29T17:30:00.000Z",
+          "homeResolvedKey": "Hammarby IF",
+          "awayResolvedKey": "IK Sirius",
+          "homeRawSample": 0,
+          "awayRawSample": 0,
+          "homeBlendedSample": 2,
+          "awayBlendedSample": 2,
+          "homeSideRawSample": 0,
+          "awaySideRawSample": 0,
+          "homeSideBlendedSample": 2,
+          "awaySideBlendedSample": 1,
+          "homePriorSample": 2,
+          "awayPriorSample": 2,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": false,
           "reasons": [
@@ -3859,47 +3900,7 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
-          "observedAt": "2026-10-29T07:48:33.931Z",
-          "kickoffUtc": "2026-10-29T17:30Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-10-29T19:44:33.633Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "Hammarby IF",
-            "awayTeam": "IK Sirius",
-            "leagueSlug": "swe.1",
-            "fixtureDate": "2026-10-29T17:30:00.000Z",
-            "homeResolvedKey": "Hammarby IF",
-            "awayResolvedKey": "IK Sirius",
-            "homeRawSample": 0,
-            "awayRawSample": 0,
-            "homeBlendedSample": 2,
-            "awayBlendedSample": 2,
-            "homeSideRawSample": 0,
-            "awaySideRawSample": 0,
-            "homeSideBlendedSample": 2,
-            "awaySideBlendedSample": 1,
-            "homePriorSample": 2,
-            "awayPriorSample": 2,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       },
       {
         "canonicalId": "cid_nedcup_kozakkenboys_utrecht_20261029",
@@ -3907,6 +3908,8 @@
         "kickoffUtc": "2026-10-29T17:45Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3953,6 +3956,8 @@
         "kickoffUtc": "2026-10-29T18:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3999,6 +4004,8 @@
         "kickoffUtc": "2026-10-29T18:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4045,6 +4052,8 @@
         "kickoffUtc": "2026-10-29T18:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4091,6 +4100,8 @@
         "kickoffUtc": "2026-10-29T18:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4137,6 +4148,8 @@
         "kickoffUtc": "2026-10-29T18:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4183,6 +4196,8 @@
         "kickoffUtc": "2026-10-29T18:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4227,10 +4242,39 @@
         "canonicalId": "cid_ksa1_alnassr_alkholood_20261029",
         "leagueSlug": "ksa.1",
         "kickoffUtc": "2026-10-29T18:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Al Nassr",
+          "awayTeam": "Al Kholood",
+          "leagueSlug": "ksa.1",
+          "fixtureDate": "2026-10-29T18:00:00.000Z",
+          "homeResolvedKey": "Al Nassr",
+          "awayResolvedKey": "Al Kholood",
+          "homeRawSample": 1,
+          "awayRawSample": 1,
+          "homeBlendedSample": 4,
+          "awayBlendedSample": 4,
+          "homeSideRawSample": 1,
+          "awaySideRawSample": 1,
+          "homeSideBlendedSample": 4,
+          "awaySideBlendedSample": 4,
+          "homePriorSample": 162,
+          "awayPriorSample": 68,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": false,
           "reasons": [
@@ -4239,56 +4283,45 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
-          "observedAt": "2026-10-29T07:48:33.931Z",
-          "kickoffUtc": "2026-10-29T18:00Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-10-29T19:44:33.633Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "Al Nassr",
-            "awayTeam": "Al Kholood",
-            "leagueSlug": "ksa.1",
-            "fixtureDate": "2026-10-29T18:00:00.000Z",
-            "homeResolvedKey": "Al Nassr",
-            "awayResolvedKey": "Al Kholood",
-            "homeRawSample": 1,
-            "awayRawSample": 1,
-            "homeBlendedSample": 4,
-            "awayBlendedSample": 4,
-            "homeSideRawSample": 1,
-            "awaySideRawSample": 1,
-            "homeSideBlendedSample": 4,
-            "awaySideBlendedSample": 4,
-            "homePriorSample": 162,
-            "awayPriorSample": 68,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       },
       {
         "canonicalId": "cid_ksa1_alriyadh_alqadsiah_20261029",
         "leagueSlug": "ksa.1",
         "kickoffUtc": "2026-10-29T18:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Al Riyadh",
+          "awayTeam": "Al Qadsiah",
+          "leagueSlug": "ksa.1",
+          "fixtureDate": "2026-10-29T18:00:00.000Z",
+          "homeResolvedKey": "Al Riyadh",
+          "awayResolvedKey": "Al Qadsiah",
+          "homeRawSample": 1,
+          "awayRawSample": 2,
+          "homeBlendedSample": 4,
+          "awayBlendedSample": 5,
+          "homeSideRawSample": 0,
+          "awaySideRawSample": 1,
+          "homeSideBlendedSample": 3,
+          "awaySideBlendedSample": 4,
+          "homePriorSample": 102,
+          "awayPriorSample": 68,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": false,
           "reasons": [
@@ -4297,56 +4330,45 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
-          "observedAt": "2026-10-29T07:48:33.931Z",
-          "kickoffUtc": "2026-10-29T18:00Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-10-29T19:44:33.633Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "Al Riyadh",
-            "awayTeam": "Al Qadsiah",
-            "leagueSlug": "ksa.1",
-            "fixtureDate": "2026-10-29T18:00:00.000Z",
-            "homeResolvedKey": "Al Riyadh",
-            "awayResolvedKey": "Al Qadsiah",
-            "homeRawSample": 1,
-            "awayRawSample": 2,
-            "homeBlendedSample": 4,
-            "awayBlendedSample": 5,
-            "homeSideRawSample": 0,
-            "awaySideRawSample": 1,
-            "homeSideBlendedSample": 3,
-            "awaySideBlendedSample": 4,
-            "homePriorSample": 102,
-            "awayPriorSample": 68,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       },
       {
         "canonicalId": "cid_per1_loschankas_cusco_20261029",
         "leagueSlug": "per.1",
         "kickoffUtc": "2026-10-29T18:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Los Chankas",
+          "awayTeam": "Cusco FC",
+          "leagueSlug": "per.1",
+          "fixtureDate": "2026-10-29T18:00:00.000Z",
+          "homeResolvedKey": "Los Chankas",
+          "awayResolvedKey": "Cusco",
+          "homeRawSample": 4,
+          "awayRawSample": 0,
+          "homeBlendedSample": 7,
+          "awayBlendedSample": 3,
+          "homeSideRawSample": 1,
+          "awaySideRawSample": 0,
+          "homeSideBlendedSample": 4,
+          "awaySideBlendedSample": 3,
+          "homePriorSample": 69,
+          "awayPriorSample": 125,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": false,
           "reasons": [
@@ -4355,56 +4377,45 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
-          "observedAt": "2026-10-29T07:48:33.931Z",
-          "kickoffUtc": "2026-10-29T18:00Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-10-29T19:44:33.633Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "Los Chankas",
-            "awayTeam": "Cusco FC",
-            "leagueSlug": "per.1",
-            "fixtureDate": "2026-10-29T18:00:00.000Z",
-            "homeResolvedKey": "Los Chankas",
-            "awayResolvedKey": "Cusco",
-            "homeRawSample": 4,
-            "awayRawSample": 0,
-            "homeBlendedSample": 7,
-            "awayBlendedSample": 3,
-            "homeSideRawSample": 1,
-            "awaySideRawSample": 0,
-            "homeSideBlendedSample": 4,
-            "awaySideBlendedSample": 3,
-            "homePriorSample": 69,
-            "awayPriorSample": 125,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       },
       {
         "canonicalId": "cid_swe1_kalmarff_gais_20261029",
         "leagueSlug": "swe.1",
         "kickoffUtc": "2026-10-29T18:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Kalmar FF",
+          "awayTeam": "GAIS",
+          "leagueSlug": "swe.1",
+          "fixtureDate": "2026-10-29T18:00:00.000Z",
+          "homeResolvedKey": "Kalmar FF",
+          "awayResolvedKey": "GAIS",
+          "homeRawSample": 1,
+          "awayRawSample": 0,
+          "homeBlendedSample": 3,
+          "awayBlendedSample": 3,
+          "homeSideRawSample": 0,
+          "awaySideRawSample": 0,
+          "homeSideBlendedSample": 1,
+          "awaySideBlendedSample": 3,
+          "homePriorSample": 2,
+          "awayPriorSample": 60,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": false,
           "reasons": [
@@ -4413,56 +4424,45 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
-          "observedAt": "2026-10-29T07:48:33.931Z",
-          "kickoffUtc": "2026-10-29T18:00Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-10-29T19:44:33.633Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "Kalmar FF",
-            "awayTeam": "GAIS",
-            "leagueSlug": "swe.1",
-            "fixtureDate": "2026-10-29T18:00:00.000Z",
-            "homeResolvedKey": "Kalmar FF",
-            "awayResolvedKey": "GAIS",
-            "homeRawSample": 1,
-            "awayRawSample": 0,
-            "homeBlendedSample": 3,
-            "awayBlendedSample": 3,
-            "homeSideRawSample": 0,
-            "awaySideRawSample": 0,
-            "homeSideBlendedSample": 1,
-            "awaySideBlendedSample": 3,
-            "homePriorSample": 2,
-            "awayPriorSample": 60,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       },
       {
         "canonicalId": "cid_swe1_orgryteis_mjallby_20261029",
         "leagueSlug": "swe.1",
         "kickoffUtc": "2026-10-29T18:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Örgryte IS",
+          "awayTeam": "Mjällby AIF",
+          "leagueSlug": "swe.1",
+          "fixtureDate": "2026-10-29T18:00:00.000Z",
+          "homeResolvedKey": "Örgryte IS",
+          "awayResolvedKey": "Mjällby AIF",
+          "homeRawSample": 0,
+          "awayRawSample": 0,
+          "homeBlendedSample": 0,
+          "awayBlendedSample": 2,
+          "homeSideRawSample": 0,
+          "awaySideRawSample": 0,
+          "homeSideBlendedSample": 0,
+          "awaySideBlendedSample": 1,
+          "homePriorSample": null,
+          "awayPriorSample": 2,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": false,
           "reasons": [
@@ -4471,47 +4471,7 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
-          "observedAt": "2026-10-29T07:48:33.931Z",
-          "kickoffUtc": "2026-10-29T18:00Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-10-29T19:44:33.633Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "Örgryte IS",
-            "awayTeam": "Mjällby AIF",
-            "leagueSlug": "swe.1",
-            "fixtureDate": "2026-10-29T18:00:00.000Z",
-            "homeResolvedKey": "Örgryte IS",
-            "awayResolvedKey": "Mjällby AIF",
-            "homeRawSample": 0,
-            "awayRawSample": 0,
-            "homeBlendedSample": 0,
-            "awayBlendedSample": 2,
-            "homeSideRawSample": 0,
-            "awaySideRawSample": 0,
-            "homeSideBlendedSample": 0,
-            "awaySideBlendedSample": 1,
-            "homePriorSample": null,
-            "awayPriorSample": 2,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       },
       {
         "canonicalId": "cid_espcopadelrey_cieza_granada_20261029",
@@ -4519,6 +4479,8 @@
         "kickoffUtc": "2026-10-29T18:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4563,8 +4525,11 @@
         "canonicalId": "cid_col2_bocajuniors_umagdalena_20261029",
         "leagueSlug": "col.2",
         "kickoffUtc": "2026-10-29T19:00:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -4581,8 +4546,11 @@
         "canonicalId": "cid_col2_envigado_indvalledelcauca_20261029",
         "leagueSlug": "col.2",
         "kickoffUtc": "2026-10-29T19:00:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -4601,6 +4569,8 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4647,6 +4617,8 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4693,6 +4665,8 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4739,6 +4713,8 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4785,6 +4761,8 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4831,6 +4809,8 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4877,6 +4857,8 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4923,6 +4905,8 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4969,6 +4953,8 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -5015,6 +5001,8 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -5061,6 +5049,8 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -5107,6 +5097,8 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -5153,6 +5145,8 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -5199,6 +5193,8 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -5245,6 +5241,8 @@
         "kickoffUtc": "2026-10-29T19:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -5289,8 +5287,11 @@
         "canonicalId": "cid_engleaguecup_everton_newcastleunited_20261029",
         "leagueSlug": "eng.league_cup",
         "kickoffUtc": "2026-10-29T19:45Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -5307,8 +5308,11 @@
         "canonicalId": "cid_ita1_fiorentina_atalanta_20261029",
         "leagueSlug": "ita.1",
         "kickoffUtc": "2026-10-29T19:45Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -5327,6 +5331,8 @@
         "kickoffUtc": "2026-10-29T20:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -5368,29 +5374,13 @@
         "predictionCreated": false
       },
       {
-        "canonicalId": "cid_mar1_maghrebfez_berkane_20261029",
-        "leagueSlug": "mar.1",
-        "kickoffUtc": "2026-10-29T20:00:00.000Z",
-        "status": "READY",
-        "reasons": [],
-        "modelAssessmentAvailable": true,
-        "recentHistory": null,
-        "standings": {
-          "usable": false,
-          "reasons": [
-            "CONSUMER_TABLE_EMPTY",
-            "CONTRACT_NOT_PASS",
-            "FOUNDATION_NOT_PASS"
-          ]
-        },
-        "predictionCreated": false
-      },
-      {
         "canonicalId": "cid_espcopadelrey_aeprat_athletic_20261029",
         "leagueSlug": "esp.copa_del_rey",
         "kickoffUtc": "2026-10-29T20:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -5437,6 +5427,8 @@
         "kickoffUtc": "2026-10-29T20:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -5483,6 +5475,8 @@
         "kickoffUtc": "2026-10-29T20:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -5529,6 +5523,8 @@
         "kickoffUtc": "2026-10-29T20:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -5575,6 +5571,8 @@
         "kickoffUtc": "2026-10-29T20:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -5619,8 +5617,11 @@
         "canonicalId": "cid_nedcup_groningen_emmen_20261029",
         "leagueSlug": "ned.cup",
         "kickoffUtc": "2026-10-29T20:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -5637,8 +5638,11 @@
         "canonicalId": "cid_per1_sportingcristal_alianzalima_20261029",
         "leagueSlug": "per.1",
         "kickoffUtc": "2026-10-29T20:30Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -5655,8 +5659,11 @@
         "canonicalId": "cid_col2_tigres_cartagena_20261029",
         "leagueSlug": "col.2",
         "kickoffUtc": "2026-10-29T21:00:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "coverage_missing_or_wrong_universe",
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -5676,12 +5683,6 @@
       "realOddsRequiredForStatisticalSelection": false,
       "unverifiedStandingsNeverPromoted": true,
       "thresholdsChanged": false
-    },
-    "readinessTimeBasis": "signed_prematch_evidence_for_started_fixtures_current_diagnostics_for_future_fixtures",
-    "prematchEvidence": {
-      "preservedRows": 19,
-      "invalidRecords": 0,
-      "predictionCreated": false
     }
   }
 }
