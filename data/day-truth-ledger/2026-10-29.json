@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-29",
-  "generatedAt": "2026-10-29T13:43:16.338Z",
+  "generatedAt": "2026-10-29T14:36:18.913Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "19ee941cc5d05814310490c8793687d7cf4b3865de3b81a9c2c1cf98c2e81379",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "68033428fde7d72df04c0b4a7dfb1256f09f205b2d543a8314c6d96b1c1763ed",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 116,
-    "playedTerminal": 33,
+    "playedTerminal": 35,
     "nonPlayedTerminal": 1,
-    "scheduled": 79,
+    "scheduled": 77,
     "live": 3,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 33,
-    "acceptedVerifiedFinalArtifacts": 33,
-    "convergedPlayedFinal": 33,
+    "verifiedFinalArtifacts": 36,
+    "acceptedVerifiedFinalArtifacts": 36,
+    "convergedPlayedFinal": 35,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 82,
+    "openRows": 79,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 33,
-    "scoredSettlementEligible": 33,
+    "historyEligible": 35,
+    "scoredSettlementEligible": 35,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -147,25 +147,25 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-29",
+        "scoreHome": 2,
+        "scoreAway": 0,
+        "scoreParity": false
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -196,9 +196,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 1
       },
@@ -245,9 +245,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 3
       },
@@ -487,31 +487,31 @@
       "homeTeam": "BKMA 2",
       "awayTeam": "Ararat Yerevan 2",
       "kickoffUtc": "2026-10-29T11:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-29",
+        "scoreHome": 0,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3378,31 +3378,31 @@
       "homeTeam": "Balikpapan",
       "awayTeam": "PSBS Biak Numfor",
       "kickoffUtc": "2026-10-29T12:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 3,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-29",
+        "scoreHome": 3,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -5728,7 +5728,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_afccup_phnompenhcrown_kitchee_20261029"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -5962,7 +5964,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 17836,
+            "count": 17936,
             "informational": true
           }
         },
@@ -9600,18 +9602,19 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "19ee941cc5d05814310490c8793687d7cf4b3865de3b81a9c2c1cf98c2e81379",
+      "truthFingerprint": "68033428fde7d72df04c0b4a7dfb1256f09f205b2d543a8314c6d96b1c1763ed",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 33,
+        "expectedEligibleRows": 35,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_afccup_adelaideunited_lioncitysailors_20261029",
           "cid_afccup_gangwon_kuchingcity_20261029",
           "cid_afccup_tampinesrovers_preahkhanreachsvayrieng_20261029",
+          "cid_arm2_bkma2_araratyerevan2_20261029",
           "cid_bra1_bahia_saopaulo_20261029",
           "cid_bra1_fluminense_internacional_20261029",
           "cid_bra1_redbullbragantino_chapecoense_20261029",
@@ -9623,6 +9626,7 @@
           "cid_col2_quindio_realcundinamarca_20261029",
           "cid_gua1_malacateco_aurora_20261029",
           "cid_gua1_municipal_comunicaciones_20261029",
+          "cid_idn2_balikpapan_psbsbiaknumfor_20261029",
           "cid_idn2_ransnusantara_tornadopekanbaru_20261029",
           "cid_mex1_america_tijuana_20261029",
           "cid_per1_ciencianodelcusco_atleticograu_20261029",
@@ -9701,7 +9705,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-29",
-      "fileCount": 33,
+      "fileCount": 36,
       "authority": "scored_final_evidence"
     },
     "downstream": {
