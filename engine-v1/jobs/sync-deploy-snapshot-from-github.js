@@ -64,6 +64,14 @@ function parseJsonBuffer(buffer, label) {
 export const REQUIRED_VALUE_COMPARISON_PLANS =
   Object.freeze(["A", "A2", "B", "B2"]);
 
+// A historical release may legitimately lack a comparison from before its
+// original publication. Never relax this for the pinned release's latest day.
+export function isHistoricalSnapshotComparisonOptional(day, latest) {
+  const target = String(day || "");
+  const latestDay = String(latest?.date || "");
+  return DAY_RE.test(target) && DAY_RE.test(latestDay) && latestDay > target;
+}
+
 function explicitUnrecoverablePlanAGap(payload) {
   return Boolean(
     payload?.comparisonEligible === false &&
@@ -546,32 +554,39 @@ async function updateRuntimeSyncState({ day, ref, manifest, latestPromoted, stat
   }, null, 2)));
 }
 
-async function stageRuntimeReleaseArtifacts({
+export async function stageRuntimeReleaseArtifacts({
   repo,
   ref,
   day,
   stageDayDir,
   stats,
-  requireDiagnostics
+  requireDiagnostics,
+  allowMissingHistoricalComparison = false,
+  fetchArtifact = fetchBuffer
 }) {
   const runtimeDir = path.join(stageDayDir, "runtime");
   await fsp.mkdir(runtimeDir, { recursive: true });
 
   // Value comparison is part of the served day release for every synchronized day.
-  const comparisonBuffer = await fetchBuffer(
-    rawUrl(repo, ref, `data/value-comparison/${day}.json`)
+  const comparisonBuffer = await fetchArtifact(
+    rawUrl(repo, ref, `data/value-comparison/${day}.json`),
+    { optional: allowMissingHistoricalComparison }
   );
-  validateValueComparisonPayload(
-    parseJsonBuffer(
-      comparisonBuffer,
-      "value_comparison"
-    ),
-    day
-  );
+  if (comparisonBuffer === null) {
+    if (!allowMissingHistoricalComparison) {
+      throw new Error("value_comparison_required_for_current_release");
+    }
+  } else {
+    // A comparison that exists must still satisfy the full integrity contract.
+    validateValueComparisonPayload(
+      parseJsonBuffer(comparisonBuffer, "value_comparison"),
+      day
+    );
+  }
 
   // Current/latest releases must carry diagnostics. Historical days may predate
   // those artifacts; when present they are still embedded and mirrored.
-  const buildBuffer = await fetchBuffer(
+  const buildBuffer = await fetchArtifact(
     rawUrl(repo, ref, `data/build-reports/${day}.json`),
     { optional: !requireDiagnostics }
   );
@@ -581,7 +596,7 @@ async function stageRuntimeReleaseArtifacts({
     if (buildDay && buildDay !== day) throw new Error("build_report_day_mismatch");
   }
 
-  const alertsBuffer = await fetchBuffer(
+  const alertsBuffer = await fetchArtifact(
     rawUrl(repo, ref, `data/system-health/${day}.json`),
     { optional: !requireDiagnostics }
   );
@@ -608,7 +623,7 @@ async function stageRuntimeReleaseArtifacts({
     comparisonBuffer,
     buildBuffer,
     alertsBuffer,
-    comparisonPresent: true,
+    comparisonPresent: comparisonBuffer !== null,
     buildReportPresent: Boolean(buildBuffer),
     systemHealthPresent: Boolean(alertsBuffer)
   };
@@ -824,8 +839,22 @@ export async function syncDeploySnapshotFromGithub(dayKey = athensDayKey(), opti
       day,
       stageDayDir,
       stats,
-      requireDiagnostics: promoteLatest
+      requireDiagnostics: promoteLatest,
+      allowMissingHistoricalComparison:
+        isHistoricalSnapshotComparisonOptional(day, latest)
     });
+
+    // Do not silently discard or overwrite a previous unpinned comparison.
+    // In that case a separate owner decision is required before publication.
+    if (
+      !runtimeArtifacts.comparisonPresent &&
+      (
+        fs.existsSync(resolveDataPath("value-comparison", `${day}.json`)) ||
+        fs.existsSync(path.join(targetDayDir, "runtime", "value-comparison.json"))
+      )
+    ) {
+      throw new Error("historical_comparison_existing_mirror_requires_review");
+    }
 
     await promoteDirectory(stageDayDir, targetDayDir, backupDir);
 
