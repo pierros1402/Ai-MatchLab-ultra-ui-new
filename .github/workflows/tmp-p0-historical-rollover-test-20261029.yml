@@ -1,0 +1,38 @@
+name: P0 historical rollover odds isolation test
+
+on:
+  push:
+    branches:
+      - fix/p0-historical-rollover-odds-isolation-20261029
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout minimal test source
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1
+            workers
+          sparse-checkout-cone-mode: true
+          persist-credentials: false
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: JS syntax
+        run: |
+          node --check engine-v1/jobs/sync-deploy-snapshot-from-github.js
+          node --check engine-v1/jobs/sync-deploy-snapshot-historical-comparison.test.js
+      - name: Targeted isolated tests
+        run: |
+          node --test \
+            engine-v1/jobs/sync-deploy-snapshot-historical-comparison.test.js \
+            engine-v1/jobs/sync-deploy-snapshot-from-github.test.js \
+            engine-v1/jobs/sync-deploy-snapshot-release.test.js \
+            engine-v1/value-comparison-runtime-gap.test.js
