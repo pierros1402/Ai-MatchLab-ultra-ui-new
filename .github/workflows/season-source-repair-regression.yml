@@ -84,3 +84,91 @@ jobs:
           mapfile -d '' -t tests < <(find engine-v1 -type f -name '*.test.js' -print0 | sort -z)
           if (( ${#tests[@]} == 0 )); then exit 1; fi
           node --test --test-concurrency=4 "${tests[@]}"
+
+  baseline-versus-patch-regression-delta:
+    # A PASS means ONLY no new failures; strict full-engine status stays blocking.
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CI: "true"
+      TZ: "UTC"
+      NO_COLOR: "1"
+    steps:
+      - name: Check out proposed source without write credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check out immutable original source for comparison
+        uses: actions/checkout@v4
+        with:
+          ref: "277f4554ec46619700c9b6e7a2a0099239af89df"
+          path: immutable-base
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install both source trees without lifecycle scripts
+        shell: bash
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          (cd immutable-base && npm ci --ignore-scripts --no-audit --no-fund)
+      - name: Compare complete engine suites without publishing any artifacts
+        shell: bash
+        run: |
+          set +e
+          (
+            mapfile -d '' -t tests < <(find engine-v1 -type f -name '*.test.js' -print0 | sort -z)
+            node --test --test-reporter=spec --test-concurrency=4 "${tests[@]}"
+          ) > "$RUNNER_TEMP/season-candidate.spec" 2>&1
+          candidate_exit=$?
+          (
+            cd immutable-base
+            mapfile -d '' -t tests < <(find engine-v1 -type f -name '*.test.js' -print0 | sort -z)
+            node --test --test-reporter=spec --test-concurrency=4 "${tests[@]}"
+          ) > "$RUNNER_TEMP/season-immutable-base.spec" 2>&1
+          baseline_exit=$?
+          set -e
+          if (( baseline_exit != 1 || candidate_exit != 1 )); then
+            echo "Unexpected test exit codes: baseline=$baseline_exit candidate=$candidate_exit" >&2
+            exit 1
+          fi
+          node --input-type=module - "$RUNNER_TEMP/season-immutable-base.spec" "$RUNNER_TEMP/season-candidate.spec" <<'JS'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          const expected = [
+            'pins all required producer source hashes',
+            'exact R31 identities and ACL activation verify while production remains disabled',
+            'R32 fingerprint is deterministic and runner contains no account ACL replay signer kernel push or deploy mutation machinery',
+            'Plan A records non-playable rejection exactly once before evaluation',
+            'value panel follows selected day and never falls back to stale static release data',
+            'live worker overlay is bounded and labeled with the shared operational day',
+            'UI aborts are terminal and are not retried as fetch failures',
+            'updated Value/live UI assets are cache-busted',
+          ].sort();
+          function parse(file) {
+            const s = fs.readFileSync(file, 'utf8').replace(/\u001b\[[0-9;]*m/g, '').replace(/\r/g, '');
+            const t = [...s.matchAll(/^\s*ℹ tests (\d+)\s*$/gm)];
+            const f = [...s.matchAll(/^\s*ℹ fail (\d+)\s*$/gm)];
+            assert.equal(t.length, 1, 'incomplete or multiple test-count summaries');
+            assert.equal(f.length, 1, 'incomplete or multiple failure-count summaries');
+            const tests = Number(t[0][1]), fail = Number(f[0][1]);
+            assert.ok(tests > 1000, 'full engine suite is required');
+            const marker = s.lastIndexOf('✖ failing tests:');
+            assert.ok(marker >= 0, 'missing full failed-tests section');
+            const names = [...s.slice(marker).matchAll(/^\s*✖\s+(.+?)\s+\([\d.]+ms\)\s*$/gm)].map(x => x[1]);
+            assert.equal(names.length, fail, 'incomplete failure enumeration');
+            assert.equal(new Set(names).size, fail, 'ambiguous duplicate names');
+            return {tests, fail, names:names.sort()};
+          }
+          const baseline = parse(process.argv[2]), candidate = parse(process.argv[3]);
+          assert.deepEqual(baseline.names, expected, 'immutable baseline failures changed; review required');
+          assert.ok(candidate.tests >= baseline.tests + 5, 'missing new Athens-day tests');
+          assert.deepEqual(candidate.names.filter(n => !baseline.names.includes(n)), [], 'new failures in candidate');
+          console.log(JSON.stringify({
+            status:'NO_NEW_FAILURES_VS_IMMUTABLE_BASE',
+            baseline:{tests:baseline.tests, failed:baseline.fail},
+            candidate:{tests:candidate.tests, failed:candidate.fail},
+            strictFullSuitePass:false, mergeOrDeployAuthorized:false
+          },null,2));
+          JS
