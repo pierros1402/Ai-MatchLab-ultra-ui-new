@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-10-29",
-  "generatedAt": "2026-10-29T07:13:37.238Z",
+  "generatedAt": "2026-10-29T07:49:45.233Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -178,41 +178,535 @@
     "id": "plan-u1",
     "label": "Ενιαίο πλάνο",
     "date": "2026-10-29",
-    "status": "NOT_AVAILABLE",
-    "availability": "not_available",
-    "reason": "unified_results_invalid",
-    "activationDay": "2026-10-18",
-    "count": 0,
-    "picks": [],
+    "status": "AVAILABLE",
+    "availability": "available",
+    "publicationMode": "production",
+    "productionPublication": true,
+    "policyId": "unified-public-u1-incremental-v1",
+    "generatedAt": "2026-10-29T07:49:44.802Z",
+    "count": 2,
+    "picks": [
+      {
+        "matchId": "cid_ksa1_alnassr_alkholood_20261029",
+        "leagueSlug": "ksa.1",
+        "homeTeam": "Al Nassr",
+        "awayTeam": "Al Kholood",
+        "kickoff": "2026-10-29T18:00Z",
+        "market": "OU25",
+        "marketName": "Over / Under 2.5",
+        "pick": "over",
+        "score": null,
+        "band": null,
+        "confidence": null,
+        "rawConfidence": 0.908,
+        "readiness": 0.71,
+        "signals": [
+          "home_edge_strong",
+          "over25_support",
+          "matchup_goals_history",
+          "priors_applied",
+          "close_strength_gap",
+          "match_profile_applied"
+        ],
+        "meta": {
+          "model": "value-engine-v1",
+          "mode": "statistical_plus_context",
+          "formWindow": 5,
+          "formRules": {
+            "sameSeasonOnly": true,
+            "maxAgeDays": 35,
+            "fullStrengthDays": 7,
+            "decayStartDays": 8,
+            "heavyDecayDays": 14,
+            "breakdownDays": 21,
+            "gapModerateDays": 14,
+            "gapHeavyDays": 21,
+            "gapStaleDays": 35,
+            "gapPolicy": "form_weight_reduced_not_rejected"
+          },
+          "baseWeights": {
+            "form": 0.5,
+            "homeAway": 0.2,
+            "goals": 0.2,
+            "matchup": 0.1
+          },
+          "effectiveWeights": {
+            "homeOverallFormWeight": 0.425,
+            "awayOverallFormWeight": 0.5,
+            "homeSideFormWeight": 0.12,
+            "awaySideFormWeight": 0.12
+          },
+          "expectedHomeGoals": 2.243,
+          "expectedAwayGoals": 1.018,
+          "expectedTotalGoals": 3.261,
+          "homeStrength": 0.731,
+          "awayStrength": 0.342,
+          "homeEdge": 0.58,
+          "awayPenalty": 0.349,
+          "recency": {
+            "homeOverall": {
+              "sample": 6,
+              "rawSample": 3,
+              "priorSample": 162,
+              "daysSinceLastMatch": 6,
+              "spanDays": 13,
+              "maxInternalGap": 11,
+              "gapSeverity": "normal",
+              "freshnessScore": 1,
+              "continuityScore": 0.85,
+              "formContinuityWeight": 0.827
+            },
+            "awayOverall": {
+              "sample": 6,
+              "rawSample": 3,
+              "priorSample": 68,
+              "daysSinceLastMatch": 5,
+              "spanDays": 15,
+              "maxInternalGap": 9,
+              "gapSeverity": "normal",
+              "freshnessScore": 1,
+              "continuityScore": 1,
+              "formContinuityWeight": 0.88
+            },
+            "homeSide": {
+              "sample": 5,
+              "rawSample": 2,
+              "priorSample": 162,
+              "daysSinceLastMatch": 9,
+              "spanDays": 11,
+              "maxInternalGap": 11,
+              "gapSeverity": "normal",
+              "freshnessScore": 0.65,
+              "continuityScore": 0.85,
+              "formContinuityWeight": 0.645
+            },
+            "awaySide": {
+              "sample": 4,
+              "rawSample": 1,
+              "priorSample": 68,
+              "daysSinceLastMatch": 14,
+              "spanDays": 0,
+              "maxInternalGap": 0,
+              "gapSeverity": "normal",
+              "freshnessScore": 0.4,
+              "continuityScore": 0.85,
+              "formContinuityWeight": 0.497
+            }
+          },
+          "matchupSample": 3,
+          "priorsUsed": true,
+          "priors": {
+            "used": true,
+            "homePriorSample": 162,
+            "awayPriorSample": 68,
+            "leaguePriorSample": 1399,
+            "matchupPriorSample": 4
+          },
+          "resolution": {
+            "homeInput": "Al Nassr",
+            "awayInput": "Al Kholood",
+            "homeResolvedKey": "Al Nassr",
+            "awayResolvedKey": "Al Kholood",
+            "homeResolveScore": 1,
+            "awayResolveScore": 1,
+            "matchupResolvedKey": "Al Nassr::Al Kholood",
+            "matchupResolveScore": 0,
+            "homePriorKey": "ksa.1::Al Nassr",
+            "awayPriorKey": "ksa.1::Al Kholood",
+            "matchupPriorKey": "ksa.1|Al Kholood|Al Nassr"
+          },
+          "sourceKeys": {
+            "homeTeamKey": "Al Nassr",
+            "awayTeamKey": "Al Kholood",
+            "leagueKey": "ksa.1",
+            "matchupKey": "Al Nassr::Al Kholood"
+          },
+          "contextModifiers": {
+            "applied": true,
+            "version": "value-context-modifiers-v1.0"
+          },
+          "contextAdjusted": true,
+          "contextDelta": 0,
+          "contextReasons": [
+            {
+              "code": "h2h_home_edge",
+              "impact": 0.025,
+              "note": "Recent H2H leans home"
+            },
+            {
+              "code": "h2h_overlean",
+              "impact": 0.03,
+              "note": "Recent H2H goals profile is open"
+            },
+            {
+              "code": "ai_h2h_over_signal",
+              "impact": 0.07,
+              "note": "AI detected open H2H pattern"
+            },
+            {
+              "code": "ai_h2h_home_edge",
+              "impact": 0.06,
+              "note": "AI detected home H2H edge"
+            }
+          ],
+          "aiContext": {
+            "available": true,
+            "importance": "low",
+            "stakes": [],
+            "pressure": [
+              "low_confidence_table"
+            ]
+          },
+          "matchProfileApplied": true,
+          "matchProfileConfidence": 0.67,
+          "matchProfileReasons": [
+            {
+              "code": "match_profile_h2h_home_edge",
+              "impact": 0.011000000000000001,
+              "note": "MatchProfile H2H trend leans home"
+            },
+            {
+              "code": "match_profile_h2h_overlean",
+              "impact": 0.022000000000000002,
+              "note": "MatchProfile H2H goal pattern leans over"
+            }
+          ],
+          "valuePolicy": {
+            "version": "statistical-value-policy-v2.3",
+            "oddsIndependent": true,
+            "type": "statistical_value",
+            "formGapHandling": "reduced_weight_not_rejected"
+          },
+          "readiness": 0.71,
+          "adjustedConfidence": 0.873,
+          "outcomeScores": {
+            "homeWinScore": 0.649,
+            "drawScore": 0.1,
+            "awayWinScore": 0.298,
+            "bestSide": "HOME",
+            "sideGap": 0.35100000000000003,
+            "drawGapToBestSide": 0.549
+          },
+          "policyReason": "over25_near_high_medium_only"
+        },
+        "context": {
+          "season": "2026-2027",
+          "leagueSlug": "ksa.1",
+          "competitionType": "league",
+          "phase": "regular",
+          "leagueTrust": "medium",
+          "leagueTier": 2,
+          "homeRestDays": 9,
+          "awayRestDays": 14,
+          "homeMatchesLast7": 0,
+          "awayMatchesLast7": 0,
+          "homeMatchesLast14": 1,
+          "awayMatchesLast14": 0,
+          "homeNextMatchInDays": null,
+          "awayNextMatchInDays": null
+        },
+        "canonicalMatchId": "cid_ksa1_alnassr_alkholood_20261029",
+        "kickoffUtc": "2026-10-29T18:00:00.000Z",
+        "families": [
+          "statistical"
+        ],
+        "sourceScores": {
+          "A": 0.847,
+          "A2": 0.847
+        },
+        "planId": "plan-u1",
+        "unified": true,
+        "modelProb": null,
+        "marketProb": null,
+        "aiFairOdds": null,
+        "result": "UNRESOLVED",
+        "finalScore": null,
+        "settlementTruth": null,
+        "publicationRecord": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
+        "firstObservedAt": "2026-10-29T07:48:33.931Z"
+      },
+      {
+        "matchId": "cid_per1_loschankas_cusco_20261029",
+        "leagueSlug": "per.1",
+        "homeTeam": "Los Chankas",
+        "awayTeam": "Cusco FC",
+        "kickoff": "2026-10-29T18:00Z",
+        "market": "OU25",
+        "marketName": "Over / Under 2.5",
+        "pick": "over",
+        "score": null,
+        "band": null,
+        "confidence": null,
+        "rawConfidence": 0.901,
+        "readiness": 0.716,
+        "signals": [
+          "away_edge",
+          "over25_support",
+          "priors_applied",
+          "close_strength_gap",
+          "home_rest_3",
+          "match_profile_applied"
+        ],
+        "meta": {
+          "model": "value-engine-v1",
+          "mode": "statistical_plus_context",
+          "formWindow": 5,
+          "formRules": {
+            "sameSeasonOnly": true,
+            "maxAgeDays": 35,
+            "fullStrengthDays": 7,
+            "decayStartDays": 8,
+            "heavyDecayDays": 14,
+            "breakdownDays": 21,
+            "gapModerateDays": 14,
+            "gapHeavyDays": 21,
+            "gapStaleDays": 35,
+            "gapPolicy": "form_weight_reduced_not_rejected"
+          },
+          "baseWeights": {
+            "form": 0.5,
+            "homeAway": 0.2,
+            "goals": 0.2,
+            "matchup": 0.1
+          },
+          "effectiveWeights": {
+            "homeOverallFormWeight": 0.425,
+            "awayOverallFormWeight": 0.5,
+            "homeSideFormWeight": 0.12,
+            "awaySideFormWeight": 0.12
+          },
+          "expectedHomeGoals": 1.27,
+          "expectedAwayGoals": 1.498,
+          "expectedTotalGoals": 2.769,
+          "homeStrength": 0.418,
+          "awayStrength": 0.536,
+          "homeEdge": 0.416,
+          "awayPenalty": 0.342,
+          "recency": {
+            "homeOverall": {
+              "sample": 7,
+              "rawSample": 4,
+              "priorSample": 69,
+              "daysSinceLastMatch": 3,
+              "spanDays": 25,
+              "maxInternalGap": 9,
+              "gapSeverity": "normal",
+              "freshnessScore": 1,
+              "continuityScore": 0.85,
+              "formContinuityWeight": 0.888
+            },
+            "awayOverall": {
+              "sample": 6,
+              "rawSample": 3,
+              "priorSample": 125,
+              "daysSinceLastMatch": 4,
+              "spanDays": 12,
+              "maxInternalGap": 8,
+              "gapSeverity": "normal",
+              "freshnessScore": 1,
+              "continuityScore": 1,
+              "formContinuityWeight": 0.88
+            },
+            "homeSide": {
+              "sample": 4,
+              "rawSample": 1,
+              "priorSample": 69,
+              "daysSinceLastMatch": 12,
+              "spanDays": 0,
+              "maxInternalGap": 0,
+              "gapSeverity": "normal",
+              "freshnessScore": 0.5,
+              "continuityScore": 0.85,
+              "formContinuityWeight": 0.533
+            },
+            "awaySide": {
+              "sample": 4,
+              "rawSample": 1,
+              "priorSample": 125,
+              "daysSinceLastMatch": 13,
+              "spanDays": 0,
+              "maxInternalGap": 0,
+              "gapSeverity": "normal",
+              "freshnessScore": 0.45,
+              "continuityScore": 0.85,
+              "formContinuityWeight": 0.515
+            }
+          },
+          "matchupSample": 4,
+          "priorsUsed": true,
+          "priors": {
+            "used": true,
+            "homePriorSample": 69,
+            "awayPriorSample": 125,
+            "leaguePriorSample": 1483,
+            "matchupPriorSample": 4
+          },
+          "resolution": {
+            "homeInput": "Los Chankas",
+            "awayInput": "Cusco FC",
+            "homeResolvedKey": "Los Chankas",
+            "awayResolvedKey": "Cusco",
+            "homeResolveScore": 1,
+            "awayResolveScore": 1,
+            "matchupResolvedKey": "Cienciano del Cusco::Los Chankas",
+            "matchupResolveScore": 0.9,
+            "homePriorKey": "per.1::Los Chankas",
+            "awayPriorKey": "per.1::Cusco FC",
+            "matchupPriorKey": "per.1|Cusco FC|Los Chankas"
+          },
+          "sourceKeys": {
+            "homeTeamKey": "Los Chankas",
+            "awayTeamKey": "Cusco",
+            "leagueKey": "per.1",
+            "matchupKey": "Cienciano del Cusco::Los Chankas"
+          },
+          "contextModifiers": {
+            "applied": true,
+            "version": "value-context-modifiers-v1.0"
+          },
+          "contextAdjusted": true,
+          "contextDelta": 0,
+          "contextReasons": [
+            {
+              "code": "h2h_home_edge",
+              "impact": 0.025,
+              "note": "Recent H2H leans home"
+            },
+            {
+              "code": "h2h_overlean",
+              "impact": 0.03,
+              "note": "Recent H2H goals profile is open"
+            },
+            {
+              "code": "ai_h2h_over_signal",
+              "impact": 0.07,
+              "note": "AI detected open H2H pattern"
+            },
+            {
+              "code": "ai_h2h_home_edge",
+              "impact": 0.06,
+              "note": "AI detected home H2H edge"
+            }
+          ],
+          "aiContext": {
+            "available": true,
+            "importance": "low",
+            "stakes": [],
+            "pressure": [
+              "low_confidence_table"
+            ]
+          },
+          "matchProfileApplied": true,
+          "matchProfileConfidence": 0.67,
+          "matchProfileReasons": [
+            {
+              "code": "match_profile_h2h_home_edge",
+              "impact": 0.011000000000000001,
+              "note": "MatchProfile H2H trend leans home"
+            },
+            {
+              "code": "match_profile_h2h_overlean",
+              "impact": 0.022000000000000002,
+              "note": "MatchProfile H2H goal pattern leans over"
+            }
+          ],
+          "valuePolicy": {
+            "version": "statistical-value-policy-v2.3",
+            "oddsIndependent": true,
+            "type": "statistical_value",
+            "formGapHandling": "reduced_weight_not_rejected"
+          },
+          "readiness": 0.716,
+          "adjustedConfidence": 0.865,
+          "outcomeScores": {
+            "homeWinScore": 0.42700000000000005,
+            "drawScore": 0.13999999999999999,
+            "awayWinScore": 0.459,
+            "bestSide": "AWAY",
+            "sideGap": 0.03199999999999997,
+            "drawGapToBestSide": 0.31900000000000006
+          },
+          "policyReason": "over25_near_high_medium_only"
+        },
+        "context": {
+          "season": "2026-2027",
+          "leagueSlug": "per.1",
+          "competitionType": "league",
+          "phase": "regular",
+          "leagueTrust": "medium",
+          "leagueTier": 2,
+          "homeRestDays": 3,
+          "awayRestDays": 88,
+          "homeMatchesLast7": 1,
+          "awayMatchesLast7": 0,
+          "homeMatchesLast14": 2,
+          "awayMatchesLast14": 0,
+          "homeNextMatchInDays": null,
+          "awayNextMatchInDays": null
+        },
+        "canonicalMatchId": "cid_per1_loschankas_cusco_20261029",
+        "kickoffUtc": "2026-10-29T18:00:00.000Z",
+        "families": [
+          "statistical"
+        ],
+        "sourceScores": {
+          "A": 0.757,
+          "A2": 0.757
+        },
+        "planId": "plan-u1",
+        "unified": true,
+        "modelProb": null,
+        "marketProb": null,
+        "aiFairOdds": null,
+        "result": "UNRESOLVED",
+        "finalScore": null,
+        "settlementTruth": null,
+        "publicationRecord": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
+        "firstObservedAt": "2026-10-29T07:48:33.931Z"
+      }
+    ],
+    "analysisComplete": false,
+    "upstreamCoverage": "INCOMPLETE",
+    "zeroPicksCertified": false,
+    "dataReadiness": {
+      "status": "PARTIAL",
+      "complete": false,
+      "checkedAt": "2026-10-29T07:49:46.349Z",
+      "fixtures": 116,
+      "applicable": 115,
+      "ready": 42,
+      "insufficient": 73,
+      "byReason": {
+        "minimum_recent_sample": 72,
+        "missing_model_assessment": 38
+      }
+    },
+    "records": [
+      {
+        "signature": "716b203a8156ae4dddc83c81056236e87b413edafffb686a5f978daf341b154f",
+        "generatedAt": "2026-10-29T07:48:33.931Z"
+      }
+    ],
+    "conflicts": [],
+    "combinedCalibratedProbability": null,
+    "performanceCertified": false,
+    "sourcePolicy": "paired_variant_agreement_each_score_at_least_0.75",
     "summary": {
-      "picks": 0,
+      "picks": 2,
+      "uniqueMatches": 2,
       "settled": 0,
       "wins": 0,
       "losses": 0,
-      "unresolved": 0,
+      "voids": 0,
+      "unresolved": 2,
       "hitRate": null
     },
-    "analysisComplete": false,
-    "dataReadiness": {
-      "status": "INSUFFICIENT_DATA",
-      "complete": false,
-      "checkedAt": "2026-10-29T07:13:38.359Z",
-      "fixtures": 116,
-      "applicable": 115,
-      "ready": 0,
-      "insufficient": 115,
-      "byReason": {
-        "details_foundation_not_verified": 115,
-        "minimum_recent_sample": 71,
-        "missing_model_assessment": 39
-      }
-    },
-    "zeroPicksCertified": false
+    "projectionSignature": "cadcf479beb29afa111b7ed21adfee64f372dd43828714df826ba32cd4151c1b"
   },
   "dataReadiness": {
     "schema": "ai-matchlab.value-data-readiness.v1",
     "date": "2026-10-29",
-    "generatedAt": "2026-10-29T07:13:38.359Z",
+    "generatedAt": "2026-10-29T07:49:46.349Z",
     "fixtureUniverse": {
       "schema": "ai-matchlab.value-fixture-universe.v1",
       "source": "canonical_fixtures",
@@ -340,16 +834,15 @@
     "certifies": "configured_statistical_value_required_inputs_only",
     "allLeagueDataCertified": false,
     "complete": false,
-    "status": "INSUFFICIENT_DATA",
+    "status": "PARTIAL",
     "summary": {
       "fixtures": 116,
       "applicable": 115,
-      "ready": 0,
-      "insufficient": 115,
+      "ready": 42,
+      "insufficient": 73,
       "byReason": {
-        "details_foundation_not_verified": 115,
-        "minimum_recent_sample": 71,
-        "missing_model_assessment": 39
+        "minimum_recent_sample": 72,
+        "missing_model_assessment": 38
       }
     },
     "rows": [
@@ -359,7 +852,6 @@
         "kickoffUtc": "2026-10-28T22:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -405,7 +897,6 @@
         "kickoffUtc": "2026-10-28T22:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -451,7 +942,6 @@
         "kickoffUtc": "2026-10-28T22:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -495,10 +985,8 @@
         "canonicalId": "cid_col1_oncecaldas_alianza_20261029",
         "leagueSlug": "col.1",
         "kickoffUtc": "2026-10-28T23:00Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -513,7 +1001,6 @@
         "kickoffUtc": "2026-10-28T23:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -559,7 +1046,6 @@
         "kickoffUtc": "2026-10-28T23:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -605,7 +1091,6 @@
         "kickoffUtc": "2026-10-28T23:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -651,7 +1136,6 @@
         "kickoffUtc": "2026-10-28T23:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -697,7 +1181,6 @@
         "kickoffUtc": "2026-10-28T23:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -743,7 +1226,6 @@
         "kickoffUtc": "2026-10-28T23:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -789,7 +1271,6 @@
         "kickoffUtc": "2026-10-28T23:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -835,7 +1316,6 @@
         "kickoffUtc": "2026-10-28T23:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -881,7 +1361,6 @@
         "kickoffUtc": "2026-10-29T00:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -928,7 +1407,6 @@
         "kickoffUtc": "2026-10-29T00:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -974,7 +1452,6 @@
         "kickoffUtc": "2026-10-29T00:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1020,7 +1497,6 @@
         "kickoffUtc": "2026-10-29T00:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1066,7 +1542,6 @@
         "kickoffUtc": "2026-10-29T00:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1112,7 +1587,6 @@
         "kickoffUtc": "2026-10-29T00:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1158,7 +1632,6 @@
         "kickoffUtc": "2026-10-29T00:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1202,10 +1675,8 @@
         "canonicalId": "cid_usa1_minnesotaunited_sportingkansascity_20261029",
         "leagueSlug": "usa.1",
         "kickoffUtc": "2026-10-29T00:30Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1224,7 +1695,6 @@
         "kickoffUtc": "2026-10-29T00:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1270,7 +1740,6 @@
         "kickoffUtc": "2026-10-29T00:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1314,10 +1783,8 @@
         "canonicalId": "cid_col2_quindio_realcundinamarca_20261029",
         "leagueSlug": "col.2",
         "kickoffUtc": "2026-10-29T01:05:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1334,10 +1801,8 @@
         "canonicalId": "cid_col1_internacionalbogota_independientemedellin_20261029",
         "leagueSlug": "col.1",
         "kickoffUtc": "2026-10-29T01:05Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1352,7 +1817,6 @@
         "kickoffUtc": "2026-10-29T02:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "missing_model_assessment"
         ],
         "modelAssessmentAvailable": false,
@@ -1373,7 +1837,6 @@
         "kickoffUtc": "2026-10-29T02:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1419,7 +1882,6 @@
         "kickoffUtc": "2026-10-29T02:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1465,7 +1927,6 @@
         "kickoffUtc": "2026-10-29T02:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1511,10 +1972,35 @@
         "kickoffUtc": "2026-10-29T03:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified"
+          "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "América",
+          "awayTeam": "Tijuana",
+          "leagueSlug": "mex.1",
+          "fixtureDate": "2026-10-29T03:00:00.000Z",
+          "homeResolvedKey": "América",
+          "awayResolvedKey": "Tijuana",
+          "homeRawSample": 2,
+          "awayRawSample": 3,
+          "homeBlendedSample": 3,
+          "awayBlendedSample": 6,
+          "homeSideRawSample": 1,
+          "awaySideRawSample": 0,
+          "homeSideBlendedSample": 2,
+          "awaySideBlendedSample": 3,
+          "homePriorSample": 1,
+          "awayPriorSample": 5,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": true,
           "reasons": []
@@ -1527,7 +2013,6 @@
         "kickoffUtc": "2026-10-29T07:45Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -1572,10 +2057,8 @@
         "canonicalId": "cid_idn2_ransnusantara_tornadopekanbaru_20261029",
         "leagueSlug": "idn.2",
         "kickoffUtc": "2026-10-29T08:30:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1594,7 +2077,6 @@
         "kickoffUtc": "2026-10-29T10:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1640,7 +2122,6 @@
         "kickoffUtc": "2026-10-29T10:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -1687,7 +2168,6 @@
         "kickoffUtc": "2026-10-29T11:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -1731,10 +2211,8 @@
         "canonicalId": "cid_idn2_balikpapan_psbsbiaknumfor_20261029",
         "leagueSlug": "idn.2",
         "kickoffUtc": "2026-10-29T12:00:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1753,7 +2231,6 @@
         "kickoffUtc": "2026-10-29T12:15Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -1798,10 +2275,8 @@
         "canonicalId": "cid_afccup_shanghaishenhua_machidazelvia_20261029",
         "leagueSlug": "afc.cup",
         "kickoffUtc": "2026-10-29T12:15Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1820,7 +2295,6 @@
         "kickoffUtc": "2026-10-29T12:15Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -1865,10 +2339,8 @@
         "canonicalId": "cid_alb1_kftirana_dinamocity_20261029",
         "leagueSlug": "alb.1",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1885,10 +2357,8 @@
         "canonicalId": "cid_alb2_iliriafushekruje_flamurtari_20261029",
         "leagueSlug": "alb.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1905,10 +2375,8 @@
         "canonicalId": "cid_egy2_alsekka_tanta_20261029",
         "leagueSlug": "egy.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1925,10 +2393,8 @@
         "canonicalId": "cid_egy2_baladiyatelmahalla_alnasr_20261029",
         "leagueSlug": "egy.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1945,10 +2411,8 @@
         "canonicalId": "cid_egy2_eldaklyeh_elentagelharby_20261029",
         "leagueSlug": "egy.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1965,10 +2429,8 @@
         "canonicalId": "cid_egy2_elmansoura_haraselhodood_20261029",
         "leagueSlug": "egy.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1985,10 +2447,8 @@
         "canonicalId": "cid_egy2_kahrabaaismailia_masar_20261029",
         "leagueSlug": "egy.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2005,10 +2465,8 @@
         "canonicalId": "cid_egy2_laviena_dayrout_20261029",
         "leagueSlug": "egy.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2025,10 +2483,8 @@
         "canonicalId": "cid_egy2_pharco_we_20261029",
         "leagueSlug": "egy.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2045,10 +2501,8 @@
         "canonicalId": "cid_egy2_proxy_elismaily_20261029",
         "leagueSlug": "egy.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2065,10 +2519,8 @@
         "canonicalId": "cid_egy2_team_deltaunited_20261029",
         "leagueSlug": "egy.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2085,10 +2537,8 @@
         "canonicalId": "cid_egy2_tersana_maleyeitkafrelzayiat_20261029",
         "leagueSlug": "egy.2",
         "kickoffUtc": "2026-10-29T12:30:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2105,10 +2555,8 @@
         "canonicalId": "cid_mne1_sutjeska_jezero_20261029",
         "leagueSlug": "mne.1",
         "kickoffUtc": "2026-10-29T13:00:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2127,7 +2575,6 @@
         "kickoffUtc": "2026-10-29T13:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -2174,7 +2621,6 @@
         "kickoffUtc": "2026-10-29T13:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2220,7 +2666,6 @@
         "kickoffUtc": "2026-10-29T13:30:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2266,7 +2711,6 @@
         "kickoffUtc": "2026-10-29T13:30:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2312,7 +2756,6 @@
         "kickoffUtc": "2026-10-29T13:30:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2358,7 +2801,6 @@
         "kickoffUtc": "2026-10-29T14:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2420,10 +2862,8 @@
         "canonicalId": "cid_ksa1_alkhaleej_alhazem_20261029",
         "leagueSlug": "ksa.1",
         "kickoffUtc": "2026-10-29T14:35Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2442,7 +2882,6 @@
         "kickoffUtc": "2026-10-29T15:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2486,10 +2925,8 @@
         "canonicalId": "cid_bul2_yantragabrovo_hebar_20261029",
         "leagueSlug": "bul.2",
         "kickoffUtc": "2026-10-29T16:00:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2508,7 +2945,6 @@
         "kickoffUtc": "2026-10-29T16:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2552,10 +2988,8 @@
         "canonicalId": "cid_fin1_interturku_hjk_20261029",
         "leagueSlug": "fin.1",
         "kickoffUtc": "2026-10-29T16:00:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2574,7 +3008,6 @@
         "kickoffUtc": "2026-10-29T16:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2620,7 +3053,6 @@
         "kickoffUtc": "2026-10-29T16:30:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2666,7 +3098,6 @@
         "kickoffUtc": "2026-10-29T17:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -2710,10 +3141,8 @@
         "canonicalId": "cid_est2_tallinnakalev_nommekaljuu21_20261029",
         "leagueSlug": "est.2",
         "kickoffUtc": "2026-10-29T17:00:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2730,10 +3159,8 @@
         "canonicalId": "cid_fin1_kups_gnistan_20261029",
         "leagueSlug": "fin.1",
         "kickoffUtc": "2026-10-29T17:00:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2752,7 +3179,6 @@
         "kickoffUtc": "2026-10-29T17:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -2799,7 +3225,6 @@
         "kickoffUtc": "2026-10-29T17:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -2844,12 +3269,9 @@
         "canonicalId": "cid_gua1_deportivomixco_xelajumc_20261029",
         "leagueSlug": "gua.1",
         "kickoffUtc": "2026-10-29T17:00Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified",
-          "missing_model_assessment"
-        ],
-        "modelAssessmentAvailable": false,
+        "status": "READY",
+        "reasons": [],
+        "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
           "usable": false,
@@ -2865,10 +3287,8 @@
         "canonicalId": "cid_alb1_egnatia_teuta_20261029",
         "leagueSlug": "alb.1",
         "kickoffUtc": "2026-10-29T17:30:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2885,10 +3305,8 @@
         "canonicalId": "cid_ita1_frosinone_lecce_20261029",
         "leagueSlug": "ita.1",
         "kickoffUtc": "2026-10-29T17:30Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2905,10 +3323,8 @@
         "canonicalId": "cid_swe1_hammarby_iksirius_20261029",
         "leagueSlug": "swe.1",
         "kickoffUtc": "2026-10-29T17:30Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -2927,7 +3343,6 @@
         "kickoffUtc": "2026-10-29T17:45Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -2974,7 +3389,6 @@
         "kickoffUtc": "2026-10-29T18:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3021,7 +3435,6 @@
         "kickoffUtc": "2026-10-29T18:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3068,7 +3481,6 @@
         "kickoffUtc": "2026-10-29T18:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3115,7 +3527,6 @@
         "kickoffUtc": "2026-10-29T18:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3162,7 +3573,6 @@
         "kickoffUtc": "2026-10-29T18:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3209,7 +3619,6 @@
         "kickoffUtc": "2026-10-29T18:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3254,10 +3663,8 @@
         "canonicalId": "cid_ksa1_alnassr_alkholood_20261029",
         "leagueSlug": "ksa.1",
         "kickoffUtc": "2026-10-29T18:00Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -3274,10 +3681,8 @@
         "canonicalId": "cid_ksa1_alriyadh_alqadsiah_20261029",
         "leagueSlug": "ksa.1",
         "kickoffUtc": "2026-10-29T18:00Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -3294,10 +3699,8 @@
         "canonicalId": "cid_per1_loschankas_cusco_20261029",
         "leagueSlug": "per.1",
         "kickoffUtc": "2026-10-29T18:00Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -3314,10 +3717,8 @@
         "canonicalId": "cid_swe1_kalmarff_gais_20261029",
         "leagueSlug": "swe.1",
         "kickoffUtc": "2026-10-29T18:00Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -3334,10 +3735,8 @@
         "canonicalId": "cid_swe1_orgryteis_mjallby_20261029",
         "leagueSlug": "swe.1",
         "kickoffUtc": "2026-10-29T18:00Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -3356,7 +3755,6 @@
         "kickoffUtc": "2026-10-29T18:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3401,10 +3799,8 @@
         "canonicalId": "cid_col2_bocajuniors_umagdalena_20261029",
         "leagueSlug": "col.2",
         "kickoffUtc": "2026-10-29T19:00:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -3421,10 +3817,8 @@
         "canonicalId": "cid_col2_envigado_indvalledelcauca_20261029",
         "leagueSlug": "col.2",
         "kickoffUtc": "2026-10-29T19:00:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -3443,7 +3837,6 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3490,7 +3883,6 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3537,7 +3929,6 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3584,7 +3975,6 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3631,7 +4021,6 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3678,7 +4067,6 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3725,7 +4113,6 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3772,7 +4159,6 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3819,7 +4205,6 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3866,7 +4251,6 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3913,7 +4297,6 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -3960,7 +4343,6 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4007,7 +4389,6 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4054,7 +4435,6 @@
         "kickoffUtc": "2026-10-29T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4101,7 +4481,6 @@
         "kickoffUtc": "2026-10-29T19:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4146,10 +4525,8 @@
         "canonicalId": "cid_engleaguecup_everton_newcastleunited_20261029",
         "leagueSlug": "eng.league_cup",
         "kickoffUtc": "2026-10-29T19:45Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -4166,10 +4543,8 @@
         "canonicalId": "cid_ita1_fiorentina_atalanta_20261029",
         "leagueSlug": "ita.1",
         "kickoffUtc": "2026-10-29T19:45Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -4188,7 +4563,6 @@
         "kickoffUtc": "2026-10-29T20:00:00.000Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4233,10 +4607,8 @@
         "canonicalId": "cid_mar1_maghrebfez_berkane_20261029",
         "leagueSlug": "mar.1",
         "kickoffUtc": "2026-10-29T20:00:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -4255,7 +4627,6 @@
         "kickoffUtc": "2026-10-29T20:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4302,7 +4673,6 @@
         "kickoffUtc": "2026-10-29T20:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4349,7 +4719,6 @@
         "kickoffUtc": "2026-10-29T20:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4396,7 +4765,6 @@
         "kickoffUtc": "2026-10-29T20:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4443,7 +4811,6 @@
         "kickoffUtc": "2026-10-29T20:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
-          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -4488,10 +4855,8 @@
         "canonicalId": "cid_nedcup_groningen_emmen_20261029",
         "leagueSlug": "ned.cup",
         "kickoffUtc": "2026-10-29T20:00Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -4508,10 +4873,8 @@
         "canonicalId": "cid_per1_sportingcristal_alianzalima_20261029",
         "leagueSlug": "per.1",
         "kickoffUtc": "2026-10-29T20:30Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -4528,10 +4891,8 @@
         "canonicalId": "cid_col2_tigres_cartagena_20261029",
         "leagueSlug": "col.2",
         "kickoffUtc": "2026-10-29T21:00:00.000Z",
-        "status": "INSUFFICIENT_DATA",
-        "reasons": [
-          "details_foundation_not_verified"
-        ],
+        "status": "READY",
+        "reasons": [],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -4551,6 +4912,12 @@
       "realOddsRequiredForStatisticalSelection": false,
       "unverifiedStandingsNeverPromoted": true,
       "thresholdsChanged": false
+    },
+    "readinessTimeBasis": "signed_prematch_evidence_for_started_fixtures_current_diagnostics_for_future_fixtures",
+    "prematchEvidence": {
+      "preservedRows": 0,
+      "invalidRecords": 0,
+      "predictionCreated": false
     }
   }
 }
