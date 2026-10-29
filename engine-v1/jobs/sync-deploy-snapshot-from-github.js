@@ -66,6 +66,10 @@ export const REQUIRED_VALUE_COMPARISON_PLANS =
 
 // A historical release may legitimately lack a comparison from before its
 // original publication. Never relax this for the pinned release's latest day.
+export function shouldSyncRollingOddsForRelease(promoteLatest) {
+  return promoteLatest === true;
+}
+
 export function isHistoricalSnapshotComparisonOptional(day, latest) {
   const target = String(day || "");
   const latestDay = String(latest?.date || "");
@@ -864,7 +868,11 @@ export async function syncDeploySnapshotFromGithub(dayKey = athensDayKey(), opti
       stats,
       promoteLatestAlerts: promoteLatest
     });
-    const multiOddsDays = await syncMultiOdds({ repo, ref, day, stats });
+    // Historical snapshots must never overwrite odds for newer operational
+    // days. Only the commit-pinned latest release may refresh rolling odds.
+    const multiOddsDays = shouldSyncRollingOddsForRelease(promoteLatest)
+      ? await syncMultiOdds({ repo, ref, day, stats })
+      : [];
 
     if (promoteLatest) {
       await writeFileAtomic(resolveDataPath("deploy-snapshots", "latest.json"), latestBuffer);
