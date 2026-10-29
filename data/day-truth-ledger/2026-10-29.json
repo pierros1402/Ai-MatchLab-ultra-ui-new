@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-10-29",
-  "generatedAt": "2026-10-29T17:05:37.767Z",
+  "generatedAt": "2026-10-29T18:02:55.809Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "4a187e60e92e2a6947bf0423205e5559ad3db3ee0e3ad9672c98038ea956e774",
+  "truthFingerprint": "01ac9ba320d5c6263ac48816c826805210a4a544d27940c1ee889a7cec53a93c",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 116,
-    "playedTerminal": 50,
+    "playedTerminal": 51,
     "nonPlayedTerminal": 2,
-    "scheduled": 64,
-    "live": 0,
+    "scheduled": 61,
+    "live": 2,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 50,
-    "acceptedVerifiedFinalArtifacts": 50,
-    "convergedPlayedFinal": 50,
+    "verifiedFinalArtifacts": 51,
+    "acceptedVerifiedFinalArtifacts": 51,
+    "convergedPlayedFinal": 51,
     "convergedNonPlayedTerminal": 2,
     "pendingVerifiedFinal": 0,
-    "openRows": 64,
+    "openRows": 63,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 50,
-    "scoredSettlementEligible": 50,
+    "historyEligible": 51,
+    "scoredSettlementEligible": 51,
     "voidSettlementEligible": 2
   },
   "fixtures": [
@@ -536,31 +536,31 @@
       "homeTeam": "Din. Minsk 2",
       "awayTeam": "Molodechno",
       "kickoffUtc": "2026-10-29T15:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-10-29",
+        "scoreHome": 1,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2545,14 +2545,14 @@
       "homeTeam": "Numancia",
       "awayTeam": "Real Oviedo",
       "kickoffUtc": "2026-10-29T17:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -2566,7 +2566,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -3231,14 +3231,14 @@
       "homeTeam": "Deportivo Mixco",
       "awayTeam": "Xelajú MC",
       "kickoffUtc": "2026-10-29T17:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -3252,7 +3252,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -5962,7 +5962,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 18230,
+            "count": 18254,
             "informational": true
           }
         },
@@ -9600,13 +9600,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "4a187e60e92e2a6947bf0423205e5559ad3db3ee0e3ad9672c98038ea956e774",
+      "truthFingerprint": "01ac9ba320d5c6263ac48816c826805210a4a544d27940c1ee889a7cec53a93c",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 50,
+        "expectedEligibleRows": 51,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_afccup_adelaideunited_lioncitysailors_20261029",
@@ -9618,6 +9618,7 @@
           "cid_alb1_kftirana_dinamocity_20261029",
           "cid_alb2_iliriafushekruje_flamurtari_20261029",
           "cid_arm2_bkma2_araratyerevan2_20261029",
+          "cid_blr2_dinminsk2_molodechno_20261029",
           "cid_bra1_bahia_saopaulo_20261029",
           "cid_bra1_fluminense_internacional_20261029",
           "cid_bra1_redbullbragantino_chapecoense_20261029",
@@ -9718,7 +9719,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-10-29",
-      "fileCount": 50,
+      "fileCount": 51,
       "authority": "scored_final_evidence"
     },
     "downstream": {
