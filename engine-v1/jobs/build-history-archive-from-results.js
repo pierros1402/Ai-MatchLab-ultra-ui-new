@@ -27,6 +27,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { ALL_LEAGUE_SEEDS } from "../config.js";
 import { resolveDataPath } from "../storage/data-root.js";
+import { athensDayFromKickoff } from "../core/daykey.js";
 import {
   archiveSeasonForDate,
   archiveSeasonLabels,
@@ -53,7 +54,7 @@ function safeNum(v, fallback = 0) {
 function dayKeyFromDate(dateStr) {
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return null;
-  return d.toISOString().slice(0, 10);
+  return athensDayFromKickoff(d.toISOString());
 }
 
 function deriveOutcome(sh, sa) {
@@ -76,7 +77,7 @@ function matchDedupKey(dayKey, home, away) {
 }
 
 // Reconstruct season→matches[] for one league from its results ledger.
-function bucketLeagueMatches(slug, resultsPayload, seasonsSet) {
+export function bucketLeagueMatches(slug, resultsPayload, seasonsSet) {
   const teams = resultsPayload?.teams || {};
   const bySeason = new Map(); // season → Map<matchId, row>
 
@@ -86,12 +87,14 @@ function bucketLeagueMatches(slug, resultsPayload, seasonsSet) {
       if (e.gf == null || e.ga == null) continue;
       if (!e.date) continue;
 
-      const season = archiveSeasonForDate(slug, e.date);
+      // Resolve the archive season from the same Athens day as the match.
+      const dayKey = dayKeyFromDate(e.date);
+      if (!dayKey) continue;
+      const season = archiveSeasonForDate(slug, `${dayKey}T12:00:00Z`);
       if (!season || !seasonsSet.has(season)) continue;
 
       const scoreHome = safeNum(e.gf);
       const scoreAway = safeNum(e.ga);
-      const dayKey = dayKeyFromDate(e.date);
 
       const row = {
         id: e.matchId || `${slug}_${dayKey}_${teamName}_${e.opp}`,
