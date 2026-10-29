@@ -1,0 +1,236 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "fin.1",
+  "homeTeam": "KuPS",
+  "awayTeam": "Gnistan",
+  "homeWinScore": 0.559,
+  "drawScore": 0.133,
+  "awayWinScore": 0.309,
+  "over15Score": 0.747,
+  "over25Score": 0.599,
+  "over35Score": 0.572,
+  "bttsScore": 0.52,
+  "confidence": 0.92,
+  "signals": [
+    "home_edge_strong",
+    "over25_support",
+    "matchup_goals_history",
+    "priors_applied",
+    "close_strength_gap"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.5,
+      "awayOverallFormWeight": 0.5,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.737,
+    "expectedAwayGoals": 1.113,
+    "expectedTotalGoals": 2.85,
+    "homeStrength": 0.635,
+    "awayStrength": 0.387,
+    "homeEdge": 0.479,
+    "awayPenalty": 0.349,
+    "recency": {
+      "homeOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 130,
+        "daysSinceLastMatch": 4,
+        "spanDays": 16,
+        "maxInternalGap": 7,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 1,
+        "formContinuityWeight": 0.94
+      },
+      "awayOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 61,
+        "daysSinceLastMatch": 5,
+        "spanDays": 16,
+        "maxInternalGap": 7,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 1,
+        "formContinuityWeight": 0.94
+      },
+      "homeSide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 130,
+        "daysSinceLastMatch": 11,
+        "spanDays": 9,
+        "maxInternalGap": 9,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.55,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.61
+      },
+      "awaySide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 61,
+        "daysSinceLastMatch": 12,
+        "spanDays": 4,
+        "maxInternalGap": 4,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.5,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.592
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 130,
+      "awayPriorSample": 61,
+      "leaguePriorSample": 792,
+      "matchupPriorSample": 6
+    },
+    "resolution": {
+      "homeInput": "KuPS",
+      "awayInput": "Gnistan",
+      "homeResolvedKey": "KuPS",
+      "awayResolvedKey": "Gnistan",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Gnistan::KuPS",
+      "matchupResolveScore": 0.93,
+      "homePriorKey": "fin.1::KuPS",
+      "awayPriorKey": "fin.1::Gnistan",
+      "matchupPriorKey": "fin.1|Gnistan|KuPS"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "KuPS",
+      "awayTeamKey": "Gnistan",
+      "leagueKey": "fin.1",
+      "matchupKey": "Gnistan::KuPS"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "h2h_home_edge",
+        "impact": 0.025,
+        "note": "Recent H2H leans home"
+      },
+      {
+        "code": "h2h_underlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is tight"
+      },
+      {
+        "code": "ai_h2h_home_edge",
+        "impact": 0.06,
+        "note": "AI detected home H2H edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    }
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "h2h_home_edge",
+      "impact": 0.025,
+      "note": "Recent H2H leans home"
+    },
+    {
+      "code": "h2h_underlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is tight"
+    },
+    {
+      "code": "ai_h2h_home_edge",
+      "impact": 0.06,
+      "note": "AI detected home H2H edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "MEDIUM",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0.009,
+      "awayDelta": 0,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "fin.1",
+    "competitionType": "continental",
+    "phase": "group",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 21,
+    "awayRestDays": 12,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 1,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
