@@ -53,7 +53,7 @@ function safeNum(v, fallback = 0) {
 
 // Results-memory fixture timestamps must denote an unambiguous instant.
 // Reject host-timezone interpretations before any archive file is written.
-const EXPLICIT_INSTANT = /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(?::\\d{2}(?:\\.\\d{1,9})?)?(?:Z|[+-](?:0\\d|1[0-4]):[0-5]\\d)$/;
+const EXPLICIT_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?(?:Z|[+-](?:0\d|1[0-4]):[0-5]\d)$/;
 
 function requireExplicitInstant(value) {
   if (typeof value !== "string" || !EXPLICIT_INSTANT.test(value)) {
