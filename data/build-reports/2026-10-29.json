@@ -1,8 +1,8 @@
 {
-  "ok": true,
+  "ok": false,
   "schema": "ai-matchlab.day-build-report.v1",
   "dayKey": "2026-10-29",
-  "generatedAt": "2026-10-29T19:35:34.424Z",
+  "generatedAt": "2026-10-29T22:07:15.904Z",
   "universe": {
     "expected": null,
     "canonical": 116,
@@ -546,10 +546,49 @@
     }
   },
   "freshness": {
-    "ok": true,
+    "ok": false,
     "manifestGeneratedAt": "2026-10-29T19:29:19.739Z",
-    "reasons": [],
-    "staleInputs": []
+    "reasons": [
+      "snapshot_stale_against_canonical",
+      "snapshot_value_stale_against_canonical",
+      "plan_a2_stale_against_canonical",
+      "plan_a2_audit_stale_against_canonical",
+      "plan_b_audit_stale_against_canonical",
+      "plan_b2_audit_stale_against_canonical",
+      "value_plan_comparison_stale_against_canonical"
+    ],
+    "staleInputs": [
+      "canonical-fixtures/2026-10-29/afc.cup.json",
+      "canonical-fixtures/2026-10-29/alb.1.json",
+      "canonical-fixtures/2026-10-29/alb.2.json",
+      "canonical-fixtures/2026-10-29/arm.2.json",
+      "canonical-fixtures/2026-10-29/blr.2.json",
+      "canonical-fixtures/2026-10-29/bul.2.json",
+      "canonical-fixtures/2026-10-29/chi.1.json",
+      "canonical-fixtures/2026-10-29/col.1.json",
+      "canonical-fixtures/2026-10-29/col.2.json",
+      "canonical-fixtures/2026-10-29/egy.1.json",
+      "canonical-fixtures/2026-10-29/egy.2.json",
+      "canonical-fixtures/2026-10-29/eng.league_cup.json",
+      "canonical-fixtures/2026-10-29/esp.copa_del_rey.json",
+      "canonical-fixtures/2026-10-29/est.2.json",
+      "canonical-fixtures/2026-10-29/fin.1.json",
+      "canonical-fixtures/2026-10-29/idn.2.json",
+      "canonical-fixtures/2026-10-29/ita.1.json",
+      "canonical-fixtures/2026-10-29/ksa.1.json",
+      "canonical-fixtures/2026-10-29/mar.1.json",
+      "canonical-fixtures/2026-10-29/mex.1.json",
+      "canonical-fixtures/2026-10-29/mne.1.json",
+      "canonical-fixtures/2026-10-29/ned.cup.json",
+      "canonical-fixtures/2026-10-29/per.1.json",
+      "canonical-fixtures/2026-10-29/svn.1.json",
+      "canonical-fixtures/2026-10-29/swe.1.json",
+      "canonical-fixtures/2026-10-29/tun.1.json",
+      "canonical-fixtures/2026-10-29/uae.1.json",
+      "canonical-fixtures/2026-10-29/usa.1.json",
+      "canonical-fixtures/2026-10-29/ven.1.json",
+      "canonical-fixtures/2026-10-29/zim.1.json"
+    ]
   },
   "invariant": {
     "ok": true,
@@ -614,7 +653,7 @@
     }
   },
   "settlement": {
-    "generatedAt": "2026-10-29T19:35:06.895Z",
+    "generatedAt": "2026-10-29T22:00:11.553Z",
     "requiredPlans": [
       "A",
       "A2",
@@ -664,16 +703,21 @@
   },
   "foundationIntegrity": {
     "schema": "ai-matchlab.foundation-integrity.v1",
-    "generatedAt": "2026-10-29T19:35:34.135Z",
+    "generatedAt": "2026-10-29T22:07:15.607Z",
     "season": "2026-2027",
     "modelReady": true,
-    "publicationReady": true,
-    "blocked": [],
+    "publicationReady": false,
+    "blocked": [
+      {
+        "component": "details",
+        "reason": "details_foundation_not_ready"
+      }
+    ],
     "warnings": [
       {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 18284,
+        "count": 18340,
         "informational": true
       },
       {
@@ -706,10 +750,13 @@
     "supersededOpenCanonicalIds": [],
     "supersededOpenFixtures": []
   },
-  "hardFailures": [],
+  "hardFailures": [
+    "foundation_publication_not_ready",
+    "snapshot_stale"
+  ],
   "warnings": [
     "acquisition_skipped_slugs:concacaf.central.american.cup,eng.w.league_cup,fifa.wworld.u17,uefa.w.europa,uefa.wchampions,usa.ncaa.m.1,usa.ncaa.w.1"
   ],
-  "clean": true,
+  "clean": false,
   "cleanStrict": false
 }
