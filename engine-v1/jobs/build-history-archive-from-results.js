@@ -51,10 +51,42 @@ function safeNum(v, fallback = 0) {
   return Number.isFinite(n) ? n : fallback;
 }
 
+// Results-memory fixture timestamps must denote an unambiguous instant.
+// Reject host-timezone interpretations before any archive file is written.
+const EXPLICIT_INSTANT = /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(?::\\d{2}(?:\\.\\d{1,9})?)?(?:Z|[+-](?:0\\d|1[0-4]):[0-5]\\d)$/;
+
+function requireExplicitInstant(value) {
+  if (typeof value !== "string" || !EXPLICIT_INSTANT.test(value)) {
+    throw new Error("results_memory_timestamp_requires_explicit_timezone");
+  }
+  const ms = Date.parse(value);
+  if (!Number.isFinite(ms)) {
+    throw new Error("results_memory_timestamp_invalid");
+  }
+  return new Date(ms).toISOString();
+}
+
 function dayKeyFromDate(dateStr) {
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return null;
-  return athensDayFromKickoff(d.toISOString());
+  return athensDayFromKickoff(requireExplicitInstant(dateStr));
+}
+
+function preflightResultsTimestamps(leagues) {
+  for (const slug of leagues) {
+    const payload = readJsonSafe(path.join(RESULTS_DIR, `${slug}.json`), null);
+    if (!payload?.teams) continue;
+    for (const entries of Object.values(payload.teams)) {
+      for (const e of Array.isArray(entries) ? entries : []) {
+        if (e?.ha !== "H" || e.gf == null || e.ga == null) continue;
+        try {
+          requireExplicitInstant(e.date);
+        } catch (err) {
+          throw new Error(
+            `results_memory_preflight_failed:${slug}:${e.matchId || "unknown"}:${err.message}`
+          );
+        }
+      }
+    }
+  }
 }
 
 function deriveOutcome(sh, sa) {
@@ -142,6 +174,9 @@ export function buildHistoryArchiveFromResults(opts = {}) {
   // without clobbering single-source ESPN history that had no duplicates.
   const overwriteSource = opts.overwriteSource || null;
   const leagues = Array.isArray(opts.leagues) && opts.leagues.length ? opts.leagues : ALL_LEAGUE_SEEDS.slice();
+
+  // Entire selected batch is validated before the first archive write.
+  preflightResultsTimestamps(leagues);
 
   ensureDir(ARCHIVE_ROOT);
 
