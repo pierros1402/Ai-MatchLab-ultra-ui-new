@@ -223,6 +223,7 @@ jobs:
 
           if [ -n "$STAGED" ]; then
             node engine-v1/jobs/guard-staged-data-boundary.js \
+              --enforce-verified-final-preservation \
               --label=current-value-settlement-checkpoint \
               --dayKey="${DAY_KEY}" \
               --allow="^(data/final-results/${DAY_KEY}/|data/final-result-conflicts/${DAY_KEY}\.json$|data/value-comparison/${DAY_KEY}\.json$)"
@@ -1062,6 +1063,7 @@ jobs:
 
           if [ -n "$STAGED" ]; then
             node engine-v1/jobs/guard-staged-data-boundary.js \
+              --enforce-verified-final-preservation \
               --label=intraday-deploy-snapshot-refresh \
               --dayKey="${DAY_KEY}" \
               --allow="^(data/canonical-fixtures/${DAY_KEY}/[^/]+\.json$|data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/foundation-integrity/${DAY_KEY}\.json$|data/foundation-integrity/latest\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/day-truth-ledger/${DAY_KEY}\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-unified/${DAY_KEY}/(observations/[a-f0-9]{64}\.json|public-plan\.json)$|data/value-data-readiness/${DAY_KEY}\.json$|data/value/_coverage-reports/${DAY_KEY}\.json$|data/value-plans/${DAY_KEY}/|data/final-results/${DAY_KEY}/|data/final-result-conflicts/${DAY_KEY}\.json$|data/value-comparison/(${DAY_KEY}\.json|cumulative\.json)$)"
