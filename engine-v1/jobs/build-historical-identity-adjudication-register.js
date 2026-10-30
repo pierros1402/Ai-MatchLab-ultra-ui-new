@@ -87,6 +87,19 @@ export function buildHistoricalIdentityAdjudicationRegister(audit,root=null) {
      ["CANONICAL_SOURCE_BOUND_CANDIDATE","HOLD_CROSS_DAY",
       "HOLD_CANONICAL_AMBIGUOUS_OR_MISSING","HOLD_CANONICAL_EVIDENCE_UNREADABLE"]
        .map(status=>[status,cases.filter(item=>item.canonicalAuthority?.status===status).length])),
+   safelyScopedCanonicalCandidates:cases.filter(item=>
+     item.evidenceState==="DUPLICATE_CANDIDATE_REQUIRES_CANONICAL_PROOF" &&
+     item.canonicalAuthority?.status==="CANONICAL_SOURCE_BOUND_CANDIDATE")
+     .map(item=>({caseId:item.caseId,
+       retainedCanonicalId:item.canonicalAuthority.canonicalId,
+       aliasCandidateId:item.evidence.firstMatchId===item.canonicalAuthority.canonicalId
+         ? item.evidence.secondMatchId : item.evidence.firstMatchId,
+       provider:item.evidence.provider,providerMatchId:item.evidence.providerMatchId,
+       firstPath:item.evidence.firstPath,secondPath:item.evidence.secondPath,
+       dependencyAudit:"NOT_EXECUTED",writeAuthorized:false})),
+   safelyScopedCanonicalCandidateCount:cases.filter(item=>
+     item.evidenceState==="DUPLICATE_CANDIDATE_REQUIRES_CANONICAL_PROOF" &&
+     item.canonicalAuthority?.status==="CANONICAL_SOURCE_BOUND_CANDIDATE").length,
    canonicalSourceBoundCases:cases.filter(item=>
      item.canonicalAuthority?.status==="CANONICAL_SOURCE_BOUND_CANDIDATE")
      .map(item=>({caseId:item.caseId,provider:item.evidence.provider,
