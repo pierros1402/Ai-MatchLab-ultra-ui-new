@@ -351,6 +351,44 @@ for (const item of staged) {
   }
 }
 
+// Verify the complete affected final-results day, not merely changed rows.
+// A newly staged alias cannot silently coexist with an older provider match.
+if (enforceVerifiedFinalPreservation) {
+  const finalPath = p => /^data\\/final-results\\/\\d{4}-\\d{2}-\\d{2}\\/[^/]+\\.json$/.test(p);
+  const affectedDays = new Set(staged.filter(x => finalPath(x.path) || finalPath(x.oldPath))
+    .flatMap(x => [x.path,x.oldPath]).filter(finalPath).map(p => p.split("/")[2]));
+  const stagedByPath = new Map(staged.map(x => [x.path,x.status[0]]));
+  for (const day of affectedDays) {
+    const prefix = `data/final-results/${day}/`;
+    const base = git(["ls-tree","-r","--name-only","HEAD","--",prefix]).split(/\\r?\\n/).filter(finalPath);
+    const paths = new Set([...base,...staged.map(x => x.path).filter(p => p.startsWith(prefix) && finalPath(p))]);
+    const owners = new Map();
+    for (const p of [...paths].sort()) {
+      if (stagedByPath.get(p)==="D") continue;
+      const isStaged=["A","M","R","C"].includes(stagedByPath.get(p));
+      try {
+        const payload=JSON.parse(git(["show",isStaged ? `:${p}` : `HEAD:${p}`]));
+        if (!Array.isArray(payload?.sources)) {
+          violations.push({reason:"verified_provider_identity_unverifiable",path:p});continue;
+        }
+        for (const source of payload.sources) {
+          const provider=source?.provider, sourceId=source?.providerMatchId;
+          if (typeof provider!=="string" || !provider || !sourceId) continue;
+          const key=JSON.stringify([provider,String(sourceId)]);
+          const previous=owners.get(key);
+          if (previous && previous!==p)
+            violations.push({reason:"verified_provider_identity_collision",provider,
+              providerMatchId:String(sourceId),firstPath:previous,secondPath:p});
+          else owners.set(key,p);
+        }
+      } catch (e) {
+        violations.push({reason:"verified_provider_day_unverifiable",path:p,
+          error:String(e?.message||e)});
+      }
+    }
+  }
+}
+
 if (candidateWriteSetFile) {
   if (!enforceResultsPreservation) {
     violations.push({reason:"write_set_requires_preservation_guard"});
