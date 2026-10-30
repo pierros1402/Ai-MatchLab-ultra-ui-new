@@ -50,3 +50,13 @@ test("read-only reconciliation flags missing canonical fixture",()=>{
     assert.ok(result.issues.some(e=>e.reason==="canonical_fixture_not_found"));
   });
 });
+
+test("real 2026-10-29 repository verified finals reconcile with canonical truth",()=>{
+  const root=fileURLToPath(new URL("../../",import.meta.url));
+  const result=auditVerifiedFinalsDay({root,dayKey:"2026-10-29"});
+  assert.ok(result.canonicalFixtures>0,"real canonical fixture inventory required");
+  assert.ok(result.verifiedFinalFiles>0,"real verified finals required");
+  assert.equal(result.matched,result.verifiedFinalFiles,
+    "all real verified finals must map to canonical scores: "+JSON.stringify(result.issues.slice(0,12)));
+  assert.equal(result.ok,true,JSON.stringify(result.issues.slice(0,12)));
+});
