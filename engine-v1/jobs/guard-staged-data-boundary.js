@@ -121,6 +121,30 @@ function inspectStagedCanonicalFile(p, violations) {
     return;
   }
 
+  if (enforceCanonicalRowPreservation) {
+    try {
+      const before = JSON.parse(git(["show", `HEAD:${p}`]));
+      const rows = x => Array.isArray(x) ? x :
+        Array.isArray(x?.fixtures) ? x.fixtures :
+        Array.isArray(x?.matches) ? x.matches :
+        Array.isArray(x?.rows) ? x.rows : null;
+      const previous = rows(before);
+      const current = rows(payload);
+      if (!previous || !current) {
+        violations.push({reason:"canonical_row_preservation_unverifiable",path:p});
+      } else if (current.length < previous.length) {
+        violations.push({reason:"canonical_row_count_regression",path:p,before:previous.length,after:current.length});
+      }
+    } catch (error) {
+      // Newly created canonical files have no HEAD version; they are checked by
+      // canonical status validation below. All other read failures fail closed.
+      if (git(["ls-tree", "--name-only", "HEAD", "--", p]).trim()) {
+        violations.push({reason:"canonical_row_preservation_unverifiable",path:p,
+          error:String(error?.message||error)});
+      }
+    }
+  }
+
   const conflicts = findCanonicalStatusConflicts(payload, { path: p });
 
   for (const conflict of conflicts) {
@@ -133,6 +157,7 @@ function inspectStagedCanonicalFile(p, violations) {
 
 // Opt-in only until all authorized-correction and rollback contracts are qualified.
 const enforceResultsPreservation = hasFlag("enforce-results-preservation");
+const enforceCanonicalRowPreservation = hasFlag("enforce-canonical-row-preservation");
 const candidateWriteSetFile = argValue("results-write-set", "");
 // Hash binding is evidence only, not external authorization. Never permit an
 // unreviewed correction to bypass the ordinary preservation veto.
