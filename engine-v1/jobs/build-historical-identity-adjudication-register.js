@@ -1,7 +1,35 @@
 import {createHash} from "node:crypto";
-import {resolve} from "node:path";
+import {resolve,join} from "node:path";
+import {readdirSync,readFileSync} from "node:fs";
 import {fileURLToPath} from "node:url";
 import {auditAllVerifiedFinalProviderIdentities} from "./audit-all-verified-final-provider-identities.js";
+
+// Resolve authoritative canonical IDs from the committed fixture store.
+// Evidence only: matching a canonical row never authorizes dependent writes.
+export function findCanonicalAuthorityForCase(root, evidence) {
+ const first=evidence?.firstPath?.match(/^data\/final-results\/(\d{4}-\d{2}-\d{2})\//);
+ const second=evidence?.secondPath?.match(/^data\/final-results\/(\d{4}-\d{2}-\d{2})\//);
+ if(!first || !second || first[1]!==second[1]) return {status:"HOLD_CROSS_DAY"};
+ const dir=join(root,"data","canonical-fixtures",first[1]);
+ const matches=[];
+ try {
+  for(const entry of readdirSync(dir).filter(name=>name.endsWith(".json"))) {
+   const doc=JSON.parse(readFileSync(join(dir,entry),"utf8"));
+   for(const row of Array.isArray(doc?.fixtures)?doc.fixtures:[]) {
+    const id=row?.canonicalId||row?.matchId;
+    if(![evidence.firstMatchId,evidence.secondMatchId].includes(id)) continue;
+    if(String(row?.source||"").toLowerCase()!==String(evidence.provider||"").toLowerCase()) continue;
+    if(String(row?.sourceMatchId||"")!==String(evidence.providerMatchId||"")) continue;
+    matches.push({canonicalId:id,fixturePath:join("data","canonical-fixtures",first[1],entry)});
+   }
+  }
+ } catch(error) {return {status:"HOLD_CANONICAL_EVIDENCE_UNREADABLE",reason:String(error.message)};}
+ const ids=[...new Set(matches.map(x=>x.canonicalId))];
+ if(ids.length!==1)return {status:"HOLD_CANONICAL_AMBIGUOUS_OR_MISSING",matches};
+ return {status:"CANONICAL_SOURCE_BOUND_CANDIDATE",canonicalId:ids[0],
+   fixturePath:matches[0].fixturePath,approvedForWrite:false,
+   dependencyInventoryVerified:false};
+}
 
 // Deterministic read-only case registry; no automatic authority assignment.
 export function buildHistoricalIdentityAdjudicationRegister(audit) {
