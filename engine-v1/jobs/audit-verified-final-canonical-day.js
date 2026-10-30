@@ -8,6 +8,7 @@ export function auditVerifiedFinalsDay({root,dayKey}) {
   const finalsDir=path.join(root,"data","final-results",dayKey);
   const canonDir=path.join(root,"data","canonical-fixtures",dayKey);
   const issues=[],canonical=new Map();
+  const canonicalProviderOwners=new Map();
   if (!fs.existsSync(finalsDir)||!fs.existsSync(canonDir)) throw Error("source_directory_missing");
   for (const file of fs.readdirSync(canonDir).filter(x=>x.endsWith(".json")).sort()) {
     const payload=JSON.parse(fs.readFileSync(path.join(canonDir,file),"utf8"));
@@ -17,6 +18,15 @@ export function auditVerifiedFinalsDay({root,dayKey}) {
       if (typeof id!=="string"||!id) {issues.push({reason:"canonical_id_missing",file});continue;}
       if (canonical.has(id)) issues.push({reason:"duplicate_canonical_id",matchId:id});
       else canonical.set(id,row);
+      const provider=typeof row?.source==="string"&&row.source.trim()?row.source.trim():null;
+      const providerId=row?.sourceId||row?.sourceMatchId||row?.providerIds?.[provider];
+      if(provider && providerId) {
+        const providerKey=JSON.stringify([provider,String(providerId)]);
+        const owner=canonicalProviderOwners.get(providerKey);
+        if(owner && owner!==id)issues.push({reason:"duplicate_canonical_provider_identity",
+          provider,providerMatchId:String(providerId),firstMatchId:owner,secondMatchId:id});
+        else canonicalProviderOwners.set(providerKey,id);
+      }
     }
   }
   let checked=0,matched=0;
