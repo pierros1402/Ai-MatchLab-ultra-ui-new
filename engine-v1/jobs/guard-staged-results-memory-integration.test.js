@@ -4,6 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 const guard = fileURLToPath(new URL("./guard-staged-data-boundary.js", import.meta.url));
@@ -128,4 +129,35 @@ test("copied results payload with mismatching slug is blocked even if Git report
     const report=JSON.parse(run.stdout);
     assert.ok(report.violations.some(v=>v.reason==="results_memory_slug_path_mismatch"));
   } finally { fs.rmSync(dir,{recursive:true,force:true}); }
+});
+
+test("exact staged write set binds bytes but never grants score-change approval", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-write-set-"));
+  try {
+    invoke("git",["init","-q"],dir);
+    invoke("git",["config","user.email","test@example.invalid"],dir);
+    invoke("git",["config","user.name","Test"],dir);
+    const file = "data/league-memory/results/league.json";
+    const target = path.join(dir,file);
+    fs.mkdirSync(path.dirname(target),{recursive:true});
+    const before=document([fixture("a")]);
+    const after=document([fixture("a",3)]);
+    fs.writeFileSync(target,before);
+    invoke("git",["add","."],dir);
+    invoke("git",["commit","-qm","baseline"],dir);
+    fs.writeFileSync(target,after);
+    invoke("git",["add","."],dir);
+    const hash=b=>createHash("sha256").update(b).digest("hex");
+    const manifest=path.join(dir,"write-set.json");
+    fs.writeFileSync(manifest,JSON.stringify({
+      schema:"ai-matchlab.results-write-set.v1",
+      entries:[{path:file,status:"M",beforeSha256:hash(before),afterSha256:hash(after)}]
+    }));
+    const r=spawnSync(process.execPath,[guard,"--enforce-results-preservation",
+      "--results-write-set="+manifest],{cwd:dir,encoding:"utf8"});
+    assert.equal(r.status,2);
+    const report=JSON.parse(r.stdout);
+    assert.ok(report.violations.some(v=>v.reason==="existing_score_changed_without_adjudication"));
+    assert.ok(!report.violations.some(v=>v.reason==="write_set_content_hash_mismatch"));
+  } finally {fs.rmSync(dir,{recursive:true,force:true});}
 });
