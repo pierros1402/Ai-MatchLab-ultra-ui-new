@@ -40,3 +40,13 @@ test("rejects changes to previously terminal W-D-L result labels", () => {
   const next = pack([{...row("one"), res:"D"}]);
   assert.deepEqual(inspect(old, next).violations.map(v=>v.reason), ["existing_result_changed_without_adjudication"]);
 });
+
+test("rejects fixture retargeting despite unchanged match ID and final score", () => {
+  for (const field of ["date", "opp", "sourceMatchId"]) {
+    const original = {...row("one"),opp:"Old Opponent",sourceMatchId:"source-one"};
+    const revised = {...original,[field]: "changed"};
+    const result = inspect(pack([original]),pack([revised]));
+    assert.deepEqual(result.violations.map(v=>v.field),[field]);
+    assert.equal(result.violations[0].reason,"existing_fixture_identity_changed_without_adjudication");
+  }
+});
