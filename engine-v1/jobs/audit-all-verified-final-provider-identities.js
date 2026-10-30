@@ -44,7 +44,9 @@ export function auditAllVerifiedFinalProviderIdentities(root) {
  }
  return {ok:duplicates.length===0&&unverifiable.length===0,readOnly:true,
   approvedForWrite:false,trackedFinalFiles:files.length,checked,providerBindings:bindings,
-  uniqueProviderMatches:index.size,duplicateCount:duplicates.length,scoreConflictCount:duplicates.filter(x=>x.scoreAgreement===false).length,\n  scoreAgreementCount:duplicates.filter(x=>x.scoreAgreement===true).length,\n  scoreUnverifiableCount:duplicates.filter(x=>x.scoreAgreement===null).length,
+  uniqueProviderMatches:index.size,duplicateCount:duplicates.length,scoreConflictCount:duplicates.filter(x=>x.scoreAgreement===false).length,
+  scoreAgreementCount:duplicates.filter(x=>x.scoreAgreement===true).length,
+  scoreUnverifiableCount:duplicates.filter(x=>x.scoreAgreement===null).length,
   unverifiableCount:unverifiable.length,duplicates,unverifiable};
 }
 if(process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
