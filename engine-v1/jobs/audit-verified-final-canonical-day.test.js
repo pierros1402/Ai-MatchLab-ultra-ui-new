@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import {fileURLToPath} from "node:url";
 import {auditVerifiedFinalsDay} from "./audit-verified-final-canonical-day.js";
 
 function withFixture(fn) {
