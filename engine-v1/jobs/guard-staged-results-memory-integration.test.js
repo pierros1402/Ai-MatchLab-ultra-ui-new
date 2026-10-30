@@ -298,3 +298,46 @@ test("staged canonical additive fixture update passes", () => {
   assert.equal(r.status,0);
   assert.equal(r.report.ok,true);
 });
+
+function verifiedFinalScenario(before, after) {
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),"aiml-verified-final-"));
+  try {
+    invoke("git",["init","-q"],dir);
+    invoke("git",["config","user.email","test@example.invalid"],dir);
+    invoke("git",["config","user.name","Test"],dir);
+    const relative="data/final-results/2026-10-30/cid_abc.json";
+    const target=path.join(dir,relative);
+    fs.mkdirSync(path.dirname(target),{recursive:true});
+    if (before) fs.writeFileSync(target,JSON.stringify(before));
+    else fs.writeFileSync(path.join(dir,"README.md"),"empty baseline");
+    invoke("git",["add","."],dir);
+    invoke("git",["commit","-qm","baseline"],dir);
+    fs.writeFileSync(target,JSON.stringify(after));
+    invoke("git",["add","."],dir);
+    const run=spawnSync(process.execPath,[guard,"--enforce-verified-final-preservation"],{cwd:dir,encoding:"utf8"});
+    return {status:run.status,report:JSON.parse(run.stdout)};
+  } finally {fs.rmSync(dir,{recursive:true,force:true});}
+}
+const verified = (h=2,a=1) => ({
+  schema:"ai-matchlab.verified-final-result.v1",verifiedFinalTruth:true,
+  matchId:"cid_abc",dayKey:"2026-10-30",
+  homeScore:h,awayScore:a,finalScore:{homeScore:h,awayScore:a}
+});
+test("staged verified-final score rewrite fails closed",()=>{
+  const r=verifiedFinalScenario(verified(),verified(3,1));
+  assert.equal(r.status,2);
+  assert.ok(r.report.violations.some(v=>v.reason==="verified_final_truth_mutation_requires_adjudication"));
+});
+test("staged verified-final provenance-only update is allowed",()=>{
+  const r=verifiedFinalScenario({...verified(),source:"old"},{...verified(),source:"new"});
+  assert.equal(r.status,0);
+});
+test("staged verified-final filename identity spoof fails closed",()=>{
+  const r=verifiedFinalScenario(null,{...verified(),matchId:"cid_wrong"});
+  assert.equal(r.status,2);
+  assert.ok(r.report.violations.some(v=>v.reason==="verified_final_staged_invalid"));
+});
+test("staged new valid verified-final is allowed",()=>{
+  const r=verifiedFinalScenario(null,verified());
+  assert.equal(r.status,0);
+});
