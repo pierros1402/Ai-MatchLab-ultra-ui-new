@@ -392,3 +392,29 @@ test("new verified final cannot duplicate an existing provider match under anoth
     v.providerMatchId==="9988123"));
  } finally {fs.rmSync(dir,{recursive:true,force:true});}
 });
+
+test("verified final deletion stays denied even under a general deletion override",()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),"aiml-final-delete-veto-"));
+ try {
+  invoke("git",["init","-q"],dir);
+  invoke("git",["config","user.email","test@example.invalid"],dir);
+  invoke("git",["config","user.name","Test"],dir);
+  const directory=path.join(dir,"data","final-results","2026-10-29");
+  fs.mkdirSync(directory,{recursive:true});
+  const filename=path.join(directory,"cid_keep.json");
+  fs.writeFileSync(filename,JSON.stringify({
+    schema:"ai-matchlab.verified-final-result.v1",matchId:"cid_keep",
+    dayKey:"2026-10-29",verifiedFinalTruth:true,homeScore:1,awayScore:0,
+    finalScore:{homeScore:1,awayScore:0},sources:[]
+  }));
+  invoke("git",["add","."],dir);
+  invoke("git",["commit","-qm","baseline"],dir);
+  fs.rmSync(filename);
+  invoke("git",["add","-u"],dir);
+  const run=spawnSync(process.execPath,[guard,"--enforce-verified-final-preservation"],
+    {cwd:dir,encoding:"utf8",env:{...process.env,ALLOW_DATA_DELETIONS:"1"}});
+  assert.equal(run.status,2,run.stdout+" "+run.stderr);
+  const report=JSON.parse(run.stdout);
+  assert.ok(report.violations.some(v=>v.reason==="verified_final_path_mutation_requires_adjudication"));
+ } finally {fs.rmSync(dir,{recursive:true,force:true});}
+});
