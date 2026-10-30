@@ -28,7 +28,7 @@ export function auditVerifiedFinalsDay({root,dayKey}) {
       issues.push({reason:"verified_final_identity_invalid",file});continue;
     }
     if (!fixture) {issues.push({reason:"canonical_fixture_not_found",matchId:id});continue;}
-    const score=v=>[v?.homeScore,v?.awayScore];
+    const score=v=>[v?.homeScore ?? v?.scoreHome,v?.awayScore ?? v?.scoreAway];
     const actual=score(final),canonicalScore=score(fixture);
     if (!actual.every(Number.isInteger) || !canonicalScore.every(Number.isInteger) ||
         actual[0]!==canonicalScore[0] || actual[1]!==canonicalScore[1]) {
