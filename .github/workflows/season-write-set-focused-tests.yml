@@ -1,0 +1,37 @@
+name: Season write-set focused verification
+on:
+  pull_request:
+    paths:
+      - "engine-v1/core/results-memory-preservation*"
+      - "engine-v1/core/results-write-set-contract*"
+      - "engine-v1/jobs/guard-staged-data-boundary.js"
+      - "engine-v1/jobs/guard-staged-results-memory*"
+      - "engine-v1/jobs/preflight-results-write-set-sandbox*"
+      - "engine-v1/jobs/simulate-results-write-set-transaction*"
+      - ".github/workflows/season-write-set-focused-tests.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  focused-read-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Execute all targeted source and isolated Git integration tests
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap \
+            engine-v1/core/results-memory-preservation.test.js \
+            engine-v1/core/results-write-set-contract.test.js \
+            engine-v1/jobs/guard-staged-results-memory-contract.test.js \
+            engine-v1/jobs/guard-staged-results-memory-integration.test.js \
+            engine-v1/jobs/preflight-results-write-set-sandbox.test.js \
+            engine-v1/jobs/simulate-results-write-set-transaction.test.js \
+            engine-v1/jobs/run-day-history-preflight-contract.test.js \
+            engine-v1/jobs/build-history-archive-athens-day.test.js
