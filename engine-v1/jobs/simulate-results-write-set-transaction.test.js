@@ -52,3 +52,26 @@ test("tampered candidate fails preflight without any writes",()=>{
   assert.throws(()=>run(args),/sandbox_preflight_hash_mismatch/);
  });
 });
+
+test("injected failure after two writes restores every candidate and leaves source intact",()=>{
+ setup(args=>{
+  const r=run({...args,injectFailureAfter:2});
+  assert.equal(r.ok,false);
+  assert.equal(r.applied,0);
+  assert.equal(r.rolledBack,true);
+  assert.equal(r.rollbackVerified,true);
+  assert.equal(r.privateStateVerified,true);
+  assert.equal(r.sourceUnchanged,true);
+  assert.equal(r.productionWrites,0);
+ });
+});
+test("failure at final write boundary restores all three pre-existing bytes",()=>{
+ setup(args=>{
+  const r=run({...args,injectFailureAfter:3});
+  assert.equal(r.ok,false);
+  assert.equal(r.applied,0);
+  assert.equal(r.rolledBack,true);
+  assert.equal(r.rollbackVerified,true);
+  assert.equal(r.sourceUnchanged,true);
+ });
+});
