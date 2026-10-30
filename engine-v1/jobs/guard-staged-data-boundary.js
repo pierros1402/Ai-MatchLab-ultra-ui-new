@@ -1,6 +1,7 @@
 import { execFileSync } from "child_process";
 
 import { findCanonicalStatusConflicts } from "../core/canonical-status-coherence.js";
+import { inspectResultsMemoryPreservation } from "../core/results-memory-preservation.js";
 
 function argValue(name, fallback = "") {
   const prefix = `--${name}=`;
@@ -124,6 +125,23 @@ function inspectStagedCanonicalFile(p, violations) {
   }
 }
 
+// Opt-in only until all authorized-correction and rollback contracts are qualified.
+const enforceResultsPreservation = hasFlag("enforce-results-preservation");
+function inspectStagedResultsMemory(p, violations) {
+  if (!/^data\\/league-memory\\/results\\/[^/]+\\.json$/.test(p)) return;
+  try {
+    const before = JSON.parse(git(["show", `HEAD:${p}`]));
+    const after = JSON.parse(git(["show", `:${p}`]));
+    const check = inspectResultsMemoryPreservation(before, after);
+    for (const violation of check.violations) {
+      violations.push({ ...violation, path: p });
+    }
+  } catch (error) {
+    violations.push({ reason: "results_memory_preservation_unverifiable", path: p,
+      error: String(error?.message || error) });
+  }
+}
+
 const staged = parseNameStatus(git(["diff", "--cached", "--name-status"]));
 const violations = [];
 
@@ -174,6 +192,10 @@ for (const item of staged) {
         dayKey
       });
     }
+  }
+
+  if (enforceResultsPreservation && statusLetter === "M") {
+    inspectStagedResultsMemory(item.path, violations);
   }
 
   if (statusLetter !== "D" && isCanonicalFixtureFile(item.path)) {
