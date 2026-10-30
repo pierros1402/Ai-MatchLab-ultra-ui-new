@@ -49,6 +49,8 @@ export function inventoryAliasDependencies(root, retainedId, aliasId) {
   const counts=ids.map(id=>bytes.split(id).length-1);
   const category=file.includes("/canonical-fixtures/")?"CANONICAL":
     file.includes("/final-results/")?"VERIFIED_FINAL":
+    /\/history-index\//.test(file)?"DERIVED_REBUILD":
+    /\/h2h\//.test(file)?"OTHER_REVIEW":
     /history|settlement|value-plan|value-pick/.test(file)?"IMMUTABLE_OR_SETTLEMENT":
     /deploy-snapshot|coverage|public-snapshot/.test(file)?"DERIVED_REBUILD":"OTHER_REVIEW";
   categories[category]++;
