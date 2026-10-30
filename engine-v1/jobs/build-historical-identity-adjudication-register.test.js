@@ -1,3 +1,4 @@
+import {execFileSync} from "node:child_process";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {buildHistoricalIdentityAdjudicationRegister,findCanonicalAuthorityForCase} from "./build-historical-identity-adjudication-register.js";
@@ -122,6 +123,11 @@ test("exact-score exact-kickoff provider match yields a non-authorized alias can
   writeFileSync(join(dir,"ita.coppa_italia.json"),JSON.stringify({fixtures:[
    {canonicalId:"cid_retained",source:"espn",sourceMatchId:"401881684"}
   ]}));
+  execFileSync("git",["init","-q"],{cwd:root});
+  const finals=join(root,"data","final-results","2026-08-15");
+  mkdirSync(finals,{recursive:true});
+  writeFileSync(join(finals,"cid_alias.json"),JSON.stringify({matchId:"cid_alias"}));
+  execFileSync("git",["add","data"],{cwd:root});
   const row={...audit.duplicates[0],provider:"espn",providerMatchId:"401881684",
    firstPath:"data/final-results/2026-08-15/cid_retained.json",
    secondPath:"data/final-results/2026-08-15/cid_alias.json",
@@ -132,6 +138,7 @@ test("exact-score exact-kickoff provider match yields a non-authorized alias can
   assert.equal(report.safelyScopedCanonicalCandidates[0].retainedCanonicalId,"cid_retained");
   assert.equal(report.safelyScopedCanonicalCandidates[0].aliasCandidateId,"cid_alias");
   assert.equal(report.safelyScopedCanonicalCandidates[0].writeAuthorized,false);
-  assert.equal(report.safelyScopedCanonicalCandidates[0].dependencyAudit,"NOT_EXECUTED");
+  assert.equal(report.safelyScopedCanonicalCandidates[0].dependencyAudit.readOnly,true);
+  assert.ok(report.safelyScopedCanonicalCandidates[0].dependencyAudit.fileCount>=1);
  }finally{rmSync(root,{recursive:true,force:true});}
 });
