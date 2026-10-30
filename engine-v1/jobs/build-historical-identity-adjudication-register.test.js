@@ -44,3 +44,23 @@ test("only matching final score and kickoff create a non-executable alias candid
  assert.equal(unsafe.candidateOperation,null);
  assert.equal(result.approvedForWrite,false);
 });
+
+test("collision totals partition exactly and remain non-executable",()=>{
+ const rows=[
+  {...audit.duplicates[0],providerMatchId:"score"},
+  {...audit.duplicates[0],providerMatchId:"kickoff",firstScore:[2,1],secondScore:[2,1],
+   scoreAgreement:true,kickoffAgreement:false},
+  {...audit.duplicates[0],providerMatchId:"candidate",firstScore:[2,1],secondScore:[2,1],
+   scoreAgreement:true,kickoffAgreement:true},
+  {...audit.duplicates[0],providerMatchId:"unknown",scoreAgreement:null,kickoffAgreement:null}
+ ];
+ const reg=buildHistoricalIdentityAdjudicationRegister({...audit,duplicates:rows});
+ assert.equal(reg.duplicateCases,4);
+ assert.deepEqual(reg.classificationCounts,{
+  SCORE_CONFLICT:1,KICKOFF_CONFLICT:1,
+  SAME_SCORE_IDENTITY_CONFLICT:1,INCOMPLETE_SCORE_EVIDENCE:1
+ });
+ assert.equal(reg.nonExecutableCandidateCount,1);
+ assert.ok(reg.cases.every(x=>x.approvedForWrite===false));
+ assert.ok(reg.cases.every(x=>x.canonicalRetainedId===null));
+});
