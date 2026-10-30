@@ -20,10 +20,19 @@ export function auditVerifiedFinalsDay({root,dayKey}) {
     }
   }
   let checked=0,matched=0;
+  const providerOwners=new Map();
   for (const file of fs.readdirSync(finalsDir).filter(x=>x.endsWith(".json")).sort()) {
     checked++;
     const final=JSON.parse(fs.readFileSync(path.join(finalsDir,file),"utf8"));
     const id=final?.matchId,fixture=canonical.get(id);
+    for (const source of Array.isArray(final?.sources)?final.sources:[]) {
+      const provider=source?.provider, providerId=source?.providerMatchId;
+      if(typeof provider!=="string" || !provider || !providerId)continue;
+      const key=provider+":"+String(providerId), owner=providerOwners.get(key);
+      if(owner && owner!==id)issues.push({reason:"duplicate_verified_provider_identity",
+        provider,providerMatchId:String(providerId),firstMatchId:owner,secondMatchId:id});
+      else providerOwners.set(key,id);
+    }
     if (!final?.verifiedFinalTruth||!id||file!==id+".json"||final?.dayKey!==dayKey) {
       issues.push({reason:"verified_final_identity_invalid",file});continue;
     }
