@@ -32,7 +32,7 @@ export function findCanonicalAuthorityForCase(root, evidence) {
 }
 
 // Deterministic read-only case registry; no automatic authority assignment.
-export function buildHistoricalIdentityAdjudicationRegister(audit) {
+export function buildHistoricalIdentityAdjudicationRegister(audit,root=null) {
  if(!audit || audit.readOnly!==true || !Array.isArray(audit.duplicates) ||
     !Array.isArray(audit.unverifiable)) throw Error("source_audit_invalid");
  const cases=audit.duplicates.map(row=>{
@@ -62,6 +62,7 @@ export function buildHistoricalIdentityAdjudicationRegister(audit) {
        requiresDependencyInventory:true,approvedForWrite:false} : null;
    return {caseId:"HIST-"+digest.slice(0,20),
      evidenceState,candidateOperation,
+     canonicalAuthority:root ? findCanonicalAuthorityForCase(root,evidence) : null,
      classification:row.scoreAgreement===false?"SCORE_CONFLICT":
        row.kickoffAgreement===false?"KICKOFF_CONFLICT":
        row.scoreAgreement===true?"SAME_SCORE_IDENTITY_CONFLICT":"INCOMPLETE_SCORE_EVIDENCE",
@@ -86,7 +87,7 @@ export function buildHistoricalIdentityAdjudicationRegister(audit) {
 }
 if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const output=buildHistoricalIdentityAdjudicationRegister(
-   auditAllVerifiedFinalProviderIdentities(process.cwd()));
+   auditAllVerifiedFinalProviderIdentities(process.cwd()),process.cwd());
  console.log(JSON.stringify(output,null,2));
  if(output.duplicateCases || output.unverifiableCases)process.exitCode=1;
 }
