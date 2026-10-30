@@ -83,6 +83,17 @@ export function buildHistoricalIdentityAdjudicationRegister(audit,root=null) {
        "INSUFFICIENT_INDEPENDENT_IDENTITY_PROOF"]
        .map(name=>[name,cases.filter(item=>item.evidenceState===name).length])),
    nonExecutableCandidateCount:cases.filter(item=>item.candidateOperation!==null).length,
+   canonicalAuthorityCounts:Object.fromEntries(
+     ["CANONICAL_SOURCE_BOUND_CANDIDATE","HOLD_CROSS_DAY",
+      "HOLD_CANONICAL_AMBIGUOUS_OR_MISSING","HOLD_CANONICAL_EVIDENCE_UNREADABLE"]
+       .map(status=>[status,cases.filter(item=>item.canonicalAuthority?.status===status).length])),
+   canonicalSourceBoundCases:cases.filter(item=>
+     item.canonicalAuthority?.status==="CANONICAL_SOURCE_BOUND_CANDIDATE")
+     .map(item=>({caseId:item.caseId,provider:item.evidence.provider,
+       providerMatchId:item.evidence.providerMatchId,
+       retainedCanonicalId:item.canonicalAuthority.canonicalId,
+       fixturePath:item.canonicalAuthority.fixturePath,
+       approvedForWrite:false,dependencyInventoryVerified:false})),
    cases,unverifiable:audit.unverifiable};
 }
 if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url)){
