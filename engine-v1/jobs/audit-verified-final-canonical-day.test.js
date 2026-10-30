@@ -75,3 +75,22 @@ test("canonical scoreHome/scoreAway schema reconciles without weakening mismatch
     assert.ok(mismatch.issues.some(i=>i.reason==="final_score_disagreement"));
   });
 });
+
+test("exact-provider canonical alias is reported for adjudication, not auto-approved",()=>{
+  withFixture(x=>{
+    fs.writeFileSync(path.join(x.canonical,"league.json"),JSON.stringify({fixtures:[{
+      canonicalId:"cid_retained",sourceId:"401912776",scoreHome:1,scoreAway:2,
+      kickoffUtc:"2026-10-29T10:00Z"
+    }]}));
+    fs.writeFileSync(path.join(x.finals,"cid_1.json"),JSON.stringify({
+      ...x.final,homeScore:1,awayScore:2,kickoffUtc:"2026-10-29T10:00Z",
+      sources:[{provider:"espn",providerMatchId:"401912776"}]
+    }));
+    const result=auditVerifiedFinalsDay({root:x.root,dayKey:x.day});
+    assert.equal(result.ok,false);
+    assert.equal(result.matched,0);
+    assert.ok(result.issues.some(e=>e.reason==="canonical_identity_alias_requires_adjudication" &&
+      e.retainedCanonicalId==="cid_retained" &&
+      e.providerMatchId==="401912776"));
+  });
+});
