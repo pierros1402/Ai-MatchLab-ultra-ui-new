@@ -10,7 +10,7 @@ test("Plan A records non-playable rejection exactly once before evaluation", () 
 
   const auditStart = source.indexOf("  const auditRejections = [];");
   const resourceStart = source.indexOf(
-    "  const { indexes, priors } = await getSeasonResources",
+    "  const resources = await getSeasonResources(season, rebuild);",
     auditStart
   );
   const evaluationStart = source.indexOf("  for (const match of matches) {", resourceStart);
