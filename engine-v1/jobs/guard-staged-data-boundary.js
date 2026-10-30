@@ -37,6 +37,10 @@ function git(args) {
   return execFileSync("git", args, { encoding: "utf8" });
 }
 
+function gitBytes(args) {
+  return execFileSync("git", args);
+}
+
 function parseNameStatus(raw) {
   return raw
     .split(/\r?\n/)
@@ -147,8 +151,8 @@ function inspectStagedResultsMemory(p, status, violations) {
     if (candidateWriteSetFile && status === "M") {
       stagedCorrectionEntries.push({
         path: p, status,
-        beforeBytes: Buffer.from(git(["show", `HEAD:${p}`])),
-        afterBytes: Buffer.from(git(["show", `:${p}`]))
+        beforeBytes: gitBytes(["show", `HEAD:${p}`]),
+        afterBytes: gitBytes(["show", `:${p}`])
       });
     }
     const check = inspectResultsMemoryPreservation(before, after);
