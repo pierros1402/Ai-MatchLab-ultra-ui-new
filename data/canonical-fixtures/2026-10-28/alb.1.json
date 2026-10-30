@@ -2,7 +2,7 @@
   "dayKey": "2026-10-28",
   "leagueSlug": "alb.1",
   "leagueName": "Albanian Superliga",
-  "updatedAt": "2026-10-28T20:09:28.919Z",
+  "updatedAt": "2026-10-30T01:16:12.983Z",
   "count": 4,
   "sourceMeta": {
     "acquisitionProvider": "flashscore",
@@ -17,7 +17,10 @@
       ],
       "changedRows": 2,
       "mergedAt": "2026-10-28T20:09:28.919Z"
-    }
+    },
+    "crossDayVerifiedFinalSupersessionAt": "2026-10-30T01:16:12.983Z",
+    "crossDayVerifiedFinalSupersessionRows": 1,
+    "crossDayVerifiedFinalSupersessionPolicy": "cross-day-provider-verified-final-v1"
   },
   "fixtures": [
     {
@@ -70,12 +73,78 @@
       "scoreAway": null,
       "penalties": null,
       "decidedBy": null,
-      "status": "STATUS_SCHEDULED",
-      "rawStatus": "STATUS_SCHEDULED",
+      "status": "STATUS_POSTPONED",
+      "rawStatus": "STATUS_POSTPONED",
       "minute": null,
       "venue": null,
       "firstSeenAt": "2026-10-25T22:32:53.352Z",
-      "lastSeenAt": "2026-10-25T22:32:53.426Z"
+      "lastSeenAt": "2026-10-25T22:32:53.426Z",
+      "statusType": "STATUS_POSTPONED",
+      "statusCorrection": {
+        "schema": "ai-matchlab.cross-day-verified-final-supersession.v1",
+        "correctedAt": "2026-10-30T01:16:12.983Z",
+        "decisionId": "cross-day-verified-final-thCi4VIP-cid_alb1_kftirana_dinamocity_20261028-v1",
+        "policyVersion": "cross-day-provider-verified-final-v1",
+        "correctedFrom": {
+          "status": "STATUS_SCHEDULED",
+          "statusType": null,
+          "rawStatus": "STATUS_SCHEDULED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "correctedTo": {
+          "status": "STATUS_POSTPONED",
+          "statusType": "STATUS_POSTPONED",
+          "rawStatus": "STATUS_POSTPONED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "reason": "verified_cross_day_provider_reschedule",
+        "decisionBasis": "exact_provider_identity_cross_day_supersession_with_verified_final",
+        "providerEvidence": {
+          "provider": "flashscore",
+          "providerMatchId": "thCi4VIP",
+          "supersededCanonicalId": "cid_alb1_kftirana_dinamocity_20261028",
+          "supersededDayKey": "2026-10-28",
+          "supersededKickoffUtc": "2026-10-28T16:00:00.000Z",
+          "evidenceCanonicalId": "cid_alb1_kftirana_dinamocity_20261029",
+          "evidenceDayKey": "2026-10-29",
+          "evidenceKickoffUtc": "2026-10-29T12:30:00.000Z",
+          "evidenceHomeTeam": "KF Tirana",
+          "evidenceAwayTeam": "Dinamo City",
+          "verifiedFinalArtifact": "data/final-results/2026-10-29/cid_alb1_kftirana_dinamocity_20261029.json",
+          "verifiedFinalVerdict": "verified_final_result",
+          "verifiedFinalTruth": true,
+          "verifiedFinalScoreHome": 1,
+          "verifiedFinalScoreAway": 1
+        },
+        "guarantees": {
+          "flashscoreProviderOnly": true,
+          "exactProviderIdentity": true,
+          "sameLeague": true,
+          "exactNormalizedOrderedTeamPair": true,
+          "uniqueLatestObservation": true,
+          "strictlyNewerKickoff": true,
+          "minimumKickoffShiftRequired": true,
+          "strictlyNewerObservation": true,
+          "nonOverlappingObservationWindows": true,
+          "oldKickoffPastGraceRequired": true,
+          "oldOccurrenceScorelessScheduledOnly": true,
+          "playedFinalNeverSuperseded": true,
+          "existingExplicitNonPlayedNeverSuperseded": true,
+          "exactVerifiedFinalArtifact": true,
+          "exactVerifiedFinalFlashscoreProviderIdentity": true,
+          "verifiedFinalScoreParity": true,
+          "verifiedFinalTeamPairParity": true,
+          "oldOccurrenceHasNoActiveFinalResult": true,
+          "oldOccurrenceAbsentFromHistory": true,
+          "oldOccurrenceHasNoOfficialValuePick": true,
+          "oldOccurrenceScoreRemainsNull": true,
+          "scoreNeverCopiedBackward": true
+        }
+      }
     },
     {
       "canonicalId": "cid_alb1_afelbasani_partizani_20261028",
