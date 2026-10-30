@@ -27,7 +27,26 @@ export function auditVerifiedFinalsDay({root,dayKey}) {
     if (!final?.verifiedFinalTruth||!id||file!==id+".json"||final?.dayKey!==dayKey) {
       issues.push({reason:"verified_final_identity_invalid",file});continue;
     }
-    if (!fixture) {issues.push({reason:"canonical_fixture_not_found",matchId:id});continue;}
+    if (!fixture) {
+      const sourceIds=new Set((final?.sources||[]).map(s=>String(s?.providerMatchId||"")).filter(Boolean));
+      const candidates=[...canonical.values()].filter(row=>
+        String(row?.sourceId||row?.sourceMatchId||"") &&
+        sourceIds.has(String(row?.sourceId||row?.sourceMatchId||"")));
+      const same=candidates.filter(row=>
+        row?.scoreHome===final?.homeScore &&
+        row?.scoreAway===final?.awayScore &&
+        row?.kickoffUtc===final?.kickoffUtc);
+      if (same.length===1) {
+        issues.push({reason:"canonical_identity_alias_requires_adjudication",
+          matchId:id,retainedCanonicalId:same[0].canonicalId,
+          providerMatchId:String(same[0].sourceId||same[0].sourceMatchId),
+          verifiedScore:[final.homeScore,final.awayScore]});
+      } else {
+        issues.push({reason:"canonical_fixture_not_found",matchId:id,
+          providerCandidates:candidates.length});
+      }
+      continue;
+    }
     const score=v=>[v?.homeScore ?? v?.scoreHome,v?.awayScore ?? v?.scoreAway];
     const actual=score(final),canonicalScore=score(fixture);
     if (!actual.every(Number.isInteger) || !canonicalScore.every(Number.isInteger) ||
