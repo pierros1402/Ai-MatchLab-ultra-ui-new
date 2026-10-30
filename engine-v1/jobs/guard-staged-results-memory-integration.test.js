@@ -418,3 +418,32 @@ test("verified final deletion stays denied even under a general deletion overrid
   assert.ok(report.violations.some(v=>v.reason==="verified_final_path_mutation_requires_adjudication"));
  } finally {fs.rmSync(dir,{recursive:true,force:true});}
 });
+
+test("adjacent-day final alias cannot duplicate a retained provider result",()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),"aiml-cross-day-final-"));
+ try {
+  invoke("git",["init","-q"],dir);
+  invoke("git",["config","user.email","test@example.invalid"],dir);
+  invoke("git",["config","user.name","Test"],dir);
+  const make=(day,id)=>JSON.stringify({
+   schema:"ai-matchlab.verified-final-result.v1",verifiedFinalTruth:true,
+   matchId:id,dayKey:day,homeScore:2,awayScore:1,
+   finalScore:{homeScore:2,awayScore:1},
+   sources:[{provider:"espn",providerMatchId:"778899"}]
+  });
+  const oldDir=path.join(dir,"data","final-results","2026-10-28");
+  const newDir=path.join(dir,"data","final-results","2026-10-29");
+  fs.mkdirSync(oldDir,{recursive:true});
+  fs.writeFileSync(path.join(oldDir,"cid_old.json"),make("2026-10-28","cid_old"));
+  invoke("git",["add","."],dir);invoke("git",["commit","-qm","baseline"],dir);
+  fs.mkdirSync(newDir,{recursive:true});
+  fs.writeFileSync(path.join(newDir,"cid_new.json"),make("2026-10-29","cid_new"));
+  invoke("git",["add","."],dir);
+  const run=spawnSync(process.execPath,[guard,"--enforce-verified-final-preservation"],
+    {cwd:dir,encoding:"utf8"});
+  assert.equal(run.status,2,run.stdout+" "+run.stderr);
+  const result=JSON.parse(run.stdout);
+  assert.ok(result.violations.some(x=>x.reason==="verified_provider_identity_collision" &&
+    x.providerMatchId==="778899"));
+ } finally {fs.rmSync(dir,{recursive:true,force:true});}
+});
