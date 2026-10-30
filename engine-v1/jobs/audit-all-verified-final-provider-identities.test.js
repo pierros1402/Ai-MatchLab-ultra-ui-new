@@ -108,3 +108,17 @@ test("empty provider source arrays cannot falsely pass historical identity cover
   assert.equal(result.unverifiable[0].reason,"provider_identity_evidence_missing");
  });
 });
+
+test("legacy exact Flashscore authority is recognized but unsupported repair authority remains on hold",()=>{
+ withHistory(({root,add,stage})=>{
+  add("2026-08-07","cid_legacy",[{authority:"flashscore",providerMatchId:"zXY011"}]);
+  add("2026-08-08","cid_regular",[{provider:"flashscore",providerMatchId:"zXY011"}]);
+  add("2026-08-09","cid_unproven",[{authority:"prior_repair_independent_source_1",reference:"old transcript"}]);
+  stage();
+  const result=auditAllVerifiedFinalProviderIdentities(root);
+  assert.equal(result.duplicateCount,1);
+  assert.equal(result.unverifiableCount,1);
+  assert.equal(result.unverifiable[0].reason,"provider_identity_evidence_missing");
+  assert.equal(result.duplicates[0].provider,"flashscore");
+ });
+});
