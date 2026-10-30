@@ -354,7 +354,8 @@ for (const item of staged) {
 // Verify the complete affected final-results day, not merely changed rows.
 // A newly staged alias cannot silently coexist with an older provider match.
 if (enforceVerifiedFinalPreservation) {
-  const finalPath = p => /^data\\/final-results\\/\\d{4}-\\d{2}-\\d{2}\\/[^/]+\\.json$/.test(p);
+  const finalPath = p => typeof p === "string" && p.startsWith("data/final-results/") &&
+    p.endsWith(".json") && p.split("/").length === 4;
   const affectedDays = new Set(staged.filter(x => finalPath(x.path) || finalPath(x.oldPath))
     .flatMap(x => [x.path,x.oldPath]).filter(finalPath).map(p => p.split("/")[2]));
   const stagedByPath = new Map(staged.map(x => [x.path,x.status[0]]));
