@@ -1,7 +1,9 @@
 import { execFileSync } from "child_process";
+import { readFileSync } from "node:fs";
 
 import { findCanonicalStatusConflicts } from "../core/canonical-status-coherence.js";
 import { inspectResultsMemoryPreservation } from "../core/results-memory-preservation.js";
+import { verifyResultsWriteSetManifest } from "../core/results-write-set-contract.js";
 
 function argValue(name, fallback = "") {
   const prefix = `--${name}=`;
@@ -127,6 +129,10 @@ function inspectStagedCanonicalFile(p, violations) {
 
 // Opt-in only until all authorized-correction and rollback contracts are qualified.
 const enforceResultsPreservation = hasFlag("enforce-results-preservation");
+const candidateWriteSetFile = argValue("results-write-set", "");
+// Hash binding is evidence only, not external authorization. Never permit an
+// unreviewed correction to bypass the ordinary preservation veto.
+const stagedCorrectionEntries = [];
 function inspectStagedResultsMemory(p, status, violations) {
   if (!/^data\/league-memory\/results\/[^/]+\.json$/.test(p)) return;
   try {
@@ -137,6 +143,13 @@ function inspectStagedResultsMemory(p, status, violations) {
       violations.push({ reason: "results_memory_slug_path_mismatch", path: p, expectedSlug,
         actualSlug: typeof after?.slug === "string" ? after.slug : null });
       return;
+    }
+    if (candidateWriteSetFile && status === "M") {
+      stagedCorrectionEntries.push({
+        path: p, status,
+        beforeBytes: Buffer.from(git(["show", `HEAD:${p}`])),
+        afterBytes: Buffer.from(git(["show", `:${p}`]))
+      });
     }
     const check = inspectResultsMemoryPreservation(before, after);
     for (const violation of check.violations) {
@@ -215,6 +228,22 @@ for (const item of staged) {
 
   if (statusLetter !== "D" && isCanonicalFixtureFile(item.path)) {
     inspectStagedCanonicalFile(item.path, violations);
+  }
+}
+
+if (candidateWriteSetFile) {
+  if (!enforceResultsPreservation) {
+    violations.push({reason:"write_set_requires_preservation_guard"});
+  } else {
+    try {
+      const manifest = JSON.parse(readFileSync(candidateWriteSetFile, "utf8"));
+      const result = verifyResultsWriteSetManifest(manifest, stagedCorrectionEntries);
+      for (const failure of result.failures) violations.push(failure);
+      // A matching manifest does not prove approval; no exception to the
+      // results-memory preservation checks is granted here.
+    } catch (e) {
+      violations.push({reason:"write_set_unreadable",error:String(e?.message || e)});
+    }
   }
 }
 
