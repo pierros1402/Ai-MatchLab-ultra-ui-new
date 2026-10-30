@@ -1,4 +1,6 @@
 import {createHash} from "node:crypto";
+import {resolve} from "node:path";
+import {fileURLToPath} from "node:url";
 import {auditAllVerifiedFinalProviderIdentities} from "./audit-all-verified-final-provider-identities.js";
 
 // Deterministic read-only case registry; no automatic authority assignment.
@@ -29,7 +31,7 @@ export function buildHistoricalIdentityAdjudicationRegister(audit) {
    duplicateCases:cases.length,unverifiableCases:audit.unverifiable.length,
    cases,unverifiable:audit.unverifiable};
 }
-if(process.argv[1] && import.meta.url===new URL("file://"+process.argv[1]).href){
+if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const output=buildHistoricalIdentityAdjudicationRegister(
    auditAllVerifiedFinalProviderIdentities(process.cwd()));
  console.log(JSON.stringify(output,null,2));
