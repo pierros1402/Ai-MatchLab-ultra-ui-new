@@ -52,12 +52,18 @@ export function inventoryAliasDependencies(root, retainedId, aliasId) {
     /history|settlement|value-plan|value-pick/.test(file)?"IMMUTABLE_OR_SETTLEMENT":
     /deploy-snapshot|coverage|public-snapshot/.test(file)?"DERIVED_REBUILD":"OTHER_REVIEW";
   categories[category]++;
-  return {path:file,retainedOccurrences:counts[0],aliasOccurrences:counts[1],category};
+  const prescribedAction=category==="IMMUTABLE_OR_SETTLEMENT"?"PRESERVE_AND_RECONCILE_BY_APPEND":
+    category==="DERIVED_REBUILD"?"DETERMINISTIC_REBUILD_REQUIRED":
+    category==="VERIFIED_FINAL"?"PRESERVE_EVIDENCE_PENDING_ALIAS_ADJUDICATION":
+    category==="CANONICAL"?"CANONICAL_AUTHORITY_READ_ONLY":
+    "MANUAL_CONTRACT_REVIEW_REQUIRED";
+  return {path:file,retainedOccurrences:counts[0],aliasOccurrences:counts[1],
+    category,prescribedAction,writeAuthorized:false};
  });
  return {readOnly:true,approvedForWrite:false,retainedId,aliasId,
    fileCount:references.length,aliasOccurrenceCount:references.reduce((n,x)=>n+x.aliasOccurrences,0),
    retainedOccurrenceCount:references.reduce((n,x)=>n+x.retainedOccurrences,0),
-   categories,references};
+   categories,writeSetApproved:false,automaticReplacementAuthorized:false,references};
 }
 
 // Deterministic read-only case registry; no automatic authority assignment.
