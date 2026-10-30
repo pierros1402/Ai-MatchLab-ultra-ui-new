@@ -341,3 +341,26 @@ test("staged new valid verified-final is allowed",()=>{
   const r=verifiedFinalScenario(null,verified());
   assert.equal(r.status,0);
 });
+
+test("publication guard rejects arbitrary canonical IDs sharing a provider fixture",()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),"aiml-provider-collision-"));
+ try {
+  invoke("git",["init","-q"],dir);
+  invoke("git",["config","user.email","test@example.invalid"],dir);
+  invoke("git",["config","user.name","Test"],dir);
+  fs.writeFileSync(path.join(dir,"README.md"),"baseline");
+  invoke("git",["add","."],dir);
+  invoke("git",["commit","-qm","baseline"],dir);
+  const target=path.join(dir,"data","canonical-fixtures","2026-10-29","afc.cup.json");
+  fs.mkdirSync(path.dirname(target),{recursive:true});
+  fs.writeFileSync(target,JSON.stringify({fixtures:[
+   {canonicalId:"cid_arbitrary_one",source:"espn",sourceId:"9911",status:"FT",scoreHome:1,scoreAway:0},
+   {canonicalId:"cid_arbitrary_two",source:"espn",sourceId:"9911",status:"FT",scoreHome:1,scoreAway:0}
+  ]}));
+  invoke("git",["add","."],dir);
+  const run=spawnSync(process.execPath,[guard],{cwd:dir,encoding:"utf8"});
+  assert.equal(run.status,2,run.stdout+" "+run.stderr);
+  const report=JSON.parse(run.stdout);
+  assert.ok(report.violations.some(v=>v.reason==="canonical_provider_identity_collision"));
+ } finally {fs.rmSync(dir,{recursive:true,force:true});}
+});
