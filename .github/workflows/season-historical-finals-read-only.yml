@@ -6,6 +6,8 @@ on:
       - "engine-v1/jobs/audit-verified-finals-range.js"
       - "engine-v1/jobs/report-verified-finals-range.js"
       - "engine-v1/jobs/audit-all-verified-final-provider-identities.js"
+      - "engine-v1/jobs/build-historical-identity-adjudication-register.js"
+      - "engine-v1/jobs/build-historical-identity-adjudication-register.test.js"
       - ".github/workflows/season-historical-finals-read-only.yml"
 permissions:
   contents: read
@@ -24,5 +26,8 @@ jobs:
         run: node engine-v1/jobs/inventory-canonical-alias-references.js
       - name: Audit every historical verified-final identity without writes
         run: node engine-v1/jobs/audit-all-verified-final-provider-identities.js
+      - name: Build full historical identity adjudication register without writes
+        if: always()
+        run: node engine-v1/jobs/build-historical-identity-adjudication-register.js
       - name: Reconcile exact historical day window without writes
         run: node engine-v1/jobs/report-verified-finals-range.js 2026-10-27 2026-10-29
