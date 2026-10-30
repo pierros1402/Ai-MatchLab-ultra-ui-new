@@ -57,3 +57,16 @@ test("canonical staged guard rejects missing identities and changed terminal evi
     assert.ok(guard.includes(expected), "missing fail-closed condition: " + expected);
   }
 });
+
+test("Daily and Intraday publication activate canonical and verified-final gates", () => {
+  const daily = fs.readFileSync(fileURLToPath(new URL("../../.github/workflows/daily-autonomous.yml", import.meta.url)), "utf8");
+  const intraday = fs.readFileSync(fileURLToPath(new URL("../../.github/workflows/intraday-deploy-snapshot-refresh.yml", import.meta.url)), "utf8");
+  const start = daily.indexOf("node engine-v1/jobs/guard-staged-data-boundary.js");
+  const boundary = daily.indexOf("--allow=", start);
+  assert.ok(start >= 0 && boundary > start);
+  const command = daily.slice(start, boundary);
+  assert.ok(command.includes("--enforce-verified-final-preservation"));
+  assert.ok(command.includes("--enforce-canonical-row-preservation"));
+  const publicCheckpoint = intraday.split("\n").find(line => line.includes("--label=intraday-public-truth-checkpoint"));
+  assert.ok(publicCheckpoint?.includes("--enforce-canonical-row-preservation"));
+});
