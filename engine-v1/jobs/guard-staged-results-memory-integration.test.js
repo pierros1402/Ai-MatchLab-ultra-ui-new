@@ -257,3 +257,44 @@ test("new staged results-memory file with partial score is denied", () => {
     v.reason === "results_memory_preservation_unverifiable" &&
     String(v.error).includes("results_memory_partial_score")));
 });
+
+function canonicalScenario(before, after) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-canonical-boundary-"));
+  try {
+    invoke("git", ["init", "-q"], dir);
+    invoke("git", ["config", "user.email", "test@example.invalid"], dir);
+    invoke("git", ["config", "user.name", "Test"], dir);
+    const target = path.join(dir, "data", "canonical-fixtures", "2026-10-30", "league.json");
+    fs.mkdirSync(path.dirname(target), {recursive:true});
+    fs.writeFileSync(target, JSON.stringify({fixtures:before}));
+    invoke("git", ["add", "."], dir);
+    invoke("git", ["commit", "-qm", "baseline"], dir);
+    fs.writeFileSync(target, JSON.stringify({fixtures:after}));
+    invoke("git", ["add", "."], dir);
+    const run = spawnSync(process.execPath, [guard, "--enforce-canonical-row-preservation"], {cwd:dir,encoding:"utf8"});
+    return {status:run.status,report:JSON.parse(run.stdout)};
+  } finally { fs.rmSync(dir,{recursive:true,force:true}); }
+}
+test("staged canonical identity replacement is rejected even with same row count", () => {
+  const r = canonicalScenario([{canonicalId:"a",status:"SCHEDULED"}],[{canonicalId:"b",status:"SCHEDULED"}]);
+  assert.equal(r.status,2);
+  assert.ok(r.report.violations.some(v=>v.reason==="canonical_identity_missing"));
+});
+test("staged canonical duplicate ids are rejected", () => {
+  const r = canonicalScenario([{canonicalId:"a",status:"SCHEDULED"}],
+    [{canonicalId:"a",status:"SCHEDULED"},{canonicalId:"a",status:"SCHEDULED"}]);
+  assert.equal(r.status,2);
+  assert.ok(r.report.violations.some(v=>v.reason==="canonical_identity_unverifiable"));
+});
+test("staged canonical final score mutation is rejected", () => {
+  const r = canonicalScenario([{canonicalId:"a",status:"FT",homeScore:2,awayScore:1}],
+    [{canonicalId:"a",status:"FT",homeScore:3,awayScore:1}]);
+  assert.equal(r.status,2);
+  assert.ok(r.report.violations.some(v=>v.reason==="canonical_verified_terminal_mutation"));
+});
+test("staged canonical additive fixture update passes", () => {
+  const r = canonicalScenario([{canonicalId:"a",status:"SCHEDULED"}],
+    [{canonicalId:"a",status:"SCHEDULED"},{canonicalId:"b",status:"SCHEDULED"}]);
+  assert.equal(r.status,0);
+  assert.equal(r.report.ok,true);
+});
