@@ -9,7 +9,7 @@ export const aliases=Object.freeze([
  "cid_afccup_tampinesrovers_pkrsvayrieng_20261029"
 ]);
 export function inventoryCanonicalAliasReferences(root, ids=aliases) {
- const files=execFileSync("git",["ls-files","-z"],{cwd:root})
+ const files=execFileSync("git",["ls-files","-z"],{cwd:root,maxBuffer:64*1024*1024})
   .toString("utf8").split("\0").filter(Boolean);
  const references=[],totals=Object.fromEntries(ids.map(id=>[id,0]));
  for(const file of files) {
