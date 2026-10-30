@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {buildHistoricalIdentityAdjudicationRegister} from "./build-historical-identity-adjudication-register.js";
+import {buildHistoricalIdentityAdjudicationRegister,findCanonicalAuthorityForCase} from "./build-historical-identity-adjudication-register.js";
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from "node:fs";
+import {tmpdir} from "node:os";
+import {join} from "node:path";
 const audit={readOnly:true,trackedFinalFiles:100,unverifiable:[],duplicates:[
  {provider:"flashscore",providerMatchId:"fixture-A",firstPath:"a.json",secondPath:"b.json",
  firstMatchId:"a",secondMatchId:"b",firstScore:[0,0],secondScore:[3,0],
@@ -63,4 +66,27 @@ test("collision totals partition exactly and remain non-executable",()=>{
  assert.equal(reg.nonExecutableCandidateCount,1);
  assert.ok(reg.cases.every(x=>x.approvedForWrite===false));
  assert.ok(reg.cases.every(x=>x.canonicalRetainedId===null));
+});
+
+test("canonical authority must match exact provider and source ID",()=>{
+ const root=mkdtempSync(join(tmpdir(),"aiml-canonical-"));
+ try {
+  const dir=join(root,"data","canonical-fixtures","2026-08-15");
+  mkdirSync(dir,{recursive:true});
+  writeFileSync(join(dir,"ita.coppa_italia.json"),JSON.stringify({fixtures:[
+    {canonicalId:"cid_retained",source:"espn",sourceMatchId:"401881684"},
+    {canonicalId:"cid_unrelated",source:"espn",sourceMatchId:"other"}
+  ]}));
+  const evidence={provider:"espn",providerMatchId:"401881684",
+    firstPath:"data/final-results/2026-08-15/cid_retained.json",
+    secondPath:"data/final-results/2026-08-15/cid_alias.json",
+    firstMatchId:"cid_retained",secondMatchId:"cid_alias"};
+  const result=findCanonicalAuthorityForCase(root,evidence);
+  assert.equal(result.status,"CANONICAL_SOURCE_BOUND_CANDIDATE");
+  assert.equal(result.canonicalId,"cid_retained");
+  assert.equal(result.approvedForWrite,false);
+  assert.equal(result.dependencyInventoryVerified,false);
+  assert.equal(findCanonicalAuthorityForCase(root,{...evidence,providerMatchId:"wrong"}).status,
+    "HOLD_CANONICAL_AMBIGUOUS_OR_MISSING");
+ } finally {rmSync(root,{recursive:true,force:true});}
 });
