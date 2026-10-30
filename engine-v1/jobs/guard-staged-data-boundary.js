@@ -177,6 +177,24 @@ function inspectStagedCanonicalFile(p, violations) {
     }
   }
 
+  // General invariant: the same provider fixture cannot have multiple
+  // canonical IDs, regardless of team-name normalization.
+  const seenProvider=new Map();
+  for (const row of Array.isArray(payload?.fixtures) ? payload.fixtures : []) {
+    const provider=typeof row?.source==="string" ? row.source.trim() : "";
+    const providerId=row?.sourceId ?? row?.sourceMatchId ?? row?.providerIds?.[provider];
+    const id=row?.canonicalId;
+    if (!provider || !providerId || !id) continue;
+    const key=JSON.stringify([provider,String(providerId)]);
+    const prior=seenProvider.get(key);
+    if (prior && prior!==id) violations.push({
+      reason:"canonical_provider_identity_collision",
+      path:p,provider,providerMatchId:String(providerId),
+      firstCanonicalId:prior,secondCanonicalId:id
+    });
+    else seenProvider.set(key,id);
+  }
+
   const conflicts = findCanonicalStatusConflicts(payload, { path: p });
 
   for (const conflict of conflicts) {
