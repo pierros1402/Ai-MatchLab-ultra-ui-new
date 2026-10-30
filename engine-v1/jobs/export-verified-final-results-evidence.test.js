@@ -185,6 +185,15 @@ test("verified finals exporter rejects existing and planned same-day provider id
  assert.match(source,/const collisionKey = keys\.find/);
  assert.ok(source.indexOf("const collisionKey = keys.find") <
    source.indexOf("if (existing) {\n      const existingScore"));
- assert.ok(source.indexOf("for (const key of keys) providerOwners.set(key,filePath)") <
+ assert.ok(source.indexOf("for (const key of keys) {") <
+   source.indexOf("writeJsonPretty(filePath, payload);"));
+});
+
+test("new verified finals cannot reuse a provider fixture from a different historical day",()=>{
+ const source=readFileSync(new URL("./export-verified-final-results-day.js",import.meta.url),"utf8");
+ assert.match(source,/historical_verified_final_provider_collision/);
+ assert.match(source,/historyOwners\.get\(key\)\.add\(file\)/);
+ assert.match(source,/historyOwners\.get\(key\)\.add\(filePath\)/);
+ assert.ok(source.indexOf("const historicalCollisionKey = keys.find") <
    source.indexOf("writeJsonPretty(filePath, payload);"));
 });
