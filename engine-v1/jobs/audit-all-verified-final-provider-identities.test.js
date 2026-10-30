@@ -70,3 +70,28 @@ test("historical score classification distinguishes agreement, conflict and unkn
   assert.equal(report.scoreUnverifiableCount,1);
  });
 });
+
+test("historical identity audit retains conflicting kickoff and terminal provenance",()=>{
+ withHistory(({root,add,stage})=>{
+  const src={provider:"flashscore",providerMatchId:"fixture-77"};
+  add("2026-07-18","cid_early",[{...src,scoreHome:0,scoreAway:0}]);
+  add("2026-10-03","cid_late",[{...src,finished:true,playedFinal:true,scoreHome:3,scoreAway:0}]);
+  for(const [day,id,score,kickoff] of [
+    ["2026-07-18","cid_early",[0,0],"2026-07-18T16:30:00.000Z"],
+    ["2026-10-03","cid_late",[3,0],"2026-10-03T18:00:00.000Z"]]) {
+    const file=path.join(root,"data","final-results",day,id+".json");
+    const doc=JSON.parse(fs.readFileSync(file,"utf8"));
+    doc.homeScore=score[0];doc.awayScore=score[1];doc.kickoffUtc=kickoff;
+    fs.writeFileSync(file,JSON.stringify(doc));
+  }
+  stage();
+  const result=auditAllVerifiedFinalProviderIdentities(root);
+  assert.equal(result.duplicateCount,1);
+  assert.equal(result.scoreConflictCount,1);
+  assert.equal(result.kickoffDisagreementCount,1);
+  assert.equal(result.ambiguousTerminalEvidenceCount,1);
+  assert.equal(result.duplicates[0].identityAdjudicationRequired,true);
+  assert.equal(result.duplicates[0].firstProviderTerminal,false);
+  assert.equal(result.duplicates[0].secondProviderTerminal,true);
+ });
+});
