@@ -111,3 +111,16 @@ test("two canonical IDs for one verified provider match fail closed",()=>{
       i.providerMatchId==="401912776"));
   });
 });
+
+test("generic canonical duplicate provider identity blocks any pair of fixture IDs",()=>{
+ withFixture(x=>{
+  fs.writeFileSync(path.join(x.canonical,"league.json"),JSON.stringify({fixtures:[
+   {canonicalId:"cid_alpha",source:"espn",sourceId:"990011",scoreHome:1,scoreAway:2},
+   {canonicalId:"cid_beta",source:"espn",sourceId:"990011",scoreHome:1,scoreAway:2}
+  ]}));
+  const result=auditVerifiedFinalsDay({root:x.root,dayKey:x.day});
+  assert.equal(result.ok,false);
+  assert.ok(result.issues.some(i=>i.reason==="duplicate_canonical_provider_identity" &&
+    i.firstMatchId==="cid_alpha"&&i.secondMatchId==="cid_beta"));
+ });
+});
