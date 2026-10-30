@@ -122,3 +122,26 @@ test("legacy exact Flashscore authority is recognized but unsupported repair aut
   assert.equal(result.duplicates[0].provider,"flashscore");
  });
 });
+
+test("legacy adjudication provenance is retained but cannot qualify a missing provider identity",()=>{
+ withHistory(({root,add,stage})=>{
+  const day="2026-08-09",id="cid_recovered";
+  add(day,id,[{authority:"prior_repair_independent_source_1",
+    sourceLocatorMissing:true,reference:"recovered-session:historical"}]);
+  const file=path.join(root,"data","final-results",day,id+".json");
+  const doc=JSON.parse(fs.readFileSync(file,"utf8"));
+  doc.finalTruthAdjudication={adjudicationId:"adj_123",state:"APPLIED"};
+  fs.writeFileSync(file,JSON.stringify(doc));
+  stage();
+  const report=auditAllVerifiedFinalProviderIdentities(root);
+  assert.equal(report.ok,false);
+  assert.equal(report.unverifiableCount,1);
+  assert.deepEqual(report.unverifiable[0],{
+    path:"data/final-results/2026-08-09/cid_recovered.json",
+    reason:"provider_identity_evidence_missing",adjudicationId:"adj_123",
+    adjudicationState:"APPLIED",historicalEvidenceCount:1,
+    missingSourceLocators:1,independentProviderIdentityQualified:false,
+    sourceReverificationRequired:true
+  });
+ });
+});
