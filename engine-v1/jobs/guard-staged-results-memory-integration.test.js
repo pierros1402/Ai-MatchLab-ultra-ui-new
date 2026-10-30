@@ -195,3 +195,30 @@ test("tampered hash-bound staged write set is refused without changing HEAD", ()
     assert.equal(finalHead,baseline);
   } finally {fs.rmSync(dir,{recursive:true,force:true});}
 });
+
+test("write set must cover all staged modified results-memory paths",()=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),"aiml-write-set-scope-"));
+  try {
+    invoke("git",["init","-q"],dir);
+    invoke("git",["config","user.email","test@example.invalid"],dir);
+    invoke("git",["config","user.name","Test"],dir);
+    const root=path.join(dir,"data","league-memory","results");
+    fs.mkdirSync(root,{recursive:true});
+    for(const slug of ["one","two"])fs.writeFileSync(path.join(root,slug+".json"),document([fixture("a")],slug));
+    invoke("git",["add","."],dir);
+    invoke("git",["commit","-qm","baseline"],dir);
+    for(const slug of ["one","two"])fs.writeFileSync(path.join(root,slug+".json"),document([fixture("a"),fixture("b")],slug));
+    invoke("git",["add","."],dir);
+    const hash=b=>createHash("sha256").update(b).digest("hex");
+    const p="data/league-memory/results/one.json";
+    const before=document([fixture("a")],"one"),after=document([fixture("a"),fixture("b")],"one");
+    const manifest=path.join(dir,"write-set.json");
+    fs.writeFileSync(manifest,JSON.stringify({schema:"ai-matchlab.results-write-set.v1",
+      entries:[{path:p,status:"M",beforeSha256:hash(before),afterSha256:hash(after)}]}));
+    const r=spawnSync(process.execPath,[guard,"--enforce-results-preservation",
+      "--results-write-set="+manifest],{cwd:dir,encoding:"utf8"});
+    assert.equal(r.status,2);
+    const report=JSON.parse(r.stdout);
+    assert.ok(report.violations.some(v=>v.reason==="write_set_unapproved_staged_path"&&v.path.endsWith("two.json")));
+  }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
