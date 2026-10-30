@@ -2,7 +2,7 @@ import {execFileSync} from "node:child_process";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {buildHistoricalIdentityAdjudicationRegister,findCanonicalAuthorityForCase} from "./build-historical-identity-adjudication-register.js";
-import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from "node:fs";
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync,readFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
 const audit={readOnly:true,trackedFinalFiles:100,unverifiable:[],duplicates:[
@@ -147,4 +147,12 @@ test("exact-score exact-kickoff provider match yields a non-authorized alias can
   assert.ok(dependencies.references.every(x=>typeof x.prescribedAction==="string"));
 
  }finally{rmSync(root,{recursive:true,force:true});}
+});
+
+test("history indexes are rebuildable but retained historical truth stays immutable",()=>{
+ const source=readFileSync(new URL("./build-historical-identity-adjudication-register.js",import.meta.url),"utf8");
+ assert.match(source,/history-index/);
+ assert.match(source,/IMMUTABLE_OR_SETTLEMENT/);
+ assert.match(source,/DETERMINISTIC_REBUILD_REQUIRED/);
+ assert.match(source,/PRESERVE_AND_RECONCILE_BY_APPEND/);
 });
