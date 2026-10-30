@@ -90,3 +90,24 @@ test("canonical authority must match exact provider and source ID",()=>{
     "HOLD_CANONICAL_AMBIGUOUS_OR_MISSING");
  } finally {rmSync(root,{recursive:true,force:true});}
 });
+
+test("canonical authority inventory stays read-only and enumerates exact source-bound candidates",()=>{
+ const root=mkdtempSync(join(tmpdir(),"aiml-canonical-summary-"));
+ try {
+  const dir=join(root,"data","canonical-fixtures","2026-08-15");
+  mkdirSync(dir,{recursive:true});
+  writeFileSync(join(dir,"ita.coppa_italia.json"),JSON.stringify({fixtures:[
+   {canonicalId:"cid_retained",source:"espn",sourceMatchId:"401881684"}
+  ]}));
+  const row={...audit.duplicates[0],provider:"espn",providerMatchId:"401881684",
+   firstPath:"data/final-results/2026-08-15/cid_retained.json",
+   secondPath:"data/final-results/2026-08-15/cid_alias.json",
+   firstMatchId:"cid_retained",secondMatchId:"cid_alias"};
+  const report=buildHistoricalIdentityAdjudicationRegister({...audit,duplicates:[row]},root);
+  assert.equal(report.canonicalAuthorityCounts.CANONICAL_SOURCE_BOUND_CANDIDATE,1);
+  assert.equal(report.canonicalSourceBoundCases.length,1);
+  assert.equal(report.canonicalSourceBoundCases[0].retainedCanonicalId,"cid_retained");
+  assert.equal(report.canonicalSourceBoundCases[0].approvedForWrite,false);
+  assert.equal(report.approvedForWrite,false);
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
