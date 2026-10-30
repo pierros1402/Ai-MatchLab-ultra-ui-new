@@ -46,10 +46,14 @@ test("Intraday authoritative checkpoint denies canonical row shrink before commi
 
 test("canonical staged guard rejects missing identities and changed terminal evidence", () => {
   const guard = fs.readFileSync(fileURLToPath(new URL("./guard-staged-data-boundary.js", import.meta.url)), "utf8");
-  assert.match(guard, /canonical_identity_unverifiable/);
-  assert.match(guard, /canonical_identity_missing/);
-  assert.match(guard, /canonical_verified_terminal_mutation/);
-  assert.match(guard, /new Set\(priorIds\)\.size !== priorIds\.length/);
-  assert.match(guard, /new Set\(nextIds\)\.size !== nextIds\.length/);
-  assert.match(guard, /if \(terminal\(row\)\)/);
+  for (const expected of [
+    "canonical_identity_unverifiable",
+    "canonical_identity_missing",
+    "canonical_verified_terminal_mutation",
+    "new Set(priorIds).size !== priorIds.length",
+    "new Set(nextIds).size !== nextIds.length",
+    "if (terminal(row))"
+  ]) {
+    assert.ok(guard.includes(expected), "missing fail-closed condition: " + expected);
+  }
 });
