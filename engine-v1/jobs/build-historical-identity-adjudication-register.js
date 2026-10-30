@@ -17,7 +17,23 @@ export function buildHistoricalIdentityAdjudicationRegister(audit) {
      firstProviderTerminal:row.firstProviderTerminal,
      secondProviderTerminal:row.secondProviderTerminal};
    const digest=createHash("sha256").update(JSON.stringify(evidence)).digest("hex");
+   const identicalScore=row.scoreAgreement===true;
+   const identicalKickoff=row.kickoffAgreement===true;
+   const sameFixtureEvidence=identicalScore && identicalKickoff &&
+     row.firstMatchId && row.secondMatchId;
+   const distinctScores=row.scoreAgreement===false;
+   const distinctKickoff=row.kickoffAgreement===false;
+   const evidenceState=distinctScores?"CONTRADICTORY_TERMINAL_SCORE":
+     distinctKickoff?"CONTRADICTORY_KICKOFF":
+     sameFixtureEvidence?"DUPLICATE_CANDIDATE_REQUIRES_CANONICAL_PROOF":
+     "INSUFFICIENT_INDEPENDENT_IDENTITY_PROOF";
+   // Never infer the retained canonical row from sort order or file age.
+   const candidateOperation=sameFixtureEvidence ?
+     {kind:"PROPOSE_ALIAS_RECONCILIATION",fromMatchId:null,
+       toMatchId:null,requiresExternalCanonicalProof:true,
+       requiresDependencyInventory:true,approvedForWrite:false} : null;
    return {caseId:"HIST-"+digest.slice(0,20),
+     evidenceState,candidateOperation,
      classification:row.scoreAgreement===false?"SCORE_CONFLICT":
        row.kickoffAgreement===false?"KICKOFF_CONFLICT":
        row.scoreAgreement===true?"SAME_SCORE_IDENTITY_CONFLICT":"INCOMPLETE_SCORE_EVIDENCE",
