@@ -161,6 +161,8 @@ jobs:
 
           node engine-v1/jobs/guard-staged-data-boundary.js \
             --enforce-results-preservation \
+            --enforce-verified-final-preservation \
+            --enforce-canonical-row-preservation \
             --label=daily-autonomous \
             --dayKey="${DAY_KEY}" \
             --allow="^(data/deploy-snapshots/${DAY_KEY}/(odds\.json|fixtures-all\.json)$|data/league-memory/|data/odds-memory/|data/expected-matches/|data/verification/|data/canonical-fixtures/${YESTERDAY}/|data/final-results/${YESTERDAY}/|data/final-result-conflicts/${YESTERDAY}\.json$|data/value-plans/${YESTERDAY}/|data/value-comparison/${YESTERDAY}\.json$|data/history-index/|data/model-priors/|data/history-archive/)"
