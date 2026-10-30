@@ -1,0 +1,55 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+const guard = fileURLToPath(new URL("./guard-staged-data-boundary.js", import.meta.url));
+const invoke = (command, args, cwd) => {
+  const result = spawnSync(command, args, { cwd, encoding: "utf8" });
+  assert.equal(result.status, 0, `${command} ${args.join(" ")}: ${result.stderr}`);
+};
+const fixture = (id, home = 2) => ({matchId:id,ha:"H",gf:home,ga:1,date:"2026-08-20T19:00:00Z"});
+const document = rows => JSON.stringify({teams:{Home:rows}},null,2);
+function scenario(before, after, mode="M") {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-staged-preservation-"));
+  try {
+    invoke("git", ["init", "-q"], dir);
+    invoke("git", ["config", "user.email", "test@example.invalid"], dir);
+    invoke("git", ["config", "user.name", "Test"], dir);
+    fs.writeFileSync(path.join(dir,"README.md"),"baseline");
+    const target=path.join(dir,"data","league-memory","results","league.json");
+    fs.mkdirSync(path.dirname(target),{recursive:true});
+    if(mode==="M") fs.writeFileSync(target,document(before));
+    invoke("git",["add","."],dir);
+    invoke("git",["commit","-qm","baseline"],dir);
+    fs.writeFileSync(target,document(after));
+    invoke("git",["add","."],dir);
+    const run=spawnSync(process.execPath,[guard,"--enforce-results-preservation"],{cwd:dir,encoding:"utf8"});
+    return {code:run.status,output:JSON.parse(run.stdout)};
+  } finally {
+    fs.rmSync(dir,{recursive:true,force:true});
+  }
+}
+test("real staged modification preserves existing records and permits additions",()=>{
+  const r=scenario([fixture("a")],[fixture("a"),fixture("b")]);
+  assert.equal(r.code,0);assert.equal(r.output.ok,true);
+});
+test("real staged shrink is blocked before commit",()=>{
+  const r=scenario([fixture("a"),fixture("b")],[fixture("a")]);
+  assert.equal(r.code,2);assert.ok(r.output.violations.some(v=>v.reason==="missing_existing_record"));
+});
+test("real staged score overwrite is blocked before commit",()=>{
+  const r=scenario([fixture("a")],[fixture("a",3)]);
+  assert.equal(r.code,2);assert.ok(r.output.violations.some(v=>v.reason==="existing_score_changed_without_adjudication"));
+});
+test("real staged added results-memory file is validated",()=>{
+  const r=scenario([], [fixture("a")],"A");
+  assert.equal(r.code,0);assert.equal(r.output.ok,true);
+});
+test("real staged malformed added results-memory fails closed",()=>{
+  const r=scenario([], [{matchId:"",ha:"H",gf:2,ga:1}],"A");
+  assert.equal(r.code,2);assert.ok(r.output.violations.some(v=>v.reason==="results_memory_preservation_unverifiable"));
+});
