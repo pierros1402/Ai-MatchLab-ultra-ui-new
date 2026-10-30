@@ -8,6 +8,16 @@ export const aliases=Object.freeze([
  "cid_afccup_tampinesrovers_preahkhanreachsvayrieng_20261029",
  "cid_afccup_tampinesrovers_pkrsvayrieng_20261029"
 ]);
+export function classifyAliasReference(file) {
+ if (file.startsWith("data/final-results/") ||
+     file.startsWith("data/day-truth-ledger/") ||
+     file.startsWith("data/value-unified/") ||
+     file.startsWith("data/value-plans/") ||
+     file.startsWith("data/value/")) return "PRESERVE_IMMUTABLE_OR_SETTLEMENT";
+ if (file.startsWith("data/canonical-fixtures/")) return "CANONICAL_IDENTITY_AUTHORITY";
+ if (file.startsWith("data/deploy-snapshots/")) return "REBUILD_DERIVED_SNAPSHOT";
+ return "REVIEW_OTHER_REFERENCES";
+}
 export function inventoryCanonicalAliasReferences(root, ids=aliases) {
  const files=execFileSync("git",["ls-files","-z"],{cwd:root,maxBuffer:64*1024*1024})
   .toString("utf8").split("\0").filter(Boolean);
@@ -30,10 +40,12 @@ export function inventoryCanonicalAliasReferences(root, ids=aliases) {
    const source=fs.readFileSync(full,"utf8");
    for(const id of ids) {
      const occurrences=source.split(id).length-1;
-     if(occurrences) {references.push({path:file,id,occurrences});totals[id]+=occurrences;}
+     if(occurrences) {references.push({path:file,id,occurrences,classification:classifyAliasReference(file)});totals[id]+=occurrences;}
    }
  }
- return {readOnly:true,approvedForWrite:false,trackedFiles:files.length,
+ const paths=[...new Set(references.map(x=>x.path))];
+ const classificationCounts=Object.fromEntries([...new Set(paths.map(classifyAliasReference))].map(c=>[c,paths.filter(p=>classifyAliasReference(p)===c).length]));
+ return {readOnly:true,approvedForWrite:false,writeSetAuthorized:false,classificationCounts,trackedFiles:files.length,
   affectedFiles:new Set(references.map(x=>x.path)).size,totals,references};
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
