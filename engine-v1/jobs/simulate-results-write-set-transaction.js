@@ -36,10 +36,16 @@ export function simulateResultsWriteSetTransaction({root,manifest,candidates,inj
    rollbackVerified=[...before].every(([path,bytes])=>hash(readFileSync(join(temp,path)))===hash(bytes));
    if(!rollbackVerified)throw Error("sandbox_rollback_verification_failed");
   }
+  // The simulation's private copy must match the baseline after any failure
+  // and the expected candidate after a successful run.
+  const expectedState=failed?"beforeSha256":"afterSha256";
+  const privateStateVerified=prepared.hashes.every(e=>
+    hash(readFileSync(join(temp,e.path)))===e[expectedState]);
+  if(!privateStateVerified)throw Error("sandbox_private_state_verification_failed");
   const sourceUnchanged=prepared.hashes.every(e=>hash(readFileSync(join(root,e.path)))===e.beforeSha256);
   if(!sourceUnchanged)throw Error("sandbox_source_mutated");
   return {ok:verified&&!failed,simulated:true,productionWrites:0,
    applied:verified?written.length:0,rolledBack:failed,rollbackVerified,
-   sourceUnchanged,files:prepared.hashes.length};
+   sourceUnchanged,privateStateVerified,files:prepared.hashes.length};
  } finally {rmSync(temp,{recursive:true,force:true});}
 }
