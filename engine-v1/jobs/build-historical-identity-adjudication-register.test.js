@@ -22,3 +22,25 @@ test("register is deterministic and cannot authorize settlement or overwrite",()
 test("register rejects missing source audit evidence",()=>{
  assert.throws(()=>buildHistoricalIdentityAdjudicationRegister({duplicates:[],unverifiable:[]}),/source_audit_invalid/);
 });
+
+test("only matching final score and kickoff create a non-executable alias candidate",()=>{
+ const source={...audit,duplicates:[
+  {...audit.duplicates[0],providerMatchId:"safe",firstScore:[1,1],
+   secondScore:[1,1],scoreAgreement:true,kickoffAgreement:true,
+   firstKickoffUtc:"2026-08-01T12:00:00Z",
+   secondKickoffUtc:"2026-08-01T12:00:00Z"},
+  {...audit.duplicates[0],providerMatchId:"unsafe",scoreAgreement:false,
+   kickoffAgreement:true}
+ ]};
+ const result=buildHistoricalIdentityAdjudicationRegister(source);
+ const safe=result.cases.find(x=>x.evidence.providerMatchId==="safe");
+ const unsafe=result.cases.find(x=>x.evidence.providerMatchId==="unsafe");
+ assert.equal(safe.evidenceState,"DUPLICATE_CANDIDATE_REQUIRES_CANONICAL_PROOF");
+ assert.equal(safe.candidateOperation.kind,"PROPOSE_ALIAS_RECONCILIATION");
+ assert.equal(safe.candidateOperation.fromMatchId,null);
+ assert.equal(safe.candidateOperation.toMatchId,null);
+ assert.equal(safe.candidateOperation.approvedForWrite,false);
+ assert.equal(unsafe.evidenceState,"CONTRADICTORY_TERMINAL_SCORE");
+ assert.equal(unsafe.candidateOperation,null);
+ assert.equal(result.approvedForWrite,false);
+});
