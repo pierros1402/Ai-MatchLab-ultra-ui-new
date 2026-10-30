@@ -3,6 +3,18 @@ import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {execFileSync} from "node:child_process";
 
+function verifiedProviderIdentity(source) {
+ const named=typeof source?.provider==="string" ? source.provider.trim() : "";
+ // Historical manual adjudications use authority=flashscore, not provider.
+ // Only recognize known exact provider names; do not infer a provider from
+ // non-provider authority markers, scores or unverified repair notes.
+ const authority=typeof source?.authority==="string" ? source.authority.trim().toLowerCase() : "";
+ const provider=named || (["flashscore","espn"].includes(authority) ? authority : "");
+ const id=source?.providerMatchId;
+ return provider && id!==null && id!==undefined && String(id).trim()
+   ? {provider,providerMatchId:String(id).trim()} : null;
+}
+
 // Pure read-only historical inventory. File names and provider bindings are evidence,
 // not permission to delete, rename, settle, or silently collapse any fixture.
 export function auditAllVerifiedFinalProviderIdentities(root) {
@@ -19,10 +31,7 @@ export function auditAllVerifiedFinalProviderIdentities(root) {
     unverifiable.push({path:file,reason:"provider_sources_missing_or_invalid"});continue;
    }
    // An empty/malformed provider list gives no proof of identity uniqueness.
-   const validSources=payload.sources.filter(source=>
-     typeof source?.provider==="string" && source.provider.trim() &&
-     source.providerMatchId!==undefined && source.providerMatchId!==null &&
-     String(source.providerMatchId).trim());
+   const validSources=payload.sources.map(verifiedProviderIdentity).filter(Boolean);
    if(validSources.length===0) {
      unverifiable.push({path:file,reason:"provider_identity_evidence_missing"});continue;
    }
@@ -42,8 +51,8 @@ export function auditAllVerifiedFinalProviderIdentities(root) {
        kickoffAgreement:previous.kickoffUtc && payload?.kickoffUtc
          ? previous.kickoffUtc===payload.kickoffUtc : null,
        firstProviderTerminal:previous.providerTerminal,
-       secondProviderTerminal:payload.sources.some(x=>x?.provider===source.provider &&
-         String(x?.providerMatchId)===String(source.providerMatchId) &&
+       secondProviderTerminal:payload.sources.some(x=>verifiedProviderIdentity(x)?.provider===source.provider &&
+         verifiedProviderIdentity(x)?.providerMatchId===source.providerMatchId &&
          x.finished===true && x.playedFinal===true),
        identityAdjudicationRequired:true,
        scoreAgreement:Number.isInteger(previous.score[0]) &&
