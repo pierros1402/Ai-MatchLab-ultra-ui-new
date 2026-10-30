@@ -51,14 +51,11 @@ test("rejects fixture retargeting despite unchanged match ID and final score", (
   }
 });
 
-test("blocks partial scored results and final-to-partial regression", () => {
-  const a = {...row("one"), gf: 2, ga: null};
-  assert.deepEqual(inspect(pack([row("one")]), pack([a])).violations.map(x=>x.reason),
-    ["candidate_partial_score", "existing_score_changed_without_adjudication"]);
-  const b = {...row("one"), gf: null, ga: 1};
-  assert.deepEqual(inspect(pack([b]), pack([row("one")])).violations.map(x=>x.reason),
-    ["existing_partial_score"]);
-  const c = {...row("one"), gf: "", ga: 1};
-  assert.deepEqual(inspect(pack([row("one")]), pack([c])).violations.map(x=>x.reason),
-    ["candidate_partial_score", "existing_score_changed_without_adjudication"]);
+test("rejects partial scored results in both original and new data", () => {
+  const a={...row("one"),gf:2,ga:null};
+  const b={...row("one"),gf:null,ga:1};
+  const c={...row("one"),gf:"",ga:1};
+  assert.throws(()=>inspect(pack([]),pack([a])),/results_memory_partial_score/);
+  assert.throws(()=>inspect(pack([b]),pack([row("one")])),/results_memory_partial_score/);
+  assert.throws(()=>inspect(pack([row("one")]),pack([c])),/results_memory_partial_score/);
 });
