@@ -15,6 +15,10 @@ function records(payload) {
     if (!Array.isArray(entries)) throw new Error("results_memory_invalid_entries");
     for (const row of entries) {
       if (!row || typeof row !== "object") throw new Error("results_memory_invalid_record");
+      if ((row.gf !== undefined && row.gf !== null && row.gf !== "" && score(row.gf) === null) ||
+          (row.ga !== undefined && row.ga !== null && row.ga !== "" && score(row.ga) === null)) {
+        throw new Error("results_memory_invalid_score");
+      }
       const matchId = id(row.matchId);
       if (!matchId || !["H", "A"].includes(row.ha)) throw new Error("results_memory_unbound_identity");
       const key = JSON.stringify([team, row.ha, matchId]);
@@ -30,6 +34,9 @@ export function inspectResultsMemoryPreservation(before, after) {
   for (const [key, oldRow] of oldRows) {
     const current = newRows.get(key);
     if (!current) { violations.push({ reason: "missing_existing_record", identity: key }); continue; }
+    if (["W", "D", "L"].includes(oldRow.res) && current.res !== oldRow.res) {
+      violations.push({ reason: "existing_result_changed_without_adjudication", identity: key });
+    }
     const oldHome = score(oldRow.gf), oldAway = score(oldRow.ga);
     const newHome = score(current.gf), newAway = score(current.ga);
     if (oldHome !== null && oldAway !== null &&
