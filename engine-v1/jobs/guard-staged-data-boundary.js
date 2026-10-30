@@ -342,6 +342,16 @@ for (const item of staged) {
     inspectStagedResultsMemory(item.path, statusLetter, violations);
   }
 
+  // A migration must never silently delete, rename, or copy protected finals,
+  // even if a general-purpose data deletion override is enabled.
+  if (enforceVerifiedFinalPreservation &&
+      ["D","R","C"].includes(statusLetter) &&
+      [item.path,item.oldPath].some(p => typeof p === "string" &&
+        p.startsWith("data/final-results/") && p.endsWith(".json"))) {
+    violations.push({reason:"verified_final_path_mutation_requires_adjudication",
+      status:item.status,path:item.path,oldPath:item.oldPath||null});
+  }
+
   if (enforceVerifiedFinalPreservation && ["A", "M"].includes(statusLetter)) {
     inspectStagedVerifiedFinal(item.path, statusLetter, violations);
   }
