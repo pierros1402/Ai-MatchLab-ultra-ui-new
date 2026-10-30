@@ -2161,7 +2161,10 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
         if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
         const file = path.join(folder,entry.name);
         const stored = readJsonSafe(file,null);
-        if (!stored || !Array.isArray(stored.sources)) continue;
+        if (!stored || !Array.isArray(stored.sources)) {
+          return {ok:false,reason:"historical_verified_final_identity_unreadable",
+            filePath:file,dayKey:safeDayKey};
+        }
         for (const source of stored.sources) {
           const provider = clean(source?.provider || (
             ["flashscore","espn"].includes(clean(source?.authority).toLowerCase())
