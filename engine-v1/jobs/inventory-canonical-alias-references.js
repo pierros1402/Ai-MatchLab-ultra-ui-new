@@ -11,8 +11,19 @@ export const aliases=Object.freeze([
 export function inventoryCanonicalAliasReferences(root, ids=aliases) {
  const files=execFileSync("git",["ls-files","-z"],{cwd:root,maxBuffer:64*1024*1024})
   .toString("utf8").split("\0").filter(Boolean);
+ // Git searches the index first, so only files actually containing one of the
+ // exact aliases need to be opened. A no-match exit is valid; other errors fail.
+ let hits;
+ try {
+   hits=execFileSync("git",["grep","-I","-l","-z","-F",...ids.flatMap(id=>["-e",id]),"--","data"],{
+     cwd:root,maxBuffer:64*1024*1024
+   }).toString("utf8").split("\0").filter(Boolean);
+ } catch(error) {
+   if(error.status!==1) throw error;
+   hits=[];
+ }
  const references=[],totals=Object.fromEntries(ids.map(id=>[id,0]));
- for(const file of files) {
+ for(const file of hits) {
    if (!file.startsWith("data/")) continue;
    const full=path.join(root,file);
    if (!fs.existsSync(full)||!fs.statSync(full).isFile()) continue;
