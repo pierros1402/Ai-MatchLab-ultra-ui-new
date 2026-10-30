@@ -18,3 +18,15 @@ test("rejects invalid or ambiguous identity", () => {
   assert.throws(() => inspect(pack([row("")]), pack([])), /unbound_identity/);
   assert.throws(() => inspect(pack([row("one"), row("one")]), pack([])), /duplicate_identity/);
 });
+
+test("rejects malformed candidate even when its rows would appear additive", () => {
+  assert.throws(() => inspect(pack([row("one")]), { teams: { Home: {} } }), /invalid_entries/);
+  assert.throws(() => inspect(pack([row("one")]), null), /invalid_shape/);
+});
+test("rejects duplicate identities in candidate as well as baseline", () => {
+  assert.throws(() => inspect(pack([row("one")]), pack([row("one"), row("one")])), /duplicate_identity/);
+});
+test("allows preserving an unresolved score and subsequent verified scoring", () => {
+  const old = pack([{...row("one"), gf: null, ga: null}]);
+  assert.equal(inspect(old, pack([row("one")])).ok, true);
+});
