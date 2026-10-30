@@ -108,6 +108,30 @@ test("canonical authority inventory stays read-only and enumerates exact source-
   assert.equal(report.canonicalSourceBoundCases.length,1);
   assert.equal(report.canonicalSourceBoundCases[0].retainedCanonicalId,"cid_retained");
   assert.equal(report.canonicalSourceBoundCases[0].approvedForWrite,false);
+  assert.equal(report.safelyScopedCanonicalCandidateCount,0);
+  assert.equal(report.safelyScopedCanonicalCandidates.length,0);
   assert.equal(report.approvedForWrite,false);
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
+
+test("exact-score exact-kickoff provider match yields a non-authorized alias candidate",()=>{
+ const root=mkdtempSync(join(tmpdir(),"aiml-canonical-aliased-"));
+ try {
+  const dir=join(root,"data","canonical-fixtures","2026-08-15");
+  mkdirSync(dir,{recursive:true});
+  writeFileSync(join(dir,"ita.coppa_italia.json"),JSON.stringify({fixtures:[
+   {canonicalId:"cid_retained",source:"espn",sourceMatchId:"401881684"}
+  ]}));
+  const row={...audit.duplicates[0],provider:"espn",providerMatchId:"401881684",
+   firstPath:"data/final-results/2026-08-15/cid_retained.json",
+   secondPath:"data/final-results/2026-08-15/cid_alias.json",
+   firstMatchId:"cid_retained",secondMatchId:"cid_alias",
+   firstScore:[1,0],secondScore:[1,0],scoreAgreement:true,kickoffAgreement:true};
+  const report=buildHistoricalIdentityAdjudicationRegister({...audit,duplicates:[row]},root);
+  assert.equal(report.safelyScopedCanonicalCandidateCount,1);
+  assert.equal(report.safelyScopedCanonicalCandidates[0].retainedCanonicalId,"cid_retained");
+  assert.equal(report.safelyScopedCanonicalCandidates[0].aliasCandidateId,"cid_alias");
+  assert.equal(report.safelyScopedCanonicalCandidates[0].writeAuthorized,false);
+  assert.equal(report.safelyScopedCanonicalCandidates[0].dependencyAudit,"NOT_EXECUTED");
  }finally{rmSync(root,{recursive:true,force:true});}
 });
