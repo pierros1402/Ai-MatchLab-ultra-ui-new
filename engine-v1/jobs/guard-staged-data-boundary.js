@@ -368,12 +368,22 @@ if (enforceVerifiedFinalPreservation) {
     p.endsWith(".json") && p.split("/").length === 4;
   const affectedDays = new Set(staged.filter(x => finalPath(x.path) || finalPath(x.oldPath))
     .flatMap(x => [x.path,x.oldPath]).filter(finalPath).map(p => p.split("/")[2]));
+  // Include adjacent-day retained finals: timezone/day-boundary rekeying must not
+  // create a second result for an existing provider fixture.
+  const nearbyDays=new Set(affectedDays);
+  for(const day of affectedDays) {
+    const stamp=Date.parse(day+"T00:00:00Z");
+    if(!Number.isFinite(stamp)) {
+      violations.push({reason:"verified_final_day_invalid",day});continue;
+    }
+    for(const delta of [-1,1])nearbyDays.add(new Date(stamp+delta*86400000).toISOString().slice(0,10));
+  }
   const stagedByPath = new Map(staged.map(x => [x.path,x.status[0]]));
-  for (const day of affectedDays) {
+  const owners = new Map();
+  for (const day of [...nearbyDays].sort()) {
     const prefix = `data/final-results/${day}/`;
     const base = git(["ls-tree","-r","--name-only","HEAD","--",prefix]).split("\n").map(x => x.trim()).filter(finalPath);
     const paths = new Set([...base,...staged.map(x => x.path).filter(p => p.startsWith(prefix) && finalPath(p))]);
-    const owners = new Map();
     for (const p of [...paths].sort()) {
       if (stagedByPath.get(p)==="D") continue;
       const isStaged=["A","M","R","C"].includes(stagedByPath.get(p));
