@@ -1,6 +1,7 @@
 import {execFileSync} from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import {fileURLToPath} from "node:url";
 
 // READ ONLY: exact string inventory in tracked repository files. No data migration.
 export const aliases=Object.freeze([
@@ -8,7 +9,7 @@ export const aliases=Object.freeze([
  "cid_afccup_tampinesrovers_pkrsvayrieng_20261029"
 ]);
 export function inventoryCanonicalAliasReferences(root, ids=aliases) {
- const files=execFileSync("git",["ls-files","-z"],{cwd:root,encoding:"buffer"})
+ const files=execFileSync("git",["ls-files","-z"],{cwd:root})
   .toString("utf8").split("\0").filter(Boolean);
  const references=[],totals=Object.fromEntries(ids.map(id=>[id,0]));
  for(const file of files) {
@@ -24,7 +25,7 @@ export function inventoryCanonicalAliasReferences(root, ids=aliases) {
  return {readOnly:true,approvedForWrite:false,trackedFiles:files.length,
   affectedFiles:new Set(references.map(x=>x.path)).size,totals,references};
 }
-if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname)) {
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
  const report=inventoryCanonicalAliasReferences(process.cwd());
  console.log(JSON.stringify(report,null,2));
  if(Object.values(report.totals).some(n=>n===0))process.exitCode=1;
