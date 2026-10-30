@@ -33,7 +33,16 @@ export function auditAllVerifiedFinalProviderIdentities(root) {
    // An empty/malformed provider list gives no proof of identity uniqueness.
    const validSources=payload.sources.map(verifiedProviderIdentity).filter(Boolean);
    if(validSources.length===0) {
-     unverifiable.push({path:file,reason:"provider_identity_evidence_missing"});continue;
+     const adjudication=payload?.finalTruthAdjudication;
+     const references=Array.isArray(payload.sources) ? payload.sources : [];
+     const missingLocators=references.filter(row=>row?.sourceLocatorMissing===true).length;
+     unverifiable.push({path:file,reason:"provider_identity_evidence_missing",
+       adjudicationId:typeof adjudication?.adjudicationId==="string" ? adjudication.adjudicationId : null,
+       adjudicationState:typeof adjudication?.state==="string" ? adjudication.state : null,
+       historicalEvidenceCount:references.length,
+       missingSourceLocators:missingLocators,
+       independentProviderIdentityQualified:false,
+       sourceReverificationRequired:true});continue;
    }
    const seen=new Set();
    for(const source of validSources) {
