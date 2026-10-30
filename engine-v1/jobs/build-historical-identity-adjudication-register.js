@@ -138,6 +138,17 @@ export function buildHistoricalIdentityAdjudicationRegister(audit,root=null) {
          item.evidence.firstMatchId===item.canonicalAuthority.canonicalId
            ? item.evidence.secondMatchId : item.evidence.firstMatchId)
          : "NOT_EXECUTED",writeAuthorized:false})),
+   reconciliationGate:{
+     status:"HOLD_UNTIL_DEPENDENCIES_ADJUDICATED",
+     sourceBoundCandidateCount:cases.filter(item=>
+       item.evidenceState==="DUPLICATE_CANDIDATE_REQUIRES_CANONICAL_PROOF" &&
+       item.canonicalAuthority?.status==="CANONICAL_SOURCE_BOUND_CANDIDATE").length,
+     unresolvedCases:cases.length+audit.unverifiable.length,
+     approvedWriteActions:0,
+     requiredEvidence:["immutable_history_retention","verified_final_alias_lineage",
+       "deterministic_derived_rebuild","H2H_reconciliation","full_regression"],
+     approvedForWrite:false
+   },
    safelyScopedCanonicalCandidateCount:cases.filter(item=>
      item.evidenceState==="DUPLICATE_CANDIDATE_REQUIRES_CANONICAL_PROOF" &&
      item.canonicalAuthority?.status==="CANONICAL_SOURCE_BOUND_CANDIDATE").length,
