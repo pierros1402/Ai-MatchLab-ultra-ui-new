@@ -37,6 +37,15 @@ export function inspectResultsMemoryPreservation(before, after) {
     if (["W", "D", "L"].includes(oldRow.res) && current.res !== oldRow.res) {
       violations.push({ reason: "existing_result_changed_without_adjudication", identity: key });
     }
+    // Never silently retarget an existing result to another opponent or kickoff.
+    // Legitimate identity corrections require a separately approved write set.
+    for (const field of ["date", "opp", "sourceMatchId"]) {
+      if (oldRow[field] !== undefined && oldRow[field] !== null &&
+          String(oldRow[field]) !== String(current[field] ?? "")) {
+        violations.push({ reason: "existing_fixture_identity_changed_without_adjudication",
+          identity: key, field });
+      }
+    }
     const oldHome = score(oldRow.gf), oldAway = score(oldRow.ga);
     const newHome = score(current.gf), newAway = score(current.ga);
     if (oldHome !== null && oldAway !== null &&
