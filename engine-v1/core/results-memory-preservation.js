@@ -19,6 +19,11 @@ function records(payload) {
           (row.ga !== undefined && row.ga !== null && row.ga !== "" && score(row.ga) === null)) {
         throw new Error("results_memory_invalid_score");
       }
+      // Validate both newly created and existing rows before diffing. A partial
+      // score must never enter results-memory, even on an added file.
+      if ((score(row.gf) === null) !== (score(row.ga) === null)) {
+        throw new Error("results_memory_partial_score");
+      }
       const matchId = id(row.matchId);
       if (!matchId || !["H", "A"].includes(row.ha)) throw new Error("results_memory_unbound_identity");
       const key = JSON.stringify([team, row.ha, matchId]);
