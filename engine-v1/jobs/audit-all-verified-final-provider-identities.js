@@ -30,13 +30,23 @@ export function auditAllVerifiedFinalProviderIdentities(root) {
        firstPath:previous.path,firstMatchId:previous.matchId,
        secondPath:file,secondMatchId:payload?.matchId||null,
        firstScore:previous.score,secondScore:[payload?.homeScore,payload?.awayScore],
+       firstKickoffUtc:previous.kickoffUtc,secondKickoffUtc:payload?.kickoffUtc||null,
+       kickoffAgreement:previous.kickoffUtc && payload?.kickoffUtc
+         ? previous.kickoffUtc===payload.kickoffUtc : null,
+       firstProviderTerminal:previous.providerTerminal,
+       secondProviderTerminal:payload.sources.some(x=>x?.provider===source.provider &&
+         String(x?.providerMatchId)===String(source.providerMatchId) &&
+         x.finished===true && x.playedFinal===true),
+       identityAdjudicationRequired:true,
        scoreAgreement:Number.isInteger(previous.score[0]) &&
          Number.isInteger(previous.score[1]) &&
          Number.isInteger(payload?.homeScore) && Number.isInteger(payload?.awayScore)
            ? (previous.score[0]===payload.homeScore &&
               previous.score[1]===payload.awayScore)
            : null});
-    } else if(!previous)index.set(key,{path:file,matchId:payload?.matchId||null,score:[payload?.homeScore,payload?.awayScore]});
+    } else if(!previous)index.set(key,{path:file,matchId:payload?.matchId||null,score:[payload?.homeScore,payload?.awayScore],
+       kickoffUtc:payload?.kickoffUtc||null,
+       providerTerminal:source.finished===true && source.playedFinal===true});
    }
   } catch(error) {
    unverifiable.push({path:file,reason:"provider_source_unreadable",error:String(error?.message||error)});
@@ -47,6 +57,8 @@ export function auditAllVerifiedFinalProviderIdentities(root) {
   uniqueProviderMatches:index.size,duplicateCount:duplicates.length,scoreConflictCount:duplicates.filter(x=>x.scoreAgreement===false).length,
   scoreAgreementCount:duplicates.filter(x=>x.scoreAgreement===true).length,
   scoreUnverifiableCount:duplicates.filter(x=>x.scoreAgreement===null).length,
+  kickoffDisagreementCount:duplicates.filter(x=>x.kickoffAgreement===false).length,
+  ambiguousTerminalEvidenceCount:duplicates.filter(x=>x.firstProviderTerminal!==x.secondProviderTerminal).length,
   unverifiableCount:unverifiable.length,duplicates,unverifiable};
 }
 if(process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
