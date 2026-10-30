@@ -30,3 +30,13 @@ test("allows preserving an unresolved score and subsequent verified scoring", ()
   const old = pack([{...row("one"), gf: null, ga: null}]);
   assert.equal(inspect(old, pack([row("one")])).ok, true);
 });
+
+test("rejects invalid score values in newly staged rows", () => {
+  assert.throws(() => inspect(pack([]), pack([row("a", -1, 0)])), /invalid_score/);
+  assert.throws(() => inspect(pack([]), pack([row("a", "not-a-score", 0)])), /invalid_score/);
+});
+test("rejects changes to previously terminal W-D-L result labels", () => {
+  const old = pack([{...row("one"), res:"W"}]);
+  const next = pack([{...row("one"), res:"D"}]);
+  assert.deepEqual(inspect(old, next).violations.map(v=>v.reason), ["existing_result_changed_without_adjudication"]);
+});
