@@ -1,4 +1,5 @@
 import {createHash} from "node:crypto";
+import {execFileSync} from "node:child_process";
 import {resolve,join} from "node:path";
 import {readdirSync,readFileSync} from "node:fs";
 import {fileURLToPath} from "node:url";
@@ -29,6 +30,34 @@ export function findCanonicalAuthorityForCase(root, evidence) {
  return {status:"CANONICAL_SOURCE_BOUND_CANDIDATE",canonicalId:ids[0],
    fixturePath:matches[0].fixturePath,approvedForWrite:false,
    dependencyInventoryVerified:false};
+}
+
+// Read-only, exact-byte reference census across tracked data files.
+export function inventoryAliasDependencies(root, retainedId, aliasId) {
+ if(!retainedId || !aliasId || retainedId===aliasId) throw Error("invalid_alias_pair");
+ const ids=[retainedId,aliasId], paths=new Set();
+ for(const id of ids) {
+  const matches=execFileSync("git",["grep","-l","-z","-F","-e",id,"--","data"],{
+    cwd:root,maxBuffer:128*1024*1024,encoding:"utf8"
+  }).split("\0").filter(Boolean);
+  for(const file of matches)paths.add(file);
+ }
+ const categories={CANONICAL:0,VERIFIED_FINAL:0,IMMUTABLE_OR_SETTLEMENT:0,
+   DERIVED_REBUILD:0,OTHER_REVIEW:0};
+ const references=[...paths].sort().map(file=>{
+  const bytes=readFileSync(join(root,file),"utf8");
+  const counts=ids.map(id=>bytes.split(id).length-1);
+  const category=file.includes("/canonical-fixtures/")?"CANONICAL":
+    file.includes("/final-results/")?"VERIFIED_FINAL":
+    /history|settlement|value-plan|value-pick/.test(file)?"IMMUTABLE_OR_SETTLEMENT":
+    /deploy-snapshot|coverage|public-snapshot/.test(file)?"DERIVED_REBUILD":"OTHER_REVIEW";
+  categories[category]++;
+  return {path:file,retainedOccurrences:counts[0],aliasOccurrences:counts[1],category};
+ });
+ return {readOnly:true,approvedForWrite:false,retainedId,aliasId,
+   fileCount:references.length,aliasOccurrenceCount:references.reduce((n,x)=>n+x.aliasOccurrences,0),
+   retainedOccurrenceCount:references.reduce((n,x)=>n+x.retainedOccurrences,0),
+   categories,references};
 }
 
 // Deterministic read-only case registry; no automatic authority assignment.
@@ -96,7 +125,11 @@ export function buildHistoricalIdentityAdjudicationRegister(audit,root=null) {
          ? item.evidence.secondMatchId : item.evidence.firstMatchId,
        provider:item.evidence.provider,providerMatchId:item.evidence.providerMatchId,
        firstPath:item.evidence.firstPath,secondPath:item.evidence.secondPath,
-       dependencyAudit:"NOT_EXECUTED",writeAuthorized:false})),
+       dependencyAudit:root ? inventoryAliasDependencies(root,
+         item.canonicalAuthority.canonicalId,
+         item.evidence.firstMatchId===item.canonicalAuthority.canonicalId
+           ? item.evidence.secondMatchId : item.evidence.firstMatchId)
+         : "NOT_EXECUTED",writeAuthorized:false})),
    safelyScopedCanonicalCandidateCount:cases.filter(item=>
      item.evidenceState==="DUPLICATE_CANDIDATE_REQUIRES_CANONICAL_PROOF" &&
      item.canonicalAuthority?.status==="CANONICAL_SOURCE_BOUND_CANDIDATE").length,
