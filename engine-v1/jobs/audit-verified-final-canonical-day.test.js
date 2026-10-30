@@ -94,3 +94,20 @@ test("exact-provider canonical alias is reported for adjudication, not auto-appr
       e.providerMatchId==="401912776"));
   });
 });
+
+test("two canonical IDs for one verified provider match fail closed",()=>{
+  withFixture(x=>{
+    fs.writeFileSync(path.join(x.canonical,"league.json"),JSON.stringify({fixtures:[
+      {canonicalId:"cid_1",scoreHome:1,scoreAway:2},
+      {canonicalId:"cid_2",scoreHome:1,scoreAway:2}
+    ]}));
+    const sources=[{provider:"espn",providerMatchId:"401912776"}];
+    fs.writeFileSync(path.join(x.finals,"cid_1.json"),JSON.stringify({...x.final,sources}));
+    fs.writeFileSync(path.join(x.finals,"cid_2.json"),JSON.stringify({...x.final,matchId:"cid_2",sources}));
+    const result=auditVerifiedFinalsDay({root:x.root,dayKey:x.day});
+    assert.equal(result.ok,false);
+    assert.equal(result.verifiedFinalFiles,2);
+    assert.ok(result.issues.some(i=>i.reason==="duplicate_verified_provider_identity" &&
+      i.providerMatchId==="401912776"));
+  });
+});
