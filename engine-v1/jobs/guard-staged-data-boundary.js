@@ -132,6 +132,12 @@ function inspectStagedResultsMemory(p, status, violations) {
   try {
     const before = status === "A" ? { teams: {} } : JSON.parse(git(["show", `HEAD:${p}`]));
     const after = JSON.parse(git(["show", `:${p}`]));
+    const expectedSlug = p.slice("data/league-memory/results/".length, -".json".length);
+    if (after?.slug !== expectedSlug) {
+      violations.push({ reason: "results_memory_slug_path_mismatch", path: p, expectedSlug,
+        actualSlug: typeof after?.slug === "string" ? after.slug : null });
+      return;
+    }
     const check = inspectResultsMemoryPreservation(before, after);
     for (const violation of check.violations) {
       violations.push({ ...violation, path: p });
