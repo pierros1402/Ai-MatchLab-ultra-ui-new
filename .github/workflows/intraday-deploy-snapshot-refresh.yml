@@ -447,7 +447,7 @@ jobs:
 
           STAGED="$(git diff --cached --name-only || true)"
           if [ -n "$STAGED" ]; then
-            node engine-v1/jobs/guard-staged-data-boundary.js --label=intraday-public-truth-checkpoint --dayKey="${DAY_KEY}" --allow="^(data/canonical-fixtures/${DAY_KEY}/[^/]+\\.json$|data/deploy-snapshots/latest\\.json$|data/deploy-snapshots/${DAY_KEY}/)"
+            node engine-v1/jobs/guard-staged-data-boundary.js --enforce-canonical-row-preservation --label=intraday-public-truth-checkpoint --dayKey="${DAY_KEY}" --allow="^(data/canonical-fixtures/${DAY_KEY}/[^/]+\\.json$|data/deploy-snapshots/latest\\.json$|data/deploy-snapshots/${DAY_KEY}/)"
           fi
 
           if git diff --cached --quiet; then
