@@ -49,3 +49,30 @@ test("extra candidate, missing candidate and forged source hash fail closed",()=
   assert.throws(()=>check({root,manifest,candidates}),/hash_mismatch/);
  });
 });
+
+test("a correctly hashed removal of an existing match is still rejected",()=>{
+ scenario(({root,manifest,candidates})=>{
+  const p=manifest.entries[0].path;
+  const slug="eng.1";
+  const original=Buffer.from(JSON.stringify({slug,teams:{Home:[{matchId:"historic",ha:"H",gf:2,ga:1}]}}));
+  const replacement=Buffer.from(JSON.stringify({slug,teams:{Home:[]}}));
+  writeFileSync(join(root,p),original);
+  manifest.entries[0].beforeSha256=sha(original);
+  manifest.entries[0].afterSha256=sha(replacement);
+  candidates[p]=replacement;
+  assert.throws(()=>check({root,manifest,candidates}),/sandbox_preflight_truth_mutation_requires_adjudication/);
+  assert.deepEqual(readFileSync(join(root,p)),original);
+ });
+});
+test("a correctly hashed score overwrite is refused before application",()=>{
+ scenario(({root,manifest,candidates})=>{
+  const p=manifest.entries[0].path,slug="eng.1";
+  const old=Buffer.from(JSON.stringify({slug,teams:{Home:[{matchId:"historic",ha:"H",gf:2,ga:1}]}}));
+  const changed=Buffer.from(JSON.stringify({slug,teams:{Home:[{matchId:"historic",ha:"H",gf:3,ga:1}]}}));
+  writeFileSync(join(root,p),old);
+  manifest.entries[0].beforeSha256=sha(old);
+  manifest.entries[0].afterSha256=sha(changed);
+  candidates[p]=changed;
+  assert.throws(()=>check({root,manifest,candidates}),/sandbox_preflight_truth_mutation_requires_adjudication/);
+ });
+});
