@@ -87,7 +87,34 @@ jobs:
         run: |
           mapfile -d '' -t tests < <(find engine-v1 -type f -name '*.test.js' -print0 | sort -z)
           if (( ${#tests[@]} == 0 )); then exit 1; fi
-          node --test --test-concurrency=4 "${tests[@]}"
+          set +e
+          node --test --test-reporter=spec --test-concurrency=4 "${tests[@]}" > "$RUNNER_TEMP/immutable-base.spec" 2>&1
+          baseline_exit=$?
+          set -e
+          if (( baseline_exit != 1 )); then echo "Unexpected baseline exit $baseline_exit" >&2; exit 1; fi
+          node --input-type=module - "$RUNNER_TEMP/immutable-base.spec" <<'JS'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          const s = fs.readFileSync(process.argv[2], 'utf8').replace(/\u001b\[[0-9;]*m/g, '').replace(/\r/g, '');
+          const t = [...s.matchAll(/^\s*ℹ tests (\d+)\s*$/gm)];
+          const f = [...s.matchAll(/^\s*ℹ fail (\d+)\s*$/gm)];
+          assert.equal(t.length, 1); assert.equal(f.length, 1);
+          assert.equal(Number(t[0][1]), 2510); assert.equal(Number(f[0][1]), 8);
+          const marker = s.lastIndexOf('✖ failing tests:');
+          assert.ok(marker >= 0);
+          const names = [...s.slice(marker).matchAll(/^\s*✖\s+(.+?)\s+\([\d.]+ms\)\s*$/gm)].map(x=>x[1]).sort();
+          assert.deepEqual(names, [
+            'pins all required producer source hashes',
+            'exact R31 identities and ACL activation verify while production remains disabled',
+            'R32 fingerprint is deterministic and runner contains no account ACL replay signer kernel push or deploy mutation machinery',
+            'Plan A records non-playable rejection exactly once before evaluation',
+            'value panel follows selected day and never falls back to stale static release data',
+            'live worker overlay is bounded and labeled with the shared operational day',
+            'UI aborts are terminal and are not retried as fetch failures',
+            'updated Value/live UI assets are cache-busted',
+          ].sort());
+          console.log('IMMUTABLE_BASELINE_EIGHT_EXPECTED_FAILURES_VERIFIED');
+          JS
 
   baseline-versus-patch-regression-delta:
     # Delta PASS accepts a zero-failure candidate, without authorizing merge/deploy.
