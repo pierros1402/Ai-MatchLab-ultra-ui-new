@@ -36,12 +36,12 @@ export function inspectResultsMemoryPreservation(before, after) {
     if (!current) { violations.push({ reason: "missing_existing_record", identity: key }); continue; }
     // An existing result must not silently lose finality. Unresolved-to-final
     // upgrades are allowed; final-to-unresolved regressions are not.
-    if ((oldRow.gf === null || oldRow.gf === undefined) !==
-        (oldRow.ga === null || oldRow.ga === undefined)) {
+    if ((score(oldRow.gf) === null) !==
+        (score(oldRow.ga) === null)) {
       violations.push({ reason: "existing_partial_score", identity: key });
     }
-    if ((current.gf === null || current.gf === undefined) !==
-        (current.ga === null || current.ga === undefined)) {
+    if ((score(current.gf) === null) !==
+        (score(current.ga) === null)) {
       violations.push({ reason: "candidate_partial_score", identity: key });
     }
     if (["W", "D", "L"].includes(oldRow.res) && current.res !== oldRow.res) {
