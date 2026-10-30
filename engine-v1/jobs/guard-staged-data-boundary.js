@@ -128,7 +128,7 @@ function inspectStagedCanonicalFile(p, violations) {
 // Opt-in only until all authorized-correction and rollback contracts are qualified.
 const enforceResultsPreservation = hasFlag("enforce-results-preservation");
 function inspectStagedResultsMemory(p, violations) {
-  if (!/^data\\/league-memory\\/results\\/[^/]+\\.json$/.test(p)) return;
+  if (!/^data\/league-memory\/results\/[^/]+\.json$/.test(p)) return;
   try {
     const before = JSON.parse(git(["show", `HEAD:${p}`]));
     const after = JSON.parse(git(["show", `:${p}`]));
