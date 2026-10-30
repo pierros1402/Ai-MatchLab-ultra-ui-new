@@ -28,8 +28,15 @@ export function auditAllVerifiedFinalProviderIdentities(root) {
     if(previous && previous.path!==file) {
      duplicates.push({provider:source.provider,providerMatchId:String(source.providerMatchId),
        firstPath:previous.path,firstMatchId:previous.matchId,
-       secondPath:file,secondMatchId:payload?.matchId||null});
-    } else if(!previous)index.set(key,{path:file,matchId:payload?.matchId||null});
+       secondPath:file,secondMatchId:payload?.matchId||null,
+       firstScore:previous.score,secondScore:[payload?.homeScore,payload?.awayScore],
+       scoreAgreement:Number.isInteger(previous.score[0]) &&
+         Number.isInteger(previous.score[1]) &&
+         Number.isInteger(payload?.homeScore) && Number.isInteger(payload?.awayScore)
+           ? (previous.score[0]===payload.homeScore &&
+              previous.score[1]===payload.awayScore)
+           : null});
+    } else if(!previous)index.set(key,{path:file,matchId:payload?.matchId||null,score:[payload?.homeScore,payload?.awayScore]});
    }
   } catch(error) {
    unverifiable.push({path:file,reason:"provider_source_unreadable",error:String(error?.message||error)});
@@ -37,10 +44,10 @@ export function auditAllVerifiedFinalProviderIdentities(root) {
  }
  return {ok:duplicates.length===0&&unverifiable.length===0,readOnly:true,
   approvedForWrite:false,trackedFinalFiles:files.length,checked,providerBindings:bindings,
-  uniqueProviderMatches:index.size,duplicateCount:duplicates.length,
+  uniqueProviderMatches:index.size,duplicateCount:duplicates.length,scoreConflictCount:duplicates.filter(x=>x.scoreAgreement===false).length,\n  scoreAgreementCount:duplicates.filter(x=>x.scoreAgreement===true).length,\n  scoreUnverifiableCount:duplicates.filter(x=>x.scoreAgreement===null).length,
   unverifiableCount:unverifiable.length,duplicates,unverifiable};
 }
-if(process.argv[1] && path.resolve(process.argv[1])===new URL(import.meta.url).pathname) {
+if(process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
  const result=auditAllVerifiedFinalProviderIdentities(process.cwd());
  console.log(JSON.stringify(result,null,2));
  if(!result.ok)process.exitCode=1;
