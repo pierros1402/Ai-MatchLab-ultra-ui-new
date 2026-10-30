@@ -447,3 +447,30 @@ test("adjacent-day final alias cannot duplicate a retained provider result",()=>
     x.providerMatchId==="778899"));
  } finally {fs.rmSync(dir,{recursive:true,force:true});}
 });
+
+test("historical duplicate from months earlier is rejected regardless of day distance",()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),"aiml-all-history-final-"));
+ try {
+  invoke("git",["init","-q"],dir);
+  invoke("git",["config","user.email","test@example.invalid"],dir);
+  invoke("git",["config","user.name","Test"],dir);
+  const day1="2026-01-15",day2="2026-10-29";
+  const final=(day,id)=>JSON.stringify({schema:"ai-matchlab.verified-final-result.v1",
+   verifiedFinalTruth:true,matchId:id,dayKey:day,homeScore:3,awayScore:1,
+   finalScore:{homeScore:3,awayScore:1},
+   sources:[{provider:"espn",providerMatchId:"99887766"}]});
+  for(const [day,id] of [[day1,"cid_january"],[day2,"cid_october"]]) {
+   const folder=path.join(dir,"data","final-results",day);
+   fs.mkdirSync(folder,{recursive:true});
+   fs.writeFileSync(path.join(folder,id+".json"),final(day,id));
+   invoke("git",["add","."],dir);
+   if(day===day1)invoke("git",["commit","-qm","historical baseline"],dir);
+  }
+  const run=spawnSync(process.execPath,[guard,"--enforce-verified-final-preservation"],
+   {cwd:dir,encoding:"utf8"});
+  assert.equal(run.status,2,run.stdout+" "+run.stderr);
+  assert.ok(JSON.parse(run.stdout).violations.some(x=>
+   x.reason==="verified_provider_identity_collision" &&
+   x.providerMatchId==="99887766"));
+ } finally {fs.rmSync(dir,{recursive:true,force:true});}
+});
