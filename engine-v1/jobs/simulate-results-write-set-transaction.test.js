@@ -29,21 +29,21 @@ test("three-file simulation applies and verifies atomically without source chang
  setup(args=>{
   const r=run(args);
   assert.deepEqual({ok:r.ok,applied:r.applied,sourceUnchanged:r.sourceUnchanged,
-    productionWrites:r.productionWrites},{ok:true,applied:3,sourceUnchanged:true,productionWrites:0});
+    productionWrites:r.productionWrites,privateStateVerified:r.privateStateVerified},{ok:true,applied:3,sourceUnchanged:true,productionWrites:0,privateStateVerified:true});
  });
 });
 test("injected failure after one write rolls back every staged file",()=>{
  setup(args=>{
   const r=run({...args,injectFailureAfter:1});
   assert.equal(r.ok,false);assert.equal(r.rolledBack,true);
-  assert.equal(r.rollbackVerified,true);assert.equal(r.applied,0);
+  assert.equal(r.rollbackVerified,true);assert.equal(r.privateStateVerified,true);assert.equal(r.applied,0);
   assert.equal(r.sourceUnchanged,true);
  });
 });
 test("injected failure before first write is also rollback-safe",()=>{
  setup(args=>{
   const r=run({...args,injectFailureAfter:0});
-  assert.equal(r.ok,false);assert.equal(r.rollbackVerified,true);
+  assert.equal(r.ok,false);assert.equal(r.rollbackVerified,true);assert.equal(r.privateStateVerified,true);
  });
 });
 test("tampered candidate fails preflight without any writes",()=>{
