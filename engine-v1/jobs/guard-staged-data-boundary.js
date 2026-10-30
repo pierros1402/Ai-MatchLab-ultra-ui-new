@@ -190,6 +190,7 @@ function inspectStagedCanonicalFile(p, violations) {
 // Opt-in only until all authorized-correction and rollback contracts are qualified.
 const enforceResultsPreservation = hasFlag("enforce-results-preservation");
 const enforceCanonicalRowPreservation = hasFlag("enforce-canonical-row-preservation");
+const enforceVerifiedFinalPreservation = hasFlag("enforce-verified-final-preservation");
 const candidateWriteSetFile = argValue("results-write-set", "");
 // Hash binding is evidence only, not external authorization. Never permit an
 // unreviewed correction to bypass the ordinary preservation veto.
@@ -219,6 +220,42 @@ function inspectStagedResultsMemory(p, status, violations) {
   } catch (error) {
     violations.push({ reason: "results_memory_preservation_unverifiable", path: p,
       error: String(error?.message || error) });
+  }
+}
+
+function inspectStagedVerifiedFinal(p, status, violations) {
+  if (!/^data\\/final-results\\/\\d{4}-\\d{2}-\\d{2}\\/[^/]+\\.json$/.test(p)) return;
+  const name = p.slice(p.lastIndexOf("/") + 1, -5);
+  const date = p.split("/")[2];
+  try {
+    const after = JSON.parse(git(["show", `:${p}`]));
+    const score = value => {
+      const h = value?.homeScore, a = value?.awayScore;
+      return Number.isInteger(h) && h >= 0 && Number.isInteger(a) && a >= 0
+        ? [h, a] : null;
+    };
+    if (after?.schema !== "ai-matchlab.verified-final-result.v1" ||
+        after?.verifiedFinalTruth !== true ||
+        after?.matchId !== name ||
+        after?.dayKey !== date ||
+        !score(after) ||
+        after?.finalScore?.homeScore !== after.homeScore ||
+        after?.finalScore?.awayScore !== after.awayScore) {
+      violations.push({reason:"verified_final_staged_invalid",path:p});
+      return;
+    }
+    if (status === "M") {
+      const before = JSON.parse(git(["show", `HEAD:${p}`]));
+      const prior = score(before), next = score(after);
+      if (before?.verifiedFinalTruth !== true || before?.matchId !== after.matchId ||
+          before?.dayKey !== after.dayKey || !prior ||
+          prior[0] !== next[0] || prior[1] !== next[1]) {
+        violations.push({reason:"verified_final_truth_mutation_requires_adjudication",path:p});
+      }
+    }
+  } catch (error) {
+    violations.push({reason:"verified_final_preservation_unverifiable",path:p,
+      error:String(error?.message || error)});
   }
 }
 
@@ -285,6 +322,10 @@ for (const item of staged) {
 
   if (enforceResultsPreservation && ["A", "M"].includes(statusLetter)) {
     inspectStagedResultsMemory(item.path, statusLetter, violations);
+  }
+
+  if (enforceVerifiedFinalPreservation && ["A", "M"].includes(statusLetter)) {
+    inspectStagedVerifiedFinal(item.path, statusLetter, violations);
   }
 
   if (statusLetter !== "D" && isCanonicalFixtureFile(item.path)) {
