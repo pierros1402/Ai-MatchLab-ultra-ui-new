@@ -2,6 +2,7 @@ import { readFileSync, lstatSync } from "node:fs";
 import { resolve, relative, sep } from "node:path";
 import { createHash } from "node:crypto";
 import { verifyResultsWriteSetManifest } from "../core/results-write-set-contract.js";
+import { inspectResultsMemoryPreservation } from "../core/results-memory-preservation.js";
 
 // Read-only proof of an entire candidate correction set. This code never writes
 // to the repository or approves a change of historical truth.
@@ -36,6 +37,26 @@ export function preflightResultsWriteSet({root, manifest, candidates}) {
   if (Object.keys(candidates).length !== entries.length) throw Error("sandbox_preflight_scope_mismatch");
   const checked=verifyResultsWriteSetManifest(manifest,staged);
   if (!checked.ok) throw Error("sandbox_preflight_hash_mismatch:"+checked.failures.map(x=>x.reason).join(","));
+  for (const item of staged) {
+    let before, after;
+    try {
+      before=JSON.parse(item.beforeBytes.toString("utf8"));
+      after=JSON.parse(item.afterBytes.toString("utf8"));
+    } catch {
+      throw Error("sandbox_preflight_invalid_json:"+item.path);
+    }
+    const expectedSlug=item.path.slice("data/league-memory/results/".length,-5);
+    if(before?.slug!==expectedSlug || after?.slug!==expectedSlug)
+      throw Error("sandbox_preflight_slug_mismatch:"+item.path);
+    let preservation;
+    try {
+      preservation=inspectResultsMemoryPreservation(before,after);
+    } catch {
+      throw Error("sandbox_preflight_invalid_results_memory:"+item.path);
+    }
+    if(!preservation.ok)
+      throw Error("sandbox_preflight_truth_mutation_requires_adjudication:"+item.path);
+  }
   return Object.freeze({ok:true,readOnly:true,approved:false,paths:staged.map(x=>x.path),
     hashes:staged.map(x=>({path:x.path,beforeSha256:digest(x.beforeBytes),afterSha256:digest(x.afterBytes)}))});
 }
