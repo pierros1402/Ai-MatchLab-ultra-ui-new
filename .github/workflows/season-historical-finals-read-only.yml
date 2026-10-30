@@ -1,0 +1,23 @@
+name: Season historical finals reconciliation (read-only)
+on:
+  pull_request:
+    paths:
+      - "engine-v1/jobs/audit-verified-final-canonical-day.js"
+      - "engine-v1/jobs/audit-verified-finals-range.js"
+      - "engine-v1/jobs/report-verified-finals-range.js"
+      - ".github/workflows/season-historical-finals-read-only.yml"
+permissions:
+  contents: read
+jobs:
+  historical-final-scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Reconcile exact historical day window without writes
+        run: node engine-v1/jobs/report-verified-finals-range.js 2026-10-27 2026-10-29
