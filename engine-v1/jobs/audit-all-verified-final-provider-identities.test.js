@@ -49,3 +49,24 @@ test("all-history audit accepts unique providers but flags unverifiable source e
   assert.equal(invalid.unverifiableCount,1);
  });
 });
+
+test("historical score classification distinguishes agreement, conflict and unknown",()=>{
+ withHistory(({root,add,stage})=>{
+  const cases=[["same",2,1,2,1],["conflict",2,1,3,1],["unknown",2,1,null,null]];
+  for(const [key,h1,a1,h2,a2] of cases) {
+   for(const [day,id,h,a] of [["2026-01-15",key+"_a",h1,a1],["2026-10-29",key+"_b",h2,a2]]) {
+    add(day,id,[{provider:"espn",providerMatchId:key}]);
+    const file=path.join(root,"data","final-results",day,id+".json");
+    const doc=JSON.parse(fs.readFileSync(file,"utf8"));
+    if(h!==null){doc.homeScore=h;doc.awayScore=a;}
+    fs.writeFileSync(file,JSON.stringify(doc));
+   }
+  }
+  stage();
+  const report=auditAllVerifiedFinalProviderIdentities(root);
+  assert.equal(report.duplicateCount,3);
+  assert.equal(report.scoreAgreementCount,1);
+  assert.equal(report.scoreConflictCount,1);
+  assert.equal(report.scoreUnverifiableCount,1);
+ });
+});
