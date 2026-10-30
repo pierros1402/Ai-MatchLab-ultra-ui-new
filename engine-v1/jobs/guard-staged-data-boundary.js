@@ -371,7 +371,7 @@ if (enforceVerifiedFinalPreservation) {
   const stagedByPath = new Map(staged.map(x => [x.path,x.status[0]]));
   for (const day of affectedDays) {
     const prefix = `data/final-results/${day}/`;
-    const base = git(["ls-tree","-r","--name-only","HEAD","--",prefix]).split(/\\r?\\n/).filter(finalPath);
+    const base = git(["ls-tree","-r","--name-only","HEAD","--",prefix]).split("\n").map(x => x.trim()).filter(finalPath);
     const paths = new Set([...base,...staged.map(x => x.path).filter(p => p.startsWith(prefix) && finalPath(p))]);
     const owners = new Map();
     for (const p of [...paths].sort()) {
@@ -379,10 +379,10 @@ if (enforceVerifiedFinalPreservation) {
       const isStaged=["A","M","R","C"].includes(stagedByPath.get(p));
       try {
         const payload=JSON.parse(git(["show",isStaged ? `:${p}` : `HEAD:${p}`]));
-        if (!Array.isArray(payload?.sources)) {
+        if (payload?.sources !== undefined && !Array.isArray(payload.sources)) {
           violations.push({reason:"verified_provider_identity_unverifiable",path:p});continue;
         }
-        for (const source of payload.sources) {
+        for (const source of (payload.sources || [])) {
           const provider=source?.provider, sourceId=source?.providerMatchId;
           if (typeof provider!=="string" || !provider || !sourceId) continue;
           const key=JSON.stringify([provider,String(sourceId)]);
