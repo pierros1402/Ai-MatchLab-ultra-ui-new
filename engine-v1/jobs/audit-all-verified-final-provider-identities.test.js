@@ -95,3 +95,16 @@ test("historical identity audit retains conflicting kickoff and terminal provena
   assert.equal(result.duplicates[0].secondProviderTerminal,true);
  });
 });
+
+test("empty provider source arrays cannot falsely pass historical identity coverage",()=>{
+ withHistory(({root,add,stage})=>{
+  add("2026-10-29","cid_no_provider",[]);
+  stage();
+  const result=auditAllVerifiedFinalProviderIdentities(root);
+  assert.equal(result.ok,false);
+  assert.equal(result.checked,1);
+  assert.equal(result.duplicateCount,0);
+  assert.equal(result.unverifiableCount,1);
+  assert.equal(result.unverifiable[0].reason,"provider_identity_evidence_missing");
+ });
+});
