@@ -197,3 +197,12 @@ test("new verified finals cannot reuse a provider fixture from a different histo
  assert.ok(source.indexOf("const historicalCollisionKey = keys.find") <
    source.indexOf("writeJsonPretty(filePath, payload);"));
 });
+
+test("historical scan fails closed on unreadable finals instead of skipping evidence",()=>{
+ const source=readFileSync(new URL("./export-verified-final-results-day.js",import.meta.url),"utf8");
+ assert.match(source,/historical_verified_final_identity_unreadable/);
+ const scan=source.indexOf("const stored = readJsonSafe(file,null)");
+ const refusal=source.indexOf('reason:"historical_verified_final_identity_unreadable"',scan);
+ const index=source.indexOf("historyOwners.get(key).add(file)",scan);
+ assert.ok(scan>=0 && refusal>scan && index>refusal);
+});
