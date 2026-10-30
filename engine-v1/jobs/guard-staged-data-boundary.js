@@ -127,10 +127,10 @@ function inspectStagedCanonicalFile(p, violations) {
 
 // Opt-in only until all authorized-correction and rollback contracts are qualified.
 const enforceResultsPreservation = hasFlag("enforce-results-preservation");
-function inspectStagedResultsMemory(p, violations) {
+function inspectStagedResultsMemory(p, status, violations) {
   if (!/^data\/league-memory\/results\/[^/]+\.json$/.test(p)) return;
   try {
-    const before = JSON.parse(git(["show", `HEAD:${p}`]));
+    const before = status === "A" ? { teams: {} } : JSON.parse(git(["show", `HEAD:${p}`]));
     const after = JSON.parse(git(["show", `:${p}`]));
     const check = inspectResultsMemoryPreservation(before, after);
     for (const violation of check.violations) {
@@ -194,8 +194,8 @@ for (const item of staged) {
     }
   }
 
-  if (enforceResultsPreservation && statusLetter === "M") {
-    inspectStagedResultsMemory(item.path, violations);
+  if (enforceResultsPreservation && ["A", "M"].includes(statusLetter)) {
+    inspectStagedResultsMemory(item.path, statusLetter, violations);
   }
 
   if (statusLetter !== "D" && isCanonicalFixtureFile(item.path)) {
