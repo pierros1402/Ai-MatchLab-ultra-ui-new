@@ -90,7 +90,7 @@ jobs:
           node --test --test-concurrency=4 "${tests[@]}"
 
   baseline-versus-patch-regression-delta:
-    # A PASS means ONLY no new failures; strict full-engine status stays blocking.
+    # Delta PASS accepts a zero-failure candidate, without authorizing merge/deploy.
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -133,10 +133,11 @@ jobs:
           ) > "$RUNNER_TEMP/season-immutable-base.spec" 2>&1
           baseline_exit=$?
           set -e
-          if (( baseline_exit != 1 || candidate_exit != 1 )); then
+          if (( baseline_exit != 1 || (candidate_exit != 0 && candidate_exit != 1) )); then
             echo "Unexpected test exit codes: baseline=$baseline_exit candidate=$candidate_exit" >&2
             exit 1
           fi
+          export CANDIDATE_EXIT="$candidate_exit"
           node --input-type=module - "$RUNNER_TEMP/season-immutable-base.spec" "$RUNNER_TEMP/season-candidate.spec" <<'JS'
           import assert from 'node:assert/strict';
           import fs from 'node:fs';
@@ -159,20 +160,23 @@ jobs:
             const tests = Number(t[0][1]), fail = Number(f[0][1]);
             assert.ok(tests > 1000, 'full engine suite is required');
             const marker = s.lastIndexOf('✖ failing tests:');
-            assert.ok(marker >= 0, 'missing full failed-tests section');
-            const names = [...s.slice(marker).matchAll(/^\s*✖\s+(.+?)\s+\([\d.]+ms\)\s*$/gm)].map(x => x[1]);
+            assert.ok(fail === 0 || marker >= 0, 'missing full failed-tests section');
+            assert.ok(fail !== 0 || marker < 0, 'unexpected failing-tests section for zero failures');
+            const names = fail === 0 ? [] : [...s.slice(marker).matchAll(/^\s*✖\s+(.+?)\s+\([\d.]+ms\)\s*$/gm)].map(x => x[1]);
             assert.equal(names.length, fail, 'incomplete failure enumeration');
             assert.equal(new Set(names).size, fail, 'ambiguous duplicate names');
             return {tests, fail, names:names.sort()};
           }
           const baseline = parse(process.argv[2]), candidate = parse(process.argv[3]);
+          assert.ok(baseline.fail > 0, 'baseline unexpectedly clean');
+          assert.equal(candidate.fail === 0, process.env.CANDIDATE_EXIT === '0', 'candidate exit and parsed failures disagree');
           assert.deepEqual(baseline.names, expected, 'immutable baseline failures changed; review required');
           assert.ok(candidate.tests >= baseline.tests + 5, 'missing new Athens-day tests');
           assert.deepEqual(candidate.names.filter(n => !baseline.names.includes(n)), [], 'new failures in candidate');
           console.log(JSON.stringify({
-            status:'NO_NEW_FAILURES_VS_IMMUTABLE_BASE',
+            status:candidate.fail === 0 ? 'CANDIDATE_FULL_SUITE_ZERO_FAILURES' : 'NO_NEW_FAILURES_VS_IMMUTABLE_BASE',
             baseline:{tests:baseline.tests, failed:baseline.fail},
             candidate:{tests:candidate.tests, failed:candidate.fail},
-            strictFullSuitePass:false, mergeOrDeployAuthorized:false
+            strictFullSuitePass:candidate.fail === 0, mergeOrDeployAuthorized:false
           },null,2));
           JS
