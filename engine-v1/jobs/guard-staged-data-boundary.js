@@ -224,7 +224,7 @@ function inspectStagedResultsMemory(p, status, violations) {
 }
 
 function inspectStagedVerifiedFinal(p, status, violations) {
-  if (!/^data\\/final-results\\/\\d{4}-\\d{2}-\\d{2}\\/[^/]+\\.json$/.test(p)) return;
+  if (!p.startsWith("data/final-results/") || !p.endsWith(".json") || p.split("/").length !== 4) return;
   const name = p.slice(p.lastIndexOf("/") + 1, -5);
   const date = p.split("/")[2];
   try {
