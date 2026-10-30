@@ -19,5 +19,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
+      - name: Inventory exact canonical alias references without writes
+        run: node engine-v1/jobs/inventory-canonical-alias-references.js
       - name: Reconcile exact historical day window without writes
         run: node engine-v1/jobs/report-verified-finals-range.js 2026-10-27 2026-10-29
