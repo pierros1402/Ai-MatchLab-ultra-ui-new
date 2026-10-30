@@ -156,3 +156,12 @@ test("history indexes are rebuildable but retained historical truth stays immuta
  assert.match(source,/DETERMINISTIC_REBUILD_REQUIRED/);
  assert.match(source,/PRESERVE_AND_RECONCILE_BY_APPEND/);
 });
+
+test("unresolved historical collisions prohibit an approved write set",()=>{
+ const report=buildHistoricalIdentityAdjudicationRegister(audit);
+ assert.equal(report.reconciliationGate.status,"HOLD_UNTIL_DEPENDENCIES_ADJUDICATED");
+ assert.equal(report.reconciliationGate.unresolvedCases,1);
+ assert.equal(report.reconciliationGate.approvedWriteActions,0);
+ assert.equal(report.reconciliationGate.approvedForWrite,false);
+ assert.ok(report.reconciliationGate.requiredEvidence.includes("full_regression"));
+});
