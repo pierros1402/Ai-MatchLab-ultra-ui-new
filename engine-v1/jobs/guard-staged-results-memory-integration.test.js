@@ -53,3 +53,25 @@ test("real staged malformed added results-memory fails closed",()=>{
   const r=scenario([], [{matchId:"",ha:"H",gf:2,ga:1}],"A");
   assert.equal(r.code,2);assert.ok(r.output.violations.some(v=>v.reason==="results_memory_preservation_unverifiable"));
 });
+
+test("real staged rename of results memory cannot silently bypass preservation", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-results-rename-"));
+  try {
+    invoke("git", ["init", "-q"], dir);
+    invoke("git", ["config", "user.email", "test@example.invalid"], dir);
+    invoke("git", ["config", "user.name", "Test"], dir);
+    const root = path.join(dir, "data", "league-memory", "results");
+    fs.mkdirSync(root, {recursive:true});
+    fs.writeFileSync(path.join(root, "old.json"), document([fixture("a")]));
+    invoke("git", ["add", "."], dir);
+    invoke("git", ["commit", "-qm", "baseline"], dir);
+    invoke("git", ["mv", "data/league-memory/results/old.json",
+      "data/league-memory/results/new.json"], dir);
+    const run = spawnSync(process.execPath,
+      [guard, "--enforce-results-preservation"], {cwd:dir,encoding:"utf8"});
+    assert.equal(run.status, 2);
+    const report = JSON.parse(run.stdout);
+    assert.ok(report.violations.some(v =>
+      v.reason === "results_memory_path_mutation_requires_adjudication"));
+  } finally { fs.rmSync(dir, {recursive:true,force:true}); }
+});
