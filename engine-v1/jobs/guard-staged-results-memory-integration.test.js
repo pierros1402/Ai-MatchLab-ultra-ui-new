@@ -75,3 +75,34 @@ test("real staged rename of results memory cannot silently bypass preservation",
       v.reason === "results_memory_path_mutation_requires_adjudication"));
   } finally { fs.rmSync(dir, {recursive:true,force:true}); }
 });
+
+test("a single violated result file rejects the entire staged multi-file set", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-results-atomic-"));
+  try {
+    invoke("git", ["init", "-q"], dir);
+    invoke("git", ["config", "user.email", "test@example.invalid"], dir);
+    invoke("git", ["config", "user.name", "Test"], dir);
+    const root = path.join(dir, "data", "league-memory", "results");
+    fs.mkdirSync(root, {recursive:true});
+    fs.writeFileSync(path.join(root, "one.json"), document([fixture("a")]));
+    fs.writeFileSync(path.join(root, "two.json"), document([fixture("x"), fixture("y")]));
+    invoke("git", ["add", "."], dir);
+    invoke("git", ["commit", "-qm", "baseline"], dir);
+    fs.writeFileSync(path.join(root, "one.json"), document([fixture("a"), fixture("b")]));
+    fs.writeFileSync(path.join(root, "two.json"), document([fixture("x")]));
+    invoke("git", ["add", "."], dir);
+    const run = spawnSync(process.execPath,
+      [guard, "--enforce-results-preservation"], {cwd:dir,encoding:"utf8"});
+    assert.equal(run.status, 2);
+    const report = JSON.parse(run.stdout);
+    assert.equal(report.stagedCount, 2);
+    assert.ok(report.violations.some(v => v.path.endsWith("/two.json") &&
+      v.reason === "missing_existing_record"));
+    assert.ok(!report.violations.some(v => v.path.endsWith("/one.json")));
+    // Failure of admission must not mutate the actual committed repository HEAD.
+    const committed = spawnSync("git", ["show", "HEAD:data/league-memory/results/two.json"],
+      {cwd:dir, encoding:"utf8"});
+    assert.equal(committed.status, 0);
+    assert.equal(JSON.parse(committed.stdout).teams.Home.length, 2);
+  } finally { fs.rmSync(dir, {recursive:true,force:true}); }
+});
