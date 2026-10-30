@@ -2149,6 +2149,32 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
   const sourceRows = Array.isArray(feed?.rows) ? feed.rows : [];
   const outputDir = resolveDataPath("final-results", safeDayKey);
 
+  // One-pass all-history provider index. Existing historical collisions are
+  // preserved, but may never be silently amplified by a new final export.
+  const historyOwners = new Map();
+  const finalResultsRoot = resolveDataPath("final-results");
+  if (fs.existsSync(finalResultsRoot)) {
+    for (const day of fs.readdirSync(finalResultsRoot,{withFileTypes:true})) {
+      if (!day.isDirectory()) continue;
+      const folder = path.join(finalResultsRoot,day.name);
+      for (const entry of fs.readdirSync(folder,{withFileTypes:true})) {
+        if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
+        const file = path.join(folder,entry.name);
+        const stored = readJsonSafe(file,null);
+        if (!stored || !Array.isArray(stored.sources)) continue;
+        for (const source of stored.sources) {
+          const provider = clean(source?.provider || (
+            ["flashscore","espn"].includes(clean(source?.authority).toLowerCase())
+              ? source.authority : "")).toLowerCase();
+          const sourceId = clean(source?.providerMatchId);
+          if (!provider || !sourceId) continue;
+          const key = JSON.stringify([provider,sourceId]);
+          if (!historyOwners.has(key)) historyOwners.set(key,new Set());
+          historyOwners.get(key).add(file);
+        }
+      }
+    }
+  }
   // Day-local collision barrier: never publish two canonical identities with
   // the same exact provider fixture. Does not mutate historical records.
   const providerOwners = new Map();
@@ -2595,6 +2621,14 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
     // Covers both persisted finals and new candidates from this run.
     const keys = Array.isArray(payload?.sources)
       ? [...new Set(payload.sources.map(providerKey).filter(Boolean))] : [];
+    const historicalCollisionKey = keys.find(key =>
+      [...(historyOwners.get(key) || [])].some(owner => owner !== filePath));
+    if (historicalCollisionKey) {
+      conflicts.push({...row,reason:"historical_verified_final_provider_collision",
+        providerIdentityKey:historicalCollisionKey,
+        existingProviderPaths:[...historyOwners.get(historicalCollisionKey)].sort()});
+      continue;
+    }
     const collisionKey = keys.find(key =>
       providerOwners.has(key) && providerOwners.get(key) !== filePath);
     if (collisionKey) {
@@ -2693,7 +2727,11 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
     }
 
     // Reserve the identity even in dry-run; later candidates must not collide.
-    for (const key of keys) providerOwners.set(key,filePath);
+    for (const key of keys) {
+      providerOwners.set(key,filePath);
+      if (!historyOwners.has(key)) historyOwners.set(key,new Set());
+      historyOwners.get(key).add(filePath);
+    }
     if (options.write === true) {
       writeJsonPretty(filePath, payload);
       written.push(row);
