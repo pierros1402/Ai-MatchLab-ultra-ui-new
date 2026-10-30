@@ -151,6 +151,7 @@ jobs:
             fi
 
             node engine-v1/jobs/guard-staged-data-boundary.js \
+              --enforce-canonical-row-preservation \
               --label=intraday-authoritative-truth-checkpoint \
               --dayKey="${DAY_KEY}" \
               --allow="^data/canonical-fixtures/${DAY_KEY}/[^/]+\\.json$"
