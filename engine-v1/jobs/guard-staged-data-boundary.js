@@ -132,8 +132,40 @@ function inspectStagedCanonicalFile(p, violations) {
       const current = rows(payload);
       if (!previous || !current) {
         violations.push({reason:"canonical_row_preservation_unverifiable",path:p});
-      } else if (current.length < previous.length) {
-        violations.push({reason:"canonical_row_count_regression",path:p,before:previous.length,after:current.length});
+      } else {
+        if (current.length < previous.length) {
+          violations.push({reason:"canonical_row_count_regression",path:p,before:previous.length,after:current.length});
+        }
+        const id = row => String(row?.canonicalId || row?.matchId || row?.id || "").trim();
+        const priorIds = previous.map(id);
+        const nextIds = current.map(id);
+        if (priorIds.some(x => !x) || nextIds.some(x => !x) ||
+            new Set(priorIds).size !== priorIds.length ||
+            new Set(nextIds).size !== nextIds.length) {
+          violations.push({reason:"canonical_identity_unverifiable",path:p});
+        } else {
+          const next = new Map(current.map(row => [id(row),row]));
+          for (const row of previous) {
+            const key = id(row);
+            if (!next.has(key)) {
+              violations.push({reason:"canonical_identity_missing",path:p,canonicalId:key});
+              continue;
+            }
+            const terminal = value => {
+              const state=String(value?.statusType || value?.status || value?.rawStatus || "").toUpperCase();
+              return /^(FT|FINAL|STATUS_FINAL|FINISHED)$/.test(state);
+            };
+            if (terminal(row)) {
+              const fields=["status","statusType","rawStatus","score","homeScore","awayScore",
+                "goalsHome","goalsAway","finalScore","authoritativeTerminalWriteback"];
+              const original=fields.map(k => JSON.stringify(row[k] ?? null));
+              const updated=fields.map(k => JSON.stringify(next.get(key)[k] ?? null));
+              if (original.some((value,i) => value !== updated[i])) {
+                violations.push({reason:"canonical_verified_terminal_mutation",path:p,canonicalId:key});
+              }
+            }
+          }
+        }
       }
     } catch (error) {
       // Newly created canonical files have no HEAD version; they are checked by
