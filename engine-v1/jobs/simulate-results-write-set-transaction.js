@@ -28,6 +28,7 @@ export function simulateResultsWriteSetTransaction({root,manifest,candidates,inj
     writeFileSync(join(temp,e.path),candidates[e.path]);
     written.push(e.path);
    }
+   if (written.length===injectFailureAfter) throw Error("sandbox_injected_preverification_failure");
    verified=prepared.hashes.every(e=>hash(readFileSync(join(temp,e.path)))===e.afterSha256);
    if(!verified)throw Error("sandbox_post_write_verification_failed");
   } catch(error) {
