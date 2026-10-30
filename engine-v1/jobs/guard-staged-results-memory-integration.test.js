@@ -249,3 +249,11 @@ test("hash-binding uses exact staged bytes including non-ASCII team names",()=>{
     assert.equal(JSON.parse(r.stdout).ok,true);
   }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
+
+test("new staged results-memory file with partial score is denied", () => {
+  const r = scenario([], [{...fixture("a"),ga:null}], "A");
+  assert.equal(r.code, 2);
+  assert.ok(r.output.violations.some(v =>
+    v.reason === "results_memory_preservation_unverifiable" &&
+    String(v.error).includes("results_memory_partial_score")));
+});
