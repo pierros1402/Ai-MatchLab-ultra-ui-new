@@ -61,3 +61,17 @@ test("real 2026-10-29 repository verified finals reconcile with canonical truth"
     "all real verified finals must map to canonical scores: "+JSON.stringify(result.issues.slice(0,12)));
   assert.equal(result.ok,true,JSON.stringify(result.issues.slice(0,12)));
 });
+
+test("canonical scoreHome/scoreAway schema reconciles without weakening mismatch detection",()=>{
+  withFixture(x=>{
+    fs.writeFileSync(path.join(x.canonical,"league.json"),
+      JSON.stringify({fixtures:[{canonicalId:"cid_1",scoreHome:1,scoreAway:2}]}));
+    const matching=auditVerifiedFinalsDay({root:x.root,dayKey:x.day});
+    assert.equal(matching.ok,true,JSON.stringify(matching.issues));
+    assert.equal(matching.matched,1);
+    fs.writeFileSync(path.join(x.finals,"cid_1.json"),JSON.stringify({...x.final,homeScore:3}));
+    const mismatch=auditVerifiedFinalsDay({root:x.root,dayKey:x.day});
+    assert.equal(mismatch.ok,false);
+    assert.ok(mismatch.issues.some(i=>i.reason==="final_score_disagreement"));
+  });
+});
