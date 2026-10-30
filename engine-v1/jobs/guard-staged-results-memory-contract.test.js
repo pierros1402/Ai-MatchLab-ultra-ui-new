@@ -28,3 +28,18 @@ test("Daily writer enforces results-memory preservation before any commit or pus
   assert.ok(push > commit, "commit must precede push");
   assert.equal(workflow.indexOf("--enforce-results-preservation", enforcement + 1), -1);
 });
+
+test("Intraday authoritative checkpoint denies canonical row shrink before commit", () => {
+  const workflow = fs.readFileSync(
+    fileURLToPath(new URL("../../.github/workflows/intraday-deploy-snapshot-refresh.yml", import.meta.url)),
+    "utf8"
+  );
+  const guard = fs.readFileSync(fileURLToPath(new URL("./guard-staged-data-boundary.js", import.meta.url)), "utf8");
+  const checkpoint = workflow.indexOf("--label=intraday-authoritative-truth-checkpoint");
+  const preservation = workflow.lastIndexOf("--enforce-canonical-row-preservation", checkpoint);
+  const commit = workflow.indexOf('git commit -m "Persist intraday canonical truth', checkpoint);
+  assert.ok(preservation >= 0 && checkpoint > preservation && commit > checkpoint);
+  assert.match(guard, /canonical_row_count_regression/);
+  assert.match(guard, /canonical_row_preservation_unverifiable/);
+  assert.match(guard, /current\.length < previous\.length/);
+});
