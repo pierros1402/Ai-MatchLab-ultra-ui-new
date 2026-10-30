@@ -361,51 +361,60 @@ for (const item of staged) {
   }
 }
 
-// Verify the complete affected final-results day, not merely changed rows.
-// A newly staged alias cannot silently coexist with an older provider match.
+// Search all tracked historical verified finals for every provider identity
+// introduced/modified in the staged set. No arbitrary date window applies.
 if (enforceVerifiedFinalPreservation) {
   const finalPath = p => typeof p === "string" && p.startsWith("data/final-results/") &&
     p.endsWith(".json") && p.split("/").length === 4;
-  const affectedDays = new Set(staged.filter(x => finalPath(x.path) || finalPath(x.oldPath))
-    .flatMap(x => [x.path,x.oldPath]).filter(finalPath).map(p => p.split("/")[2]));
-  // Include adjacent-day retained finals: timezone/day-boundary rekeying must not
-  // create a second result for an existing provider fixture.
-  const nearbyDays=new Set(affectedDays);
-  for(const day of affectedDays) {
-    const stamp=Date.parse(day+"T00:00:00Z");
-    if(!Number.isFinite(stamp)) {
-      violations.push({reason:"verified_final_day_invalid",day});continue;
-    }
-    for(const delta of [-1,1])nearbyDays.add(new Date(stamp+delta*86400000).toISOString().slice(0,10));
+  const changed=staged.filter(x=>finalPath(x.path));
+  const changedPaths=new Set(changed.map(x=>x.path));
+  const candidates=new Map();
+  for (const item of changed) {
+    if (item.status.startsWith("D")) continue;
+    try { candidates.set(item.path,JSON.parse(git(["show",`:${item.path}`]))); }
+    catch(e) { violations.push({reason:"staged_final_unverifiable",path:item.path}); }
   }
-  const stagedByPath = new Map(staged.map(x => [x.path,x.status[0]]));
-  const owners = new Map();
-  for (const day of [...nearbyDays].sort()) {
-    const prefix = `data/final-results/${day}/`;
-    const base = git(["ls-tree","-r","--name-only","HEAD","--",prefix]).split("\n").map(x => x.trim()).filter(finalPath);
-    const paths = new Set([...base,...staged.map(x => x.path).filter(p => p.startsWith(prefix) && finalPath(p))]);
-    for (const p of [...paths].sort()) {
-      if (stagedByPath.get(p)==="D") continue;
-      const isStaged=["A","M","R","C"].includes(stagedByPath.get(p));
+  const owner=new Map();
+  for(const [p,doc] of candidates) {
+    for(const src of Array.isArray(doc.sources)?doc.sources:[]) {
+      if(!src?.provider||!src?.providerMatchId)continue;
+      const key=JSON.stringify([src.provider,String(src.providerMatchId)]);
+      if(owner.has(key)&&owner.get(key)!==p)
+        violations.push({reason:"verified_provider_identity_collision",firstPath:owner.get(key),
+          secondPath:p,provider:src.provider,providerMatchId:String(src.providerMatchId)});
+      else owner.set(key,p);
+    }
+  }
+  // Indexed Git search over ALL historic days, narrowed to exact provider
+  // strings. Match candidates must also agree on provider (not ID alone).
+  const ids=[...new Set([...candidates.values()].flatMap(doc=>
+    (Array.isArray(doc.sources)?doc.sources:[]).map(src=>src?.providerMatchId)
+      .filter(x=>x!==undefined&&x!==null&&String(x)!=="").map(String)))];
+  if(ids.length) {
+    let hits=[];
+    try {
+      hits=git(["grep","-l","-F",...ids.flatMap(id=>["-e",id]),"HEAD","--","data/final-results/"])
+        .split("\n").map(x=>x.trim()).filter(x=>x.startsWith("HEAD:data/final-results/"));
+    } catch(e) {
+      if(e?.status!==1) violations.push({reason:"full_history_provider_lookup_unverifiable",
+        error:String(e?.message||e)});
+    }
+    for(const hit of hits) {
+      const p=hit.slice(5);
+      if(changedPaths.has(p))continue;
       try {
-        const payload=JSON.parse(git(["show",isStaged ? `:${p}` : `HEAD:${p}`]));
-        if (payload?.sources !== undefined && !Array.isArray(payload.sources)) {
-          violations.push({reason:"verified_provider_identity_unverifiable",path:p});continue;
+        const doc=JSON.parse(git(["show",hit]));
+        for(const src of Array.isArray(doc?.sources)?doc.sources:[]) {
+          if(!src?.provider||!src?.providerMatchId)continue;
+          const key=JSON.stringify([src.provider,String(src.providerMatchId)]);
+          const first=owner.get(key);
+          if(first && first!==p)
+            violations.push({reason:"verified_provider_identity_collision",
+              firstPath:p,secondPath:first,provider:src.provider,
+              providerMatchId:String(src.providerMatchId)});
         }
-        for (const source of (payload.sources || [])) {
-          const provider=source?.provider, sourceId=source?.providerMatchId;
-          if (typeof provider!=="string" || !provider || !sourceId) continue;
-          const key=JSON.stringify([provider,String(sourceId)]);
-          const previous=owners.get(key);
-          if (previous && previous!==p)
-            violations.push({reason:"verified_provider_identity_collision",provider,
-              providerMatchId:String(sourceId),firstPath:previous,secondPath:p});
-          else owners.set(key,p);
-        }
-      } catch (e) {
-        violations.push({reason:"verified_provider_day_unverifiable",path:p,
-          error:String(e?.message||e)});
-      }
+      } catch(e) {violations.push({reason:"full_history_final_unverifiable",path:p,
+          error:String(e?.message||e)});}
     }
   }
 }
