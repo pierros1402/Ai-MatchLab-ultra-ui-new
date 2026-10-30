@@ -140,5 +140,11 @@ test("exact-score exact-kickoff provider match yields a non-authorized alias can
   assert.equal(report.safelyScopedCanonicalCandidates[0].writeAuthorized,false);
   assert.equal(report.safelyScopedCanonicalCandidates[0].dependencyAudit.readOnly,true);
   assert.ok(report.safelyScopedCanonicalCandidates[0].dependencyAudit.fileCount>=1);
+  const dependencies=report.safelyScopedCanonicalCandidates[0].dependencyAudit;
+  assert.equal(dependencies.writeSetApproved,false);
+  assert.equal(dependencies.automaticReplacementAuthorized,false);
+  assert.ok(dependencies.references.every(x=>x.writeAuthorized===false));
+  assert.ok(dependencies.references.every(x=>typeof x.prescribedAction==="string"));
+
  }finally{rmSync(root,{recursive:true,force:true});}
 });
