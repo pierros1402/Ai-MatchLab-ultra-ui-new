@@ -194,6 +194,15 @@ for (const item of staged) {
     }
   }
 
+  // A rename/copy changes result-memory custody and must not bypass the
+  // preservation comparison. Require a separately approved migration.
+  if (enforceResultsPreservation &&
+      ["R", "C", "D"].includes(statusLetter) &&
+      [item.path, item.oldPath].some(p => /^data\\/league-memory\\/results\\/[^/]+\\.json$/.test(p))) {
+    violations.push({ reason: "results_memory_path_mutation_requires_adjudication",
+      status: item.status, path: item.path, oldPath: item.oldPath || null });
+  }
+
   if (enforceResultsPreservation && ["A", "M"].includes(statusLetter)) {
     inspectStagedResultsMemory(item.path, statusLetter, violations);
   }
