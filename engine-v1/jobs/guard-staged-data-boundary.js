@@ -198,7 +198,7 @@ for (const item of staged) {
   // preservation comparison. Require a separately approved migration.
   if (enforceResultsPreservation &&
       ["R", "C", "D"].includes(statusLetter) &&
-      [item.path, item.oldPath].some(p => /^data\\/league-memory\\/results\\/[^/]+\\.json$/.test(p))) {
+      [item.path, item.oldPath].some(p => /^data\/league-memory\/results\/[^/]+\.json$/.test(p))) {
     violations.push({ reason: "results_memory_path_mutation_requires_adjudication",
       status: item.status, path: item.path, oldPath: item.oldPath || null });
   }
