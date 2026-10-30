@@ -12,7 +12,7 @@ const invoke = (command, args, cwd) => {
   assert.equal(result.status, 0, `${command} ${args.join(" ")}: ${result.stderr}`);
 };
 const fixture = (id, home = 2) => ({matchId:id,ha:"H",gf:home,ga:1,date:"2026-08-20T19:00:00Z"});
-const document = rows => JSON.stringify({teams:{Home:rows}},null,2);
+const document = (rows, slug = "league") => JSON.stringify({slug,teams:{Home:rows}},null,2);
 function scenario(before, after, mode="M") {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-staged-preservation-"));
   try {
@@ -62,7 +62,7 @@ test("real staged rename of results memory cannot silently bypass preservation",
     invoke("git", ["config", "user.name", "Test"], dir);
     const root = path.join(dir, "data", "league-memory", "results");
     fs.mkdirSync(root, {recursive:true});
-    fs.writeFileSync(path.join(root, "old.json"), document([fixture("a")]));
+    fs.writeFileSync(path.join(root, "old.json"), document([fixture("a")], "old"));
     invoke("git", ["add", "."], dir);
     invoke("git", ["commit", "-qm", "baseline"], dir);
     invoke("git", ["mv", "data/league-memory/results/old.json",
@@ -84,12 +84,12 @@ test("a single violated result file rejects the entire staged multi-file set", (
     invoke("git", ["config", "user.name", "Test"], dir);
     const root = path.join(dir, "data", "league-memory", "results");
     fs.mkdirSync(root, {recursive:true});
-    fs.writeFileSync(path.join(root, "one.json"), document([fixture("a")]));
-    fs.writeFileSync(path.join(root, "two.json"), document([fixture("x"), fixture("y")]));
+    fs.writeFileSync(path.join(root, "one.json"), document([fixture("a")], "one"));
+    fs.writeFileSync(path.join(root, "two.json"), document([fixture("x"), fixture("y")], "two"));
     invoke("git", ["add", "."], dir);
     invoke("git", ["commit", "-qm", "baseline"], dir);
-    fs.writeFileSync(path.join(root, "one.json"), document([fixture("a"), fixture("b")]));
-    fs.writeFileSync(path.join(root, "two.json"), document([fixture("x")]));
+    fs.writeFileSync(path.join(root, "one.json"), document([fixture("a"), fixture("b")], "one"));
+    fs.writeFileSync(path.join(root, "two.json"), document([fixture("x")], "two"));
     invoke("git", ["add", "."], dir);
     const run = spawnSync(process.execPath,
       [guard, "--enforce-results-preservation"], {cwd:dir,encoding:"utf8"});
@@ -105,4 +105,27 @@ test("a single violated result file rejects the entire staged multi-file set", (
     assert.equal(committed.status, 0);
     assert.equal(JSON.parse(committed.stdout).teams.Home.length, 2);
   } finally { fs.rmSync(dir, {recursive:true,force:true}); }
+});
+
+test("copied results payload with mismatching slug is blocked even if Git reports it as A", () => {
+  const r = scenario([], [fixture("a")], "A");
+  assert.equal(r.code, 0);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-results-copy-"));
+  try {
+    invoke("git", ["init", "-q"], dir);
+    invoke("git", ["config", "user.email", "test@example.invalid"], dir);
+    invoke("git", ["config", "user.name", "Test"], dir);
+    fs.writeFileSync(path.join(dir,"README.md"),"baseline");
+    invoke("git", ["add", "."], dir);
+    invoke("git", ["commit", "-qm", "baseline"], dir);
+    const root = path.join(dir,"data","league-memory","results");
+    fs.mkdirSync(root,{recursive:true});
+    fs.writeFileSync(path.join(root,"other.json"), document([fixture("a")],"league"));
+    invoke("git",["add","."],dir);
+    const run = spawnSync(process.execPath,[guard,"--enforce-results-preservation"],
+      {cwd:dir,encoding:"utf8"});
+    assert.equal(run.status,2);
+    const report=JSON.parse(run.stdout);
+    assert.ok(report.violations.some(v=>v.reason==="results_memory_slug_path_mismatch"));
+  } finally { fs.rmSync(dir,{recursive:true,force:true}); }
 });
