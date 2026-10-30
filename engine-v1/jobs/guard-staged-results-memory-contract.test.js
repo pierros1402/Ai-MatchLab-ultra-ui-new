@@ -13,3 +13,18 @@ test("staged results-memory preservation is fail-closed and opt-in only", () => 
   assert.match(source, /enforceResultsPreservation && \["A", "M"\]\.includes\(statusLetter\)/);
   assert.doesNotMatch(source, /allow-results-memory-shrink/);
 });
+
+test("Daily writer enforces results-memory preservation before any commit or push", () => {
+  const workflow = fs.readFileSync(
+    fileURLToPath(new URL("../../.github/workflows/daily-autonomous.yml", import.meta.url)),
+    "utf8"
+  );
+  const stage = workflow.indexOf("node engine-v1/jobs/guard-staged-data-boundary.js");
+  const enforcement = workflow.indexOf("--enforce-results-preservation", stage);
+  const commit = workflow.indexOf('git commit -m "Daily autonomous run', stage);
+  const push = workflow.indexOf("bash tools/git-push-rebase-retry.sh", stage);
+  assert.ok(stage >= 0 && enforcement > stage, "Daily preservation guard must be enabled");
+  assert.ok(commit > enforcement, "guard must precede commit");
+  assert.ok(push > commit, "commit must precede push");
+  assert.equal(workflow.indexOf("--enforce-results-preservation", enforcement + 1), -1);
+});
