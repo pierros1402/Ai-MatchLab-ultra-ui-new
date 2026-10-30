@@ -364,3 +364,31 @@ test("publication guard rejects arbitrary canonical IDs sharing a provider fixtu
   assert.ok(report.violations.some(v=>v.reason==="canonical_provider_identity_collision"));
  } finally {fs.rmSync(dir,{recursive:true,force:true});}
 });
+
+test("new verified final cannot duplicate an existing provider match under another ID",()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),"aiml-final-provider-guard-"));
+ try {
+  invoke("git",["init","-q"],dir);
+  invoke("git",["config","user.email","test@example.invalid"],dir);
+  invoke("git",["config","user.name","Test"],dir);
+  const root=path.join(dir,"data","final-results","2026-10-29");
+  fs.mkdirSync(root,{recursive:true});
+  const documentFor=id=>JSON.stringify({
+   schema:"ai-matchlab.verified-final-result.v1",verifiedFinalTruth:true,
+   matchId:id,dayKey:"2026-10-29",homeScore:1,awayScore:5,
+   finalScore:{homeScore:1,awayScore:5},
+   sources:[{provider:"espn",providerMatchId:"9988123"}]
+  });
+  fs.writeFileSync(path.join(root,"cid_first.json"),documentFor("cid_first"));
+  invoke("git",["add","."],dir);
+  invoke("git",["commit","-qm","baseline"],dir);
+  fs.writeFileSync(path.join(root,"cid_second.json"),documentFor("cid_second"));
+  invoke("git",["add","."],dir);
+  const run=spawnSync(process.execPath,[guard,"--enforce-verified-final-preservation"],
+    {cwd:dir,encoding:"utf8"});
+  assert.equal(run.status,2,run.stdout+" "+run.stderr);
+  const report=JSON.parse(run.stdout);
+  assert.ok(report.violations.some(v=>v.reason==="verified_provider_identity_collision" &&
+    v.providerMatchId==="9988123"));
+ } finally {fs.rmSync(dir,{recursive:true,force:true});}
+});
