@@ -222,3 +222,30 @@ test("write set must cover all staged modified results-memory paths",()=>{
     assert.ok(report.violations.some(v=>v.reason==="write_set_unapproved_staged_path"&&v.path.endsWith("two.json")));
   }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
+
+test("hash-binding uses exact staged bytes including non-ASCII team names",()=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),"aiml-unicode-hashes-"));
+  try {
+    invoke("git",["init","-q"],dir);
+    invoke("git",["config","user.email","test@example.invalid"],dir);
+    invoke("git",["config","user.name","Test"],dir);
+    const relative="data/league-memory/results/league.json";
+    const target=path.join(dir,relative);
+    fs.mkdirSync(path.dirname(target),{recursive:true});
+    const before=JSON.stringify({slug:"league",teams:{"Αθήνα":[fixture("one")]}},null,2);
+    const after=JSON.stringify({slug:"league",teams:{"Αθήνα":[fixture("one"),fixture("two")]}},null,2);
+    fs.writeFileSync(target,before,"utf8");
+    invoke("git",["add","."],dir);
+    invoke("git",["commit","-qm","baseline"],dir);
+    fs.writeFileSync(target,after,"utf8");
+    invoke("git",["add","."],dir);
+    const digest=b=>createHash("sha256").update(Buffer.from(b,"utf8")).digest("hex");
+    const manifest=path.join(dir,"write-set.json");
+    fs.writeFileSync(manifest,JSON.stringify({schema:"ai-matchlab.results-write-set.v1",
+      entries:[{path:relative,status:"M",beforeSha256:digest(before),afterSha256:digest(after)}]}));
+    const r=spawnSync(process.execPath,[guard,"--enforce-results-preservation",
+      "--results-write-set="+manifest],{cwd:dir,encoding:"utf8"});
+    assert.equal(r.status,0,r.stdout+" "+r.stderr);
+    assert.equal(JSON.parse(r.stdout).ok,true);
+  }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
