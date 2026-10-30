@@ -1,0 +1,220 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "eng.5",
+  "homeTeam": "AFC Fylde",
+  "awayTeam": "AFC Hornchurch",
+  "homeWinScore": 0.458,
+  "drawScore": 0.211,
+  "awayWinScore": 0.332,
+  "over15Score": 0.797,
+  "over25Score": 0.663,
+  "over35Score": 0.623,
+  "bttsScore": 0.552,
+  "confidence": 0.822,
+  "signals": [
+    "home_edge",
+    "over25_support",
+    "priors_applied",
+    "close_strength_gap",
+    "home_rest_3",
+    "away_rest_3"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.425,
+      "awayOverallFormWeight": 0.35,
+      "homeSideFormWeight": 0.17,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.559,
+    "expectedAwayGoals": 1.486,
+    "expectedTotalGoals": 3.045,
+    "homeStrength": 0.41,
+    "awayStrength": 0.377,
+    "homeEdge": 0.45,
+    "awayPenalty": 0.663,
+    "recency": {
+      "homeOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 92,
+        "daysSinceLastMatch": 3,
+        "spanDays": 24,
+        "maxInternalGap": 7,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.948
+      },
+      "awayOverall": {
+        "sample": 5,
+        "rawSample": 5,
+        "priorSample": 0,
+        "daysSinceLastMatch": 3,
+        "spanDays": 28,
+        "maxInternalGap": 14,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.7,
+        "formContinuityWeight": 0.895
+      },
+      "homeSide": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 92,
+        "daysSinceLastMatch": 3,
+        "spanDays": 28,
+        "maxInternalGap": 10,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.888
+      },
+      "awaySide": {
+        "sample": 3,
+        "rawSample": 3,
+        "priorSample": 0,
+        "daysSinceLastMatch": 6,
+        "spanDays": 28,
+        "maxInternalGap": 21,
+        "gapSeverity": "moderate",
+        "freshnessScore": 1,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.705
+      }
+    },
+    "matchupSample": 0,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 92,
+      "awayPriorSample": 0,
+      "leaguePriorSample": 2737,
+      "matchupPriorSample": 0
+    },
+    "resolution": {
+      "homeInput": "AFC Fylde",
+      "awayInput": "AFC Hornchurch",
+      "homeResolvedKey": "AFC Fylde",
+      "awayResolvedKey": "AFC Hornchurch",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "AFC Fylde::AFC Hornchurch",
+      "matchupResolveScore": 0,
+      "homePriorKey": "eng.5::AFC Fylde",
+      "awayPriorKey": null,
+      "matchupPriorKey": null
+    },
+    "sourceKeys": {
+      "homeTeamKey": "AFC Fylde",
+      "awayTeamKey": "AFC Hornchurch",
+      "leagueKey": "eng.5",
+      "matchupKey": "AFC Fylde::AFC Hornchurch"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "form_balanced",
+        "impact": 0.04,
+        "note": "Teams have similar recent form"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    }
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "form_balanced",
+      "impact": 0.04,
+      "note": "Teams have similar recent form"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "MEDIUM",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0.009,
+      "awayDelta": 0,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0.05,
+      "awayPenalty": 0.05,
+      "reasons": [
+        "home_rest_3",
+        "away_rest_3"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "eng.5",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 3,
+    "awayRestDays": 3,
+    "homeMatchesLast7": 1,
+    "awayMatchesLast7": 1,
+    "homeMatchesLast14": 2,
+    "awayMatchesLast14": 1,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
