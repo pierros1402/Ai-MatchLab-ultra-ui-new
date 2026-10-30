@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import path from "node:path";
 
 import {
   buildCheckpointAwareValueComparisonRuntimeIdentitiesAclPostActivationVerification,
@@ -98,11 +99,11 @@ function identityEvidence() {
 function directoryRows() {
   const stateRows = [
     STATE,
-    `${STATE}\\locks`,
-    `${STATE}\\journals`,
-    `${STATE}\\replay`,
-    `${STATE}\\audits`,
-    `${STATE}\\backups`
+    path.join(STATE, "locks"),
+    path.join(STATE, "journals"),
+    path.join(STATE, "replay"),
+    path.join(STATE, "audits"),
+    path.join(STATE, "backups")
   ];
 
   return [
