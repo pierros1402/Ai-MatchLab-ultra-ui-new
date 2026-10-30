@@ -45,6 +45,15 @@ export function buildHistoricalIdentityAdjudicationRegister(audit) {
    readOnly:true,approvedForWrite:false,requiresHumanAdjudication:true,
    sourceTrackedFinalFiles:audit.trackedFinalFiles,
    duplicateCases:cases.length,unverifiableCases:audit.unverifiable.length,
+   classificationCounts:Object.fromEntries(
+     ["SCORE_CONFLICT","KICKOFF_CONFLICT","SAME_SCORE_IDENTITY_CONFLICT","INCOMPLETE_SCORE_EVIDENCE"]
+       .map(name=>[name,cases.filter(item=>item.classification===name).length])),
+   evidenceStateCounts:Object.fromEntries(
+     ["CONTRADICTORY_TERMINAL_SCORE","CONTRADICTORY_KICKOFF",
+       "DUPLICATE_CANDIDATE_REQUIRES_CANONICAL_PROOF",
+       "INSUFFICIENT_INDEPENDENT_IDENTITY_PROOF"]
+       .map(name=>[name,cases.filter(item=>item.evidenceState===name).length])),
+   nonExecutableCandidateCount:cases.filter(item=>item.candidateOperation!==null).length,
    cases,unverifiable:audit.unverifiable};
 }
 if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url)){
