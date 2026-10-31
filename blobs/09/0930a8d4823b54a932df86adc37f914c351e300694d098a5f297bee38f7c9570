@@ -1,0 +1,106 @@
+{
+  "schema": "ai-matchlab.history-backed-standings.v1",
+  "league": "gab.1",
+  "seasonReference": "2026-2027",
+  "updatedAt": "2026-10-31T02:45:19.317Z",
+  "confidence": 0,
+  "completeness": 0,
+  "sourceAudit": [
+    {
+      "type": "history_foundation",
+      "label": "history-2026-2027",
+      "ok": false
+    },
+    {
+      "type": "competition_contract",
+      "label": "gab.1@2026-2027#v1",
+      "ok": false
+    }
+  ],
+  "phaseSummary": {
+    "hasPhaseTables": false,
+    "phaseKeys": []
+  },
+  "phaseTables": {},
+  "phases": {},
+  "table": [],
+  "foundation": {
+    "schema": "ai-matchlab.history-backed-standings-foundation.v1",
+    "status": "GATED",
+    "usable": false,
+    "reasonCodes": [
+      "NO_STRICT_HISTORY_ROWS",
+      "TABLE_EMPTY",
+      "TEAM_COUNT_AUTHORITY_MISSING"
+    ],
+    "builtAt": "2026-10-31T02:45:19.317Z",
+    "historySeason": "2026-2027",
+    "historyLeagueRows": 0,
+    "historyLeagueSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "competitionFormatRegistrySha256": "d72c3d0c06ee39b4a08e5f9f33513a5802ab4d0b1abb795b28942fb4868fd74b",
+    "teamAliasesSha256": "MISSING",
+    "teamIdentityMode": "LEAGUE_SCOPED_CANONICAL_ALIAS_ID_V1",
+    "contractId": "gab.1@2026-2027#v1",
+    "contractSeasonReference": "2026-2027",
+    "contractAuthorityScopes": [],
+    "contractValidation": {
+      "schema": "ai-matchlab.standings-contract-validation.v1",
+      "status": "FAIL",
+      "ok": false,
+      "publicationDecision": "NOT_APPLIED_READ_ONLY",
+      "leagueSlug": "gab.1",
+      "seasonReference": "2026-2027",
+      "contractId": "gab.1@2026-2027#v1",
+      "authority": {
+        "status": "UNVERIFIED",
+        "scopes": [],
+        "verifiedAt": null
+      },
+      "artifact": {
+        "shape": "OBJECT",
+        "declaredLeague": "gab.1",
+        "observedPhaseKeys": []
+      },
+      "summary": {
+        "primaryUniverseSource": "TABLE",
+        "primaryRowCount": 0,
+        "primaryUniqueTeamCount": 0,
+        "primaryCanonicalIdCount": 0,
+        "primaryFallbackIdentityCount": 0,
+        "primaryCanonicalIdentityComplete": true,
+        "phaseTableCount": 0,
+        "teamCountEvaluation": {
+          "evaluated": false,
+          "pass": null,
+          "expected": null,
+          "observed": 0
+        },
+        "errorCount": 1,
+        "warningCount": 1
+      },
+      "issues": [
+        {
+          "code": "TABLE_EMPTY",
+          "severity": "error",
+          "scope": "primary",
+          "message": "Standings table is empty."
+        },
+        {
+          "code": "TEAM_COUNT_CONTRACT_UNVERIFIED",
+          "severity": "warning",
+          "scope": "contract.teamCount",
+          "message": "Team count is not authoritative for this league/season; count mismatch is not evaluated as compliance failure."
+        }
+      ],
+      "mutationGuard": {
+        "readOnly": true,
+        "mutationAttempted": false,
+        "mutations": []
+      }
+    },
+    "observedRowCount": 0,
+    "observedTable": [],
+    "consumerTableRows": 0,
+    "staleOnSourceChange": true
+  }
+}
