@@ -113,9 +113,28 @@ export function buildHistoricalAliasPreflight(register) {
      dependency.retainedId===row.retainedCanonicalId &&
      dependency.aliasId===row.aliasCandidateId &&
      Array.isArray(dependency.references);
+   const references=dependencyBound ? dependency.references : [];
+   const paths=references.map(ref=>ref?.path);
+   const dependencyInventoryExact=dependencyBound &&
+     Number.isSafeInteger(dependency.fileCount) &&
+     dependency.fileCount===references.length &&
+     paths.every(p=>typeof p==="string" && p.startsWith("data/")) &&
+     new Set(paths).size===paths.length &&
+     references.every(ref=>Number.isSafeInteger(ref.aliasOccurrences) &&
+       Number.isSafeInteger(ref.retainedOccurrences) &&
+       ref.aliasOccurrences>=0 && ref.retainedOccurrences>=0 &&
+       ref.writeAuthorized===false) &&
+     references.reduce((n,ref)=>n+ref.aliasOccurrences,0)===
+       dependency.aliasOccurrenceCount &&
+     references.reduce((n,ref)=>n+ref.retainedOccurrences,0)===
+       dependency.retainedOccurrenceCount &&
+     references.some(ref=>ref.path===row.firstPath &&
+       ref.category==="VERIFIED_FINAL") &&
+     references.some(ref=>ref.path===row.secondPath &&
+       ref.category==="VERIFIED_FINAL");
    const uniquePair=!seen.has(row.aliasCandidateId);
    seen.add(row.aliasCandidateId);
-   const preflightQualified=Boolean(identifiersValid && exactEvidence && dependencyBound && uniquePair);
+   const preflightQualified=Boolean(identifiersValid && exactEvidence && dependencyInventoryExact && uniquePair);
    return {caseId:row.caseId,retainedCanonicalId:row.retainedCanonicalId,
      aliasCandidateId:row.aliasCandidateId,
      preflightQualified,
