@@ -1,7 +1,7 @@
 import {execFileSync} from "node:child_process";
 import test from "node:test";
 import assert from "node:assert/strict";
-import {buildHistoricalIdentityAdjudicationRegister,findCanonicalAuthorityForCase} from "./build-historical-identity-adjudication-register.js";
+import {buildHistoricalIdentityAdjudicationRegister,findCanonicalAuthorityForCase,inventoryAliasDependencies} from "./build-historical-identity-adjudication-register.js";
 import {mkdtempSync,mkdirSync,writeFileSync,rmSync,readFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
@@ -164,4 +164,19 @@ test("unresolved historical collisions prohibit an approved write set",()=>{
  assert.equal(report.reconciliationGate.approvedWriteActions,0);
  assert.equal(report.reconciliationGate.approvedForWrite,false);
  assert.ok(report.reconciliationGate.requiredEvidence.includes("full_regression"));
+});
+
+test("empty retained-id git grep is not an inventory failure",()=>{
+ const root=mkdtempSync(join(tmpdir(),"aiml-alias-empty-"));
+ try {
+  execFileSync("git",["init","-q"],{cwd:root});
+  mkdirSync(join(root,"data"),{recursive:true});
+  writeFileSync(join(root,"data","sample.json"),JSON.stringify({matchId:"legacy"}));
+  execFileSync("git",["add","data"],{cwd:root});
+  const x=inventoryAliasDependencies(root,"retained","legacy");
+  assert.equal(x.fileCount,1);
+  assert.equal(x.aliasOccurrenceCount,1);
+  assert.equal(x.retainedOccurrenceCount,0);
+  assert.equal(x.approvedForWrite,false);
+ }finally{rmSync(root,{recursive:true,force:true});}
 });
