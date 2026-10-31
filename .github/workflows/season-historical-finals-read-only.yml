@@ -11,6 +11,7 @@ on:
       - "engine-v1/jobs/g2-historical-two-pass-fixtures-sandbox.js"
       - "engine-v1/jobs/g2-historical-two-pass-fixtures-all-sandbox.js"
       - "engine-v1/jobs/g2-historical-two-pass-odds-sandbox.js"
+      - "engine-v1/jobs/g2-historical-two-pass-details-sandbox.js"
       - ".github/workflows/season-historical-finals-read-only.yml"
 permissions:
   contents: read
@@ -85,6 +86,17 @@ jobs:
         with:
           name: historical-g2-odds-${{ github.sha }}
           path: g2-odds-two-pass.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: G2 historical details two-pass producer validation
+        if: always()
+        run: node engine-v1/jobs/g2-historical-two-pass-details-sandbox.js
+      - name: Retain G2 details validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g2-details-${{ github.sha }}
+          path: g2-details-two-pass.json
           if-no-files-found: warn
           retention-days: 30
       - name: G2 execute existing P0-C producer adapter regression in real checkout
