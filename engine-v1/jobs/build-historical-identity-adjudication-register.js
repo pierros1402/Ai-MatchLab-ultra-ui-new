@@ -195,7 +195,7 @@ export function buildHistoricalAliasSourceBoundManifest(review,root) {
    ...(Array.isArray(row.dependencies)?row.dependencies.map(x=>x.path):[])
  ]))].sort();
  const files=paths.map(file=>{
-   if(typeof file!=="string" || !/^data\\/[A-Za-z0-9_./~-]+$/.test(file) ||
+   if(typeof file!=="string" || !(file.startsWith("data/") && /^[A-Za-z0-9_./~-]+$/.test(file.slice(5))) ||
       file.split("/").includes(".."))
      return {path:file,status:"HOLD_INVALID_PATH"};
    try {
