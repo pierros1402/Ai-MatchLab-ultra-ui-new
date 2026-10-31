@@ -40,7 +40,8 @@ for(const day of inventory.days){
   if(!h)unmatched.push({path:f.path,id:f.id,reason:"NO_HISTORICAL_CANONICAL_ID"});
   else matched.push({path:f.path,id:f.id,historicalStatus:h.status,source:h.source});
  }
- results.push({day:day.day,commit:day.commit,files:paths.length,historicalRows:historical.length,historicalFT:historical.filter(x=>x.status==="FT").length,finalFiles:files.length,matched,unmatched,failures});
+ const unpairedHistorical=historical.filter(h=>!finals.some(f=>f.id===h.id));
+ results.push({day:day.day,commit:day.commit,unpairedHistorical,files:paths.length,historicalRows:historical.length,historicalFT:historical.filter(x=>x.status==="FT").length,finalFiles:files.length,matched,unmatched,failures});
 }
 const result={schema:"ai-matchlab.historical-git-canonical-candidate.v1",readOnly:true,writeAuthorized:false,ftMutationAuthorized:false,approval:"HOLD_PENDING_INDEPENDENT_FINAL_TRUTH_RECONCILIATION",results};
 writeFileSync("historical-canonical-git-candidate.json",JSON.stringify(result,null,2)+"\n");
