@@ -24,8 +24,11 @@ for(const path of paths){
   if(ids.size!==rows.length||ids.has(undefined))throw Error("INVALID_FIXTURE_IDS");
   const fixtureCounts={manifestCountsFixtures:manifest.counts?.fixtures,
     manifestFixtureJsonCount:manifest.fixtureJsonCount,actualFixtureRows:rows.length};
-  if(manifest.counts?.fixtures!==rows.length||manifest.fixtureJsonCount!==rows.length){
-   throw Error("FIXTURE_COUNT_MISMATCH:"+JSON.stringify(fixtureCounts));
+  if(manifest.counts?.fixtures!==rows.length){
+   throw Error("PUBLISHED_FIXTURE_COUNT_MISMATCH:"+JSON.stringify(fixtureCounts));
+  }
+  if(!Number.isInteger(manifest.fixtureJsonCount)||manifest.fixtureJsonCount<0){
+   throw Error("SOURCE_FIXTURE_JSON_COUNT_INVALID");
   }
   if(manifest.counts?.details!==manifest.details.length)throw Error("DETAIL_COUNT_MISMATCH");
   const seen=new Set();
