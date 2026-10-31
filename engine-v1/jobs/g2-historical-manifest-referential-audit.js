@@ -22,7 +22,11 @@ for(const path of paths){
   if(!Array.isArray(rows))throw Error("FIXTURES_SHAPE_MISMATCH");
   const ids=new Set(rows.map(r=>r.canonicalId||r.matchId||r.id));
   if(ids.size!==rows.length||ids.has(undefined))throw Error("INVALID_FIXTURE_IDS");
-  if(manifest.counts?.fixtures!==rows.length||manifest.fixtureJsonCount!==rows.length)throw Error("FIXTURE_COUNT_MISMATCH");
+  const fixtureCounts={manifestCountsFixtures:manifest.counts?.fixtures,
+    manifestFixtureJsonCount:manifest.fixtureJsonCount,actualFixtureRows:rows.length};
+  if(manifest.counts?.fixtures!==rows.length||manifest.fixtureJsonCount!==rows.length){
+   throw Error("FIXTURE_COUNT_MISMATCH:"+JSON.stringify(fixtureCounts));
+  }
   if(manifest.counts?.details!==manifest.details.length)throw Error("DETAIL_COUNT_MISMATCH");
   const seen=new Set();
   for(const record of manifest.details){
@@ -32,7 +36,7 @@ for(const path of paths){
    const detailPath=root+"details/"+file;
    if(!existsSync(detailPath))throw Error("DETAIL_MISSING:"+file);
    const bytes=readFileSync(detailPath);
-   if(record.bytes!==bytes.length)throw Error("DETAIL_BYTE_LENGTH_MISMATCH:"+file);
+   if(record.bytes!==bytes.length)throw Error("DETAIL_BYTE_LENGTH_MISMATCH:"+file+":expected="+record.bytes+":actual="+bytes.length);
    const id=record.canonicalId||record.matchId||file.replace(/\.json$/,"");
    if(!ids.has(id))throw Error("ORPHAN_DETAIL:"+file);
   }
