@@ -53,10 +53,16 @@ jobs:
             const rc=Number(process.env.PRODUCER_RC);
             const valid=r.schema==="ai-matchlab.historical-identity-adjudication-register.v1" &&
               r.readOnly===true && r.approvedForWrite===false &&
-              r.aliasPreflight?.preflightQualifiedCount===72 &&
-              r.aliasReviewManifest?.entries?.length===72 &&
+              Number.isInteger(r.aliasPreflight?.preflightQualifiedCount) &&
+              r.aliasPreflight.preflightQualifiedCount>0 &&
+              Array.isArray(r.aliasReviewManifest?.entries) &&
+              r.aliasReviewManifest.entries.length===r.aliasPreflight.preflightQualifiedCount &&
               r.aliasSourceBoundManifest?.status==="SOURCE_HASHES_CAPTURED_NOT_AUTHORIZED_FOR_WRITE" &&
-              r.aliasSourceBoundManifest?.files?.length===559;
+              Array.isArray(r.aliasSourceBoundManifest?.files) &&
+              r.aliasSourceBoundManifest.files.length>0 &&
+              new Set(r.aliasSourceBoundManifest.files.map(f=>f.path)).size===r.aliasSourceBoundManifest.files.length &&
+              r.aliasReviewManifest.entries.every(e=>Array.isArray(e.dependencies) &&
+                e.dependencies.every(d=>r.aliasSourceBoundManifest.files.some(f=>f.path===d.path)));
             if(!valid || rc!==1) {
               console.error("HOLD_REGISTER_PRODUCER_UNEXPECTED", {valid,rc,duplicates:r.duplicateCases,unverifiable:r.unverifiableCases});
               process.exit(1);
