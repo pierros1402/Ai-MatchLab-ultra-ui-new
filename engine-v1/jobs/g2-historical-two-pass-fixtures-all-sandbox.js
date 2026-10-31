@@ -8,7 +8,7 @@ const sha=x=>createHash("sha256").update(x).digest("hex");
 const before=execFileSync("git",["status","--porcelain","--untracked-files=no"],{encoding:"utf8"});
 const register=JSON.parse(readFileSync("historical-identity-register.json","utf8"));
 const entries=register.aliasReviewManifest?.entries;
-if(!Array.isArray(entries)||entries.length!==72)throw Error("G2_BAD_REGISTER");
+if(!Array.isArray(entries)||!entries.length||register.readOnly!==true||register.approvedForWrite!==false||register.aliasPreflight?.preflightQualifiedCount!==entries.length||!Array.isArray(register.aliasSourceBoundManifest?.files))throw Error("G2_BAD_REGISTER");
 const targets=[...new Set(entries.flatMap(x=>(x.dependencies||[]).map(d=>d.path)
  .filter(p=>/^data\/deploy-snapshots\/\d{4}-\d{2}-\d{2}\/fixtures-all\.json$/.test(p))))].sort();
 if(targets.length!==24)throw Error("G2_FIXTURES_ALL_TARGET_SET_CHANGED:"+targets.length);
