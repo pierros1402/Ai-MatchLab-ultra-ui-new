@@ -8,7 +8,7 @@ const digest=x=>createHash("sha256").update(x).digest("hex");
 const before=execFileSync("git",["status","--porcelain"],{encoding:"utf8"});
 const report=JSON.parse(readFileSync("historical-identity-register.json","utf8"));
 const entries=report.aliasReviewManifest?.entries;
-if(!Array.isArray(entries)||entries.length!==72)throw Error("G2_DETAILS_REGISTER_NOT_72");
+if(!Array.isArray(entries)||!entries.length||report.readOnly!==true||report.approvedForWrite!==false||report.aliasPreflight?.preflightQualifiedCount!==entries.length||!Array.isArray(report.aliasSourceBoundManifest?.files))throw Error("G2_SOURCE_REGISTER_INCONSISTENT");
 const targets=[...new Set(entries.flatMap(x=>(x.dependencies||[]).map(d=>d.path)
  .filter(p=>/^data\/deploy-snapshots\/\d{4}-\d{2}-\d{2}\/details\/[^/]+\.json$/.test(p))))].sort();
 if(targets.length!==66)throw Error("G2_DETAILS_TARGET_COUNT_CHANGED:"+targets.length);
