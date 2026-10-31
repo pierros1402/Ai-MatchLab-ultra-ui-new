@@ -182,6 +182,37 @@ export function buildHistoricalAliasReviewManifest(register,preflight=buildHisto
    candidateCount:entries.length,entries};
 }
 
+// Source-bound evidence only. Capture the exact bytes of every dependency
+// and reject missing/unreadable paths without ever mutating tracked files.
+export function buildHistoricalAliasSourceBoundManifest(review,root) {
+ if(review?.readOnly!==true || review?.approvedForWrite!==false ||
+    review?.status!=="READY_FOR_INDEPENDENT_REVIEW_NOT_WRITE" ||
+    !Array.isArray(review.entries) || !root)
+   return {schema:"ai-matchlab.historical-alias-source-bound.v1",
+     readOnly:true,approvedForWrite:false,status:"HOLD_REVIEW_INCOMPLETE",files:[]};
+ const paths=[...new Set(review.entries.flatMap(row=>[
+   ...(Array.isArray(row.evidencePaths)?row.evidencePaths:[]),
+   ...(Array.isArray(row.dependencies)?row.dependencies.map(x=>x.path):[])
+ ]))].sort();
+ const files=paths.map(file=>{
+   if(typeof file!=="string" || !/^data\\/[A-Za-z0-9_./~-]+$/.test(file) ||
+      file.split("/").includes(".."))
+     return {path:file,status:"HOLD_INVALID_PATH"};
+   try {
+     const bytes=readFileSync(join(root,file));
+     return {path:file,status:"SHA256_BOUND",bytes:bytes.length,
+       sha256:createHash("sha256").update(bytes).digest("hex")};
+   }catch(error){
+     return {path:file,status:"HOLD_UNREADABLE",errorCode:error.code||"UNKNOWN"};
+   }
+ });
+ return {schema:"ai-matchlab.historical-alias-source-bound.v1",
+   readOnly:true,approvedForWrite:false,
+   status:files.every(row=>row.status==="SHA256_BOUND")
+     ? "SOURCE_HASHES_CAPTURED_NOT_AUTHORIZED_FOR_WRITE" : "HOLD_SOURCE_BINDING",
+   uniqueFileCount:files.length,files};
+}
+
 // Deterministic read-only case registry; no automatic authority assignment.
 export function buildHistoricalIdentityAdjudicationRegister(audit,root=null) {
  if(!audit || audit.readOnly!==true || !Array.isArray(audit.duplicates) ||
@@ -291,6 +322,7 @@ if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url))
    auditAllVerifiedFinalProviderIdentities(process.cwd()),process.cwd());
  output.aliasPreflight=buildHistoricalAliasPreflight(output);
  output.aliasReviewManifest=buildHistoricalAliasReviewManifest(output,output.aliasPreflight);
+ output.aliasSourceBoundManifest=buildHistoricalAliasSourceBoundManifest(output.aliasReviewManifest,process.cwd());
  console.log(JSON.stringify(output,null,2));
  if(output.duplicateCases || output.unverifiableCases)process.exitCode=1;
 }
