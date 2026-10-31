@@ -43,7 +43,28 @@ jobs:
       - name: Build full historical identity adjudication register without writes
         if: always()
         run: |
+          set +e
           node engine-v1/jobs/build-historical-identity-adjudication-register.js > historical-identity-register.json
+          producer_rc=$?
+          set -e
+          PRODUCER_RC="$producer_rc" node --input-type=module -e '
+            import fs from "node:fs";
+            const r=JSON.parse(fs.readFileSync("historical-identity-register.json","utf8"));
+            const rc=Number(process.env.PRODUCER_RC);
+            const valid=r.schema==="ai-matchlab.historical-identity-adjudication-register.v1" &&
+              r.readOnly===true && r.approvedForWrite===false &&
+              r.aliasPreflight?.preflightQualifiedCount===72 &&
+              r.aliasReviewManifest?.entries?.length===72 &&
+              r.aliasSourceBoundManifest?.status==="SOURCE_HASHES_CAPTURED_NOT_AUTHORIZED_FOR_WRITE" &&
+              r.aliasSourceBoundManifest?.files?.length===559;
+            if(!valid || rc!==1) {
+              console.error("HOLD_REGISTER_PRODUCER_UNEXPECTED", {valid,rc,duplicates:r.duplicateCases,unverifiable:r.unverifiableCases});
+              process.exit(1);
+            }
+            console.log(JSON.stringify({registerProduced:true,adjudicationStatus:"HOLD_NOT_APPROVED_FOR_WRITE",
+              sourceBound:r.aliasSourceBoundManifest.status,candidates:r.aliasReviewManifest.entries.length,
+              unresolved:r.duplicateCases+r.unverifiableCases,producerExitCode:rc}));
+          '
       - name: Retain exact historical identity and source-bound manifest evidence
         if: always()
         uses: actions/upload-artifact@v4
