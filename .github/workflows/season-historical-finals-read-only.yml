@@ -32,7 +32,16 @@ jobs:
         run: node engine-v1/jobs/audit-all-verified-final-provider-identities.js
       - name: Build full historical identity adjudication register without writes
         if: always()
-        run: node engine-v1/jobs/build-historical-identity-adjudication-register.js
+        run: |
+          node engine-v1/jobs/build-historical-identity-adjudication-register.js > historical-identity-register.json
+      - name: Retain exact historical identity and source-bound manifest evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-identity-source-bound-${{ github.sha }}
+          path: historical-identity-register.json
+          if-no-files-found: error
+          retention-days: 30
       - name: Reconcile exact historical day window without writes
         if: always()
         run: node engine-v1/jobs/report-verified-finals-range.js 2026-10-27 2026-10-29
