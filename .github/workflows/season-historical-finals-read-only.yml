@@ -30,4 +30,5 @@ jobs:
         if: always()
         run: node engine-v1/jobs/build-historical-identity-adjudication-register.js
       - name: Reconcile exact historical day window without writes
+        if: always()
         run: node engine-v1/jobs/report-verified-finals-range.js 2026-10-27 2026-10-29
