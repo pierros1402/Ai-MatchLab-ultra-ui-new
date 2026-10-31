@@ -44,7 +44,7 @@ try{
  const result={schema:"ai-matchlab.g2-details-existing-source-two-pass.v1",
   readOnly:true,writeAuthorized:false,identityReconciliationAuthorized:false,
   source:"existing-deploy-details-and-published-fixtures; no independent canonical verification",
-  expected:66,passed:passed.length,heldTargets:66-passed.length,
+  expected:targets.length,passed:passed.length,heldTargets:targets.length-passed.length,
   status:held.length?"HOLD_G2_DETAILS":"PASS_G2_DETAILS_DETERMINISM_ONLY",outputs:passed,failures:held};
  writeFileSync("g2-details-two-pass.json",JSON.stringify(result,null,2)+"\n");
  console.log(JSON.stringify({status:result.status,passed:result.passed,heldDays:held.length}));
