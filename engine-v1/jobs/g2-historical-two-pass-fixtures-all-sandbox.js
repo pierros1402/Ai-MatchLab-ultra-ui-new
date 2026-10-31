@@ -1,4 +1,4 @@
-import {readFileSync,readdirSync,writeFileSync,mkdtempSync,mkdirSync,rmSync} from "node:fs";
+import {readFileSync,readdirSync,writeFileSync,copyFileSync,mkdtempSync,mkdirSync,rmSync} from "node:fs";
 import {join,dirname} from "node:path";
 import {tmpdir} from "node:os";
 import {createHash} from "node:crypto";
@@ -39,6 +39,10 @@ try{
     outputs.push(sha(bytes));
    }
    if(outputs[0]!==outputs[1])throw Error("NONDETERMINISTIC_FIXTURES_ALL");
+   const durable=join("g2-fixtures-all-payload",target);
+   mkdirSync(dirname(durable),{recursive:true});
+   copyFileSync(join(dirs[0],target),durable);
+   if(sha(readFileSync(durable))!==outputs[0])throw Error("EXPORTED_PAYLOAD_HASH_MISMATCH");
    passed.push({target,canonicalPartitions:names.length,canonicalRows:canonicalRows.length,outputSha256:outputs[0]});
   }catch(error){failed.push({target,reason:String(error.message||error)});}
  }
