@@ -1,4 +1,4 @@
-import {readFileSync,readdirSync,writeFileSync,copyFileSync,mkdtempSync,mkdirSync,rmSync} from "node:fs";
+import {readFileSync,readdirSync,existsSync,writeFileSync,copyFileSync,mkdtempSync,mkdirSync,rmSync} from "node:fs";
 import {join,dirname} from "node:path";
 import {tmpdir} from "node:os";
 import {createHash} from "node:crypto";
@@ -14,15 +14,19 @@ const targets=[...new Set(entries.flatMap(x=>(x.dependencies||[]).map(d=>d.path)
 if(targets.length!==24)throw Error("G2_FIXTURES_ALL_TARGET_SET_CHANGED:"+targets.length);
 const dirs=[mkdtempSync(join(tmpdir(),"aiml-fa1-")),mkdtempSync(join(tmpdir(),"aiml-fa2-"))];
 const passed=[],failed=[];
+const historicalRefs={"2026-07-13":"b487f4a858328d9bbdc0bf073885dc62050c1858","2026-07-20":"bd3e10a695fe3773ed37bfc24028ef2c480e5054"};
 try{
  for(const target of targets){
   const day=target.split("/")[2],root=join("data","canonical-fixtures",day);
   try{
-   const names=readdirSync(root).filter(s=>s.endsWith(".json")).sort();
+   const historicalRef=historicalRefs[day]||null;
+   const fromHistorical=historicalRef && !existsSync(root);
+   const names=fromHistorical?execFileSync("git",["ls-tree","-r","--name-only",historicalRef,root+"/"],{encoding:"utf8"}).trim().split("\n").filter(x=>x.endsWith(".json")).map(x=>x.slice(root.length+1)).sort():readdirSync(root).filter(s=>s.endsWith(".json")).sort();
    if(!names.length)throw Error("MISSING_CANONICAL_PARTITIONS");
    const canonicalRows=[],identity=new Set();
    for(const name of names){
-    const part=JSON.parse(readFileSync(join(root,name),"utf8"));
+    const bytes=fromHistorical?execFileSync("git",["show",historicalRef+":"+join(root,name).replaceAll("\\","/")]):readFileSync(join(root,name));
+    const part=JSON.parse(bytes.toString("utf8"));
     if(part.dayKey!==day || !Array.isArray(part.fixtures))throw Error("INVALID_CANONICAL_PARTITION:"+name);
     for(const row of part.fixtures){
      const id=row.canonicalId||row.matchId;
@@ -43,7 +47,7 @@ try{
    mkdirSync(dirname(durable),{recursive:true});
    copyFileSync(join(dirs[0],target),durable);
    if(sha(readFileSync(durable))!==outputs[0])throw Error("EXPORTED_PAYLOAD_HASH_MISMATCH");
-   passed.push({target,canonicalPartitions:names.length,canonicalRows:canonicalRows.length,outputSha256:outputs[0]});
+   passed.push({target,sourceRef:fromHistorical?historicalRef:null,canonicalPartitions:names.length,canonicalRows:canonicalRows.length,outputSha256:outputs[0]});
   }catch(error){failed.push({target,reason:String(error.message||error)});}
  }
  const after=execFileSync("git",["status","--porcelain","--untracked-files=no"],{encoding:"utf8"});
