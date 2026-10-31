@@ -9,6 +9,7 @@ on:
       - "engine-v1/jobs/build-historical-identity-adjudication-register.js"
       - "engine-v1/jobs/build-historical-identity-adjudication-register.test.js"
       - "engine-v1/jobs/g2-historical-two-pass-fixtures-sandbox.js"
+      - "engine-v1/jobs/g2-historical-two-pass-fixtures-all-sandbox.js"
       - ".github/workflows/season-historical-finals-read-only.yml"
 permissions:
   contents: read
@@ -53,6 +54,17 @@ jobs:
         with:
           name: historical-g2-two-pass-fixtures-${{ github.sha }}
           path: g2-two-pass-fixtures-result.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: G2 two-pass rebuild of 24 fixtures-all from canonical partitions
+        if: always()
+        run: node engine-v1/jobs/g2-historical-two-pass-fixtures-all-sandbox.js
+      - name: Retain G2 fixtures-all rebuild evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g2-fixtures-all-${{ github.sha }}
+          path: g2-fixtures-all-two-pass.json
           if-no-files-found: warn
           retention-days: 30
       - name: G2 execute existing P0-C producer adapter regression in real checkout
