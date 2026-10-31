@@ -5,7 +5,7 @@ const definitions=[
  {name:"G2_FIXTURES",path:"g2-two-pass-fixtures-result.json",expected:20,pass:"PASS_G2_TWO_PASS_FIXTURES_ONLY",count:"successfulTargets",total:"selectedTargetCount"},
  {name:"G2_FIXTURES_ALL",path:"g2-fixtures-all-two-pass.json",expected:24,pass:"PASS_G2_FIXTURES_ALL_TWO_PASS_ONLY",count:"passed",total:"expected"},
  {name:"G2_ODDS",path:"g2-odds-two-pass.json",expected:8,pass:"PASS_G2_ODDS_DETERMINISM_ONLY",count:"passed",total:"expected"},
- {name:"G2_DETAILS",path:"g2-details-two-pass.json",expected:66,pass:"PASS_G2_DETAILS_DETERMINISM_ONLY",count:"passed",total:"expected"},
+ {name:"G2_DETAILS",path:"g2-details-two-pass.json",expected:67,pass:"PASS_G2_DETAILS_DETERMINISM_ONLY",count:"passed",total:"expected"},
  {name:"G2_MANIFEST_REFERENCES",path:"g2-manifest-integrity.json",expected:20,pass:"PASS_G2_MANIFEST_REFERENCES_ONLY",count:"passed",total:"expected"},
  {name:"G2_VALUE_AUDIT_PRESERVATION",path:"g2-value-audit-integrity.json",expected:17,pass:"PASS_G2_VALUE_AUDIT_PRESERVATION_ONLY",count:"passed",total:"expected"},
 ];
