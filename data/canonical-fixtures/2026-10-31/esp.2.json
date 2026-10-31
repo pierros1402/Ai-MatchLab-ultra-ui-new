@@ -2,14 +2,47 @@
   "dayKey": "2026-10-31",
   "leagueSlug": "esp.2",
   "leagueName": "LaLiga 2",
-  "updatedAt": "2026-10-31T13:38:07.727Z",
+  "updatedAt": "2026-10-31T17:02:19.024Z",
   "count": 5,
   "sourceMeta": {
-    "acquisitionProvider": "espn_all_scoreboard",
-    "requestedLeagueSlug": "all",
+    "acquisitionProvider": "espn_direct_league_status",
+    "requestedLeagueSlug": "esp.2",
     "requestedDayKey": "2026-10-31",
-    "mergedAt": "2026-10-31T13:38:07.727Z",
-    "mode": "supplemental_target_seed_only"
+    "providerFetchSlugs": [
+      "esp.2"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 0,
+      "matches": 0,
+      "fetches": []
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-10-31T17:02:16.039Z",
+    "mode": "targeted_live_status_refresh",
+    "flashscoreFinalRefresh": {
+      "matchedBy": "exact_source_id",
+      "requestedDayKey": "2026-10-31",
+      "offsets": [
+        0
+      ],
+      "changedRows": 1,
+      "mergedAt": "2026-10-31T17:02:19.024Z"
+    }
   },
   "fixtures": [
     {
@@ -29,16 +62,15 @@
       "kickoffUtc": "2026-10-31T13:00:00.000Z",
       "homeTeam": "Real Sociedad B",
       "awayTeam": "Girona",
-      "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null,
-      "status": "STATUS_SCHEDULED",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": null,
       "venue": null,
       "firstSeenAt": "2026-10-29T00:48:57.371Z",
-      "lastSeenAt": "2026-10-31T13:36:33.246Z"
+      "lastSeenAt": "2026-10-31T17:02:19.024Z",
+      "status": "FT",
+      "statusType": "STATUS_FINAL",
+      "rawStatus": "STATUS_FINAL",
+      "minute": "FT",
+      "scoreHome": 1,
+      "scoreAway": 0
     },
     {
       "canonicalId": "cid_esp2_realsociedadii_girona_20261031",
@@ -57,17 +89,37 @@
       "kickoffUtc": "2026-10-31T13:00Z",
       "homeTeam": "Real Sociedad II",
       "awayTeam": "Girona",
-      "scoreHome": 0,
-      "scoreAway": 0,
-      "penalties": null,
-      "decidedBy": null,
-      "status": "FIRST_HALF",
-      "rawStatus": "STATUS_FIRST_HALF",
-      "minute": "37'",
       "venue": "Estadio Zubieta XXI",
       "firstSeenAt": "2026-10-16T18:13:53.654Z",
-      "lastSeenAt": "2026-10-31T13:38:07.453Z",
-      "providerLeagueSlug": "esp.2"
+      "lastSeenAt": "2026-10-31T17:02:16.037Z",
+      "providerLeagueSlug": "esp.2",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+7'",
+      "scoreHome": 1,
+      "scoreAway": 0,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-10-31T15:43:33.470Z",
+        "provider": "espn",
+        "providerMatchId": "401883145",
+        "dayKey": "2026-10-31",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 1,
+          "scoreAway": 0
+        }
+      }
     },
     {
       "canonicalId": "cid_esp2_eibar_almeria_20261031",
@@ -88,15 +140,13 @@
       "awayTeam": "Almería",
       "venue": "Ipurua",
       "firstSeenAt": "2026-10-16T18:13:53.655Z",
-      "lastSeenAt": "2026-10-31T13:38:07.456Z",
+      "lastSeenAt": "2026-10-31T17:02:16.037Z",
       "providerLeagueSlug": "esp.2",
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
-      "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null
+      "status": "SECOND_HALF",
+      "rawStatus": "STATUS_SECOND_HALF",
+      "minute": "68'",
+      "scoreHome": 0,
+      "scoreAway": 1
     },
     {
       "canonicalId": "cid_esp2_rcceltafortuna_cordoba_20261031",
@@ -117,7 +167,7 @@
       "awayTeam": "Córdoba",
       "venue": "Balaidos",
       "firstSeenAt": "2026-10-16T18:13:53.655Z",
-      "lastSeenAt": "2026-10-31T13:38:07.458Z",
+      "lastSeenAt": "2026-10-31T17:02:16.037Z",
       "canonicalAliases": [
         "cid_esp2_celtavigob_cordoba_20261031"
       ],
@@ -126,9 +176,7 @@
       "rawStatus": "STATUS_SCHEDULED",
       "minute": "0'",
       "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null
+      "scoreAway": null
     },
     {
       "canonicalId": "cid_esp2_albacete_sabadell_20261031",
@@ -149,15 +197,13 @@
       "awayTeam": "CD Sabadell",
       "venue": "Carlos Belmonte",
       "firstSeenAt": "2026-10-16T18:13:53.656Z",
-      "lastSeenAt": "2026-10-31T13:38:07.460Z",
+      "lastSeenAt": "2026-10-31T17:02:16.037Z",
       "providerLeagueSlug": "esp.2",
       "status": "PRE",
       "rawStatus": "STATUS_SCHEDULED",
       "minute": "0'",
       "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null
+      "scoreAway": null
     }
   ]
 }

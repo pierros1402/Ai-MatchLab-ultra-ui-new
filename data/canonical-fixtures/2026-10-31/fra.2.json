@@ -2,14 +2,38 @@
   "dayKey": "2026-10-31",
   "leagueSlug": "fra.2",
   "leagueName": "Ligue 2",
-  "updatedAt": "2026-10-31T13:38:07.728Z",
+  "updatedAt": "2026-10-31T17:02:16.101Z",
   "count": 2,
   "sourceMeta": {
-    "acquisitionProvider": "espn_all_scoreboard",
-    "requestedLeagueSlug": "all",
+    "acquisitionProvider": "espn_direct_league_status",
+    "requestedLeagueSlug": "fra.2",
     "requestedDayKey": "2026-10-31",
-    "mergedAt": "2026-10-31T13:38:07.728Z",
-    "mode": "supplemental_target_seed_only"
+    "providerFetchSlugs": [
+      "fra.2"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 0,
+      "matches": 0,
+      "fetches": []
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-10-31T17:02:16.101Z",
+    "mode": "targeted_live_status_refresh"
   },
   "fixtures": [
     {
@@ -31,15 +55,35 @@
       "awayTeam": "Montpellier",
       "venue": "Parc des Sports",
       "firstSeenAt": "2026-10-16T18:14:04.299Z",
-      "lastSeenAt": "2026-10-31T13:38:07.485Z",
+      "lastSeenAt": "2026-10-31T17:02:16.101Z",
       "providerLeagueSlug": "fra.2",
-      "status": "FIRST_HALF",
-      "rawStatus": "STATUS_FIRST_HALF",
-      "minute": "38'",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+5'",
       "scoreHome": 0,
-      "scoreAway": 1,
-      "penalties": null,
-      "decidedBy": null
+      "scoreAway": 3,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-10-31T15:43:33.470Z",
+        "provider": "espn",
+        "providerMatchId": "401876709",
+        "dayKey": "2026-10-31",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 0,
+          "scoreAway": 3
+        }
+      }
     },
     {
       "canonicalId": "cid_fra2_guingamp_saintetienne_20261031",
@@ -60,7 +104,7 @@
       "awayTeam": "Saint-Étienne",
       "venue": "Stade Municipal de Roudourou",
       "firstSeenAt": "2026-10-16T18:14:04.300Z",
-      "lastSeenAt": "2026-10-31T13:38:07.487Z",
+      "lastSeenAt": "2026-10-31T17:02:16.101Z",
       "canonicalAliases": [
         "cid_fra2_guingamp_stetienne_20261031"
       ],
@@ -69,9 +113,7 @@
       "rawStatus": "STATUS_SCHEDULED",
       "minute": "0'",
       "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null
+      "scoreAway": null
     }
   ]
 }
