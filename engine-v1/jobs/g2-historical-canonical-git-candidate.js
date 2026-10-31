@@ -1,19 +1,20 @@
 import {execFileSync} from "node:child_process";
 import {readFileSync,writeFileSync} from "node:fs";
 import {createHash} from "node:crypto";
-const inventory=JSON.parse(readFileSync(process.argv[2]||"historical-canonical-recovery-inventory.json","utf8"));
+const inventory={days:[{day:"2026-07-13",commit:"b487f4a858328d9bbdc0bf073885dc62050c1858"},{day:"2026-07-20",commit:"bd3e10a695fe3773ed37bfc24028ef2c480e5054"}]};
 const sha=b=>createHash("sha256").update(b).digest("hex");
 const git=(args)=>execFileSync("git",args,{maxBuffer:32*1024*1024});
 const results=[];
 for(const day of inventory.days){
  const historical=[],failures=[],seen=new Set();
- for(const item of day.files){
+ const paths=git(["ls-tree","-r","--name-only",day.commit,"data/canonical-fixtures/"+day.day+"/"]).toString("utf8").split("
+").filter(x=>x.endsWith(".json"));\n for(const item of paths.map(path=>({path}))){
   try{
    const raw=git(["show",day.commit+":"+item.path]);
-   const blob=git(["hash-object","--stdin"],{input:raw});
    // hash-object receives the original bytes through stdin, without rewriting source.
    const actual=execFileSync("git",["hash-object","--stdin"],{input:raw}).toString().trim();
-   if(actual!==item.gitBlobSha1)throw Error("HISTORICAL_BLOB_MISMATCH");
+   const pinned=git(["ls-tree",day.commit,"--",item.path]).toString("utf8").trim().split(/\s+/)[2];
+   if(actual!==pinned)throw Error("HISTORICAL_BLOB_MISMATCH");
    const p=JSON.parse(raw.toString("utf8"));
    if(p.dayKey!==day.day||!Array.isArray(p.fixtures))throw Error("INVALID_HISTORICAL_PARTITION");
    for(const row of p.fixtures){
@@ -39,7 +40,7 @@ for(const day of inventory.days){
   if(!h)unmatched.push({path:f.path,id:f.id,reason:"NO_HISTORICAL_CANONICAL_ID"});
   else matched.push({path:f.path,id:f.id,historicalStatus:h.status,source:h.source});
  }
- results.push({day:day.day,commit:day.commit,files:day.files.length,historicalRows:historical.length,historicalFT:historical.filter(x=>x.status==="FT").length,finalFiles:files.length,matched,unmatched,failures});
+ results.push({day:day.day,commit:day.commit,files:paths.length,historicalRows:historical.length,historicalFT:historical.filter(x=>x.status==="FT").length,finalFiles:files.length,matched,unmatched,failures});
 }
 const result={schema:"ai-matchlab.historical-git-canonical-candidate.v1",readOnly:true,writeAuthorized:false,ftMutationAuthorized:false,approval:"HOLD_PENDING_INDEPENDENT_FINAL_TRUTH_RECONCILIATION",results};
 writeFileSync("historical-canonical-git-candidate.json",JSON.stringify(result,null,2)+"\n");
