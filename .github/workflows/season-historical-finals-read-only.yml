@@ -15,6 +15,7 @@ on:
       - "engine-v1/jobs/g2-historical-closure-ledger.js"
       - "engine-v1/jobs/g2-historical-manifest-referential-audit.js"
       - "engine-v1/jobs/g2-historical-value-audit-preservation.js"
+      - "engine-v1/jobs/g2-historical-history-index-source-audit.js"
       - ".github/workflows/season-historical-finals-read-only.yml"
 permissions:
   contents: read
@@ -122,6 +123,17 @@ jobs:
         with:
           name: historical-g2-value-audit-${{ github.sha }}
           path: g2-value-audit-integrity.json
+          if-no-files-found: warn
+          retention-days: 90
+      - name: G2 inventory and validate 4 historical history-index source documents
+        if: always()
+        run: node engine-v1/jobs/g2-historical-history-index-source-audit.js
+      - name: Retain history-index source integrity evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g2-history-index-${{ github.sha }}
+          path: g2-history-index-source.json
           if-no-files-found: warn
           retention-days: 90
       - name: G2 evidence-bound scope closure ledger
