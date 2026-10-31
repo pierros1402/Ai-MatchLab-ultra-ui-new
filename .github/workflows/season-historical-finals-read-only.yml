@@ -10,6 +10,7 @@ on:
       - "engine-v1/jobs/build-historical-identity-adjudication-register.test.js"
       - "engine-v1/jobs/g2-historical-two-pass-fixtures-sandbox.js"
       - "engine-v1/jobs/g2-historical-two-pass-fixtures-all-sandbox.js"
+      - "engine-v1/jobs/g2-historical-canonical-git-candidate.js"
       - "engine-v1/jobs/g2-historical-two-pass-odds-sandbox.js"
       - "engine-v1/jobs/g2-historical-two-pass-details-sandbox.js"
       - "engine-v1/jobs/g2-historical-closure-ledger.js"
@@ -88,6 +89,21 @@ jobs:
         with:
           name: historical-g2-two-pass-fixtures-${{ github.sha }}
           path: g2-two-pass-fixtures-result.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Recover pinned historical Git partitions and reconcile finals without writes
+        if: always()
+        run: |
+          git -c protocol.version=2 fetch --no-tags --depth=1 origin b487f4a858328d9bbdc0bf073885dc62050c1858
+          git -c protocol.version=2 fetch --no-tags --depth=1 origin bd3e10a695fe3773ed37bfc24028ef2c480e5054
+          node --check engine-v1/jobs/g2-historical-canonical-git-candidate.js
+          node engine-v1/jobs/g2-historical-canonical-git-candidate.js
+      - name: Retain pinned historical Git candidate and reconciliation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-git-canonical-candidate-${{ github.sha }}
+          path: historical-canonical-git-candidate.json
           if-no-files-found: warn
           retention-days: 30
       - name: G2 two-pass rebuild of 24 fixtures-all from canonical partitions
