@@ -117,26 +117,24 @@ export function buildHistoricalIdentityAdjudicationRegister(audit,root=null) {
      {kind:"PROPOSE_ALIAS_RECONCILIATION",fromMatchId:null,
        toMatchId:null,requiresExternalCanonicalProof:true,
        requiresDependencyInventory:true,approvedForWrite:false} : null;
+   const canonicalAuthority=root ? findCanonicalAuthorityForCase(root,evidence) : null;
    return {caseId:"HIST-"+digest.slice(0,20),
      evidenceState,candidateOperation,
-     canonicalAuthority:root ? findCanonicalAuthorityForCase(root,evidence) : null,
+     canonicalAuthority,
      classification:row.scoreAgreement===false?"SCORE_CONFLICT":
        row.kickoffAgreement===false?"KICKOFF_CONFLICT":
        row.scoreAgreement===true?"SAME_SCORE_IDENTITY_CONFLICT":"INCOMPLETE_SCORE_EVIDENCE",
      disposition:"HOLD_FOR_SOURCE_ADJUDICATION",
      // A source-bound canonical identity is a read-only reconciliation lead,
      // not authority to select a conflicting score or apply an alias.
-     reconciliationLead:root ? (()=>{
-       const authority=findCanonicalAuthorityForCase(root,evidence);
-       return authority.status==="CANONICAL_SOURCE_BOUND_CANDIDATE"
-         ? {retainedCanonicalId:authority.canonicalId,
-            fixturePath:authority.fixturePath,
+     reconciliationLead:canonicalAuthority?.status==="CANONICAL_SOURCE_BOUND_CANDIDATE"
+         ? {retainedCanonicalId:canonicalAuthority.canonicalId,
+            fixturePath:canonicalAuthority.fixturePath,
             evidenceState,firstMatchId:evidence.firstMatchId,
             secondMatchId:evidence.secondMatchId,
             requiredAction:"INDEPENDENT_FINAL_AND_KICKOFF_ADJUDICATION",
             approvedForWrite:false}
-         : null;
-     })() : null,
+         : null,
      canonicalRetainedId:null,approvedForWrite:false,
      evidence};
  }).sort((a,b)=>a.caseId.localeCompare(b.caseId));
