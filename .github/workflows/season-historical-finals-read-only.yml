@@ -11,6 +11,7 @@ on:
       - ".github/workflows/season-historical-finals-read-only.yml"
 permissions:
   contents: read
+  actions: read
 jobs:
   historical-final-scope:
     runs-on: ubuntu-latest
@@ -41,6 +42,61 @@ jobs:
           name: historical-identity-source-bound-${{ github.sha }}
           path: historical-identity-register.json
           if-no-files-found: error
+          retention-days: 30
+      - name: G0 rehash all 559 source-bound dependencies in checkout
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${{ github.repository }}/actions/artifacts/13033304578/zip" > /tmp/aiml-g0-source.zip
+          python3 - <<'PY'
+          import hashlib,json,pathlib,sys,zipfile
+          with zipfile.ZipFile('/tmp/aiml-g0-source.zip') as z:
+              report=json.loads(z.read('historical-identity-register.json'))
+          bound=report['aliasSourceBoundManifest']
+          checks=bound['files']
+          failures=[]
+          if bound.get('status')!='SOURCE_HASHES_CAPTURED_NOT_AUTHORIZED_FOR_WRITE' or len(checks)!=559:
+              failures.append('SOURCE_MANIFEST_INCOMPLETE')
+          if report['aliasPreflight'].get('preflightQualifiedCount')!=72:
+              failures.append('PREFLIGHT_COUNT_CHANGED')
+          digest=hashlib.sha256(json.dumps(checks,separators=(',',':'),ensure_ascii=False).encode()).hexdigest()
+          if digest!=bound.get('inventorySha256'):
+              failures.append('INVENTORY_DIGEST_MISMATCH')
+          visited=set()
+          for item in checks:
+              path=item.get('path','')
+              parts=path.split('/')
+              if (path in visited or not path.startswith('data/') or '..' in parts or
+                  '\\' in path or item.get('status')!='SHA256_BOUND'):
+                  failures.append('INVALID_SOURCE_ENTRY:'+path)
+                  continue
+              visited.add(path)
+              target=pathlib.Path(path)
+              try:
+                  payload=target.read_bytes()
+                  if len(payload)!=item['bytes'] or hashlib.sha256(payload).hexdigest()!=item['sha256']:
+                      failures.append('SOURCE_BYTES_CHANGED:'+path)
+              except (OSError,ValueError,KeyError):
+                  failures.append('SOURCE_MISSING:'+path)
+          result={'schema':'ai-matchlab.g0-ci-source-recheck.v1',
+                  'readOnly':True,'approvedForWrite':False,
+                  'gitHead':__import__('subprocess').check_output(['git','rev-parse','HEAD'],text=True).strip(),
+                  'expectedSourceArtifactId':13033304578,
+                  'expected':559,'checked':len(visited),
+                  'mismatches':len(failures),'issues':failures,
+                  'status':'PASS_G0_SOURCE_BOUND_ONLY' if not failures else 'HOLD_G0'}
+          pathlib.Path('g0-source-recheck.json').write_text(json.dumps(result,indent=2)+'\n')
+          print(json.dumps({k:result[k] for k in ('status','checked','expected','mismatches','gitHead')}))
+          sys.exit(0 if not failures else 1)
+          PY
+      - name: Retain G0 checkout rehash evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g0-559-rehash-${{ github.sha }}
+          path: g0-source-recheck.json
+          if-no-files-found: warn
           retention-days: 30
       - name: Reconcile exact historical day window without writes
         if: always()
