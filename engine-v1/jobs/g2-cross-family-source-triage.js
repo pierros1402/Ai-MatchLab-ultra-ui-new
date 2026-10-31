@@ -53,9 +53,12 @@ for(const day of days){
  }else{item.canonicalStatus="DAY_PARTITIONS_MISSING";item.diagnostics.push("CANONICAL_DAY_PARTITIONS_MISSING");}
  delete item.fixtureIds;
  const x=item.counts;
- for(const field of ["manifestFixtures","valueAuditFixtures","fixturesAll"]){
-  if(Number.isInteger(x[field])&&Number.isInteger(x.snapshotFixtures)&&x[field]!==x.snapshotFixtures)item.diagnostics.push("COUNT_DRIFT:"+field+":"+x[field]+":snapshot:"+x.snapshotFixtures);
- }
+ if(Number.isInteger(x.manifestFixtures)&&Number.isInteger(x.snapshotFixtures)&&x.manifestFixtures!==x.snapshotFixtures)
+  item.diagnostics.push("PUBLISHED_MANIFEST_FIXTURE_COUNT_CONFLICT:"+x.manifestFixtures+":snapshot:"+x.snapshotFixtures);
+ if(Number.isInteger(x.fixturesAll)&&Number.isInteger(x.snapshotFixtures)&&x.fixturesAll!==x.snapshotFixtures)
+  item.diagnostics.push("FIXTURES_ALL_MEMBERSHIP_COUNT_DIFFERENCE:"+x.fixturesAll+":snapshot:"+x.snapshotFixtures);
+ if(Number.isInteger(x.valueAuditFixtures)&&Number.isInteger(x.snapshotFixtures)&&x.valueAuditFixtures!==x.snapshotFixtures)
+  item.valueAuditSourceCoverageDifference=x.valueAuditFixtures-x.snapshotFixtures;
  if(x.canonicalMissingFromSnapshot>0||x.snapshotMissingFromCanonical>0)item.diagnostics.push("CANONICAL_SNAPSHOT_IDENTITY_DRIFT");
  item.status=item.diagnostics.length?"HOLD_REQUIRES_SOURCE_ADJUDICATION":"CONSISTENT_COUNTS_ONLY";
  records.push(item);
