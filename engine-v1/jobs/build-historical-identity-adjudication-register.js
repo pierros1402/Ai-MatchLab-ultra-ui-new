@@ -37,10 +37,17 @@ export function inventoryAliasDependencies(root, retainedId, aliasId) {
  if(!retainedId || !aliasId || retainedId===aliasId) throw Error("invalid_alias_pair");
  const ids=[retainedId,aliasId], paths=new Set();
  for(const id of ids) {
-  const matches=execFileSync("git",["grep","-l","-z","-F","-e",id,"--","data"],{
-    cwd:root,maxBuffer:128*1024*1024,encoding:"utf8"
-  }).split("\0").filter(Boolean);
-  for(const file of matches)paths.add(file);
+  let output="";
+  try {
+   output=execFileSync("git",["grep","-l","-z","-F","-e",id,"--","data"],{
+     cwd:root,maxBuffer:128*1024*1024,encoding:"utf8",stdio:["ignore","pipe","pipe"]
+   });
+  } catch(error) {
+   // git grep returns status 1 for a valid search with zero matches.
+   // Any other failure must remain fail-closed.
+   if(error.status!==1 || String(error.stderr||"").trim())throw error;
+  }
+  for(const file of output.split("\0").filter(Boolean))paths.add(file);
  }
  const categories={CANONICAL:0,VERIFIED_FINAL:0,IMMUTABLE_OR_SETTLEMENT:0,
    DERIVED_REBUILD:0,OTHER_REVIEW:0};
