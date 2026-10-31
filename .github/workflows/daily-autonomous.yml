@@ -38,6 +38,9 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          # Fetch the active branch only; preserve its history for push/rebase.
+          ref: ${{ github.ref_name }}
+          fetch-tags: false
           # Only the triggering branch is required; avoid fetching every branch/tag.
           ref: ${{ github.ref_name }}
           fetch-tags: false
