@@ -161,3 +161,32 @@ test("first source terminal provenance is not lost during provider normalization
   assert.equal(report.ok,false);
  });
 });
+
+test("equivalent ISO UTC kickoff representations do not create false conflicts",()=>{
+ withHistory(({root,add,stage})=>{
+  const cases=[
+   ["same-z","2026-07-16T17:00:00.000Z","2026-07-16T17:00Z",true],
+   ["same-offset","2026-07-16T17:00:00Z","2026-07-16T20:00:00+03:00",true],
+   ["different","2026-07-16T17:00:00Z","2026-07-16T17:01:00Z",false],
+   ["invalid","not-a-timestamp","2026-07-16T17:00:00Z",null]
+  ];
+  for(const [key,first,second] of cases){
+   for(const [id,kickoff] of [[key+"-a",first],[key+"-b",second]]){
+    add("2026-07-16",id,[{provider:"flashscore",providerMatchId:key}]);
+    const filename=path.join(root,"data","final-results","2026-07-16",id+".json");
+    const doc=JSON.parse(fs.readFileSync(filename,"utf8"));
+    doc.kickoffUtc=kickoff;doc.homeScore=1;doc.awayScore=0;
+    fs.writeFileSync(filename,JSON.stringify(doc));
+   }
+  }
+  stage();
+  const report=auditAllVerifiedFinalProviderIdentities(root);
+  assert.equal(report.duplicateCount,4);
+  for(const [key,,,expected] of cases){
+   const row=report.duplicates.find(x=>x.providerMatchId===key);
+   assert.equal(row.kickoffAgreement,expected);
+  }
+  assert.equal(report.kickoffDisagreementCount,1);
+  assert.equal(report.approvedForWrite,false);
+ });
+});
