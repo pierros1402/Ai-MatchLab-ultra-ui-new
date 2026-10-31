@@ -151,6 +151,43 @@ export function buildHistoricalAliasPreflight(register) {
    candidates};
 }
 
+// G1 terminal-status disagreements require separate independent final-truth
+// confirmation even where source identity, normalized kickoff and score agree.
+export function buildHistoricalG1TerminalAdjudication(register) {
+ if(register?.readOnly!==true || register?.approvedForWrite!==false ||
+    !Array.isArray(register.safelyScopedCanonicalCandidates) ||
+    !Array.isArray(register.cases)) throw Error("invalid_historical_g1_input");
+ const byId=new Map(register.cases.map(row=>[row.caseId,row]));
+ const rows=register.safelyScopedCanonicalCandidates.map(candidate=>{
+   const item=byId.get(candidate.caseId);
+   const evidence=item?.evidence;
+   const bindingValid=item?.canonicalAuthority?.status==="CANONICAL_SOURCE_BOUND_CANDIDATE" &&
+     item.canonicalAuthority.canonicalId===candidate.retainedCanonicalId &&
+     item.evidenceState==="DUPLICATE_CANDIDATE_REQUIRES_CANONICAL_PROOF";
+   const terminalKnown=typeof evidence?.firstProviderTerminal==="boolean" &&
+     typeof evidence?.secondProviderTerminal==="boolean";
+   const terminalDisagreement=terminalKnown &&
+     evidence.firstProviderTerminal!==evidence.secondProviderTerminal;
+   return {caseId:candidate.caseId,retainedCanonicalId:candidate.retainedCanonicalId,
+     aliasCandidateId:candidate.aliasCandidateId,
+     bindingValid:Boolean(bindingValid),terminalKnown,
+     terminalDisagreement,
+     terminalTruthStatus:!bindingValid?"HOLD_SOURCE_BINDING":
+       !terminalKnown?"HOLD_TERMINAL_EVIDENCE_MISSING":
+       terminalDisagreement?"HOLD_INDEPENDENT_TERMINAL_TRUTH_REQUIRED":
+       "TERMINAL_FLAGS_AGREE_INDEPENDENT_TRUTH_STILL_REQUIRED",
+     independentlyVerified:false,writeAuthorized:false};
+ }).sort((a,b)=>a.caseId.localeCompare(b.caseId));
+ return {schema:"ai-matchlab.historical-g1-terminal-adjudication.v1",
+   readOnly:true,approvedForWrite:false,
+   candidateCount:rows.length,
+   terminalDisagreementCount:rows.filter(row=>row.terminalDisagreement).length,
+   independentlyVerifiedCount:0,
+   approvedWriteActions:0,
+   status:"HOLD_INDEPENDENT_TRUTH_AND_DEPENDENCY_REBUILD",
+   cases:rows};
+}
+
 // A deterministic review manifest, deliberately not a sequence of file mutations.
 export function buildHistoricalAliasReviewManifest(register,preflight=buildHistoricalAliasPreflight(register)) {
  if(preflight?.readOnly!==true || preflight?.approvedForWrite!==false ||
@@ -322,6 +359,7 @@ export function buildHistoricalIdentityAdjudicationRegister(audit,root=null) {
 if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const output=buildHistoricalIdentityAdjudicationRegister(
    auditAllVerifiedFinalProviderIdentities(process.cwd()),process.cwd());
+ output.g1TerminalAdjudication=buildHistoricalG1TerminalAdjudication(output);
  output.aliasPreflight=buildHistoricalAliasPreflight(output);
  output.aliasReviewManifest=buildHistoricalAliasReviewManifest(output,output.aliasPreflight);
  output.aliasSourceBoundManifest=buildHistoricalAliasSourceBoundManifest(output.aliasReviewManifest,process.cwd());
