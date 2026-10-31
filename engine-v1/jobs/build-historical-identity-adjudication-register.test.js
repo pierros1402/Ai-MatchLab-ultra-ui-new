@@ -1,7 +1,7 @@
 import {execFileSync} from "node:child_process";
 import test from "node:test";
 import assert from "node:assert/strict";
-import {buildHistoricalIdentityAdjudicationRegister,findCanonicalAuthorityForCase,inventoryAliasDependencies} from "./build-historical-identity-adjudication-register.js";
+import {buildHistoricalIdentityAdjudicationRegister,buildHistoricalAliasPreflight,findCanonicalAuthorityForCase,inventoryAliasDependencies} from "./build-historical-identity-adjudication-register.js";
 import {mkdtempSync,mkdirSync,writeFileSync,rmSync,readFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
@@ -273,4 +273,28 @@ test("providerIds-only canonical evidence is usable but conflicting identifiers 
    sourceMatchId:"401881684",sourceId:"401881684",
    providerIds:{espn:"401881684"}}).status,"CANONICAL_SOURCE_BOUND_CANDIDATE");
  }finally{rmSync(root,{recursive:true,force:true});}
+});
+
+test("alias preflight qualifies only fully source-bound, dependency-bound pairs and authorizes zero writes",()=>{
+ const base={readOnly:true,approvedForWrite:false,
+  cases:[{caseId:"case-1",evidenceState:"DUPLICATE_CANDIDATE_REQUIRES_CANONICAL_PROOF",
+   canonicalAuthority:{status:"CANONICAL_SOURCE_BOUND_CANDIDATE",canonicalId:"cid_retained"},
+   evidence:{provider:"espn",providerMatchId:"id-123"}}],
+  safelyScopedCanonicalCandidates:[{caseId:"case-1",retainedCanonicalId:"cid_retained",
+   aliasCandidateId:"cid_alias",provider:"espn",providerMatchId:"id-123",
+   dependencyAudit:{readOnly:true,approvedForWrite:false,writeSetApproved:false,
+    retainedId:"cid_retained",aliasId:"cid_alias",fileCount:2,references:[]}}]};
+ const good=buildHistoricalAliasPreflight(base);
+ assert.equal(good.preflightQualifiedCount,1);
+ assert.equal(good.blockedCount,0);
+ assert.equal(good.candidates[0].writeAuthorized,false);
+ assert.equal(good.approvedForWrite,false);
+ const bad=buildHistoricalAliasPreflight({...base,
+  safelyScopedCanonicalCandidates:[{...base.safelyScopedCanonicalCandidates[0],
+   dependencyAudit:{...base.safelyScopedCanonicalCandidates[0].dependencyAudit,
+    writeSetApproved:true}}]});
+ assert.equal(bad.preflightQualifiedCount,0);
+ assert.equal(bad.blockedCount,1);
+ assert.throws(()=>buildHistoricalAliasPreflight({...base,approvedForWrite:true}),
+  /invalid_historical_register/);
 });
