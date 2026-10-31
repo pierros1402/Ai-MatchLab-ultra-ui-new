@@ -350,6 +350,7 @@ test("historical source-bound manifest captures exact bytes and rejects missing 
   const first=buildHistoricalAliasSourceBoundManifest(review,root);
   assert.equal(first.status,"SOURCE_HASHES_CAPTURED_NOT_AUTHORIZED_FOR_WRITE");
   assert.equal(first.uniqueFileCount,1);
+  assert.match(first.inventorySha256,/^[a-f0-9]{64}$/);
   assert.match(first.files[0].sha256,/^[a-f0-9]{64}$/);
   assert.equal(first.files[0].bytes,16);
   assert.deepEqual(first,buildHistoricalAliasSourceBoundManifest(review,root));
