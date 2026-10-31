@@ -1,0 +1,124 @@
+import fs from "node:fs";
+import path from "node:path";
+import {fileURLToPath} from "node:url";
+import {execFileSync} from "node:child_process";
+
+function verifiedProviderIdentity(source) {
+ const named=typeof source?.provider==="string" ? source.provider.trim() : "";
+ // Historical manual adjudications use authority=flashscore, not provider.
+ // Only recognize known exact provider names; do not infer a provider from
+ // non-provider authority markers, scores or unverified repair notes.
+ const authority=typeof source?.authority==="string" ? source.authority.trim().toLowerCase() : "";
+ const provider=named || (["flashscore","espn"].includes(authority) ? authority : "");
+ const id=source?.providerMatchId;
+ return provider && id!==null && id!==undefined && String(id).trim()
+   ? {provider,providerMatchId:String(id).trim()} : null;
+}
+
+// Compare the same UTC instant, not its textual ISO representation.
+// Missing, ambiguous or invalid timestamps never prove a kickoff match.
+function exactKickoffInstant(value) {
+ if(typeof value!=="string" ||
+    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})$/.test(value)) return null;
+ const millis=Date.parse(value);
+ return Number.isFinite(millis)?millis:null;
+}
+
+// A missing terminal flag is unknown, never evidence of a non-final match.
+function providerTerminalEvidence(sources,provider,id) {
+ const matching=sources.filter(x=>{
+  const key=verifiedProviderIdentity(x);
+  return key?.provider===provider && key?.providerMatchId===id;
+ });
+ if(matching.some(x=>x.finished===true && x.playedFinal===true))return "CONFIRMED_FINAL";
+ if(matching.some(x=>x.finished===false || x.playedFinal===false))return "EXPLICIT_NONFINAL";
+ return "UNSPECIFIED";
+}
+
+// Pure read-only historical inventory. File names and provider bindings are evidence,
+// not permission to delete, rename, settle, or silently collapse any fixture.
+export function auditAllVerifiedFinalProviderIdentities(root) {
+ const files=execFileSync("git",["ls-files","-z","--","data/final-results"],{
+  cwd:root,maxBuffer:64*1024*1024
+ }).toString("utf8").split("\0").filter(x=>x.endsWith(".json"));
+ const index=new Map(),duplicates=[],unverifiable=[];
+ let checked=0,bindings=0;
+ for(const file of files) {
+  try {
+   const payload=JSON.parse(fs.readFileSync(path.join(root,file),"utf8"));
+   checked++;
+   if(!Array.isArray(payload?.sources)) {
+    unverifiable.push({path:file,reason:"provider_sources_missing_or_invalid"});continue;
+   }
+   // An empty/malformed provider list gives no proof of identity uniqueness.
+   const validSources=payload.sources.map(verifiedProviderIdentity).filter(Boolean);
+   if(validSources.length===0) {
+     const adjudication=payload?.finalTruthAdjudication;
+     const references=Array.isArray(payload.sources) ? payload.sources : [];
+     const missingLocators=references.filter(row=>row?.sourceLocatorMissing===true).length;
+     unverifiable.push({path:file,reason:"provider_identity_evidence_missing",
+       adjudicationId:typeof adjudication?.adjudicationId==="string" ? adjudication.adjudicationId : null,
+       adjudicationState:typeof adjudication?.state==="string" ? adjudication.state : null,
+       historicalEvidenceCount:references.length,
+       missingSourceLocators:missingLocators,
+       independentProviderIdentityQualified:false,
+       sourceReverificationRequired:true});continue;
+   }
+   const seen=new Set();
+   for(const source of validSources) {
+    if(typeof source?.provider!=="string"||!source.provider||!source.providerMatchId)continue;
+    const key=JSON.stringify([source.provider,String(source.providerMatchId)]);
+    if(seen.has(key))continue;
+    seen.add(key);bindings++;
+    const previous=index.get(key);
+    if(previous && previous.path!==file) {
+     duplicates.push({provider:source.provider,providerMatchId:String(source.providerMatchId),
+       firstPath:previous.path,firstMatchId:previous.matchId,
+       secondPath:file,secondMatchId:payload?.matchId||null,
+       firstScore:previous.score,secondScore:[payload?.homeScore,payload?.awayScore],
+       firstKickoffUtc:previous.kickoffUtc,secondKickoffUtc:payload?.kickoffUtc||null,
+       kickoffAgreement:exactKickoffInstant(previous.kickoffUtc)!==null &&
+         exactKickoffInstant(payload?.kickoffUtc)!==null
+           ? exactKickoffInstant(previous.kickoffUtc)===exactKickoffInstant(payload.kickoffUtc)
+           : null,
+       firstProviderTerminal:previous.providerTerminal,
+       firstProviderTerminalEvidence:previous.providerTerminalEvidence,
+       secondProviderTerminalEvidence:providerTerminalEvidence(payload.sources,source.provider,source.providerMatchId),
+       secondProviderTerminal:payload.sources.some(x=>verifiedProviderIdentity(x)?.provider===source.provider &&
+         verifiedProviderIdentity(x)?.providerMatchId===source.providerMatchId &&
+         x.finished===true && x.playedFinal===true),
+       identityAdjudicationRequired:true,
+       scoreAgreement:Number.isInteger(previous.score[0]) &&
+         Number.isInteger(previous.score[1]) &&
+         Number.isInteger(payload?.homeScore) && Number.isInteger(payload?.awayScore)
+           ? (previous.score[0]===payload.homeScore &&
+              previous.score[1]===payload.awayScore)
+           : null});
+    } else if(!previous)index.set(key,{path:file,matchId:payload?.matchId||null,score:[payload?.homeScore,payload?.awayScore],
+       kickoffUtc:payload?.kickoffUtc||null,
+       providerTerminalEvidence:providerTerminalEvidence(payload.sources,source.provider,source.providerMatchId),
+       providerTerminal:payload.sources.some(x=>{
+         const identity=verifiedProviderIdentity(x);
+         return identity?.provider===source.provider &&
+           identity?.providerMatchId===source.providerMatchId &&
+           x.finished===true && x.playedFinal===true;
+       })});
+   }
+  } catch(error) {
+   unverifiable.push({path:file,reason:"provider_source_unreadable",error:String(error?.message||error)});
+  }
+ }
+ return {ok:duplicates.length===0&&unverifiable.length===0,readOnly:true,
+  approvedForWrite:false,trackedFinalFiles:files.length,checked,providerBindings:bindings,
+  uniqueProviderMatches:index.size,duplicateCount:duplicates.length,scoreConflictCount:duplicates.filter(x=>x.scoreAgreement===false).length,
+  scoreAgreementCount:duplicates.filter(x=>x.scoreAgreement===true).length,
+  scoreUnverifiableCount:duplicates.filter(x=>x.scoreAgreement===null).length,
+  kickoffDisagreementCount:duplicates.filter(x=>x.kickoffAgreement===false).length,
+  ambiguousTerminalEvidenceCount:duplicates.filter(x=>x.firstProviderTerminal!==x.secondProviderTerminal).length,
+  unverifiableCount:unverifiable.length,duplicates,unverifiable};
+}
+if(process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
+ const result=auditAllVerifiedFinalProviderIdentities(process.cwd());
+ console.log(JSON.stringify(result,null,2));
+ if(!result.ok)process.exitCode=1;
+}

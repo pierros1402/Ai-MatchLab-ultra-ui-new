@@ -2029,6 +2029,8 @@ export async function runDailyCycle(options = {}) {
     historyCatchUp = [];
     for (let back = 1; back <= 7; back++) {
       const day = shiftDay(dayKey, -back);
+      const catchUpStartedAt = Date.now();
+      console.log('[daily-cycle] history-catch-up:day-start', { day, back });
       try {
         let liveRefresh = null;
 
@@ -2183,6 +2185,14 @@ export async function runDailyCycle(options = {}) {
         });
       } catch (e) {
         historyCatchUp.push({ day, error: String(e?.message || e) });
+      } finally {
+        const elapsedMs = Date.now() - catchUpStartedAt;
+        const record = historyCatchUp[historyCatchUp.length - 1];
+        if (record?.day === day) record.elapsedMs = elapsedMs;
+        console.log('[daily-cycle] history-catch-up:day-end', {
+          day, back, elapsedMs,
+          error: record?.day === day ? record.error || null : 'missing_day_record'
+        });
       }
     }
 

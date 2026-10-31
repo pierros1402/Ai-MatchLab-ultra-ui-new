@@ -163,7 +163,13 @@ export async function runDay(dayKey) {
       log("model-priors", { rebuilt: false, reason: "season_set_unchanged" });
     }
   } catch (e) {
-    log("history-archive-priors:skip", String(e?.message || e));
+    const reason = String(e?.message || e);
+    // Malformed results-memory timestamps must stop the Daily writer instead
+    // of silently skipping archive refresh and committing partial history.
+    if (reason.startsWith("results_memory_preflight_failed:")) {
+      throw e;
+    }
+    log("history-archive-priors:skip", reason);
   }
 
   // 2h) Rebuild the CURRENT-season form indexes (team/league/matchup) from the

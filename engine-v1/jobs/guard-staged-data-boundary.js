@@ -1,6 +1,9 @@
 import { execFileSync } from "child_process";
+import { readFileSync } from "node:fs";
 
 import { findCanonicalStatusConflicts } from "../core/canonical-status-coherence.js";
+import { inspectResultsMemoryPreservation } from "../core/results-memory-preservation.js";
+import { verifyResultsWriteSetManifest } from "../core/results-write-set-contract.js";
 
 function argValue(name, fallback = "") {
   const prefix = `--${name}=`;
@@ -32,6 +35,10 @@ const allowRe = allowPattern ? new RegExp(allowPattern) : null;
 
 function git(args) {
   return execFileSync("git", args, { encoding: "utf8" });
+}
+
+function gitBytes(args) {
+  return execFileSync("git", args);
 }
 
 function parseNameStatus(raw) {
@@ -114,6 +121,80 @@ function inspectStagedCanonicalFile(p, violations) {
     return;
   }
 
+  if (enforceCanonicalRowPreservation) {
+    try {
+      const before = JSON.parse(git(["show", `HEAD:${p}`]));
+      const rows = x => Array.isArray(x) ? x :
+        Array.isArray(x?.fixtures) ? x.fixtures :
+        Array.isArray(x?.matches) ? x.matches :
+        Array.isArray(x?.rows) ? x.rows : null;
+      const previous = rows(before);
+      const current = rows(payload);
+      if (!previous || !current) {
+        violations.push({reason:"canonical_row_preservation_unverifiable",path:p});
+      } else {
+        if (current.length < previous.length) {
+          violations.push({reason:"canonical_row_count_regression",path:p,before:previous.length,after:current.length});
+        }
+        const id = row => String(row?.canonicalId || row?.matchId || row?.id || "").trim();
+        const priorIds = previous.map(id);
+        const nextIds = current.map(id);
+        if (priorIds.some(x => !x) || nextIds.some(x => !x) ||
+            new Set(priorIds).size !== priorIds.length ||
+            new Set(nextIds).size !== nextIds.length) {
+          violations.push({reason:"canonical_identity_unverifiable",path:p});
+        } else {
+          const next = new Map(current.map(row => [id(row),row]));
+          for (const row of previous) {
+            const key = id(row);
+            if (!next.has(key)) {
+              violations.push({reason:"canonical_identity_missing",path:p,canonicalId:key});
+              continue;
+            }
+            const terminal = value => {
+              const state=String(value?.statusType || value?.status || value?.rawStatus || "").toUpperCase();
+              return /^(FT|FINAL|STATUS_FINAL|FINISHED)$/.test(state);
+            };
+            if (terminal(row)) {
+              const fields=["status","statusType","rawStatus","score","homeScore","awayScore",
+                "goalsHome","goalsAway","finalScore","authoritativeTerminalWriteback"];
+              const original=fields.map(k => JSON.stringify(row[k] ?? null));
+              const updated=fields.map(k => JSON.stringify(next.get(key)[k] ?? null));
+              if (original.some((value,i) => value !== updated[i])) {
+                violations.push({reason:"canonical_verified_terminal_mutation",path:p,canonicalId:key});
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      // Newly created canonical files have no HEAD version; they are checked by
+      // canonical status validation below. All other read failures fail closed.
+      if (git(["ls-tree", "--name-only", "HEAD", "--", p]).trim()) {
+        violations.push({reason:"canonical_row_preservation_unverifiable",path:p,
+          error:String(error?.message||error)});
+      }
+    }
+  }
+
+  // General invariant: the same provider fixture cannot have multiple
+  // canonical IDs, regardless of team-name normalization.
+  const seenProvider=new Map();
+  for (const row of Array.isArray(payload?.fixtures) ? payload.fixtures : []) {
+    const provider=typeof row?.source==="string" ? row.source.trim() : "";
+    const providerId=row?.sourceId ?? row?.sourceMatchId ?? row?.providerIds?.[provider];
+    const id=row?.canonicalId;
+    if (!provider || !providerId || !id) continue;
+    const key=JSON.stringify([provider,String(providerId)]);
+    const prior=seenProvider.get(key);
+    if (prior && prior!==id) violations.push({
+      reason:"canonical_provider_identity_collision",
+      path:p,provider,providerMatchId:String(providerId),
+      firstCanonicalId:prior,secondCanonicalId:id
+    });
+    else seenProvider.set(key,id);
+  }
+
   const conflicts = findCanonicalStatusConflicts(payload, { path: p });
 
   for (const conflict of conflicts) {
@@ -121,6 +202,78 @@ function inspectStagedCanonicalFile(p, violations) {
       reason: "staged_canonical_status_conflict",
       ...conflict
     });
+  }
+}
+
+// Opt-in only until all authorized-correction and rollback contracts are qualified.
+const enforceResultsPreservation = hasFlag("enforce-results-preservation");
+const enforceCanonicalRowPreservation = hasFlag("enforce-canonical-row-preservation");
+const enforceVerifiedFinalPreservation = hasFlag("enforce-verified-final-preservation");
+const candidateWriteSetFile = argValue("results-write-set", "");
+// Hash binding is evidence only, not external authorization. Never permit an
+// unreviewed correction to bypass the ordinary preservation veto.
+const stagedCorrectionEntries = [];
+function inspectStagedResultsMemory(p, status, violations) {
+  if (!/^data\/league-memory\/results\/[^/]+\.json$/.test(p)) return;
+  try {
+    const before = status === "A" ? { teams: {} } : JSON.parse(git(["show", `HEAD:${p}`]));
+    const after = JSON.parse(git(["show", `:${p}`]));
+    const expectedSlug = p.slice("data/league-memory/results/".length, -".json".length);
+    if (after?.slug !== expectedSlug) {
+      violations.push({ reason: "results_memory_slug_path_mismatch", path: p, expectedSlug,
+        actualSlug: typeof after?.slug === "string" ? after.slug : null });
+      return;
+    }
+    if (candidateWriteSetFile && status === "M") {
+      stagedCorrectionEntries.push({
+        path: p, status,
+        beforeBytes: gitBytes(["show", `HEAD:${p}`]),
+        afterBytes: gitBytes(["show", `:${p}`])
+      });
+    }
+    const check = inspectResultsMemoryPreservation(before, after);
+    for (const violation of check.violations) {
+      violations.push({ ...violation, path: p });
+    }
+  } catch (error) {
+    violations.push({ reason: "results_memory_preservation_unverifiable", path: p,
+      error: String(error?.message || error) });
+  }
+}
+
+function inspectStagedVerifiedFinal(p, status, violations) {
+  if (!p.startsWith("data/final-results/") || !p.endsWith(".json") || p.split("/").length !== 4) return;
+  const name = p.slice(p.lastIndexOf("/") + 1, -5);
+  const date = p.split("/")[2];
+  try {
+    const after = JSON.parse(git(["show", `:${p}`]));
+    const score = value => {
+      const h = value?.homeScore, a = value?.awayScore;
+      return Number.isInteger(h) && h >= 0 && Number.isInteger(a) && a >= 0
+        ? [h, a] : null;
+    };
+    if (after?.schema !== "ai-matchlab.verified-final-result.v1" ||
+        after?.verifiedFinalTruth !== true ||
+        after?.matchId !== name ||
+        after?.dayKey !== date ||
+        !score(after) ||
+        after?.finalScore?.homeScore !== after.homeScore ||
+        after?.finalScore?.awayScore !== after.awayScore) {
+      violations.push({reason:"verified_final_staged_invalid",path:p});
+      return;
+    }
+    if (status === "M") {
+      const before = JSON.parse(git(["show", `HEAD:${p}`]));
+      const prior = score(before), next = score(after);
+      if (before?.verifiedFinalTruth !== true || before?.matchId !== after.matchId ||
+          before?.dayKey !== after.dayKey || !prior ||
+          prior[0] !== next[0] || prior[1] !== next[1]) {
+        violations.push({reason:"verified_final_truth_mutation_requires_adjudication",path:p});
+      }
+    }
+  } catch (error) {
+    violations.push({reason:"verified_final_preservation_unverifiable",path:p,
+      error:String(error?.message || error)});
   }
 }
 
@@ -176,8 +329,109 @@ for (const item of staged) {
     }
   }
 
+  // A rename/copy changes result-memory custody and must not bypass the
+  // preservation comparison. Require a separately approved migration.
+  if (enforceResultsPreservation &&
+      ["R", "C", "D"].includes(statusLetter) &&
+      [item.path, item.oldPath].some(p => /^data\/league-memory\/results\/[^/]+\.json$/.test(p))) {
+    violations.push({ reason: "results_memory_path_mutation_requires_adjudication",
+      status: item.status, path: item.path, oldPath: item.oldPath || null });
+  }
+
+  if (enforceResultsPreservation && ["A", "M"].includes(statusLetter)) {
+    inspectStagedResultsMemory(item.path, statusLetter, violations);
+  }
+
+  // A migration must never silently delete, rename, or copy protected finals,
+  // even if a general-purpose data deletion override is enabled.
+  if (enforceVerifiedFinalPreservation &&
+      ["D","R","C"].includes(statusLetter) &&
+      [item.path,item.oldPath].some(p => typeof p === "string" &&
+        p.startsWith("data/final-results/") && p.endsWith(".json"))) {
+    violations.push({reason:"verified_final_path_mutation_requires_adjudication",
+      status:item.status,path:item.path,oldPath:item.oldPath||null});
+  }
+
+  if (enforceVerifiedFinalPreservation && ["A", "M"].includes(statusLetter)) {
+    inspectStagedVerifiedFinal(item.path, statusLetter, violations);
+  }
+
   if (statusLetter !== "D" && isCanonicalFixtureFile(item.path)) {
     inspectStagedCanonicalFile(item.path, violations);
+  }
+}
+
+// Search all tracked historical verified finals for every provider identity
+// introduced/modified in the staged set. No arbitrary date window applies.
+if (enforceVerifiedFinalPreservation) {
+  const finalPath = p => typeof p === "string" && p.startsWith("data/final-results/") &&
+    p.endsWith(".json") && p.split("/").length === 4;
+  const changed=staged.filter(x=>finalPath(x.path));
+  const changedPaths=new Set(changed.map(x=>x.path));
+  const candidates=new Map();
+  for (const item of changed) {
+    if (item.status.startsWith("D")) continue;
+    try { candidates.set(item.path,JSON.parse(git(["show",`:${item.path}`]))); }
+    catch(e) { violations.push({reason:"staged_final_unverifiable",path:item.path}); }
+  }
+  const owner=new Map();
+  for(const [p,doc] of candidates) {
+    for(const src of Array.isArray(doc.sources)?doc.sources:[]) {
+      if(!src?.provider||!src?.providerMatchId)continue;
+      const key=JSON.stringify([src.provider,String(src.providerMatchId)]);
+      if(owner.has(key)&&owner.get(key)!==p)
+        violations.push({reason:"verified_provider_identity_collision",firstPath:owner.get(key),
+          secondPath:p,provider:src.provider,providerMatchId:String(src.providerMatchId)});
+      else owner.set(key,p);
+    }
+  }
+  // Indexed Git search over ALL historic days, narrowed to exact provider
+  // strings. Match candidates must also agree on provider (not ID alone).
+  const ids=[...new Set([...candidates.values()].flatMap(doc=>
+    (Array.isArray(doc.sources)?doc.sources:[]).map(src=>src?.providerMatchId)
+      .filter(x=>x!==undefined&&x!==null&&String(x)!=="").map(String)))];
+  if(ids.length) {
+    let hits=[];
+    try {
+      hits=git(["grep","-l","-F",...ids.flatMap(id=>["-e",id]),"HEAD","--","data/final-results/"])
+        .split("\n").map(x=>x.trim()).filter(x=>x.startsWith("HEAD:data/final-results/"));
+    } catch(e) {
+      if(e?.status!==1) violations.push({reason:"full_history_provider_lookup_unverifiable",
+        error:String(e?.message||e)});
+    }
+    for(const hit of hits) {
+      const p=hit.slice(5);
+      if(changedPaths.has(p))continue;
+      try {
+        const doc=JSON.parse(git(["show",hit]));
+        for(const src of Array.isArray(doc?.sources)?doc.sources:[]) {
+          if(!src?.provider||!src?.providerMatchId)continue;
+          const key=JSON.stringify([src.provider,String(src.providerMatchId)]);
+          const first=owner.get(key);
+          if(first && first!==p)
+            violations.push({reason:"verified_provider_identity_collision",
+              firstPath:p,secondPath:first,provider:src.provider,
+              providerMatchId:String(src.providerMatchId)});
+        }
+      } catch(e) {violations.push({reason:"full_history_final_unverifiable",path:p,
+          error:String(e?.message||e)});}
+    }
+  }
+}
+
+if (candidateWriteSetFile) {
+  if (!enforceResultsPreservation) {
+    violations.push({reason:"write_set_requires_preservation_guard"});
+  } else {
+    try {
+      const manifest = JSON.parse(readFileSync(candidateWriteSetFile, "utf8"));
+      const result = verifyResultsWriteSetManifest(manifest, stagedCorrectionEntries);
+      for (const failure of result.failures) violations.push(failure);
+      // A matching manifest does not prove approval; no exception to the
+      // results-memory preservation checks is granted here.
+    } catch (e) {
+      violations.push({reason:"write_set_unreadable",error:String(e?.message || e)});
+    }
   }
 }
 

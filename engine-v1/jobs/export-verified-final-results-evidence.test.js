@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
 
 import {
   buildPenaltyWinnerMarkerNormalizedFinalResult,
@@ -174,4 +175,34 @@ test("ordinary terminal score disagreement remains pending recheck", () => {
     });
 
   assert.equal(result.state, "pending_recheck");
+});
+
+test("verified finals exporter rejects existing and planned same-day provider identity collisions",()=>{
+ const source=readFileSync(new URL("./export-verified-final-results-day.js",import.meta.url),"utf8");
+ assert.match(source,/existing_verified_final_provider_collision/);
+ assert.match(source,/duplicate_verified_provider_identity/);
+ assert.match(source,/providerOwners\.set\(key,filePath\)/);
+ assert.match(source,/const collisionKey = keys\.find/);
+ assert.ok(source.indexOf("const collisionKey = keys.find") <
+   source.indexOf("if (existing) {\n      const existingScore"));
+ assert.ok(source.indexOf("for (const key of keys) {") <
+   source.indexOf("writeJsonPretty(filePath, payload);"));
+});
+
+test("new verified finals cannot reuse a provider fixture from a different historical day",()=>{
+ const source=readFileSync(new URL("./export-verified-final-results-day.js",import.meta.url),"utf8");
+ assert.match(source,/historical_verified_final_provider_collision/);
+ assert.match(source,/historyOwners\.get\(key\)\.add\(file\)/);
+ assert.match(source,/historyOwners\.get\(key\)\.add\(filePath\)/);
+ assert.ok(source.indexOf("const historicalCollisionKey = keys.find") <
+   source.indexOf("writeJsonPretty(filePath, payload);"));
+});
+
+test("historical scan fails closed on unreadable finals instead of skipping evidence",()=>{
+ const source=readFileSync(new URL("./export-verified-final-results-day.js",import.meta.url),"utf8");
+ assert.match(source,/historical_verified_final_identity_unreadable/);
+ const scan=source.indexOf("const stored = readJsonSafe(file,null)");
+ const refusal=source.indexOf('reason:"historical_verified_final_identity_unreadable"',scan);
+ const index=source.indexOf("historyOwners.get(key).add(file)",scan);
+ assert.ok(scan>=0 && refusal>scan && index>refusal);
 });

@@ -1,0 +1,223 @@
+name: Season Athens-day source repair (read-only regression)
+
+on:
+  pull_request:
+    paths:
+      - "engine-v1/jobs/build-history-archive-from-results.js"
+      - "engine-v1/jobs/build-current-season-indexes.js"
+      - "engine-v1/jobs/build-history-archive-athens-day.test.js"
+      - "engine-v1/jobs/guard-staged-results-memory-contract.test.js"
+      - ".github/workflows/daily-autonomous.yml"
+      - ".github/workflows/intraday-deploy-snapshot-refresh.yml"
+      - "engine-v1/jobs/guard-staged-data-boundary.js"
+      - "engine-v1/jobs/audit-verified-final-canonical-day.js"
+      - "engine-v1/jobs/audit-verified-final-canonical-day.test.js"
+      - "engine-v1/jobs/audit-verified-finals-range.js"
+      - "engine-v1/jobs/audit-verified-finals-range.test.js"
+      - "engine-v1/jobs/report-verified-finals-range.js"
+      - "engine-v1/jobs/inventory-canonical-alias-references.js"
+      - "engine-v1/jobs/inventory-canonical-alias-references.test.js"
+      - "engine-v1/jobs/audit-all-verified-final-provider-identities.js"
+      - "engine-v1/jobs/audit-all-verified-final-provider-identities.test.js"
+      - "engine-v1/jobs/simulate-results-write-set-transaction.test.js"
+      - "engine-v1/jobs/p0c-p4-family-adapter-contract.js"
+      - "engine-v1/jobs/p0c-p4-family-adapter-contract.test.js"
+      - "engine-v1/tests/plan-a-evaluation-accounting-exclusivity.test.js"
+      - "engine-v1/tests/checkpoint-aware-targeted-value-comparison-production-runtime-identities-acl-post-activation-verification.test.js"
+      - ".github/workflows/season-source-repair-regression.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: season-athens-source-regression-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  full-engine-read-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CI: "true"
+      TZ: "UTC"
+    steps:
+      - name: Check out proposed source without Git write credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install pinned dependencies without package lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Check all engine JavaScript syntax
+        run: |
+          find engine-v1 -type f -name '*.js' -print0 \
+            | xargs -0 -r -P 4 -n 1 node --check
+
+      - name: Verify Athens-day tests across host timezones
+        run: |
+          TZ=UTC node --test engine-v1/jobs/build-history-archive-athens-day.test.js
+          TZ=America/Los_Angeles node --test engine-v1/jobs/build-history-archive-athens-day.test.js
+
+      - name: Run all engine tests without publishing artifacts
+        shell: bash
+        run: |
+          mapfile -d '' -t tests < <(find engine-v1 -type f -name '*.test.js' -print0 | sort -z)
+          if (( ${#tests[@]} == 0 )); then
+            echo "No engine tests found" >&2
+            exit 1
+          fi
+          node --test --test-concurrency=4 "${tests[@]}"
+
+  immutable-base-regression-control:
+    # This job is intentionally independent: compare the proposed engine against
+    # the exact pre-patch commit. It is read-only and cannot deploy or push.
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CI: "true"
+      TZ: "UTC"
+    steps:
+      - name: Check out immutable original commit without credentials
+        uses: actions/checkout@v4
+        with:
+          ref: "277f4554ec46619700c9b6e7a2a0099239af89df"
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install exact baseline dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Reproduce full baseline engine test failures for comparison
+        shell: bash
+        run: |
+          mapfile -d '' -t tests < <(find engine-v1 -type f -name '*.test.js' -print0 | sort -z)
+          if (( ${#tests[@]} == 0 )); then exit 1; fi
+          set +e
+          node --test --test-reporter=spec --test-concurrency=4 "${tests[@]}" > "$RUNNER_TEMP/immutable-base.spec" 2>&1
+          baseline_exit=$?
+          set -e
+          if (( baseline_exit != 1 )); then echo "Unexpected baseline exit $baseline_exit" >&2; exit 1; fi
+          node --input-type=module - "$RUNNER_TEMP/immutable-base.spec" <<'JS'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          const s = fs.readFileSync(process.argv[2], 'utf8').replace(/\u001b\[[0-9;]*m/g, '').replace(/\r/g, '');
+          const t = [...s.matchAll(/^\s*ℹ tests (\d+)\s*$/gm)];
+          const f = [...s.matchAll(/^\s*ℹ fail (\d+)\s*$/gm)];
+          assert.equal(t.length, 1); assert.equal(f.length, 1);
+          assert.equal(Number(t[0][1]), 2510); assert.equal(Number(f[0][1]), 8);
+          const marker = s.lastIndexOf('✖ failing tests:');
+          assert.ok(marker >= 0);
+          const names = [...s.slice(marker).matchAll(/^\s*✖\s+(.+?)\s+\([\d.]+ms\)\s*$/gm)].map(x=>x[1]).sort();
+          assert.deepEqual(names, [
+            'pins all required producer source hashes',
+            'exact R31 identities and ACL activation verify while production remains disabled',
+            'R32 fingerprint is deterministic and runner contains no account ACL replay signer kernel push or deploy mutation machinery',
+            'Plan A records non-playable rejection exactly once before evaluation',
+            'value panel follows selected day and never falls back to stale static release data',
+            'live worker overlay is bounded and labeled with the shared operational day',
+            'UI aborts are terminal and are not retried as fetch failures',
+            'updated Value/live UI assets are cache-busted',
+          ].sort());
+          console.log('IMMUTABLE_BASELINE_EIGHT_EXPECTED_FAILURES_VERIFIED');
+          JS
+
+  baseline-versus-patch-regression-delta:
+    # Delta PASS accepts a zero-failure candidate, without authorizing merge/deploy.
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CI: "true"
+      TZ: "UTC"
+      NO_COLOR: "1"
+    steps:
+      - name: Check out proposed source without write credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check out immutable original source for comparison
+        uses: actions/checkout@v4
+        with:
+          ref: "277f4554ec46619700c9b6e7a2a0099239af89df"
+          path: immutable-base
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install both source trees without lifecycle scripts
+        shell: bash
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          (cd immutable-base && npm ci --ignore-scripts --no-audit --no-fund)
+      - name: Compare complete engine suites without publishing any artifacts
+        shell: bash
+        run: |
+          set +e
+          (
+            mapfile -d '' -t tests < <(find engine-v1 -type f -name '*.test.js' -print0 | sort -z)
+            node --test --test-reporter=spec --test-concurrency=4 "${tests[@]}"
+          ) > "$RUNNER_TEMP/season-candidate.spec" 2>&1
+          candidate_exit=$?
+          (
+            cd immutable-base
+            mapfile -d '' -t tests < <(find engine-v1 -type f -name '*.test.js' -print0 | sort -z)
+            node --test --test-reporter=spec --test-concurrency=4 "${tests[@]}"
+          ) > "$RUNNER_TEMP/season-immutable-base.spec" 2>&1
+          baseline_exit=$?
+          set -e
+          if (( baseline_exit != 1 || (candidate_exit != 0 && candidate_exit != 1) )); then
+            echo "Unexpected test exit codes: baseline=$baseline_exit candidate=$candidate_exit" >&2
+            exit 1
+          fi
+          export CANDIDATE_EXIT="$candidate_exit"
+          node --input-type=module - "$RUNNER_TEMP/season-immutable-base.spec" "$RUNNER_TEMP/season-candidate.spec" <<'JS'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          const expected = [
+            'pins all required producer source hashes',
+            'exact R31 identities and ACL activation verify while production remains disabled',
+            'R32 fingerprint is deterministic and runner contains no account ACL replay signer kernel push or deploy mutation machinery',
+            'Plan A records non-playable rejection exactly once before evaluation',
+            'value panel follows selected day and never falls back to stale static release data',
+            'live worker overlay is bounded and labeled with the shared operational day',
+            'UI aborts are terminal and are not retried as fetch failures',
+            'updated Value/live UI assets are cache-busted',
+          ].sort();
+          function parse(file) {
+            const s = fs.readFileSync(file, 'utf8').replace(/\u001b\[[0-9;]*m/g, '').replace(/\r/g, '');
+            const t = [...s.matchAll(/^\s*ℹ tests (\d+)\s*$/gm)];
+            const f = [...s.matchAll(/^\s*ℹ fail (\d+)\s*$/gm)];
+            assert.equal(t.length, 1, 'incomplete or multiple test-count summaries');
+            assert.equal(f.length, 1, 'incomplete or multiple failure-count summaries');
+            const tests = Number(t[0][1]), fail = Number(f[0][1]);
+            assert.ok(tests > 1000, 'full engine suite is required');
+            const marker = s.lastIndexOf('✖ failing tests:');
+            assert.ok(fail === 0 || marker >= 0, 'missing full failed-tests section');
+            assert.ok(fail !== 0 || marker < 0, 'unexpected failing-tests section for zero failures');
+            const names = fail === 0 ? [] : [...s.slice(marker).matchAll(/^\s*✖\s+(.+?)\s+\([\d.]+ms\)\s*$/gm)].map(x => x[1]);
+            assert.equal(names.length, fail, 'incomplete failure enumeration');
+            assert.equal(new Set(names).size, fail, 'ambiguous duplicate names');
+            return {tests, fail, names:names.sort()};
+          }
+          const baseline = parse(process.argv[2]), candidate = parse(process.argv[3]);
+          assert.ok(baseline.fail > 0, 'baseline unexpectedly clean');
+          assert.equal(candidate.fail === 0, process.env.CANDIDATE_EXIT === '0', 'candidate exit and parsed failures disagree');
+          assert.deepEqual(baseline.names, expected, 'immutable baseline failures changed; review required');
+          assert.ok(candidate.tests >= baseline.tests + 5, 'missing new Athens-day tests');
+          assert.deepEqual(candidate.names.filter(n => !baseline.names.includes(n)), [], 'new failures in candidate');
+          console.log(JSON.stringify({
+            status:candidate.fail === 0 ? 'CANDIDATE_FULL_SUITE_ZERO_FAILURES' : 'NO_NEW_FAILURES_VS_IMMUTABLE_BASE',
+            baseline:{tests:baseline.tests, failed:baseline.fail},
+            candidate:{tests:candidate.tests, failed:candidate.fail},
+            strictFullSuitePass:candidate.fail === 0, mergeOrDeployAuthorized:false
+          },null,2));
+          JS

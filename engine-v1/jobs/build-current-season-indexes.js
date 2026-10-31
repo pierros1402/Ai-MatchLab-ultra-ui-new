@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { currentSeason } from "../core/season.js";
+import { athensDayFromKickoff } from "../core/daykey.js";
 import { filterHistoryCompetitionRows } from '../core/history-competition-provenance.js';
 import { isCalendarYearLeague } from "../core/season-model.js";
 import { canonicalTeamName } from "../storage/team-aliases-db.js";
@@ -364,7 +365,7 @@ async function listArchiveLeagues() {
   }
 }
 
-function rowDayKey(row) {
+export function rowDayKey(row) {
   const direct = String(
     row?.dayKey ||
     row?.day ||
@@ -383,9 +384,7 @@ function rowDayKey(row) {
   );
 
   return Number.isFinite(timestamp)
-    ? new Date(timestamp)
-        .toISOString()
-        .slice(0, 10)
+    ? athensDayFromKickoff(new Date(timestamp).toISOString())
     : null;
 }
 

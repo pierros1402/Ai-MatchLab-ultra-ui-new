@@ -201,6 +201,6 @@ test("updated Value/live UI assets are cache-busted", () => {
 
   assert.match(
     html,
-    /value-picks\.js\?v=4/
+    /value-picks\.js\?v=6/
   );
 });

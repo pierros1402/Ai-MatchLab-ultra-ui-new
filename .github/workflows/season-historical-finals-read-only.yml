@@ -1,0 +1,275 @@
+name: Season historical finals reconciliation (read-only)
+on:
+  pull_request:
+    paths:
+      - "engine-v1/jobs/audit-verified-final-canonical-day.js"
+      - "engine-v1/jobs/audit-verified-finals-range.js"
+      - "engine-v1/jobs/report-verified-finals-range.js"
+      - "engine-v1/jobs/audit-all-verified-final-provider-identities.js"
+      - "engine-v1/jobs/build-historical-identity-adjudication-register.js"
+      - "engine-v1/jobs/build-historical-identity-adjudication-register.test.js"
+      - "engine-v1/jobs/g2-historical-two-pass-fixtures-sandbox.js"
+      - "engine-v1/jobs/g2-historical-two-pass-fixtures-all-sandbox.js"
+      - "engine-v1/jobs/g2-historical-canonical-git-candidate.js"
+      - "engine-v1/jobs/g2-historical-two-pass-odds-sandbox.js"
+      - "engine-v1/jobs/g2-historical-two-pass-details-sandbox.js"
+      - "engine-v1/jobs/g2-historical-closure-ledger.js"
+      - "engine-v1/jobs/g2-historical-manifest-referential-audit.js"
+      - "engine-v1/jobs/g2-historical-value-audit-preservation.js"
+      - "engine-v1/jobs/g2-historical-history-index-source-audit.js"
+      - "engine-v1/jobs/g2-cross-family-source-triage.js"
+      - ".github/workflows/season-historical-finals-read-only.yml"
+permissions:
+  contents: read
+  actions: read
+jobs:
+  historical-final-scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Test historical provider identity and terminal provenance
+        run: node --test engine-v1/jobs/audit-all-verified-final-provider-identities.test.js
+      - name: Test historical identity resolver and sourceId fallback
+        run: node --test engine-v1/jobs/build-historical-identity-adjudication-register.test.js
+      - name: Inventory exact canonical alias references without writes
+        run: node engine-v1/jobs/inventory-canonical-alias-references.js
+      - name: Audit every historical verified-final identity without writes
+        run: node engine-v1/jobs/audit-all-verified-final-provider-identities.js
+      - name: Build full historical identity adjudication register without writes
+        if: always()
+        run: |
+          set +e
+          node engine-v1/jobs/build-historical-identity-adjudication-register.js > historical-identity-register.json
+          producer_rc=$?
+          set -e
+          PRODUCER_RC="$producer_rc" node --input-type=module -e '
+            import fs from "node:fs";
+            const r=JSON.parse(fs.readFileSync("historical-identity-register.json","utf8"));
+            const rc=Number(process.env.PRODUCER_RC);
+            const valid=r.schema==="ai-matchlab.historical-identity-adjudication-register.v1" &&
+              r.readOnly===true && r.approvedForWrite===false &&
+              Number.isInteger(r.aliasPreflight?.preflightQualifiedCount) &&
+              r.aliasPreflight.preflightQualifiedCount>0 &&
+              Array.isArray(r.aliasReviewManifest?.entries) &&
+              r.aliasReviewManifest.entries.length===r.aliasPreflight.preflightQualifiedCount &&
+              r.aliasSourceBoundManifest?.status==="SOURCE_HASHES_CAPTURED_NOT_AUTHORIZED_FOR_WRITE" &&
+              Array.isArray(r.aliasSourceBoundManifest?.files) &&
+              r.aliasSourceBoundManifest.files.length>0 &&
+              new Set(r.aliasSourceBoundManifest.files.map(f=>f.path)).size===r.aliasSourceBoundManifest.files.length &&
+              r.aliasReviewManifest.entries.every(e=>Array.isArray(e.dependencies) &&
+                e.dependencies.every(d=>r.aliasSourceBoundManifest.files.some(f=>f.path===d.path)));
+            if(!valid || rc!==1) {
+              console.error("HOLD_REGISTER_PRODUCER_UNEXPECTED", {valid,rc,duplicates:r.duplicateCases,unverifiable:r.unverifiableCases});
+              process.exit(1);
+            }
+            console.log(JSON.stringify({registerProduced:true,adjudicationStatus:"HOLD_NOT_APPROVED_FOR_WRITE",
+              sourceBound:r.aliasSourceBoundManifest.status,candidates:r.aliasReviewManifest.entries.length,
+              unresolved:r.duplicateCases+r.unverifiableCases,producerExitCode:rc}));
+          '
+      - name: Retain exact historical identity and source-bound manifest evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-identity-source-bound-${{ github.sha }}
+          path: historical-identity-register.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: G2 rebuild historical fixture targets twice in isolated directories
+        if: always()
+        run: node engine-v1/jobs/g2-historical-two-pass-fixtures-sandbox.js
+      - name: Retain G2 two-pass fixture rebuild report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g2-two-pass-fixtures-${{ github.sha }}
+          path: g2-two-pass-fixtures-result.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Recover pinned historical Git partitions and reconcile finals without writes
+        if: always()
+        run: |
+          git -c protocol.version=2 fetch --no-tags --depth=1 origin b487f4a858328d9bbdc0bf073885dc62050c1858
+          git -c protocol.version=2 fetch --no-tags --depth=1 origin bd3e10a695fe3773ed37bfc24028ef2c480e5054
+          node --check engine-v1/jobs/g2-historical-canonical-git-candidate.js
+          node engine-v1/jobs/g2-historical-canonical-git-candidate.js
+      - name: Retain pinned historical Git candidate and reconciliation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-git-canonical-candidate-${{ github.sha }}
+          path: historical-canonical-git-candidate.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: G2 two-pass rebuild of 24 fixtures-all from canonical partitions
+        if: always()
+        run: node engine-v1/jobs/g2-historical-two-pass-fixtures-all-sandbox.js
+      - name: Retain actual G2 fixtures-all rebuilt payloads, no repository writes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g2-fixtures-all-payload-${{ github.sha }}
+          path: g2-fixtures-all-payload/
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Retain G2 fixtures-all rebuild evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g2-fixtures-all-${{ github.sha }}
+          path: g2-fixtures-all-two-pass.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: G2 historical odds two-pass producer integrity
+        if: always()
+        run: node engine-v1/jobs/g2-historical-two-pass-odds-sandbox.js
+      - name: Retain G2 odds producer verification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g2-odds-${{ github.sha }}
+          path: g2-odds-two-pass.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: G2 historical details two-pass producer validation
+        if: always()
+        run: node engine-v1/jobs/g2-historical-two-pass-details-sandbox.js
+      - name: Retain G2 details validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g2-details-${{ github.sha }}
+          path: g2-details-two-pass.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: G2 verify 20 historical manifest references against stored snapshot files
+        if: always()
+        run: node engine-v1/jobs/g2-historical-manifest-referential-audit.js
+      - name: Retain source-bound manifest referential evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g2-manifest-references-${{ github.sha }}
+          path: g2-manifest-integrity.json
+          if-no-files-found: warn
+          retention-days: 90
+      - name: G2 verify 17 preserved historical Value audit records
+        if: always()
+        run: node engine-v1/jobs/g2-historical-value-audit-preservation.js
+      - name: Retain immutable Value audit integrity evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g2-value-audit-${{ github.sha }}
+          path: g2-value-audit-integrity.json
+          if-no-files-found: warn
+          retention-days: 90
+      - name: G2 inventory and validate 4 historical history-index source documents
+        if: always()
+        run: node engine-v1/jobs/g2-historical-history-index-source-audit.js
+      - name: Retain history-index source integrity evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g2-history-index-${{ github.sha }}
+          path: g2-history-index-source.json
+          if-no-files-found: warn
+          retention-days: 90
+      - name: G2 correlate canonical fixtures, manifests, Value audits and snapshots
+        if: always()
+        run: node engine-v1/jobs/g2-cross-family-source-triage.js
+      - name: Retain G2 cross-family evidence and unresolved source conflicts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g2-source-triage-${{ github.sha }}
+          path: g2-cross-family-source-triage.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: G2 evidence-bound scope closure ledger
+        if: always()
+        run: node engine-v1/jobs/g2-historical-closure-ledger.js
+      - name: Retain G2 closure ledger permanently with workflow evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g2-closure-${{ github.sha }}
+          path: g2-closure-ledger.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: G2 execute existing P0-C producer adapter regression in real checkout
+        if: always()
+        run: |
+          set -eu
+          node --check engine-v1/jobs/p0c-p4-ready-family-adapters.js
+          node --check engine-v1/jobs/p0c-p4-family-adapter-contract.js
+          node --test engine-v1/jobs/p0c-p4-ready-family-adapters.test.js engine-v1/jobs/p0c-p4-family-adapter-contract.test.js
+          printf '%s\\n' '{"schema":"ai-matchlab.g2-existing-producers-regression.v1","phase":"TESTED_EXISTING_ADAPTERS_NOT_HISTORICAL_REBUILD","sourceBound":true,"writeAuthorized":false,"historicalResultsChanged":false}' > g2-existing-producers-regression.json
+      - name: Retain G2 real-checkout producer evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g2-producer-tests-${{ github.sha }}
+          path: g2-existing-producers-regression.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: G0 rehash current-run source-bound dependencies in checkout
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,pathlib,subprocess,sys
+          report=json.loads(pathlib.Path('historical-identity-register.json').read_text())
+          bound=report['aliasSourceBoundManifest']
+          checks=bound['files']
+          failures=[]
+          qualified=report['aliasPreflight'].get('preflightQualifiedCount')
+          entries=report['aliasReviewManifest'].get('entries',[])
+          if bound.get('status')!='SOURCE_HASHES_CAPTURED_NOT_AUTHORIZED_FOR_WRITE' or not checks:
+              failures.append('SOURCE_MANIFEST_INCOMPLETE')
+          if not isinstance(qualified,int) or qualified<=0 or qualified!=len(entries):
+              failures.append('PREFLIGHT_COUNT_INVALID')
+          digest=hashlib.sha256(json.dumps(checks,separators=(',',':'),ensure_ascii=False).encode()).hexdigest()
+          if digest!=bound.get('inventorySha256'):
+              failures.append('INVENTORY_DIGEST_MISMATCH')
+          visited=set()
+          for item in checks:
+              path=item.get('path','')
+              parts=path.split('/')
+              if (path in visited or not path.startswith('data/') or '..' in parts or
+                  '\\' in path or item.get('status')!='SHA256_BOUND'):
+                  failures.append('INVALID_SOURCE_ENTRY:'+path)
+                  continue
+              visited.add(path)
+              try:
+                  payload=pathlib.Path(path).read_bytes()
+                  if len(payload)!=item['bytes'] or hashlib.sha256(payload).hexdigest()!=item['sha256']:
+                      failures.append('SOURCE_BYTES_CHANGED:'+path)
+              except (OSError,ValueError,KeyError):
+                  failures.append('SOURCE_MISSING:'+path)
+          result={'schema':'ai-matchlab.g0-ci-source-recheck.v2',
+                  'readOnly':True,'approvedForWrite':False,
+                  'gitHead':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
+                  'source':'SAME_RUN_LOCAL_PRODUCER_OUTPUT',
+                  'expected':len(checks),'checked':len(visited),
+                  'qualified':qualified,'mismatches':len(failures),'issues':failures,
+                  'status':'PASS_G0_SOURCE_BOUND_ONLY' if not failures else 'HOLD_G0'}
+          pathlib.Path('g0-source-recheck.json').write_text(json.dumps(result,indent=2)+'\n')
+          print(json.dumps({k:result[k] for k in ('status','checked','expected','qualified','mismatches','gitHead')}))
+          sys.exit(0 if not failures else 1)
+          PY
+      - name: Retain G0 checkout rehash evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g0-source-rehash-${{ github.sha }}
+          path: g0-source-recheck.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Reconcile exact historical day window without writes
+        if: always()
+        run: node engine-v1/jobs/report-verified-finals-range.js 2026-10-27 2026-10-29
