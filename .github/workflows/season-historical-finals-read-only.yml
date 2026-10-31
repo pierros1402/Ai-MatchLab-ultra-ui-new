@@ -16,6 +16,7 @@ on:
       - "engine-v1/jobs/g2-historical-manifest-referential-audit.js"
       - "engine-v1/jobs/g2-historical-value-audit-preservation.js"
       - "engine-v1/jobs/g2-historical-history-index-source-audit.js"
+      - "engine-v1/jobs/g2-cross-family-source-triage.js"
       - ".github/workflows/season-historical-finals-read-only.yml"
 permissions:
   contents: read
@@ -135,6 +136,17 @@ jobs:
           name: historical-g2-history-index-${{ github.sha }}
           path: g2-history-index-source.json
           if-no-files-found: warn
+          retention-days: 90
+      - name: G2 correlate canonical fixtures, manifests, Value audits and snapshots
+        if: always()
+        run: node engine-v1/jobs/g2-cross-family-source-triage.js
+      - name: Retain G2 cross-family evidence and unresolved source conflicts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g2-source-triage-${{ github.sha }}
+          path: g2-cross-family-source-triage.json
+          if-no-files-found: error
           retention-days: 90
       - name: G2 evidence-bound scope closure ledger
         if: always()
