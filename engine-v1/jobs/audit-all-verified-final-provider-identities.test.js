@@ -145,3 +145,19 @@ test("legacy adjudication provenance is retained but cannot qualify a missing pr
   });
  });
 });
+
+test("first source terminal provenance is not lost during provider normalization",()=>{
+ withHistory(({root,add,stage})=>{
+  const id="fixture-first-terminal";
+  add("2026-08-15","cid_first",[{provider:"espn",providerMatchId:id,finished:true,playedFinal:true}]);
+  add("2026-08-15","cid_second",[{provider:"espn",providerMatchId:id,finished:false,playedFinal:false}]);
+  stage();
+  const report=auditAllVerifiedFinalProviderIdentities(root);
+  assert.equal(report.duplicateCount,1);
+  assert.equal(report.duplicates[0].firstProviderTerminal,true);
+  assert.equal(report.duplicates[0].secondProviderTerminal,false);
+  assert.equal(report.ambiguousTerminalEvidenceCount,1);
+  assert.equal(report.approvedForWrite,false);
+  assert.equal(report.ok,false);
+ });
+});
