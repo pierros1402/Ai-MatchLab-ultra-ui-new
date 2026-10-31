@@ -241,3 +241,33 @@ test("legacy canonical sourceId is accepted only when sourceMatchId is absent",(
   assert.equal(findCanonicalAuthorityForCase(root,evidence).status,"HOLD_CANONICAL_AMBIGUOUS_OR_MISSING");
  }finally{rmSync(root,{recursive:true,force:true});}
 });
+
+test("providerIds-only canonical evidence is usable but conflicting identifiers remain HOLD",()=>{
+ const root=mkdtempSync(join(tmpdir(),"aiml-provider-ids-"));
+ try {
+  const dir=join(root,"data","canonical-fixtures","2026-08-15");
+  mkdirSync(dir,{recursive:true});
+  const file=join(dir,"provider-ids.json");
+  const evidence={provider:"espn",providerMatchId:"401881684",
+   firstPath:"data/final-results/2026-08-15/cid_retained.json",
+   secondPath:"data/final-results/2026-08-15/cid_alias.json",
+   firstMatchId:"cid_retained",secondMatchId:"cid_alias"};
+  const check=fixture=>{
+   writeFileSync(file,JSON.stringify({fixtures:[fixture]}));
+   return findCanonicalAuthorityForCase(root,evidence);
+  };
+  const candidate=check({canonicalId:"cid_retained",source:"espn",
+   providerIds:{espn:"401881684"}});
+  assert.equal(candidate.status,"CANONICAL_SOURCE_BOUND_CANDIDATE");
+  assert.equal(candidate.approvedForWrite,false);
+  assert.equal(check({canonicalId:"cid_retained",source:"espn",
+   sourceId:"other",providerIds:{espn:"401881684"}}).status,
+   "HOLD_CANONICAL_AMBIGUOUS_OR_MISSING");
+  assert.equal(check({canonicalId:"cid_retained",source:"espn",
+   providerIds:{flashscore:"401881684"}}).status,
+   "HOLD_CANONICAL_AMBIGUOUS_OR_MISSING");
+  assert.equal(check({canonicalId:"cid_retained",source:"espn",
+   sourceMatchId:"401881684",sourceId:"401881684",
+   providerIds:{espn:"401881684"}}).status,"CANONICAL_SOURCE_BOUND_CANDIDATE");
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
