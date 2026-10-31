@@ -190,3 +190,17 @@ test("equivalent ISO UTC kickoff representations do not create false conflicts",
   assert.equal(report.approvedForWrite,false);
  });
 });
+
+test("provider terminal metadata absence is not explicit nonfinal evidence",()=>{
+ withHistory(({root,add,stage})=>{
+  add("2026-07-16","cid_a",[{provider:"flashscore",providerMatchId:"id-xy",
+   finished:true,playedFinal:true}]);
+  add("2026-07-16","cid_b",[{provider:"flashscore",providerMatchId:"id-xy"}]);
+  stage();
+  const report=auditAllVerifiedFinalProviderIdentities(root);
+  assert.equal(report.duplicateCount,1);
+  assert.equal(report.duplicates[0].firstProviderTerminalEvidence,"CONFIRMED_FINAL");
+  assert.equal(report.duplicates[0].secondProviderTerminalEvidence,"UNSPECIFIED");
+  assert.equal(report.approvedForWrite,false);
+ });
+});
