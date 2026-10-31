@@ -15,6 +15,15 @@ function verifiedProviderIdentity(source) {
    ? {provider,providerMatchId:String(id).trim()} : null;
 }
 
+// Compare the same UTC instant, not its textual ISO representation.
+// Missing, ambiguous or invalid timestamps never prove a kickoff match.
+function exactKickoffInstant(value) {
+ if(typeof value!=="string" ||
+    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})$/.test(value)) return null;
+ const millis=Date.parse(value);
+ return Number.isFinite(millis)?millis:null;
+}
+
 // Pure read-only historical inventory. File names and provider bindings are evidence,
 // not permission to delete, rename, settle, or silently collapse any fixture.
 export function auditAllVerifiedFinalProviderIdentities(root) {
@@ -57,8 +66,10 @@ export function auditAllVerifiedFinalProviderIdentities(root) {
        secondPath:file,secondMatchId:payload?.matchId||null,
        firstScore:previous.score,secondScore:[payload?.homeScore,payload?.awayScore],
        firstKickoffUtc:previous.kickoffUtc,secondKickoffUtc:payload?.kickoffUtc||null,
-       kickoffAgreement:previous.kickoffUtc && payload?.kickoffUtc
-         ? previous.kickoffUtc===payload.kickoffUtc : null,
+       kickoffAgreement:exactKickoffInstant(previous.kickoffUtc)!==null &&
+         exactKickoffInstant(payload?.kickoffUtc)!==null
+           ? exactKickoffInstant(previous.kickoffUtc)===exactKickoffInstant(payload.kickoffUtc)
+           : null,
        firstProviderTerminal:previous.providerTerminal,
        secondProviderTerminal:payload.sources.some(x=>verifiedProviderIdentity(x)?.provider===source.provider &&
          verifiedProviderIdentity(x)?.providerMatchId===source.providerMatchId &&
