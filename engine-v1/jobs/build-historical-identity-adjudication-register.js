@@ -88,6 +88,50 @@ export function inventoryAliasDependencies(root, retainedId, aliasId) {
    categories,writeSetApproved:false,automaticReplacementAuthorized:false,references};
 }
 
+// A bounded, non-executable reconciliation preflight: do not translate a
+// source-bound candidate into a mutation without a complete dependency review.
+export function buildHistoricalAliasPreflight(register) {
+ if(register?.readOnly!==true || register?.approvedForWrite!==false ||
+    !Array.isArray(register.safelyScopedCanonicalCandidates) ||
+    !Array.isArray(register.cases)) throw Error("invalid_historical_register");
+ const cases=new Map(register.cases.map(row=>[row.caseId,row]));
+ const seen=new Set();
+ const candidates=register.safelyScopedCanonicalCandidates.map(row=>{
+   const item=cases.get(row.caseId);
+   const dependency=row.dependencyAudit;
+   const identifiersValid=typeof row.retainedCanonicalId==="string" &&
+     typeof row.aliasCandidateId==="string" && row.retainedCanonicalId.length>0 &&
+     row.aliasCandidateId.length>0 && row.retainedCanonicalId!==row.aliasCandidateId;
+   const exactEvidence=item?.evidenceState==="DUPLICATE_CANDIDATE_REQUIRES_CANONICAL_PROOF" &&
+     item?.canonicalAuthority?.status==="CANONICAL_SOURCE_BOUND_CANDIDATE" &&
+     item.canonicalAuthority.canonicalId===row.retainedCanonicalId &&
+     item.evidence.provider===row.provider &&
+     item.evidence.providerMatchId===row.providerMatchId;
+   const dependencyBound=dependency?.readOnly===true &&
+     dependency.approvedForWrite===false &&
+     dependency.writeSetApproved===false &&
+     dependency.retainedId===row.retainedCanonicalId &&
+     dependency.aliasId===row.aliasCandidateId &&
+     Array.isArray(dependency.references);
+   const uniquePair=!seen.has(row.aliasCandidateId);
+   seen.add(row.aliasCandidateId);
+   const preflightQualified=Boolean(identifiersValid && exactEvidence && dependencyBound && uniquePair);
+   return {caseId:row.caseId,retainedCanonicalId:row.retainedCanonicalId,
+     aliasCandidateId:row.aliasCandidateId,
+     preflightQualified,
+     dependencyFileCount:dependencyBound?dependency.fileCount:null,
+     preservationRequired:true,independentTruthReviewRequired:true,
+     h2hReconciliationRequired:true,derivedRebuildRequired:true,
+     writeAuthorized:false};
+ });
+ return {schema:"ai-matchlab.historical-alias-preflight.v1",readOnly:true,
+   approvedForWrite:false,writeSetApproved:false,
+   candidateCount:candidates.length,
+   preflightQualifiedCount:candidates.filter(x=>x.preflightQualified).length,
+   blockedCount:candidates.filter(x=>!x.preflightQualified).length,
+   candidates};
+}
+
 // Deterministic read-only case registry; no automatic authority assignment.
 export function buildHistoricalIdentityAdjudicationRegister(audit,root=null) {
  if(!audit || audit.readOnly!==true || !Array.isArray(audit.duplicates) ||
