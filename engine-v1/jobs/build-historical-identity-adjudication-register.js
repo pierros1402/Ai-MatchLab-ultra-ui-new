@@ -20,7 +20,10 @@ export function findCanonicalAuthorityForCase(root, evidence) {
     const id=row?.canonicalId||row?.matchId;
     if(![evidence.firstMatchId,evidence.secondMatchId].includes(id)) continue;
     if(String(row?.source||"").toLowerCase()!==String(evidence.provider||"").toLowerCase()) continue;
-    if(String(row?.sourceMatchId||"")!==String(evidence.providerMatchId||"")) continue;
+    // Historical canonical fixtures may carry sourceId before sourceMatchId existed.
+    // Use the fallback only when sourceMatchId is absent; never override a conflicting primary ID.
+    const sourceId=row?.sourceMatchId??row?.sourceId;
+    if(sourceId===null || sourceId===undefined || String(sourceId)!==String(evidence.providerMatchId||"")) continue;
     matches.push({canonicalId:id,fixturePath:join("data","canonical-fixtures",first[1],entry)});
    }
   }
