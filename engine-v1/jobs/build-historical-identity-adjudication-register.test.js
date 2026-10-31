@@ -368,16 +368,33 @@ test("historical source-bound manifest captures exact bytes and rejects missing 
 test("G1 must hold even matching score and kickoff if terminal flags disagree",()=>{
  const item={caseId:"HIST-demo",evidenceState:"DUPLICATE_CANDIDATE_REQUIRES_CANONICAL_PROOF",
   canonicalAuthority:{status:"CANONICAL_SOURCE_BOUND_CANDIDATE",canonicalId:"cid_retained"},
-  evidence:{firstProviderTerminal:true,secondProviderTerminal:false}};
+  evidence:{firstProviderTerminal:true,secondProviderTerminal:false,
+   firstProviderTerminalEvidence:"CONFIRMED_FINAL",secondProviderTerminalEvidence:"EXPLICIT_NONFINAL"}};
  const register={readOnly:true,approvedForWrite:false,cases:[item],
   safelyScopedCanonicalCandidates:[{caseId:"HIST-demo",retainedCanonicalId:"cid_retained",
     aliasCandidateId:"cid_alias"}]};
  const result=buildHistoricalG1TerminalAdjudication(register);
  assert.equal(result.terminalDisagreementCount,1);
- assert.equal(result.cases[0].terminalTruthStatus,"HOLD_INDEPENDENT_TERMINAL_TRUTH_REQUIRED");
+ assert.equal(result.explicitTerminalConflictCount,1);
+ assert.equal(result.missingTerminalMetadataCount,0);
+ assert.equal(result.cases[0].terminalTruthStatus,"HOLD_EXPLICIT_TERMINAL_CONFLICT");
  assert.equal(result.approvedWriteActions,0);
  assert.equal(result.cases[0].writeAuthorized,false);
  assert.deepEqual(result,buildHistoricalG1TerminalAdjudication(register));
  assert.throws(()=>buildHistoricalG1TerminalAdjudication({...register,approvedForWrite:true}),
   /invalid_historical_g1_input/);
+});
+
+test("G1 missing terminal flags are unknown, not explicit nonfinal",()=>{
+ const reg={readOnly:true,approvedForWrite:false,
+  safelyScopedCanonicalCandidates:[{caseId:"HIST-missing",retainedCanonicalId:"canonical",aliasCandidateId:"alias"}],
+  cases:[{caseId:"HIST-missing",evidenceState:"DUPLICATE_CANDIDATE_REQUIRES_CANONICAL_PROOF",
+   canonicalAuthority:{status:"CANONICAL_SOURCE_BOUND_CANDIDATE",canonicalId:"canonical"},
+   evidence:{firstProviderTerminal:true,secondProviderTerminal:false,
+    firstProviderTerminalEvidence:"CONFIRMED_FINAL",secondProviderTerminalEvidence:"UNSPECIFIED"}}]};
+ const result=buildHistoricalG1TerminalAdjudication(reg);
+ assert.equal(result.missingTerminalMetadataCount,1);
+ assert.equal(result.explicitTerminalConflictCount,0);
+ assert.equal(result.cases[0].terminalTruthStatus,"HOLD_TERMINAL_EVIDENCE_MISSING");
+ assert.equal(result.approvedWriteActions,0);
 });
