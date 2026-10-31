@@ -24,6 +24,10 @@ export function findCanonicalAuthorityForCase(root, evidence) {
     // Use the fallback only when sourceMatchId is absent; never override a conflicting primary ID.
     const sourceId=row?.sourceMatchId??row?.sourceId;
     if(sourceId===null || sourceId===undefined || String(sourceId)!==String(evidence.providerMatchId||"")) continue;
+    // If both provider IDs exist, disagreement is not a trusted canonical binding.
+    if(row?.sourceMatchId!==null && row?.sourceMatchId!==undefined &&
+       row?.sourceId!==null && row?.sourceId!==undefined &&
+       String(row.sourceMatchId)!==String(row.sourceId)) continue;
     matches.push({canonicalId:id,fixturePath:join("data","canonical-fixtures",first[1],entry)});
    }
   }
