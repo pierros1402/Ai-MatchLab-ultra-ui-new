@@ -16,7 +16,7 @@ for(const path of targets){
   const doc=JSON.parse(bytes.toString("utf8"));
   if(!doc||typeof doc!=="object"||Array.isArray(doc))throw Error("NON_OBJECT_HISTORY_INDEX");
   rows.push({path,bytes:bytes.length,sha256:createHash("sha256").update(bytes).digest("hex"),
-    topLevelKeys:Object.keys(doc).sort()});
+    topLevelKeyCount:Object.keys(doc).length});
  }catch(e){held.push({path,reason:String(e.message||e)});}
 }
 if(before!==execFileSync("git",["status","--porcelain","--untracked-files=no"],{encoding:"utf8"}))held.push({reason:"TRACKED_WORKTREE_CHANGED"});
