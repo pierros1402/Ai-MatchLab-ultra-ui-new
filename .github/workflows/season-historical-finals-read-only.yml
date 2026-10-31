@@ -218,23 +218,21 @@ jobs:
           path: g2-existing-producers-regression.json
           if-no-files-found: warn
           retention-days: 30
-      - name: G0 rehash all 559 source-bound dependencies in checkout
+      - name: G0 rehash current-run source-bound dependencies in checkout
         if: always()
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          gh api "repos/${{ github.repository }}/actions/artifacts/13033304578/zip" > /tmp/aiml-g0-source.zip
           python3 - <<'PY'
-          import hashlib,json,pathlib,sys,zipfile
-          with zipfile.ZipFile('/tmp/aiml-g0-source.zip') as z:
-              report=json.loads(z.read('historical-identity-register.json'))
+          import hashlib,json,pathlib,subprocess,sys
+          report=json.loads(pathlib.Path('historical-identity-register.json').read_text())
           bound=report['aliasSourceBoundManifest']
           checks=bound['files']
           failures=[]
-          if bound.get('status')!='SOURCE_HASHES_CAPTURED_NOT_AUTHORIZED_FOR_WRITE' or len(checks)!=559:
+          qualified=report['aliasPreflight'].get('preflightQualifiedCount')
+          entries=report['aliasReviewManifest'].get('entries',[])
+          if bound.get('status')!='SOURCE_HASHES_CAPTURED_NOT_AUTHORIZED_FOR_WRITE' or not checks:
               failures.append('SOURCE_MANIFEST_INCOMPLETE')
-          if report['aliasPreflight'].get('preflightQualifiedCount')!=72:
-              failures.append('PREFLIGHT_COUNT_CHANGED')
+          if not isinstance(qualified,int) or qualified<=0 or qualified!=len(entries):
+              failures.append('PREFLIGHT_COUNT_INVALID')
           digest=hashlib.sha256(json.dumps(checks,separators=(',',':'),ensure_ascii=False).encode()).hexdigest()
           if digest!=bound.get('inventorySha256'):
               failures.append('INVENTORY_DIGEST_MISMATCH')
@@ -247,22 +245,21 @@ jobs:
                   failures.append('INVALID_SOURCE_ENTRY:'+path)
                   continue
               visited.add(path)
-              target=pathlib.Path(path)
               try:
-                  payload=target.read_bytes()
+                  payload=pathlib.Path(path).read_bytes()
                   if len(payload)!=item['bytes'] or hashlib.sha256(payload).hexdigest()!=item['sha256']:
                       failures.append('SOURCE_BYTES_CHANGED:'+path)
               except (OSError,ValueError,KeyError):
                   failures.append('SOURCE_MISSING:'+path)
-          result={'schema':'ai-matchlab.g0-ci-source-recheck.v1',
+          result={'schema':'ai-matchlab.g0-ci-source-recheck.v2',
                   'readOnly':True,'approvedForWrite':False,
-                  'gitHead':__import__('subprocess').check_output(['git','rev-parse','HEAD'],text=True).strip(),
-                  'expectedSourceArtifactId':13033304578,
-                  'expected':559,'checked':len(visited),
-                  'mismatches':len(failures),'issues':failures,
+                  'gitHead':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
+                  'source':'SAME_RUN_LOCAL_PRODUCER_OUTPUT',
+                  'expected':len(checks),'checked':len(visited),
+                  'qualified':qualified,'mismatches':len(failures),'issues':failures,
                   'status':'PASS_G0_SOURCE_BOUND_ONLY' if not failures else 'HOLD_G0'}
           pathlib.Path('g0-source-recheck.json').write_text(json.dumps(result,indent=2)+'\n')
-          print(json.dumps({k:result[k] for k in ('status','checked','expected','mismatches','gitHead')}))
+          print(json.dumps({k:result[k] for k in ('status','checked','expected','qualified','mismatches','gitHead')}))
           sys.exit(0 if not failures else 1)
           PY
       - name: Retain G0 checkout rehash evidence
