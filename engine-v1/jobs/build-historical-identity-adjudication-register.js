@@ -171,10 +171,19 @@ export function buildHistoricalG1TerminalAdjudication(register) {
    const explicitConflict=[evidence.firstProviderTerminalEvidence,evidence.secondProviderTerminalEvidence].includes("EXPLICIT_NONFINAL") &&
      [evidence.firstProviderTerminalEvidence,evidence.secondProviderTerminalEvidence].includes("CONFIRMED_FINAL");
    const missingEvidence=[evidence.firstProviderTerminalEvidence,evidence.secondProviderTerminalEvidence].includes("UNSPECIFIED");
+   const canonicalIsFirst=candidate.retainedCanonicalId===evidence?.firstMatchId;
+   const canonicalIsSecond=candidate.retainedCanonicalId===evidence?.secondMatchId;
+   const canonicalTerminalEvidence=canonicalIsFirst?evidence.firstProviderTerminalEvidence:
+     canonicalIsSecond?evidence.secondProviderTerminalEvidence:"UNRESOLVED";
+   const aliasTerminalEvidence=canonicalIsFirst?evidence.secondProviderTerminalEvidence:
+     canonicalIsSecond?evidence.firstProviderTerminalEvidence:"UNRESOLVED";
+   const canonicalFinalAliasUnspecified=Boolean(bindingValid &&
+     canonicalTerminalEvidence==="CONFIRMED_FINAL" && aliasTerminalEvidence==="UNSPECIFIED");
    return {caseId:candidate.caseId,retainedCanonicalId:candidate.retainedCanonicalId,
      aliasCandidateId:candidate.aliasCandidateId,
      bindingValid:Boolean(bindingValid),terminalKnown,
      terminalDisagreement,explicitConflict,missingEvidence,
+     canonicalTerminalEvidence,aliasTerminalEvidence,canonicalFinalAliasUnspecified,
      terminalTruthStatus:!bindingValid?"HOLD_SOURCE_BINDING":
        missingEvidence?"HOLD_TERMINAL_EVIDENCE_MISSING":
        explicitConflict?"HOLD_EXPLICIT_TERMINAL_CONFLICT":
@@ -189,6 +198,7 @@ export function buildHistoricalG1TerminalAdjudication(register) {
    terminalDisagreementCount:rows.filter(row=>row.terminalDisagreement).length,
    missingTerminalMetadataCount:rows.filter(row=>row.missingEvidence).length,
    explicitTerminalConflictCount:rows.filter(row=>row.explicitConflict).length,
+   canonicalFinalAliasUnspecifiedCount:rows.filter(row=>row.canonicalFinalAliasUnspecified).length,
    independentlyVerifiedCount:0,
    approvedWriteActions:0,
    status:"HOLD_INDEPENDENT_TRUTH_AND_DEPENDENCY_REBUILD",
