@@ -14,6 +14,7 @@ on:
       - "engine-v1/jobs/g2-historical-two-pass-details-sandbox.js"
       - "engine-v1/jobs/g2-historical-closure-ledger.js"
       - "engine-v1/jobs/g2-historical-manifest-referential-audit.js"
+      - "engine-v1/jobs/g2-historical-value-audit-preservation.js"
       - ".github/workflows/season-historical-finals-read-only.yml"
 permissions:
   contents: read
@@ -110,6 +111,17 @@ jobs:
         with:
           name: historical-g2-manifest-references-${{ github.sha }}
           path: g2-manifest-integrity.json
+          if-no-files-found: warn
+          retention-days: 90
+      - name: G2 verify 17 preserved historical Value audit records
+        if: always()
+        run: node engine-v1/jobs/g2-historical-value-audit-preservation.js
+      - name: Retain immutable Value audit integrity evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g2-value-audit-${{ github.sha }}
+          path: g2-value-audit-integrity.json
           if-no-files-found: warn
           retention-days: 90
       - name: G2 evidence-bound scope closure ledger
