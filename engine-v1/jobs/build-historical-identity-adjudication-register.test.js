@@ -1,7 +1,7 @@
 import {execFileSync} from "node:child_process";
 import test from "node:test";
 import assert from "node:assert/strict";
-import {buildHistoricalIdentityAdjudicationRegister,buildHistoricalAliasPreflight,buildHistoricalAliasReviewManifest,findCanonicalAuthorityForCase,inventoryAliasDependencies} from "./build-historical-identity-adjudication-register.js";
+import {buildHistoricalIdentityAdjudicationRegister,buildHistoricalAliasPreflight,buildHistoricalAliasReviewManifest,buildHistoricalAliasSourceBoundManifest,findCanonicalAuthorityForCase,inventoryAliasDependencies} from "./build-historical-identity-adjudication-register.js";
 import {mkdtempSync,mkdirSync,writeFileSync,rmSync,readFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
@@ -335,4 +335,31 @@ test("historical review manifest fails closed and is deterministic",()=>{
  assert.equal(first.entries[0].writeAuthorized,false);
  assert.equal(first.approvedForWrite,false);
  assert.deepEqual(first,buildHistoricalAliasReviewManifest(base,qualified));
+});
+
+test("historical source-bound manifest captures exact bytes and rejects missing dependencies",()=>{
+ const root=mkdtempSync(join(tmpdir(),"aiml-source-bound-review-"));
+ try {
+  const file=join(root,"data","final-results","a.json");
+  mkdirSync(join(root,"data","final-results"),{recursive:true});
+  writeFileSync(file,"test exact bytes");
+  const review={readOnly:true,approvedForWrite:false,
+   status:"READY_FOR_INDEPENDENT_REVIEW_NOT_WRITE",
+   entries:[{evidencePaths:["data/final-results/a.json"],
+    dependencies:[{path:"data/final-results/a.json"}]}]};
+  const first=buildHistoricalAliasSourceBoundManifest(review,root);
+  assert.equal(first.status,"SOURCE_HASHES_CAPTURED_NOT_AUTHORIZED_FOR_WRITE");
+  assert.equal(first.uniqueFileCount,1);
+  assert.match(first.files[0].sha256,/^[a-f0-9]{64}$/);
+  assert.equal(first.files[0].bytes,16);
+  assert.deepEqual(first,buildHistoricalAliasSourceBoundManifest(review,root));
+  const missing=buildHistoricalAliasSourceBoundManifest({...review,
+   entries:[{evidencePaths:["data/final-results/missing.json"],dependencies:[]}]},root);
+  assert.equal(missing.status,"HOLD_SOURCE_BINDING");
+  assert.equal(missing.files[0].status,"HOLD_UNREADABLE");
+  const traversal=buildHistoricalAliasSourceBoundManifest({...review,
+   entries:[{evidencePaths:["data/../secret"],dependencies:[]}]},root);
+  assert.equal(traversal.files[0].status,"HOLD_INVALID_PATH");
+  assert.equal(first.approvedForWrite,false);
+ }finally{rmSync(root,{recursive:true,force:true});}
 });
