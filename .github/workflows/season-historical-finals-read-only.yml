@@ -13,6 +13,7 @@ on:
       - "engine-v1/jobs/g2-historical-two-pass-odds-sandbox.js"
       - "engine-v1/jobs/g2-historical-two-pass-details-sandbox.js"
       - "engine-v1/jobs/g2-historical-closure-ledger.js"
+      - "engine-v1/jobs/g2-historical-manifest-referential-audit.js"
       - ".github/workflows/season-historical-finals-read-only.yml"
 permissions:
   contents: read
@@ -100,6 +101,17 @@ jobs:
           path: g2-details-two-pass.json
           if-no-files-found: warn
           retention-days: 30
+      - name: G2 verify 20 historical manifest references against stored snapshot files
+        if: always()
+        run: node engine-v1/jobs/g2-historical-manifest-referential-audit.js
+      - name: Retain source-bound manifest referential evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g2-manifest-references-${{ github.sha }}
+          path: g2-manifest-integrity.json
+          if-no-files-found: warn
+          retention-days: 90
       - name: G2 evidence-bound scope closure ledger
         if: always()
         run: node engine-v1/jobs/g2-historical-closure-ledger.js
