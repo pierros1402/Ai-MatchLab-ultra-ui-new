@@ -239,6 +239,7 @@ export function buildHistoricalIdentityAdjudicationRegister(audit,root=null) {
 if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const output=buildHistoricalIdentityAdjudicationRegister(
    auditAllVerifiedFinalProviderIdentities(process.cwd()),process.cwd());
+ output.aliasPreflight=buildHistoricalAliasPreflight(output);
  console.log(JSON.stringify(output,null,2));
  if(output.duplicateCases || output.unverifiableCases)process.exitCode=1;
 }
