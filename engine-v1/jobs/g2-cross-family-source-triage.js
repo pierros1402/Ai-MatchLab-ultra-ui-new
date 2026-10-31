@@ -6,7 +6,7 @@ const hash=x=>createHash("sha256").update(x).digest("hex");
 const before=execFileSync("git",["status","--porcelain","--untracked-files=no"],{encoding:"utf8"});
 const registry=JSON.parse(readFileSync("historical-identity-register.json","utf8"));
 const entries=registry.aliasReviewManifest?.entries;
-if(!Array.isArray(entries)||entries.length!==72)throw Error("G2_RECONCILIATION_REGISTER_NOT_72");
+if(!Array.isArray(entries)||!entries.length||registry.readOnly!==true||registry.approvedForWrite!==false||registry.aliasPreflight?.preflightQualifiedCount!==entries.length||!Array.isArray(registry.aliasSourceBoundManifest?.files))throw Error("G2_SOURCE_REGISTER_INCONSISTENT");
 const days=[...new Set(entries.flatMap(e=>(e.dependencies||[])
  .map(d=>/^data\/deploy-snapshots\/(\d{4}-\d{2}-\d{2})\/(?:manifest|value-audit)\.json$/.exec(d.path)?.[1])
  .filter(Boolean)))].sort();
@@ -65,7 +65,7 @@ for(const day of days){
 }
 if(before!==execFileSync("git",["status","--porcelain","--untracked-files=no"],{encoding:"utf8"}))throw Error("TRACKED_WORKTREE_CHANGED");
 const result={schema:"ai-matchlab.g2-cross-family-source-triage.v1",readOnly:true,writeAuthorized:false,
- independentFinalScoreAuthority:false,authoritativeWriteSet:false,expectedCandidatePairs:72,
+ independentFinalScoreAuthority:false,authoritativeWriteSet:false,expectedCandidatePairs:entries.length,
  days:records.length,consistent:records.filter(r=>r.status==="CONSISTENT_COUNTS_ONLY").length,
  hold:records.filter(r=>r.status!=="CONSISTENT_COUNTS_ONLY").length,records};
 writeFileSync("g2-cross-family-source-triage.json",JSON.stringify(result,null,2)+"\n");
