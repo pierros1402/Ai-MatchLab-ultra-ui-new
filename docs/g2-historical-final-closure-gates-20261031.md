@@ -7,8 +7,7 @@ PR #124 historical run 41188312943; manifest integrity artifact
 Of those 13, one was a stored detail byte-length mismatch on 2026-07-14;
 12 had manifest fixture counts inconsistent with the current fixture snapshot:
 2026-07-15, 07-16, 07-18, 07-19, 07-21, 07-22, 07-23,
-07-24, 07-25, 07-29, 07-30, plus one remaining failure
-requiring extraction from the source-bound evidence before closure.
+07-24, 07-25, 07-29, 07-30, and 2026-08-01.
 All 13 are HOLD, not evidence of which side is authoritative.
 The read-only checker now emits exact expected/actual counts and sizes
 (commit 1523f59fdc5b132453318da421aa0ae907bf443b).
