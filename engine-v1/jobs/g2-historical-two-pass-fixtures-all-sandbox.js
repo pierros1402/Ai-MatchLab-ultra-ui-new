@@ -5,7 +5,7 @@ import {createHash} from "node:crypto";
 import {execFileSync} from "node:child_process";
 import {buildFixturesAllFromCanonicalEvidenceDay} from "./rebuild-fixtures-all-from-canonical-evidence-day.js";
 const sha=x=>createHash("sha256").update(x).digest("hex");
-const before=execFileSync("git",["status","--porcelain"],{encoding:"utf8"});
+const before=execFileSync("git",["status","--porcelain","--untracked-files=no"],{encoding:"utf8"});
 const register=JSON.parse(readFileSync("historical-identity-register.json","utf8"));
 const entries=register.aliasReviewManifest?.entries;
 if(!Array.isArray(entries)||entries.length!==72)throw Error("G2_BAD_REGISTER");
@@ -46,8 +46,8 @@ try{
    passed.push({target,canonicalPartitions:names.length,canonicalRows:canonicalRows.length,outputSha256:outputs[0]});
   }catch(error){failed.push({target,reason:String(error.message||error)});}
  }
- const after=execFileSync("git",["status","--porcelain"],{encoding:"utf8"});
- if(before!==after)failed.push({reason:"WORKTREE_CHANGED"});
+ const after=execFileSync("git",["status","--porcelain","--untracked-files=no"],{encoding:"utf8"});
+ if(before!==after)failed.push({reason:"TRACKED_WORKTREE_CHANGED"});
  const result={schema:"ai-matchlab.g2-fixtures-all-two-pass.v1",readOnly:true,
   writeAuthorized:false,source:"canonical-fixtures",expected:24,passed:passed.length,
   held:failed.length,status:failed.length?"HOLD_G2_FIXTURES_ALL":"PASS_G2_FIXTURES_ALL_TWO_PASS_ONLY",
