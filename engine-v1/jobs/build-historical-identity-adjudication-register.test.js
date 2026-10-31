@@ -108,6 +108,9 @@ test("canonical authority inventory stays read-only and enumerates exact source-
   assert.equal(report.canonicalAuthorityCounts.CANONICAL_SOURCE_BOUND_CANDIDATE,1);
   assert.equal(report.canonicalSourceBoundCases.length,1);
   assert.equal(report.canonicalSourceBoundCases[0].retainedCanonicalId,"cid_retained");
+  assert.equal(report.cases[0].reconciliationLead.retainedCanonicalId,"cid_retained");
+  assert.equal(report.cases[0].reconciliationLead.approvedForWrite,false);
+  assert.equal(report.cases[0].reconciliationLead.requiredAction,"INDEPENDENT_FINAL_AND_KICKOFF_ADJUDICATION");
   assert.equal(report.canonicalSourceBoundCases[0].approvedForWrite,false);
   assert.equal(report.safelyScopedCanonicalCandidateCount,0);
   assert.equal(report.safelyScopedCanonicalCandidates.length,0);
