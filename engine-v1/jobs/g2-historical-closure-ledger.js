@@ -7,6 +7,7 @@ const definitions=[
  {name:"G2_ODDS",path:"g2-odds-two-pass.json",expected:8,pass:"PASS_G2_ODDS_DETERMINISM_ONLY",count:"passed",total:"expected"},
  {name:"G2_DETAILS",path:"g2-details-two-pass.json",expected:66,pass:"PASS_G2_DETAILS_DETERMINISM_ONLY",count:"passed",total:"expected"},
  {name:"G2_MANIFEST_REFERENCES",path:"g2-manifest-integrity.json",expected:20,pass:"PASS_G2_MANIFEST_REFERENCES_ONLY",count:"passed",total:"expected"},
+ {name:"G2_VALUE_AUDIT_PRESERVATION",path:"g2-value-audit-integrity.json",expected:17,pass:"PASS_G2_VALUE_AUDIT_PRESERVATION_ONLY",count:"passed",total:"expected"},
 ];
 const sha=b=>createHash("sha256").update(b).digest("hex");
 const rows=definitions.map(item=>{
