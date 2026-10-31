@@ -24,7 +24,11 @@ export function findCanonicalAuthorityForCase(root, evidence) {
     matches.push({canonicalId:id,fixturePath:join("data","canonical-fixtures",first[1],entry)});
    }
   }
- } catch(error) {return {status:"HOLD_CANONICAL_EVIDENCE_UNREADABLE",reason:String(error.message)};}
+ } catch(error) {
+  if(error?.code==="ENOENT" && error?.path===dir)
+   return {status:"HOLD_CANONICAL_AMBIGUOUS_OR_MISSING",matches:[],reason:"canonical_day_directory_missing"};
+  return {status:"HOLD_CANONICAL_EVIDENCE_UNREADABLE",reason:String(error.message)};
+ }
  const ids=[...new Set(matches.map(x=>x.canonicalId))];
  if(ids.length!==1)return {status:"HOLD_CANONICAL_AMBIGUOUS_OR_MISSING",matches};
  return {status:"CANONICAL_SOURCE_BOUND_CANDIDATE",canonicalId:ids[0],
