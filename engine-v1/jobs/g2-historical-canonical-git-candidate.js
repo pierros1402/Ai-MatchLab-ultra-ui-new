@@ -40,12 +40,17 @@ for(const day of inventory.days){
    else index.set(key,h);
   }
  }
- const matched=[],unmatched=[],matchedCanonical=new Set();
+ const matched=[],unmatched=[],matchedCanonical=new Set(),finalByCanonical=new Map();
  for(const f of finals){
   const h=index.get(f.id);
   if(!h)unmatched.push({path:f.path,id:f.id,reason:"NO_SOURCE_BOUND_CANONICAL_OR_PROVIDER_ID"});
   else{
-   if(matchedCanonical.has(h.id))failures.push({path:f.path,id:f.id,reason:"MULTIPLE_FINALS_FOR_CANONICAL_ID:"+h.id});
+   if(finalByCanonical.has(h.id)){
+    const previous=finalByCanonical.get(h.id);
+    const sameScore=Number(previous.payload.homeScore)===Number(f.payload.homeScore)&&Number(previous.payload.awayScore)===Number(f.payload.awayScore);
+    const bothVerified=previous.payload.verifiedFinalTruth===true&&f.payload.verifiedFinalTruth===true;
+    if(!sameScore||!bothVerified)failures.push({path:f.path,id:f.id,canonicalId:h.id,reason:"CONFLICTING_DUPLICATE_FINAL",previousPath:previous.path,previousScore:[previous.payload.homeScore,previous.payload.awayScore],currentScore:[f.payload.homeScore,f.payload.awayScore]});
+   }else finalByCanonical.set(h.id,f);
    if(h.status==="FT" && Number.isFinite(h.scoreHome)&&Number.isFinite(h.scoreAway) && (Number(f.payload.homeScore)!==h.scoreHome||Number(f.payload.awayScore)!==h.scoreAway))failures.push({path:f.path,id:f.id,canonicalId:h.id,reason:"HISTORICAL_FT_SCORE_CONFLICT",historicalScore:[h.scoreHome,h.scoreAway],verifiedFinalScore:[f.payload.homeScore,f.payload.awayScore]});
    matchedCanonical.add(h.id);
    matched.push({path:f.path,id:f.id,canonicalId:h.id,matchMode:f.id===h.id?"CANONICAL_ID":"PROVIDER_SOURCE_ID",historicalStatus:h.status,source:h.source});
