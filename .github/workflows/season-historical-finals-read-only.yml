@@ -59,6 +59,14 @@ jobs:
       - name: G2 two-pass rebuild of 24 fixtures-all from canonical partitions
         if: always()
         run: node engine-v1/jobs/g2-historical-two-pass-fixtures-all-sandbox.js
+      - name: Retain actual G2 fixtures-all rebuilt payloads, no repository writes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g2-fixtures-all-payload-${{ github.sha }}
+          path: g2-fixtures-all-payload/
+          if-no-files-found: warn
+          retention-days: 30
       - name: Retain G2 fixtures-all rebuild evidence
         if: always()
         uses: actions/upload-artifact@v4
