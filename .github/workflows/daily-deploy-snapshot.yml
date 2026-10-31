@@ -22,9 +22,11 @@ on:
     # P3.1 atomic-midnight contract: scheduled full publication is PRE-MIDNIGHT
     # only and always targets TOMORROW. UTC candidates cover both Athens DST and
     # standard time; the local guard admits the useful 17:30-22:10 window.
+    # Two candidates (early and final) replace seven hourly queue entries;
+    # preserve the existing shared non-cancelling data-writer lock.
     # A normal early candidate publishes tomorrow once; the 20:45+ candidate is
     # the final refresh. No scheduled full TODAY build is allowed after 00:00.
-    - cron: "17 14,15,16,17,18,19,20 * * *"
+    - cron: "17 15,19 * * *"
 
 permissions:
   contents: write
