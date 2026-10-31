@@ -168,11 +168,16 @@ export function buildHistoricalG1TerminalAdjudication(register) {
      typeof evidence?.secondProviderTerminal==="boolean";
    const terminalDisagreement=terminalKnown &&
      evidence.firstProviderTerminal!==evidence.secondProviderTerminal;
+   const explicitConflict=[evidence.firstProviderTerminalEvidence,evidence.secondProviderTerminalEvidence].includes("EXPLICIT_NONFINAL") &&
+     [evidence.firstProviderTerminalEvidence,evidence.secondProviderTerminalEvidence].includes("CONFIRMED_FINAL");
+   const missingEvidence=[evidence.firstProviderTerminalEvidence,evidence.secondProviderTerminalEvidence].includes("UNSPECIFIED");
    return {caseId:candidate.caseId,retainedCanonicalId:candidate.retainedCanonicalId,
      aliasCandidateId:candidate.aliasCandidateId,
      bindingValid:Boolean(bindingValid),terminalKnown,
-     terminalDisagreement,
+     terminalDisagreement,explicitConflict,missingEvidence,
      terminalTruthStatus:!bindingValid?"HOLD_SOURCE_BINDING":
+       missingEvidence?"HOLD_TERMINAL_EVIDENCE_MISSING":
+       explicitConflict?"HOLD_EXPLICIT_TERMINAL_CONFLICT":
        !terminalKnown?"HOLD_TERMINAL_EVIDENCE_MISSING":
        terminalDisagreement?"HOLD_INDEPENDENT_TERMINAL_TRUTH_REQUIRED":
        "TERMINAL_FLAGS_AGREE_INDEPENDENT_TRUTH_STILL_REQUIRED",
@@ -182,6 +187,8 @@ export function buildHistoricalG1TerminalAdjudication(register) {
    readOnly:true,approvedForWrite:false,
    candidateCount:rows.length,
    terminalDisagreementCount:rows.filter(row=>row.terminalDisagreement).length,
+   missingTerminalMetadataCount:rows.filter(row=>row.missingEvidence).length,
+   explicitTerminalConflictCount:rows.filter(row=>row.explicitConflict).length,
    independentlyVerifiedCount:0,
    approvedWriteActions:0,
    status:"HOLD_INDEPENDENT_TRUTH_AND_DEPENDENCY_REBUILD",
@@ -264,7 +271,9 @@ export function buildHistoricalIdentityAdjudicationRegister(audit,root=null) {
      firstKickoffUtc:row.firstKickoffUtc||null,
      secondKickoffUtc:row.secondKickoffUtc||null,
      firstProviderTerminal:row.firstProviderTerminal,
-     secondProviderTerminal:row.secondProviderTerminal};
+     secondProviderTerminal:row.secondProviderTerminal,
+     firstProviderTerminalEvidence:row.firstProviderTerminalEvidence||"UNSPECIFIED",
+     secondProviderTerminalEvidence:row.secondProviderTerminalEvidence||"UNSPECIFIED"};
    const digest=createHash("sha256").update(JSON.stringify(evidence)).digest("hex");
    const identicalScore=row.scoreAgreement===true;
    const identicalKickoff=row.kickoffAgreement===true;
