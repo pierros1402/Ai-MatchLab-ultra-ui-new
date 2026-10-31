@@ -43,6 +43,22 @@ jobs:
           path: historical-identity-register.json
           if-no-files-found: error
           retention-days: 30
+      - name: G2 execute existing P0-C producer adapter regression in real checkout
+        if: always()
+        run: |
+          set -eu
+          node --check engine-v1/jobs/p0c-p4-ready-family-adapters.js
+          node --check engine-v1/jobs/p0c-p4-family-adapter-contract.js
+          node --test engine-v1/jobs/p0c-p4-ready-family-adapters.test.js engine-v1/jobs/p0c-p4-family-adapter-contract.test.js
+          printf '%s\\n' '{"schema":"ai-matchlab.g2-existing-producers-regression.v1","phase":"TESTED_EXISTING_ADAPTERS_NOT_HISTORICAL_REBUILD","sourceBound":true,"writeAuthorized":false,"historicalResultsChanged":false}' > g2-existing-producers-regression.json
+      - name: Retain G2 real-checkout producer evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g2-producer-tests-${{ github.sha }}
+          path: g2-existing-producers-regression.json
+          if-no-files-found: warn
+          retention-days: 30
       - name: G0 rehash all 559 source-bound dependencies in checkout
         if: always()
         env:
