@@ -72,7 +72,12 @@ export function auditAllVerifiedFinalProviderIdentities(root) {
            : null});
     } else if(!previous)index.set(key,{path:file,matchId:payload?.matchId||null,score:[payload?.homeScore,payload?.awayScore],
        kickoffUtc:payload?.kickoffUtc||null,
-       providerTerminal:source.finished===true && source.playedFinal===true});
+       providerTerminal:payload.sources.some(x=>{
+         const identity=verifiedProviderIdentity(x);
+         return identity?.provider===source.provider &&
+           identity?.providerMatchId===source.providerMatchId &&
+           x.finished===true && x.playedFinal===true;
+       })});
    }
   } catch(error) {
    unverifiable.push({path:file,reason:"provider_source_unreadable",error:String(error?.message||error)});
