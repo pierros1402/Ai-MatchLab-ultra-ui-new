@@ -282,8 +282,14 @@ test("alias preflight qualifies only fully source-bound, dependency-bound pairs 
    evidence:{provider:"espn",providerMatchId:"id-123"}}],
   safelyScopedCanonicalCandidates:[{caseId:"case-1",retainedCanonicalId:"cid_retained",
    aliasCandidateId:"cid_alias",provider:"espn",providerMatchId:"id-123",
+   firstPath:"data/final-results/2026-08-15/cid_retained.json",
+   secondPath:"data/final-results/2026-08-15/cid_alias.json",
    dependencyAudit:{readOnly:true,approvedForWrite:false,writeSetApproved:false,
-    retainedId:"cid_retained",aliasId:"cid_alias",fileCount:2,references:[]}}]};
+    retainedId:"cid_retained",aliasId:"cid_alias",fileCount:2,
+    aliasOccurrenceCount:1,retainedOccurrenceCount:1,
+    references:[
+     {path:"data/final-results/2026-08-15/cid_retained.json",category:"VERIFIED_FINAL",aliasOccurrences:0,retainedOccurrences:1,writeAuthorized:false},
+     {path:"data/final-results/2026-08-15/cid_alias.json",category:"VERIFIED_FINAL",aliasOccurrences:1,retainedOccurrences:0,writeAuthorized:false}]}}]};
  const good=buildHistoricalAliasPreflight(base);
  assert.equal(good.preflightQualifiedCount,1);
  assert.equal(good.blockedCount,0);
@@ -295,6 +301,11 @@ test("alias preflight qualifies only fully source-bound, dependency-bound pairs 
     writeSetApproved:true}}]});
  assert.equal(bad.preflightQualifiedCount,0);
  assert.equal(bad.blockedCount,1);
+ const mismatched=buildHistoricalAliasPreflight({...base,
+  safelyScopedCanonicalCandidates:[{...base.safelyScopedCanonicalCandidates[0],
+   dependencyAudit:{...base.safelyScopedCanonicalCandidates[0].dependencyAudit,
+    aliasOccurrenceCount:9}}]});
+ assert.equal(mismatched.preflightQualifiedCount,0);
  assert.throws(()=>buildHistoricalAliasPreflight({...base,approvedForWrite:true}),
   /invalid_historical_register/);
 });
