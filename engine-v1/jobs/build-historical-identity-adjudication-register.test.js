@@ -398,3 +398,23 @@ test("G1 missing terminal flags are unknown, not explicit nonfinal",()=>{
  assert.equal(result.cases[0].terminalTruthStatus,"HOLD_TERMINAL_EVIDENCE_MISSING");
  assert.equal(result.approvedWriteActions,0);
 });
+
+test("G1 identifies canonical confirmed-final versus alias missing metadata without approving write",()=>{
+ for(const canonicalFirst of [true,false]){
+  const evidence={firstMatchId:canonicalFirst?"canonical":"alias",
+   secondMatchId:canonicalFirst?"alias":"canonical",
+   firstProviderTerminalEvidence:canonicalFirst?"CONFIRMED_FINAL":"UNSPECIFIED",
+   secondProviderTerminalEvidence:canonicalFirst?"UNSPECIFIED":"CONFIRMED_FINAL",
+   firstProviderTerminal:canonicalFirst,secondProviderTerminal:!canonicalFirst};
+  const reg={readOnly:true,approvedForWrite:false,
+   safelyScopedCanonicalCandidates:[{caseId:"HIST-demo",retainedCanonicalId:"canonical",aliasCandidateId:"alias"}],
+   cases:[{caseId:"HIST-demo",evidenceState:"DUPLICATE_CANDIDATE_REQUIRES_CANONICAL_PROOF",
+    canonicalAuthority:{status:"CANONICAL_SOURCE_BOUND_CANDIDATE",canonicalId:"canonical"},evidence}]};
+  const out=buildHistoricalG1TerminalAdjudication(reg);
+  assert.equal(out.canonicalFinalAliasUnspecifiedCount,1);
+  assert.equal(out.cases[0].canonicalTerminalEvidence,"CONFIRMED_FINAL");
+  assert.equal(out.cases[0].aliasTerminalEvidence,"UNSPECIFIED");
+  assert.equal(out.cases[0].writeAuthorized,false);
+  assert.equal(out.approvedWriteActions,0);
+ }
+});
