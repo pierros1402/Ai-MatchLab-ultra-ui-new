@@ -232,6 +232,10 @@ test("legacy canonical sourceId is accepted only when sourceMatchId is absent",(
   ]}));
   assert.equal(findCanonicalAuthorityForCase(root,evidence).status,"HOLD_CANONICAL_AMBIGUOUS_OR_MISSING");
   writeFileSync(fixture,JSON.stringify({fixtures:[
+   {canonicalId:"cid_retained",source:"espn",sourceMatchId:"401881684",sourceId:"conflicting"}
+  ]}));
+  assert.equal(findCanonicalAuthorityForCase(root,evidence).status,"HOLD_CANONICAL_AMBIGUOUS_OR_MISSING");
+  writeFileSync(fixture,JSON.stringify({fixtures:[
    {canonicalId:"cid_retained",source:"flashscore",sourceId:"401881684"}
   ]}));
   assert.equal(findCanonicalAuthorityForCase(root,evidence).status,"HOLD_CANONICAL_AMBIGUOUS_OR_MISSING");
