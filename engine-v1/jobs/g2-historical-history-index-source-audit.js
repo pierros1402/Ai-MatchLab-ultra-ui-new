@@ -5,7 +5,7 @@ const targets=["data/history-index/matchups/2025-2026.json","data/history-index/
  "data/history-index/team-form/2025-2026.json","data/history-index/team-form/2026-2027.json"];
 const register=JSON.parse(readFileSync("historical-identity-register.json","utf8"));
 const entries=register.aliasReviewManifest?.entries;
-if(!Array.isArray(entries)||entries.length!==72)throw Error("G2_HISTORY_REGISTER_NOT_BOUND");
+if(!Array.isArray(entries)||!entries.length||register.readOnly!==true||register.approvedForWrite!==false||register.aliasPreflight?.preflightQualifiedCount!==entries.length||!Array.isArray(register.aliasSourceBoundManifest?.files))throw Error("G2_SOURCE_REGISTER_INCONSISTENT");
 const referenced=new Set(entries.flatMap(x=>(x.dependencies||[]).map(y=>y.path)));
 if(targets.some(t=>!referenced.has(t)))throw Error("G2_HISTORY_TARGET_NOT_SOURCE_BOUND");
 const before=execFileSync("git",["status","--porcelain","--untracked-files=no"],{encoding:"utf8"});
