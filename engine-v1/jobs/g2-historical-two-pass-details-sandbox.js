@@ -11,7 +11,7 @@ const entries=report.aliasReviewManifest?.entries;
 if(!Array.isArray(entries)||!entries.length||report.readOnly!==true||report.approvedForWrite!==false||report.aliasPreflight?.preflightQualifiedCount!==entries.length||!Array.isArray(report.aliasSourceBoundManifest?.files))throw Error("G2_SOURCE_REGISTER_INCONSISTENT");
 const targets=[...new Set(entries.flatMap(x=>(x.dependencies||[]).map(d=>d.path)
  .filter(p=>/^data\/deploy-snapshots\/\d{4}-\d{2}-\d{2}\/details\/[^/]+\.json$/.test(p))))].sort();
-if(targets.length!==66)throw Error("G2_DETAILS_TARGET_COUNT_CHANGED:"+targets.length);
+if(!targets.length||targets.some(path=>!report.aliasSourceBoundManifest.files.some(file=>file.path===path)))throw Error("G2_DETAILS_TARGETS_NOT_SOURCE_BOUND");
 const byDay=new Map();
 for(const path of targets){const day=path.split("/")[2];if(!byDay.has(day))byDay.set(day,[]);byDay.get(day).push(path);}
 const dirs=[mkdtempSync(join(tmpdir(),"aiml-details-a-")),mkdtempSync(join(tmpdir(),"aiml-details-b-"))];
