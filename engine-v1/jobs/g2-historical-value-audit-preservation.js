@@ -5,7 +5,7 @@ const sha=x=>createHash("sha256").update(x).digest("hex");
 const before=execFileSync("git",["status","--porcelain","--untracked-files=no"],{encoding:"utf8"});
 const register=JSON.parse(readFileSync("historical-identity-register.json","utf8"));
 const entries=register.aliasReviewManifest?.entries;
-if(!Array.isArray(entries)||entries.length!==72)throw Error("G2_VALUE_AUDIT_REGISTER_NOT_72");
+if(!Array.isArray(entries)||!entries.length||register.readOnly!==true||register.approvedForWrite!==false||register.aliasPreflight?.preflightQualifiedCount!==entries.length||!Array.isArray(register.aliasSourceBoundManifest?.files))throw Error("G2_SOURCE_REGISTER_INCONSISTENT");
 const targets=[...new Set(entries.flatMap(e=>(e.dependencies||[]).map(d=>d.path)
  .filter(p=>/^data\/deploy-snapshots\/\d{4}-\d{2}-\d{2}\/value-audit\.json$/.test(p))))].sort();
 if(targets.length!==17)throw Error("G2_VALUE_AUDIT_TARGET_COUNT:"+targets.length);
