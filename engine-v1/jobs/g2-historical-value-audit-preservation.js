@@ -23,7 +23,8 @@ for(const path of targets){
   if(sum!==a.rejections?.total)throw Error("VALUE_AUDIT_REJECTION_COUNTS_MISMATCH");
   const existing=JSON.parse(readFileSync("data/deploy-snapshots/"+day+"/fixtures.json","utf8"));
   const fixtureRows=Array.isArray(existing.fixtures)?existing.fixtures:existing.matches;
-  if(!Array.isArray(fixtureRows)||a.universe.fixturesSeen!==fixtureRows.length)throw Error("VALUE_AUDIT_FIXTURE_COUNT_DIFFERENCE");
+  if(!Array.isArray(fixtureRows))throw Error("VALUE_AUDIT_FIXTURE_SOURCE_INVALID");
+  if(a.universe.fixturesSeen!==fixtureRows.length)throw Error("VALUE_AUDIT_FIXTURE_COUNT_DIFFERENCE:audited="+a.universe.fixturesSeen+":snapshot="+fixtureRows.length);
   passed.push({path,sha256:sha(bytes),fixtureCount:fixtureRows.length,approved:a.universe.approved});
  }catch(e){held.push({path,reason:String(e.message||e)});}
 }
