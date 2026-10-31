@@ -21,7 +21,7 @@ for(const day of inventory.days){
     const id=row.canonicalId||row.matchId;
     if(!id||seen.has(String(id)))failures.push({path:item.path,id,reason:"DUPLICATE_OR_MISSING_CANONICAL_ID"});
     else seen.add(String(id));
-    historical.push({id:String(id||""),status:row.status,score:row.score??null,source:item.path});
+    historical.push({id:String(id||""),matchId:String(row.matchId||""),sourceId:String(row.sourceId||""),status:row.status,score:row.score??null,source:item.path});
    }
   }catch(e){failures.push({path:item.path,reason:String(e.message||e)})}
  }
@@ -33,14 +33,25 @@ for(const day of inventory.days){
    finals.push({path,id:String(p.canonicalId||p.matchId||""),payload:p});
   }catch(e){failures.push({path,reason:"FINAL_READ_ERROR:"+String(e.message||e)})}
  }
- const index=new Map(historical.map(x=>[x.id,x]));
- const matched=[],unmatched=[];
+ const index=new Map(),aliasConflicts=[];
+ for(const h of historical){
+  for(const key of new Set([h.id,h.matchId,h.sourceId].filter(Boolean))){
+   if(index.has(key)&&index.get(key).id!==h.id)aliasConflicts.push({key,first:index.get(key).id,second:h.id});
+   else index.set(key,h);
+  }
+ }
+ const matched=[],unmatched=[],matchedCanonical=new Set();
  for(const f of finals){
   const h=index.get(f.id);
-  if(!h)unmatched.push({path:f.path,id:f.id,reason:"NO_HISTORICAL_CANONICAL_ID"});
-  else matched.push({path:f.path,id:f.id,historicalStatus:h.status,source:h.source});
+  if(!h)unmatched.push({path:f.path,id:f.id,reason:"NO_SOURCE_BOUND_CANONICAL_OR_PROVIDER_ID"});
+  else{
+   if(matchedCanonical.has(h.id))failures.push({path:f.path,id:f.id,reason:"MULTIPLE_FINALS_FOR_CANONICAL_ID:"+h.id});
+   matchedCanonical.add(h.id);
+   matched.push({path:f.path,id:f.id,canonicalId:h.id,matchMode:f.id===h.id?"CANONICAL_ID":"PROVIDER_SOURCE_ID",historicalStatus:h.status,source:h.source});
+  }
  }
- const unpairedHistorical=historical.filter(h=>!finals.some(f=>f.id===h.id));
+ for(const conflict of aliasConflicts)failures.push({reason:"AMBIGUOUS_HISTORICAL_PROVIDER_ALIAS",...conflict});
+ const unpairedHistorical=historical.filter(h=>!matchedCanonical.has(h.id));
  results.push({day:day.day,commit:day.commit,unpairedHistorical,files:paths.length,historicalRows:historical.length,historicalFT:historical.filter(x=>x.status==="FT").length,finalFiles:files.length,matched,unmatched,failures});
 }
 const result={schema:"ai-matchlab.historical-git-canonical-candidate.v1",readOnly:true,writeAuthorized:false,ftMutationAuthorized:false,approval:"HOLD_PENDING_INDEPENDENT_FINAL_TRUTH_RECONCILIATION",results};
