@@ -12,6 +12,7 @@ on:
       - "engine-v1/jobs/g2-historical-two-pass-fixtures-all-sandbox.js"
       - "engine-v1/jobs/g2-historical-two-pass-odds-sandbox.js"
       - "engine-v1/jobs/g2-historical-two-pass-details-sandbox.js"
+      - "engine-v1/jobs/g2-historical-closure-ledger.js"
       - ".github/workflows/season-historical-finals-read-only.yml"
 permissions:
   contents: read
@@ -99,6 +100,17 @@ jobs:
           path: g2-details-two-pass.json
           if-no-files-found: warn
           retention-days: 30
+      - name: G2 evidence-bound scope closure ledger
+        if: always()
+        run: node engine-v1/jobs/g2-historical-closure-ledger.js
+      - name: Retain G2 closure ledger permanently with workflow evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-g2-closure-${{ github.sha }}
+          path: g2-closure-ledger.json
+          if-no-files-found: error
+          retention-days: 90
       - name: G2 execute existing P0-C producer adapter regression in real checkout
         if: always()
         run: |
