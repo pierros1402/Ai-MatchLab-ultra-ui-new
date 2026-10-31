@@ -180,3 +180,35 @@ test("empty retained-id git grep is not an inventory failure",()=>{
   assert.equal(x.approvedForWrite,false);
  }finally{rmSync(root,{recursive:true,force:true});}
 });
+
+
+test("missing canonical day is classified as missing evidence without write authority",()=>{
+ const root=mkdtempSync(join(tmpdir(),"aiml-missing-canonical-day-"));
+ try {
+  const evidence={provider:"espn",providerMatchId:"123",
+   firstPath:"data/final-results/2026-07-13/cid_a.json",
+   secondPath:"data/final-results/2026-07-13/cid_b.json",
+   firstMatchId:"cid_a",secondMatchId:"cid_b"};
+  const result=findCanonicalAuthorityForCase(root,evidence);
+  assert.equal(result.status,"HOLD_CANONICAL_AMBIGUOUS_OR_MISSING");
+  assert.equal(result.reason,"canonical_day_directory_missing");
+  assert.deepEqual(result.matches,[]);
+  assert.notEqual(result.approvedForWrite,true);
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
+
+test("malformed existing canonical evidence must still be unreadable, never accepted",()=>{
+ const root=mkdtempSync(join(tmpdir(),"aiml-unreadable-canonical-day-"));
+ try {
+  const dir=join(root,"data","canonical-fixtures","2026-07-13");
+  mkdirSync(dir,{recursive:true});
+  writeFileSync(join(dir,"broken.json"),"{invalid");
+  const result=findCanonicalAuthorityForCase(root,{
+   provider:"espn",providerMatchId:"123",
+   firstPath:"data/final-results/2026-07-13/cid_a.json",
+   secondPath:"data/final-results/2026-07-13/cid_b.json",
+   firstMatchId:"cid_a",secondMatchId:"cid_b"});
+  assert.equal(result.status,"HOLD_CANONICAL_EVIDENCE_UNREADABLE");
+  assert.notEqual(result.approvedForWrite,true);
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
