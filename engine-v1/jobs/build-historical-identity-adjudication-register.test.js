@@ -212,3 +212,28 @@ test("malformed existing canonical evidence must still be unreadable, never acce
   assert.notEqual(result.approvedForWrite,true);
  }finally{rmSync(root,{recursive:true,force:true});}
 });
+
+test("legacy canonical sourceId is accepted only when sourceMatchId is absent",()=>{
+ const root=mkdtempSync(join(tmpdir(),"aiml-legacy-source-id-"));
+ try {
+  const dir=join(root,"data","canonical-fixtures","2026-08-15");
+  mkdirSync(dir,{recursive:true});
+  const fixture=join(dir,"legacy.json");
+  const evidence={provider:"espn",providerMatchId:"401881684",
+   firstPath:"data/final-results/2026-08-15/cid_retained.json",
+   secondPath:"data/final-results/2026-08-15/cid_alias.json",
+   firstMatchId:"cid_retained",secondMatchId:"cid_alias"};
+  writeFileSync(fixture,JSON.stringify({fixtures:[
+   {canonicalId:"cid_retained",source:"espn",sourceId:"401881684"}
+  ]}));
+  assert.equal(findCanonicalAuthorityForCase(root,evidence).status,"CANONICAL_SOURCE_BOUND_CANDIDATE");
+  writeFileSync(fixture,JSON.stringify({fixtures:[
+   {canonicalId:"cid_retained",source:"espn",sourceId:"401881684",sourceMatchId:"conflicting"}
+  ]}));
+  assert.equal(findCanonicalAuthorityForCase(root,evidence).status,"HOLD_CANONICAL_AMBIGUOUS_OR_MISSING");
+  writeFileSync(fixture,JSON.stringify({fixtures:[
+   {canonicalId:"cid_retained",source:"flashscore",sourceId:"401881684"}
+  ]}));
+  assert.equal(findCanonicalAuthorityForCase(root,evidence).status,"HOLD_CANONICAL_AMBIGUOUS_OR_MISSING");
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
