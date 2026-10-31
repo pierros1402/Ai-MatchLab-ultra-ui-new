@@ -21,7 +21,7 @@ for(const day of inventory.days){
     const id=row.canonicalId||row.matchId;
     if(!id||seen.has(String(id)))failures.push({path:item.path,id,reason:"DUPLICATE_OR_MISSING_CANONICAL_ID"});
     else seen.add(String(id));
-    historical.push({id:String(id||""),matchId:String(row.matchId||""),sourceId:String(row.sourceId||""),status:row.status,score:row.score??null,source:item.path});
+    historical.push({id:String(id||""),matchId:String(row.matchId||""),sourceId:String(row.sourceId||""),status:row.status,scoreHome:row.scoreHome??null,scoreAway:row.scoreAway??null,source:item.path});
    }
   }catch(e){failures.push({path:item.path,reason:String(e.message||e)})}
  }
@@ -46,6 +46,7 @@ for(const day of inventory.days){
   if(!h)unmatched.push({path:f.path,id:f.id,reason:"NO_SOURCE_BOUND_CANONICAL_OR_PROVIDER_ID"});
   else{
    if(matchedCanonical.has(h.id))failures.push({path:f.path,id:f.id,reason:"MULTIPLE_FINALS_FOR_CANONICAL_ID:"+h.id});
+   if(h.status==="FT" && Number.isFinite(h.scoreHome)&&Number.isFinite(h.scoreAway) && (Number(f.payload.homeScore)!==h.scoreHome||Number(f.payload.awayScore)!==h.scoreAway))failures.push({path:f.path,id:f.id,canonicalId:h.id,reason:"HISTORICAL_FT_SCORE_CONFLICT",historicalScore:[h.scoreHome,h.scoreAway],verifiedFinalScore:[f.payload.homeScore,f.payload.awayScore]});
    matchedCanonical.add(h.id);
    matched.push({path:f.path,id:f.id,canonicalId:h.id,matchMode:f.id===h.id?"CANONICAL_ID":"PROVIDER_SOURCE_ID",historicalStatus:h.status,source:h.source});
   }
