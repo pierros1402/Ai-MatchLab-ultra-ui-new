@@ -1,7 +1,7 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-10-30",
-  "generatedAt": "2026-10-30T22:03:25.569Z",
+  "generatedAt": "2026-10-31T00:05:19.512Z",
   "severity": "warning",
   "issueCounts": {
     "error": 0,
@@ -11,16 +11,40 @@
   "alert": true,
   "alertCounts": {
     "error": 0,
-    "warning": 2,
+    "warning": 4,
     "info": 0
   },
   "activeIssueCount": 18,
   "actionableIssueCount": 9,
-  "newIssueCount": 2,
-  "newActionableIssueCount": 2,
-  "resolvedIssueCount": 2,
-  "persistentIssueCount": 16,
+  "newIssueCount": 7,
+  "newActionableIssueCount": 4,
+  "resolvedIssueCount": 8,
+  "persistentIssueCount": 11,
   "activeIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-10-30.json",
+        "at": "2026-10-30T21:47:42.027Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -11148
+      }
+    },
     {
       "severity": "info",
       "source": "freshness-report",
@@ -276,38 +300,6 @@
           "rejectedCount": 14,
           "alreadyDeclaredCount": 0
         }
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "value-comparison",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B picks remain unresolved 1 day after fixture day.",
-      "details": {
-        "dayKey": "2026-10-30",
-        "todayDayKey": "2026-10-31",
-        "ageDays": 1,
-        "overdue": true,
-        "settlementSource": "value-comparison",
-        "picks": 4,
-        "settled": 3,
-        "unresolved": 1
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "value-comparison",
-      "type": "plan_b2_unresolved_settlement",
-      "message": "Plan B2 picks remain unresolved 1 day after fixture day.",
-      "details": {
-        "dayKey": "2026-10-30",
-        "todayDayKey": "2026-10-31",
-        "ageDays": 1,
-        "overdue": true,
-        "settlementSource": "value-comparison",
-        "picks": 4,
-        "settled": 3,
-        "unresolved": 1
       }
     },
     {
@@ -1023,13 +1015,13 @@
           "summary": {
             "picks": 4,
             "uniqueMatches": 3,
-            "settled": 3,
+            "settled": 4,
             "wins": 3,
-            "losses": 0,
+            "losses": 1,
             "voids": 0,
-            "unresolved": 1,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": 1,
+            "hitRate": 0.75,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -1043,13 +1035,13 @@
           "summary": {
             "picks": 4,
             "uniqueMatches": 3,
-            "settled": 3,
+            "settled": 4,
             "wins": 3,
-            "losses": 0,
+            "losses": 1,
             "voids": 0,
-            "unresolved": 1,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": 1,
+            "hitRate": 0.75,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -1062,6 +1054,30 @@
     }
   ],
   "actionableIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-10-30.json",
+        "at": "2026-10-30T21:47:42.027Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -11148
+      }
+    },
     {
       "severity": "warning",
       "source": "value-input",
@@ -1153,38 +1169,6 @@
         "clean": true,
         "cleanStrict": false,
         "contextOnlyWarnings": false
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "value-comparison",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B picks remain unresolved 1 day after fixture day.",
-      "details": {
-        "dayKey": "2026-10-30",
-        "todayDayKey": "2026-10-31",
-        "ageDays": 1,
-        "overdue": true,
-        "settlementSource": "value-comparison",
-        "picks": 4,
-        "settled": 3,
-        "unresolved": 1
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "value-comparison",
-      "type": "plan_b2_unresolved_settlement",
-      "message": "Plan B2 picks remain unresolved 1 day after fixture day.",
-      "details": {
-        "dayKey": "2026-10-30",
-        "todayDayKey": "2026-10-31",
-        "ageDays": 1,
-        "overdue": true,
-        "settlementSource": "value-comparison",
-        "picks": 4,
-        "settled": 3,
-        "unresolved": 1
       }
     },
     {
@@ -1839,106 +1823,28 @@
   "newIssues": [
     {
       "severity": "warning",
-      "source": "value-comparison",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B picks remain unresolved 1 day after fixture day.",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
       "details": {
-        "dayKey": "2026-10-30",
-        "todayDayKey": "2026-10-31",
-        "ageDays": 1,
-        "overdue": true,
-        "settlementSource": "value-comparison",
-        "picks": 4,
-        "settled": 3,
-        "unresolved": 1
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
       }
     },
     {
       "severity": "warning",
-      "source": "value-comparison",
-      "type": "plan_b2_unresolved_settlement",
-      "message": "Plan B2 picks remain unresolved 1 day after fixture day.",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
       "details": {
-        "dayKey": "2026-10-30",
-        "todayDayKey": "2026-10-31",
-        "ageDays": 1,
-        "overdue": true,
-        "settlementSource": "value-comparison",
-        "picks": 4,
-        "settled": 3,
-        "unresolved": 1
-      }
-    }
-  ],
-  "newActionableIssues": [
-    {
-      "severity": "warning",
-      "source": "value-comparison",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B picks remain unresolved 1 day after fixture day.",
-      "details": {
-        "dayKey": "2026-10-30",
-        "todayDayKey": "2026-10-31",
-        "ageDays": 1,
-        "overdue": true,
-        "settlementSource": "value-comparison",
-        "picks": 4,
-        "settled": 3,
-        "unresolved": 1
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-10-30.json",
+        "at": "2026-10-30T21:47:42.027Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -11148
       }
     },
-    {
-      "severity": "warning",
-      "source": "value-comparison",
-      "type": "plan_b2_unresolved_settlement",
-      "message": "Plan B2 picks remain unresolved 1 day after fixture day.",
-      "details": {
-        "dayKey": "2026-10-30",
-        "todayDayKey": "2026-10-31",
-        "ageDays": 1,
-        "overdue": true,
-        "settlementSource": "value-comparison",
-        "picks": 4,
-        "settled": 3,
-        "unresolved": 1
-      }
-    }
-  ],
-  "resolvedIssues": [
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-10-30",
-        "todayDayKey": "2026-10-30",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 4,
-        "settled": 3,
-        "unresolved": 1
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_b2_unresolved_settlement",
-      "message": "Plan B2 picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-10-30",
-        "todayDayKey": "2026-10-30",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 4,
-        "settled": 3,
-        "unresolved": 1
-      }
-    }
-  ],
-  "persistentIssues": [
     {
       "severity": "info",
       "source": "freshness-report",
@@ -2014,6 +1920,234 @@
         "skipped": "artifact_missing_or_no_timestamp"
       }
     },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "concacaf.central.american.cup",
+          "fifa.wworld.u17",
+          "fra.w.1",
+          "mex.w.1",
+          "uefa.w.europa",
+          "uefa.wchampions",
+          "usa.ncaa.m.1",
+          "usa.ncaa.w.1"
+        ],
+        "raw": "acquisition_skipped_slugs:concacaf.central.american.cup,fifa.wworld.u17,fra.w.1,mex.w.1,uefa.w.europa,uefa.wchampions,usa.ncaa.m.1,usa.ncaa.w.1",
+        "contextOnly": false
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-10-30.json",
+        "at": "2026-10-30T21:47:42.027Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -11148
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "concacaf.central.american.cup",
+          "fifa.wworld.u17",
+          "fra.w.1",
+          "mex.w.1",
+          "uefa.w.europa",
+          "uefa.wchampions",
+          "usa.ncaa.m.1",
+          "usa.ncaa.w.1"
+        ],
+        "raw": "acquisition_skipped_slugs:concacaf.central.american.cup,fifa.wworld.u17,fra.w.1,mex.w.1,uefa.w.europa,uefa.wchampions,usa.ncaa.m.1,usa.ncaa.w.1",
+        "contextOnly": false
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-10-29.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b",
+        "artifact": "value-plans/2026-10-29/plan-b.json",
+        "at": null,
+        "staleReason": "plan_b_stale_against_canonical",
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-10-29",
+          "currentAthensDay": "2026-10-29",
+          "fixtureCount": 116,
+          "frozenHash": "5f58203b39e69bd62a79048f43e912c3332ee2e0d21edb89f272005679e66250",
+          "currentHash": "5f58203b39e69bd62a79048f43e912c3332ee2e0d21edb89f272005679e66250",
+          "strictFrozenParity": true,
+          "membershipParity": true,
+          "descriptorDrift": false,
+          "publicationMembershipPreserved": false,
+          "authorizedShrink": false,
+          "removedFixtureIds": [],
+          "deferredCurrentFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "exact_current_frozen_membership"
+        },
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b2",
+        "artifact": "value-plans/2026-10-29/plan-b2.json",
+        "at": null,
+        "staleReason": "plan_b2_stale_against_canonical",
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-10-29",
+          "currentAthensDay": "2026-10-29",
+          "fixtureCount": 116,
+          "frozenHash": "5f58203b39e69bd62a79048f43e912c3332ee2e0d21edb89f272005679e66250",
+          "currentHash": "5f58203b39e69bd62a79048f43e912c3332ee2e0d21edb89f272005679e66250",
+          "strictFrozenParity": true,
+          "membershipParity": true,
+          "descriptorDrift": false,
+          "publicationMembershipPreserved": false,
+          "authorizedShrink": false,
+          "removedFixtureIds": [],
+          "deferredCurrentFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "exact_current_frozen_membership"
+        },
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_publication_not_ready",
+      "details": {
+        "failure": "foundation_publication_not_ready"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "concacaf.central.american.cup",
+          "eng.w.league_cup",
+          "fifa.wworld.u17",
+          "uefa.w.europa",
+          "uefa.wchampions",
+          "usa.ncaa.m.1",
+          "usa.ncaa.w.1"
+        ],
+        "raw": "acquisition_skipped_slugs:concacaf.central.american.cup,eng.w.league_cup,fifa.wworld.u17,uefa.w.europa,uefa.wchampions,usa.ncaa.m.1,usa.ncaa.w.1",
+        "contextOnly": false
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
+    }
+  ],
+  "persistentIssues": [
     {
       "severity": "warning",
       "source": "value-input",
@@ -2110,37 +2244,6 @@
         "reason": "score_consistent_alias_mirror_conflicts_present",
         "count": 47,
         "informational": true
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "acquisition_skipped_slugs",
-      "message": "Acquisition skipped slugs during fixture acquisition.",
-      "details": {
-        "slugs": [
-          "concacaf.central.american.cup",
-          "fifa.wworld.u17",
-          "fra.w.1",
-          "mex.w.1",
-          "uefa.w.europa",
-          "uefa.wchampions",
-          "usa.ncaa.m.1",
-          "usa.ncaa.w.1"
-        ],
-        "raw": "acquisition_skipped_slugs:concacaf.central.american.cup,fifa.wworld.u17,fra.w.1,mex.w.1,uefa.w.europa,uefa.wchampions,usa.ncaa.m.1,usa.ncaa.w.1",
-        "contextOnly": false
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
-      "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
       }
     },
     {
@@ -2909,13 +3012,13 @@
           "summary": {
             "picks": 4,
             "uniqueMatches": 3,
-            "settled": 3,
+            "settled": 4,
             "wins": 3,
-            "losses": 0,
+            "losses": 1,
             "voids": 0,
-            "unresolved": 1,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": 1,
+            "hitRate": 0.75,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -2929,13 +3032,13 @@
           "summary": {
             "picks": 4,
             "uniqueMatches": 3,
-            "settled": 3,
+            "settled": 4,
             "wins": 3,
-            "losses": 0,
+            "losses": 1,
             "voids": 0,
-            "unresolved": 1,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": 1,
+            "hitRate": 0.75,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
