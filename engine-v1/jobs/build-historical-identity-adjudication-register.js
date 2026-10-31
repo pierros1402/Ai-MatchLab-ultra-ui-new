@@ -22,12 +22,14 @@ export function findCanonicalAuthorityForCase(root, evidence) {
     if(String(row?.source||"").toLowerCase()!==String(evidence.provider||"").toLowerCase()) continue;
     // Historical canonical fixtures may carry sourceId before sourceMatchId existed.
     // Use the fallback only when sourceMatchId is absent; never override a conflicting primary ID.
-    const sourceId=row?.sourceMatchId??row?.sourceId;
-    if(sourceId===null || sourceId===undefined || String(sourceId)!==String(evidence.providerMatchId||"")) continue;
-    // If both provider IDs exist, disagreement is not a trusted canonical binding.
-    if(row?.sourceMatchId!==null && row?.sourceMatchId!==undefined &&
-       row?.sourceId!==null && row?.sourceId!==undefined &&
-       String(row.sourceMatchId)!==String(row.sourceId)) continue;
+    // Provider identity may be stored in the source fields or providerIds map.
+    // All populated identifiers for this provider must agree; a contradiction
+    // is never rescued by a matching fallback.
+    const ids=[row?.sourceMatchId,row?.sourceId,row?.providerIds?.[evidence.provider]]
+      .filter(x=>x!==null && x!==undefined && String(x).trim()!=="")
+      .map(x=>String(x).trim());
+    if(ids.length===0 || new Set(ids).size!==1 ||
+       ids[0]!==String(evidence.providerMatchId||"")) continue;
     matches.push({canonicalId:id,fixturePath:join("data","canonical-fixtures",first[1],entry)});
    }
   }
