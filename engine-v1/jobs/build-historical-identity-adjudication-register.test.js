@@ -1,7 +1,7 @@
 import {execFileSync} from "node:child_process";
 import test from "node:test";
 import assert from "node:assert/strict";
-import {buildHistoricalIdentityAdjudicationRegister,buildHistoricalAliasPreflight,findCanonicalAuthorityForCase,inventoryAliasDependencies} from "./build-historical-identity-adjudication-register.js";
+import {buildHistoricalIdentityAdjudicationRegister,buildHistoricalAliasPreflight,buildHistoricalAliasReviewManifest,findCanonicalAuthorityForCase,inventoryAliasDependencies} from "./build-historical-identity-adjudication-register.js";
 import {mkdtempSync,mkdirSync,writeFileSync,rmSync,readFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
@@ -308,4 +308,31 @@ test("alias preflight qualifies only fully source-bound, dependency-bound pairs 
  assert.equal(mismatched.preflightQualifiedCount,0);
  assert.throws(()=>buildHistoricalAliasPreflight({...base,approvedForWrite:true}),
   /invalid_historical_register/);
+});
+
+test("historical review manifest fails closed and is deterministic",()=>{
+ const invalid={readOnly:true,approvedForWrite:false,cases:[],
+  safelyScopedCanonicalCandidates:[]};
+ const incomplete=buildHistoricalAliasReviewManifest(invalid,{
+  readOnly:true,approvedForWrite:false,writeSetApproved:false,
+  candidateCount:1,blockedCount:1,candidates:[]});
+ assert.equal(incomplete.status,"HOLD_PREFLIGHT_INCOMPLETE");
+ assert.deepEqual(incomplete.entries,[]);
+ const base={...invalid,cases:[{caseId:"id-1"}],
+  safelyScopedCanonicalCandidates:[{
+   caseId:"id-1",retainedCanonicalId:"retained",aliasCandidateId:"alias",
+   provider:"espn",providerMatchId:"provider-1",
+   firstPath:"data/final-results/a.json",secondPath:"data/final-results/b.json",
+   dependencyAudit:{references:[{path:"data/final-results/b.json",category:"VERIFIED_FINAL",
+    prescribedAction:"PRESERVE_EVIDENCE_PENDING_ALIAS_ADJUDICATION",
+    aliasOccurrences:1,retainedOccurrences:0}]}
+  }]};
+ const qualified={readOnly:true,approvedForWrite:false,writeSetApproved:false,
+  candidateCount:1,blockedCount:0,candidates:[{preflightQualified:true,writeAuthorized:false}]};
+ const first=buildHistoricalAliasReviewManifest(base,qualified);
+ assert.equal(first.status,"READY_FOR_INDEPENDENT_REVIEW_NOT_WRITE");
+ assert.equal(first.entries.length,1);
+ assert.equal(first.entries[0].writeAuthorized,false);
+ assert.equal(first.approvedForWrite,false);
+ assert.deepEqual(first,buildHistoricalAliasReviewManifest(base,qualified));
 });
