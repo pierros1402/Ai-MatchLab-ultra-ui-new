@@ -7,8 +7,8 @@ const git=(args)=>execFileSync("git",args,{maxBuffer:32*1024*1024});
 const results=[];
 for(const day of inventory.days){
  const historical=[],failures=[],seen=new Set();
- const paths=git(["ls-tree","-r","--name-only",day.commit,"data/canonical-fixtures/"+day.day+"/"]).toString("utf8").split("
-").filter(x=>x.endsWith(".json"));\n for(const item of paths.map(path=>({path}))){
+ const paths=git(["ls-tree","-r","--name-only",day.commit,"data/canonical-fixtures/"+day.day+"/"]).toString("utf8").split("\n").filter(x=>x.endsWith(".json"));
+ for(const item of paths.map(path=>({path}))){
   try{
    const raw=git(["show",day.commit+":"+item.path]);
    // hash-object receives the original bytes through stdin, without rewriting source.
