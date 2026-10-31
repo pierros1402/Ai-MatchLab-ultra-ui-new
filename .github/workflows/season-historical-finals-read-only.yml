@@ -22,6 +22,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
+      - name: Test historical identity resolver and sourceId fallback
+        run: node --test engine-v1/jobs/build-historical-identity-adjudication-register.test.js
       - name: Inventory exact canonical alias references without writes
         run: node engine-v1/jobs/inventory-canonical-alias-references.js
       - name: Audit every historical verified-final identity without writes
