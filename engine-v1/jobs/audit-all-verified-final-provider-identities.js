@@ -24,6 +24,17 @@ function exactKickoffInstant(value) {
  return Number.isFinite(millis)?millis:null;
 }
 
+// A missing terminal flag is unknown, never evidence of a non-final match.
+function providerTerminalEvidence(sources,provider,id) {
+ const matching=sources.filter(x=>{
+  const key=verifiedProviderIdentity(x);
+  return key?.provider===provider && key?.providerMatchId===id;
+ });
+ if(matching.some(x=>x.finished===true && x.playedFinal===true))return "CONFIRMED_FINAL";
+ if(matching.some(x=>x.finished===false || x.playedFinal===false))return "EXPLICIT_NONFINAL";
+ return "UNSPECIFIED";
+}
+
 // Pure read-only historical inventory. File names and provider bindings are evidence,
 // not permission to delete, rename, settle, or silently collapse any fixture.
 export function auditAllVerifiedFinalProviderIdentities(root) {
@@ -71,6 +82,8 @@ export function auditAllVerifiedFinalProviderIdentities(root) {
            ? exactKickoffInstant(previous.kickoffUtc)===exactKickoffInstant(payload.kickoffUtc)
            : null,
        firstProviderTerminal:previous.providerTerminal,
+       firstProviderTerminalEvidence:previous.providerTerminalEvidence,
+       secondProviderTerminalEvidence:providerTerminalEvidence(payload.sources,source.provider,source.providerMatchId),
        secondProviderTerminal:payload.sources.some(x=>verifiedProviderIdentity(x)?.provider===source.provider &&
          verifiedProviderIdentity(x)?.providerMatchId===source.providerMatchId &&
          x.finished===true && x.playedFinal===true),
@@ -83,6 +96,7 @@ export function auditAllVerifiedFinalProviderIdentities(root) {
            : null});
     } else if(!previous)index.set(key,{path:file,matchId:payload?.matchId||null,score:[payload?.homeScore,payload?.awayScore],
        kickoffUtc:payload?.kickoffUtc||null,
+       providerTerminalEvidence:providerTerminalEvidence(payload.sources,source.provider,source.providerMatchId),
        providerTerminal:payload.sources.some(x=>{
          const identity=verifiedProviderIdentity(x);
          return identity?.provider===source.provider &&
