@@ -5,7 +5,7 @@ const sha=b=>createHash("sha256").update(b).digest("hex");
 const before=execFileSync("git",["status","--porcelain","--untracked-files=no"],{encoding:"utf8"});
 const registry=JSON.parse(readFileSync("historical-identity-register.json","utf8"));
 const entries=registry.aliasReviewManifest?.entries;
-if(!Array.isArray(entries)||entries.length!==72)throw Error("G2_MANIFEST_SOURCE_REGISTER_NOT_72");
+if(!Array.isArray(entries)||!entries.length||registry.readOnly!==true||registry.approvedForWrite!==false||registry.aliasPreflight?.preflightQualifiedCount!==entries.length||!Array.isArray(registry.aliasSourceBoundManifest?.files))throw Error("G2_MANIFEST_SOURCE_REGISTER_INVALID");
 const paths=[...new Set(entries.flatMap(e=>(e.dependencies||[]).map(d=>d.path)
  .filter(p=>/^data\/deploy-snapshots\/\d{4}-\d{2}-\d{2}\/manifest\.json$/.test(p))))].sort();
 if(paths.length!==20)throw Error("G2_MANIFEST_TARGETS_CHANGED:"+paths.length);
