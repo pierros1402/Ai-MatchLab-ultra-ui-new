@@ -210,7 +210,9 @@ export function buildHistoricalAliasSourceBoundManifest(review,root) {
    readOnly:true,approvedForWrite:false,
    status:files.every(row=>row.status==="SHA256_BOUND")
      ? "SOURCE_HASHES_CAPTURED_NOT_AUTHORIZED_FOR_WRITE" : "HOLD_SOURCE_BINDING",
-   uniqueFileCount:files.length,files};
+   uniqueFileCount:files.length,
+   inventorySha256:createHash("sha256").update(JSON.stringify(files)).digest("hex"),
+   files};
 }
 
 // Deterministic read-only case registry; no automatic authority assignment.
