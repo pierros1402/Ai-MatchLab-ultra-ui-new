@@ -1,7 +1,7 @@
 import {execFileSync} from "node:child_process";
 import test from "node:test";
 import assert from "node:assert/strict";
-import {buildHistoricalIdentityAdjudicationRegister,buildHistoricalAliasPreflight,buildHistoricalAliasReviewManifest,buildHistoricalAliasSourceBoundManifest,findCanonicalAuthorityForCase,inventoryAliasDependencies} from "./build-historical-identity-adjudication-register.js";
+import {buildHistoricalIdentityAdjudicationRegister,buildHistoricalAliasPreflight,buildHistoricalAliasReviewManifest,buildHistoricalAliasSourceBoundManifest,buildHistoricalG1TerminalAdjudication,findCanonicalAuthorityForCase,inventoryAliasDependencies} from "./build-historical-identity-adjudication-register.js";
 import {mkdtempSync,mkdirSync,writeFileSync,rmSync,readFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
@@ -363,4 +363,21 @@ test("historical source-bound manifest captures exact bytes and rejects missing 
   assert.equal(traversal.files[0].status,"HOLD_INVALID_PATH");
   assert.equal(first.approvedForWrite,false);
  }finally{rmSync(root,{recursive:true,force:true});}
+});
+
+test("G1 must hold even matching score and kickoff if terminal flags disagree",()=>{
+ const item={caseId:"HIST-demo",evidenceState:"DUPLICATE_CANDIDATE_REQUIRES_CANONICAL_PROOF",
+  canonicalAuthority:{status:"CANONICAL_SOURCE_BOUND_CANDIDATE",canonicalId:"cid_retained"},
+  evidence:{firstProviderTerminal:true,secondProviderTerminal:false}};
+ const register={readOnly:true,approvedForWrite:false,cases:[item],
+  safelyScopedCanonicalCandidates:[{caseId:"HIST-demo",retainedCanonicalId:"cid_retained",
+    aliasCandidateId:"cid_alias"}]};
+ const result=buildHistoricalG1TerminalAdjudication(register);
+ assert.equal(result.terminalDisagreementCount,1);
+ assert.equal(result.cases[0].terminalTruthStatus,"HOLD_INDEPENDENT_TERMINAL_TRUTH_REQUIRED");
+ assert.equal(result.approvedWriteActions,0);
+ assert.equal(result.cases[0].writeAuthorized,false);
+ assert.deepEqual(result,buildHistoricalG1TerminalAdjudication(register));
+ assert.throws(()=>buildHistoricalG1TerminalAdjudication({...register,approvedForWrite:true}),
+  /invalid_historical_g1_input/);
 });
