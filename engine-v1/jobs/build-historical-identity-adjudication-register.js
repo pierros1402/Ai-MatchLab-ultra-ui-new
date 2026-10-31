@@ -151,6 +151,37 @@ export function buildHistoricalAliasPreflight(register) {
    candidates};
 }
 
+// A deterministic review manifest, deliberately not a sequence of file mutations.
+export function buildHistoricalAliasReviewManifest(register,preflight=buildHistoricalAliasPreflight(register)) {
+ if(preflight?.readOnly!==true || preflight?.approvedForWrite!==false ||
+    preflight?.writeSetApproved!==false ||
+    preflight.candidateCount!==register?.safelyScopedCanonicalCandidates?.length ||
+    preflight.blockedCount!==0 || !Array.isArray(preflight.candidates) ||
+    preflight.candidates.some(row=>row.preflightQualified!==true || row.writeAuthorized!==false))
+   return {schema:"ai-matchlab.historical-alias-review-manifest.v1",
+     readOnly:true,approvedForWrite:false,status:"HOLD_PREFLIGHT_INCOMPLETE",
+     candidateCount:preflight?.candidateCount??null,entries:[]};
+ const entries=register.safelyScopedCanonicalCandidates.map(row=>({
+   caseId:row.caseId,retainedCanonicalId:row.retainedCanonicalId,
+   aliasCandidateId:row.aliasCandidateId,
+   provider:row.provider,providerMatchId:row.providerMatchId,
+   evidencePaths:[row.firstPath,row.secondPath],
+   dependencies:row.dependencyAudit.references.map(ref=>({
+     path:ref.path,category:ref.category,
+     prescribedAction:ref.prescribedAction,
+     aliasOccurrences:ref.aliasOccurrences,
+     retainedOccurrences:ref.retainedOccurrences
+   })).sort((a,b)=>a.path.localeCompare(b.path)),
+   requiredProofs:["INDEPENDENT_RESULT_TRUTH","IMMUTABLE_HISTORY_RETENTION",
+     "H2H_RECONCILIATION","DETERMINISTIC_DERIVED_REBUILD",
+     "SOURCE_BOUND_FULL_REGRESSION"],
+   writeAuthorized:false
+ })).sort((a,b)=>a.caseId.localeCompare(b.caseId));
+ return {schema:"ai-matchlab.historical-alias-review-manifest.v1",
+   readOnly:true,approvedForWrite:false,status:"READY_FOR_INDEPENDENT_REVIEW_NOT_WRITE",
+   candidateCount:entries.length,entries};
+}
+
 // Deterministic read-only case registry; no automatic authority assignment.
 export function buildHistoricalIdentityAdjudicationRegister(audit,root=null) {
  if(!audit || audit.readOnly!==true || !Array.isArray(audit.duplicates) ||
@@ -259,6 +290,7 @@ if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url))
  const output=buildHistoricalIdentityAdjudicationRegister(
    auditAllVerifiedFinalProviderIdentities(process.cwd()),process.cwd());
  output.aliasPreflight=buildHistoricalAliasPreflight(output);
+ output.aliasReviewManifest=buildHistoricalAliasReviewManifest(output,output.aliasPreflight);
  console.log(JSON.stringify(output,null,2));
  if(output.duplicateCases || output.unverifiableCases)process.exitCode=1;
 }
