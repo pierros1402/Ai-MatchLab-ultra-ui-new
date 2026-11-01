@@ -4,7 +4,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { athensDayKey } from "../core/daykey.js";
-import { buildMatchIntelligence } from "../core/build-match-intelligence.js";
+import { buildMatchIntelligence, createMatchIntelligenceContext } from "../core/build-match-intelligence.js";
 import {
   evaluateMatchValue,
   loadValueIndexes,
@@ -294,6 +294,9 @@ export async function buildValueCoverageReportDay(dayKey = athensDayKey(), optio
   ]);
 
   const rows = [];
+  // One immutable input view per report, not a complete history reload per
+  // fixture. A later report still creates a fresh context after acquisition.
+  const intelligenceContext = createMatchIntelligenceContext(season);
   const startedAt = new Date().toISOString();
   const diagnosticNow = Date.parse(startedAt);
   const prospectiveIndexes = playable.some(match => Date.parse(match.kickoffUtc) > diagnosticNow)
@@ -307,7 +310,7 @@ export async function buildValueCoverageReportDay(dayKey = athensDayKey(), optio
     let intelligenceError = null;
 
     try {
-      intelligence = await buildMatchIntelligence(match, { season });
+      intelligence = await buildMatchIntelligence(match, { season, context: intelligenceContext });
     } catch (error) {
       intelligenceError = error?.message || String(error);
     }
