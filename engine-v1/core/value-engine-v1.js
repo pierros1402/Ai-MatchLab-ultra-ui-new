@@ -2376,7 +2376,8 @@ export async function evaluateMatchValue(input, opts = {}) {
     fixture: input,
     baseValue,
     opts: {
-      season
+      season,
+      modifierContext: opts.modifierContext
     }
   });
 

@@ -49,6 +49,24 @@ const DEFAULTS = {
 // PUBLIC API
 // ------------------------------------------------------------
 
+// The caller owns this immutable input view for one batch only. Keep this
+// layer's committed inputs separate from the evaluator's prospective indexes.
+export function createValueModifierContext({
+  readIndexes = loadIndexes,
+  readFixtures = () => readJsonSafe(path.join(DATA_ROOT, "fixtures.json"), [])
+} = {}) {
+  const seasons = new Map();
+  let fixtures;
+  return {
+    async read(season) {
+      if (!seasons.has(season)) seasons.set(season, Promise.resolve().then(() => readIndexes(season)).catch(error => { seasons.delete(season); throw error; }));
+      if (!fixtures) fixtures = Promise.resolve().then(readFixtures).catch(error => { fixtures = null; throw error; });
+      const [indexes, fixturesDb] = await Promise.all([seasons.get(season), fixtures]);
+      return { indexes, fixturesDb };
+    }
+  };
+}
+
 export async function applyValueContextModifiers({
   fixture,
   baseValue,
@@ -66,8 +84,9 @@ export async function applyValueContextModifiers({
   const season = resolveSeason(fixture);
   const kickoffTs = getFixtureKickoffTs(fixture);
 
-  const indexes = await loadIndexes(season);
-  const fixturesDb = await readJsonSafe(path.join(DATA_ROOT, "fixtures.json"), []);
+  const { indexes, fixturesDb } = opts.modifierContext
+    ? await opts.modifierContext.read(season)
+    : { indexes: await loadIndexes(season), fixturesDb: await readJsonSafe(path.join(DATA_ROOT, "fixtures.json"), []) };
   const currentFixtures = normalizeFixtureRows(fixturesDb);
 
   const homeName = getHomeTeamName(fixture);

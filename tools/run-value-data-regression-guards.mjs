@@ -21,6 +21,7 @@ export const valueDataRegressionTests=[
   'engine-v1/core/verified-history-recovery-boundary.test.js',
   'tools/run-prospective-value-step.test.mjs',
   'engine-v1/core/build-match-intelligence-context.test.js'
+  ,'engine-v1/core/value-context-modifiers-context.test.js'
 ];
 
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
