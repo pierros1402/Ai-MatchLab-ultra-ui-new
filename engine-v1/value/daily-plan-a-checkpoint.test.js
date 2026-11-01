@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { checkpointDailyPlanA } from "./daily-plan-a-checkpoint.js";
+import { checkpointDailyPlanA, dailyPublicationAdmission } from "./daily-plan-a-checkpoint.js";
 import { ensurePlanAObservationAtPaths } from "./plan-a-observation.js";
 
 test("scheduled full cycle fits the Athens admission and midnight budget in both seasons", () => {
@@ -14,8 +14,9 @@ test("scheduled full cycle fits the Athens admission and midnight budget in both
     const parts = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Athens", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
       .formatToParts(new Date(`${date}T${hour.padStart(2, "0")}:${minute.padStart(2, "0")}:00Z`));
     const start = Number(parts.find(p => p.type === "hour").value) * 60 + Number(parts.find(p => p.type === "minute").value);
-    assert.ok(start >= 1050 && start <= 1130, `${date}: scheduled run must be admitted`);
-    assert.ok(start + budget <= 1430, `${date}: full budget must end before midnight`);
+    assert.ok(start >= 1020 && start <= 1130, `${date}: scheduled run must be admitted`);
+    assert.ok(start + 10 <= 1130, `${date}: a ten-minute cold checkout must still be admitted`);
+    assert.ok(start + 10 + budget <= 1430, `${date}: checkout and full budget must end before midnight`);
     assert.ok(budget >= 240, "observed four-hour incident run must fit the full budget");
   }
 });
@@ -28,6 +29,15 @@ test("watchdog next-day fallback has the same full-cycle midnight budget", () =>
   const end = Number(watchdog.match(/ATHENS_TOTAL_MINUTES\}" -le (\d+)/)[1]);
   assert.ok(start <= end);
   assert.ok(end + budget <= 1430, "watchdog must leave the full Daily budget before midnight");
+});
+
+test("a next-day manual dispatch delayed in the writer queue cannot start past its full budget", () => {
+  const today = "2026-11-01", day = "2026-11-02";
+  assert.equal(dailyPublicationAdmission(day, { today, minuteOfDay: 1130 }).admitted, true);
+  assert.equal(dailyPublicationAdmission(day, { today, minuteOfDay: 1131 }).admitted, false);
+  assert.equal(dailyPublicationAdmission(day, { today, minuteOfDay: 1200 }).reason, "next_day_full_cycle_deadline_missed");
+  assert.equal(dailyPublicationAdmission(today, { today, minuteOfDay: 1439 }).admitted, true);
+  assert.throws(() => dailyPublicationAdmission("2026-11-03", { today, minuteOfDay: 600 }), /outside_next_day_window/);
 });
 
 test("first production output survives midnight and later candidates without rewriting signed bytes", () => {

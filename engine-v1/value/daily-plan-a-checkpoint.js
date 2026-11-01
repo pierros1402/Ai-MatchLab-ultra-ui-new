@@ -1,6 +1,22 @@
 import fs from "node:fs";
-import { athensDayKey } from "../core/daykey.js";
+import { athensDayKey, shiftDay } from "../core/daykey.js";
 import { ensurePlanAObservationDay, isPlanAObservationDay, readPlanAObservationDay } from "./plan-a-observation.js";
+
+export function dailyPublicationAdmission(day, {
+  now = new Date(), today = athensDayKey(now), minuteOfDay = null, budgetMinutes = 300
+} = {}) {
+  if (day <= today) return { admitted: true, mode: "current_or_historical_recovery" };
+  if (day !== shiftDay(today, 1)) throw Error("daily_future_publication_outside_next_day_window");
+  if (minuteOfDay === null) {
+    const parts = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Athens", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(now);
+    minuteOfDay = Number(parts.find(p => p.type === "hour").value) * 60 + Number(parts.find(p => p.type === "minute").value);
+  }
+  return {
+    admitted: minuteOfDay + budgetMinutes <= 1430,
+    mode: "next_day_prepublication",
+    reason: minuteOfDay + budgetMinutes <= 1430 ? null : "next_day_full_cycle_deadline_missed"
+  };
+}
 
 // A late pipeline must never invent a first observation for a closed day.
 export function checkpointDailyPlanA(day, payload, {
