@@ -9,7 +9,17 @@
     "requestedLeagueSlug": "all",
     "requestedDayKey": "2026-11-01",
     "mergedAt": "2026-11-01T08:02:20.752Z",
-    "mode": "supplemental_target_seed_only"
+    "mode": "supplemental_target_seed_only",
+    "authoritativeTerminalOverlayPromotion": {
+      "schema": "ai-matchlab.authoritative-terminal-overlay-promotion.v1",
+      "promotedAt": "2026-11-01T09:41:42.639Z",
+      "exactProviderIdOnly": true,
+      "orderedTeamIdentityRequired": true,
+      "athensDayRequired": true,
+      "explicitTerminalStatusRequired": true,
+      "numericScoreRequired": true,
+      "heuristicIdentity": false
+    }
   },
   "fixtures": [
     {
@@ -127,18 +137,42 @@
       "awayTeam": "Gamba Osaka",
       "venue": "Machida Gion Stadium",
       "firstSeenAt": "2026-10-17T17:27:42.426Z",
-      "lastSeenAt": "2026-11-01T08:02:20.719Z",
+      "lastSeenAt": 1793524561300,
       "canonicalAliases": [
         "cid_jpn1_machida_gambaosaka_20261101"
       ],
       "providerLeagueSlug": "jpn.1",
-      "status": "HALF_TIME",
-      "rawStatus": "STATUS_HALFTIME",
-      "minute": "45'+2'",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+5'",
       "scoreHome": 0,
       "scoreAway": 0,
       "penalties": null,
-      "decidedBy": null
+      "decidedBy": null,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-11-01T09:41:42.639Z",
+        "provider": "espn",
+        "providerMatchId": "401877581",
+        "dayKey": "2026-11-01",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 0,
+          "scoreAway": 0
+        }
+      }
     }
   ]
 }
