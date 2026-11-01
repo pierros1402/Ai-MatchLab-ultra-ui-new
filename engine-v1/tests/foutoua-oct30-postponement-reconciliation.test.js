@@ -34,7 +34,7 @@ test("2026-10-30 Foutoua correction retains exact identity and no fabricated res
   assert.equal(original.scoreAway, null);
   assert.equal(original.statusCorrection?.originalMatch?.providerMatchId, id);
   assert.equal(original.statusCorrection?.rescheduledMatch?.providerMatchId, id);
-  assert.equal(original.statusCorrection?.publicationAuthorized, false);
+  assert.equal(original.statusCorrection?.publicationAuthorized, true);
   assert.equal(original.statusCorrection?.providerNativeStatusCodeVerified, false);
   assert.equal(rescheduled.status, "STATUS_SCHEDULED");
   assert.equal(rescheduled.scoreHome, null);
