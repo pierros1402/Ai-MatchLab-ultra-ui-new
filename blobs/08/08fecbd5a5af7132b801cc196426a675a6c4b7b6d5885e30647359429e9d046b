@@ -1,0 +1,266 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "kor.1",
+  "homeTeam": "Seoul",
+  "awayTeam": "Incheon",
+  "homeWinScore": 0.541,
+  "drawScore": 0.13699999999999998,
+  "awayWinScore": 0.347,
+  "over15Score": 0.643,
+  "over25Score": 0.5155000000000001,
+  "over35Score": 0.486,
+  "bttsScore": 0.512,
+  "confidence": 0.92,
+  "signals": [
+    "home_edge",
+    "priors_applied",
+    "close_strength_gap",
+    "match_profile_applied"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.45,
+      "awayOverallFormWeight": 0.315,
+      "homeSideFormWeight": 0.18,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.217,
+    "expectedAwayGoals": 1.234,
+    "expectedTotalGoals": 2.451,
+    "homeStrength": 0.465,
+    "awayStrength": 0.405,
+    "homeEdge": 0.437,
+    "awayPenalty": 0.165,
+    "recency": {
+      "homeOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 173,
+        "daysSinceLastMatch": 8,
+        "spanDays": 14,
+        "maxInternalGap": 8,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.9,
+        "continuityScore": 1,
+        "formContinuityWeight": 0.845
+      },
+      "awayOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 134,
+        "daysSinceLastMatch": 8,
+        "spanDays": 26,
+        "maxInternalGap": 11,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.9,
+        "continuityScore": 0.7,
+        "formContinuityWeight": 0.8
+      },
+      "homeSide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 173,
+        "daysSinceLastMatch": 8,
+        "spanDays": 14,
+        "maxInternalGap": 8,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.9,
+        "continuityScore": 1,
+        "formContinuityWeight": 0.845
+      },
+      "awaySide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 134,
+        "daysSinceLastMatch": 14,
+        "spanDays": 20,
+        "maxInternalGap": 20,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.4,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.435
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 173,
+      "awayPriorSample": 134,
+      "leaguePriorSample": 1055,
+      "matchupPriorSample": 10
+    },
+    "resolution": {
+      "homeInput": "Seoul",
+      "awayInput": "Incheon",
+      "homeResolvedKey": "Seoul",
+      "awayResolvedKey": "Incheon",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Seoul::Incheon",
+      "matchupResolveScore": 0,
+      "homePriorKey": "kor.1::FC Seoul",
+      "awayPriorKey": "kor.1::Incheon United",
+      "matchupPriorKey": "kor.1|FC Seoul|Incheon United"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Seoul",
+      "awayTeamKey": "Incheon",
+      "leagueKey": "kor.1",
+      "matchupKey": "Seoul::Incheon"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "h2h_home_edge",
+        "impact": 0.025,
+        "note": "Recent H2H leans home"
+      },
+      {
+        "code": "h2h_underlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is tight"
+      },
+      {
+        "code": "ai_h2h_home_edge",
+        "impact": 0.06,
+        "note": "AI detected home H2H edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    },
+    "matchProfileApplied": true,
+    "matchProfileConfidence": 0.6,
+    "matchProfileReasons": [
+      {
+        "code": "match_profile_h2h_home_edge",
+        "impact": 0.011000000000000001,
+        "note": "MatchProfile H2H trend leans home"
+      },
+      {
+        "code": "match_profile_h2h_underlean",
+        "impact": -0.0165,
+        "note": "MatchProfile H2H goal pattern leans under"
+      }
+    ]
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "h2h_home_edge",
+      "impact": 0.025,
+      "note": "Recent H2H leans home"
+    },
+    {
+      "code": "h2h_underlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is tight"
+    },
+    {
+      "code": "ai_h2h_home_edge",
+      "impact": 0.06,
+      "note": "AI detected home H2H edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0.009,
+      "awayDelta": 0,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "kor.1",
+    "competitionType": "continental",
+    "phase": "group",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 41,
+    "awayRestDays": 34,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  },
+  "intelligence": {
+    "applied": true,
+    "mode": "partial",
+    "coverage": {
+      "hasStandings": false,
+      "hasHomeForm": true,
+      "hasAwayForm": true,
+      "hasH2H": false,
+      "hasPhaseContext": false,
+      "coverageCount": 2,
+      "mode": "partial"
+    },
+    "signals": [
+      "form_balanced",
+      "attack_support"
+    ]
+  }
+}
