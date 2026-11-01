@@ -202,6 +202,41 @@ test("evidence boundaries reject traversal, secrets and arbitrary stores; hooks 
   assert.deepEqual(checkpointHistoryIfRequired("2026-10-13", "test"), { enabled: false });
 });
 
+test("bounded archive transport leaves main ancestry and preexisting archive checkout untouched; fresh remote restore retains every checkpoint", t => {
+  const f = fixture(t);
+  git(f.root, ["push", "--quiet", "origin", "main"]);
+  git(f.remote, ["config", "uploadpack.allowFilter", "true"]);
+  const checkpoints = [];
+  for (let i = 0; i < 4; i++) {
+    f.write("data/value/original.json", JSON.stringify({ i }));
+    checkpoints.push(preserveHistoryCheckpoint({ root: f.root, dayKey: "2026-10-13", stage: `stage-${i}`, runId: "bounded" }));
+  }
+  git(f.root, ["fetch", "--quiet", "origin", HISTORY_ARCHIVE_BRANCH]);
+  git(f.root, ["branch", HISTORY_ARCHIVE_BRANCH, "FETCH_HEAD"]);
+  const refs = git(f.root, ["show-ref"]), head = git(f.root, ["rev-parse", "HEAD"]);
+  const fetchHead = fs.readFileSync(path.join(f.root, ".git/FETCH_HEAD"));
+  const shallow = git(f.root, ["rev-parse", "--is-shallow-repository"]);
+  const next = preserveHistoryCheckpoint({ root: f.root, dayKey: "2026-10-13", stage: "later", runId: "bounded" });
+  assert.equal(git(f.root, ["show-ref"]), refs);
+  assert.equal(git(f.root, ["rev-parse", "HEAD"]), head);
+  assert.equal(git(f.root, ["rev-parse", "--is-shallow-repository"]), shallow);
+  assert.deepEqual(fs.readFileSync(path.join(f.root, ".git/FETCH_HEAD")), fetchHead);
+  const fresh = path.join(f.temp, "fresh-remote");
+  git(f.root, ["clone", "--quiet", "--single-branch", "--branch", HISTORY_ARCHIVE_BRANCH, pathToFileURL(f.remote).href, fresh]);
+  assert.equal(git(fresh, ["rev-parse", "--is-shallow-repository"]), "false");
+  for (const [i, checkpoint] of checkpoints.entries()) {
+    assert.equal(git(fresh, ["merge-base", "--is-ancestor", checkpoint.archiveCommit, "HEAD"]), "");
+    const destination = path.join(f.temp, `restored-${i}`);
+    restoreHistoryCheckpoint({ root: fresh, ref: "HEAD", manifestPath: checkpoint.manifestPath, destination });
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(destination, "data/value/original.json"))), { i });
+  }
+  git(f.root, ["checkout", HISTORY_ARCHIVE_BRANCH]);
+  const archiveHead = git(f.root, ["rev-parse", "HEAD"]);
+  const again = preserveHistoryCheckpoint({ root: f.root, dayKey: "2026-10-13", stage: "archive-checkout", runId: "bounded" });
+  assert.equal(git(f.root, ["rev-parse", "HEAD"]), archiveHead);
+  assert.ok(again.ok && next.ok);
+});
+
  test("new production evidence is archived while temporary candidates stay excluded",()=>{
   assert.equal(isHistoryEvidencePath("data/value-unified/2026-10-18/observations/abc.json"),true);
   assert.equal(isHistoryEvidencePath("data/value-unified/2026-10-18/public-plan.json"),true);

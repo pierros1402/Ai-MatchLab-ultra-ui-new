@@ -3,7 +3,9 @@ import os from "node:os";
 import path from "node:path";
 import crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
+import { AsyncLocalStorage } from "node:async_hooks";
 import { scanGitDelimited } from "./history-git-scan.js";
+import { fetchHistoryArchiveTip } from "./history-archive-transport.js";
 
 export const HISTORY_ARCHIVE_BRANCH = "codex/history-archive";
 // Only application evidence, never .env, credentials, source code or arbitrary files.
@@ -40,20 +42,22 @@ export function isHistoryEvidencePath(value) {
 
 const sha256 = bytes => crypto.createHash("sha256").update(bytes).digest("hex");
 const CHUNK_BYTES = 8 * 1024 * 1024;
+const archiveTransport = new AsyncLocalStorage();
 
-function git(root, args, { input, index, allowFailure = false, binary = false } = {}) {
+function git(root, args, { input, index, allowFailure = false, binary = false, timeout } = {}) {
+  const command = args[0] === "-c" ? args[2] : args[0];
   const result = spawnSync("git", args, {
     cwd: root, input, encoding: binary || input instanceof Buffer ? undefined : "utf8",
-    env: { ...process.env, ...(index ? { GIT_INDEX_FILE: index } : {}) },
+    env: { ...process.env, ...archiveTransport.getStore(), ...(index ? { GIT_INDEX_FILE: index } : {}) },
     // Cold archive history was previously prefetched by checkout. Its measured
     // first fetch exceeds two minutes; retain a finite budget without relaxing
     // durability, ancestry, hashing, or ordinary command timeouts.
-    timeout: args[0] === "write-tree" ? 600_000 : args[0] === "fetch" ? 300_000 : 120_000, maxBuffer: 128 * 1024 * 1024,
+    timeout: timeout ?? (command === "write-tree" ? 600_000 : command === "fetch" ? 300_000 : 120_000), maxBuffer: 128 * 1024 * 1024,
     windowsHide: true
   });
   if (result.error || result.status !== 0) {
     if (allowFailure) return null;
-    throw new Error(`history_preservation_git_failed:${args[0]}:${String(result.stderr || result.error || "").slice(0, 1200)}`);
+    throw new Error(`history_preservation_git_failed:${command}:${result.error?.code || result.signal || result.status}:${String(result.stderr || result.error || "").slice(0, 1200)}`);
   }
   return result.stdout;
 }
@@ -81,8 +85,10 @@ function token(value, label) {
 }
 
 function readBlob(root, ref, name) {
-  const value = git(root, ["show", `${ref}:${name}`], { allowFailure: true, binary: true });
-  return value === null ? null : Buffer.from(value);
+  // Only an absent tree entry means absent evidence. A failed lazy download
+  // must never authorize replacement of an existing checkpoint identity.
+  if (!git(root, ["ls-tree", "-z", ref, "--", name]).length) return null;
+  return Buffer.from(git(root, ["show", `${ref}:${name}`], { binary: true }));
 }
 
 function readBlobs(root, files, consume) {
@@ -132,11 +138,9 @@ function readBlobs(root, files, consume) {
 }
 
 function remoteArchive(root, remote) {
-  const refs = git(root, ["ls-remote", "--heads", remote, `refs/heads/${HISTORY_ARCHIVE_BRANCH}`]).trim();
-  if (!refs) return null;
-  const commit = refs.split(/\s/u)[0];
-  git(root, ["fetch", "--quiet", "--filter=blob:none", "--no-tags", remote, commit]);
-  return commit;
+  // Fetch the exact advertised commit. A moving remote is handled by the
+  // normal fast-forward push/retry, without changing any checkout refs.
+  return fetchHistoryArchiveTip({ remote, branch: HISTORY_ARCHIVE_BRANCH, run: (args, options) => git(root, args, options) });
 }
 
 /** Capture bytes, including partial/invalid JSON, without interpreting empty files as successful runs.
@@ -157,6 +161,20 @@ export function preserveHistoryCheckpoint({
   });
   const captureDir = fs.mkdtempSync(path.join(os.tmpdir(), "matchlab-history-"));
   const manifestPath = `checkpoints/${dayKey}/${runId}/${attempt}/${stage}/manifest.json`;
+  // Keep archive shallow boundaries private to this operation. Marking the
+  // main checkout shallow would undermine later source-ancestry proofs and
+  // cause selected-history loading to download the archive again.
+  const transportDir = path.join(captureDir, "transport.git");
+  const objectDirectory = path.resolve(root, git(root, ["rev-parse", "--git-path", "objects"]).trim());
+  const configFile = path.resolve(root, git(root, ["rev-parse", "--git-path", "config"]).trim());
+  const objectFormat = git(root, ["rev-parse", "--show-object-format"]).trim();
+  git(root, ["init", "--bare", `--object-format=${objectFormat}`, transportDir]);
+  git(root, ["--git-dir", transportDir, "config", "include.path", configFile]);
+  fs.appendFileSync(path.join(transportDir, "config"), "\n[core]\n\tbare = true\n");
+  const sourceShallow = git(root, ["rev-parse", "--git-path", "shallow"]).trim();
+  const sourceShallowPath = path.resolve(root, sourceShallow);
+  if (fs.existsSync(sourceShallowPath)) fs.copyFileSync(sourceShallowPath, path.join(transportDir, "shallow"));
+  return archiveTransport.run({ GIT_DIR: transportDir, GIT_OBJECT_DIRECTORY: objectDirectory }, () => {
   try {
     const initialParent = remoteArchive(root, remote);
     const files = [];
@@ -246,12 +264,14 @@ export function preserveHistoryCheckpoint({
         // A normal fast-forward push. Concurrent writers cause a retry, never a force push.
         git(root, ["push", "--quiet", remote, `${commit}:refs/heads/${HISTORY_ARCHIVE_BRANCH}`]);
         const durableRef = remoteArchive(root, remote);
-        verifyHistoryCheckpoint({ root, ref: durableRef, manifestPath });
+        const verified = verifyHistoryCheckpoint({ root, ref: durableRef, manifestPath });
+        if (verified.fingerprint !== fingerprint) throw new Error("history_checkpoint_identity_conflict");
         return { ok: true, reused: false, archiveCommit: commit, manifestPath, fileCount: files.length };
       } catch (error) { lastError = error; }
     }
     throw lastError || new Error("history_checkpoint_not_durable");
   } finally { fs.rmSync(captureDir, { recursive: true, force: true }); }
+  });
 }
 
 export function verifyHistoryCheckpoint({ root = process.cwd(), ref, manifestPath } = {}) {
