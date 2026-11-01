@@ -5,7 +5,7 @@ import { resolveFederationNonPlayedDecision as resolve } from "./federation-nonp
 const id = "cid_syr1_foutoua_aljaish_20261030";
 const common = { canonicalId: id, leagueSlug: "syr.1", sourceId: "KdKrgosB", homeTeam: "Foutoua", awayTeam: "Al Jaish", kickoffUtc: "2026-10-30T12:00:00.000Z", scoreHome: null, scoreAway: null };
 const published = { ...common, status: "STATUS_SCHEDULED" };
-const canonical = { ...common, status: "STATUS_POSTPONED", rawStatus: "STATUS_POSTPONED", statusType: "STATUS_POSTPONED", statusCorrection: { decisionId: "foutoua-aljaish-federation-reschedule-20261029-v1", providerNativeStatusCodeVerified: false, rescheduledMatch: { providerMatchId: "KdKrgosB" } } };
+const canonical = { ...common, status: "STATUS_POSTPONED", rawStatus: "STATUS_POSTPONED", statusType: "STATUS_POSTPONED", statusCorrection: { decisionId: "foutoua-aljaish-federation-reschedule-20261029-v1", providerNativeStatusCodeVerified: false, policyVersion: "federation-nonplayed-exact-reviewed-v1", publicationAuthorized: true, rescheduledMatch: { providerMatchId: "KdKrgosB" } } };
 const rescheduled = { ...common, canonicalId: "cid_syr1_foutoua_aljaish_20261101", dayKey: "2026-11-01", kickoffUtc: "2026-11-01T12:00:00.000Z", status: "STATUS_SCHEDULED" };
 const input = { day: "2026-10-30", published, canonical, rescheduled };
 test("only exact separately pinned federation decision is admissible", () => {
@@ -22,6 +22,7 @@ test("cross-day and score/status/identity mutations fail closed", () => {
     ["rescheduled", { dayKey: "2026-10-30" }],
     ["rescheduled", { sourceId: "different" }],
     ["rescheduled", { scoreHome: 0 }],
-    ["canonical", { statusCorrection: { ...canonical.statusCorrection, decisionId: "unknown" } }]
+    ["canonical", { statusCorrection: { ...canonical.statusCorrection, decisionId: "unknown" } }],
+    ["canonical", { statusCorrection: { ...canonical.statusCorrection, publicationAuthorized: false } }]
   ]) assert.equal(resolve({ ...input, [part]: { ...input[part], ...changes } }), null);
 });
