@@ -26,3 +26,11 @@ test("cross-day and score/status/identity mutations fail closed", () => {
     ["canonical", { statusCorrection: { ...canonical.statusCorrection, publicationAuthorized: false } }]
   ]) assert.equal(resolve({ ...input, [part]: { ...input[part], ...changes } }), null);
 });
+
+test("rescheduled legitimate final is allowed only on the new day", () => {
+  const nextFinal = { ...rescheduled, status: "FT", rawStatus: "STATUS_FINAL", scoreHome: 1, scoreAway: 1 };
+  assert.equal(resolve({ ...input, rescheduled: nextFinal })?.terminalStatus, "STATUS_POSTPONED");
+  assert.equal(resolve({ ...input, rescheduled: { ...nextFinal, scoreAway: null } }), null);
+  assert.equal(resolve({ ...input, rescheduled: { ...nextFinal, rawStatus: "STATUS_SCHEDULED" } }), null);
+  assert.equal(resolve({ ...input, canonical: { ...canonical, scoreHome: 1 }, rescheduled: nextFinal }), null);
+});
