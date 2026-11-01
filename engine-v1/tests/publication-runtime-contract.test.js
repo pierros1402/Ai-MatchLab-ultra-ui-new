@@ -100,7 +100,7 @@ test("value panel follows selected day and never falls back to stale static rele
   assert.match(adapter, /on\("date:change"/);
   assert.match(adapter, /engine-release-unavailable/);
   assert.match(adapter, /AbortController/);
-  assert.match(html, /value-adapter\.js\?v=3/);
+  assert.match(html, /value-adapter\.js\?v=4/);
 });
 
 test("odds requests are bound to the selected match day and obsolete requests are aborted", () => {
@@ -138,7 +138,7 @@ test("live worker overlay is bounded and labeled with the shared operational day
   assert.match(html, /today-panel\.js\?v=5/);
   assert.match(html, /active-leagues-panel\.js\?v=4/);
   assert.match(html, /live-overlay\.js\?v=9/);
-  assert.match(html, /value-picks\.js\?v=4/);
+  assert.match(html, /value-picks\.js\?v=6/);
 });
 
 test("UI aborts are terminal and are not retried as fetch failures", () => {
@@ -153,7 +153,7 @@ test("UI aborts are terminal and are not retried as fetch failures", () => {
   assert.match(value, /if \(!isAbortError\(err\)\)/);
   assert.match(html, /app\.js\?v=3/);
   assert.match(html, /fixtures-loader\.js\?v=9/);
-  assert.match(html, /value-adapter\.js\?v=3/);
+  assert.match(html, /value-adapter\.js\?v=4/);
 });
 
 test("engine package and lock dependencies are synchronized", () => {
