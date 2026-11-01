@@ -6,6 +6,7 @@ on:
       - engine-v1/storage/history-archive-transport*
       - engine-v1/storage/history-preservation.js
       - engine-v1/tests/history-preservation.test.js
+      - .github/workflows/history-preservation-canary.yml
 permissions:
   contents: read
 jobs:
@@ -20,9 +21,11 @@ jobs:
           persist-credentials: false
           sparse-checkout: |
             engine-v1
+            .github
+            tools
       - uses: actions/setup-node@v7
         with:
           node-version: "24"
       - run: node --check engine-v1/storage/history-preservation.js
-      - run: node --test engine-v1/storage/history-archive-transport.test.js engine-v1/tests/history-preservation.test.js
+      - run: node --test engine-v1/storage/history-archive-transport.test.js engine-v1/tests/history-preservation.test.js engine-v1/tests/history-protection-watchdog.test.js
       - run: git diff --exit-code
