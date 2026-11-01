@@ -13,6 +13,7 @@ import {
 import { buildValueFixtureUniverse } from "../core/value-fixture-universe.js";
 import { resolveDataPath } from "../storage/data-root.js";
 import { currentSeason } from "../core/season.js";
+import { createValueModifierContext } from "../core/value-context-modifiers.js";
 
 const DEFAULT_SEASON = currentSeason();
 
@@ -297,6 +298,7 @@ export async function buildValueCoverageReportDay(dayKey = athensDayKey(), optio
   // One immutable input view per report, not a complete history reload per
   // fixture. A later report still creates a fresh context after acquisition.
   const intelligenceContext = createMatchIntelligenceContext(season);
+  const modifierContext = createValueModifierContext();
   const startedAt = new Date().toISOString();
   const diagnosticNow = Date.parse(startedAt);
   const prospectiveIndexes = playable.some(match => Date.parse(match.kickoffUtc) > diagnosticNow)
@@ -344,6 +346,7 @@ export async function buildValueCoverageReportDay(dayKey = athensDayKey(), optio
           season,
           indexes: Date.parse(match.kickoffUtc) > diagnosticNow ? prospectiveIndexes : indexes,
           priors,
+          modifierContext,
           returnNullDiagnostics: true
         }
       );

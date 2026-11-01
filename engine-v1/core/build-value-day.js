@@ -16,6 +16,7 @@ import {
 } from "./value-fixture-universe.js";
 import { adjustPlanAValue } from "./opponent-strength-adjusted-form.js";
 import { loadOpponentAdjustedProfiles } from "./opponent-strength-profile-loader.js";
+import { createValueModifierContext } from "./value-context-modifiers.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -977,6 +978,7 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
 
   const picks = [];
   const intelligenceContext = createMatchIntelligenceContext(season);
+  const modifierContext = createValueModifierContext();
   const evaluatedFixtureIds = new Set();
   const fixturesWithCandidateMarkets = new Set();
 
@@ -1052,7 +1054,7 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
                       }
                     };
                   inputEvidence.capture("engine_arguments", { input: engineInput, intelligence }, evaluatedFixtureId);
-                  const value = await evaluateMatchValue(engineInput, { season, indexes, priors, returnNullDiagnostics: true });
+                  const value = await evaluateMatchValue(engineInput, { season, indexes, priors, modifierContext, returnNullDiagnostics: true });
                   // The evaluator also loads input.ai internally. Capture the
                   // argument after that load as well as the returned value.
                   inputEvidence.capture("engine_returned", { input: engineInput, value }, evaluatedFixtureId);
