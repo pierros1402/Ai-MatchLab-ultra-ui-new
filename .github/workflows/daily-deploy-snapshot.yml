@@ -19,10 +19,10 @@ on:
         required: false
         default: ""
   schedule:
-    # Full publication targets TOMORROW. 15:47 UTC is 17:47 in winter and
-    # 18:47 in summer: both leave a five-hour cycle budget before midnight.
+    # Full publication targets TOMORROW. 15:00 UTC is 17:00 in winter and
+    # 18:00 in summer, leaving room for checkout/queue delay before admission.
     # Late refreshes belong to Intraday, not another exhaustive full cycle.
-    - cron: "47 15 * * *"
+    - cron: "0 15 * * *"
 
 permissions:
   contents: write
@@ -75,8 +75,8 @@ jobs:
             # Scheduled publication never builds TODAY after midnight. It only
             # prepares TOMORROW while there is enough wall-clock budget to finish
             # the complete release transaction before 00:00 Europe/Athens.
-            if [ "$ATHENS_TOTAL_MINUTES" -lt 1050 ] || [ "$ATHENS_TOTAL_MINUTES" -gt 1130 ]; then
-              echo "Skipping scheduled full publication outside 17:30-18:50 Europe/Athens. Athens time: $ATHENS_HOUR:$ATHENS_MINUTE"
+            if [ "$ATHENS_TOTAL_MINUTES" -lt 1020 ] || [ "$ATHENS_TOTAL_MINUTES" -gt 1130 ]; then
+              echo "Skipping scheduled full publication outside 17:00-18:50 Europe/Athens. Athens time: $ATHENS_HOUR:$ATHENS_MINUTE"
               echo "skipBuild=true" >> "$GITHUB_OUTPUT"
               echo "SKIP_BUILD=true" >> "$GITHUB_ENV"
               exit 0
@@ -142,7 +142,16 @@ jobs:
         shell: bash
         run: |
           node --input-type=module <<'NODE'
-          import { checkpointDailyPlanA } from './engine-v1/value/daily-plan-a-checkpoint.js';
+          import fs from 'node:fs';
+          import { checkpointDailyPlanA, dailyPublicationAdmission } from './engine-v1/value/daily-plan-a-checkpoint.js';
+          // A watchdog/manual TOMORROW request can wait in the shared queue.
+          // Recheck its full deadline after checkout, not at dispatch time.
+          const admission = dailyPublicationAdmission(process.env.DAY_KEY);
+          if (!admission.admitted) {
+            console.log(JSON.stringify(admission));
+            fs.appendFileSync(process.env.GITHUB_ENV, 'SKIP_BUILD=true\n');
+            process.exit(1);
+          }
           // Read-only: reject an impossible historical rebuild before spending
           // hours acquiring inputs. Recovery must restore original signed bytes.
           console.log(JSON.stringify(checkpointDailyPlanA(process.env.DAY_KEY)));
