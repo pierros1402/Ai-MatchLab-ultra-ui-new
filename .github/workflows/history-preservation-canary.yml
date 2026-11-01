@@ -1,6 +1,14 @@
 name: History preservation and recovery canary
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/history-preservation-canary.yml
+      - .github/actions/preserve-history/**
+      - engine-v1/storage/history-preservation.js
+      - engine-v1/storage/history-archive-transport.js
+      - engine-v1/storage/history-git-scan.js
   workflow_dispatch:
     inputs:
       dayKey:
