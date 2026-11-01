@@ -112,7 +112,8 @@ test(
           reason:
             "plan_a_observation_invalid_json"
         },
-        observationFileExists: false
+        observationFileExists: false,
+        today: "2026-08-15"
       });
 
     assert.equal(
@@ -126,6 +127,12 @@ test(
     );
   }
 );
+
+test("closed-day missing observation cannot freeze a retrospective rebuild or rewrite its date", () => {
+  assert.throws(() => selectPlanAPublicationPayload({dayKey:"2026-08-15",today:"2026-08-16",currentPayload:valuePayload(7)}), /historical_first_freeze_forbidden/);
+  assert.throws(() => selectPlanAPublicationPayload({dayKey:"2026-08-16",today:"2026-08-16",currentPayload:valuePayload(7)}), /day_mismatch/);
+  assert.throws(() => selectPlanAPublicationPayload({dayKey:"2026-08-15",today:"2026-08-15",currentPayload:{...valuePayload(1),count:7}}), /count_mismatch/);
+});
 
 test(
   "invalid existing frozen observation fails closed",

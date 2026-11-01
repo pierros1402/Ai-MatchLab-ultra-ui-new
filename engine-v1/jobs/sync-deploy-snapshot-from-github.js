@@ -25,6 +25,7 @@ import {
 import { resolveDataPath } from "../storage/data-root.js";
 import { athensDayKey, shiftDay } from "../core/daykey.js";
 import { validatePlanCShadowExportPayload } from "../value/plan-c-shadow-export.js";
+import { validateValuePublicationIntegrity } from "../core/value-snapshot-integrity.js";
 
 const DEFAULT_REPO = process.env.SNAPSHOT_SYNC_REPO || "pierros1402/Ai-MatchLab-ultra-ui-new";
 const DEFAULT_REF = process.env.SNAPSHOT_SYNC_BRANCH || "main";
@@ -312,6 +313,18 @@ export async function validateStagedRelease(stageDayDir, manifest) {
 
   const fixtures = parseJsonBuffer(await fsp.readFile(fixturesFile), "fixtures");
   const value = parseJsonBuffer(await fsp.readFile(valueFile), "value");
+  // A hash alone can bind empty or semantically unrelated audit bytes. Modern
+  // releases must prove the Value/audit/day/universe relationship before any
+  // served directory is promoted; one bad day cannot mutate another release.
+  if (manifest.files?.valueAudit || manifest.valueGate) {
+    const auditName = safeName(manifest.files?.valueAudit);
+    if (!auditName) throw new Error("staged_value_audit_required");
+    const auditFile = path.join(stageDayDir, auditName);
+    if (!fs.existsSync(auditFile)) throw new Error("staged_value_audit_required");
+    const audit = parseJsonBuffer(await fsp.readFile(auditFile), "value-audit");
+    const integrity = validateValuePublicationIntegrity({ day: manifest.date, fixtures: rowsOfFixtures(fixtures), value, audit, gate: manifest.valueGate });
+    if (!integrity.ok) throw new Error(`staged_value_integrity_failed:${integrity.errors.join(",")}`);
+  }
   const fixtureCount = rowsOfFixtures(fixtures).length;
   const valueCount = rowsOfValue(value).length;
 
