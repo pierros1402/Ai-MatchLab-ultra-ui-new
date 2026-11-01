@@ -1,0 +1,51 @@
+name: Restored 31 October Value contract
+on:
+  pull_request:
+    paths:
+      - engine-v1/core/archived-value-release*
+      - engine-v1/jobs/restored-value-20261031.test.js
+      - engine-v1/jobs/export-deploy-snapshot-day.js
+      - engine-v1/jobs/sync-deploy-snapshot-from-github.js
+      - .github/workflows/restored-value-20261031.yml
+      - data/deploy-snapshots/2026-10-31/**
+      - data/value-plans/2026-10-31/**
+      - data/value-comparison/2026-10-31.json
+      - data/history-resolutions/2026-10-31/**
+  push:
+    branches: [main]
+    paths:
+      - data/deploy-snapshots/2026-10-31/**
+      - data/value-plans/2026-10-31/**
+      - data/value-comparison/2026-10-31.json
+permissions:
+  contents: read
+jobs:
+  original-observation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          fetch-tags: false
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /package*.json
+            /engine-v1/
+            /workers/
+            /tools/
+            /.github/
+            /data/deploy-snapshots/2026-10-31/
+            /data/value-plans/2026-10-31/
+            /data/value-comparison/2026-10-31.json
+            /data/history-resolutions/2026-10-31/
+            /data/value/2026-10-31.json
+            /data/value/_audit/2026-10-31.json
+            /data/final-results/2026-10-31/
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - run: npm ci --no-audit --no-fund
+      - run: node --test engine-v1/core/archived-value-release.test.js engine-v1/jobs/restored-value-20261031.test.js engine-v1/jobs/sync-deploy-snapshot-release.test.js engine-v1/jobs/refresh-published-final-status-day.test.js
+      - run: git diff --exit-code
