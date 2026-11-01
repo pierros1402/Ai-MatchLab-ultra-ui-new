@@ -1,0 +1,27 @@
+name: Selected source ancestry regression
+on:
+  pull_request:
+    paths:
+      - .github/workflows/daily-autonomous.yml
+      - .github/workflows/selected-history-regression.yml
+      - tools/fetch-selected-history*
+permissions:
+  contents: read
+jobs:
+  selected-ancestry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          fetch-tags: false
+          persist-credentials: false
+          sparse-checkout: |
+            tools
+            .github
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - run: node --test tools/fetch-selected-history.test.mjs
+      - run: git diff --exit-code
