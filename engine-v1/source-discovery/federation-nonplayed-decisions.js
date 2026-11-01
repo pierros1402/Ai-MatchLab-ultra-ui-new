@@ -54,6 +54,8 @@ export function resolveFederationNonPlayedDecision({ day, published, canonical, 
     [published, canonical, rescheduled].every(r => missingScore(r.scoreHome) && missingScore(r.scoreAway)) &&
     canonical.statusCorrection?.decisionId === "foutoua-aljaish-federation-reschedule-20261029-v1" &&
     canonical.statusCorrection?.providerNativeStatusCodeVerified === false &&
+    canonical.statusCorrection?.policyVersion === "federation-nonplayed-exact-reviewed-v1" &&
+    canonical.statusCorrection?.publicationAuthorized === true &&
     canonical.statusCorrection?.rescheduledMatch?.providerMatchId === d.providerId
   );
   return matching.length === 1 ? { ...matching[0], evidence: [...matching[0].evidence] } : null;
