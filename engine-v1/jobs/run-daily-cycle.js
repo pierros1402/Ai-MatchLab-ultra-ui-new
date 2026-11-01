@@ -55,6 +55,7 @@ import { applyTeamNewsSeedsDay } from "./apply-team-news-seeds-day.js";
 import { validateTeamNewsSeedsDay } from "./validate-team-news-seeds-day.js";
 import { acquireTeamNewsTransfermarktDay } from "./acquire-team-news-transfermarkt-day.js";
 import { buildValueDay } from "../core/build-value-day.js";
+import { checkpointDailyPlanA } from "../value/daily-plan-a-checkpoint.js";
 import { buildValueCoverageReportDay } from "./build-value-coverage-report-day.js";
 import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
 import { deriveValueFromOdds } from "./derive-value-from-odds.js";
@@ -1395,6 +1396,10 @@ export async function runDailyCycle(options = {}) {
   });
 
   valueBuild = await buildValueDay(dayKey, { rebuild: true });
+
+  // Preserve the first production observation before the remaining cycle can
+  // cross Athens midnight. Existing signed observations remain authoritative.
+  checkpointDailyPlanA(dayKey, valueBuild);
 
   console.log("[daily-cycle] value-build:done", {
     ok: valueBuild?.ok,

@@ -19,14 +19,10 @@ on:
         required: false
         default: ""
   schedule:
-    # P3.1 atomic-midnight contract: scheduled full publication is PRE-MIDNIGHT
-    # only and always targets TOMORROW. UTC candidates cover both Athens DST and
-    # standard time; the local guard admits the useful 17:30-22:10 window.
-    # Two candidates (early and final) replace seven hourly queue entries;
-    # preserve the existing shared non-cancelling data-writer lock.
-    # A normal early candidate publishes tomorrow once; the 20:45+ candidate is
-    # the final refresh. No scheduled full TODAY build is allowed after 00:00.
-    - cron: "17 15,19 * * *"
+    # Full publication targets TOMORROW. 15:47 UTC is 17:47 in winter and
+    # 18:47 in summer: both leave a five-hour cycle budget before midnight.
+    # Late refreshes belong to Intraday, not another exhaustive full cycle.
+    - cron: "47 15 * * *"
 
 permissions:
   contents: write
@@ -40,12 +36,9 @@ concurrency:
 jobs:
   build-and-commit-snapshot:
     runs-on: ubuntu-latest
-    # Hard deadline budget. A scheduled run admitted at 22:10 Athens must stop
-    # before midnight instead of drifting into the next operational day.
-    # Manual incident-recovery runs need enough room for the same exhaustive
-    # cycle plus the publication gates; Day29 proved that the cycle alone can
-    # legitimately consume almost the entire scheduled budget.
-    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && 300 || 100 }}
+    # The observed daily cycle alone exceeds two hours. Admit scheduled work
+    # only by 18:50 Athens, reserving five hours plus ten minutes to midnight.
+    timeout-minutes: 300
 
     steps:
       - name: Checkout repository
@@ -55,6 +48,7 @@ jobs:
           # Preserve current-branch history for rebase without fetching all refs.
           ref: ${{ github.ref_name }}
           fetch-tags: false
+          filter: blob:none
 
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -81,8 +75,8 @@ jobs:
             # Scheduled publication never builds TODAY after midnight. It only
             # prepares TOMORROW while there is enough wall-clock budget to finish
             # the complete release transaction before 00:00 Europe/Athens.
-            if [ "$ATHENS_TOTAL_MINUTES" -lt 1050 ] || [ "$ATHENS_TOTAL_MINUTES" -gt 1330 ]; then
-              echo "Skipping scheduled full publication outside 17:30-22:10 Europe/Athens. Athens time: $ATHENS_HOUR:$ATHENS_MINUTE"
+            if [ "$ATHENS_TOTAL_MINUTES" -lt 1050 ] || [ "$ATHENS_TOTAL_MINUTES" -gt 1130 ]; then
+              echo "Skipping scheduled full publication outside 17:30-18:50 Europe/Athens. Athens time: $ATHENS_HOUR:$ATHENS_MINUTE"
               echo "skipBuild=true" >> "$GITHUB_OUTPUT"
               echo "SKIP_BUILD=true" >> "$GITHUB_ENV"
               exit 0
@@ -90,11 +84,10 @@ jobs:
 
             DAY_KEY="$(TZ=Europe/Athens date -d 'tomorrow' +%F)"
 
-            # Before the final refresh window, do not repeat a full build after
-            # tomorrow has already passed the atomic latest promotion. At/after
-            # 20:45 one final refresh is admitted to capture late fixture input.
+            # Do not repeat a full build after tomorrow's atomic publication.
+            # Intraday owns subsequent status refreshes.
             LATEST_DAY="$(node -e 'try{const x=require("./data/deploy-snapshots/latest.json");process.stdout.write(String(x.date||""));}catch{}')"
-            if [ "$ATHENS_TOTAL_MINUTES" -lt 1245 ] && [ "$LATEST_DAY" = "$DAY_KEY" ]; then
+            if [ "$LATEST_DAY" = "$DAY_KEY" ]; then
               echo "Tomorrow $DAY_KEY is already atomically published; skipping duplicate early full build."
               echo "skipBuild=true" >> "$GITHUB_OUTPUT"
               echo "SKIP_BUILD=true" >> "$GITHUB_ENV"
@@ -143,6 +136,17 @@ jobs:
             echo "Render redeploy disabled for this daily run."
           fi
           echo "Resolved DAY_KEY=$DAY_KEY"
+
+      - name: Check immutable Plan A recovery prerequisites before acquisition
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { checkpointDailyPlanA } from './engine-v1/value/daily-plan-a-checkpoint.js';
+          // Read-only: reject an impossible historical rebuild before spending
+          // hours acquiring inputs. Recovery must restore original signed bytes.
+          console.log(JSON.stringify(checkpointDailyPlanA(process.env.DAY_KEY)));
+          NODE
 
       - name: Install root dependencies
         if: env.SKIP_BUILD != 'true'
