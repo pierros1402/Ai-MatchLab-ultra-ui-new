@@ -37,10 +37,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           # Fetch only the triggering branch; retain history for push/rebase.
           ref: ${{ github.ref_name }}
           fetch-tags: false
+          filter: blob:none
+
+      - name: Load complete source history without archive ancestry
+        run: node tools/fetch-selected-history.mjs
 
       - name: Setup Node
         uses: actions/setup-node@v7
