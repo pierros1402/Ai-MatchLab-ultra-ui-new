@@ -3,7 +3,9 @@ set -euo pipefail
 
 EXPECTED_SHA="${1:-}"
 ENGINE_BASE="${ENGINE_BASE:-https://ai-matchlab-engine.onrender.com}"
-MAX_ATTEMPTS="${RENDER_VERIFY_MAX_ATTEMPTS:-60}"
+# The measured cold release took eleven minutes. Allow fifteen minutes of
+# normal polling within the deploy workflow's existing twenty-minute budget.
+MAX_ATTEMPTS="${RENDER_VERIFY_MAX_ATTEMPTS:-90}"
 SLEEP_SECONDS="${RENDER_VERIFY_POLL_SECONDS:-10}"
 
 if ! [[ "$EXPECTED_SHA" =~ ^[0-9a-fA-F]{40}$ ]]; then
