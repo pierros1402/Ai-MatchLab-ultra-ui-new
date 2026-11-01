@@ -1,0 +1,62 @@
+name: Publish verified original 31 October release
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/restored-day-publication.yml
+      - data/history-resolutions/2026-10-31/original-value-restoration.v1.json
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ai-matchlab-dated-publication-2026-10-31
+  cancel-in-progress: false
+jobs:
+  synchronize-approved-day:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 1
+          fetch-tags: false
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /package*.json
+            /engine-v1/
+            /workers/
+            /tools/
+            /.github/
+            /data/deploy-snapshots/latest.json
+            /data/deploy-snapshots/2026-10-31/
+            /data/history-resolutions/2026-10-31/
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - run: npm ci --no-audit --no-fund
+      - name: Validate the complete restored release before synchronization
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import {execFileSync} from 'node:child_process';
+          import {validateStagedRelease} from './engine-v1/jobs/sync-deploy-snapshot-from-github.js';
+          import {restoredDaySyncAdmission} from './tools/restored-day-sync-admission.mjs';
+          const root='data/deploy-snapshots/2026-10-31',read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
+          const manifest=read(root+'/manifest.json');await validateStagedRelease(root,manifest);
+          const ref=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+          const response=await fetch('https://ai-matchlab-engine.onrender.com/deploy-snapshot?date=2026-10-31',{signal:AbortSignal.timeout(30000)});
+          if(!response.ok&&response.status!==404)throw Error('public_release_read_failed:'+response.status);
+          const decision=restoredDaySyncAdmission({ref,manifest,receipt:read('data/history-resolutions/2026-10-31/original-value-restoration.v1.json'),latestDay:read('data/deploy-snapshots/latest.json').date,publicRelease:response.ok?await response.json():null});
+          console.log(JSON.stringify(decision));
+          fs.appendFileSync(process.env.GITHUB_ENV,`RESTORED_REF=${ref}\nRESTORED_ACTION=${decision.action}\n`);
+          NODE
+      - name: Synchronize only the approved dated release
+        if: env.RESTORED_ACTION == 'SYNC_REQUIRED'
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          bash tools/sync-public-snapshot.sh '2026-10-31' "$RESTORED_REF" | tee "$RUNNER_TEMP/restored-day-sync.log"
+          grep -q '^SNAPSHOT_SYNC_LATEST_PROMOTED=false$' "$RUNNER_TEMP/restored-day-sync.log"

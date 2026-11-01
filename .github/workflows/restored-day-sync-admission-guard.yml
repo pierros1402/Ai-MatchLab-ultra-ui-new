@@ -1,0 +1,25 @@
+name: Restored dated publication admission regression
+on:
+  pull_request:
+    paths:
+      - tools/restored-day-sync-admission*
+      - .github/workflows/restored-day-publication.yml
+      - .github/workflows/restored-day-sync-admission-guard.yml
+permissions:
+  contents: read
+jobs:
+  admission:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+          sparse-checkout: |
+            tools
+            .github
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - run: node --test tools/restored-day-sync-admission.test.mjs
