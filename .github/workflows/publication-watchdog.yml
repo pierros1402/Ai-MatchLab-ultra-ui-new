@@ -169,19 +169,20 @@ jobs:
                   ATHENS_TOTAL_MINUTES=$((10#$ATHENS_HOUR * 60 + 10#$ATHENS_MINUTE))
 
                   # GitHub scheduled Daily events are not guaranteed delivery.
-                  # Once two normal evening opportunities have passed, a
+                  # If the normal early candidate has not published, a
                   # scheduled watchdog run becomes the fail-safe prepublication
                   # launcher for TOMORROW. It never builds publication artifacts
                   # itself; it only dispatches the complete fail-closed Daily.
                   #
-                  # 19:30-20:59 Athens leaves ample wall-clock budget before
-                  # midnight while preserving the normal Daily schedule as the
-                  # primary mechanism.
+                  # Full Daily needs up to five hours. Its fallback must start
+                  # by 18:50 too; a 19:30-20:59 launch can cross midnight and
+                  # strand an observation before publication. Summer fallback
+                  # may run before the regular slot; the activity check dedupes.
                   if [[
                     ( "${EVENT_NAME}" == "schedule" || "${EVENT_NAME}" == "push" ) &&
                     "${TARGET_DAY}" == "${CALENDAR_DAY}" &&
-                    "${ATHENS_TOTAL_MINUTES}" -ge 1170 &&
-                    "${ATHENS_TOTAL_MINUTES}" -le 1259
+                    "${ATHENS_TOTAL_MINUTES}" -ge 1080 &&
+                    "${ATHENS_TOTAL_MINUTES}" -le 1130
                   ]]; then
                     echo "Current-day publication is healthy but next-day prepublication is still absent."
                     echo "Checking Daily activity before controlled next-day fallback."

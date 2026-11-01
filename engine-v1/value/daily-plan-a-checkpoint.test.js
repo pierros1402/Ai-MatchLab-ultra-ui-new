@@ -20,6 +20,16 @@ test("scheduled full cycle fits the Athens admission and midnight budget in both
   }
 });
 
+test("watchdog next-day fallback has the same full-cycle midnight budget", () => {
+  const daily = fs.readFileSync(new URL("../../.github/workflows/daily-deploy-snapshot.yml", import.meta.url), "utf8");
+  const watchdog = fs.readFileSync(new URL("../../.github/workflows/publication-watchdog.yml", import.meta.url), "utf8");
+  const budget = Number(daily.match(/^    timeout-minutes: (\d+)$/m)[1]);
+  const start = Number(watchdog.match(/ATHENS_TOTAL_MINUTES\}" -ge (\d+)/)[1]);
+  const end = Number(watchdog.match(/ATHENS_TOTAL_MINUTES\}" -le (\d+)/)[1]);
+  assert.ok(start <= end);
+  assert.ok(end + budget <= 1430, "watchdog must leave the full Daily budget before midnight");
+});
+
 test("first production output survives midnight and later candidates without rewriting signed bytes", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-daily-freeze-"));
   const observationFile = path.join(root, "plan-a.json"), auditFile = path.join(root, "audit.json");

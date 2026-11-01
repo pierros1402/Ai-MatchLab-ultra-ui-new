@@ -118,4 +118,9 @@ test("restore drill has its own serialized lane and only captures existing evide
   assert.ok(yaml.includes("uses: ./.github/actions/preserve-history"));
   assert.ok(!/run:.*(?:run-daily-cycle|build-value|sync-public-snapshot)/.test(yaml));
   assert.ok(!yaml.includes("cron:"));
+  // Fetching all refs eagerly downloads the growing recovery archive before
+  // the actual restore drill can run (the incident exhausted checkout's 20m).
+  assert.ok(yaml.includes("ref: ${{ github.ref_name }}"));
+  assert.ok(yaml.includes("fetch-tags: false"));
+  assert.ok(yaml.includes("filter: blob:none"));
 });
