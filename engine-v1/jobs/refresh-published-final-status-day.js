@@ -7,6 +7,7 @@ import { fixturesForSnapshotDay } from "../core/day-fixture-universe.js";
 import { resolveDataPath } from "../storage/data-root.js";
 import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
 import { validateStagedRelease } from "./sync-deploy-snapshot-from-github.js";
+import { resolveFederationNonPlayedDecision } from "../source-discovery/federation-nonplayed-decisions.js";
 
 const idOf = row => String(row?.canonicalId || row?.matchId || "");
 const final = row => [row?.status, row?.statusType, row?.rawStatus].some(x => /^(FT|FINAL|FULL_TIME|STATUS_FINAL|STATUS_FULL_TIME|STATUS_FINAL_AET|STATUS_FINAL_PEN|AET|PEN)$/u.test(String(x || "").toUpperCase()));
@@ -18,15 +19,28 @@ const hash = file => crypto.createHash("sha256").update(fs.readFileSync(file)).d
 
 // No provider calls, model execution, fixture admission, score revision or
 // retrospective observation creation. Only already verified canonical finals.
-export function planPublishedFinalRefresh({ day, published = [], canonical = [], results = new Map() }) {
+export function planPublishedFinalRefresh({ day, published = [], canonical = [], results = new Map(), rescheduled = [] }) {
   const current = new Map(canonical.map(row => [idOf(row), row]));
   if (current.size !== canonical.length || new Set(published.map(idOf)).size !== published.length) throw Error("final_refresh_duplicate_identity");
   const upgrades = [];
+  const nonplayed = [];
+  const newDay = new Map(rescheduled.map(row => [String(row?.sourceId || ""), row]));
   for (const previous of published) {
     const id = idOf(previous), next = current.get(id);
     if (!id || !next) throw Error(`final_refresh_missing_canonical:${id}`);
     if (final(previous) && (!final(next) || !sameScore(previous, next))) throw Error(`final_refresh_terminal_revision_forbidden:${id}`);
-    if (final(previous) || !final(next)) continue;
+    if (final(previous)) continue;
+    if (!final(next)) {
+      const decision = resolveFederationNonPlayedDecision({
+        day, published: previous, canonical: next,
+        rescheduled: newDay.get(String(previous.sourceId || ""))
+      });
+      if (decision) {
+        nonplayed.push(id);
+        upgrades.push(id);
+      }
+      continue;
+    }
     const result = results.get(id);
     if (!validScore(next) || result?.verifiedFinalTruth !== true || result.date !== day || result.matchId !== id ||
         !sameScore(result, next) || result.homeTeam !== next.homeTeam || result.awayTeam !== next.awayTeam ||
@@ -35,7 +49,7 @@ export function planPublishedFinalRefresh({ day, published = [], canonical = [],
     }
     upgrades.push(id);
   }
-  return { upgrades, fixtureIds: published.map(idOf) };
+  return { upgrades, nonplayed, fixtureIds: published.map(idOf) };
 }
 
 export async function refreshPublishedFinalStatusDay(day, { apply = false, today = athensDayKey() } = {}) {
@@ -57,7 +71,8 @@ export async function refreshPublishedFinalStatusDay(day, { apply = false, today
     const file = resolveDataPath("final-results", day, `${id}.json`);
     if (fs.existsSync(file)) results.set(id, JSON.parse(fs.readFileSync(file, "utf8")));
   }
-  const plan = planPublishedFinalRefresh({ day, published, canonical, results });
+  const rescheduled = day === "2026-10-30" ? fixturesForSnapshotDay("2026-11-01").fixtures : [];
+  const plan = planPublishedFinalRefresh({ day, published, canonical, results, rescheduled });
   if (!apply || !plan.upgrades.length) return { day, changed: false, plannedUpgrades: plan.upgrades, available: true, hash: beforeManifest.hash };
   const protectedFiles = ["value.json", "value-audit.json", "plan-c-shadow.json", "plan-c-shadow-audit.json"]
     .map(name => path.join(root, name)).filter(file => fs.existsSync(file));
@@ -73,7 +88,20 @@ export async function refreshPublishedFinalStatusDay(day, { apply = false, today
   const after = rowsOf(JSON.parse(fs.readFileSync(path.join(root, "fixtures.json"), "utf8")));
   if (JSON.stringify(after.map(idOf).sort()) !== JSON.stringify([...plan.fixtureIds].sort())) throw Error("final_refresh_membership_changed");
   const afterMap = new Map(after.map(row => [idOf(row), row]));
-  for (const id of plan.upgrades) if (!final(afterMap.get(id)) || !sameScore(afterMap.get(id), results.get(id))) throw Error(`final_refresh_output_mismatch:${id}`);
+  for (const id of plan.upgrades) {
+    const afterRow = afterMap.get(id);
+    if (plan.nonplayed.includes(id)) {
+      const beforeRow = published.find(row => idOf(row) === id);
+      const canonicalRow = canonical.find(row => idOf(row) === id);
+      const decision = resolveFederationNonPlayedDecision({
+        day, published: beforeRow, canonical: canonicalRow,
+        rescheduled: rescheduled.find(row => row.sourceId === beforeRow.sourceId)
+      });
+      if (!decision || afterRow?.status !== "STATUS_POSTPONED" || !sameScore(afterRow, beforeRow)) throw Error(`final_refresh_nonplayed_output_mismatch:${id}`);
+    } else if (!final(afterRow) || !sameScore(afterRow, results.get(id))) {
+      throw Error(`final_refresh_output_mismatch:${id}`);
+    }
+  }
   const manifest = JSON.parse(fs.readFileSync(manifestFile, "utf8"));
   await validateStagedRelease(root, manifest);
   return { day, changed: true, upgraded: plan.upgrades, available: true, hash: manifest.hash };
