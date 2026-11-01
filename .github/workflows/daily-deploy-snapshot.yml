@@ -1249,7 +1249,7 @@ jobs:
           echo "DAILY_SNAPSHOT_COMMITTED=true" >> "$GITHUB_ENV"
           echo "Published immutable snapshot ref ${PUBLISHED_REF}"
 
-      - name: Promote and verify public runtime snapshots
+      - name: Promote and verify current-day public runtime snapshot
         if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true'
         shell: bash
         env:
@@ -1263,10 +1263,24 @@ jobs:
           # Promote the release day first. A prior-day synchronization problem
           # must never strand the newly published operational day behind yesterday.
           bash tools/sync-public-snapshot.sh "${DAY_KEY}" "${PUBLISHED_REF}"
+
+      - name: Publish available prior-day Value comparison
+        if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true'
+        shell: bash
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
           # FINALIZE_DAY_KEY is a closed-day settlement publication.
           # Keep the strict historical snapshot manifest gate intact;
           # only refresh the authoritative four-plan comparison mirror.
-          node tools/sync-public-value-comparison.mjs "${FINALIZE_DAY_KEY}" "${PUBLISHED_REF}"
+          AVAILABLE="$(node tools/value-comparison-availability.mjs "${FINALIZE_DAY_KEY}" "${PUBLISHED_REF}")"
+          if [ "$AVAILABLE" = "true" ]; then
+            node tools/sync-public-value-comparison.mjs "${FINALIZE_DAY_KEY}" "${PUBLISHED_REF}"
+          elif [ "$AVAILABLE" != "false" ]; then
+            echo "ERROR: invalid comparison availability response"
+            exit 1
+          fi
 
       - name: Data publication requires no UI deploy
         if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true' && env.ALLOW_RENDER_DEPLOY != 'true'
