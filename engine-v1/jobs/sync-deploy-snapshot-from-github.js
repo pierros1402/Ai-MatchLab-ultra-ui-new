@@ -25,6 +25,7 @@ import {
 import { resolveDataPath } from "../storage/data-root.js";
 import { athensDayKey, shiftDay } from "../core/daykey.js";
 import { validatePlanCShadowExportPayload } from "../value/plan-c-shadow-export.js";
+import { assertArchivedValueRelease } from "../core/archived-value-release.js";
 
 const DEFAULT_REPO = process.env.SNAPSHOT_SYNC_REPO || "pierros1402/Ai-MatchLab-ultra-ui-new";
 const DEFAULT_REF = process.env.SNAPSHOT_SYNC_BRANCH || "main";
@@ -312,6 +313,8 @@ export async function validateStagedRelease(stageDayDir, manifest) {
 
   const fixtures = parseJsonBuffer(await fsp.readFile(fixturesFile), "fixtures");
   const value = parseJsonBuffer(await fsp.readFile(valueFile), "value");
+  assertArchivedValueRelease({day:manifest.date,stageDir:stageDayDir,
+    receiptFile:resolveDataPath('history-resolutions',manifest.date,'original-value-restoration.v1.json')});
   const fixtureCount = rowsOfFixtures(fixtures).length;
   const valueCount = rowsOfValue(value).length;
 

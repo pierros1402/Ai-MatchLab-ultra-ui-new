@@ -1,4 +1,5 @@
 import fs from "fs";
+import { assertArchivedValueRelease } from "../core/archived-value-release.js";
 import path from "path";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import {
@@ -1564,6 +1565,9 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
     valueAudit &&
     typeof valueAudit === "object"
   );
+
+  assertArchivedValueRelease({day:dayKey,stageDir:snapshotRoot,
+    receiptFile:resolveDataPath('history-resolutions',dayKey,'original-value-restoration.v1.json')});
 
   const preserveSnapshotValueAuditBytes =
     Boolean(preservedSnapshotValueAudit);
