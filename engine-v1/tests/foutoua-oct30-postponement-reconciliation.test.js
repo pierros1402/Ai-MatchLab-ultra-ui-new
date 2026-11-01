@@ -36,9 +36,17 @@ test("2026-10-30 Foutoua correction retains exact identity and no fabricated res
   assert.equal(original.statusCorrection?.rescheduledMatch?.providerMatchId, id);
   assert.equal(original.statusCorrection?.publicationAuthorized, true);
   assert.equal(original.statusCorrection?.providerNativeStatusCodeVerified, false);
-  assert.equal(rescheduled.status, "STATUS_SCHEDULED");
-  assert.equal(rescheduled.scoreHome, null);
-  assert.equal(rescheduled.scoreAway, null);
+  // The next-day fixture may still be scheduled on the branch or already
+  // finalized on the current main merge result; its score belongs ONLY there.
+  if (rescheduled.status === "FT") {
+    assert.equal(rescheduled.rawStatus, "STATUS_FINAL");
+    assert.ok(Number.isInteger(rescheduled.scoreHome) && rescheduled.scoreHome >= 0);
+    assert.ok(Number.isInteger(rescheduled.scoreAway) && rescheduled.scoreAway >= 0);
+  } else {
+    assert.equal(rescheduled.status, "STATUS_SCHEDULED");
+    assert.equal(rescheduled.scoreHome, null);
+    assert.equal(rescheduled.scoreAway, null);
+  }
   assert.equal(old.fixtures.filter(f => f.status === "FT").length, 4);
   assert.equal(old.fixtures.filter(f => f.status === "STATUS_POSTPONED").length, 1);
 });
