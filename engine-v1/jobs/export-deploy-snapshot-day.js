@@ -26,7 +26,8 @@ import {
 } from "../value/plan-a-publication-authority.js";
 import {
   buildPlanCShadowExportAudit,
-  readPlanCShadowDay
+  readPlanCShadowDay,
+  validatePlanCShadowExportPayload
 } from "../value/plan-c-shadow-export.js";
 
 function readJsonSafe(filePath, fallback = null) {
@@ -1581,37 +1582,36 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
   // daily source is represented honestly as available:false; an existing but
   // invalid or modified source fails the entire export closed. It never
   // changes the official Value artifact or its publication authority.
-  const planCShadowLoaded =
-    readPlanCShadowDay(dayKey);
+  const snapshotPlanCShadowFile = path.join(snapshotRoot, "plan-c-shadow.json");
+  const snapshotPlanCShadowAuditFile = path.join(snapshotRoot, "plan-c-shadow-audit.json");
+  // Historical terminal-status convergence must retain the exact existing
+  // shadow observation and audit, even when its source has since been pruned.
+  const preserveShadow = options?.preserveShadow === true;
+  const planCShadowLoaded = preserveShadow
+    ? { payload: readJsonSafe(snapshotPlanCShadowFile, null) }
+    : readPlanCShadowDay(dayKey);
 
   const planCShadowOut =
     planCShadowLoaded.payload;
 
-  const planCShadowAudit =
-    buildPlanCShadowExportAudit(
+  const planCShadowAudit = preserveShadow
+    ? readJsonSafe(snapshotPlanCShadowAuditFile, null)
+    : buildPlanCShadowExportAudit(
       dayKey,
       planCShadowLoaded,
       startedAt
     );
 
-  const snapshotPlanCShadowFile =
-    path.join(
-      snapshotRoot,
-      "plan-c-shadow.json"
-    );
+  if (preserveShadow && (!planCShadowAudit || !validatePlanCShadowExportPayload(planCShadowOut, dayKey).ok)) {
+    throw new Error("preserved_plan_c_shadow_invalid");
+  }
 
-  const snapshotPlanCShadowAuditFile =
-    path.join(
-      snapshotRoot,
-      "plan-c-shadow-audit.json"
-    );
-
-  writeJsonStable(
+  if (!preserveShadow) writeJsonStable(
     snapshotPlanCShadowFile,
     planCShadowOut
   );
 
-  writeJsonStable(
+  if (!preserveShadow) writeJsonStable(
     snapshotPlanCShadowAuditFile,
     planCShadowAudit
   );
