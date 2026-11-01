@@ -22,6 +22,11 @@ const decisions = Object.freeze([
 const missingScore = x => x === null || x === undefined;
 const id = x => String(x?.canonicalId || x?.matchId || "");
 const final = x => ["FT", "FINAL", "STATUS_FINAL"].includes(String(x?.status || "").toUpperCase());
+const verifiedRescheduledShape = row =>
+  (missingScore(row.scoreHome) && missingScore(row.scoreAway) && row.status === "STATUS_SCHEDULED") ||
+  (row.status === "FT" && row.rawStatus === "STATUS_FINAL" &&
+    Number.isInteger(row.scoreHome) && row.scoreHome >= 0 &&
+    Number.isInteger(row.scoreAway) && row.scoreAway >= 0);
 
 export function resolveFederationNonPlayedDecision({ day, published, canonical, rescheduled }) {
   if (!published || !canonical || !rescheduled) return null;
@@ -51,7 +56,8 @@ export function resolveFederationNonPlayedDecision({ day, published, canonical, 
     canonical.rawStatus === d.terminalStatus &&
     canonical.statusType === d.terminalStatus &&
     !final(published) && !final(canonical) &&
-    [published, canonical, rescheduled].every(r => missingScore(r.scoreHome) && missingScore(r.scoreAway)) &&
+    [published, canonical].every(r => missingScore(r.scoreHome) && missingScore(r.scoreAway)) &&
+    verifiedRescheduledShape(rescheduled) &&
     canonical.statusCorrection?.decisionId === "foutoua-aljaish-federation-reschedule-20261029-v1" &&
     canonical.statusCorrection?.providerNativeStatusCodeVerified === false &&
     canonical.statusCorrection?.policyVersion === "federation-nonplayed-exact-reviewed-v1" &&
