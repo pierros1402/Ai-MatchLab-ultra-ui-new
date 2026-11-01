@@ -45,7 +45,10 @@ function git(root, args, { input, index, allowFailure = false, binary = false } 
   const result = spawnSync("git", args, {
     cwd: root, input, encoding: binary || input instanceof Buffer ? undefined : "utf8",
     env: { ...process.env, ...(index ? { GIT_INDEX_FILE: index } : {}) },
-    timeout: args[0] === "write-tree" ? 600_000 : 120_000, maxBuffer: 128 * 1024 * 1024,
+    // Cold archive history was previously prefetched by checkout. Its measured
+    // first fetch exceeds two minutes; retain a finite budget without relaxing
+    // durability, ancestry, hashing, or ordinary command timeouts.
+    timeout: args[0] === "write-tree" ? 600_000 : args[0] === "fetch" ? 300_000 : 120_000, maxBuffer: 128 * 1024 * 1024,
     windowsHide: true
   });
   if (result.error || result.status !== 0) {
@@ -132,7 +135,7 @@ function remoteArchive(root, remote) {
   const refs = git(root, ["ls-remote", "--heads", remote, `refs/heads/${HISTORY_ARCHIVE_BRANCH}`]).trim();
   if (!refs) return null;
   const commit = refs.split(/\s/u)[0];
-  git(root, ["fetch", "--quiet", "--no-tags", remote, commit]);
+  git(root, ["fetch", "--quiet", "--filter=blob:none", "--no-tags", remote, commit]);
   return commit;
 }
 
