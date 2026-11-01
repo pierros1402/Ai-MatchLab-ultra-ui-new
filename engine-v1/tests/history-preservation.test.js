@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { execFileSync, execFile } from "node:child_process";
+import { execFileSync, execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
 import { gzipSync } from "node:zlib";
 import crypto from "node:crypto";
@@ -99,6 +99,28 @@ test("retry is idempotent and a changed payload cannot overwrite the same checkp
   f.write("data/value/2026-10-13.json", '{"count":1}');
   assert.throws(() => preserveHistoryCheckpoint(args), /identity_conflict/);
   assert.equal(git(f.root, ["ls-remote", "--heads", "origin", HISTORY_ARCHIVE_BRANCH]).split(/\s/u)[0], first.archiveCommit);
+});
+
+test("private transport retains checkout-v7 conditional HTTP credentials without copying secrets to archive", async t => {
+  const f=fixture(t);git(f.remote,['config','http.receivepack','true']);git(f.remote,['config','uploadpack.allowFilter','true']);
+  const helper=new URL('./helpers/authenticated-git-http-server.mjs',import.meta.url);
+  const server=spawn(process.execPath,[helper.pathname.replace(/^\/([A-Za-z]:)/,'$1'),f.temp],{stdio:['ignore','pipe','pipe'],windowsHide:true});
+  t.after(()=>server.kill());
+  const port=await new Promise((resolve,reject)=>{let text='';server.stdout.on('data',b=>{text+=b;if(text.includes('\n'))resolve(Number(text.trim()));});server.on('error',reject);server.on('exit',code=>reject(Error('http_fixture_exited:'+code)));});
+  const remote=`http://127.0.0.1:${port}/archive.git`;
+  git(f.root,['remote','set-url','origin',remote]);
+  const credentials=path.join(f.temp,'checkout-credentials.config');
+  fs.writeFileSync(credentials,`[http "http://127.0.0.1:${port}/"]\n\textraheader = Authorization: Basic dGVzdDp0ZXN0\n`);
+  const dir=path.join(f.root,'.git').replaceAll('\\','/');
+  git(f.root,['config','--add',`includeIf.gitdir:${dir}.path`,credentials.replaceAll('\\','/')]);
+  f.write('data/value/original.json','{"authenticated":true}');
+  const result=preserveHistoryCheckpoint({root:f.root,dayKey:'2026-11-01',stage:'authenticated',runId:'checkout-v7'});
+  assert.equal(result.ok,true);
+  const again=preserveHistoryCheckpoint({root:f.root,dayKey:'2026-11-01',stage:'authenticated',runId:'checkout-v7'});
+  assert.equal(again.reused,true);
+  const verified=verifyHistoryCheckpoint({root:f.root,ref:again.archiveCommit,manifestPath:again.manifestPath});
+  assert.deepEqual(verified.files.map(f=>f.path),['data/value/original.json']);
+  assert.equal(git(f.root,['show',`${again.archiveCommit}:${again.manifestPath}`]).includes('dGVzdDp0ZXN0'),false);
 });
 
 test("missing remote blocks durability and an independent recovery bundle still preserves bytes", t => {

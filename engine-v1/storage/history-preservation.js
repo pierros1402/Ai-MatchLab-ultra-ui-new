@@ -143,6 +143,22 @@ function remoteArchive(root, remote) {
   return fetchHistoryArchiveTip({ remote, branch: HISTORY_ARCHIVE_BRANCH, run: (args, options) => git(root, args, options) });
 }
 
+function effectiveCredentialIncludes(root) {
+  // checkout@v7 scopes its credential include to the original Git directory.
+  // Private transport metadata does not match that includeIf. Carry the
+  // already-effective credential config origins, without reading/header values
+  // into arguments, logs or captured application evidence.
+  const origins = git(root, ["config", "--null", "--show-origin", "--name-only", "--get-regexp",
+    "^http\\..*\\.extraheader$|^credential(\\..*)?\\.(helper|username|usehttppath)$"], {allowFailure:true});
+  if (!origins) return [];
+  const fields = origins.split("\0"), files = new Set();
+  for (let i=0;i+1<fields.length;i+=2) {
+    const origin=fields[i];
+    if (origin.startsWith("file:")) files.add(path.resolve(root,origin.slice(5)));
+  }
+  return [...files];
+}
+
 /** Capture bytes, including partial/invalid JSON, without interpreting empty files as successful runs.
  * Each archive commit retains the source commit as a parent, so unchanged baseline data remains reachable.
  * The source checkout/index and main branch are never changed.
@@ -168,8 +184,12 @@ export function preserveHistoryCheckpoint({
   const objectDirectory = path.resolve(root, git(root, ["rev-parse", "--git-path", "objects"]).trim());
   const configFile = path.resolve(root, git(root, ["rev-parse", "--git-path", "config"]).trim());
   const objectFormat = git(root, ["rev-parse", "--show-object-format"]).trim();
+  const credentialIncludes = effectiveCredentialIncludes(root);
   git(root, ["init", "--bare", `--object-format=${objectFormat}`, transportDir]);
   git(root, ["--git-dir", transportDir, "config", "include.path", configFile]);
+  for (const credentialFile of credentialIncludes) {
+    if (credentialFile !== configFile) git(root, ["--git-dir", transportDir, "config", "--add", "include.path", credentialFile]);
+  }
   fs.appendFileSync(path.join(transportDir, "config"), "\n[core]\n\tbare = true\n");
   const sourceShallow = git(root, ["rev-parse", "--git-path", "shallow"]).trim();
   const sourceShallowPath = path.resolve(root, sourceShallow);
