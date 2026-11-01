@@ -135,7 +135,7 @@ function remoteArchive(root, remote) {
   const refs = git(root, ["ls-remote", "--heads", remote, `refs/heads/${HISTORY_ARCHIVE_BRANCH}`]).trim();
   if (!refs) return null;
   const commit = refs.split(/\s/u)[0];
-  git(root, ["fetch", "--quiet", "--filter=blob:none", "--no-tags", remote, commit]);
+  // Fetch only the advertised archive branch tip, without walking the full\n  // archive ancestry into this checkout. The remote tracking ref is not mutated;\n  // durable ancestry is verified through the normal fast-forward push.\n  git(root, ["-c", "fetch.negotiationAlgorithm=noop", "fetch", "--quiet", "--filter=blob:none", "--depth=1", "--no-tags", remote, `+refs/heads/${HISTORY_ARCHIVE_BRANCH}:refs/remotes/${remote}/${HISTORY_ARCHIVE_BRANCH}`]);\n  if (git(root, ["rev-parse", `refs/remotes/${remote}/${HISTORY_ARCHIVE_BRANCH}`]).trim() !== commit) {\n    throw new Error("history_archive_remote_tip_changed_during_fetch");\n  }
   return commit;
 }
 
