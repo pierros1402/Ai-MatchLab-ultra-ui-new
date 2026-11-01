@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { athensDayKey } from "../core/daykey.js";
 
 import {
   isPlanAObservationDay,
@@ -26,7 +27,8 @@ export function selectPlanAPublicationPayload({
   dayKey,
   currentPayload,
   observation = null,
-  observationFileExists = false
+  observationFileExists = false,
+  today = athensDayKey()
 } = {}) {
   const day = String(dayKey || "").trim();
 
@@ -72,6 +74,15 @@ export function selectPlanAPublicationPayload({
     );
   }
 
+  if (day < today) {
+    throw new Error(`plan_a_historical_first_freeze_forbidden:${day}:restore_original_observation_required`);
+  }
+  if (currentPayload?.date && currentPayload.date !== day) {
+    throw new Error(`plan_a_publication_day_mismatch:${day}`);
+  }
+  if (currentPayload && currentPayload.count !== rowsFromPlanAPayload(currentPayload).length) {
+    throw new Error(`plan_a_publication_count_mismatch:${day}`);
+  }
   return {
     ok: true,
     authority: "current_value_artifact_first_freeze",

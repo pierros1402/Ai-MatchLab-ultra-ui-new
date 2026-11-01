@@ -1,0 +1,39 @@
+name: Value snapshot integrity regression
+on:
+  pull_request:
+    paths:
+      - .github/workflows/value-snapshot-integrity-guard.yml
+      - engine-v1/core/value-snapshot-integrity*
+      - engine-v1/jobs/sync-deploy-snapshot-from-github.js
+      - engine-v1/jobs/sync-deploy-snapshot-release.test.js
+      - engine-v1/value/plan-a-publication-authority*
+permissions:
+  contents: read
+jobs:
+  value-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          fetch-tags: false
+          persist-credentials: false
+          sparse-checkout: |
+            engine-v1
+            workers
+            tools
+            .github
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - run: npm ci --no-audit --no-fund
+      - run: >-
+          node --test
+          engine-v1/core/value-snapshot-integrity.test.js
+          engine-v1/core/value-publication-integrity.test.js
+          engine-v1/value/plan-a-publication-authority.test.js
+          engine-v1/jobs/sync-deploy-snapshot-release.test.js
+          engine-v1/jobs/refresh-published-final-status-day.test.js
+          engine-v1/jobs/daily-publish-hardening-foundation.test.js
+      - run: git diff --exit-code

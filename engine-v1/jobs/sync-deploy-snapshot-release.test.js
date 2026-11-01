@@ -138,3 +138,30 @@ test("runtime sync downloads declared Plan C shadow files as required core artif
   assert.ok(files.required.includes("plan-c-shadow.json"));
   assert.ok(files.required.includes("plan-c-shadow-audit.json"));
 });
+
+test("even a green rehashed manifest cannot publish an empty or cross-day Value audit", async t => {
+  const root = await fs.promises.mkdtemp(path.join(os.tmpdir(), "aiml-release-value-audit-"));
+  t.after(() => fs.promises.rm(root, { recursive: true, force: true }));
+  const manifest = await makeRelease(root);
+  const value = {ok:true,date:manifest.date,source:'canonical_fixtures',count:0,picks:[]};
+  const audit = {ok:true,date:manifest.date,source:'canonical_fixtures',sourceContract:{canonicalOnly:true},fixtureUniverse:{count:1,canonicalIds:['m1']},universe:{approved:0},evaluationAccounting:{unaccountedFixtureCount:0,duplicateOutcomeCount:0}};
+  manifest.files.valueAudit = 'value-audit.json';
+  manifest.valueGate = {ok:true,valueFreshAgainstCanonical:true};
+  async function bind(auditBytes) {
+    const valueBytes = jsonBuffer(value);
+    await fs.promises.writeFile(path.join(root,'value.json'),valueBytes);
+    await fs.promises.writeFile(path.join(root,'value-audit.json'),auditBytes);
+    manifest.fileHashes['value.json'] = canonicalBufferSha256(valueBytes);
+    manifest.fileHashes['value-audit.json'] = canonicalBufferSha256(auditBytes);
+    manifest.hash = computeDeploySnapshotManifestHash(manifest);
+    await fs.promises.writeFile(path.join(root,'manifest.json'),jsonBuffer(manifest));
+  }
+  await bind(jsonBuffer(audit));
+  assert.equal((await validateStagedRelease(root,manifest)).fixtureCount,1);
+  for (const bytes of [Buffer.alloc(0),Buffer.from('{'),jsonBuffer({...audit,date:'2099-01-01'})]) {
+    await bind(bytes);
+    await assert.rejects(validateStagedRelease(root,manifest), /value-audit_json_invalid|value_audit_missing_or_invalid/);
+  }
+  await fs.promises.unlink(path.join(root,'value-audit.json'));
+  await assert.rejects(validateStagedRelease(root,manifest), /staged_value_audit_required/);
+});
