@@ -1,0 +1,48 @@
+name: Federation postponement guard
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/federation-postponement-guard.yml
+      - engine-v1/source-discovery/federation-nonplayed-decisions.js
+      - engine-v1/source-discovery/federation-nonplayed-decisions.test.js
+      - engine-v1/jobs/refresh-published-final-status-day.js
+      - engine-v1/jobs/refresh-published-final-status-day.test.js
+      - engine-v1/tests/foutoua-*.test.js
+      - data/canonical-fixtures/2026-10-30/syr.1.json
+      - data/canonical-fixtures/2026-11-01/syr.1.json
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-policy-and-publication:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          fetch-tags: false
+          filter: blob:none
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: Validate source syntax
+        run: |
+          node --check engine-v1/source-discovery/federation-nonplayed-decisions.js
+          node --check engine-v1/jobs/refresh-published-final-status-day.js
+      - name: Enforce exact identity, strict nonplayed policy and publication contracts
+        run: |
+          node --test \
+            engine-v1/source-discovery/federation-nonplayed-decisions.test.js \
+            engine-v1/tests/foutoua-oct30-postponement-reconciliation.test.js \
+            engine-v1/tests/foutoua-nonplayed-policy-boundary.test.js \
+            engine-v1/jobs/refresh-published-final-status-day.test.js \
+            engine-v1/jobs/sync-deploy-snapshot-release.test.js \
+            engine-v1/tests/history-protection-watchdog.test.js \
+            engine-v1/tests/publication-runtime-contract.test.js
+      - name: Ensure no tracked source or data mutations
+        run: |
+          test -z "$(git status --porcelain)"
