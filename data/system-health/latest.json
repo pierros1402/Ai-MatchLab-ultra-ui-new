@@ -1,50 +1,26 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-11-01",
-  "generatedAt": "2026-11-01T14:38:33.253Z",
-  "severity": "error",
+  "generatedAt": "2026-11-01T22:31:41.866Z",
+  "severity": "warning",
   "issueCounts": {
-    "error": 2,
-    "warning": 8,
-    "info": 11
+    "error": 0,
+    "warning": 7,
+    "info": 9
   },
   "alert": true,
   "alertCounts": {
-    "error": 2,
-    "warning": 2,
+    "error": 0,
+    "warning": 1,
     "info": 0
   },
-  "activeIssueCount": 21,
-  "actionableIssueCount": 10,
-  "newIssueCount": 4,
-  "newActionableIssueCount": 4,
-  "resolvedIssueCount": 1,
-  "persistentIssueCount": 17,
+  "activeIssueCount": 16,
+  "actionableIssueCount": 7,
+  "newIssueCount": 1,
+  "newActionableIssueCount": 1,
+  "resolvedIssueCount": 6,
+  "persistentIssueCount": 15,
   "activeIssues": [
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
-      "details": {
-        "reasons": [
-          "value_plan_comparison_stale_against_canonical"
-        ]
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "value_plan_comparison",
-        "artifact": "value-comparison/2026-11-01.json",
-        "at": "2026-11-01T12:35:31.122Z",
-        "staleReason": "value_plan_comparison_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -12207
-      }
-    },
     {
       "severity": "info",
       "source": "freshness-report",
@@ -71,13 +47,13 @@
         "preservation": {
           "reason": "frozen_value_observation_cohort_identity_preserved",
           "requestedDay": "2026-11-01",
-          "currentAthensDay": "2026-11-01",
+          "currentAthensDay": "2026-11-02",
           "fixtureCount": 351,
           "frozenHash": "66ff823d7d7205504f7a71e6291da59833bdf3ea113afdb01a8b68da79247020",
-          "currentHash": "66ff823d7d7205504f7a71e6291da59833bdf3ea113afdb01a8b68da79247020",
+          "currentHash": "1f260c5a901e326ca6bfb2641d8031a9c9cc7b9d5cf621ca258a883db35af438",
           "strictFrozenParity": true,
           "membershipParity": true,
-          "descriptorDrift": false,
+          "descriptorDrift": true,
           "publicationMembershipPreserved": false,
           "authorizedShrink": false,
           "removedFixtureIds": [],
@@ -102,13 +78,13 @@
         "preservation": {
           "reason": "frozen_value_observation_cohort_identity_preserved",
           "requestedDay": "2026-11-01",
-          "currentAthensDay": "2026-11-01",
+          "currentAthensDay": "2026-11-02",
           "fixtureCount": 351,
           "frozenHash": "66ff823d7d7205504f7a71e6291da59833bdf3ea113afdb01a8b68da79247020",
-          "currentHash": "66ff823d7d7205504f7a71e6291da59833bdf3ea113afdb01a8b68da79247020",
+          "currentHash": "1f260c5a901e326ca6bfb2641d8031a9c9cc7b9d5cf621ca258a883db35af438",
           "strictFrozenParity": true,
           "membershipParity": true,
-          "descriptorDrift": false,
+          "descriptorDrift": true,
           "publicationMembershipPreserved": false,
           "authorizedShrink": false,
           "removedFixtureIds": [],
@@ -512,7 +488,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 19330,
+        "count": 19350,
         "informational": true
       }
     },
@@ -538,15 +514,6 @@
         "reason": "score_consistent_alias_mirror_conflicts_present",
         "count": 47,
         "informational": true
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
       }
     },
     {
@@ -576,13 +543,14 @@
       }
     },
     {
-      "severity": "error",
+      "severity": "warning",
       "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
       "details": {
-        "clean": false,
-        "cleanStrict": false
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     },
     {
@@ -645,38 +613,6 @@
           "rejectedCount": 23,
           "alreadyDeclaredCount": 0
         }
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-11-01",
-        "todayDayKey": "2026-11-01",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 2,
-        "settled": 0,
-        "unresolved": 2
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_b2_unresolved_settlement",
-      "message": "Plan B2 picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-11-01",
-        "todayDayKey": "2026-11-01",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 2,
-        "settled": 0,
-        "unresolved": 2
       }
     },
     {
@@ -1407,13 +1343,13 @@
           "summary": {
             "picks": 2,
             "uniqueMatches": 1,
-            "settled": 0,
-            "wins": 0,
+            "settled": 2,
+            "wins": 2,
             "losses": 0,
             "voids": 0,
-            "unresolved": 2,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": null,
+            "hitRate": 1,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -1427,13 +1363,13 @@
           "summary": {
             "picks": 2,
             "uniqueMatches": 1,
-            "settled": 0,
-            "wins": 0,
+            "settled": 2,
+            "wins": 2,
             "losses": 0,
             "voids": 0,
-            "unresolved": 2,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": null,
+            "hitRate": 1,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -1446,30 +1382,6 @@
     }
   ],
   "actionableIssues": [
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
-      "details": {
-        "reasons": [
-          "value_plan_comparison_stale_against_canonical"
-        ]
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "value_plan_comparison",
-        "artifact": "value-comparison/2026-11-01.json",
-        "at": "2026-11-01T12:35:31.122Z",
-        "staleReason": "value_plan_comparison_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -12207
-      }
-    },
     {
       "severity": "warning",
       "source": "value-input",
@@ -1855,15 +1767,6 @@
       }
     },
     {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
-      }
-    },
-    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -1890,13 +1793,14 @@
       }
     },
     {
-      "severity": "error",
+      "severity": "warning",
       "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
       "details": {
-        "clean": false,
-        "cleanStrict": false
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     },
     {
@@ -2566,94 +2470,17 @@
   "newIssues": [
     {
       "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
-      "details": {
-        "reasons": [
-          "value_plan_comparison_stale_against_canonical"
-        ]
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "value_plan_comparison",
-        "artifact": "value-comparison/2026-11-01.json",
-        "at": "2026-11-01T12:35:31.122Z",
-        "staleReason": "value_plan_comparison_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -12207
-      }
-    },
-    {
-      "severity": "error",
       "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
       "details": {
-        "failure": "snapshot_stale"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
-      "details": {
-        "clean": false,
-        "cleanStrict": false
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     }
   ],
   "newActionableIssues": [
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
-      "details": {
-        "reasons": [
-          "value_plan_comparison_stale_against_canonical"
-        ]
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "value_plan_comparison",
-        "artifact": "value-comparison/2026-11-01.json",
-        "at": "2026-11-01T12:35:31.122Z",
-        "staleReason": "value_plan_comparison_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -12207
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
-      "details": {
-        "clean": false,
-        "cleanStrict": false
-      }
-    }
-  ],
-  "resolvedIssues": [
     {
       "severity": "warning",
       "source": "build-report",
@@ -2663,6 +2490,83 @@
         "clean": true,
         "cleanStrict": false,
         "contextOnlyWarnings": false
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-11-01.json",
+        "at": "2026-11-01T12:35:31.122Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -12207
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_b_unresolved_settlement",
+      "message": "Plan B picks are still unresolved.",
+      "details": {
+        "dayKey": "2026-11-01",
+        "todayDayKey": "2026-11-01",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 2,
+        "settled": 0,
+        "unresolved": 2
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_b2_unresolved_settlement",
+      "message": "Plan B2 picks are still unresolved.",
+      "details": {
+        "dayKey": "2026-11-01",
+        "todayDayKey": "2026-11-01",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 2,
+        "settled": 0,
+        "unresolved": 2
       }
     }
   ],
@@ -2693,13 +2597,13 @@
         "preservation": {
           "reason": "frozen_value_observation_cohort_identity_preserved",
           "requestedDay": "2026-11-01",
-          "currentAthensDay": "2026-11-01",
+          "currentAthensDay": "2026-11-02",
           "fixtureCount": 351,
           "frozenHash": "66ff823d7d7205504f7a71e6291da59833bdf3ea113afdb01a8b68da79247020",
-          "currentHash": "66ff823d7d7205504f7a71e6291da59833bdf3ea113afdb01a8b68da79247020",
+          "currentHash": "1f260c5a901e326ca6bfb2641d8031a9c9cc7b9d5cf621ca258a883db35af438",
           "strictFrozenParity": true,
           "membershipParity": true,
-          "descriptorDrift": false,
+          "descriptorDrift": true,
           "publicationMembershipPreserved": false,
           "authorizedShrink": false,
           "removedFixtureIds": [],
@@ -2724,13 +2628,13 @@
         "preservation": {
           "reason": "frozen_value_observation_cohort_identity_preserved",
           "requestedDay": "2026-11-01",
-          "currentAthensDay": "2026-11-01",
+          "currentAthensDay": "2026-11-02",
           "fixtureCount": 351,
           "frozenHash": "66ff823d7d7205504f7a71e6291da59833bdf3ea113afdb01a8b68da79247020",
-          "currentHash": "66ff823d7d7205504f7a71e6291da59833bdf3ea113afdb01a8b68da79247020",
+          "currentHash": "1f260c5a901e326ca6bfb2641d8031a9c9cc7b9d5cf621ca258a883db35af438",
           "strictFrozenParity": true,
           "membershipParity": true,
-          "descriptorDrift": false,
+          "descriptorDrift": true,
           "publicationMembershipPreserved": false,
           "authorizedShrink": false,
           "removedFixtureIds": [],
@@ -3134,7 +3038,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 19264,
+        "count": 19350,
         "informational": true
       }
     },
@@ -3248,38 +3152,6 @@
           "rejectedCount": 23,
           "alreadyDeclaredCount": 0
         }
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-11-01",
-        "todayDayKey": "2026-11-01",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 2,
-        "settled": 0,
-        "unresolved": 2
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_b2_unresolved_settlement",
-      "message": "Plan B2 picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-11-01",
-        "todayDayKey": "2026-11-01",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 2,
-        "settled": 0,
-        "unresolved": 2
       }
     },
     {
@@ -4010,13 +3882,13 @@
           "summary": {
             "picks": 2,
             "uniqueMatches": 1,
-            "settled": 0,
-            "wins": 0,
+            "settled": 2,
+            "wins": 2,
             "losses": 0,
             "voids": 0,
-            "unresolved": 2,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": null,
+            "hitRate": 1,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -4030,13 +3902,13 @@
           "summary": {
             "picks": 2,
             "uniqueMatches": 1,
-            "settled": 0,
-            "wins": 0,
+            "settled": 2,
+            "wins": 2,
             "losses": 0,
             "voids": 0,
-            "unresolved": 2,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": null,
+            "hitRate": 1,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
