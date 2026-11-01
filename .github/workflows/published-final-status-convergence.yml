@@ -61,6 +61,7 @@ jobs:
           engine-v1/core/build-match-intelligence-context.test.js
           engine-v1/value/daily-plan-a-checkpoint.test.js
           engine-v1/tests/history-protection-watchdog.test.js
+          engine-v1/tests/publication-runtime-contract.test.js
       - name: Refresh existing closed-day snapshots from verified canonical finals
         run: node engine-v1/jobs/refresh-published-final-status-day.js --days-back=7 --apply
       - name: Persist only validated dated snapshots
@@ -116,4 +117,3 @@ jobs:
           path: ${{ runner.temp }}/final-status-refresh.json
           if-no-files-found: warn
           retention-days: 90
-
