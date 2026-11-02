@@ -1,0 +1,31 @@
+name: Value input coverage UI regression
+on:
+  pull_request:
+    paths:
+      - assets/js/ui/value-picks.js
+      - index.html
+      - engine-v1/tests/unified-public-ui.test.js
+      - engine-v1/tests/publication-runtime-contract.test.js
+      - engine-v1/tests/value-current-day-settlement-live-contract.test.js
+      - .github/workflows/value-input-coverage-ui.yml
+permissions:
+  contents: read
+jobs:
+  ui-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            assets
+            engine-v1
+            workers
+            tools
+            .github
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - run: node --test engine-v1/tests/unified-public-ui.test.js engine-v1/tests/publication-runtime-contract.test.js engine-v1/tests/value-current-day-settlement-live-contract.test.js engine-v1/jobs/four-plan-ui-contract.test.js engine-v1/core/value-data-readiness.test.js engine-v1/core/prematch-readiness-evidence.test.js engine-v1/value/unified-production-journal.test.js

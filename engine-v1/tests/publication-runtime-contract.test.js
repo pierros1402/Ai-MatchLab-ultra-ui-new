@@ -138,7 +138,7 @@ test("live worker overlay is bounded and labeled with the shared operational day
   assert.match(html, /today-panel\.js\?v=5/);
   assert.match(html, /active-leagues-panel\.js\?v=4/);
   assert.match(html, /live-overlay\.js\?v=9/);
-  assert.match(html, /value-picks\.js\?v=6/);
+  assert.ok(Number(html.match(/value-picks\.js\?v=(\d+)/)?.[1]) >= 7, 'Value coverage UI must use the new or a later cache version');
 });
 
 test("UI aborts are terminal and are not retried as fetch failures", () => {

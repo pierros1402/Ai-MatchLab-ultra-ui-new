@@ -679,6 +679,37 @@ function renderComparisonRow(p) {
   ].join("");
 }
 
+function renderCoverageNotice(plan) {
+  if (planIsUnavailable(plan)) return '';
+  const readiness = plan?.dataReadiness;
+  const count = value => Number.isInteger(value) && value >= 0;
+  const bound = readiness && count(readiness.applicable) && count(readiness.ready) && count(readiness.insufficient) &&
+    readiness.applicable > 0 && readiness.ready + readiness.insufficient === readiness.applicable;
+  const incomplete = plan?.analysisComplete === false || plan?.upstreamCoverage === 'INCOMPLETE' ||
+    readiness?.complete === false || (readiness && (!bound || readiness.insufficient > 0));
+  if (!incomplete) return '';
+  const labels = {
+    minimum_recent_sample: 'Ανεπαρκές πρόσφατο ιστορικό',
+    missing_model_assessment: 'Απουσία αποθηκευμένης αξιολόγησης',
+    ambiguous_model_assessment: 'Αμφίσημη αξιολόγηση',
+    coverage_missing_or_wrong_universe: 'Μη επιβεβαιωμένη κάλυψη αγώνων',
+    fixture_coverage_missing_or_ambiguous: 'Ελλιπής ή αμφίσημη κάλυψη αγώνα',
+    details_missing: 'Απουσία στοιχείων αγώνα',
+    details_foundation_not_verified: 'Μη επαληθευμένα στοιχεία αγώνα',
+    value_input_not_evaluated: 'Μη αξιολογημένες είσοδοι'
+  };
+  let message = bound && readiness.insufficient > 0
+    ? 'Μερική κάλυψη αξιολόγησης: ' + readiness.ready + '/' + readiness.applicable + ' αγώνες έτοιμοι · ' + readiness.insufficient + ' με ελλείψεις.'
+    : 'Δεν έχει επιβεβαιωθεί πλήρης κάλυψη αξιολόγησης για αυτή την ημέρα.';
+  if (bound && readiness.insufficient > 0) {
+    const reasons = Object.entries(readiness.byReason || {}).filter(([, n]) => count(n) && n > 0);
+    if (reasons.length) message += ' ' + reasons.map(([reason, n]) => (labels[reason] || 'Άλλες ελλείψεις') + ': ' + n).join(' · ') + '.';
+    if (reasons.length > 1) message += ' Οι αιτίες μπορεί να επικαλύπτονται.';
+  }
+  message += ' Η ολοκλήρωση των αγώνων και το settlement καταγράφονται χωριστά.';
+  return '<div class="panel-empty" role="status" data-value-coverage="incomplete">' + esc(message) + '</div>';
+}
+
 function renderPlanSummary(plan) {
   if (planIsUnavailable(plan)) {
     return "N/A • plan unavailable";
@@ -760,7 +791,7 @@ function renderPlanBlock(plan, title, information) {
       const plan=supplied?.id==='plan-u1'&&supplied.date===payload.date&&supplied.status==='AVAILABLE'&&Array.isArray(supplied.picks)&&supplied.count===supplied.picks.length?supplied:
         {status:'NOT_AVAILABLE',availability:'not_available',picks:[],count:0};
       const heading='<div class="value-head"><div class="value-head-title">Ενιαίο πλάνο</div><div class="value-head-sub">'+esc(payload.date)+'</div></div>';
-      const coverage=plan.analysisComplete===false||plan.upstreamCoverage==='INCOMPLETE'?'<div class="panel-empty">Η τροφοδότηση δεδομένων δεν είναι πλήρης.</div>':'';
+      const coverage=renderCoverageNotice(plan);
       const html=coverage+renderPlanBlock(plan,'Ενιαίο πλάνο',
         'Συμφωνία A/A2 ή B/B2 με βαθμολογία τουλάχιστον 0,75 σε κάθε παραλλαγή. Κάθε επιλογή εμφανίζεται μία φορά και οι αντίθετες επιλογές αποκλείονται. Οι επιμέρους βαθμολογίες δεν είναι μία ενιαία πιθανότητα επιτυχίας.');
       if(headWrapEl){headWrapEl.innerHTML=heading;bodyEl.innerHTML=html;}else bodyEl.innerHTML=heading+html;
