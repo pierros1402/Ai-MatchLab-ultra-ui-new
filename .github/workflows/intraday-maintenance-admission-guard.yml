@@ -19,6 +19,10 @@ jobs:
         with:
           fetch-depth: 1
           filter: blob:none
+          sparse-checkout: |
+            .github/workflows/intraday-deploy-snapshot-refresh.yml
+            tools/intraday-priority-admission.test.js
+          sparse-checkout-cone-mode: false
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
