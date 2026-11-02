@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-02",
-  "generatedAt": "2026-11-02T19:46:48.593Z",
+  "generatedAt": "2026-11-02T20:30:35.476Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "950f1b36b51c8c18ed1f9cf5d7578dccbb4c5b6a3edcfff349fec04c2dc7b43c",
+  "truthFingerprint": "b5bb490935dc93fda46ac7c0b2fb85cd2993e8798fe58df0077bf64798481fb7",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 134,
-    "playedTerminal": 84,
+    "playedTerminal": 99,
     "nonPlayedTerminal": 2,
-    "scheduled": 32,
-    "live": 16,
+    "scheduled": 16,
+    "live": 17,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 90,
-    "acceptedVerifiedFinalArtifacts": 90,
-    "convergedPlayedFinal": 82,
+    "verifiedFinalArtifacts": 102,
+    "acceptedVerifiedFinalArtifacts": 102,
+    "convergedPlayedFinal": 97,
     "convergedNonPlayedTerminal": 2,
     "pendingVerifiedFinal": 0,
-    "openRows": 42,
+    "openRows": 30,
     "unresolvedRows": 0,
-    "conflictRows": 8,
+    "conflictRows": 5,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 82,
-    "scoredSettlementEligible": 82,
+    "historyEligible": 97,
+    "scoredSettlementEligible": 97,
     "voidSettlementEligible": 2
   },
   "fixtures": [
@@ -49,25 +49,25 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_IN_PROGRESS",
         "scoreHome": 0,
-        "scoreAway": 4
+        "scoreAway": 5
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-02",
+        "scoreHome": 0,
+        "scoreAway": 5,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -98,25 +98,25 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 0,
-        "scoreAway": 2
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
+        "scoreAway": 3
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-02",
+        "scoreHome": 1,
+        "scoreAway": 4,
+        "scoreParity": false
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -340,14 +340,14 @@
       "homeTeam": "Teuta",
       "awayTeam": "Partizani",
       "kickoffUtc": "2026-11-02T17:30:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": true,
@@ -357,14 +357,14 @@
         "dayKey": "2026-11-02",
         "scoreHome": 0,
         "scoreAway": 1,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -644,18 +644,18 @@
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-02",
+        "scoreHome": 0,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -689,7 +689,7 @@
         "status": "SECOND_HALF",
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 0,
+        "scoreHome": 2,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -928,31 +928,31 @@
       "homeTeam": "Noah 2",
       "awayTeam": "Pyunik Yerevan 2",
       "kickoffUtc": "2026-11-02T14:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 3,
+        "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-02",
+        "scoreHome": 3,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1274,9 +1274,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -1320,14 +1320,14 @@
       "homeTeam": "Arda",
       "awayTeam": "Septemvri Sofia",
       "kickoffUtc": "2026-11-02T17:30:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": true,
@@ -1337,14 +1337,14 @@
         "dayKey": "2026-11-02",
         "scoreHome": 2,
         "scoreAway": 1,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1859,31 +1859,31 @@
       "homeTeam": "Sønderjyske Fodbold",
       "awayTeam": "F.C. København",
       "kickoffUtc": "2026-11-02T18:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 0,
         "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-02",
+        "scoreHome": 0,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1957,14 +1957,14 @@
       "homeTeam": "Newcastle United",
       "awayTeam": "Everton",
       "kickoffUtc": "2026-11-02T20:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1978,7 +1978,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -2006,14 +2006,14 @@
       "homeTeam": "Deportivo",
       "awayTeam": "Osasuna",
       "kickoffUtc": "2026-11-02T20:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -2027,7 +2027,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -2055,14 +2055,14 @@
       "homeTeam": "Mallorca",
       "awayTeam": "Cádiz",
       "kickoffUtc": "2026-11-02T20:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -2076,7 +2076,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -2153,14 +2153,14 @@
       "homeTeam": "Real Valladolid",
       "awayTeam": "Leganés",
       "kickoffUtc": "2026-11-02T17:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 4,
-        "scoreAway": 2
+        "scoreAway": 3
       },
       "verifiedFinal": {
         "present": true,
@@ -2170,14 +2170,14 @@
         "dayKey": "2026-11-02",
         "scoreHome": 4,
         "scoreAway": 3,
-        "scoreParity": false
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2349,14 +2349,14 @@
       "homeTeam": "Lorient",
       "awayTeam": "Brest",
       "kickoffUtc": "2026-11-02T19:45Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -2370,7 +2370,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -2398,14 +2398,14 @@
       "homeTeam": "Red Star FC 93",
       "awayTeam": "AS Nancy Lorraine",
       "kickoffUtc": "2026-11-02T19:45Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -2419,7 +2419,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -2447,14 +2447,14 @@
       "homeTeam": "Stade de Reims",
       "awayTeam": "Sochaux",
       "kickoffUtc": "2026-11-02T19:45Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 2,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -2468,7 +2468,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -2594,12 +2594,12 @@
       "homeTeam": "Kalamata",
       "awayTeam": "Iraklis",
       "kickoffUtc": "2026-11-02T17:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 1
       },
@@ -2614,11 +2614,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2986,31 +2986,31 @@
       "homeTeam": "Hap. Ramat Gan",
       "awayTeam": "Maccabi Tel-Aviv",
       "kickoffUtc": "2026-11-02T18:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 0,
+        "scoreAway": 5
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-02",
+        "scoreHome": 0,
+        "scoreAway": 5,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3231,14 +3231,14 @@
       "homeTeam": "Atalanta",
       "awayTeam": "Parma",
       "kickoffUtc": "2026-11-02T19:45Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -3252,7 +3252,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -3280,14 +3280,14 @@
       "homeTeam": "Sassuolo",
       "awayTeam": "Fiorentina",
       "kickoffUtc": "2026-11-02T17:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 2,
-        "scoreAway": 3
+        "scoreAway": 4
       },
       "verifiedFinal": {
         "present": true,
@@ -3297,14 +3297,14 @@
         "dayKey": "2026-11-02",
         "scoreHome": 2,
         "scoreAway": 4,
-        "scoreParity": false
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3920,9 +3920,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -3969,9 +3969,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -4018,9 +4018,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -4067,11 +4067,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 3,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -4113,31 +4113,31 @@
       "homeTeam": "Kongsvinger",
       "awayTeam": "Stabaek",
       "kickoffUtc": "2026-11-02T18:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-02",
+        "scoreHome": 1,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4267,7 +4267,7 @@
         "statusType": null,
         "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 2,
-        "scoreAway": 2
+        "scoreAway": 3
       },
       "verifiedFinal": {
         "present": false,
@@ -4701,31 +4701,31 @@
       "homeTeam": "Penafiel",
       "awayTeam": "Feirense",
       "kickoffUtc": "2026-11-02T18:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-02",
+        "scoreHome": 1,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4848,14 +4848,14 @@
       "homeTeam": "Cape Town City",
       "awayTeam": "Magesi",
       "kickoffUtc": "2026-11-02T17:30:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": true,
@@ -4865,14 +4865,14 @@
         "dayKey": "2026-11-02",
         "scoreHome": 1,
         "scoreAway": 0,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -5485,31 +5485,31 @@
       "homeTeam": "GAIS",
       "awayTeam": "AIK",
       "kickoffUtc": "2026-11-02T18:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 2,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-02",
+        "scoreHome": 2,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -5534,31 +5534,31 @@
       "homeTeam": "Mjällby AIF",
       "awayTeam": "Kalmar FF",
       "kickoffUtc": "2026-11-02T18:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 0,
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-02",
+        "scoreHome": 0,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -5583,31 +5583,31 @@
       "homeTeam": "Landskrona",
       "awayTeam": "Orebro",
       "kickoffUtc": "2026-11-02T18:05:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-02",
+        "scoreHome": 2,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -5632,31 +5632,31 @@
       "homeTeam": "Oster",
       "awayTeam": "Helsingborg",
       "kickoffUtc": "2026-11-02T18:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 3,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-02",
+        "scoreHome": 3,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -6611,12 +6611,9 @@
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
     "conflictFixtureIds": [
-      "cid_alb1_teuta_partizani_20261102",
-      "cid_bul1_arda_septemvrisofia_20261102",
-      "cid_esp2_realvalladolid_leganes_20261102",
-      "cid_gre1_kalamata_iraklis_20261102",
-      "cid_ita1_sassuolo_fiorentina_20261102",
-      "cid_rsa2_capetowncity_magesi_20261102",
+      "cid_afcchampions_algharafa_alqadsiah_20261102",
+      "cid_afcchampions_alittihad_alain_20261102",
+      "cid_arg2_atleticorafaela_patronato_20261102",
       "cid_ukr1_zoryaluhansk_epitsentr_20261102",
       "cid_ukr2_koloskovalivka2_metalistkharkiv_20261102"
     ],
@@ -6630,25 +6627,25 @@
     "systemHealth": {
       "schema": "ai-matchlab.system-health-alerts.v1",
       "dayKey": "2026-11-02",
-      "generatedAt": "2026-11-02T01:42:33.241Z",
+      "generatedAt": "2026-11-02T20:30:34.840Z",
       "severity": "warning",
       "issueCounts": {
         "error": 0,
         "warning": 7,
-        "info": 11
+        "info": 9
       },
-      "alert": true,
+      "alert": false,
       "alertCounts": {
         "error": 0,
-        "warning": 7,
+        "warning": 0,
         "info": 0
       },
-      "activeIssueCount": 18,
+      "activeIssueCount": 16,
       "actionableIssueCount": 7,
-      "newIssueCount": 15,
-      "newActionableIssueCount": 7,
-      "resolvedIssueCount": 14,
-      "persistentIssueCount": 3,
+      "newIssueCount": 0,
+      "newActionableIssueCount": 0,
+      "resolvedIssueCount": 2,
+      "persistentIssueCount": 16,
       "activeIssues": [
         {
           "severity": "info",
@@ -6795,7 +6792,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 19500,
+            "count": 19508,
             "informational": true
           }
         },
@@ -6921,38 +6918,6 @@
               "rejectedCount": 24,
               "alreadyDeclaredCount": 0
             }
-          }
-        },
-        {
-          "severity": "info",
-          "source": "value-comparison",
-          "type": "plan_b_unresolved_settlement",
-          "message": "Plan B picks are still unresolved.",
-          "details": {
-            "dayKey": "2026-11-02",
-            "todayDayKey": "2026-11-02",
-            "ageDays": 0,
-            "overdue": false,
-            "settlementSource": "value-comparison",
-            "picks": 2,
-            "settled": 0,
-            "unresolved": 2
-          }
-        },
-        {
-          "severity": "info",
-          "source": "value-comparison",
-          "type": "plan_b2_unresolved_settlement",
-          "message": "Plan B2 picks are still unresolved.",
-          "details": {
-            "dayKey": "2026-11-02",
-            "todayDayKey": "2026-11-02",
-            "ageDays": 0,
-            "overdue": false,
-            "settlementSource": "value-comparison",
-            "picks": 2,
-            "settled": 0,
-            "unresolved": 2
           }
         },
         {
@@ -7656,19 +7621,19 @@
               "summary": {
                 "picks": 2,
                 "uniqueMatches": 1,
-                "settled": 0,
-                "wins": 0,
+                "settled": 2,
+                "wins": 2,
                 "losses": 0,
                 "voids": 0,
-                "unresolved": 2,
+                "unresolved": 0,
                 "unsupported": 0,
-                "hitRate": null,
-                "oddsAvailable": 0,
-                "averageOdds": null,
-                "totalStake": null,
-                "totalReturn": null,
-                "profit": null,
-                "roi": null
+                "hitRate": 1,
+                "oddsAvailable": 2,
+                "averageOdds": 5.01,
+                "totalStake": 2,
+                "totalReturn": 10.02,
+                "profit": 8.02,
+                "roi": 4.01
               }
             },
             "planB2": {
@@ -7676,19 +7641,19 @@
               "summary": {
                 "picks": 2,
                 "uniqueMatches": 1,
-                "settled": 0,
-                "wins": 0,
+                "settled": 2,
+                "wins": 2,
                 "losses": 0,
                 "voids": 0,
-                "unresolved": 2,
+                "unresolved": 0,
                 "unsupported": 0,
-                "hitRate": null,
-                "oddsAvailable": 0,
-                "averageOdds": null,
-                "totalStake": null,
-                "totalReturn": null,
-                "profit": null,
-                "roi": null
+                "hitRate": 1,
+                "oddsAvailable": 2,
+                "averageOdds": 5.01,
+                "totalStake": 2,
+                "totalReturn": 10.02,
+                "profit": 8.02,
+                "roi": 4.01
               }
             }
           }
@@ -8431,7 +8396,43 @@
           }
         }
       ],
-      "newIssues": [
+      "newIssues": [],
+      "newActionableIssues": [],
+      "resolvedIssues": [
+        {
+          "severity": "info",
+          "source": "value-comparison",
+          "type": "plan_b_unresolved_settlement",
+          "message": "Plan B picks are still unresolved.",
+          "details": {
+            "dayKey": "2026-11-02",
+            "todayDayKey": "2026-11-02",
+            "ageDays": 0,
+            "overdue": false,
+            "settlementSource": "value-comparison",
+            "picks": 2,
+            "settled": 0,
+            "unresolved": 2
+          }
+        },
+        {
+          "severity": "info",
+          "source": "value-comparison",
+          "type": "plan_b2_unresolved_settlement",
+          "message": "Plan B2 picks are still unresolved.",
+          "details": {
+            "dayKey": "2026-11-02",
+            "todayDayKey": "2026-11-02",
+            "ageDays": 0,
+            "overdue": false,
+            "settlementSource": "value-comparison",
+            "picks": 2,
+            "settled": 0,
+            "unresolved": 2
+          }
+        }
+      ],
+      "persistentIssues": [
         {
           "severity": "info",
           "source": "freshness-report",
@@ -8570,6 +8571,42 @@
           }
         },
         {
+          "severity": "info",
+          "source": "foundation-integrity",
+          "type": "age_expired_results_rows_present",
+          "message": "Foundation integrity informational condition.",
+          "details": {
+            "component": "historySemantic",
+            "reason": "age_expired_results_rows_present",
+            "count": 19508,
+            "informational": true
+          }
+        },
+        {
+          "severity": "info",
+          "source": "foundation-integrity",
+          "type": "history_semantic_warnings_present",
+          "message": "Foundation integrity informational condition.",
+          "details": {
+            "component": "historySemantic",
+            "reason": "history_semantic_warnings_present",
+            "count": 4,
+            "informational": true
+          }
+        },
+        {
+          "severity": "info",
+          "source": "foundation-integrity",
+          "type": "score_consistent_alias_mirror_conflicts_present",
+          "message": "Foundation integrity informational condition.",
+          "details": {
+            "component": "historySemantic",
+            "reason": "score_consistent_alias_mirror_conflicts_present",
+            "count": 47,
+            "informational": true
+          }
+        },
+        {
           "severity": "warning",
           "source": "build-report",
           "type": "acquisition_skipped_slugs",
@@ -8667,38 +8704,6 @@
               "rejectedCount": 24,
               "alreadyDeclaredCount": 0
             }
-          }
-        },
-        {
-          "severity": "info",
-          "source": "value-comparison",
-          "type": "plan_b_unresolved_settlement",
-          "message": "Plan B picks are still unresolved.",
-          "details": {
-            "dayKey": "2026-11-02",
-            "todayDayKey": "2026-11-02",
-            "ageDays": 0,
-            "overdue": false,
-            "settlementSource": "value-comparison",
-            "picks": 2,
-            "settled": 0,
-            "unresolved": 2
-          }
-        },
-        {
-          "severity": "info",
-          "source": "value-comparison",
-          "type": "plan_b2_unresolved_settlement",
-          "message": "Plan B2 picks are still unresolved.",
-          "details": {
-            "dayKey": "2026-11-02",
-            "todayDayKey": "2026-11-02",
-            "ageDays": 0,
-            "overdue": false,
-            "settlementSource": "value-comparison",
-            "picks": 2,
-            "settled": 0,
-            "unresolved": 2
           }
         },
         {
@@ -9402,19 +9407,19 @@
               "summary": {
                 "picks": 2,
                 "uniqueMatches": 1,
-                "settled": 0,
-                "wins": 0,
+                "settled": 2,
+                "wins": 2,
                 "losses": 0,
                 "voids": 0,
-                "unresolved": 2,
+                "unresolved": 0,
                 "unsupported": 0,
-                "hitRate": null,
-                "oddsAvailable": 0,
-                "averageOdds": null,
-                "totalStake": null,
-                "totalReturn": null,
-                "profit": null,
-                "roi": null
+                "hitRate": 1,
+                "oddsAvailable": 2,
+                "averageOdds": 5.01,
+                "totalStake": 2,
+                "totalReturn": 10.02,
+                "profit": 8.02,
+                "roi": 4.01
               }
             },
             "planB2": {
@@ -9422,956 +9427,41 @@
               "summary": {
                 "picks": 2,
                 "uniqueMatches": 1,
-                "settled": 0,
-                "wins": 0,
+                "settled": 2,
+                "wins": 2,
                 "losses": 0,
                 "voids": 0,
-                "unresolved": 2,
+                "unresolved": 0,
                 "unsupported": 0,
-                "hitRate": null,
-                "oddsAvailable": 0,
-                "averageOdds": null,
-                "totalStake": null,
-                "totalReturn": null,
-                "profit": null,
-                "roi": null
+                "hitRate": 1,
+                "oddsAvailable": 2,
+                "averageOdds": 5.01,
+                "totalStake": 2,
+                "totalReturn": 10.02,
+                "profit": 8.02,
+                "roi": 4.01
               }
             }
-          }
-        }
-      ],
-      "newActionableIssues": [
-        {
-          "severity": "warning",
-          "source": "value-input",
-          "type": "plan_b_assessment_coverage_incomplete",
-          "message": "Plan B ran with incomplete model-assessment coverage; its output is not proof of a fully evaluated zero-pick day.",
-          "details": {
-            "plan": "B",
-            "missing": 10,
-            "ambiguous": 0,
-            "canonicalFixtures": 134,
-            "joinedMatches": 124,
-            "orphanAssessmentRows": 2,
-            "missingCanonicalIds": [
-              "cid_afcchampions_alittihad_alain_20261102",
-              "cid_afcchampions_alwasl_alquwaaljawiya_20261102",
-              "cid_afcchampions_pakhtakor_alnassr_20261102",
-              "cid_afcchampions_tractor_neftchifergana_20261102",
-              "cid_crc1_saprissa_alajuelense_20261102",
-              "cid_gua1_guastatoya_cobanimperial_20261102",
-              "cid_hon1_motagua_deportivomarathon_20261102",
-              "cid_hon1_olancho_platense_20261102",
-              "cid_slv1_luisangelfirpo_fas_20261102",
-              "cid_syr1_alittihadaleppo_qamishli_20261102"
-            ]
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "value-input",
-          "type": "plan_b2_assessment_coverage_incomplete",
-          "message": "Plan B2 ran with incomplete model-assessment coverage; its output is not proof of a fully evaluated zero-pick day.",
-          "details": {
-            "plan": "B2",
-            "missing": 10,
-            "ambiguous": 0,
-            "canonicalFixtures": 134,
-            "joinedMatches": 124,
-            "orphanAssessmentRows": 2,
-            "missingCanonicalIds": [
-              "cid_afcchampions_alittihad_alain_20261102",
-              "cid_afcchampions_alwasl_alquwaaljawiya_20261102",
-              "cid_afcchampions_pakhtakor_alnassr_20261102",
-              "cid_afcchampions_tractor_neftchifergana_20261102",
-              "cid_crc1_saprissa_alajuelense_20261102",
-              "cid_gua1_guastatoya_cobanimperial_20261102",
-              "cid_hon1_motagua_deportivomarathon_20261102",
-              "cid_hon1_olancho_platense_20261102",
-              "cid_slv1_luisangelfirpo_fas_20261102",
-              "cid_syr1_alittihadaleppo_qamishli_20261102"
-            ]
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "value-input",
-          "type": "plan_b2_opponent_adjustment_unavailable",
-          "message": "Plan B2 lacks trusted opponent standings for 113 evaluated fixtures.",
-          "details": {
-            "plan": "B2",
-            "fixtures": 113
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "build-report",
-          "type": "acquisition_skipped_slugs",
-          "message": "Acquisition skipped slugs during fixture acquisition.",
-          "details": {
-            "slugs": [
-              "aus.w.1",
-              "bra.copa_do_brazil",
-              "col.copa",
-              "eng.w.1",
-              "eng.w.fa",
-              "eng.w.league_cup",
-              "esp.w.1",
-              "fifa.wworld.u17",
-              "fra.w.1",
-              "mex.w.1",
-              "ned.w.1",
-              "usa.ncaa.m.1",
-              "usa.ncaa.w.1",
-              "usa.w.usl.1"
-            ],
-            "raw": "acquisition_skipped_slugs:aus.w.1,bra.copa_do_brazil,col.copa,eng.w.1,eng.w.fa,eng.w.league_cup,esp.w.1,fifa.wworld.u17,fra.w.1,mex.w.1,ned.w.1,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
-            "contextOnly": false
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "build-report",
-          "type": "build_not_strict_clean",
-          "message": "Build report is clean but not strict-clean.",
-          "details": {
-            "clean": true,
-            "cleanStrict": false,
-            "contextOnlyWarnings": false
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "active-competition-completeness",
-          "type": "active_competition_scope_unresolved",
-          "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
-          "details": {
-            "dayKey": "2026-11-02",
-            "count": 56,
-            "competitions": [
-              {
-                "providerCompetitionId": "dYsyRqp2",
-                "providerPath": "/football/algeria/ligue-1/",
-                "providerCountry": "Algeria",
-                "providerName": "Ligue 1",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
-                "targetDaySourceIds": [
-                  "KvLBwZ8r",
-                  "pSmBpm5S"
-                ]
-              },
-              {
-                "providerCompetitionId": "zsav4HyS",
-                "providerPath": "/football/argentina/primera-b/",
-                "providerCountry": "Argentina",
-                "providerName": "Primera B",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 5,
-                "targetDaySourceIds": [
-                  "CUEDtKBO",
-                  "MaYegceU",
-                  "dEO6BvBb",
-                  "rkNdp2Ca",
-                  "xC85D0tn"
-                ]
-              },
-              {
-                "providerCompetitionId": "SvvJdZT1",
-                "providerPath": "/football/argentina/primera-c/",
-                "providerCountry": "Argentina",
-                "providerName": "Primera C - Promotion - Play Offs",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "WKqJy3Pr"
-                ]
-              },
-              {
-                "providerCompetitionId": "8GrEGw7F",
-                "providerPath": "/football/argentina/torneo-federal/",
-                "providerCountry": "Argentina",
-                "providerName": "Torneo Federal - Promotion - Play Offs",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "YZzjoM2C"
-                ]
-              },
-              {
-                "providerCompetitionId": "tOnqSs7l",
-                "providerPath": "/football/aruba/division-di-honor/",
-                "providerCountry": "Aruba",
-                "providerName": "Division di Honor",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "pErZIzyJ"
-                ]
-              },
-              {
-                "providerCompetitionId": "vFUMcudt",
-                "providerPath": "/football/bahrain/king-s-cup/",
-                "providerCountry": "Bahrain",
-                "providerName": "King's Cup",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
-                "targetDaySourceIds": [
-                  "Eo6V6tBO",
-                  "xOqmPNQh"
-                ]
-              },
-              {
-                "providerCompetitionId": "QmOSLNEU",
-                "providerPath": "/football/brazil/copa-fares-lopes/",
-                "providerCountry": "Brazil",
-                "providerName": "Copa Fares Lopes",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "4z7mLN5e"
-                ]
-              },
-              {
-                "providerCompetitionId": "vNQFjfyJ",
-                "providerPath": "/football/brazil/gaucho-3/",
-                "providerCountry": "Brazil",
-                "providerName": "Gaucho 3 - Play Offs",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "EuckmW2E"
-                ]
-              },
-              {
-                "providerCompetitionId": "UJ5yPXGU",
-                "providerPath": "/football/brazil/kings-cup-brazil/",
-                "providerCountry": "Brazil",
-                "providerName": "Kings Cup - Brazil",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
-                "targetDaySourceIds": [
-                  "CQXf8cod",
-                  "vXPtW0w3"
-                ]
-              },
-              {
-                "providerCompetitionId": "UXbfvQAd",
-                "providerPath": "/football/brazil/pernambucano/",
-                "providerCountry": "Brazil",
-                "providerName": "Pernambucano - First stage",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "dfqQjmlB"
-                ]
-              },
-              {
-                "providerCompetitionId": "GzKFoyZq",
-                "providerPath": "/football/colombia/copa-colombia/",
-                "providerCountry": "Colombia",
-                "providerName": "Copa Colombia - Second stage",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "nXZ2WvhD"
-                ]
-              },
-              {
-                "providerCompetitionId": "UcU2C7LG",
-                "providerPath": "/football/costa-rica/primera-division/",
-                "providerCountry": "Costa Rica",
-                "providerName": "Primera Division - Apertura",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "bs8TNNIs"
-                ]
-              },
-              {
-                "providerCompetitionId": "v3cZ9kb4",
-                "providerPath": "/football/dominican-republic/ldf/",
-                "providerCountry": "Dominican Republic",
-                "providerName": "LDF - Apertura",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "jeJ5skMU"
-                ]
-              },
-              {
-                "providerCompetitionId": "2gwkxD56",
-                "providerPath": "/football/egypt/league-cup/",
-                "providerCountry": "Egypt",
-                "providerName": "League Cup",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
-                "targetDaySourceIds": [
-                  "WbWDsn4S",
-                  "xrbqtfpL"
-                ]
-              },
-              {
-                "providerCompetitionId": "vF4o1qCD",
-                "providerPath": "/football/el-salvador/primera-division/",
-                "providerCountry": "El Salvador",
-                "providerName": "Primera Division - Apertura",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "UVwCZgAr"
-                ]
-              },
-              {
-                "providerCompetitionId": "CGhHvd9l",
-                "providerPath": "/football/england/baller-league-uk/",
-                "providerCountry": "England",
-                "providerName": "Baller League - UK",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 6,
-                "targetDaySourceIds": [
-                  "2HaDnNpI",
-                  "As3Lp1FU",
-                  "Mwbcj5og",
-                  "U315lqG5",
-                  "YaAtYNVO",
-                  "lCpjhRGt"
-                ]
-              },
-              {
-                "providerCompetitionId": "GSXwFia5",
-                "providerPath": "/football/england/isthmian-league-premier-division/",
-                "providerCountry": "England",
-                "providerName": "Isthmian League Premier Division",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "ADm4RZrp"
-                ]
-              },
-              {
-                "providerCompetitionId": "zeac60cd",
-                "providerPath": "/football/england/national-league-south/",
-                "providerCountry": "England",
-                "providerName": "National League South",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "jZulsTas"
-                ]
-              },
-              {
-                "providerCompetitionId": "Ol7mLaCk",
-                "providerPath": "/football/england/premier-league-cup/",
-                "providerCountry": "England",
-                "providerName": "Premier League Cup",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 6,
-                "targetDaySourceIds": [
-                  "KGSDc1Qa",
-                  "StWLeueC",
-                  "W8qMPYRr",
-                  "n3U5aNem",
-                  "vZnUNCde",
-                  "z7ZTgJPO"
-                ]
-              },
-              {
-                "providerCompetitionId": "jcI1VLQ9",
-                "providerPath": "/football/estonia/esiliiga-b/",
-                "providerCountry": "Estonia",
-                "providerName": "Esiliiga B",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "fZfIQo8c"
-                ]
-              },
-              {
-                "providerCompetitionId": "ncesw88j",
-                "providerPath": "/football/ethiopia/premier-league/",
-                "providerCountry": "Ethiopia",
-                "providerName": "Premier League",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "0SFwLmdf"
-                ]
-              },
-              {
-                "providerCompetitionId": "A97zljkC",
-                "providerPath": "/football/ghana/division-one-league/",
-                "providerCountry": "Ghana",
-                "providerName": "Division One League",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "SpQXD8Oq"
-                ]
-              },
-              {
-                "providerCompetitionId": "WElfKJSN",
-                "providerPath": "/football/guatemala/liga-nacional/",
-                "providerCountry": "Guatemala",
-                "providerName": "Liga Nacional - Apertura",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
-                "targetDaySourceIds": [
-                  "Eg2kiOLt",
-                  "Uq95mtL5"
-                ]
-              },
-              {
-                "providerCompetitionId": "zL02I6iJ",
-                "providerPath": "/football/honduras/liga-nacional/",
-                "providerCountry": "Honduras",
-                "providerName": "Liga Nacional - Apertura",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
-                "targetDaySourceIds": [
-                  "W4JpeGFs",
-                  "vVMhgfpf"
-                ]
-              },
-              {
-                "providerCompetitionId": "pGc1BATg",
-                "providerPath": "/football/iran/azadegan-league/",
-                "providerCountry": "Iran",
-                "providerName": "Azadegan League",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 6,
-                "targetDaySourceIds": [
-                  "2ZQnzU4S",
-                  "8YYxIUrp",
-                  "8hPWwC53",
-                  "GbxoG8Dd",
-                  "f9NvxjzG",
-                  "xjr7NjLM"
-                ]
-              },
-              {
-                "providerCompetitionId": "8Ahr0wef",
-                "providerPath": "/football/israel/liga-alef-north/",
-                "providerCountry": "Israel",
-                "providerName": "Liga Alef North",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 3,
-                "targetDaySourceIds": [
-                  "OfA32tBc",
-                  "SjJvnLQG",
-                  "d88B0KuA"
-                ]
-              },
-              {
-                "providerCompetitionId": "GzdjbHP6",
-                "providerPath": "/football/israel/liga-alef-south/",
-                "providerCountry": "Israel",
-                "providerName": "Liga Alef South",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 5,
-                "targetDaySourceIds": [
-                  "UVuS4qIb",
-                  "dIsK65mn",
-                  "nkLaJrXi",
-                  "pMnr11HN",
-                  "thYDeuuo"
-                ]
-              },
-              {
-                "providerCompetitionId": "EaiVDG2C",
-                "providerPath": "/football/italy/kings-cup-italy/",
-                "providerCountry": "Italy",
-                "providerName": "Kings Cup - Italy",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 6,
-                "targetDaySourceIds": [
-                  "6JsAR974",
-                  "EqRzQdWa",
-                  "M9UrOz1C",
-                  "bgv2TVxh",
-                  "hdiG5Spo",
-                  "vXuIPmxH"
-                ]
-              },
-              {
-                "providerCompetitionId": "ng1EBOKh",
-                "providerPath": "/football/italy/serie-c-group-a/",
-                "providerCountry": "Italy",
-                "providerName": "Serie C - Group A",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
-                "targetDaySourceIds": [
-                  "8bAIc9k3",
-                  "h8w6yJY0"
-                ]
-              },
-              {
-                "providerCompetitionId": "f3Mw8tKH",
-                "providerPath": "/football/italy/serie-c-group-c/",
-                "providerCountry": "Italy",
-                "providerName": "Serie C - Group C",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "QZpFVJWb"
-                ]
-              },
-              {
-                "providerCompetitionId": "SMPm3XIq",
-                "providerPath": "/football/italy/serie-d-group-c/",
-                "providerCountry": "Italy",
-                "providerName": "Serie D - Group C",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "Odm0jPy8"
-                ]
-              },
-              {
-                "providerCompetitionId": "GtXxRctR",
-                "providerPath": "/football/kenya/premier-league/",
-                "providerCountry": "Kenya",
-                "providerName": "Premier League",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 4,
-                "targetDaySourceIds": [
-                  "4CCA4bY2",
-                  "QPkop9Vj",
-                  "Qqtu6jhA",
-                  "zwYQdnFd"
-                ]
-              },
-              {
-                "providerCompetitionId": "Uuw12j7b",
-                "providerPath": "/football/kuwait/premier-league/",
-                "providerCountry": "Kuwait",
-                "providerName": "Premier League",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "t8pF1FbL"
-                ]
-              },
-              {
-                "providerCompetitionId": "StJZnYv1",
-                "providerPath": "/football/kyrgyzstan/premier-liga/",
-                "providerCountry": "Kyrgyzstan",
-                "providerName": "Premier Liga",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 3,
-                "targetDaySourceIds": [
-                  "259p3Aje",
-                  "AVCh1lL7",
-                  "fu6x5WLr"
-                ]
-              },
-              {
-                "providerCompetitionId": "WIEW5Qn9",
-                "providerPath": "/football/libya/premier-league/",
-                "providerCountry": "Libya",
-                "providerName": "Premier League",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "0ECcEizq"
-                ]
-              },
-              {
-                "providerCompetitionId": "tjmWOXSk",
-                "providerPath": "/football/mali/premiere-division/",
-                "providerCountry": "Mali",
-                "providerName": "Premiere Division",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 3,
-                "targetDaySourceIds": [
-                  "Gtg0Ri8b",
-                  "O6d8PVxB",
-                  "WWaGN97N"
-                ]
-              },
-              {
-                "providerCompetitionId": "8IKhJoog",
-                "providerPath": "/football/mauritania/ligue-1/",
-                "providerCountry": "Mauritania",
-                "providerName": "Ligue 1",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
-                "targetDaySourceIds": [
-                  "KK6hDuaC",
-                  "Y38pF1Ua"
-                ]
-              },
-              {
-                "providerCompetitionId": "GAhlTb0U",
-                "providerPath": "/football/mexico/liga-premier-serie-a/",
-                "providerCountry": "Mexico",
-                "providerName": "Liga Premier Serie A",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "xdafaUuT"
-                ]
-              },
-              {
-                "providerCompetitionId": "6eDGfVHs",
-                "providerPath": "/football/mongolia/premier-league/",
-                "providerCountry": "Mongolia",
-                "providerName": "Premier League",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
-                "targetDaySourceIds": [
-                  "Q5JD0znA",
-                  "bJHLbEGM"
-                ]
-              },
-              {
-                "providerCompetitionId": "4bndtoZr",
-                "providerPath": "/football/mozambique/mocambola/",
-                "providerCountry": "Mozambique",
-                "providerName": "Mocambola",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "4fZMUjNG"
-                ]
-              },
-              {
-                "providerCompetitionId": "j14EotGb",
-                "providerPath": "/football/nicaragua/liga-primera/",
-                "providerCountry": "Nicaragua",
-                "providerName": "Liga Primera - Apertura",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 3,
-                "targetDaySourceIds": [
-                  "0deCEOUs",
-                  "6gbKC2af",
-                  "v7dSAtU6"
-                ]
-              },
-              {
-                "providerCompetitionId": "rq1Axxwo",
-                "providerPath": "/football/panama/lpf/",
-                "providerCountry": "Panama",
-                "providerName": "LPF - Apertura",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "bmDsJPXF"
-                ]
-              },
-              {
-                "providerCompetitionId": "2HsXdi8N",
-                "providerPath": "/football/poland/division-2/",
-                "providerCountry": "Poland",
-                "providerName": "Division 2",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "lz5YQRh4"
-                ]
-              },
-              {
-                "providerCompetitionId": "KbiyeBRG",
-                "providerPath": "/football/saudi-arabia/division-2/",
-                "providerCountry": "Saudi Arabia",
-                "providerName": "Division 2",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 7,
-                "targetDaySourceIds": [
-                  "QDmatLRr",
-                  "WUt10tJE",
-                  "Ywi7vade",
-                  "fRQRbTsA",
-                  "n1NJ0kDc",
-                  "vep9bKmR",
-                  "vyfFxwR7"
-                ]
-              },
-              {
-                "providerCompetitionId": "SpUVNBL0",
-                "providerPath": "/football/senegal/ligue-1/",
-                "providerCountry": "Senegal",
-                "providerName": "Ligue 1",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "M3NUNmPh"
-                ]
-              },
-              {
-                "providerCompetitionId": "CbLcLsnd",
-                "providerPath": "/football/spain/primera-rfef-group-2/",
-                "providerCountry": "Spain",
-                "providerName": "Primera RFEF - Group 2",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
-                "targetDaySourceIds": [
-                  "hEvnQx4D",
-                  "nZSWTK4l"
-                ]
-              },
-              {
-                "providerCompetitionId": "jw6weON8",
-                "providerPath": "/football/spain/segunda-rfef-group-4/",
-                "providerCountry": "Spain",
-                "providerName": "Segunda RFEF - Group 4",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "GYvLhKaC"
-                ]
-              },
-              {
-                "providerCompetitionId": "EovFcuY7",
-                "providerPath": "/football/suriname/sml/",
-                "providerCountry": "Suriname",
-                "providerName": "SML",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 1,
-                "targetDaySourceIds": [
-                  "0nMWfA6l"
-                ]
-              },
-              {
-                "providerCompetitionId": "f54pHdn1",
-                "providerPath": "/football/tajikistan/vysshaya-liga/",
-                "providerCountry": "Tajikistan",
-                "providerName": "Vysshaya Liga",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
-                "targetDaySourceIds": [
-                  "8Ckq8Mcc",
-                  "t6ccpJ5j"
-                ]
-              },
-              {
-                "providerCompetitionId": "UHAsq3CN",
-                "providerPath": "/football/tanzania/ligi-kuu-bara/",
-                "providerCountry": "Tanzania",
-                "providerName": "Ligi Kuu Bara",
-                "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 3,
-                "targetDaySourceIds": [
-                  "4hGzXeHd",
-                  "WQ2TYHnp",
-                  "YRfKv8z3"
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "active-competition-completeness",
-          "type": "active_competition_structural_adapter_gap",
-          "message": "Effective competition slugs still rely on supplemental acquisition because no league adapter is enabled.",
-          "details": {
-            "dayKey": "2026-11-02",
-            "slugs": [
-              "crc.1",
-              "gua.1",
-              "hon.1",
-              "par.1",
-              "slv.1"
-            ]
-          }
-        }
-      ],
-      "resolvedIssues": [
-        {
-          "severity": "error",
-          "source": "manifest",
-          "type": "artifact_missing",
-          "message": "Snapshot manifest is missing.",
-          "details": {
-            "artifact": "data/deploy-snapshots/2026-11-02/manifest.json"
-          }
-        },
-        {
-          "severity": "error",
-          "source": "invariant-report",
-          "type": "artifact_missing",
-          "message": "Invariant report is missing.",
-          "details": {
-            "artifact": "data/deploy-snapshots/2026-11-02/invariant-report.json"
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "freshness-report",
-          "type": "artifact_missing",
-          "message": "Freshness report is missing.",
-          "details": {
-            "artifact": "data/deploy-snapshots/2026-11-02/freshness-report.json"
-          }
-        },
-        {
-          "severity": "error",
-          "source": "foundation-integrity",
-          "type": "foundation_publication_not_ready",
-          "message": "Publication foundation is not ready.",
-          "details": {
-            "blocked": [
-              {
-                "component": "details",
-                "reason": "details_foundation_not_ready"
-              }
-            ]
-          }
-        },
-        {
-          "severity": "error",
-          "source": "build-report",
-          "type": "build_hard_failure",
-          "message": "manifest_missing",
-          "details": {
-            "failure": "manifest_missing"
-          }
-        },
-        {
-          "severity": "error",
-          "source": "build-report",
-          "type": "build_hard_failure",
-          "message": "foundation_publication_not_ready",
-          "details": {
-            "failure": "foundation_publication_not_ready"
-          }
-        },
-        {
-          "severity": "error",
-          "source": "build-report",
-          "type": "build_hard_failure",
-          "message": "snapshot_stale",
-          "details": {
-            "failure": "snapshot_stale"
-          }
-        },
-        {
-          "severity": "error",
-          "source": "build-report",
-          "type": "build_hard_failure",
-          "message": "value_plan_comparison_missing",
-          "details": {
-            "failure": "value_plan_comparison_missing"
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "build-report",
-          "type": "build_warning",
-          "message": "canonical_leagues_missing_from_published:afc.champions,alb.1,alb.2,arg.1,arg.2,arm.2,aze.1,blr.2,bol.1,bra.2,bul.1,bul.2,chi.1,col.1,col.2,cze.2,den.1,ecu.1,eng.1,esp.1,esp.2,fin.1,fra.1,fra.2,geo.1,gre.1,gre.2,hun.2,isr.1,isr.2,ita.1,ksa.2,mex.1,mkd.1,mne.1,ned.2,nor.2,per.1,pol.1,pol.2,por.1,por.2,rou.1,rsa.2,rus.1,srb.1,srb.2,svn.1,svn.2,swe.1,swe.2,syr.1,tur.1,tur.2,ukr.1,ukr.2,uru.1,uru.2,usa.1,usa.2,ven.1",
-          "details": {
-            "raw": "canonical_leagues_missing_from_published:afc.champions,alb.1,alb.2,arg.1,arg.2,arm.2,aze.1,blr.2,bol.1,bra.2,bul.1,bul.2,chi.1,col.1,col.2,cze.2,den.1,ecu.1,eng.1,esp.1,esp.2,fin.1,fra.1,fra.2,geo.1,gre.1,gre.2,hun.2,isr.1,isr.2,ita.1,ksa.2,mex.1,mkd.1,mne.1,ned.2,nor.2,per.1,pol.1,pol.2,por.1,por.2,rou.1,rsa.2,rus.1,srb.1,srb.2,svn.1,svn.2,swe.1,swe.2,syr.1,tur.1,tur.2,ukr.1,ukr.2,uru.1,uru.2,usa.1,usa.2,ven.1"
-          }
-        },
-        {
-          "severity": "error",
-          "source": "build-report",
-          "type": "build_not_clean",
-          "message": "Build report is not clean.",
-          "details": {
-            "clean": false,
-            "cleanStrict": false
-          }
-        },
-        {
-          "severity": "error",
-          "source": "active-competition-completeness",
-          "type": "active_competition_completeness_missing",
-          "message": "Independent target-day active competition coverage proof is missing.",
-          "details": {
-            "dayKey": "2026-11-02",
-            "artifact": "data/coverage-readiness/2026-11-02.json"
-          }
-        },
-        {
-          "severity": "error",
-          "source": "value",
-          "type": "artifact_missing",
-          "message": "Production value artifact is missing.",
-          "details": {
-            "artifact": "data/deploy-snapshots/2026-11-02/value.json"
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "value-audit",
-          "type": "artifact_missing",
-          "message": "Production value audit artifact is missing.",
-          "details": {
-            "artifact": "data/deploy-snapshots/2026-11-02/value-audit.json"
-          }
-        },
-        {
-          "severity": "info",
-          "source": "value-comparison",
-          "type": "artifact_missing",
-          "message": "Four-plan Value comparison artifact is missing.",
-          "details": {
-            "artifact": "data/value-comparison/2026-11-02.json",
-            "requiredPlans": [
-              "A",
-              "A2",
-              "B",
-              "B2"
-            ]
-          }
-        }
-      ],
-      "persistentIssues": [
-        {
-          "severity": "info",
-          "source": "foundation-integrity",
-          "type": "age_expired_results_rows_present",
-          "message": "Foundation integrity informational condition.",
-          "details": {
-            "component": "historySemantic",
-            "reason": "age_expired_results_rows_present",
-            "count": 19368,
-            "informational": true
-          }
-        },
-        {
-          "severity": "info",
-          "source": "foundation-integrity",
-          "type": "history_semantic_warnings_present",
-          "message": "Foundation integrity informational condition.",
-          "details": {
-            "component": "historySemantic",
-            "reason": "history_semantic_warnings_present",
-            "count": 4,
-            "informational": true
-          }
-        },
-        {
-          "severity": "info",
-          "source": "foundation-integrity",
-          "type": "score_consistent_alias_mirror_conflicts_present",
-          "message": "Foundation integrity informational condition.",
-          "details": {
-            "component": "historySemantic",
-            "reason": "score_consistent_alias_mirror_conflicts_present",
-            "count": 47,
-            "informational": true
           }
         }
       ]
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "950f1b36b51c8c18ed1f9cf5d7578dccbb4c5b6a3edcfff349fec04c2dc7b43c",
+      "truthFingerprint": "b5bb490935dc93fda46ac7c0b2fb85cd2993e8798fe58df0077bf64798481fb7",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 82,
+        "expectedEligibleRows": 97,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_afcchampions_alsadd_alahli_20261102",
           "cid_afcchampions_alwasl_alquwaaljawiya_20261102",
           "cid_afcchampions_pakhtakor_alnassr_20261102",
           "cid_afcchampions_tractor_neftchifergana_20261102",
+          "cid_alb1_teuta_partizani_20261102",
           "cid_alb1_vora_dinamocity_20261102",
           "cid_alb2_flamurtari_kukesi_20261102",
           "cid_alb2_sopotilibrazhd_iliriafushekruje_20261102",
@@ -10381,31 +9471,38 @@
           "cid_arm2_andranik_bentonit_20261102",
           "cid_arm2_araratyerevan2_mika_20261102",
           "cid_arm2_avsharararat_urartu2_20261102",
+          "cid_arm2_noah2_pyunikyerevan2_20261102",
           "cid_aze1_sumqayit_safabaku_20261102",
           "cid_blr2_gomel2_minsk2_20261102",
           "cid_blr2_molodechno_osipovichi_20261102",
           "cid_bol1_universitariovinto_alwaysready_20261102",
+          "cid_bul1_arda_septemvrisofia_20261102",
           "cid_bul1_chernomore_botevvratsa_20261102",
           "cid_bul2_montana_spartakpleven_20261102",
           "cid_bul2_svoge_ludogoretsii_20261102",
           "cid_col1_independientemedellin_alianza_20261102",
           "cid_crc1_saprissa_alajuelense_20261102",
           "cid_cze2_ostravab_jihlava_20261102",
+          "cid_den1_snderjyske_kbenhavn_20261102",
           "cid_esp2_realoviedo_laspalmas_20261102",
+          "cid_esp2_realvalladolid_leganes_20261102",
           "cid_esp2_tenerife_andorra_20261102",
           "cid_fin1_interturku_gnistan_20261102",
           "cid_fin1_vps_hjk_20261102",
           "cid_geo1_torpedokutaisi_dilagori_20261102",
           "cid_gre1_atromitos_volosnfc_20261102",
+          "cid_gre1_kalamata_iraklis_20261102",
           "cid_gre2_marko_kalamaria_20261102",
           "cid_gua1_comunicaciones_deportivomixco_20261102",
           "cid_gua1_guastatoya_cobanimperial_20261102",
           "cid_hon1_motagua_deportivomarathon_20261102",
           "cid_hon1_olancho_platense_20261102",
+          "cid_isr1_hapramatgan_maccabitelaviv_20261102",
           "cid_isr2_ashdod_bneiyehuda_20261102",
           "cid_isr2_hapoelkfarshalem_ironimodiin_20261102",
           "cid_isr2_hraanana_kiryatyam_20261102",
           "cid_isr2_maccabijaffa_hapoelkfarsaba_20261102",
+          "cid_ita1_sassuolo_fiorentina_20261102",
           "cid_ksa2_aljabalain_albukiryah_20261102",
           "cid_ksa2_aljeel_alnajma_20261102",
           "cid_ksa2_alorubah_alanwar_20261102",
@@ -10417,11 +9514,14 @@
           "cid_mkd1_vardar_struga_20261102",
           "cid_mne1_bokelj_buducnost_20261102",
           "cid_mne1_mladostdg_sutjeska_20261102",
+          "cid_nor2_kongsvinger_stabaek_20261102",
           "cid_per1_sporthuancayo_melgar_20261102",
           "cid_pol1_radomiakradom_slaskwroclaw_20261102",
           "cid_pol1_zaglebie_koronakielce_20261102",
           "cid_pol2_poloniabytom_odraopole_20261102",
+          "cid_por2_penafiel_feirense_20261102",
           "cid_rou1_voluntari_farulconstanta_20261102",
+          "cid_rsa2_capetowncity_magesi_20261102",
           "cid_rus1_kryliasovetov_zenitstpetersburg_20261102",
           "cid_slv1_luisangelfirpo_fas_20261102",
           "cid_srb1_mladost_radnik_20261102",
@@ -10434,6 +9534,10 @@
           "cid_svn1_bravo_koper_20261102",
           "cid_svn2_brezice_beltinci_20261102",
           "cid_svn2_triglav_nkkrka_20261102",
+          "cid_swe1_gais_aik_20261102",
+          "cid_swe1_mjallby_kalmarff_20261102",
+          "cid_swe2_landskrona_orebro_20261102",
+          "cid_swe2_oster_helsingborg_20261102",
           "cid_syr1_alittihadaleppo_qamishli_20261102",
           "cid_syr1_altaliya_homsalfidaa_20261102",
           "cid_tur1_genclerbirligi_alanyaspor_20261102",
@@ -10488,8 +9592,8 @@
         "state": "OBSERVED_WARNING",
         "sourcePath": "data/system-health/2026-11-02.json",
         "severity": "warning",
-        "alert": true,
-        "activeIssueCount": 18,
+        "alert": false,
+        "activeIssueCount": 16,
         "actionableIssueCount": 7
       },
       "authority": {
@@ -10509,7 +9613,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-11-02",
-      "fileCount": 90,
+      "fileCount": 102,
       "authority": "scored_final_evidence"
     },
     "downstream": {
