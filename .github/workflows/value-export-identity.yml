@@ -1,0 +1,38 @@
+name: Value export identity contract
+on:
+  pull_request:
+    paths:
+      - engine-v1/index.js
+      - engine-v1/core/value-export-identity*
+      - engine-v1/core/value-export-report.js
+      - .github/workflows/value-export-identity.yml
+permissions:
+  contents: read
+jobs:
+  export-identity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            engine-v1
+            assets
+            workers
+            tools
+            .github
+            data/value-comparison
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - run: >-
+          node --test
+          engine-v1/core/value-export-identity.test.js
+          engine-v1/core/value-export-report.test.js
+          engine-v1/core/value-export-compatibility.test.js
+          engine-v1/core/value-export-unified.test.js
+          engine-v1/tests/value-export-void.test.js
+          engine-v1/tests/publication-runtime-contract.test.js
+      - run: git diff --exit-code
