@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-02",
-  "generatedAt": "2026-11-02T11:48:03.358Z",
+  "generatedAt": "2026-11-02T12:34:18.145Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "6df51af38572583cc52c8446d764f65bc1905bbff417fd2440448c737981c9c4",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "e38050c6584229620370c1509117568965396ab2b5de822ead7b6c6e9655cc0b",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -25,14 +25,14 @@
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 21,
-    "acceptedVerifiedFinalArtifacts": 21,
+    "verifiedFinalArtifacts": 22,
+    "acceptedVerifiedFinalArtifacts": 22,
     "convergedPlayedFinal": 21,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 112,
+    "openRows": 111,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 21,
@@ -6034,18 +6034,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-02",
+        "scoreHome": 0,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -6610,7 +6610,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_ukr1_zoryaluhansk_epitsentr_20261102"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -6786,7 +6788,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 19406,
+            "count": 19410,
             "informational": true
           }
         },
@@ -10350,7 +10352,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "6df51af38572583cc52c8446d764f65bc1905bbff417fd2440448c737981c9c4",
+      "truthFingerprint": "e38050c6584229620370c1509117568965396ab2b5de822ead7b6c6e9655cc0b",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -10439,7 +10441,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-11-02",
-      "fileCount": 21,
+      "fileCount": 22,
       "authority": "scored_final_evidence"
     },
     "downstream": {
