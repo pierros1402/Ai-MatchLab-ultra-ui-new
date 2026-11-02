@@ -199,8 +199,5 @@ test("updated Value/live UI assets are cache-busted", () => {
     /live-overlay\.js\?v=9/
   );
 
-  assert.match(
-    html,
-    /value-picks\.js\?v=4/
-  );
+  assert.ok(Number(html.match(/value-picks\.js\?v=(\d+)/)?.[1]) >= 7, 'Value coverage UI must use the new or a later cache version');
 });
