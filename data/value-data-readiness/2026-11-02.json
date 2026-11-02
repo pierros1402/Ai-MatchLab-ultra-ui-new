@@ -1,7 +1,7 @@
 {
   "schema": "ai-matchlab.value-data-readiness.v1",
   "date": "2026-11-02",
-  "generatedAt": "2026-11-02T02:34:27.017Z",
+  "generatedAt": "2026-11-02T05:20:18.784Z",
   "fixtureUniverse": {
     "schema": "ai-matchlab.value-fixture-universe.v1",
     "source": "canonical_fixtures",
@@ -151,11 +151,11 @@
   "summary": {
     "fixtures": 134,
     "applicable": 133,
-    "ready": 88,
-    "insufficient": 45,
+    "ready": 91,
+    "insufficient": 42,
     "byReason": {
       "minimum_recent_sample": 39,
-      "missing_model_assessment": 15
+      "missing_model_assessment": 11
     }
   },
   "rows": [
@@ -960,7 +960,47 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false
+      "predictionCreated": false,
+      "readinessBasis": "signed_prematch_observation",
+      "prematchEvidence": {
+        "recordSignature": "cf4baf5ad1ced4e521a6594cb89321a29c0463339e9bcfadf1d7a48467791bcd",
+        "observedAt": "2026-11-02T02:34:27.054Z",
+        "kickoffUtc": "2026-11-02T02:45Z",
+        "scope": "diagnostics_only_no_selector_inputs_changed"
+      },
+      "currentDiagnostic": {
+        "generatedAt": "2026-11-02T05:20:18.784Z",
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "minimum_recent_sample"
+        ],
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Portland Timbers",
+          "awayTeam": "Houston Dynamo FC",
+          "leagueSlug": "usa.1",
+          "fixtureDate": "2026-11-02T02:45:00.000Z",
+          "homeResolvedKey": "Portland Timbers",
+          "awayResolvedKey": "Houston Dynamo FC",
+          "homeRawSample": 1,
+          "awayRawSample": 1,
+          "homeBlendedSample": 4,
+          "awayBlendedSample": 4,
+          "homeSideRawSample": 0,
+          "awaySideRawSample": 1,
+          "homeSideBlendedSample": 3,
+          "awaySideBlendedSample": 4,
+          "homePriorSample": 168,
+          "awayPriorSample": 165,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        }
+      }
     },
     {
       "canonicalId": "cid_ukr2_koloskovalivka2_metalistkharkiv_20261102",
@@ -2167,10 +2207,9 @@
       "kickoffUtc": "2026-11-02T16:00Z",
       "status": "INSUFFICIENT_DATA",
       "reasons": [
-        "minimum_recent_sample",
-        "missing_model_assessment"
+        "minimum_recent_sample"
       ],
-      "modelAssessmentAvailable": false,
+      "modelAssessmentAvailable": true,
       "recentHistory": {
         "minRequiredRecentMatches": 3,
         "sampleBasis": "current_season_raw",
@@ -2944,11 +2983,9 @@
       "canonicalId": "cid_afcchampions_algharafa_alqadsiah_20261102",
       "leagueSlug": "afc.champions",
       "kickoffUtc": "2026-11-02T18:15Z",
-      "status": "INSUFFICIENT_DATA",
-      "reasons": [
-        "missing_model_assessment"
-      ],
-      "modelAssessmentAvailable": false,
+      "status": "READY",
+      "reasons": [],
+      "modelAssessmentAvailable": true,
       "recentHistory": null,
       "standings": {
         "usable": false,
@@ -3470,11 +3507,9 @@
       "canonicalId": "cid_ecu1_orense_tecnicouniversitario_20261102",
       "leagueSlug": "ecu.1",
       "kickoffUtc": "2026-11-02T20:30Z",
-      "status": "INSUFFICIENT_DATA",
-      "reasons": [
-        "missing_model_assessment"
-      ],
-      "modelAssessmentAvailable": false,
+      "status": "READY",
+      "reasons": [],
+      "modelAssessmentAvailable": true,
       "recentHistory": null,
       "standings": {
         "usable": false,
@@ -3585,11 +3620,9 @@
       "canonicalId": "cid_bol1_realtomayapo_blooming_20261102",
       "leagueSlug": "bol.1",
       "kickoffUtc": "2026-11-02T21:15Z",
-      "status": "INSUFFICIENT_DATA",
-      "reasons": [
-        "missing_model_assessment"
-      ],
-      "modelAssessmentAvailable": false,
+      "status": "READY",
+      "reasons": [],
+      "modelAssessmentAvailable": true,
       "recentHistory": null,
       "standings": {
         "usable": false,
@@ -3608,5 +3641,11 @@
     "realOddsRequiredForStatisticalSelection": false,
     "unverifiedStandingsNeverPromoted": true,
     "thresholdsChanged": false
+  },
+  "readinessTimeBasis": "signed_prematch_evidence_for_started_fixtures_current_diagnostics_for_future_fixtures",
+  "prematchEvidence": {
+    "preservedRows": 1,
+    "invalidRecords": 0,
+    "predictionCreated": false
   }
 }
