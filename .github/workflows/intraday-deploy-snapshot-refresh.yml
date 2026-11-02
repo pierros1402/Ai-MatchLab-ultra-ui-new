@@ -34,7 +34,7 @@ jobs:
         run: |
           set -euo pipefail
           ACTIVE_COUNT=0
-          for WORKFLOW in daily-deploy-snapshot.yml value-data-alarm.yml value-data-recovery.yml; do
+          for WORKFLOW in daily-deploy-snapshot.yml daily-autonomous.yml value-data-alarm.yml value-data-recovery.yml; do
             API_URL="https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/$WORKFLOW/runs?branch=main&per_page=20"
             RESPONSE_FILE="$RUNNER_TEMP/$WORKFLOW.priority.json"
             if ! curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" -o "$RESPONSE_FILE" "$API_URL"; then
@@ -42,7 +42,7 @@ jobs:
               echo "allow_writer=false" >> "$GITHUB_OUTPUT"
               exit 0
             fi
-            COUNT="$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1], encoding="utf-8")); print(sum(1 for r in d.get("workflow_runs", []) if str(r.get("status", "")).lower() != "completed"))' "$RESPONSE_FILE" 2>/dev/null || true)"
+            COUNT="$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1], encoding="utf-8")); runs=d.get("workflow_runs") if isinstance(d,dict) else None; valid=isinstance(runs,list) and all(isinstance(r,dict) and isinstance(r.get("status"),str) and r["status"].strip() for r in runs); print(sum(r["status"].lower() != "completed" for r in runs)) if valid else sys.exit(1)' "$RESPONSE_FILE" 2>/dev/null || true)"
             if ! [[ "$COUNT" =~ ^[0-9]+$ ]]; then
               echo "allow_writer=false" >> "$GITHUB_OUTPUT"
               exit 0
