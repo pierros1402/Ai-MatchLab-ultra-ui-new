@@ -2130,6 +2130,16 @@ export function resolvePenaltyWinnerMarkerConflict({
   };
 }
 
+export function checkpointVerifiedFinalExport({dayKey,write,allFixtures,written=[],retracted=[],correctedPenaltyScores=[],correctedTerminalScores=[]}, checkpoint = checkpointHistoryIfRequired) {
+  const changes = [written,retracted,correctedPenaltyScores,correctedTerminalScores];
+  if (changes.some(rows => !Array.isArray(rows))) throw Error('verified_export_mutation_evidence_invalid');
+  if (write !== true) return {enabled:false,reason:'dry_run'};
+  // The whole-universe call always writes its conflict backlog. Pick-scoped
+  // read-only rechecks produce no new evidence bytes and need no archive copy.
+  if (allFixtures === true || changes.some(rows => rows.length > 0)) return checkpoint(dayKey,'verified-results-written');
+  return {enabled:false,reason:'no_export_mutation'};
+}
+
 export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
   const safeDayKey = clean(dayKey);
 
@@ -2142,7 +2152,7 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
     valuePathOverride: options.valuePath || ""
   });
 
-  const feed = await fetchFlashscoreFixtures({
+  const feed = await (options.dependencies?.fetchFlashscoreFixtures || fetchFlashscoreFixtures)({
     offsets: Array.isArray(options.offsets) && options.offsets.length ? options.offsets : [0]
   });
 
@@ -2746,10 +2756,12 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
     conflictCount: remainingConflicts.length
   });
 
-  if (options.write === true) checkpointHistoryIfRequired(safeDayKey, "verified-results-written");
+  const historyCheckpoint = checkpointVerifiedFinalExport({dayKey:safeDayKey,write:options.write,allFixtures:targetSource.allFixtures,
+    written,retracted,correctedPenaltyScores,correctedTerminalScores}, options.dependencies?.checkpointHistoryIfRequired || checkpointHistoryIfRequired);
   return {
     ok: completion.ok,
     truthComplete: completion.truthComplete,
+    historyCheckpoint,
     conflictsIsolated: completion.conflictsIsolated,
     stage: options.write === true
       ? "verified_final_results_export_completed"

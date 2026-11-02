@@ -1,0 +1,39 @@
+name: Verified result checkpoint admission
+on:
+  pull_request:
+    paths:
+      - engine-v1/jobs/export-verified-final-results-day.js
+      - engine-v1/jobs/export-verified-results-checkpoint.test.js
+      - .github/workflows/verified-results-checkpoint.yml
+permissions:
+  contents: read
+jobs:
+  checkpoint-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            engine-v1
+            assets
+            workers
+            tools
+            .github
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Run all consumers of verified final export
+        run: |
+          node --input-type=module - <<'NODE'
+          import fs from 'node:fs';
+          import {execFileSync} from 'node:child_process';
+          const files=[];
+          function walk(dir){for(const item of fs.readdirSync(dir,{withFileTypes:true})){if(item.name==='node_modules')continue;const p=dir+'/'+item.name;if(item.isDirectory())walk(p);else if(p.endsWith('.test.js')&&fs.readFileSync(p,'utf8').includes('export-verified-final-results-day'))files.push(p);}}
+          walk('engine-v1');
+          if(!files.includes('engine-v1/jobs/export-verified-results-checkpoint.test.js'))throw Error('checkpoint_regression_missing');
+          execFileSync(process.execPath,['--test',...files.sort()],{stdio:'inherit'});
+          NODE
+      - run: git diff --exit-code
