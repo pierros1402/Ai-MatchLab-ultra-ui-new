@@ -1,3 +1,4 @@
+import {VALUE_EXPORT_IDENTITY_FIELDS,VALUE_EXPORT_IDENTITY_LABELS,valueExportIdentityValues} from './core/value-export-identity.js';
 import express from "express";
 import fs from "fs";
 import { spawn } from "child_process";
@@ -3273,11 +3274,11 @@ function setValueExportPercentCell(row, columnNumber) {
 }
 
 function addValueExportPlanSection(sheet, plan) {
-  styleValueExportTitle(sheet, sheet.rowCount + 1, `${plan.label} — Picks`);
+  styleValueExportTitle(sheet, sheet.rowCount + 1, `${plan.label} — Picks`, 19);
   addValueExportTableHeader(sheet, [
     "Date", "Kickoff", "Country", "League", "Home", "Away", "Market", "Pick",
     "Model Score", "Confidence", "Market Prob", "AI Fair Odds", "Display Odds",
-    "Final Score", "Result", "Source"
+    "Final Score", "Result", "Source", ...VALUE_EXPORT_IDENTITY_LABELS
   ]);
 
   if (plan.picks.length === 0) {
@@ -3300,7 +3301,8 @@ function addValueExportPlanSection(sheet, plan) {
         row.oddsDecimal ?? "",
         valueExportFinalScore(row),
         row.result,
-        row.source || ""
+        row.source || "",
+        ...valueExportIdentityValues(row)
       ]);
       for (const column of [9, 10, 11, 12, 13]) {
         added.getCell(column).numFmt = column >= 12 ? "0.00" : "0.000";
@@ -3411,10 +3413,10 @@ function valueExportMatchLabel(row) {
 }
 
 function addCompactDailyValuePicks(sheet, report) {
-  styleValueExportTitle(sheet, sheet.rowCount + 1, `Value Picks — ${report.from}`, 11);
+  styleValueExportTitle(sheet, sheet.rowCount + 1, `Value Picks — ${report.from}`, 14);
   addValueExportTableHeader(sheet, [
     "Plan", "Country", "League", "Match", "Kickoff", "Pick",
-    "Model Score", "Confidence", "Display Odds", "Final Score", "Result"
+    "Model Score", "Confidence", "Display Odds", "Final Score", "Result", ...VALUE_EXPORT_IDENTITY_LABELS
   ]);
 
   let rowCount = 0;
@@ -3432,7 +3434,8 @@ function addCompactDailyValuePicks(sheet, report) {
         row.confidence ?? "",
         row.oddsDecimal ?? "",
         valueExportFinalScore(row),
-        row.result || ""
+        row.result || "",
+        ...valueExportIdentityValues(row)
       ]);
       added.getCell(7).numFmt = "0.000";
       if (typeof added.getCell(8).value === "number") added.getCell(8).numFmt = "0.000";
@@ -3443,7 +3446,7 @@ function addCompactDailyValuePicks(sheet, report) {
 
   if (rowCount === 0) {
     const row = sheet.addRow(["No picks for selected day"]);
-    sheet.mergeCells(row.number, 1, row.number, 11);
+    sheet.mergeCells(row.number, 1, row.number, 14);
   }
 }
 
@@ -3504,7 +3507,7 @@ function addCompactDailyPlanAnalysis(sheet, plan) {
 }
 
 function configureCompactDailyValueExportSheet(sheet) {
-  const widths = [12, 16, 24, 38, 10, 20, 13, 13, 13, 13, 12];
+  const widths = [12, 16, 24, 38, 10, 20, 13, 13, 13, 13, 12, 62, 28, 32];
   widths.forEach((width, index) => {
     sheet.getColumn(index + 1).width = width;
     sheet.getColumn(index + 1).alignment = {
@@ -3517,7 +3520,7 @@ function configureCompactDailyValueExportSheet(sheet) {
 }
 
 function configureValueExportSheet(sheet) {
-  const widths = [14, 22, 16, 22, 24, 24, 22, 18, 13, 13, 13, 13, 13, 13, 12, 24];
+  const widths = [14, 22, 16, 22, 24, 24, 22, 18, 13, 13, 13, 13, 13, 13, 12, 24, 62, 28, 32];
   widths.forEach((width, index) => {
     sheet.getColumn(index + 1).width = width;
     sheet.getColumn(index + 1).alignment = {
@@ -3534,7 +3537,7 @@ function valueExportCsvHeader() {
     "recordType", "plan", "date", "from", "to", "status", "market", "selection",
     "kickoff", "country", "league", "home", "away", "picks", "wins", "losses",
     "voids", "unresolved", "unsupported", "winRate", "modelScore", "confidence",
-    "marketProb", "aiFairOdds", "odds", "finalScore", "result", "source"
+    "marketProb", "aiFairOdds", "odds", "finalScore", "result", "source", ...VALUE_EXPORT_IDENTITY_FIELDS
   ];
 }
 
@@ -3568,7 +3571,8 @@ function valueExportCsvLine(record) {
     summary ? "" : record.oddsDecimal ?? "",
     summary ? "" : valueExportFinalScore(record),
     summary ? "" : record.result || "",
-    summary ? "" : record.source || ""
+    summary ? "" : record.source || "",
+    ...(summary ? ["", "", ""] : valueExportIdentityValues(record))
   ].map(csvEscape).join(",");
 }
 
@@ -3685,7 +3689,7 @@ app.get("/value-export/range", async (req, res) => {
       }
     }
 
-    styleValueExportTitle(sheet, sheet.rowCount + 1, "Integrity", compactDaily ? 11 : 16);
+    styleValueExportTitle(sheet, sheet.rowCount + 1, "Integrity", compactDaily ? 14 : 19);
     addValueExportTableHeader(sheet, ["Status", "Issue Count", "Code", "Date", "Plan", "Details"]);
     if (report.integrity.issues.length === 0) {
       sheet.addRow([report.integrity.status, 0, "", "", "", ""]);

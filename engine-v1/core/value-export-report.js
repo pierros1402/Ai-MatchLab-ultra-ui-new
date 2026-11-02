@@ -1,3 +1,4 @@
+import {valueExportIdentity} from './value-export-identity.js';
 import {isUnifiedPublicDay} from '../value/unified-public-plan.js';
 export const VALUE_EXPORT_PLAN_ORDER = Object.freeze([
   Object.freeze({ key: "A", id: "plan-a", label: "Plan A" }),
@@ -320,16 +321,15 @@ function scoreKey(value) {
 function normalizePickRow(date, plan, source, pick) {
   const market = normalizeValueMarketSelection(pick?.market ?? pick?.marketName, pick?.pick);
   const result = normalizeValueSettlement(pick?.result ?? pick?.settlement);
-  const canonicalMatchId = clean(pick?.canonicalMatchId || pick?.canonicalId || pick?.matchId) || null;
+  const identity = valueExportIdentity(pick,date);
 
   return {
     date,
     planKey: plan.key,
     planId: clean(pick?.planId) || plan.id,
     planLabel: plan.label,
-    canonicalMatchId,
-    matchId: clean(pick?.matchId) || canonicalMatchId,
-    kickoff: pick?.kickoff ?? null,
+    ...identity,
+    kickoff: pick?.kickoff ?? pick?.kickoffUtc ?? null,
     country: clean(pick?.country) || null,
     leagueSlug: clean(pick?.leagueSlug) || null,
     leagueName: clean(pick?.leagueName) || null,
@@ -513,7 +513,8 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
     unresolvedClosedDays: [],
     unsupportedRows: [],
     duplicatePicks: [],
-    countMismatches: []
+    countMismatches: [],
+    identityGaps: []
   };
   const plans = {};
   let totalRows = 0;
@@ -541,6 +542,8 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
       if(planDay?.analysisComplete===false)integrity.incompleteInputDays.push({date,plan:plan.key});
       const available = Boolean(planDay?.available);
       const rows = available && Array.isArray(planDay.picks) ? planDay.picks : [];
+      for (const row of rows) if(row.canonicalIdentityStatus !== 'RECORDED_CANONICAL_ID')
+        integrity.identityGaps.push({date,plan:plan.key,matchId:row.matchId,status:row.canonicalIdentityStatus});
       const summary = summarizeValueRows(rows);
       const status = planDayStatus(available, summary);
       if (status === "ZERO_PICKS_UNVERIFIED") {
@@ -639,6 +642,7 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
 
   integrity.missingDays = [...new Set(integrity.missingDays)].sort();
   integrity.issues = [
+    ...integrity.identityGaps.map(issue=>({code:"VALUE_EXPORT_CANONICAL_IDENTITY_UNVERIFIED",...issue})),
     ...integrity.incompleteInputDays.map(issue=>({code:"VALUE_EXPORT_INPUT_COVERAGE_INCOMPLETE",...issue})),
     ...integrity.missingDays.map(date => ({ code: "VALUE_EXPORT_DAY_MISSING", date })),
     ...integrity.unresolvedClosedDays.map(issue => ({ code: "VALUE_EXPORT_CLOSED_DAY_UNRESOLVED", ...issue })),
