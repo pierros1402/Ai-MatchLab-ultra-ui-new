@@ -1,0 +1,343 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "svn.1",
+  "homeTeam": "Bravo",
+  "awayTeam": "Koper",
+  "homeWinScore": 0.294,
+  "drawScore": 0.101,
+  "awayWinScore": 0.651,
+  "over15Score": 0.698,
+  "over25Score": 0.728,
+  "over35Score": 0.533,
+  "bttsScore": 0.5805,
+  "confidence": 0.905,
+  "signals": [
+    "away_edge",
+    "priors_applied",
+    "close_strength_gap",
+    "match_profile_applied"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.425,
+      "awayOverallFormWeight": 0.5,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.152,
+    "expectedAwayGoals": 1.53,
+    "expectedTotalGoals": 2.682,
+    "homeStrength": 0.433,
+    "awayStrength": 0.612,
+    "homeEdge": 0.219,
+    "awayPenalty": 0.068,
+    "recency": {
+      "homeOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 178,
+        "daysSinceLastMatch": 3,
+        "spanDays": 18,
+        "maxInternalGap": 12,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.827
+      },
+      "awayOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 178,
+        "daysSinceLastMatch": 5,
+        "spanDays": 17,
+        "maxInternalGap": 9,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 1,
+        "formContinuityWeight": 0.88
+      },
+      "homeSide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 178,
+        "daysSinceLastMatch": 16,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.33,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.403
+      },
+      "awaySide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 178,
+        "daysSinceLastMatch": 23,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.21
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 178,
+      "awayPriorSample": 178,
+      "leaguePriorSample": 890,
+      "matchupPriorSample": 10
+    },
+    "resolution": {
+      "homeInput": "Bravo",
+      "awayInput": "Koper",
+      "homeResolvedKey": "Bravo",
+      "awayResolvedKey": "Koper",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Bravo::FC Koper",
+      "matchupResolveScore": 0.93,
+      "homePriorKey": "svn.1::NK Bravo",
+      "awayPriorKey": "svn.1::FC Koper",
+      "matchupPriorKey": "svn.1|FC Koper|NK Bravo"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Bravo",
+      "awayTeamKey": "Koper",
+      "leagueKey": "svn.1",
+      "matchupKey": "Bravo::FC Koper"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "h2h_away_edge",
+        "impact": 0.025,
+        "note": "Recent H2H leans away"
+      },
+      {
+        "code": "h2h_overlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is open"
+      },
+      {
+        "code": "ai_h2h_over_signal",
+        "impact": 0.07,
+        "note": "AI detected open H2H pattern"
+      },
+      {
+        "code": "ai_h2h_away_edge",
+        "impact": 0.06,
+        "note": "AI detected away H2H edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    },
+    "matchProfileApplied": true,
+    "matchProfileConfidence": 0.67,
+    "matchProfileReasons": [
+      {
+        "code": "match_profile_h2h_away_edge",
+        "impact": 0.011000000000000001,
+        "note": "MatchProfile H2H trend leans away"
+      },
+      {
+        "code": "match_profile_h2h_overlean",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile H2H goal pattern leans over"
+      }
+    ]
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "h2h_away_edge",
+      "impact": 0.025,
+      "note": "Recent H2H leans away"
+    },
+    {
+      "code": "h2h_overlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is open"
+    },
+    {
+      "code": "ai_h2h_over_signal",
+      "impact": 0.07,
+      "note": "AI detected open H2H pattern"
+    },
+    {
+      "code": "ai_h2h_away_edge",
+      "impact": 0.06,
+      "note": "AI detected away H2H edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "svn.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 16,
+    "awayRestDays": 5,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 1,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 1,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  },
+  "intelligence": {
+    "applied": true,
+    "mode": "partial",
+    "coverage": {
+      "hasStandings": false,
+      "hasHomeForm": true,
+      "hasAwayForm": true,
+      "hasH2H": false,
+      "hasPhaseContext": false,
+      "coverageCount": 2,
+      "mode": "partial"
+    },
+    "signals": [
+      "away_form_edge",
+      "attack_support"
+    ]
+  },
+  "opponentAdjustedForm": {
+    "home": {
+      "schema": "ai-matchlab.opponent-adjusted-form.v1",
+      "sample": 6,
+      "strongOpponentSample": 0,
+      "peerStrengthSample": 6,
+      "oppositionStrengthMean": 0.179,
+      "sampleReliability": 0.6,
+      "raw": {
+        "gfRate": 0.939,
+        "gaRate": 1.401,
+        "ppg": 1.183,
+        "over25Rate": 0.511,
+        "bttsRate": 0.55
+      },
+      "adjusted": {
+        "gfRate": 0.939,
+        "gaRate": 1.401,
+        "ppg": 1.183,
+        "over25Rate": 0.511,
+        "bttsRate": 0.55
+      },
+      "impact": {
+        "gfRate": 0,
+        "gaRate": 0,
+        "ppg": 0,
+        "over25Rate": 0,
+        "bttsRate": 0
+      },
+      "reasonCodes": [
+        "no_strong_opposition_sample"
+      ]
+    },
+    "away": {
+      "schema": "ai-matchlab.opponent-adjusted-form.v1",
+      "sample": 12,
+      "strongOpponentSample": 0,
+      "peerStrengthSample": 12,
+      "oppositionStrengthMean": 0.179,
+      "sampleReliability": 1,
+      "raw": {
+        "gfRate": 1.247,
+        "gaRate": 0.73,
+        "ppg": 1.983,
+        "over25Rate": 0.291,
+        "bttsRate": 0.353
+      },
+      "adjusted": {
+        "gfRate": 1.247,
+        "gaRate": 0.73,
+        "ppg": 1.983,
+        "over25Rate": 0.291,
+        "bttsRate": 0.353
+      },
+      "impact": {
+        "gfRate": 0,
+        "gaRate": 0,
+        "ppg": 0,
+        "over25Rate": 0,
+        "bttsRate": 0
+      },
+      "reasonCodes": [
+        "no_strong_opposition_sample"
+      ]
+    },
+    "sampleReliability": 0.6
+  }
+}
