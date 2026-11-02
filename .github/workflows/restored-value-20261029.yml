@@ -1,0 +1,28 @@
+name: Verify 29 October audit identity projection
+on:
+  pull_request:
+    paths:
+      - data/deploy-snapshots/2026-10-29/**
+      - data/history-resolutions/2026-10-29/**
+      - engine-v1/jobs/restored-value-20261029.test.js
+      - .github/workflows/restored-value-20261029.yml
+permissions:
+  contents: read
+jobs:
+  dated-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            engine-v1
+            data/deploy-snapshots/2026-10-29
+            data/history-resolutions/2026-10-29
+            data/canonical-fixtures/2026-10-29
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - run: node --test engine-v1/jobs/restored-value-20261029.test.js engine-v1/core/archived-value-release.test.js
