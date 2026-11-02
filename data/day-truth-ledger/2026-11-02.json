@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-02",
-  "generatedAt": "2026-11-02T05:22:12.149Z",
+  "generatedAt": "2026-11-02T06:16:28.523Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "a73eedc9e2db1a3386a235cf4e622becdbaca70fcb7c59c2ec60e7f145c99057",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "6df51af38572583cc52c8446d764f65bc1905bbff417fd2440448c737981c9c4",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 134,
-    "playedTerminal": 20,
+    "playedTerminal": 21,
     "nonPlayedTerminal": 1,
     "scheduled": 112,
-    "live": 1,
+    "live": 0,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 21,
     "acceptedVerifiedFinalArtifacts": 21,
-    "convergedPlayedFinal": 20,
+    "convergedPlayedFinal": 21,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
     "openRows": 112,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 20,
-    "scoredSettlementEligible": 20,
+    "historyEligible": 21,
+    "scoredSettlementEligible": 21,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -6367,12 +6367,12 @@
       "homeTeam": "Portland Timbers",
       "awayTeam": "Houston Dynamo FC",
       "kickoffUtc": "2026-11-02T02:45Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 3,
         "scoreAway": 1
       },
@@ -6387,11 +6387,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -6610,9 +6610,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_usa1_portlandtimbers_houstondynamo_20261102"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -10352,13 +10350,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "a73eedc9e2db1a3386a235cf4e622becdbaca70fcb7c59c2ec60e7f145c99057",
+      "truthFingerprint": "6df51af38572583cc52c8446d764f65bc1905bbff417fd2440448c737981c9c4",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 20,
+        "expectedEligibleRows": 21,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_lanus_gimnasiamendoza_20261102",
@@ -10377,6 +10375,7 @@
           "cid_uru2_miramar_plazacolonia_20261102",
           "cid_usa1_lafc_minnesotaunited_20261102",
           "cid_usa1_newenglandrevolution_intermiami_20261102",
+          "cid_usa1_portlandtimbers_houstondynamo_20261102",
           "cid_usa2_newmexico_phoenixrising_20261102",
           "cid_usa2_sacramentorepublic_tulsa_20261102",
           "cid_ven1_carabobo_metropolitanos_20261102",
