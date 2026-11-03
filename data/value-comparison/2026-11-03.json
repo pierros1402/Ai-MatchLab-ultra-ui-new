@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-11-03",
-  "generatedAt": "2026-11-03T20:37:17.830Z",
+  "generatedAt": "2026-11-03T23:00:51.657Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,7 +18,7 @@
   "inputs": {
     "fixturesPath": "data/canonical-fixtures/2026-11-03",
     "finalResultsDir": "data/final-results/2026-11-03",
-    "verifiedFinalResults": 46,
+    "verifiedFinalResults": 89,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-11-03",
     "canonicalContradictionsRejected": [],
     "canonicalIdentityAmbiguities": [],
@@ -55,38 +55,38 @@
       "summary": {
         "picks": 4,
         "uniqueMatches": 4,
-        "settled": 1,
-        "wins": 0,
+        "settled": 4,
+        "wins": 3,
         "losses": 1,
         "voids": 0,
-        "unresolved": 3,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": 0,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 0.75,
+        "oddsAvailable": 2,
+        "averageOdds": 1.46,
+        "totalStake": 2,
+        "totalReturn": 2.92,
+        "profit": 0.92,
+        "roi": 0.46
       },
       "marketSummary": [
         {
           "market": "Over / Under 2.5",
           "picks": 4,
           "uniqueMatches": 4,
-          "settled": 1,
-          "wins": 0,
+          "settled": 4,
+          "wins": 3,
           "losses": 1,
           "voids": 0,
-          "unresolved": 3,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": 0,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "hitRate": 0.75,
+          "oddsAvailable": 2,
+          "averageOdds": 1.46,
+          "totalStake": 2,
+          "totalReturn": 2.92,
+          "profit": 0.92,
+          "roi": 0.46
         }
       ],
       "picks": [
@@ -110,11 +110,75 @@
           "aiFairOdds": 1.47,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 4,
+            "awayScore": 0,
+            "scoreKey": "4-0"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-11-03T22:57:02.379Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401915385",
+                "canonicalId": "cid_uefachampions_lasklinz_slovanbratislava_20261103",
+                "leagueName": "UEFA Champions League",
+                "home": "LASK Linz",
+                "away": "Slovan Bratislava",
+                "scoreHome": 4,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-11-03T20:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-11-03T22:36:36.972Z",
+                "scoreKey": "4-0",
+                "homeTeam": "LASK Linz",
+                "awayTeam": "Slovan Bratislava",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_uefachampions_lasklinz_slovanbratislava_20261103"
+                  ],
+                  "sourceFixtureId": "cid_uefachampions_lasklinz_slovanbratislava_20261103",
+                  "resolvedFixtureId": "cid_uefachampions_lasklinz_slovanbratislava_20261103",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "LASK Linz",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Slovan Bratislava",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "6TK5I5v3",
+                "country": "Europe",
+                "leagueName": "Champions League - League phase",
+                "leaguePath": "/football/europe/champions-league/",
+                "home": "LASK",
+                "away": "Slovan Bratislava",
+                "scoreHome": 4,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-11-03T20:00:00.000Z",
+                "scoreKey": "4-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -136,11 +200,62 @@
           "aiFairOdds": 1.74,
           "oddsDecimal": 1.35,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 6,
+            "scoreKey": "0-6"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_espn_terminal_final",
+            "method": "canonical_espn_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-11-03T22:57:02.445Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401915309",
+                "canonicalId": "cid_uefachampions_villarreal_parissaintgermain_20261103",
+                "leagueName": "UEFA Champions League",
+                "home": "Villarreal",
+                "away": "Paris Saint-Germain",
+                "scoreHome": 0,
+                "scoreAway": 6,
+                "kickoffUtc": "2026-11-03T20:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-11-03T22:36:36.973Z",
+                "scoreKey": "0-6",
+                "homeTeam": "Villarreal",
+                "awayTeam": "Paris Saint-Germain",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_uefachampions_villarreal_parissaintgermain_20261103"
+                  ],
+                  "sourceFixtureId": "cid_uefachampions_villarreal_parissaintgermain_20261103",
+                  "resolvedFixtureId": "cid_uefachampions_villarreal_parissaintgermain_20261103",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Villarreal",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Paris Saint-Germain",
+                  "awayGlobalClubId": "gcid_c8d80a09e809430fdaa18486",
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -252,11 +367,75 @@
           "aiFairOdds": 1.91,
           "oddsDecimal": 1.57,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 4,
+            "scoreKey": "1-4"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-11-03T22:57:01.058Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401906344",
+                "canonicalId": "cid_engtrophy_rochdale_doncasterrovers_20261103",
+                "leagueName": "EFL Trophy",
+                "home": "Rochdale",
+                "away": "Doncaster Rovers",
+                "scoreHome": 1,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-11-03T19:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-11-03T22:35:48.930Z",
+                "scoreKey": "1-4",
+                "homeTeam": "Rochdale",
+                "awayTeam": "Doncaster Rovers",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_engtrophy_rochdale_doncasterrovers_20261103"
+                  ],
+                  "sourceFixtureId": "cid_engtrophy_rochdale_doncasterrovers_20261103",
+                  "resolvedFixtureId": "cid_engtrophy_rochdale_doncasterrovers_20261103",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Rochdale",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Doncaster Rovers",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "4KtZz4hg",
+                "country": "England",
+                "leagueName": "EFL Trophy",
+                "leaguePath": "/football/england/efl-trophy/",
+                "home": "Rochdale",
+                "away": "Doncaster",
+                "scoreHome": 1,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-11-03T19:00:00.000Z",
+                "scoreKey": "1-4"
+              }
+            ]
+          }
         }
       ]
     },
@@ -274,38 +453,38 @@
       "summary": {
         "picks": 4,
         "uniqueMatches": 4,
-        "settled": 1,
-        "wins": 0,
+        "settled": 4,
+        "wins": 3,
         "losses": 1,
         "voids": 0,
-        "unresolved": 3,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": 0,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 0.75,
+        "oddsAvailable": 2,
+        "averageOdds": 1.46,
+        "totalStake": 2,
+        "totalReturn": 2.92,
+        "profit": 0.92,
+        "roi": 0.46
       },
       "marketSummary": [
         {
           "market": "Over / Under 2.5",
           "picks": 4,
           "uniqueMatches": 4,
-          "settled": 1,
-          "wins": 0,
+          "settled": 4,
+          "wins": 3,
           "losses": 1,
           "voids": 0,
-          "unresolved": 3,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": 0,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "hitRate": 0.75,
+          "oddsAvailable": 2,
+          "averageOdds": 1.46,
+          "totalStake": 2,
+          "totalReturn": 2.92,
+          "profit": 0.92,
+          "roi": 0.46
         }
       ],
       "picks": [
@@ -329,11 +508,75 @@
           "aiFairOdds": 1.47,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 4,
+            "awayScore": 0,
+            "scoreKey": "4-0"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-11-03T22:57:02.379Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401915385",
+                "canonicalId": "cid_uefachampions_lasklinz_slovanbratislava_20261103",
+                "leagueName": "UEFA Champions League",
+                "home": "LASK Linz",
+                "away": "Slovan Bratislava",
+                "scoreHome": 4,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-11-03T20:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-11-03T22:36:36.972Z",
+                "scoreKey": "4-0",
+                "homeTeam": "LASK Linz",
+                "awayTeam": "Slovan Bratislava",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_uefachampions_lasklinz_slovanbratislava_20261103"
+                  ],
+                  "sourceFixtureId": "cid_uefachampions_lasklinz_slovanbratislava_20261103",
+                  "resolvedFixtureId": "cid_uefachampions_lasklinz_slovanbratislava_20261103",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "LASK Linz",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Slovan Bratislava",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "6TK5I5v3",
+                "country": "Europe",
+                "leagueName": "Champions League - League phase",
+                "leaguePath": "/football/europe/champions-league/",
+                "home": "LASK",
+                "away": "Slovan Bratislava",
+                "scoreHome": 4,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-11-03T20:00:00.000Z",
+                "scoreKey": "4-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -355,11 +598,62 @@
           "aiFairOdds": 1.74,
           "oddsDecimal": 1.35,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 6,
+            "scoreKey": "0-6"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_espn_terminal_final",
+            "method": "canonical_espn_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-11-03T22:57:02.445Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401915309",
+                "canonicalId": "cid_uefachampions_villarreal_parissaintgermain_20261103",
+                "leagueName": "UEFA Champions League",
+                "home": "Villarreal",
+                "away": "Paris Saint-Germain",
+                "scoreHome": 0,
+                "scoreAway": 6,
+                "kickoffUtc": "2026-11-03T20:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-11-03T22:36:36.973Z",
+                "scoreKey": "0-6",
+                "homeTeam": "Villarreal",
+                "awayTeam": "Paris Saint-Germain",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_uefachampions_villarreal_parissaintgermain_20261103"
+                  ],
+                  "sourceFixtureId": "cid_uefachampions_villarreal_parissaintgermain_20261103",
+                  "resolvedFixtureId": "cid_uefachampions_villarreal_parissaintgermain_20261103",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Villarreal",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Paris Saint-Germain",
+                  "awayGlobalClubId": "gcid_c8d80a09e809430fdaa18486",
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -471,11 +765,75 @@
           "aiFairOdds": 1.91,
           "oddsDecimal": 1.57,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 4,
+            "scoreKey": "1-4"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-11-03T22:57:01.058Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401906344",
+                "canonicalId": "cid_engtrophy_rochdale_doncasterrovers_20261103",
+                "leagueName": "EFL Trophy",
+                "home": "Rochdale",
+                "away": "Doncaster Rovers",
+                "scoreHome": 1,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-11-03T19:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-11-03T22:35:48.930Z",
+                "scoreKey": "1-4",
+                "homeTeam": "Rochdale",
+                "awayTeam": "Doncaster Rovers",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_engtrophy_rochdale_doncasterrovers_20261103"
+                  ],
+                  "sourceFixtureId": "cid_engtrophy_rochdale_doncasterrovers_20261103",
+                  "resolvedFixtureId": "cid_engtrophy_rochdale_doncasterrovers_20261103",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Rochdale",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Doncaster Rovers",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "4KtZz4hg",
+                "country": "England",
+                "leagueName": "EFL Trophy",
+                "leaguePath": "/football/england/efl-trophy/",
+                "home": "Rochdale",
+                "away": "Doncaster",
+                "scoreHome": 1,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-11-03T19:00:00.000Z",
+                "scoreKey": "1-4"
+              }
+            ]
+          }
         }
       ]
     },
@@ -493,50 +851,50 @@
       "summary": {
         "picks": 6,
         "uniqueMatches": 3,
-        "settled": 0,
-        "wins": 0,
-        "losses": 0,
+        "settled": 6,
+        "wins": 3,
+        "losses": 3,
         "voids": 0,
-        "unresolved": 6,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": null,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 0.5,
+        "oddsAvailable": 1,
+        "averageOdds": 1.5,
+        "totalStake": 1,
+        "totalReturn": 1.5,
+        "profit": 0.5,
+        "roi": 0.5
       },
       "marketSummary": [
         {
           "market": "BTTS",
           "picks": 3,
           "uniqueMatches": 3,
-          "settled": 0,
-          "wins": 0,
-          "losses": 0,
+          "settled": 3,
+          "wins": 1,
+          "losses": 2,
           "voids": 0,
-          "unresolved": 3,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "hitRate": 0.3333,
+          "oddsAvailable": 1,
+          "averageOdds": 1.5,
+          "totalStake": 1,
+          "totalReturn": 1.5,
+          "profit": 0.5,
+          "roi": 0.5
         },
         {
           "market": "OU25",
           "picks": 3,
           "uniqueMatches": 3,
-          "settled": 0,
-          "wins": 0,
-          "losses": 0,
+          "settled": 3,
+          "wins": 2,
+          "losses": 1,
           "voids": 0,
-          "unresolved": 3,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
+          "hitRate": 0.6667,
           "oddsAvailable": 0,
           "averageOdds": null,
           "totalStake": null,
@@ -566,11 +924,75 @@
           "aiFairOdds": 1.19,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 0,
+            "scoreKey": "2-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-11-03T22:57:01.936Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401930416",
+                "canonicalId": "cid_scochallenge_rosscounty_celticb_20261103",
+                "leagueName": "Scottish Challenge Cup",
+                "home": "Ross County",
+                "away": "Celtic B",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-11-03T19:45Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-11-03T22:36:15.616Z",
+                "scoreKey": "2-0",
+                "homeTeam": "Ross County",
+                "awayTeam": "Celtic B",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_scochallenge_rosscounty_celticb_20261103"
+                  ],
+                  "sourceFixtureId": "cid_scochallenge_rosscounty_celticb_20261103",
+                  "resolvedFixtureId": "cid_scochallenge_rosscounty_celticb_20261103",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Ross County",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Celtic B",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "jF9TEay1",
+                "country": "Scotland",
+                "leagueName": "Challenge Cup - Play Offs",
+                "leaguePath": "/football/scotland/challenge-cup/",
+                "home": "Ross County",
+                "away": "Celtic B",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-11-03T19:45:00.000Z",
+                "scoreKey": "2-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -592,11 +1014,62 @@
           "aiFairOdds": 1.25,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 3,
+            "scoreKey": "0-3"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_espn_terminal_final",
+            "method": "canonical_espn_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-11-03T22:57:02.322Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401915307",
+                "canonicalId": "cid_uefachampions_feyenoordrotterdam_internazionale_20261103",
+                "leagueName": "UEFA Champions League",
+                "home": "Feyenoord Rotterdam",
+                "away": "Internazionale",
+                "scoreHome": 0,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-11-03T20:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-11-03T22:36:36.971Z",
+                "scoreKey": "0-3",
+                "homeTeam": "Feyenoord Rotterdam",
+                "awayTeam": "Internazionale",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_uefachampions_feyenoordrotterdam_internazionale_20261103"
+                  ],
+                  "sourceFixtureId": "cid_uefachampions_feyenoordrotterdam_internazionale_20261103",
+                  "resolvedFixtureId": "cid_uefachampions_feyenoordrotterdam_internazionale_20261103",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Feyenoord Rotterdam",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Internazionale",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -618,11 +1091,75 @@
           "aiFairOdds": 1.27,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 0,
+            "scoreKey": "2-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-11-03T22:57:01.936Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401930416",
+                "canonicalId": "cid_scochallenge_rosscounty_celticb_20261103",
+                "leagueName": "Scottish Challenge Cup",
+                "home": "Ross County",
+                "away": "Celtic B",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-11-03T19:45Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-11-03T22:36:15.616Z",
+                "scoreKey": "2-0",
+                "homeTeam": "Ross County",
+                "awayTeam": "Celtic B",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_scochallenge_rosscounty_celticb_20261103"
+                  ],
+                  "sourceFixtureId": "cid_scochallenge_rosscounty_celticb_20261103",
+                  "resolvedFixtureId": "cid_scochallenge_rosscounty_celticb_20261103",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Ross County",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Celtic B",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "jF9TEay1",
+                "country": "Scotland",
+                "leagueName": "Challenge Cup - Play Offs",
+                "leaguePath": "/football/scotland/challenge-cup/",
+                "home": "Ross County",
+                "away": "Celtic B",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-11-03T19:45:00.000Z",
+                "scoreKey": "2-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -644,11 +1181,75 @@
           "aiFairOdds": 1.28,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 7,
+            "awayScore": 3,
+            "scoreKey": "7-3"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-11-03T22:57:01.712Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401930414",
+                "canonicalId": "cid_scochallenge_eastkilbride_stirlingalbion_20261103",
+                "leagueName": "Scottish Challenge Cup",
+                "home": "East Kilbride",
+                "away": "Stirling Albion",
+                "scoreHome": 7,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-11-03T19:45Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-11-03T22:36:15.614Z",
+                "scoreKey": "7-3",
+                "homeTeam": "East Kilbride",
+                "awayTeam": "Stirling Albion",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_scochallenge_eastkilbride_stirlingalbion_20261103"
+                  ],
+                  "sourceFixtureId": "cid_scochallenge_eastkilbride_stirlingalbion_20261103",
+                  "resolvedFixtureId": "cid_scochallenge_eastkilbride_stirlingalbion_20261103",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "East Kilbride",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Stirling Albion",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "zam3mKsQ",
+                "country": "Scotland",
+                "leagueName": "Challenge Cup - Play Offs",
+                "leaguePath": "/football/scotland/challenge-cup/",
+                "home": "East Kilbride",
+                "away": "Stirling",
+                "scoreHome": 7,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-11-03T19:45:00.000Z",
+                "scoreKey": "7-3"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -670,11 +1271,62 @@
           "aiFairOdds": 1.29,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 3,
+            "scoreKey": "0-3"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_espn_terminal_final",
+            "method": "canonical_espn_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-11-03T22:57:02.322Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401915307",
+                "canonicalId": "cid_uefachampions_feyenoordrotterdam_internazionale_20261103",
+                "leagueName": "UEFA Champions League",
+                "home": "Feyenoord Rotterdam",
+                "away": "Internazionale",
+                "scoreHome": 0,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-11-03T20:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-11-03T22:36:36.971Z",
+                "scoreKey": "0-3",
+                "homeTeam": "Feyenoord Rotterdam",
+                "awayTeam": "Internazionale",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_uefachampions_feyenoordrotterdam_internazionale_20261103"
+                  ],
+                  "sourceFixtureId": "cid_uefachampions_feyenoordrotterdam_internazionale_20261103",
+                  "resolvedFixtureId": "cid_uefachampions_feyenoordrotterdam_internazionale_20261103",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Feyenoord Rotterdam",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Internazionale",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -696,11 +1348,75 @@
           "aiFairOdds": 1.3,
           "oddsDecimal": 1.5,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 7,
+            "awayScore": 3,
+            "scoreKey": "7-3"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-11-03T22:57:01.712Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401930414",
+                "canonicalId": "cid_scochallenge_eastkilbride_stirlingalbion_20261103",
+                "leagueName": "Scottish Challenge Cup",
+                "home": "East Kilbride",
+                "away": "Stirling Albion",
+                "scoreHome": 7,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-11-03T19:45Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-11-03T22:36:15.614Z",
+                "scoreKey": "7-3",
+                "homeTeam": "East Kilbride",
+                "awayTeam": "Stirling Albion",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_scochallenge_eastkilbride_stirlingalbion_20261103"
+                  ],
+                  "sourceFixtureId": "cid_scochallenge_eastkilbride_stirlingalbion_20261103",
+                  "resolvedFixtureId": "cid_scochallenge_eastkilbride_stirlingalbion_20261103",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "East Kilbride",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Stirling Albion",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "zam3mKsQ",
+                "country": "Scotland",
+                "leagueName": "Challenge Cup - Play Offs",
+                "leaguePath": "/football/scotland/challenge-cup/",
+                "home": "East Kilbride",
+                "away": "Stirling",
+                "scoreHome": 7,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-11-03T19:45:00.000Z",
+                "scoreKey": "7-3"
+              }
+            ]
+          }
         }
       ]
     },
@@ -718,50 +1434,50 @@
       "summary": {
         "picks": 6,
         "uniqueMatches": 3,
-        "settled": 0,
-        "wins": 0,
-        "losses": 0,
+        "settled": 6,
+        "wins": 3,
+        "losses": 3,
         "voids": 0,
-        "unresolved": 6,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": null,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 0.5,
+        "oddsAvailable": 1,
+        "averageOdds": 1.5,
+        "totalStake": 1,
+        "totalReturn": 1.5,
+        "profit": 0.5,
+        "roi": 0.5
       },
       "marketSummary": [
         {
           "market": "BTTS",
           "picks": 3,
           "uniqueMatches": 3,
-          "settled": 0,
-          "wins": 0,
-          "losses": 0,
+          "settled": 3,
+          "wins": 1,
+          "losses": 2,
           "voids": 0,
-          "unresolved": 3,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "hitRate": 0.3333,
+          "oddsAvailable": 1,
+          "averageOdds": 1.5,
+          "totalStake": 1,
+          "totalReturn": 1.5,
+          "profit": 0.5,
+          "roi": 0.5
         },
         {
           "market": "OU25",
           "picks": 3,
           "uniqueMatches": 3,
-          "settled": 0,
-          "wins": 0,
-          "losses": 0,
+          "settled": 3,
+          "wins": 2,
+          "losses": 1,
           "voids": 0,
-          "unresolved": 3,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
+          "hitRate": 0.6667,
           "oddsAvailable": 0,
           "averageOdds": null,
           "totalStake": null,
@@ -791,11 +1507,75 @@
           "aiFairOdds": 1.19,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 0,
+            "scoreKey": "2-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-11-03T22:57:01.936Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401930416",
+                "canonicalId": "cid_scochallenge_rosscounty_celticb_20261103",
+                "leagueName": "Scottish Challenge Cup",
+                "home": "Ross County",
+                "away": "Celtic B",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-11-03T19:45Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-11-03T22:36:15.616Z",
+                "scoreKey": "2-0",
+                "homeTeam": "Ross County",
+                "awayTeam": "Celtic B",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_scochallenge_rosscounty_celticb_20261103"
+                  ],
+                  "sourceFixtureId": "cid_scochallenge_rosscounty_celticb_20261103",
+                  "resolvedFixtureId": "cid_scochallenge_rosscounty_celticb_20261103",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Ross County",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Celtic B",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "jF9TEay1",
+                "country": "Scotland",
+                "leagueName": "Challenge Cup - Play Offs",
+                "leaguePath": "/football/scotland/challenge-cup/",
+                "home": "Ross County",
+                "away": "Celtic B",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-11-03T19:45:00.000Z",
+                "scoreKey": "2-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -817,11 +1597,62 @@
           "aiFairOdds": 1.25,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 3,
+            "scoreKey": "0-3"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_espn_terminal_final",
+            "method": "canonical_espn_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-11-03T22:57:02.322Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401915307",
+                "canonicalId": "cid_uefachampions_feyenoordrotterdam_internazionale_20261103",
+                "leagueName": "UEFA Champions League",
+                "home": "Feyenoord Rotterdam",
+                "away": "Internazionale",
+                "scoreHome": 0,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-11-03T20:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-11-03T22:36:36.971Z",
+                "scoreKey": "0-3",
+                "homeTeam": "Feyenoord Rotterdam",
+                "awayTeam": "Internazionale",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_uefachampions_feyenoordrotterdam_internazionale_20261103"
+                  ],
+                  "sourceFixtureId": "cid_uefachampions_feyenoordrotterdam_internazionale_20261103",
+                  "resolvedFixtureId": "cid_uefachampions_feyenoordrotterdam_internazionale_20261103",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Feyenoord Rotterdam",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Internazionale",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -843,11 +1674,75 @@
           "aiFairOdds": 1.27,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 0,
+            "scoreKey": "2-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-11-03T22:57:01.936Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401930416",
+                "canonicalId": "cid_scochallenge_rosscounty_celticb_20261103",
+                "leagueName": "Scottish Challenge Cup",
+                "home": "Ross County",
+                "away": "Celtic B",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-11-03T19:45Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-11-03T22:36:15.616Z",
+                "scoreKey": "2-0",
+                "homeTeam": "Ross County",
+                "awayTeam": "Celtic B",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_scochallenge_rosscounty_celticb_20261103"
+                  ],
+                  "sourceFixtureId": "cid_scochallenge_rosscounty_celticb_20261103",
+                  "resolvedFixtureId": "cid_scochallenge_rosscounty_celticb_20261103",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Ross County",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Celtic B",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "jF9TEay1",
+                "country": "Scotland",
+                "leagueName": "Challenge Cup - Play Offs",
+                "leaguePath": "/football/scotland/challenge-cup/",
+                "home": "Ross County",
+                "away": "Celtic B",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-11-03T19:45:00.000Z",
+                "scoreKey": "2-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -869,11 +1764,75 @@
           "aiFairOdds": 1.28,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 7,
+            "awayScore": 3,
+            "scoreKey": "7-3"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-11-03T22:57:01.712Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401930414",
+                "canonicalId": "cid_scochallenge_eastkilbride_stirlingalbion_20261103",
+                "leagueName": "Scottish Challenge Cup",
+                "home": "East Kilbride",
+                "away": "Stirling Albion",
+                "scoreHome": 7,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-11-03T19:45Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-11-03T22:36:15.614Z",
+                "scoreKey": "7-3",
+                "homeTeam": "East Kilbride",
+                "awayTeam": "Stirling Albion",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_scochallenge_eastkilbride_stirlingalbion_20261103"
+                  ],
+                  "sourceFixtureId": "cid_scochallenge_eastkilbride_stirlingalbion_20261103",
+                  "resolvedFixtureId": "cid_scochallenge_eastkilbride_stirlingalbion_20261103",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "East Kilbride",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Stirling Albion",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "zam3mKsQ",
+                "country": "Scotland",
+                "leagueName": "Challenge Cup - Play Offs",
+                "leaguePath": "/football/scotland/challenge-cup/",
+                "home": "East Kilbride",
+                "away": "Stirling",
+                "scoreHome": 7,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-11-03T19:45:00.000Z",
+                "scoreKey": "7-3"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -895,11 +1854,62 @@
           "aiFairOdds": 1.29,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 3,
+            "scoreKey": "0-3"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_espn_terminal_final",
+            "method": "canonical_espn_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-11-03T22:57:02.322Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401915307",
+                "canonicalId": "cid_uefachampions_feyenoordrotterdam_internazionale_20261103",
+                "leagueName": "UEFA Champions League",
+                "home": "Feyenoord Rotterdam",
+                "away": "Internazionale",
+                "scoreHome": 0,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-11-03T20:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-11-03T22:36:36.971Z",
+                "scoreKey": "0-3",
+                "homeTeam": "Feyenoord Rotterdam",
+                "awayTeam": "Internazionale",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_uefachampions_feyenoordrotterdam_internazionale_20261103"
+                  ],
+                  "sourceFixtureId": "cid_uefachampions_feyenoordrotterdam_internazionale_20261103",
+                  "resolvedFixtureId": "cid_uefachampions_feyenoordrotterdam_internazionale_20261103",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Feyenoord Rotterdam",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Internazionale",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -921,22 +1931,86 @@
           "aiFairOdds": 1.3,
           "oddsDecimal": 1.5,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 7,
+            "awayScore": 3,
+            "scoreKey": "7-3"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-11-03T22:57:01.712Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401930414",
+                "canonicalId": "cid_scochallenge_eastkilbride_stirlingalbion_20261103",
+                "leagueName": "Scottish Challenge Cup",
+                "home": "East Kilbride",
+                "away": "Stirling Albion",
+                "scoreHome": 7,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-11-03T19:45Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-11-03T22:36:15.614Z",
+                "scoreKey": "7-3",
+                "homeTeam": "East Kilbride",
+                "awayTeam": "Stirling Albion",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_scochallenge_eastkilbride_stirlingalbion_20261103"
+                  ],
+                  "sourceFixtureId": "cid_scochallenge_eastkilbride_stirlingalbion_20261103",
+                  "resolvedFixtureId": "cid_scochallenge_eastkilbride_stirlingalbion_20261103",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "East Kilbride",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Stirling Albion",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "zam3mKsQ",
+                "country": "Scotland",
+                "leagueName": "Challenge Cup - Play Offs",
+                "leaguePath": "/football/scotland/challenge-cup/",
+                "home": "East Kilbride",
+                "away": "Stirling",
+                "scoreHome": 7,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-11-03T19:45:00.000Z",
+                "scoreKey": "7-3"
+              }
+            ]
+          }
         }
       ]
     }
   },
   "comparison": {
     "pickDeltaPlanBMinusPlanA": 2,
-    "settledDeltaPlanBMinusPlanA": -1,
+    "settledDeltaPlanBMinusPlanA": 2,
     "winsDeltaPlanBMinusPlanA": 0,
-    "lossesDeltaPlanBMinusPlanA": -1,
-    "hitRateDeltaPlanBMinusPlanA": null,
-    "roiDeltaPlanBMinusPlanA": null
+    "lossesDeltaPlanBMinusPlanA": 2,
+    "hitRateDeltaPlanBMinusPlanA": -0.25,
+    "roiDeltaPlanBMinusPlanA": 0.04
   },
   "unifiedPlan": {
     "id": "plan-u1",
@@ -947,7 +2021,7 @@
     "publicationMode": "production",
     "productionPublication": true,
     "policyId": "unified-public-u1-incremental-v1",
-    "generatedAt": "2026-11-03T03:20:38.642Z",
+    "generatedAt": "2026-11-03T23:00:53.292Z",
     "count": 4,
     "picks": [
       {
@@ -1011,9 +2085,15 @@
         "marketProb": null,
         "aiFairOdds": null,
         "band": null,
-        "result": "UNRESOLVED",
-        "finalScore": null,
-        "settlementTruth": null,
+        "result": "LOSS",
+        "settlementTruth": {
+          "path": "data/final-results/2026-11-03/cid_scochallenge_rosscounty_celticb_20261103.json",
+          "sha256": "da4013ba42f07dd11034059d078f78f9b54c074af0997dd976ee2b1ee1a0089f",
+          "matchId": "cid_scochallenge_rosscounty_celticb_20261103",
+          "date": "2026-11-03",
+          "scoreHome": 2,
+          "scoreAway": 0
+        },
         "publicationRecord": "7c8654bc2dc283f4ca1e9243b9500b9182385c627fd8383bc994b47d9641c1e4",
         "firstObservedAt": "2026-11-03T03:18:51.877Z"
       },
@@ -1078,9 +2158,15 @@
         "marketProb": null,
         "aiFairOdds": null,
         "band": null,
-        "result": "UNRESOLVED",
-        "finalScore": null,
-        "settlementTruth": null,
+        "result": "WIN",
+        "settlementTruth": {
+          "path": "data/final-results/2026-11-03/cid_uefachampions_feyenoordrotterdam_internazionale_20261103.json",
+          "sha256": "f57136cafe1461eb134fd98eb10b543001862af0c0a4c8d668997353a733b8c0",
+          "matchId": "cid_uefachampions_feyenoordrotterdam_internazionale_20261103",
+          "date": "2026-11-03",
+          "scoreHome": 0,
+          "scoreAway": 3
+        },
         "publicationRecord": "7c8654bc2dc283f4ca1e9243b9500b9182385c627fd8383bc994b47d9641c1e4",
         "firstObservedAt": "2026-11-03T03:18:51.877Z"
       },
@@ -1305,9 +2391,15 @@
         "modelProb": null,
         "marketProb": null,
         "aiFairOdds": null,
-        "result": "UNRESOLVED",
-        "finalScore": null,
-        "settlementTruth": null,
+        "result": "WIN",
+        "settlementTruth": {
+          "path": "data/final-results/2026-11-03/cid_uefachampions_lasklinz_slovanbratislava_20261103.json",
+          "sha256": "bec9caa05ae2c7e4a3c95431f2c073c64bf4985ae5b7a7955125565bf1787190",
+          "matchId": "cid_uefachampions_lasklinz_slovanbratislava_20261103",
+          "date": "2026-11-03",
+          "scoreHome": 4,
+          "scoreAway": 0
+        },
         "publicationRecord": "7c8654bc2dc283f4ca1e9243b9500b9182385c627fd8383bc994b47d9641c1e4",
         "firstObservedAt": "2026-11-03T03:18:51.877Z"
       },
@@ -1531,9 +2623,15 @@
         "modelProb": null,
         "marketProb": null,
         "aiFairOdds": null,
-        "result": "UNRESOLVED",
-        "finalScore": null,
-        "settlementTruth": null,
+        "result": "WIN",
+        "settlementTruth": {
+          "path": "data/final-results/2026-11-03/cid_uefachampions_manchesterunited_asroma_20261103.json",
+          "sha256": "b31057764d174a2b1d9f87e2bb33042ccad14d3d2eb57b29655639d1bc38c058",
+          "matchId": "cid_uefachampions_manchesterunited_asroma_20261103",
+          "date": "2026-11-03",
+          "scoreHome": 3,
+          "scoreAway": 2
+        },
         "publicationRecord": "7c8654bc2dc283f4ca1e9243b9500b9182385c627fd8383bc994b47d9641c1e4",
         "firstObservedAt": "2026-11-03T03:18:51.877Z"
       }
@@ -1544,7 +2642,7 @@
     "dataReadiness": {
       "status": "PARTIAL",
       "complete": false,
-      "checkedAt": "2026-11-03T20:37:18.911Z",
+      "checkedAt": "2026-11-03T23:00:52.937Z",
       "fixtures": 94,
       "applicable": 94,
       "ready": 40,
@@ -1567,19 +2665,19 @@
     "summary": {
       "picks": 4,
       "uniqueMatches": 4,
-      "settled": 0,
-      "wins": 0,
-      "losses": 0,
+      "settled": 4,
+      "wins": 3,
+      "losses": 1,
       "voids": 0,
-      "unresolved": 4,
-      "hitRate": null
+      "unresolved": 0,
+      "hitRate": 0.75
     },
-    "projectionSignature": "110b4865336fe8ff65b5c5605f9ff154c10a311071e5717d61d8ce8abdab20c4"
+    "projectionSignature": "296dbbceee017874f69473a19e47cec10b2ea5dae8cc5fbb6c880ec61333b7a6"
   },
   "dataReadiness": {
     "schema": "ai-matchlab.value-data-readiness.v1",
     "date": "2026-11-03",
-    "generatedAt": "2026-11-03T20:37:18.911Z",
+    "generatedAt": "2026-11-03T23:00:52.937Z",
     "fixtureUniverse": {
       "schema": "ai-matchlab.value-fixture-universe.v1",
       "source": "canonical_fixtures",
@@ -2260,7 +3358,7 @@
           "scope": "diagnostics_only_no_selector_inputs_changed"
         },
         "currentDiagnostic": {
-          "generatedAt": "2026-11-03T20:37:18.911Z",
+          "generatedAt": "2026-11-03T23:00:52.937Z",
           "status": "INSUFFICIENT_DATA",
           "reasons": [
             "minimum_recent_sample"
@@ -2392,7 +3490,7 @@
           "scope": "diagnostics_only_no_selector_inputs_changed"
         },
         "currentDiagnostic": {
-          "generatedAt": "2026-11-03T20:37:18.911Z",
+          "generatedAt": "2026-11-03T23:00:52.937Z",
           "status": "INSUFFICIENT_DATA",
           "reasons": [
             "minimum_recent_sample",
@@ -2544,7 +3642,7 @@
           "scope": "diagnostics_only_no_selector_inputs_changed"
         },
         "currentDiagnostic": {
-          "generatedAt": "2026-11-03T20:37:18.911Z",
+          "generatedAt": "2026-11-03T23:00:52.937Z",
           "status": "INSUFFICIENT_DATA",
           "reasons": [
             "minimum_recent_sample",
@@ -2694,7 +3792,7 @@
           "scope": "diagnostics_only_no_selector_inputs_changed"
         },
         "currentDiagnostic": {
-          "generatedAt": "2026-11-03T20:37:18.911Z",
+          "generatedAt": "2026-11-03T23:00:52.937Z",
           "status": "INSUFFICIENT_DATA",
           "reasons": [
             "minimum_recent_sample"
@@ -2752,7 +3850,7 @@
           "scope": "diagnostics_only_no_selector_inputs_changed"
         },
         "currentDiagnostic": {
-          "generatedAt": "2026-11-03T20:37:18.911Z",
+          "generatedAt": "2026-11-03T23:00:52.937Z",
           "status": "INSUFFICIENT_DATA",
           "reasons": [
             "minimum_recent_sample"
@@ -2902,7 +4000,7 @@
           "scope": "diagnostics_only_no_selector_inputs_changed"
         },
         "currentDiagnostic": {
-          "generatedAt": "2026-11-03T20:37:18.911Z",
+          "generatedAt": "2026-11-03T23:00:52.937Z",
           "status": "INSUFFICIENT_DATA",
           "reasons": [
             "minimum_recent_sample"
@@ -2996,7 +4094,7 @@
           "scope": "diagnostics_only_no_selector_inputs_changed"
         },
         "currentDiagnostic": {
-          "generatedAt": "2026-11-03T20:37:18.911Z",
+          "generatedAt": "2026-11-03T23:00:52.937Z",
           "status": "INSUFFICIENT_DATA",
           "reasons": [
             "minimum_recent_sample"
@@ -3145,7 +4243,7 @@
           "scope": "diagnostics_only_no_selector_inputs_changed"
         },
         "currentDiagnostic": {
-          "generatedAt": "2026-11-03T20:37:18.911Z",
+          "generatedAt": "2026-11-03T23:00:52.937Z",
           "status": "INSUFFICIENT_DATA",
           "reasons": [
             "minimum_recent_sample"
@@ -3203,7 +4301,7 @@
           "scope": "diagnostics_only_no_selector_inputs_changed"
         },
         "currentDiagnostic": {
-          "generatedAt": "2026-11-03T20:37:18.911Z",
+          "generatedAt": "2026-11-03T23:00:52.937Z",
           "status": "INSUFFICIENT_DATA",
           "reasons": [
             "minimum_recent_sample"
@@ -3353,7 +4451,7 @@
           "scope": "diagnostics_only_no_selector_inputs_changed"
         },
         "currentDiagnostic": {
-          "generatedAt": "2026-11-03T20:37:18.911Z",
+          "generatedAt": "2026-11-03T23:00:52.937Z",
           "status": "INSUFFICIENT_DATA",
           "reasons": [
             "minimum_recent_sample"
@@ -3411,7 +4509,7 @@
           "scope": "diagnostics_only_no_selector_inputs_changed"
         },
         "currentDiagnostic": {
-          "generatedAt": "2026-11-03T20:37:18.911Z",
+          "generatedAt": "2026-11-03T23:00:52.937Z",
           "status": "INSUFFICIENT_DATA",
           "reasons": [
             "minimum_recent_sample"
