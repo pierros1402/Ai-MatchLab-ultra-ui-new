@@ -1,7 +1,7 @@
 {
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison-cumulative.v1",
-  "generatedAt": "2026-11-03T00:23:20.855Z",
+  "generatedAt": "2026-11-03T02:02:10.533Z",
   "note": "Rolled-up immutable Plan A vs Plan B observations for the full trial window. Historical minimum-sample exclusions are applied only to derived statistics; frozen observations remain immutable. Snapshot-integrity warnings remain diagnostics.",
   "historicalStatisticsCorrection": {
     "active": true,
@@ -39,9 +39,9 @@
     "correctedStatisticalPopulation": 401
   },
   "trialStartDay": "2026-07-05",
-  "dayCount": 114,
+  "dayCount": 115,
   "firstDay": "2026-07-05",
-  "lastDay": "2026-11-02",
+  "lastDay": "2026-11-03",
   "requireIntegrityClean": false,
   "requireImmutablePlanA": true,
   "daysIncluded": [
@@ -158,7 +158,8 @@
     "2026-10-30",
     "2026-10-31",
     "2026-11-01",
-    "2026-11-02"
+    "2026-11-02",
+    "2026-11-03"
   ],
   "daysExcluded": [
     {
@@ -1384,21 +1385,42 @@
         "checkedAt": "2026-11-01T22:22:58.997Z",
         "manifestGeneratedAt": "2026-11-02T00:34:39.554Z"
       }
+    },
+    {
+      "dayKey": "2026-11-02",
+      "reason": "invariant_report_stale",
+      "details": {
+        "ok": false,
+        "reason": "invariant_report_stale",
+        "checkedAt": "2026-11-02T21:47:08.233Z",
+        "manifestGeneratedAt": "2026-11-03T01:13:09.128Z"
+      }
+    },
+    {
+      "dayKey": "2026-11-03",
+      "reason": "build_report_not_clean",
+      "details": {
+        "ok": false,
+        "reason": "build_report_not_clean",
+        "hardFailures": [
+          "foundation_publication_not_ready"
+        ]
+      }
     }
   ],
-  "integrityWarningDayCount": 100,
+  "integrityWarningDayCount": 102,
   "plans": {
     "A": {
       "id": "plan-a",
       "label": "Plan A - frozen production observation",
       "totals": {
-        "picks": 358,
-        "uniqueMatches": 343,
+        "picks": 362,
+        "uniqueMatches": 347,
         "settled": 353,
         "wins": 229,
         "losses": 124,
         "voids": 3,
-        "unresolved": 2,
+        "unresolved": 6,
         "unsupported": 0,
         "oddsAvailable": 190,
         "totalStake": 190,
@@ -1412,13 +1434,13 @@
       "id": "plan-b",
       "label": "Plan B - strict value-policy-v2.3 observation",
       "totals": {
-        "picks": 245,
-        "uniqueMatches": 148,
+        "picks": 251,
+        "uniqueMatches": 151,
         "settled": 244,
         "wins": 175,
         "losses": 69,
         "voids": 0,
-        "unresolved": 1,
+        "unresolved": 7,
         "unsupported": 0,
         "oddsAvailable": 96,
         "totalStake": 96,
@@ -1430,7 +1452,7 @@
     }
   },
   "comparison": {
-    "picksDeltaPlanBMinusPlanA": -113,
+    "picksDeltaPlanBMinusPlanA": -111,
     "settledDeltaPlanBMinusPlanA": -109,
     "winsDeltaPlanBMinusPlanA": -54,
     "lossesDeltaPlanBMinusPlanA": -55,
