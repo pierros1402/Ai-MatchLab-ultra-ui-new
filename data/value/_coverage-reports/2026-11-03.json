@@ -2,8 +2,8 @@
   "ok": true,
   "dayKey": "2026-11-03",
   "season": "2026-2027",
-  "generatedAt": "2026-11-03T16:07:56.155Z",
-  "startedAt": "2026-11-03T16:05:00.502Z",
+  "generatedAt": "2026-11-03T17:59:34.015Z",
+  "startedAt": "2026-11-03T17:56:39.769Z",
   "source": {
     "inputSource": "canonical_fixtures",
     "canonicalMatches": 94,
@@ -21,17 +21,17 @@
     "totalRows": 94,
     "detailsFound": 94,
     "intelligenceOk": 94,
-    "valueReturned": 33,
-    "valueNull": 61,
+    "valueReturned": 31,
+    "valueNull": 63,
     "valueFailed": 0,
-    "minimumRecentSampleNull": 61
+    "minimumRecentSampleNull": 63
   },
   "breakdown": {
     "nullByReason": {
-      "minimum_recent_sample": 61
+      "minimum_recent_sample": 63
     },
     "nullByClass": {
-      "low_recent_sample_prior_backed": 41,
+      "low_recent_sample_prior_backed": 43,
       "low_recent_sample": 14,
       "missing_team_history_and_prior": 6
     },
@@ -47,6 +47,7 @@
       "esp.copa_del_rey": 2,
       "ksa.2": 2,
       "mne.1": 2,
+      "pol.2": 2,
       "bra.1": 1,
       "bra.2": 1,
       "chi.1": 1,
@@ -63,7 +64,6 @@
       "uefa.champions": 9,
       "col.1": 2,
       "eng.2": 2,
-      "pol.2": 2,
       "uga.1": 2,
       "ecu.1": 1,
       "eng.trophy": 1,
@@ -164,7 +164,7 @@
       "leagueSlug": "afc.champions",
       "homeTeam": "Esteghlal FC",
       "awayTeam": "Al-Shamal",
-      "status": "PRE",
+      "status": "SECOND_HALF",
       "kickoffUtc": "2026-11-03T16:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -458,7 +458,7 @@
       "leagueSlug": "afc.cup",
       "homeTeam": "Al-Hussein SC",
       "awayTeam": "Al-Shorta SC",
-      "status": "PRE",
+      "status": "SECOND_HALF",
       "kickoffUtc": "2026-11-03T16:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -1988,7 +1988,7 @@
       "leagueSlug": "esp.copa_del_rey",
       "homeTeam": "Anaitasuna",
       "awayTeam": "Alavés",
-      "status": "PRE",
+      "status": "SPECIAL",
       "kickoffUtc": "2026-11-03T18:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -2030,7 +2030,7 @@
       "leagueSlug": "esp.copa_del_rey",
       "homeTeam": "CD Pamplona",
       "awayTeam": "Eibar",
-      "status": "PRE",
+      "status": "SPECIAL",
       "kickoffUtc": "2026-11-03T18:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -2957,7 +2957,7 @@
       "leagueSlug": "ksa.2",
       "homeTeam": "Al Raed",
       "awayTeam": "Al Wehda",
-      "status": "STATUS_SCHEDULED",
+      "status": "FT",
       "kickoffUtc": "2026-11-03T15:00:00.000Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -3290,72 +3290,37 @@
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.762,
-        "homeWinScore": 0.237,
-        "drawScore": 0.18,
-        "awayWinScore": 0.583,
-        "over15Score": 0.748,
-        "over25Score": 0.634,
-        "bttsScore": 0.485,
-        "signals": [
-          "away_edge",
-          "over25_support",
-          "form_influence_reduced",
-          "priors_applied",
-          "close_strength_gap"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "AWAY",
-            "score": 0.583,
-            "gap": 0.346,
-            "drawScore": 0.18,
-            "reasons": [
-              "best_below_0.68"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": true,
-            "pick": "Over 1.5",
-            "score": 0.748,
-            "reasons": []
-          },
-          "Over / Under 2.5": {
-            "eligible": false,
-            "pick": "Over 2.5",
-            "score": 0.634,
-            "expectedTotalGoals": 2.925,
-            "reasons": [
-              "score_below_0.65"
-            ]
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.577,
-            "reasons": [
-              "score_below_0.74",
-              "missing_strong_goal_support"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.485,
-            "reasons": [
-              "score_below_0.68",
-              "missing_btts_support"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample_prior_backed",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Chrobry Glogow",
+        "awayTeam": "Arka Gdynia",
+        "leagueSlug": "pol.2",
+        "fixtureDate": "2026-11-03T17:00:00.000Z",
+        "homeResolvedKey": "Chrobry Glogow",
+        "awayResolvedKey": "Arka Gdynia",
+        "homeRawSample": 1,
+        "awayRawSample": 0,
+        "homeBlendedSample": 1,
+        "awayBlendedSample": 3,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 0,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": null,
+        "awayPriorSample": 139,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_pol2_pogonsiedlce_ruchchorzow_20261103",
@@ -3367,74 +3332,37 @@
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.89,
-        "homeWinScore": 0.347,
-        "drawScore": 0.132,
-        "awayWinScore": 0.521,
-        "over15Score": 0.65,
-        "over25Score": 0.521,
-        "bttsScore": 0.505,
-        "signals": [
-          "away_edge",
-          "priors_applied",
-          "close_strength_gap"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "AWAY",
-            "score": 0.521,
-            "gap": 0.17400000000000004,
-            "drawScore": 0.132,
-            "reasons": [
-              "best_below_0.68"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": false,
-            "pick": "Over 1.5",
-            "score": 0.65,
-            "reasons": [
-              "score_below_0.70"
-            ]
-          },
-          "Over / Under 2.5": {
-            "eligible": false,
-            "pick": "Over 2.5",
-            "score": 0.521,
-            "expectedTotalGoals": 2.627,
-            "reasons": [
-              "score_below_0.65",
-              "expected_goals_below_2.75",
-              "missing_goal_support"
-            ]
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.496,
-            "reasons": [
-              "score_below_0.74",
-              "missing_strong_goal_support"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.505,
-            "reasons": [
-              "score_below_0.68",
-              "missing_btts_support"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample_prior_backed",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Pogon Siedlce",
+        "awayTeam": "Ruch Chorzow",
+        "leagueSlug": "pol.2",
+        "fixtureDate": "2026-11-03T17:00:00.000Z",
+        "homeResolvedKey": "Pogon Siedlce",
+        "awayResolvedKey": "Ruch Chorzow",
+        "homeRawSample": 1,
+        "awayRawSample": 1,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": 68,
+        "awayPriorSample": 102,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_scochallenge_aberdeenb_queenspark_20261103",
@@ -4557,14 +4485,13 @@
       "minimumSample": null,
       "valuePreview": {
         "confidence": 0.857,
-        "homeWinScore": 0.407,
-        "drawScore": 0.198,
-        "awayWinScore": 0.395,
-        "over15Score": 0.801,
-        "over25Score": 0.675,
-        "bttsScore": 0.615,
+        "homeWinScore": 0.395,
+        "drawScore": 0.193,
+        "awayWinScore": 0.412,
+        "over15Score": 0.792,
+        "over25Score": 0.666,
+        "bttsScore": 0.596,
         "signals": [
-          "home_edge",
           "away_edge",
           "over25_support",
           "btts_support",
@@ -4576,10 +4503,10 @@
         "marketDiagnostics": {
           "1X2": {
             "eligible": false,
-            "pick": "HOME",
-            "score": 0.407,
-            "gap": 0.011999999999999955,
-            "drawScore": 0.198,
+            "pick": "AWAY",
+            "score": 0.412,
+            "gap": 0.01699999999999996,
+            "drawScore": 0.193,
             "reasons": [
               "best_below_0.68",
               "gap_below_0.10"
@@ -4588,7 +4515,7 @@
           "Over / Under 1.5": {
             "eligible": false,
             "pick": "Over 1.5",
-            "score": 0.801,
+            "score": 0.792,
             "reasons": [
               "suppressed_by_over25"
             ]
@@ -4596,14 +4523,14 @@
           "Over / Under 2.5": {
             "eligible": true,
             "pick": "Over 2.5",
-            "score": 0.675,
-            "expectedTotalGoals": 3.448,
+            "score": 0.666,
+            "expectedTotalGoals": 3.371,
             "reasons": []
           },
           "Over / Under 3.5": {
             "eligible": false,
             "pick": "Over 3.5",
-            "score": 0.641,
+            "score": 0.63,
             "reasons": [
               "score_below_0.74",
               "missing_strong_goal_support"
@@ -4612,7 +4539,7 @@
           "BTTS": {
             "eligible": false,
             "pick": "BTTS YES",
-            "score": 0.615,
+            "score": 0.596,
             "reasons": [
               "score_below_0.68"
             ]
@@ -4789,12 +4716,12 @@
       "nullClass": null,
       "minimumSample": null,
       "valuePreview": {
-        "confidence": 0.853,
-        "homeWinScore": 0.403,
-        "drawScore": 0.164,
-        "awayWinScore": 0.432,
-        "over15Score": 0.732,
-        "over25Score": 0.619,
+        "confidence": 0.854,
+        "homeWinScore": 0.396,
+        "drawScore": 0.167,
+        "awayWinScore": 0.438,
+        "over15Score": 0.74,
+        "over25Score": 0.623,
         "bttsScore": 0.559,
         "signals": [
           "away_edge",
@@ -4808,9 +4735,9 @@
           "1X2": {
             "eligible": false,
             "pick": "AWAY",
-            "score": 0.432,
-            "gap": 0.02899999999999997,
-            "drawScore": 0.164,
+            "score": 0.438,
+            "gap": 0.04199999999999998,
+            "drawScore": 0.167,
             "reasons": [
               "best_below_0.68",
               "gap_below_0.10"
@@ -4819,14 +4746,14 @@
           "Over / Under 1.5": {
             "eligible": true,
             "pick": "Over 1.5",
-            "score": 0.732,
+            "score": 0.74,
             "reasons": []
           },
           "Over / Under 2.5": {
             "eligible": false,
             "pick": "Over 2.5",
-            "score": 0.619,
-            "expectedTotalGoals": 3.011,
+            "score": 0.623,
+            "expectedTotalGoals": 3.058,
             "reasons": [
               "score_below_0.65"
             ]
@@ -4834,7 +4761,7 @@
           "Over / Under 3.5": {
             "eligible": false,
             "pick": "Over 3.5",
-            "score": 0.573,
+            "score": 0.579,
             "reasons": [
               "score_below_0.74",
               "missing_strong_goal_support"
