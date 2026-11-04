@@ -1,25 +1,25 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-11-04",
-  "generatedAt": "2026-11-04T21:13:59.122Z",
-  "severity": "error",
+  "generatedAt": "2026-11-04T21:46:28.832Z",
+  "severity": "warning",
   "issueCounts": {
-    "error": 2,
-    "warning": 7,
+    "error": 0,
+    "warning": 8,
     "info": 11
   },
   "alert": true,
   "alertCounts": {
-    "error": 2,
-    "warning": 0,
+    "error": 0,
+    "warning": 2,
     "info": 0
   },
-  "activeIssueCount": 20,
-  "actionableIssueCount": 9,
+  "activeIssueCount": 19,
+  "actionableIssueCount": 8,
   "newIssueCount": 2,
   "newActionableIssueCount": 2,
-  "resolvedIssueCount": 1,
-  "persistentIssueCount": 18,
+  "resolvedIssueCount": 3,
+  "persistentIssueCount": 17,
   "activeIssues": [
     {
       "severity": "info",
@@ -50,17 +50,19 @@
           "currentAthensDay": "2026-11-04",
           "fixtureCount": 77,
           "frozenHash": "e2e221f5c1e097125a781cfb9b3114b46e0d18e770abbabfecb0a040be3375a3",
-          "currentHash": "e2e221f5c1e097125a781cfb9b3114b46e0d18e770abbabfecb0a040be3375a3",
+          "currentHash": "6e5b156a48ee40e22eeff20d122f981c684eb05eef783d2877c465cf8bfa3534",
           "strictFrozenParity": true,
-          "membershipParity": true,
-          "descriptorDrift": false,
-          "publicationMembershipPreserved": false,
-          "authorizedShrink": false,
-          "removedFixtureIds": [],
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": true,
+          "removedFixtureIds": [
+            "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261104"
+          ],
           "deferredCurrentFixtureIds": [],
           "publishedOutsideFrozenFixtureIds": [],
           "resolvedFrozenAliasMappings": [],
-          "removalEvidenceSource": "exact_current_frozen_membership"
+          "removalEvidenceSource": "persisted_authoritative_prune_ledger"
         },
         "skipped": "artifact_missing_or_no_timestamp"
       }
@@ -81,17 +83,19 @@
           "currentAthensDay": "2026-11-04",
           "fixtureCount": 77,
           "frozenHash": "e2e221f5c1e097125a781cfb9b3114b46e0d18e770abbabfecb0a040be3375a3",
-          "currentHash": "e2e221f5c1e097125a781cfb9b3114b46e0d18e770abbabfecb0a040be3375a3",
+          "currentHash": "6e5b156a48ee40e22eeff20d122f981c684eb05eef783d2877c465cf8bfa3534",
           "strictFrozenParity": true,
-          "membershipParity": true,
-          "descriptorDrift": false,
-          "publicationMembershipPreserved": false,
-          "authorizedShrink": false,
-          "removedFixtureIds": [],
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": true,
+          "removedFixtureIds": [
+            "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261104"
+          ],
           "deferredCurrentFixtureIds": [],
           "publishedOutsideFrozenFixtureIds": [],
           "resolvedFrozenAliasMappings": [],
-          "removalEvidenceSource": "exact_current_frozen_membership"
+          "removalEvidenceSource": "persisted_authoritative_prune_ledger"
         },
         "skipped": "artifact_missing_or_no_timestamp"
       }
@@ -215,44 +219,12 @@
       }
     },
     {
-      "severity": "error",
-      "source": "live-status-completeness",
-      "type": "stale_open_exact_provider_ids",
-      "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
-      "details": {
-        "raw": "live_status_stale_open_exact_provider_ids:cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261104",
-        "canonicalIds": [
-          "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261104"
-        ],
-        "count": 1,
-        "staleAfterHours": 4,
-        "exactProviderIdOnly": true,
-        "heuristicFinalPromotion": false,
-        "fixtures": [
-          {
-            "canonicalId": "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261104",
-            "providerId": "401933098",
-            "source": "espn",
-            "leagueSlug": "fra.coupe_de_france",
-            "providerLeagueSlug": "fra.coupe_de_france",
-            "kickoffUtc": "2026-11-04T17:00Z",
-            "ageHours": 4.057,
-            "status": "PRE",
-            "rawStatus": "STATUS_SCHEDULED",
-            "statusType": null,
-            "operationalState": null,
-            "classification": "stale_open_exact_provider_id"
-          }
-        ]
-      }
-    },
-    {
       "severity": "warning",
       "source": "build-report",
       "type": "build_warning",
-      "message": "canonical_leagues_missing_from_published:mex.2",
+      "message": "canonical_leagues_missing_from_published:fra.coupe_de_france,mex.2",
       "details": {
-        "raw": "canonical_leagues_missing_from_published:mex.2"
+        "raw": "canonical_leagues_missing_from_published:fra.coupe_de_france,mex.2"
       }
     },
     {
@@ -273,13 +245,14 @@
       }
     },
     {
-      "severity": "error",
+      "severity": "warning",
       "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
       "details": {
-        "clean": false,
-        "cleanStrict": false
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     },
     {
@@ -1202,44 +1175,12 @@
       }
     },
     {
-      "severity": "error",
-      "source": "live-status-completeness",
-      "type": "stale_open_exact_provider_ids",
-      "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
-      "details": {
-        "raw": "live_status_stale_open_exact_provider_ids:cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261104",
-        "canonicalIds": [
-          "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261104"
-        ],
-        "count": 1,
-        "staleAfterHours": 4,
-        "exactProviderIdOnly": true,
-        "heuristicFinalPromotion": false,
-        "fixtures": [
-          {
-            "canonicalId": "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261104",
-            "providerId": "401933098",
-            "source": "espn",
-            "leagueSlug": "fra.coupe_de_france",
-            "providerLeagueSlug": "fra.coupe_de_france",
-            "kickoffUtc": "2026-11-04T17:00Z",
-            "ageHours": 4.057,
-            "status": "PRE",
-            "rawStatus": "STATUS_SCHEDULED",
-            "statusType": null,
-            "operationalState": null,
-            "classification": "stale_open_exact_provider_id"
-          }
-        ]
-      }
-    },
-    {
       "severity": "warning",
       "source": "build-report",
       "type": "build_warning",
-      "message": "canonical_leagues_missing_from_published:mex.2",
+      "message": "canonical_leagues_missing_from_published:fra.coupe_de_france,mex.2",
       "details": {
-        "raw": "canonical_leagues_missing_from_published:mex.2"
+        "raw": "canonical_leagues_missing_from_published:fra.coupe_de_france,mex.2"
       }
     },
     {
@@ -1260,13 +1201,14 @@
       }
     },
     {
-      "severity": "error",
+      "severity": "warning",
       "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
       "details": {
-        "clean": false,
-        "cleanStrict": false
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     },
     {
@@ -1910,93 +1852,14 @@
   ],
   "newIssues": [
     {
-      "severity": "error",
-      "source": "live-status-completeness",
-      "type": "stale_open_exact_provider_ids",
-      "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:fra.coupe_de_france,mex.2",
       "details": {
-        "raw": "live_status_stale_open_exact_provider_ids:cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261104",
-        "canonicalIds": [
-          "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261104"
-        ],
-        "count": 1,
-        "staleAfterHours": 4,
-        "exactProviderIdOnly": true,
-        "heuristicFinalPromotion": false,
-        "fixtures": [
-          {
-            "canonicalId": "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261104",
-            "providerId": "401933098",
-            "source": "espn",
-            "leagueSlug": "fra.coupe_de_france",
-            "providerLeagueSlug": "fra.coupe_de_france",
-            "kickoffUtc": "2026-11-04T17:00Z",
-            "ageHours": 4.057,
-            "status": "PRE",
-            "rawStatus": "STATUS_SCHEDULED",
-            "statusType": null,
-            "operationalState": null,
-            "classification": "stale_open_exact_provider_id"
-          }
-        ]
+        "raw": "canonical_leagues_missing_from_published:fra.coupe_de_france,mex.2"
       }
     },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
-      "details": {
-        "clean": false,
-        "cleanStrict": false
-      }
-    }
-  ],
-  "newActionableIssues": [
-    {
-      "severity": "error",
-      "source": "live-status-completeness",
-      "type": "stale_open_exact_provider_ids",
-      "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
-      "details": {
-        "raw": "live_status_stale_open_exact_provider_ids:cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261104",
-        "canonicalIds": [
-          "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261104"
-        ],
-        "count": 1,
-        "staleAfterHours": 4,
-        "exactProviderIdOnly": true,
-        "heuristicFinalPromotion": false,
-        "fixtures": [
-          {
-            "canonicalId": "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261104",
-            "providerId": "401933098",
-            "source": "espn",
-            "leagueSlug": "fra.coupe_de_france",
-            "providerLeagueSlug": "fra.coupe_de_france",
-            "kickoffUtc": "2026-11-04T17:00Z",
-            "ageHours": 4.057,
-            "status": "PRE",
-            "rawStatus": "STATUS_SCHEDULED",
-            "statusType": null,
-            "operationalState": null,
-            "classification": "stale_open_exact_provider_id"
-          }
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
-      "details": {
-        "clean": false,
-        "cleanStrict": false
-      }
-    }
-  ],
-  "resolvedIssues": [
     {
       "severity": "warning",
       "source": "build-report",
@@ -2006,6 +1869,81 @@
         "clean": true,
         "cleanStrict": false,
         "contextOnlyWarnings": false
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:fra.coupe_de_france,mex.2",
+      "details": {
+        "raw": "canonical_leagues_missing_from_published:fra.coupe_de_france,mex.2"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "error",
+      "source": "live-status-completeness",
+      "type": "stale_open_exact_provider_ids",
+      "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
+      "details": {
+        "raw": "live_status_stale_open_exact_provider_ids:cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261104",
+        "canonicalIds": [
+          "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261104"
+        ],
+        "count": 1,
+        "staleAfterHours": 4,
+        "exactProviderIdOnly": true,
+        "heuristicFinalPromotion": false,
+        "fixtures": [
+          {
+            "canonicalId": "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261104",
+            "providerId": "401933098",
+            "source": "espn",
+            "leagueSlug": "fra.coupe_de_france",
+            "providerLeagueSlug": "fra.coupe_de_france",
+            "kickoffUtc": "2026-11-04T17:00Z",
+            "ageHours": 4.057,
+            "status": "PRE",
+            "rawStatus": "STATUS_SCHEDULED",
+            "statusType": null,
+            "operationalState": null,
+            "classification": "stale_open_exact_provider_id"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:mex.2",
+      "details": {
+        "raw": "canonical_leagues_missing_from_published:mex.2"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
       }
     }
   ],
@@ -2039,17 +1977,19 @@
           "currentAthensDay": "2026-11-04",
           "fixtureCount": 77,
           "frozenHash": "e2e221f5c1e097125a781cfb9b3114b46e0d18e770abbabfecb0a040be3375a3",
-          "currentHash": "e2e221f5c1e097125a781cfb9b3114b46e0d18e770abbabfecb0a040be3375a3",
+          "currentHash": "6e5b156a48ee40e22eeff20d122f981c684eb05eef783d2877c465cf8bfa3534",
           "strictFrozenParity": true,
-          "membershipParity": true,
-          "descriptorDrift": false,
-          "publicationMembershipPreserved": false,
-          "authorizedShrink": false,
-          "removedFixtureIds": [],
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": true,
+          "removedFixtureIds": [
+            "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261104"
+          ],
           "deferredCurrentFixtureIds": [],
           "publishedOutsideFrozenFixtureIds": [],
           "resolvedFrozenAliasMappings": [],
-          "removalEvidenceSource": "exact_current_frozen_membership"
+          "removalEvidenceSource": "persisted_authoritative_prune_ledger"
         },
         "skipped": "artifact_missing_or_no_timestamp"
       }
@@ -2070,17 +2010,19 @@
           "currentAthensDay": "2026-11-04",
           "fixtureCount": 77,
           "frozenHash": "e2e221f5c1e097125a781cfb9b3114b46e0d18e770abbabfecb0a040be3375a3",
-          "currentHash": "e2e221f5c1e097125a781cfb9b3114b46e0d18e770abbabfecb0a040be3375a3",
+          "currentHash": "6e5b156a48ee40e22eeff20d122f981c684eb05eef783d2877c465cf8bfa3534",
           "strictFrozenParity": true,
-          "membershipParity": true,
-          "descriptorDrift": false,
-          "publicationMembershipPreserved": false,
-          "authorizedShrink": false,
-          "removedFixtureIds": [],
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": true,
+          "removedFixtureIds": [
+            "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261104"
+          ],
           "deferredCurrentFixtureIds": [],
           "publishedOutsideFrozenFixtureIds": [],
           "resolvedFrozenAliasMappings": [],
-          "removalEvidenceSource": "exact_current_frozen_membership"
+          "removalEvidenceSource": "persisted_authoritative_prune_ledger"
         },
         "skipped": "artifact_missing_or_no_timestamp"
       }
@@ -2201,15 +2143,6 @@
         "reason": "score_consistent_alias_mirror_conflicts_present",
         "count": 47,
         "informational": true
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_warning",
-      "message": "canonical_leagues_missing_from_published:mex.2",
-      "details": {
-        "raw": "canonical_leagues_missing_from_published:mex.2"
       }
     },
     {
