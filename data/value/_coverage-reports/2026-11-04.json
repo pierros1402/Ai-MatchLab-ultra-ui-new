@@ -2,8 +2,8 @@
   "ok": true,
   "dayKey": "2026-11-04",
   "season": "2026-2027",
-  "generatedAt": "2026-11-04T20:31:24.235Z",
-  "startedAt": "2026-11-04T20:29:25.660Z",
+  "generatedAt": "2026-11-04T21:13:52.545Z",
+  "startedAt": "2026-11-04T21:11:32.729Z",
   "source": {
     "inputSource": "canonical_fixtures",
     "canonicalMatches": 77,
@@ -21,18 +21,18 @@
     "totalRows": 76,
     "detailsFound": 76,
     "intelligenceOk": 76,
-    "valueReturned": 22,
-    "valueNull": 54,
+    "valueReturned": 20,
+    "valueNull": 56,
     "valueFailed": 0,
-    "minimumRecentSampleNull": 54
+    "minimumRecentSampleNull": 56
   },
   "breakdown": {
     "nullByReason": {
-      "minimum_recent_sample": 54
+      "minimum_recent_sample": 56
     },
     "nullByClass": {
-      "low_recent_sample_prior_backed": 37,
-      "low_recent_sample": 9,
+      "low_recent_sample_prior_backed": 38,
+      "low_recent_sample": 10,
       "missing_team_history_and_prior": 6,
       "missing_both_team_history_and_priors": 2
     },
@@ -45,17 +45,18 @@
       "afc.champions": 2,
       "bel.2": 2,
       "bra.1": 2,
+      "col.2": 2,
       "kos.2": 2,
       "ltu.2": 2,
       "aze.2": 1,
       "bel.1": 1,
       "blr.2": 1,
-      "col.2": 1,
       "crc.1": 1,
       "cze.1": 1,
       "eng.2": 1,
       "eng.3": 1,
       "fra.coupe_de_france": 1,
+      "hon.1": 1,
       "hun.2": 1,
       "mar.1": 1,
       "per.1": 1,
@@ -66,11 +67,10 @@
     "returnedByLeague": {
       "uefa.champions": 6,
       "kos.2": 5,
-      "col.2": 2,
       "eng.2": 2,
       "uga.1": 2,
       "col.1": 1,
-      "hon.1": 1,
+      "col.2": 1,
       "kos.1": 1,
       "par.1": 1,
       "ven.1": 1
@@ -166,7 +166,7 @@
       "leagueSlug": "afc.cup",
       "homeTeam": "Al-Muharraq SC",
       "awayTeam": "Al Jazira Club",
-      "status": "SECOND_HALF",
+      "status": "FT",
       "kickoffUtc": "2026-11-04T18:15Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -250,7 +250,7 @@
       "leagueSlug": "afc.cup",
       "homeTeam": "Al Taawoun",
       "awayTeam": "Al-Faisaly SC",
-      "status": "SECOND_HALF",
+      "status": "FT",
       "kickoffUtc": "2026-11-04T18:15Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -544,7 +544,7 @@
       "leagueSlug": "bel.1",
       "homeTeam": "KV Kortrijk",
       "awayTeam": "KV Mechelen",
-      "status": "FIRST_HALF",
+      "status": "SECOND_HALF",
       "kickoffUtc": "2026-11-04T19:30Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -932,16 +932,18 @@
       "nullClass": null,
       "minimumSample": null,
       "valuePreview": {
-        "confidence": 0.92,
-        "homeWinScore": 0.529,
+        "confidence": 0.834,
+        "homeWinScore": 0.471,
         "drawScore": 0.132,
-        "awayWinScore": 0.339,
-        "over15Score": 0.625,
-        "over25Score": 0.484,
-        "bttsScore": 0.45,
+        "awayWinScore": 0.398,
+        "over15Score": 0.587,
+        "over25Score": 0.45099999999999996,
+        "bttsScore": 0.42,
         "signals": [
-          "home_edge",
           "away_edge",
+          "home_form_decay",
+          "away_form_decay",
+          "form_influence_reduced",
           "priors_applied",
           "close_strength_gap"
         ],
@@ -949,17 +951,19 @@
           "1X2": {
             "eligible": false,
             "pick": "HOME",
-            "score": 0.529,
-            "gap": 0.19,
+            "score": 0.471,
+            "gap": 0.07299999999999995,
             "drawScore": 0.132,
             "reasons": [
-              "best_below_0.68"
+              "best_below_0.68",
+              "gap_below_0.10",
+              "side_negative_form"
             ]
           },
           "Over / Under 1.5": {
             "eligible": false,
             "pick": "Over 1.5",
-            "score": 0.625,
+            "score": 0.587,
             "reasons": [
               "score_below_0.70"
             ]
@@ -967,8 +971,8 @@
           "Over / Under 2.5": {
             "eligible": false,
             "pick": "Over 2.5",
-            "score": 0.484,
-            "expectedTotalGoals": 2.198,
+            "score": 0.45099999999999996,
+            "expectedTotalGoals": 2.313,
             "reasons": [
               "score_below_0.65",
               "expected_goals_below_2.75",
@@ -978,7 +982,7 @@
           "Over / Under 3.5": {
             "eligible": false,
             "pick": "Over 3.5",
-            "score": 0.465,
+            "score": 0.437,
             "reasons": [
               "score_below_0.74",
               "missing_strong_goal_support"
@@ -987,7 +991,7 @@
           "BTTS": {
             "eligible": false,
             "pick": "BTTS YES",
-            "score": 0.45,
+            "score": 0.42,
             "reasons": [
               "score_below_0.68",
               "missing_btts_support"
@@ -1006,74 +1010,37 @@
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.92,
-        "homeWinScore": 0.3,
-        "drawScore": 0.145,
-        "awayWinScore": 0.555,
-        "over15Score": 0.582,
-        "over25Score": 0.45099999999999996,
-        "bttsScore": 0.428,
-        "signals": [
-          "away_edge",
-          "priors_applied",
-          "close_strength_gap"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "AWAY",
-            "score": 0.555,
-            "gap": 0.25500000000000006,
-            "drawScore": 0.145,
-            "reasons": [
-              "best_below_0.68"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": false,
-            "pick": "Over 1.5",
-            "score": 0.582,
-            "reasons": [
-              "score_below_0.70"
-            ]
-          },
-          "Over / Under 2.5": {
-            "eligible": false,
-            "pick": "Over 2.5",
-            "score": 0.45099999999999996,
-            "expectedTotalGoals": 2.067,
-            "reasons": [
-              "score_below_0.65",
-              "expected_goals_below_2.75",
-              "missing_goal_support"
-            ]
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.431,
-            "reasons": [
-              "score_below_0.74",
-              "missing_strong_goal_support"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.428,
-            "reasons": [
-              "score_below_0.68",
-              "missing_btts_support"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample_prior_backed",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Tigres FC",
+        "awayTeam": "Deportes Quindío",
+        "leagueSlug": "col.2",
+        "fixtureDate": "2026-11-04T21:00:00.000Z",
+        "homeResolvedKey": "Tigres FC",
+        "awayResolvedKey": "Deportes Quindío",
+        "homeRawSample": 4,
+        "awayRawSample": 2,
+        "homeBlendedSample": 7,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 2,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 5,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": 164,
+        "awayPriorSample": 161,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_crc1_sportingsanjose_perezzeledon_20261104",
@@ -1164,7 +1131,7 @@
       "leagueSlug": "eng.2",
       "homeTeam": "Bristol City",
       "awayTeam": "Wolverhampton Wanderers",
-      "status": "FIRST_HALF",
+      "status": "HALF_TIME",
       "kickoffUtc": "2026-11-04T20:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -1242,7 +1209,7 @@
       "leagueSlug": "eng.2",
       "homeTeam": "Cardiff City",
       "awayTeam": "West Ham United",
-      "status": "FIRST_HALF",
+      "status": "SECOND_HALF",
       "kickoffUtc": "2026-11-04T19:45Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -1284,7 +1251,7 @@
       "leagueSlug": "eng.2",
       "homeTeam": "Wrexham",
       "awayTeam": "Middlesbrough",
-      "status": "FIRST_HALF",
+      "status": "SECOND_HALF",
       "kickoffUtc": "2026-11-04T19:45Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -1362,7 +1329,7 @@
       "leagueSlug": "eng.3",
       "homeTeam": "Oxford United",
       "awayTeam": "Reading",
-      "status": "FIRST_HALF",
+      "status": "SECOND_HALF",
       "kickoffUtc": "2026-11-04T19:45Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -1703,71 +1670,37 @@
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.635,
-        "homeWinScore": 0.365,
-        "drawScore": 0.128,
-        "awayWinScore": 0.507,
-        "over15Score": 0.846,
-        "over25Score": 0.708,
-        "bttsScore": 0.632,
-        "signals": [
-          "away_edge",
-          "over25_support",
-          "btts_support",
-          "mutual_attack_profile",
-          "close_strength_gap",
-          "away_rest_4"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "AWAY",
-            "score": 0.507,
-            "gap": 0.14200000000000002,
-            "drawScore": 0.128,
-            "reasons": [
-              "best_below_0.68"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": false,
-            "pick": "Over 1.5",
-            "score": 0.846,
-            "reasons": [
-              "suppressed_by_over25"
-            ]
-          },
-          "Over / Under 2.5": {
-            "eligible": true,
-            "pick": "Over 2.5",
-            "score": 0.708,
-            "expectedTotalGoals": 3.833,
-            "reasons": []
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.708,
-            "reasons": [
-              "score_below_0.74"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.632,
-            "reasons": [
-              "score_below_0.68"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Olancho FC",
+        "awayTeam": "UPNFM",
+        "leagueSlug": "hon.1",
+        "fixtureDate": "2026-11-04T21:00:00.000Z",
+        "homeResolvedKey": "Olancho FC",
+        "awayResolvedKey": "UPNFM",
+        "homeRawSample": 1,
+        "awayRawSample": 1,
+        "homeBlendedSample": 1,
+        "awayBlendedSample": 1,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 0,
+        "awaySideBlendedSample": 0,
+        "homePriorSample": null,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_hun2_szeged_bvsczuglo_20261104",
@@ -3302,7 +3235,7 @@
       "leagueSlug": "uefa.champions",
       "homeTeam": "Lens",
       "awayTeam": "Como",
-      "status": "FIRST_HALF",
+      "status": "LIVE",
       "kickoffUtc": "2026-11-04T20:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -3380,7 +3313,7 @@
       "leagueSlug": "uefa.champions",
       "homeTeam": "FC Porto",
       "awayTeam": "Napoli",
-      "status": "FIRST_HALF",
+      "status": "HALF_TIME",
       "kickoffUtc": "2026-11-04T20:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -3537,7 +3470,7 @@
       "leagueSlug": "uefa.champions",
       "homeTeam": "RB Leipzig",
       "awayTeam": "Manchester City",
-      "status": "FIRST_HALF",
+      "status": "HALF_TIME",
       "kickoffUtc": "2026-11-04T20:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -3615,7 +3548,7 @@
       "leagueSlug": "uefa.champions",
       "homeTeam": "Slavia Prague",
       "awayTeam": "Arsenal",
-      "status": "FIRST_HALF",
+      "status": "HALF_TIME",
       "kickoffUtc": "2026-11-04T20:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -3690,7 +3623,7 @@
       "leagueSlug": "uefa.champions",
       "homeTeam": "Viking FK",
       "awayTeam": "Sabah FK",
-      "status": "FIRST_HALF",
+      "status": "HALF_TIME",
       "kickoffUtc": "2026-11-04T20:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
