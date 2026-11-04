@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-04",
-  "generatedAt": "2026-11-04T19:05:09.779Z",
+  "generatedAt": "2026-11-04T19:46:39.530Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "c220357bd7ee422c128ba3ac2881b824a49850cdcc7baadb4c3d673dc436b779",
+  "truthFingerprint": "19e163fd0fd2eee6a86515bd3e5629f9d206f4a1149af8c8858d89b676760594",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 77,
-    "playedTerminal": 37,
+    "playedTerminal": 38,
     "nonPlayedTerminal": 14,
-    "scheduled": 22,
+    "scheduled": 21,
     "live": 4,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 37,
-    "acceptedVerifiedFinalArtifacts": 37,
-    "convergedPlayedFinal": 37,
+    "verifiedFinalArtifacts": 38,
+    "acceptedVerifiedFinalArtifacts": 38,
+    "convergedPlayedFinal": 38,
     "convergedNonPlayedTerminal": 14,
     "pendingVerifiedFinal": 0,
-    "openRows": 26,
+    "openRows": 25,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 37,
-    "scoredSettlementEligible": 37,
+    "historyEligible": 38,
+    "scoredSettlementEligible": 38,
     "voidSettlementEligible": 14
   },
   "fixtures": [
@@ -147,9 +147,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -245,10 +245,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 2,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -1124,31 +1124,31 @@
       "homeTeam": "Artis Brno",
       "awayTeam": "Bohemians",
       "kickoffUtc": "2026-11-04T17:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-04",
+        "scoreHome": 1,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3087,11 +3087,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 1,
-        "scoreAway": 1
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 2,
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -3185,11 +3185,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 1,
-        "scoreAway": 1
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 2,
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -4013,7 +4013,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 19792,
+            "count": 19830,
             "informational": true
           }
         },
@@ -7645,13 +7645,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "c220357bd7ee422c128ba3ac2881b824a49850cdcc7baadb4c3d673dc436b779",
+      "truthFingerprint": "19e163fd0fd2eee6a86515bd3e5629f9d206f4a1149af8c8858d89b676760594",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 37,
+        "expectedEligibleRows": 38,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_afcchampions_buriramunited_kashimaantlers_20261104",
@@ -7668,6 +7668,7 @@
           "cid_col1_deportivopasto_jaguarescordoba_20261104",
           "cid_col2_cartagena_quindio_20261104",
           "cid_crc1_sportingsanjose_perezzeledon_20261104",
+          "cid_cze1_artisbrno_bohemians_20261104",
           "cid_hun2_szeged_bvsczuglo_20261104",
           "cid_kos1_drita_prishtina_20261104",
           "cid_kos2_besapeja_prishtinare_20261104",
@@ -7750,7 +7751,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-11-04",
-      "fileCount": 37,
+      "fileCount": 38,
       "authority": "scored_final_evidence"
     },
     "downstream": {
