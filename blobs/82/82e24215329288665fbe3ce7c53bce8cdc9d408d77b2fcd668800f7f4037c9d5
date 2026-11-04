@@ -1,0 +1,209 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "uefa.europa",
+  "homeTeam": "Stade Rennais",
+  "awayTeam": "Olympiacos",
+  "homeWinScore": 0.45,
+  "drawScore": 0.164,
+  "awayWinScore": 0.385,
+  "over15Score": 0.835,
+  "over25Score": 0.693,
+  "over35Score": 0.648,
+  "bttsScore": 0.548,
+  "confidence": 0.855,
+  "signals": [
+    "home_edge",
+    "over25_support",
+    "mutual_attack_profile",
+    "priors_applied",
+    "close_strength_gap",
+    "home_rest_4",
+    "away_rest_3"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.5,
+      "awayOverallFormWeight": 0.5,
+      "homeSideFormWeight": 0.13,
+      "awaySideFormWeight": 0.17
+    },
+    "expectedHomeGoals": 1.627,
+    "expectedAwayGoals": 1.49,
+    "expectedTotalGoals": 3.116,
+    "homeStrength": 0.595,
+    "awayStrength": 0.529,
+    "homeEdge": 0.633,
+    "awayPenalty": 0.426,
+    "recency": {
+      "homeOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 16,
+        "daysSinceLastMatch": 4,
+        "spanDays": 14,
+        "maxInternalGap": 5,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 1,
+        "formContinuityWeight": 1
+      },
+      "awayOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 30,
+        "daysSinceLastMatch": 3,
+        "spanDays": 15,
+        "maxInternalGap": 6,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 1,
+        "formContinuityWeight": 1
+      },
+      "homeSide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 16,
+        "daysSinceLastMatch": 9,
+        "spanDays": 14,
+        "maxInternalGap": 9,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.65,
+        "continuityScore": 1,
+        "formContinuityWeight": 0.757
+      },
+      "awaySide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 30,
+        "daysSinceLastMatch": 3,
+        "spanDays": 15,
+        "maxInternalGap": 13,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.827
+      }
+    },
+    "matchupSample": 0,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 16,
+      "awayPriorSample": 30,
+      "leaguePriorSample": 790,
+      "matchupPriorSample": 0
+    },
+    "resolution": {
+      "homeInput": "Stade Rennais",
+      "awayInput": "Olympiacos",
+      "homeResolvedKey": "Stade Rennais",
+      "awayResolvedKey": "Olympiacos",
+      "homeResolveScore": 0.82,
+      "awayResolveScore": 0.82,
+      "matchupResolvedKey": "Stade Rennais::Olympiacos",
+      "matchupResolveScore": 0,
+      "homePriorKey": "uefa.europa::Stade Rennais",
+      "awayPriorKey": "uefa.europa::Olympiacos",
+      "matchupPriorKey": null
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Stade Rennais",
+      "awayTeamKey": "Olympiacos",
+      "leagueKey": "uefa.europa",
+      "matchupKey": "Stade Rennais::Olympiacos"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": false,
+    "contextDelta": 0,
+    "contextReasons": [],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    }
+  },
+  "contextAdjusted": false,
+  "contextReasons": [],
+  "contextDelta": 0,
+  "band": {
+    "over15": "HIGH",
+    "over25": "MEDIUM",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0.009,
+      "awayDelta": 0,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0.025,
+      "awayPenalty": 0.05,
+      "reasons": [
+        "home_rest_4",
+        "away_rest_3"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "uefa.europa",
+    "competitionType": "continental",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 4,
+    "awayRestDays": 3,
+    "homeMatchesLast7": 1,
+    "awayMatchesLast7": 1,
+    "homeMatchesLast14": 1,
+    "awayMatchesLast14": 1,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
