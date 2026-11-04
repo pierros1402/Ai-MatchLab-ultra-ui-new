@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-04",
-  "generatedAt": "2026-11-04T03:43:32.258Z",
+  "generatedAt": "2026-11-04T04:25:42.494Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "dce1d5ebd0b6bb2f41289e1170e681202d2dbba17a85e0461cfb29f7d2e0f348",
+  "truthFingerprint": "4816bf441d0f580602cb6028f4c2e24999c23f88d754768a4c076fce5c7f9a47",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,27 +17,27 @@
   },
   "summary": {
     "canonicalRows": 77,
-    "playedTerminal": 7,
-    "nonPlayedTerminal": 8,
-    "scheduled": 62,
+    "playedTerminal": 8,
+    "nonPlayedTerminal": 14,
+    "scheduled": 55,
     "live": 0,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 7,
-    "acceptedVerifiedFinalArtifacts": 7,
-    "convergedPlayedFinal": 7,
-    "convergedNonPlayedTerminal": 8,
+    "verifiedFinalArtifacts": 8,
+    "acceptedVerifiedFinalArtifacts": 8,
+    "convergedPlayedFinal": 8,
+    "convergedNonPlayedTerminal": 14,
     "pendingVerifiedFinal": 0,
-    "openRows": 62,
+    "openRows": 55,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 7,
-    "scoredSettlementEligible": 7,
-    "voidSettlementEligible": 8
+    "historyEligible": 8,
+    "scoredSettlementEligible": 8,
+    "voidSettlementEligible": 14
   },
   "fixtures": [
     {
@@ -928,31 +928,31 @@
       "homeTeam": "Cartagena",
       "awayTeam": "Deportes Quindío",
       "kickoffUtc": "2026-11-04T01:30:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 3
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-04",
+        "scoreHome": 2,
+        "scoreAway": 3,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1369,12 +1369,12 @@
       "homeTeam": "Amorebieta",
       "awayTeam": "UD Logroñés",
       "kickoffUtc": "2026-11-04T19:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PRE_KICKOFF_NON_PLAYED",
+      "operationalState": "NON_PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "SPECIAL",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
+        "rawStatus": "STATUS_POSTPONED",
         "scoreHome": null,
         "scoreAway": null
       },
@@ -1389,12 +1389,12 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "CONVERGED_NON_PLAYED_TERMINAL",
+        "reason": "explicit_nonplayed_terminal",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
-        "voidSettlementEligible": false,
+        "voidSettlementEligible": true,
         "repairAuthorized": false
       },
       "downstream": {
@@ -1467,12 +1467,12 @@
       "homeTeam": "Calvo Sotelo",
       "awayTeam": "Albacete",
       "kickoffUtc": "2026-11-04T19:45Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PRE_KICKOFF_NON_PLAYED",
+      "operationalState": "NON_PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "SPECIAL",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
+        "rawStatus": "STATUS_POSTPONED",
         "scoreHome": null,
         "scoreAway": null
       },
@@ -1487,12 +1487,12 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "CONVERGED_NON_PLAYED_TERMINAL",
+        "reason": "explicit_nonplayed_terminal",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
-        "voidSettlementEligible": false,
+        "voidSettlementEligible": true,
         "repairAuthorized": false
       },
       "downstream": {
@@ -1516,12 +1516,12 @@
       "homeTeam": "CD Minera",
       "awayTeam": "FC Cartagena",
       "kickoffUtc": "2026-11-04T19:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PRE_KICKOFF_NON_PLAYED",
+      "operationalState": "NON_PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "SPECIAL",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
+        "rawStatus": "STATUS_POSTPONED",
         "scoreHome": null,
         "scoreAway": null
       },
@@ -1536,12 +1536,12 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "CONVERGED_NON_PLAYED_TERMINAL",
+        "reason": "explicit_nonplayed_terminal",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
-        "voidSettlementEligible": false,
+        "voidSettlementEligible": true,
         "repairAuthorized": false
       },
       "downstream": {
@@ -1565,12 +1565,12 @@
       "homeTeam": "Portugalete",
       "awayTeam": "Real Unión Irun",
       "kickoffUtc": "2026-11-04T18:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PRE_KICKOFF_NON_PLAYED",
+      "operationalState": "NON_PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "SPECIAL",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
+        "rawStatus": "STATUS_POSTPONED",
         "scoreHome": null,
         "scoreAway": null
       },
@@ -1585,12 +1585,12 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "CONVERGED_NON_PLAYED_TERMINAL",
+        "reason": "explicit_nonplayed_terminal",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
-        "voidSettlementEligible": false,
+        "voidSettlementEligible": true,
         "repairAuthorized": false
       },
       "downstream": {
@@ -1614,12 +1614,12 @@
       "homeTeam": "Reus FC Reddis",
       "awayTeam": "Barakaldo",
       "kickoffUtc": "2026-11-04T19:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PRE_KICKOFF_NON_PLAYED",
+      "operationalState": "NON_PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "SPECIAL",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
+        "rawStatus": "STATUS_POSTPONED",
         "scoreHome": null,
         "scoreAway": null
       },
@@ -1634,12 +1634,12 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "CONVERGED_NON_PLAYED_TERMINAL",
+        "reason": "explicit_nonplayed_terminal",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
-        "voidSettlementEligible": false,
+        "voidSettlementEligible": true,
         "repairAuthorized": false
       },
       "downstream": {
@@ -1663,12 +1663,12 @@
       "homeTeam": "Utebo",
       "awayTeam": "CD Sabadell",
       "kickoffUtc": "2026-11-04T19:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PRE_KICKOFF_NON_PLAYED",
+      "operationalState": "NON_PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "SPECIAL",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
+        "rawStatus": "STATUS_POSTPONED",
         "scoreHome": null,
         "scoreAway": null
       },
@@ -1683,12 +1683,12 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "CONVERGED_NON_PLAYED_TERMINAL",
+        "reason": "explicit_nonplayed_terminal",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
-        "voidSettlementEligible": false,
+        "voidSettlementEligible": true,
         "repairAuthorized": false
       },
       "downstream": {
@@ -7645,18 +7645,19 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "dce1d5ebd0b6bb2f41289e1170e681202d2dbba17a85e0461cfb29f7d2e0f348",
+      "truthFingerprint": "4816bf441d0f580602cb6028f4c2e24999c23f88d754768a4c076fce5c7f9a47",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 7,
+        "expectedEligibleRows": 8,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_bra1_chapecoense_mirassol_20261104",
           "cid_bra1_internacional_coritiba_20261104",
           "cid_col1_deportivopasto_jaguarescordoba_20261104",
+          "cid_col2_cartagena_quindio_20261104",
           "cid_crc1_sportingsanjose_perezzeledon_20261104",
           "cid_par1_nacionalasuncion_sportivosanlorenzo_20261104",
           "cid_per1_alianzalima_ciencianodelcusco_20261104",
@@ -7720,7 +7721,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-11-04",
-      "fileCount": 7,
+      "fileCount": 8,
       "authority": "scored_final_evidence"
     },
     "downstream": {
