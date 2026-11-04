@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-04",
-  "generatedAt": "2026-11-04T14:36:54.552Z",
+  "generatedAt": "2026-11-04T15:13:28.093Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "dee8c56d4cb7253f232af6db0ce5f48fbbba62abf323f11768ba5608c7d2df9d",
+  "truthFingerprint": "814254cb9ee093f684094ab88ca6c109f764989a6e49b78b9d56653c0895576a",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 77,
-    "playedTerminal": 24,
+    "playedTerminal": 25,
     "nonPlayedTerminal": 14,
-    "scheduled": 38,
+    "scheduled": 37,
     "live": 1,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 25,
-    "acceptedVerifiedFinalArtifacts": 25,
-    "convergedPlayedFinal": 24,
+    "verifiedFinalArtifacts": 27,
+    "acceptedVerifiedFinalArtifacts": 27,
+    "convergedPlayedFinal": 25,
     "convergedNonPlayedTerminal": 14,
     "pendingVerifiedFinal": 0,
-    "openRows": 38,
+    "openRows": 36,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 24,
-    "scoredSettlementEligible": 24,
+    "historyEligible": 25,
+    "scoredSettlementEligible": 25,
     "voidSettlementEligible": 14
   },
   "fixtures": [
@@ -2153,14 +2153,14 @@
       "homeTeam": "Rilindja",
       "awayTeam": "Ramiz Sadiku",
       "kickoffUtc": "2026-11-04T12:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 3
       },
       "verifiedFinal": {
         "present": true,
@@ -2170,14 +2170,14 @@
         "dayKey": "2026-11-04",
         "scoreHome": 1,
         "scoreAway": 3,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3584,18 +3584,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-04",
+        "scoreHome": 3,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -3633,18 +3633,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-04",
+        "scoreHome": 3,
+        "scoreAway": 4,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -3818,7 +3818,8 @@
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
     "conflictFixtureIds": [
-      "cid_kos2_rilindja_ramizsadiku_20261104"
+      "cid_uga1_kampalacity_maroons_20261104",
+      "cid_uga1_kataka_ura_20261104"
     ],
     "pendingVerifiedFinalFixtureIds": []
   },
@@ -4015,7 +4016,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 19682,
+            "count": 19690,
             "informational": true
           }
         },
@@ -7647,13 +7648,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "dee8c56d4cb7253f232af6db0ce5f48fbbba62abf323f11768ba5608c7d2df9d",
+      "truthFingerprint": "814254cb9ee093f684094ab88ca6c109f764989a6e49b78b9d56653c0895576a",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 24,
+        "expectedEligibleRows": 25,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_afcchampions_buriramunited_kashimaantlers_20261104",
@@ -7671,6 +7672,7 @@
           "cid_kos2_kflepencikacanik_trepca89_20261104",
           "cid_kos2_kika_vjosa_20261104",
           "cid_kos2_mitrovica_2korriku_20261104",
+          "cid_kos2_rilindja_ramizsadiku_20261104",
           "cid_kos2_suhareka_liria_20261104",
           "cid_ltu2_taurastaurage_minija_20261104",
           "cid_mne2_budva_berane_20261104",
@@ -7739,7 +7741,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-11-04",
-      "fileCount": 25,
+      "fileCount": 27,
       "authority": "scored_final_evidence"
     },
     "downstream": {
