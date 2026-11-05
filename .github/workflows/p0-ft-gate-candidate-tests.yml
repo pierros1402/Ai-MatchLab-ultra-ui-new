@@ -1,0 +1,27 @@
+name: P0 FT publication candidate validation
+
+on:
+  push:
+    branches:
+      - work/p0-ft-publication-gate-20261105
+
+permissions:
+  contents: read
+
+jobs:
+  candidate-ft-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: Check candidate syntax
+        run: |
+          node --check engine-v1/jobs/check-publication-ft.mjs
+          node --check engine-v1/jobs/check-publication-ft.test.mjs
+      - name: Run candidate negative tests
+        run: node --test engine-v1/jobs/check-publication-ft.test.mjs
+      - name: Run existing publication and runtime display regressions
+        run: node --test engine-v1/jobs/verify-daily-publish-contract.test.js engine-v1/core/runtime-display-policy.test.js
