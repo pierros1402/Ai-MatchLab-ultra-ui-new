@@ -2,8 +2,8 @@
   "ok": true,
   "dayKey": "2026-11-05",
   "season": "2026-2027",
-  "generatedAt": "2026-11-05T14:28:21.177Z",
-  "startedAt": "2026-11-05T14:26:12.040Z",
+  "generatedAt": "2026-11-05T15:11:40.928Z",
+  "startedAt": "2026-11-05T15:09:38.984Z",
   "source": {
     "inputSource": "canonical_fixtures",
     "canonicalMatches": 82,
@@ -21,17 +21,17 @@
     "totalRows": 82,
     "detailsFound": 82,
     "intelligenceOk": 82,
-    "valueReturned": 45,
-    "valueNull": 37,
+    "valueReturned": 44,
+    "valueNull": 38,
     "valueFailed": 0,
-    "minimumRecentSampleNull": 37
+    "minimumRecentSampleNull": 38
   },
   "breakdown": {
     "nullByReason": {
-      "minimum_recent_sample": 37
+      "minimum_recent_sample": 38
     },
     "nullByClass": {
-      "low_recent_sample_prior_backed": 15,
+      "low_recent_sample_prior_backed": 16,
       "low_recent_sample": 12,
       "missing_team_history_and_prior": 8,
       "missing_both_team_history_and_priors": 2
@@ -53,6 +53,7 @@
       "ind.2": 1,
       "kos.2": 1,
       "per.1": 1,
+      "rou.2": 1,
       "uefa.europa": 1,
       "uefa.europa.conf": 1,
       "ven.1": 1
@@ -66,8 +67,7 @@
       "bra.1": 1,
       "col.1": 1,
       "crc.1": 1,
-      "hon.1": 1,
-      "rou.2": 1
+      "hon.1": 1
     }
   },
   "rows": [
@@ -76,7 +76,7 @@
       "leagueSlug": "afc.cup",
       "homeTeam": "BG Pathum United",
       "awayTeam": "Tai Po FC",
-      "status": "SECOND_HALF",
+      "status": "FT",
       "kickoffUtc": "2026-11-05T12:15Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -160,7 +160,7 @@
       "leagueSlug": "afc.cup",
       "homeTeam": "Kuching City",
       "awayTeam": "Gangwon FC",
-      "status": "SECOND_HALF",
+      "status": "FT",
       "kickoffUtc": "2026-11-05T12:15Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -286,7 +286,7 @@
       "leagueSlug": "afc.cup",
       "homeTeam": "PKR Svay Rieng",
       "awayTeam": "Tampines Rovers FC",
-      "status": "SECOND_HALF",
+      "status": "FT",
       "kickoffUtc": "2026-11-05T12:15Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -1344,7 +1344,7 @@
       "leagueSlug": "ind.1",
       "homeTeam": "Mohun Bagan Super Giant",
       "awayTeam": "Odisha FC",
-      "status": "PRE",
+      "status": "FIRST_HALF",
       "kickoffUtc": "2026-11-05T14:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -1386,7 +1386,7 @@
       "leagueSlug": "ind.2",
       "homeTeam": "Samaleswari SC",
       "awayTeam": "Dempo Sports Club",
-      "status": "HALF_TIME",
+      "status": "SECOND_HALF",
       "kickoffUtc": "2026-11-05T13:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -1956,71 +1956,37 @@
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.817,
-        "homeWinScore": 0.336,
-        "drawScore": 0.081,
-        "awayWinScore": 0.582,
-        "over15Score": 0.779,
-        "over25Score": 0.656,
-        "bttsScore": 0.513,
-        "signals": [
-          "away_edge",
-          "over25_support",
-          "priors_applied",
-          "close_strength_gap"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "AWAY",
-            "score": 0.582,
-            "gap": 0.24599999999999994,
-            "drawScore": 0.081,
-            "reasons": [
-              "best_below_0.68"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": false,
-            "pick": "Over 1.5",
-            "score": 0.779,
-            "reasons": [
-              "suppressed_by_over25"
-            ]
-          },
-          "Over / Under 2.5": {
-            "eligible": true,
-            "pick": "Over 2.5",
-            "score": 0.656,
-            "expectedTotalGoals": 2.808,
-            "reasons": []
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.598,
-            "reasons": [
-              "score_below_0.74",
-              "missing_strong_goal_support"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.513,
-            "reasons": [
-              "score_below_0.68",
-              "missing_btts_support"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample_prior_backed",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Chindia Targoviste",
+        "awayTeam": "Popesti Leordeni",
+        "leagueSlug": "rou.2",
+        "fixtureDate": "2026-11-05T15:00:00.000Z",
+        "homeResolvedKey": "Chindia Targoviste",
+        "awayResolvedKey": "Popesti Leordeni",
+        "homeRawSample": 2,
+        "awayRawSample": 2,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 2,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 0,
+        "homePriorSample": 84,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_slv1_luisangelfirpo_alianza_20261105",
