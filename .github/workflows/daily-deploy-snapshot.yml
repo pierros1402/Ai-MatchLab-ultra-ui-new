@@ -78,10 +78,11 @@ jobs:
             # prepares TOMORROW while there is enough wall-clock budget to finish
             # the complete release transaction before 00:00 Europe/Athens.
             if [ "$ATHENS_TOTAL_MINUTES" -lt 1020 ] || [ "$ATHENS_TOTAL_MINUTES" -gt 1130 ]; then
-              echo "Skipping scheduled full publication outside 17:00-18:50 Europe/Athens. Athens time: $ATHENS_HOUR:$ATHENS_MINUTE"
-              echo "skipBuild=true" >> "$GITHUB_OUTPUT"
-              echo "SKIP_BUILD=true" >> "$GITHUB_ENV"
-              exit 0
+              # A timed-out/queued scheduled run cannot report successful publication.
+              # Existing watchdog/guard may dispatch recovery; this run grants no write authority.
+              echo "::error::Scheduled Daily missed admission window (17:00-18:50 Athens); no publication was performed by this run. Athens time: $ATHENS_HOUR:$ATHENS_MINUTE"
+              echo "DAILY_PUBLICATION_OUTCOME=MISSED_ADMISSION_WINDOW"
+              exit 1
             fi
 
             DAY_KEY="$(TZ=Europe/Athens date -d 'tomorrow' +%F)"
@@ -1011,6 +1012,11 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/verify-daily-publish-contract.js --date="$DAY_KEY" --prepublish --gate
 
+      # P0: fail closed when canonical terminal truth is not reflected in the release.
+      - name: Verify canonical FT parity before latest promotion
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/check-publication-ft.mjs --day="$DAY_KEY" --root="$GITHUB_WORKSPACE"
+
       - name: Promote deploy snapshot latest after prepublish gates
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/promote-deploy-snapshot-latest-day.js --date="$DAY_KEY"
@@ -1086,6 +1092,18 @@ jobs:
         shell: bash
         run: |
           git restore --staged . || true
+          # Restore Unified Plan staging after the mandatory index reset.
+          # Explicit paths only: immutable observation IDs, public projection and readiness.
+          if [ -d "data/value-unified/${DAY_KEY}/observations" ]; then
+            find "data/value-unified/${DAY_KEY}/observations" -maxdepth 1 -regextype posix-extended -type f -regex '.*/[a-f0-9]{64}[.]json' -exec git add -- {} +
+          fi
+          if [ -f "data/value-unified/${DAY_KEY}/public-plan.json" ]; then
+            git add "data/value-unified/${DAY_KEY}/public-plan.json"
+          fi
+          if [ -f "data/value-data-readiness/${DAY_KEY}.json" ]; then
+            git add "data/value-data-readiness/${DAY_KEY}.json"
+          fi
+
 
           git add data/deploy-snapshots/latest.json
           git add "data/deploy-snapshots/${DAY_KEY}/"
