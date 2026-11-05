@@ -1011,6 +1011,11 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/verify-daily-publish-contract.js --date="$DAY_KEY" --prepublish --gate
 
+      # P0: fail closed when canonical terminal truth is not reflected in the release.
+      - name: Verify canonical FT parity before latest promotion
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/check-publication-ft.mjs --day="$DAY_KEY" --root="$GITHUB_WORKSPACE"
+
       - name: Promote deploy snapshot latest after prepublish gates
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/promote-deploy-snapshot-latest-day.js --date="$DAY_KEY"
