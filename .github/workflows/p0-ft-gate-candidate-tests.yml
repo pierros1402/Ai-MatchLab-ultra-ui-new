@@ -23,3 +23,5 @@ jobs:
           node --check engine-v1/jobs/check-publication-ft.test.mjs
       - name: Run candidate negative tests
         run: node --test engine-v1/jobs/check-publication-ft.test.mjs
+      - name: Run existing publication and runtime display regressions
+        run: node --test engine-v1/jobs/verify-daily-publish-contract.test.js engine-v1/core/runtime-display-policy.test.js
