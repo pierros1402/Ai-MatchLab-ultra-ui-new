@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-05",
-  "generatedAt": "2026-11-05T16:43:07.300Z",
+  "generatedAt": "2026-11-05T17:21:27.594Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "68ff6516f173f496e589be036ff744be3e5bfcf327545c2b8b7fdd25a76f5cc9",
+  "truthFingerprint": "e847f573afd354c5c70a70599a7598289e0815ad34bed2d309082490b4bec82f",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 82,
-    "playedTerminal": 35,
+    "playedTerminal": 36,
     "nonPlayedTerminal": 5,
-    "scheduled": 42,
+    "scheduled": 41,
     "live": 0,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 35,
-    "acceptedVerifiedFinalArtifacts": 35,
-    "convergedPlayedFinal": 35,
+    "verifiedFinalArtifacts": 36,
+    "acceptedVerifiedFinalArtifacts": 36,
+    "convergedPlayedFinal": 36,
     "convergedNonPlayedTerminal": 5,
     "pendingVerifiedFinal": 0,
-    "openRows": 42,
+    "openRows": 41,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 35,
-    "scoredSettlementEligible": 35,
+    "historyEligible": 36,
+    "scoredSettlementEligible": 36,
     "voidSettlementEligible": 5
   },
   "fixtures": [
@@ -1908,31 +1908,31 @@
       "homeTeam": "Chindia Targoviste",
       "awayTeam": "Popesti Leordeni",
       "kickoffUtc": "2026-11-05T15:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 4,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-05",
+        "scoreHome": 4,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4272,7 +4272,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 20478,
+            "count": 20504,
             "informational": true
           }
         },
@@ -6925,13 +6925,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "68ff6516f173f496e589be036ff744be3e5bfcf327545c2b8b7fdd25a76f5cc9",
+      "truthFingerprint": "e847f573afd354c5c70a70599a7598289e0815ad34bed2d309082490b4bec82f",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 35,
+        "expectedEligibleRows": 36,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_afccup_bgpathumunited_taipo_20261105",
@@ -6965,6 +6965,7 @@
           "cid_par1_olimpia_deportivorecoleta_20261105",
           "cid_par1_sportivoameliano_guarani_20261105",
           "cid_per1_universitario_sportboys_20261105",
+          "cid_rou2_chindiatargoviste_popestileordeni_20261105",
           "cid_slv1_luisangelfirpo_alianza_20261105",
           "cid_slv1_municipallimeno_fuertesanfrancisco_20261105",
           "cid_uga1_ntugasaze_entebbeuppc_20261105",
@@ -7028,7 +7029,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-11-05",
-      "fileCount": 35,
+      "fileCount": 36,
       "authority": "scored_final_evidence"
     },
     "downstream": {
