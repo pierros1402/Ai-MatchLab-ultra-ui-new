@@ -1,0 +1,205 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "mne.2",
+  "homeTeam": "FK Podgorica",
+  "awayTeam": "Budva",
+  "homeWinScore": 0.441,
+  "drawScore": 0.163,
+  "awayWinScore": 0.397,
+  "over15Score": 0.712,
+  "over25Score": 0.59,
+  "over35Score": 0.544,
+  "bttsScore": 0.449,
+  "confidence": 0.72,
+  "signals": [
+    "home_edge",
+    "priors_applied",
+    "close_strength_gap",
+    "home_rest_4",
+    "away_rest_4"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.425,
+      "awayOverallFormWeight": 0.255,
+      "homeSideFormWeight": 0.153,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 0.978,
+    "expectedAwayGoals": 1.608,
+    "expectedTotalGoals": 2.586,
+    "homeStrength": 0.472,
+    "awayStrength": 0.554,
+    "homeEdge": 0.485,
+    "awayPenalty": 0.064,
+    "recency": {
+      "homeOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 138,
+        "daysSinceLastMatch": 4,
+        "spanDays": 18,
+        "maxInternalGap": 14,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.827
+      },
+      "awayOverall": {
+        "sample": 3,
+        "rawSample": 3,
+        "priorSample": 0,
+        "daysSinceLastMatch": 4,
+        "spanDays": 17,
+        "maxInternalGap": 13,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.827
+      },
+      "homeSide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 138,
+        "daysSinceLastMatch": 8,
+        "spanDays": 14,
+        "maxInternalGap": 14,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.9,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.733
+      },
+      "awaySide": {
+        "sample": 0,
+        "rawSample": 0,
+        "priorSample": 0,
+        "daysSinceLastMatch": null,
+        "spanDays": null,
+        "maxInternalGap": null,
+        "gapSeverity": "missing",
+        "freshnessScore": 0.2,
+        "continuityScore": 0.2,
+        "formContinuityWeight": 0
+      }
+    },
+    "matchupSample": 0,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 138,
+      "awayPriorSample": 0,
+      "leaguePriorSample": 847,
+      "matchupPriorSample": 0
+    },
+    "resolution": {
+      "homeInput": "FK Podgorica",
+      "awayInput": "Budva",
+      "homeResolvedKey": "FK Podgorica",
+      "awayResolvedKey": "Budva",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Budva::FK Podgorica",
+      "matchupResolveScore": 0.93,
+      "homePriorKey": "mne.2::FK Podgorica",
+      "awayPriorKey": null,
+      "matchupPriorKey": null
+    },
+    "sourceKeys": {
+      "homeTeamKey": "FK Podgorica",
+      "awayTeamKey": "Budva",
+      "leagueKey": "mne.2",
+      "matchupKey": "Budva::FK Podgorica"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": false,
+    "contextDelta": 0,
+    "contextReasons": [],
+    "aiContext": {
+      "available": true,
+      "importance": "unknown",
+      "stakes": [],
+      "pressure": []
+    }
+  },
+  "contextAdjusted": false,
+  "contextReasons": [],
+  "contextDelta": 0,
+  "band": {
+    "over15": "MEDIUM",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0.009,
+      "awayDelta": 0,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0.025,
+      "awayPenalty": 0.025,
+      "reasons": [
+        "home_rest_4",
+        "away_rest_4"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "mne.2",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 4,
+    "awayRestDays": 4,
+    "homeMatchesLast7": 1,
+    "awayMatchesLast7": 1,
+    "homeMatchesLast14": 2,
+    "awayMatchesLast14": 2,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}

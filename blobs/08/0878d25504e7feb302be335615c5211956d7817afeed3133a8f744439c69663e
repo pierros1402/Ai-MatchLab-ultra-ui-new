@@ -1,0 +1,208 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "arm.2",
+  "homeTeam": "Lernayin Artsakh",
+  "awayTeam": "Olympia Yerevan",
+  "homeWinScore": 0.298,
+  "drawScore": 0.153,
+  "awayWinScore": 0.549,
+  "over15Score": 0.746,
+  "over25Score": 0.657,
+  "over35Score": 0.611,
+  "bttsScore": 0.625,
+  "confidence": 0.766,
+  "signals": [
+    "away_edge",
+    "over25_support",
+    "btts_support",
+    "home_form_decay",
+    "form_influence_reduced",
+    "mutual_attack_profile",
+    "priors_applied",
+    "close_strength_gap",
+    "away_rest_4"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.255,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.739,
+    "expectedAwayGoals": 1.804,
+    "expectedTotalGoals": 3.543,
+    "homeStrength": 0.261,
+    "awayStrength": 0.507,
+    "homeEdge": 0.252,
+    "awayPenalty": 0.117,
+    "recency": {
+      "homeOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 95,
+        "daysSinceLastMatch": 18,
+        "spanDays": 12,
+        "maxInternalGap": 6,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.26,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.498
+      },
+      "awayOverall": {
+        "sample": 3,
+        "rawSample": 3,
+        "priorSample": 0,
+        "daysSinceLastMatch": 4,
+        "spanDays": 20,
+        "maxInternalGap": 13,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.827
+      },
+      "homeSide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 95,
+        "daysSinceLastMatch": 18,
+        "spanDays": 12,
+        "maxInternalGap": 12,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.26,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.386
+      },
+      "awaySide": {
+        "sample": 1,
+        "rawSample": 1,
+        "priorSample": 0,
+        "daysSinceLastMatch": 18,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.26,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.378
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 95,
+      "awayPriorSample": 0,
+      "leaguePriorSample": 807,
+      "matchupPriorSample": 5
+    },
+    "resolution": {
+      "homeInput": "Lernayin Artsakh",
+      "awayInput": "Olympia Yerevan",
+      "homeResolvedKey": "Lernayin Artsakh",
+      "awayResolvedKey": "Olympia Yerevan",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Lernayin Artsakh::Olympia Yerevan",
+      "matchupResolveScore": 0,
+      "homePriorKey": "arm.2::Lernayin Artsakh FC",
+      "awayPriorKey": null,
+      "matchupPriorKey": "arm.2|Lernayin Artsakh FC|Noah Yerevan 2"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Lernayin Artsakh",
+      "awayTeamKey": "Olympia Yerevan",
+      "leagueKey": "arm.2",
+      "matchupKey": "Lernayin Artsakh::Olympia Yerevan"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": false,
+    "contextDelta": 0,
+    "contextReasons": [],
+    "aiContext": {
+      "available": true,
+      "importance": "unknown",
+      "stakes": [],
+      "pressure": []
+    }
+  },
+  "contextAdjusted": false,
+  "contextReasons": [],
+  "contextDelta": 0,
+  "band": {
+    "over15": "MEDIUM",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0.025,
+      "reasons": [
+        "away_rest_4"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "arm.2",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 18,
+    "awayRestDays": 4,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 1,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 1,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}

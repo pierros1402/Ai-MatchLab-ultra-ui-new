@@ -1,0 +1,203 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "kos.1",
+  "homeTeam": "Drenica",
+  "awayTeam": "Drita",
+  "homeWinScore": 0.291,
+  "drawScore": 0.132,
+  "awayWinScore": 0.577,
+  "over15Score": 0.663,
+  "over25Score": 0.553,
+  "over35Score": 0.504,
+  "bttsScore": 0.465,
+  "confidence": 0.857,
+  "signals": [
+    "away_edge",
+    "priors_applied",
+    "close_strength_gap",
+    "away_rest_4"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.325,
+      "awayOverallFormWeight": 0.35,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 0.938,
+    "expectedAwayGoals": 1.625,
+    "expectedTotalGoals": 2.563,
+    "homeStrength": 0.296,
+    "awayStrength": 0.571,
+    "homeEdge": 0.084,
+    "awayPenalty": 0.065,
+    "recency": {
+      "homeOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 108,
+        "daysSinceLastMatch": 9,
+        "spanDays": 16,
+        "maxInternalGap": 10,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.65,
+        "continuityScore": 1,
+        "formContinuityWeight": 0.757
+      },
+      "awayOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 180,
+        "daysSinceLastMatch": 4,
+        "spanDays": 22,
+        "maxInternalGap": 14,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.7,
+        "formContinuityWeight": 0.835
+      },
+      "homeSide": {
+        "sample": 3,
+        "rawSample": 0,
+        "priorSample": 108,
+        "daysSinceLastMatch": null,
+        "spanDays": null,
+        "maxInternalGap": null,
+        "gapSeverity": "missing",
+        "freshnessScore": 0.2,
+        "continuityScore": 0.2,
+        "formContinuityWeight": 0
+      },
+      "awaySide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 180,
+        "daysSinceLastMatch": 22,
+        "spanDays": 4,
+        "maxInternalGap": 4,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.27
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 108,
+      "awayPriorSample": 180,
+      "leaguePriorSample": 909,
+      "matchupPriorSample": 10
+    },
+    "resolution": {
+      "homeInput": "Drenica",
+      "awayInput": "Drita",
+      "homeResolvedKey": "Drenica",
+      "awayResolvedKey": "Drita",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Drenica::Drita",
+      "matchupResolveScore": 0,
+      "homePriorKey": "kos.1::KF Drenica",
+      "awayPriorKey": "kos.1::FC Drita",
+      "matchupPriorKey": "kos.1|FC Drita|KF Drenica"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Drenica",
+      "awayTeamKey": "Drita",
+      "leagueKey": "kos.1",
+      "matchupKey": "Drenica::Drita"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": false,
+    "contextDelta": 0,
+    "contextReasons": [],
+    "aiContext": {
+      "available": true,
+      "importance": "unknown",
+      "stakes": [],
+      "pressure": []
+    }
+  },
+  "contextAdjusted": false,
+  "contextReasons": [],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0.025,
+      "reasons": [
+        "away_rest_4"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "kos.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 9,
+    "awayRestDays": 4,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 1,
+    "homeMatchesLast14": 1,
+    "awayMatchesLast14": 2,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
