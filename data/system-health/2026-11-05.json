@@ -1,65 +1,195 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-11-05",
-  "generatedAt": "2026-11-05T03:01:56.300Z",
-  "severity": "error",
+  "generatedAt": "2026-11-05T06:50:38.770Z",
+  "severity": "warning",
   "issueCounts": {
-    "error": 9,
-    "warning": 6,
-    "info": 6
+    "error": 0,
+    "warning": 7,
+    "info": 9
   },
-  "alert": false,
+  "alert": true,
   "alertCounts": {
     "error": 0,
-    "warning": 0,
+    "warning": 4,
     "info": 0
   },
-  "activeIssueCount": 21,
-  "actionableIssueCount": 15,
-  "newIssueCount": 0,
-  "newActionableIssueCount": 0,
-  "resolvedIssueCount": 1,
-  "persistentIssueCount": 21,
+  "activeIssueCount": 16,
+  "actionableIssueCount": 7,
+  "newIssueCount": 8,
+  "newActionableIssueCount": 4,
+  "resolvedIssueCount": 13,
+  "persistentIssueCount": 8,
   "activeIssues": [
     {
-      "severity": "error",
-      "source": "manifest",
-      "type": "artifact_missing",
-      "message": "Snapshot manifest is missing.",
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
       "details": {
-        "artifact": "data/deploy-snapshots/2026-11-05/manifest.json"
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-11-05.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
       }
     },
     {
-      "severity": "error",
-      "source": "invariant-report",
-      "type": "artifact_missing",
-      "message": "Invariant report is missing.",
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
       "details": {
-        "artifact": "data/deploy-snapshots/2026-11-05/invariant-report.json"
+        "kind": "plan_b",
+        "artifact": "value-plans/2026-11-05/plan-b.json",
+        "at": null,
+        "staleReason": "plan_b_stale_against_canonical",
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-11-05",
+          "currentAthensDay": "2026-11-05",
+          "fixtureCount": 82,
+          "frozenHash": "6a2b0c59870368e7fc2504e5615e3aee0adb04d002ed229e0afa3e378d9ce9b2",
+          "currentHash": "6a2b0c59870368e7fc2504e5615e3aee0adb04d002ed229e0afa3e378d9ce9b2",
+          "strictFrozenParity": true,
+          "membershipParity": true,
+          "descriptorDrift": false,
+          "publicationMembershipPreserved": false,
+          "authorizedShrink": false,
+          "removedFixtureIds": [],
+          "deferredCurrentFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "exact_current_frozen_membership"
+        },
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b2",
+        "artifact": "value-plans/2026-11-05/plan-b2.json",
+        "at": null,
+        "staleReason": "plan_b2_stale_against_canonical",
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-11-05",
+          "currentAthensDay": "2026-11-05",
+          "fixtureCount": 82,
+          "frozenHash": "6a2b0c59870368e7fc2504e5615e3aee0adb04d002ed229e0afa3e378d9ce9b2",
+          "currentHash": "6a2b0c59870368e7fc2504e5615e3aee0adb04d002ed229e0afa3e378d9ce9b2",
+          "strictFrozenParity": true,
+          "membershipParity": true,
+          "descriptorDrift": false,
+          "publicationMembershipPreserved": false,
+          "authorizedShrink": false,
+          "removedFixtureIds": [],
+          "deferredCurrentFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "exact_current_frozen_membership"
+        },
+        "skipped": "artifact_missing_or_no_timestamp"
       }
     },
     {
       "severity": "warning",
-      "source": "freshness-report",
-      "type": "artifact_missing",
-      "message": "Freshness report is missing.",
+      "source": "value-input",
+      "type": "plan_b_assessment_coverage_incomplete",
+      "message": "Plan B ran with incomplete model-assessment coverage; its output is not proof of a fully evaluated zero-pick day.",
       "details": {
-        "artifact": "data/deploy-snapshots/2026-11-05/freshness-report.json"
+        "plan": "B",
+        "missing": 27,
+        "ambiguous": 0,
+        "canonicalFixtures": 82,
+        "joinedMatches": 55,
+        "orphanAssessmentRows": 7,
+        "missingCanonicalIds": [
+          "cid_afccup_bgpathumunited_taipo_20261105",
+          "cid_afccup_kitchee_phnompenhcrown_20261105",
+          "cid_afccup_lioncitysailors_adelaideunited_20261105",
+          "cid_afccup_machidazelvia_shanghaishenhua_20261105",
+          "cid_afccup_pkrsvayrieng_tampinesrovers_20261105",
+          "cid_crc1_puntarenas_sancarlos_20261105",
+          "cid_espcopadelrey_alcoyano_mallorca_20261105",
+          "cid_espcopadelrey_tarancon_levante_20261105",
+          "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261105",
+          "cid_hon1_estrellaroja_motagua_20261105",
+          "cid_ind1_churchillbrothers_northeastunited_20261105",
+          "cid_ind2_samaleswari_demposports_20261105",
+          "cid_par1_libertad_cerroporteno_20261105",
+          "cid_par1_olimpia_deportivorecoleta_20261105",
+          "cid_par1_sportivoameliano_guarani_20261105",
+          "cid_uefaeuropa_crystalpalace_tsghoffenheim_20261105",
+          "cid_uefaeuropa_lillestrom_viktoriaplzen_20261105",
+          "cid_uefaeuropa_sksturmgraz_nkcelje_20261105",
+          "cid_uefaeuropa_spartaprague_bournemouth_20261105",
+          "cid_uefaeuropa_sunderland_dinamozagreb_20261105",
+          "cid_uefaeuropaconf_asmonaco_nordsjlland_20261105",
+          "cid_uefaeuropaconf_csucraiova_egnatia_20261105",
+          "cid_uefaeuropaconf_kupskuopio_kaagent_20261105",
+          "cid_uefaeuropaconf_redstarbelgrade_interdescaldes_20261105",
+          "cid_uefaeuropaconf_thun_heartofmidlothian_20261105",
+          "cid_uefaeuropaconf_trabzonspor_freiburg_20261105",
+          "cid_uga2_calvary_volcanoes_20261105"
+        ]
       }
     },
     {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "foundation_publication_not_ready",
-      "message": "Publication foundation is not ready.",
+      "severity": "warning",
+      "source": "value-input",
+      "type": "plan_b2_assessment_coverage_incomplete",
+      "message": "Plan B2 ran with incomplete model-assessment coverage; its output is not proof of a fully evaluated zero-pick day.",
       "details": {
-        "blocked": [
-          {
-            "component": "details",
-            "reason": "details_foundation_not_ready"
-          }
+        "plan": "B2",
+        "missing": 27,
+        "ambiguous": 0,
+        "canonicalFixtures": 82,
+        "joinedMatches": 55,
+        "orphanAssessmentRows": 7,
+        "missingCanonicalIds": [
+          "cid_afccup_bgpathumunited_taipo_20261105",
+          "cid_afccup_kitchee_phnompenhcrown_20261105",
+          "cid_afccup_lioncitysailors_adelaideunited_20261105",
+          "cid_afccup_machidazelvia_shanghaishenhua_20261105",
+          "cid_afccup_pkrsvayrieng_tampinesrovers_20261105",
+          "cid_crc1_puntarenas_sancarlos_20261105",
+          "cid_espcopadelrey_alcoyano_mallorca_20261105",
+          "cid_espcopadelrey_tarancon_levante_20261105",
+          "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261105",
+          "cid_hon1_estrellaroja_motagua_20261105",
+          "cid_ind1_churchillbrothers_northeastunited_20261105",
+          "cid_ind2_samaleswari_demposports_20261105",
+          "cid_par1_libertad_cerroporteno_20261105",
+          "cid_par1_olimpia_deportivorecoleta_20261105",
+          "cid_par1_sportivoameliano_guarani_20261105",
+          "cid_uefaeuropa_crystalpalace_tsghoffenheim_20261105",
+          "cid_uefaeuropa_lillestrom_viktoriaplzen_20261105",
+          "cid_uefaeuropa_sksturmgraz_nkcelje_20261105",
+          "cid_uefaeuropa_spartaprague_bournemouth_20261105",
+          "cid_uefaeuropa_sunderland_dinamozagreb_20261105",
+          "cid_uefaeuropaconf_asmonaco_nordsjlland_20261105",
+          "cid_uefaeuropaconf_csucraiova_egnatia_20261105",
+          "cid_uefaeuropaconf_kupskuopio_kaagent_20261105",
+          "cid_uefaeuropaconf_redstarbelgrade_interdescaldes_20261105",
+          "cid_uefaeuropaconf_thun_heartofmidlothian_20261105",
+          "cid_uefaeuropaconf_trabzonspor_freiburg_20261105",
+          "cid_uga2_calvary_volcanoes_20261105"
         ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-input",
+      "type": "plan_b2_opponent_adjustment_unavailable",
+      "message": "Plan B2 lacks trusted opponent standings for 52 evaluated fixtures.",
+      "details": {
+        "plan": "B2",
+        "fixtures": 52
       }
     },
     {
@@ -70,7 +200,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 19878,
+        "count": 19884,
         "informational": true
       }
     },
@@ -99,51 +229,6 @@
       }
     },
     {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "manifest_missing",
-      "details": {
-        "failure": "manifest_missing"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "foundation_publication_not_ready",
-      "details": {
-        "failure": "foundation_publication_not_ready"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "value_plan_comparison_missing",
-      "details": {
-        "failure": "value_plan_comparison_missing"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_warning",
-      "message": "canonical_leagues_missing_from_published:afc.cup,arg.1,aze.2,bra.1,col.1,crc.1,esp.copa_del_rey,fra.coupe_de_france,hon.1,ind.1,ind.2,kos.2,ksa.1,mex.2,par.1,per.1,rou.2,slv.1,uefa.europa,uefa.europa.conf,uga.1,uga.2,ven.1",
-      "details": {
-        "raw": "canonical_leagues_missing_from_published:afc.cup,arg.1,aze.2,bra.1,col.1,crc.1,esp.copa_del_rey,fra.coupe_de_france,hon.1,ind.1,ind.2,kos.2,ksa.1,mex.2,par.1,per.1,rou.2,slv.1,uefa.europa,uefa.europa.conf,uga.1,uga.2,ven.1"
-      }
-    },
-    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -163,13 +248,14 @@
       }
     },
     {
-      "severity": "error",
+      "severity": "warning",
       "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
       "details": {
-        "clean": false,
-        "cleanStrict": false
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     },
     {
@@ -787,124 +873,203 @@
       }
     },
     {
-      "severity": "error",
-      "source": "value",
-      "type": "artifact_missing",
-      "message": "Production value artifact is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-11-05/value.json"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "value-audit",
-      "type": "artifact_missing",
-      "message": "Production value audit artifact is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-11-05/value-audit.json"
-      }
-    },
-    {
       "severity": "info",
       "source": "value-comparison",
-      "type": "artifact_missing",
-      "message": "Four-plan Value comparison artifact is missing.",
+      "type": "value_plan_comparison_summary",
+      "message": "Four-plan Value comparison artifact is available.",
       "details": {
-        "artifact": "data/value-comparison/2026-11-05.json",
+        "complete": true,
         "requiredPlans": [
           "A",
           "A2",
           "B",
           "B2"
-        ]
+        ],
+        "presentPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "missingPlans": [],
+        "planA": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planA2": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planB": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planB2": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        }
       }
     }
   ],
   "actionableIssues": [
     {
-      "severity": "error",
-      "source": "manifest",
-      "type": "artifact_missing",
-      "message": "Snapshot manifest is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-11-05/manifest.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "invariant-report",
-      "type": "artifact_missing",
-      "message": "Invariant report is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-11-05/invariant-report.json"
-      }
-    },
-    {
       "severity": "warning",
-      "source": "freshness-report",
-      "type": "artifact_missing",
-      "message": "Freshness report is missing.",
+      "source": "value-input",
+      "type": "plan_b_assessment_coverage_incomplete",
+      "message": "Plan B ran with incomplete model-assessment coverage; its output is not proof of a fully evaluated zero-pick day.",
       "details": {
-        "artifact": "data/deploy-snapshots/2026-11-05/freshness-report.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "foundation_publication_not_ready",
-      "message": "Publication foundation is not ready.",
-      "details": {
-        "blocked": [
-          {
-            "component": "details",
-            "reason": "details_foundation_not_ready"
-          }
+        "plan": "B",
+        "missing": 27,
+        "ambiguous": 0,
+        "canonicalFixtures": 82,
+        "joinedMatches": 55,
+        "orphanAssessmentRows": 7,
+        "missingCanonicalIds": [
+          "cid_afccup_bgpathumunited_taipo_20261105",
+          "cid_afccup_kitchee_phnompenhcrown_20261105",
+          "cid_afccup_lioncitysailors_adelaideunited_20261105",
+          "cid_afccup_machidazelvia_shanghaishenhua_20261105",
+          "cid_afccup_pkrsvayrieng_tampinesrovers_20261105",
+          "cid_crc1_puntarenas_sancarlos_20261105",
+          "cid_espcopadelrey_alcoyano_mallorca_20261105",
+          "cid_espcopadelrey_tarancon_levante_20261105",
+          "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261105",
+          "cid_hon1_estrellaroja_motagua_20261105",
+          "cid_ind1_churchillbrothers_northeastunited_20261105",
+          "cid_ind2_samaleswari_demposports_20261105",
+          "cid_par1_libertad_cerroporteno_20261105",
+          "cid_par1_olimpia_deportivorecoleta_20261105",
+          "cid_par1_sportivoameliano_guarani_20261105",
+          "cid_uefaeuropa_crystalpalace_tsghoffenheim_20261105",
+          "cid_uefaeuropa_lillestrom_viktoriaplzen_20261105",
+          "cid_uefaeuropa_sksturmgraz_nkcelje_20261105",
+          "cid_uefaeuropa_spartaprague_bournemouth_20261105",
+          "cid_uefaeuropa_sunderland_dinamozagreb_20261105",
+          "cid_uefaeuropaconf_asmonaco_nordsjlland_20261105",
+          "cid_uefaeuropaconf_csucraiova_egnatia_20261105",
+          "cid_uefaeuropaconf_kupskuopio_kaagent_20261105",
+          "cid_uefaeuropaconf_redstarbelgrade_interdescaldes_20261105",
+          "cid_uefaeuropaconf_thun_heartofmidlothian_20261105",
+          "cid_uefaeuropaconf_trabzonspor_freiburg_20261105",
+          "cid_uga2_calvary_volcanoes_20261105"
         ]
       }
     },
     {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "manifest_missing",
+      "severity": "warning",
+      "source": "value-input",
+      "type": "plan_b2_assessment_coverage_incomplete",
+      "message": "Plan B2 ran with incomplete model-assessment coverage; its output is not proof of a fully evaluated zero-pick day.",
       "details": {
-        "failure": "manifest_missing"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "foundation_publication_not_ready",
-      "details": {
-        "failure": "foundation_publication_not_ready"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "value_plan_comparison_missing",
-      "details": {
-        "failure": "value_plan_comparison_missing"
+        "plan": "B2",
+        "missing": 27,
+        "ambiguous": 0,
+        "canonicalFixtures": 82,
+        "joinedMatches": 55,
+        "orphanAssessmentRows": 7,
+        "missingCanonicalIds": [
+          "cid_afccup_bgpathumunited_taipo_20261105",
+          "cid_afccup_kitchee_phnompenhcrown_20261105",
+          "cid_afccup_lioncitysailors_adelaideunited_20261105",
+          "cid_afccup_machidazelvia_shanghaishenhua_20261105",
+          "cid_afccup_pkrsvayrieng_tampinesrovers_20261105",
+          "cid_crc1_puntarenas_sancarlos_20261105",
+          "cid_espcopadelrey_alcoyano_mallorca_20261105",
+          "cid_espcopadelrey_tarancon_levante_20261105",
+          "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261105",
+          "cid_hon1_estrellaroja_motagua_20261105",
+          "cid_ind1_churchillbrothers_northeastunited_20261105",
+          "cid_ind2_samaleswari_demposports_20261105",
+          "cid_par1_libertad_cerroporteno_20261105",
+          "cid_par1_olimpia_deportivorecoleta_20261105",
+          "cid_par1_sportivoameliano_guarani_20261105",
+          "cid_uefaeuropa_crystalpalace_tsghoffenheim_20261105",
+          "cid_uefaeuropa_lillestrom_viktoriaplzen_20261105",
+          "cid_uefaeuropa_sksturmgraz_nkcelje_20261105",
+          "cid_uefaeuropa_spartaprague_bournemouth_20261105",
+          "cid_uefaeuropa_sunderland_dinamozagreb_20261105",
+          "cid_uefaeuropaconf_asmonaco_nordsjlland_20261105",
+          "cid_uefaeuropaconf_csucraiova_egnatia_20261105",
+          "cid_uefaeuropaconf_kupskuopio_kaagent_20261105",
+          "cid_uefaeuropaconf_redstarbelgrade_interdescaldes_20261105",
+          "cid_uefaeuropaconf_thun_heartofmidlothian_20261105",
+          "cid_uefaeuropaconf_trabzonspor_freiburg_20261105",
+          "cid_uga2_calvary_volcanoes_20261105"
+        ]
       }
     },
     {
       "severity": "warning",
-      "source": "build-report",
-      "type": "build_warning",
-      "message": "canonical_leagues_missing_from_published:afc.cup,arg.1,aze.2,bra.1,col.1,crc.1,esp.copa_del_rey,fra.coupe_de_france,hon.1,ind.1,ind.2,kos.2,ksa.1,mex.2,par.1,per.1,rou.2,slv.1,uefa.europa,uefa.europa.conf,uga.1,uga.2,ven.1",
+      "source": "value-input",
+      "type": "plan_b2_opponent_adjustment_unavailable",
+      "message": "Plan B2 lacks trusted opponent standings for 52 evaluated fixtures.",
       "details": {
-        "raw": "canonical_leagues_missing_from_published:afc.cup,arg.1,aze.2,bra.1,col.1,crc.1,esp.copa_del_rey,fra.coupe_de_france,hon.1,ind.1,ind.2,kos.2,ksa.1,mex.2,par.1,per.1,rou.2,slv.1,uefa.europa,uefa.europa.conf,uga.1,uga.2,ven.1"
+        "plan": "B2",
+        "fixtures": 52
       }
     },
     {
@@ -927,13 +1092,14 @@
       }
     },
     {
-      "severity": "error",
+      "severity": "warning",
       "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
       "details": {
-        "clean": false,
-        "cleanStrict": false
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     },
     {
@@ -1485,6 +1651,499 @@
           "slv.1"
         ]
       }
+    }
+  ],
+  "newIssues": [
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-11-05.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b",
+        "artifact": "value-plans/2026-11-05/plan-b.json",
+        "at": null,
+        "staleReason": "plan_b_stale_against_canonical",
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-11-05",
+          "currentAthensDay": "2026-11-05",
+          "fixtureCount": 82,
+          "frozenHash": "6a2b0c59870368e7fc2504e5615e3aee0adb04d002ed229e0afa3e378d9ce9b2",
+          "currentHash": "6a2b0c59870368e7fc2504e5615e3aee0adb04d002ed229e0afa3e378d9ce9b2",
+          "strictFrozenParity": true,
+          "membershipParity": true,
+          "descriptorDrift": false,
+          "publicationMembershipPreserved": false,
+          "authorizedShrink": false,
+          "removedFixtureIds": [],
+          "deferredCurrentFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "exact_current_frozen_membership"
+        },
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b2",
+        "artifact": "value-plans/2026-11-05/plan-b2.json",
+        "at": null,
+        "staleReason": "plan_b2_stale_against_canonical",
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-11-05",
+          "currentAthensDay": "2026-11-05",
+          "fixtureCount": 82,
+          "frozenHash": "6a2b0c59870368e7fc2504e5615e3aee0adb04d002ed229e0afa3e378d9ce9b2",
+          "currentHash": "6a2b0c59870368e7fc2504e5615e3aee0adb04d002ed229e0afa3e378d9ce9b2",
+          "strictFrozenParity": true,
+          "membershipParity": true,
+          "descriptorDrift": false,
+          "publicationMembershipPreserved": false,
+          "authorizedShrink": false,
+          "removedFixtureIds": [],
+          "deferredCurrentFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "exact_current_frozen_membership"
+        },
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-input",
+      "type": "plan_b_assessment_coverage_incomplete",
+      "message": "Plan B ran with incomplete model-assessment coverage; its output is not proof of a fully evaluated zero-pick day.",
+      "details": {
+        "plan": "B",
+        "missing": 27,
+        "ambiguous": 0,
+        "canonicalFixtures": 82,
+        "joinedMatches": 55,
+        "orphanAssessmentRows": 7,
+        "missingCanonicalIds": [
+          "cid_afccup_bgpathumunited_taipo_20261105",
+          "cid_afccup_kitchee_phnompenhcrown_20261105",
+          "cid_afccup_lioncitysailors_adelaideunited_20261105",
+          "cid_afccup_machidazelvia_shanghaishenhua_20261105",
+          "cid_afccup_pkrsvayrieng_tampinesrovers_20261105",
+          "cid_crc1_puntarenas_sancarlos_20261105",
+          "cid_espcopadelrey_alcoyano_mallorca_20261105",
+          "cid_espcopadelrey_tarancon_levante_20261105",
+          "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261105",
+          "cid_hon1_estrellaroja_motagua_20261105",
+          "cid_ind1_churchillbrothers_northeastunited_20261105",
+          "cid_ind2_samaleswari_demposports_20261105",
+          "cid_par1_libertad_cerroporteno_20261105",
+          "cid_par1_olimpia_deportivorecoleta_20261105",
+          "cid_par1_sportivoameliano_guarani_20261105",
+          "cid_uefaeuropa_crystalpalace_tsghoffenheim_20261105",
+          "cid_uefaeuropa_lillestrom_viktoriaplzen_20261105",
+          "cid_uefaeuropa_sksturmgraz_nkcelje_20261105",
+          "cid_uefaeuropa_spartaprague_bournemouth_20261105",
+          "cid_uefaeuropa_sunderland_dinamozagreb_20261105",
+          "cid_uefaeuropaconf_asmonaco_nordsjlland_20261105",
+          "cid_uefaeuropaconf_csucraiova_egnatia_20261105",
+          "cid_uefaeuropaconf_kupskuopio_kaagent_20261105",
+          "cid_uefaeuropaconf_redstarbelgrade_interdescaldes_20261105",
+          "cid_uefaeuropaconf_thun_heartofmidlothian_20261105",
+          "cid_uefaeuropaconf_trabzonspor_freiburg_20261105",
+          "cid_uga2_calvary_volcanoes_20261105"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-input",
+      "type": "plan_b2_assessment_coverage_incomplete",
+      "message": "Plan B2 ran with incomplete model-assessment coverage; its output is not proof of a fully evaluated zero-pick day.",
+      "details": {
+        "plan": "B2",
+        "missing": 27,
+        "ambiguous": 0,
+        "canonicalFixtures": 82,
+        "joinedMatches": 55,
+        "orphanAssessmentRows": 7,
+        "missingCanonicalIds": [
+          "cid_afccup_bgpathumunited_taipo_20261105",
+          "cid_afccup_kitchee_phnompenhcrown_20261105",
+          "cid_afccup_lioncitysailors_adelaideunited_20261105",
+          "cid_afccup_machidazelvia_shanghaishenhua_20261105",
+          "cid_afccup_pkrsvayrieng_tampinesrovers_20261105",
+          "cid_crc1_puntarenas_sancarlos_20261105",
+          "cid_espcopadelrey_alcoyano_mallorca_20261105",
+          "cid_espcopadelrey_tarancon_levante_20261105",
+          "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261105",
+          "cid_hon1_estrellaroja_motagua_20261105",
+          "cid_ind1_churchillbrothers_northeastunited_20261105",
+          "cid_ind2_samaleswari_demposports_20261105",
+          "cid_par1_libertad_cerroporteno_20261105",
+          "cid_par1_olimpia_deportivorecoleta_20261105",
+          "cid_par1_sportivoameliano_guarani_20261105",
+          "cid_uefaeuropa_crystalpalace_tsghoffenheim_20261105",
+          "cid_uefaeuropa_lillestrom_viktoriaplzen_20261105",
+          "cid_uefaeuropa_sksturmgraz_nkcelje_20261105",
+          "cid_uefaeuropa_spartaprague_bournemouth_20261105",
+          "cid_uefaeuropa_sunderland_dinamozagreb_20261105",
+          "cid_uefaeuropaconf_asmonaco_nordsjlland_20261105",
+          "cid_uefaeuropaconf_csucraiova_egnatia_20261105",
+          "cid_uefaeuropaconf_kupskuopio_kaagent_20261105",
+          "cid_uefaeuropaconf_redstarbelgrade_interdescaldes_20261105",
+          "cid_uefaeuropaconf_thun_heartofmidlothian_20261105",
+          "cid_uefaeuropaconf_trabzonspor_freiburg_20261105",
+          "cid_uga2_calvary_volcanoes_20261105"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-input",
+      "type": "plan_b2_opponent_adjustment_unavailable",
+      "message": "Plan B2 lacks trusted opponent standings for 52 evaluated fixtures.",
+      "details": {
+        "plan": "B2",
+        "fixtures": 52
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "value_plan_comparison_summary",
+      "message": "Four-plan Value comparison artifact is available.",
+      "details": {
+        "complete": true,
+        "requiredPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "presentPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "missingPlans": [],
+        "planA": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planA2": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planB": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planB2": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        }
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "warning",
+      "source": "value-input",
+      "type": "plan_b_assessment_coverage_incomplete",
+      "message": "Plan B ran with incomplete model-assessment coverage; its output is not proof of a fully evaluated zero-pick day.",
+      "details": {
+        "plan": "B",
+        "missing": 27,
+        "ambiguous": 0,
+        "canonicalFixtures": 82,
+        "joinedMatches": 55,
+        "orphanAssessmentRows": 7,
+        "missingCanonicalIds": [
+          "cid_afccup_bgpathumunited_taipo_20261105",
+          "cid_afccup_kitchee_phnompenhcrown_20261105",
+          "cid_afccup_lioncitysailors_adelaideunited_20261105",
+          "cid_afccup_machidazelvia_shanghaishenhua_20261105",
+          "cid_afccup_pkrsvayrieng_tampinesrovers_20261105",
+          "cid_crc1_puntarenas_sancarlos_20261105",
+          "cid_espcopadelrey_alcoyano_mallorca_20261105",
+          "cid_espcopadelrey_tarancon_levante_20261105",
+          "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261105",
+          "cid_hon1_estrellaroja_motagua_20261105",
+          "cid_ind1_churchillbrothers_northeastunited_20261105",
+          "cid_ind2_samaleswari_demposports_20261105",
+          "cid_par1_libertad_cerroporteno_20261105",
+          "cid_par1_olimpia_deportivorecoleta_20261105",
+          "cid_par1_sportivoameliano_guarani_20261105",
+          "cid_uefaeuropa_crystalpalace_tsghoffenheim_20261105",
+          "cid_uefaeuropa_lillestrom_viktoriaplzen_20261105",
+          "cid_uefaeuropa_sksturmgraz_nkcelje_20261105",
+          "cid_uefaeuropa_spartaprague_bournemouth_20261105",
+          "cid_uefaeuropa_sunderland_dinamozagreb_20261105",
+          "cid_uefaeuropaconf_asmonaco_nordsjlland_20261105",
+          "cid_uefaeuropaconf_csucraiova_egnatia_20261105",
+          "cid_uefaeuropaconf_kupskuopio_kaagent_20261105",
+          "cid_uefaeuropaconf_redstarbelgrade_interdescaldes_20261105",
+          "cid_uefaeuropaconf_thun_heartofmidlothian_20261105",
+          "cid_uefaeuropaconf_trabzonspor_freiburg_20261105",
+          "cid_uga2_calvary_volcanoes_20261105"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-input",
+      "type": "plan_b2_assessment_coverage_incomplete",
+      "message": "Plan B2 ran with incomplete model-assessment coverage; its output is not proof of a fully evaluated zero-pick day.",
+      "details": {
+        "plan": "B2",
+        "missing": 27,
+        "ambiguous": 0,
+        "canonicalFixtures": 82,
+        "joinedMatches": 55,
+        "orphanAssessmentRows": 7,
+        "missingCanonicalIds": [
+          "cid_afccup_bgpathumunited_taipo_20261105",
+          "cid_afccup_kitchee_phnompenhcrown_20261105",
+          "cid_afccup_lioncitysailors_adelaideunited_20261105",
+          "cid_afccup_machidazelvia_shanghaishenhua_20261105",
+          "cid_afccup_pkrsvayrieng_tampinesrovers_20261105",
+          "cid_crc1_puntarenas_sancarlos_20261105",
+          "cid_espcopadelrey_alcoyano_mallorca_20261105",
+          "cid_espcopadelrey_tarancon_levante_20261105",
+          "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261105",
+          "cid_hon1_estrellaroja_motagua_20261105",
+          "cid_ind1_churchillbrothers_northeastunited_20261105",
+          "cid_ind2_samaleswari_demposports_20261105",
+          "cid_par1_libertad_cerroporteno_20261105",
+          "cid_par1_olimpia_deportivorecoleta_20261105",
+          "cid_par1_sportivoameliano_guarani_20261105",
+          "cid_uefaeuropa_crystalpalace_tsghoffenheim_20261105",
+          "cid_uefaeuropa_lillestrom_viktoriaplzen_20261105",
+          "cid_uefaeuropa_sksturmgraz_nkcelje_20261105",
+          "cid_uefaeuropa_spartaprague_bournemouth_20261105",
+          "cid_uefaeuropa_sunderland_dinamozagreb_20261105",
+          "cid_uefaeuropaconf_asmonaco_nordsjlland_20261105",
+          "cid_uefaeuropaconf_csucraiova_egnatia_20261105",
+          "cid_uefaeuropaconf_kupskuopio_kaagent_20261105",
+          "cid_uefaeuropaconf_redstarbelgrade_interdescaldes_20261105",
+          "cid_uefaeuropaconf_thun_heartofmidlothian_20261105",
+          "cid_uefaeuropaconf_trabzonspor_freiburg_20261105",
+          "cid_uga2_calvary_volcanoes_20261105"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-input",
+      "type": "plan_b2_opponent_adjustment_unavailable",
+      "message": "Plan B2 lacks trusted opponent standings for 52 evaluated fixtures.",
+      "details": {
+        "plan": "B2",
+        "fixtures": 52
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "error",
+      "source": "manifest",
+      "type": "artifact_missing",
+      "message": "Snapshot manifest is missing.",
+      "details": {
+        "artifact": "data/deploy-snapshots/2026-11-05/manifest.json"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "artifact_missing",
+      "message": "Invariant report is missing.",
+      "details": {
+        "artifact": "data/deploy-snapshots/2026-11-05/invariant-report.json"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "artifact_missing",
+      "message": "Freshness report is missing.",
+      "details": {
+        "artifact": "data/deploy-snapshots/2026-11-05/freshness-report.json"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "manifest_missing",
+      "details": {
+        "failure": "manifest_missing"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_publication_not_ready",
+      "details": {
+        "failure": "foundation_publication_not_ready"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "value_plan_comparison_missing",
+      "details": {
+        "failure": "value_plan_comparison_missing"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:afc.cup,arg.1,aze.2,bra.1,col.1,crc.1,esp.copa_del_rey,fra.coupe_de_france,hon.1,ind.1,ind.2,kos.2,ksa.1,mex.2,par.1,per.1,rou.2,slv.1,uefa.europa,uefa.europa.conf,uga.1,uga.2,ven.1",
+      "details": {
+        "raw": "canonical_leagues_missing_from_published:afc.cup,arg.1,aze.2,bra.1,col.1,crc.1,esp.copa_del_rey,fra.coupe_de_france,hon.1,ind.1,ind.2,kos.2,ksa.1,mex.2,par.1,per.1,rou.2,slv.1,uefa.europa,uefa.europa.conf,uga.1,uga.2,ven.1"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
     },
     {
       "severity": "error",
@@ -1503,87 +2162,25 @@
       "details": {
         "artifact": "data/deploy-snapshots/2026-11-05/value-audit.json"
       }
-    }
-  ],
-  "newIssues": [],
-  "newActionableIssues": [],
-  "resolvedIssues": [
+    },
     {
-      "severity": "error",
-      "source": "live-status-completeness",
-      "type": "stale_open_exact_provider_ids",
-      "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "artifact_missing",
+      "message": "Four-plan Value comparison artifact is missing.",
       "details": {
-        "raw": "live_status_stale_open_exact_provider_ids:cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261105",
-        "canonicalIds": [
-          "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261105"
-        ],
-        "count": 1,
-        "staleAfterHours": 4,
-        "exactProviderIdOnly": true,
-        "heuristicFinalPromotion": false,
-        "fixtures": [
-          {
-            "canonicalId": "cid_fracoupedefrance_sportingbaiemahault_sirocolesabymes_20261105",
-            "providerId": "401933098",
-            "source": "espn",
-            "leagueSlug": "fra.coupe_de_france",
-            "providerLeagueSlug": "fra.coupe_de_france",
-            "kickoffUtc": "2026-11-04T22:00Z",
-            "ageHours": 4.554,
-            "status": "PRE",
-            "rawStatus": "STATUS_SCHEDULED",
-            "statusType": null,
-            "operationalState": null,
-            "classification": "stale_open_exact_provider_id"
-          }
+        "artifact": "data/value-comparison/2026-11-05.json",
+        "requiredPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
         ]
       }
     }
   ],
   "persistentIssues": [
     {
-      "severity": "error",
-      "source": "manifest",
-      "type": "artifact_missing",
-      "message": "Snapshot manifest is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-11-05/manifest.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "invariant-report",
-      "type": "artifact_missing",
-      "message": "Invariant report is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-11-05/invariant-report.json"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "artifact_missing",
-      "message": "Freshness report is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-11-05/freshness-report.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "foundation_publication_not_ready",
-      "message": "Publication foundation is not ready.",
-      "details": {
-        "blocked": [
-          {
-            "component": "details",
-            "reason": "details_foundation_not_ready"
-          }
-        ]
-      }
-    },
-    {
       "severity": "info",
       "source": "foundation-integrity",
       "type": "age_expired_results_rows_present",
@@ -1591,7 +2188,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 19876,
+        "count": 19884,
         "informational": true
       }
     },
@@ -1620,51 +2217,6 @@
       }
     },
     {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "manifest_missing",
-      "details": {
-        "failure": "manifest_missing"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "foundation_publication_not_ready",
-      "details": {
-        "failure": "foundation_publication_not_ready"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "value_plan_comparison_missing",
-      "details": {
-        "failure": "value_plan_comparison_missing"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_warning",
-      "message": "canonical_leagues_missing_from_published:afc.cup,arg.1,aze.2,bra.1,col.1,crc.1,esp.copa_del_rey,fra.coupe_de_france,hon.1,ind.1,ind.2,kos.2,ksa.1,mex.2,par.1,per.1,rou.2,slv.1,uefa.europa,uefa.europa.conf,uga.1,uga.2,ven.1",
-      "details": {
-        "raw": "canonical_leagues_missing_from_published:afc.cup,arg.1,aze.2,bra.1,col.1,crc.1,esp.copa_del_rey,fra.coupe_de_france,hon.1,ind.1,ind.2,kos.2,ksa.1,mex.2,par.1,per.1,rou.2,slv.1,uefa.europa,uefa.europa.conf,uga.1,uga.2,ven.1"
-      }
-    },
-    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -1681,16 +2233,6 @@
         ],
         "raw": "acquisition_skipped_slugs:afc.saff.championship,bol.copa,esp.copa_de_la_reina,fifa.wworld.u17,mex.w.1,usa.ncaa.m.1,usa.ncaa.w.1",
         "contextOnly": false
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
-      "details": {
-        "clean": false,
-        "cleanStrict": false
       }
     },
     {
@@ -2304,39 +2846,6 @@
           "hon.1",
           "par.1",
           "slv.1"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "source": "value",
-      "type": "artifact_missing",
-      "message": "Production value artifact is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-11-05/value.json"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "value-audit",
-      "type": "artifact_missing",
-      "message": "Production value audit artifact is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-11-05/value-audit.json"
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "artifact_missing",
-      "message": "Four-plan Value comparison artifact is missing.",
-      "details": {
-        "artifact": "data/value-comparison/2026-11-05.json",
-        "requiredPlans": [
-          "A",
-          "A2",
-          "B",
-          "B2"
         ]
       }
     }
