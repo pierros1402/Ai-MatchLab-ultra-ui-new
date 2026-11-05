@@ -1,0 +1,224 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "eng.2",
+  "homeTeam": "Wrexham",
+  "awayTeam": "Wolverhampton Wanderers",
+  "homeWinScore": 0.305,
+  "drawScore": 0.185,
+  "awayWinScore": 0.525,
+  "over15Score": 0.782,
+  "over25Score": 0.649,
+  "over35Score": 0.602,
+  "bttsScore": 0.597,
+  "confidence": 0.741,
+  "signals": [
+    "away_edge",
+    "over25_support",
+    "btts_support",
+    "priors_applied",
+    "close_strength_gap",
+    "home_rest_2",
+    "away_rest_2"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.35,
+      "awayOverallFormWeight": 0.425,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.371,
+    "expectedAwayGoals": 1.572,
+    "expectedTotalGoals": 2.943,
+    "homeStrength": 0.466,
+    "awayStrength": 0.612,
+    "homeEdge": 0.427,
+    "awayPenalty": 0.082,
+    "recency": {
+      "homeOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 46,
+        "daysSinceLastMatch": 2,
+        "spanDays": 22,
+        "maxInternalGap": 13,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.7,
+        "formContinuityWeight": 0.835
+      },
+      "awayOverall": {
+        "sample": 5,
+        "rawSample": 5,
+        "priorSample": 0,
+        "daysSinceLastMatch": 2,
+        "spanDays": 22,
+        "maxInternalGap": 10,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.948
+      },
+      "homeSide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 46,
+        "daysSinceLastMatch": 2,
+        "spanDays": 22,
+        "maxInternalGap": 18,
+        "gapSeverity": "moderate",
+        "freshnessScore": 1,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.705
+      },
+      "awaySide": {
+        "sample": 2,
+        "rawSample": 2,
+        "priorSample": 0,
+        "daysSinceLastMatch": 2,
+        "spanDays": 19,
+        "maxInternalGap": 19,
+        "gapSeverity": "moderate",
+        "freshnessScore": 1,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.697
+      }
+    },
+    "matchupSample": 0,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 46,
+      "awayPriorSample": 0,
+      "leaguePriorSample": 2768,
+      "matchupPriorSample": 0
+    },
+    "resolution": {
+      "homeInput": "Wrexham",
+      "awayInput": "Wolverhampton Wanderers",
+      "homeResolvedKey": "Wrexham",
+      "awayResolvedKey": "Wolverhampton Wanderers",
+      "homeResolveScore": 0.82,
+      "awayResolveScore": 0.82,
+      "matchupResolvedKey": "Wrexham::Wolverhampton Wanderers",
+      "matchupResolveScore": 0,
+      "homePriorKey": "eng.2::Wrexham",
+      "awayPriorKey": null,
+      "matchupPriorKey": null
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Wrexham",
+      "awayTeamKey": "Wolverhampton Wanderers",
+      "leagueKey": "eng.2",
+      "matchupKey": "Wrexham::Wolverhampton Wanderers"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": false,
+    "contextDelta": 0,
+    "contextReasons": [],
+    "aiContext": {
+      "available": true,
+      "importance": "unknown",
+      "stakes": [],
+      "pressure": []
+    }
+  },
+  "contextAdjusted": false,
+  "contextReasons": [],
+  "contextDelta": 0,
+  "band": {
+    "over15": "MEDIUM",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0.08,
+      "awayPenalty": 0.08,
+      "reasons": [
+        "home_rest_2",
+        "away_rest_2"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "eng.2",
+    "competitionType": "continental",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 2,
+    "awayRestDays": 2,
+    "homeMatchesLast7": 1,
+    "awayMatchesLast7": 2,
+    "homeMatchesLast14": 2,
+    "awayMatchesLast14": 2,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  },
+  "intelligence": {
+    "applied": true,
+    "mode": "partial",
+    "coverage": {
+      "hasStandings": false,
+      "hasHomeForm": true,
+      "hasAwayForm": true,
+      "hasH2H": false,
+      "hasPhaseContext": false,
+      "coverageCount": 2,
+      "mode": "partial"
+    },
+    "signals": [
+      "form_balanced",
+      "attack_support"
+    ]
+  }
+}
