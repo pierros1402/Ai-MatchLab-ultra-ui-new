@@ -2,8 +2,8 @@
   "ok": true,
   "dayKey": "2026-11-06",
   "season": "2026-2027",
-  "generatedAt": "2026-11-06T11:43:46.229Z",
-  "startedAt": "2026-11-06T11:40:53.292Z",
+  "generatedAt": "2026-11-06T12:36:23.545Z",
+  "startedAt": "2026-11-06T12:31:55.842Z",
   "source": {
     "inputSource": "canonical_fixtures",
     "canonicalMatches": 159,
@@ -21,22 +21,23 @@
     "totalRows": 159,
     "detailsFound": 159,
     "intelligenceOk": 159,
-    "valueReturned": 133,
-    "valueNull": 26,
+    "valueReturned": 128,
+    "valueNull": 31,
     "valueFailed": 0,
-    "minimumRecentSampleNull": 26
+    "minimumRecentSampleNull": 31
   },
   "breakdown": {
     "nullByReason": {
-      "minimum_recent_sample": 26
+      "minimum_recent_sample": 31
     },
     "nullByClass": {
-      "low_recent_sample_prior_backed": 12,
+      "low_recent_sample_prior_backed": 17,
       "missing_team_history_and_prior": 7,
       "low_recent_sample": 6,
       "missing_both_team_history_and_priors": 1
     },
     "nullByLeague": {
+      "syr.1": 4,
       "mda.2": 3,
       "bra.1": 2,
       "crc.1": 2,
@@ -52,8 +53,9 @@
       "eng.fa": 1,
       "fra.coupe_de_france": 1,
       "idn.1": 1,
+      "isr.1": 1,
+      "mkd.1": 1,
       "par.1": 1,
-      "syr.1": 1,
       "ukr.2": 1
     },
     "returnedByLeague": {
@@ -65,7 +67,6 @@
       "aut.2": 4,
       "cro.2": 4,
       "cze.2": 4,
-      "syr.1": 4,
       "den.2": 3,
       "ksa.1": 3,
       "nir.2": 3,
@@ -104,11 +105,9 @@
       "gib.1": 1,
       "idn.1": 1,
       "ind.1": 1,
-      "isr.1": 1,
       "ita.1": 1,
       "ita.2": 1,
       "kos.1": 1,
-      "mkd.1": 1,
       "mlt.1": 1,
       "mne.1": 1,
       "ned.1": 1,
@@ -121,6 +120,7 @@
       "svk.2": 1,
       "svn.1": 1,
       "swe.1": 1,
+      "syr.1": 1,
       "tur.1": 1,
       "uga.1": 1
     }
@@ -4444,23 +4444,24 @@
       "minimumSample": null,
       "valuePreview": {
         "confidence": 0.92,
-        "homeWinScore": 0.424,
+        "homeWinScore": 0.453,
         "drawScore": 0.13,
-        "awayWinScore": 0.446,
-        "over15Score": 0.729,
-        "over25Score": 0.7190000000000001,
-        "bttsScore": 0.5710000000000001,
+        "awayWinScore": 0.417,
+        "over15Score": 0.737,
+        "over25Score": 0.726,
+        "bttsScore": 0.585,
         "signals": [
           "away_edge",
+          "over25_support",
           "priors_applied",
           "close_strength_gap"
         ],
         "marketDiagnostics": {
           "1X2": {
             "eligible": false,
-            "pick": "AWAY",
-            "score": 0.446,
-            "gap": 0.02200000000000002,
+            "pick": "HOME",
+            "score": 0.453,
+            "gap": 0.03600000000000003,
             "drawScore": 0.13,
             "reasons": [
               "best_below_0.68",
@@ -4468,24 +4469,24 @@
             ]
           },
           "Over / Under 1.5": {
-            "eligible": true,
+            "eligible": false,
             "pick": "Over 1.5",
-            "score": 0.729,
-            "reasons": []
+            "score": 0.737,
+            "reasons": [
+              "suppressed_by_over25"
+            ]
           },
           "Over / Under 2.5": {
-            "eligible": false,
+            "eligible": true,
             "pick": "Over 2.5",
-            "score": 0.7190000000000001,
-            "expectedTotalGoals": 2.832,
-            "reasons": [
-              "missing_goal_support"
-            ]
+            "score": 0.726,
+            "expectedTotalGoals": 2.839,
+            "reasons": []
           },
           "Over / Under 3.5": {
             "eligible": false,
             "pick": "Over 3.5",
-            "score": 0.561,
+            "score": 0.567,
             "reasons": [
               "score_below_0.74",
               "missing_strong_goal_support"
@@ -4494,7 +4495,7 @@
           "BTTS": {
             "eligible": false,
             "pick": "BTTS YES",
-            "score": 0.5710000000000001,
+            "score": 0.585,
             "reasons": [
               "score_below_0.68",
               "missing_btts_support"
@@ -4625,7 +4626,7 @@
       "leagueSlug": "ind.2",
       "homeTeam": "Bengaluru United FC",
       "awayTeam": "Mohammedan SC",
-      "status": "FIRST_HALF",
+      "status": "SECOND_HALF",
       "kickoffUtc": "2026-11-06T10:30Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -4714,71 +4715,37 @@
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.92,
-        "homeWinScore": 0.554,
-        "drawScore": 0.16,
-        "awayWinScore": 0.286,
-        "over15Score": 0.76,
-        "over25Score": 0.605,
-        "bttsScore": 0.529,
-        "signals": [
-          "home_edge_strong",
-          "over25_support",
-          "matchup_goals_history",
-          "priors_applied",
-          "close_strength_gap"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "HOME",
-            "score": 0.554,
-            "gap": 0.26800000000000007,
-            "drawScore": 0.16,
-            "reasons": [
-              "best_below_0.68"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": true,
-            "pick": "Over 1.5",
-            "score": 0.76,
-            "reasons": []
-          },
-          "Over / Under 2.5": {
-            "eligible": false,
-            "pick": "Over 2.5",
-            "score": 0.605,
-            "expectedTotalGoals": 2.953,
-            "reasons": [
-              "score_below_0.65"
-            ]
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.583,
-            "reasons": [
-              "score_below_0.74"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.529,
-            "reasons": [
-              "score_below_0.68",
-              "missing_btts_support"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample_prior_backed",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Maccabi Tel-Aviv",
+        "awayTeam": "Maccabi Petah-Tikva",
+        "leagueSlug": "isr.1",
+        "fixtureDate": "2026-11-06T12:00:00.000Z",
+        "homeResolvedKey": "Maccabi Tel-Aviv",
+        "awayResolvedKey": "Maccabi Petah-Tikva",
+        "homeRawSample": 1,
+        "awayRawSample": 1,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": 180,
+        "awayPriorSample": 99,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_isr2_bneiyehuda_mnazareth_20261106",
@@ -6172,73 +6139,37 @@
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.92,
-        "homeWinScore": 0.535,
-        "drawScore": 0.13,
-        "awayWinScore": 0.335,
-        "over15Score": 0.63,
-        "over25Score": 0.6340000000000001,
-        "bttsScore": 0.47300000000000003,
-        "signals": [
-          "home_edge",
-          "matchup_goals_history",
-          "priors_applied",
-          "close_strength_gap"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "HOME",
-            "score": 0.535,
-            "gap": 0.2,
-            "drawScore": 0.13,
-            "reasons": [
-              "best_below_0.68"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": false,
-            "pick": "Over 1.5",
-            "score": 0.63,
-            "reasons": [
-              "score_below_0.70"
-            ]
-          },
-          "Over / Under 2.5": {
-            "eligible": false,
-            "pick": "Over 2.5",
-            "score": 0.6340000000000001,
-            "expectedTotalGoals": 2.366,
-            "reasons": [
-              "score_below_0.65",
-              "expected_goals_below_2.75"
-            ]
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.48,
-            "reasons": [
-              "score_below_0.74"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.47300000000000003,
-            "reasons": [
-              "score_below_0.68",
-              "missing_btts_support"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample_prior_backed",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Tikves",
+        "awayTeam": "FK Skopje",
+        "leagueSlug": "mkd.1",
+        "fixtureDate": "2026-11-06T12:00:00.000Z",
+        "homeResolvedKey": "Tikves",
+        "awayResolvedKey": "FK Skopje",
+        "homeRawSample": 1,
+        "awayRawSample": 0,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 3,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": 162,
+        "awayPriorSample": 66,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_mlt1_birzebbuga_mosta_20261106",
@@ -9159,76 +9090,37 @@
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.74,
-        "homeWinScore": 0.296,
-        "drawScore": 0.13,
-        "awayWinScore": 0.573,
-        "over15Score": 0.571,
-        "over25Score": 0.503,
-        "bttsScore": 0.351,
-        "signals": [
-          "away_edge",
-          "btts_no_lean",
-          "priors_applied",
-          "close_strength_gap"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "AWAY",
-            "score": 0.573,
-            "gap": 0.27699999999999997,
-            "drawScore": 0.13,
-            "reasons": [
-              "best_below_0.68"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": false,
-            "pick": "Over 1.5",
-            "score": 0.571,
-            "reasons": [
-              "score_below_0.70"
-            ]
-          },
-          "Over / Under 2.5": {
-            "eligible": false,
-            "pick": "Over 2.5",
-            "score": 0.503,
-            "expectedTotalGoals": 2.167,
-            "reasons": [
-              "score_below_0.65",
-              "expected_goals_below_2.75",
-              "missing_goal_support"
-            ]
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.443,
-            "reasons": [
-              "score_below_0.74",
-              "missing_strong_goal_support"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.351,
-            "reasons": [
-              "score_below_0.68",
-              "missing_btts_support",
-              "btts_blocker"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample_prior_backed",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Al Nawaeir",
+        "awayTeam": "Al Taliya",
+        "leagueSlug": "syr.1",
+        "fixtureDate": "2026-11-06T12:00:00.000Z",
+        "homeResolvedKey": "Al Nawaeir",
+        "awayResolvedKey": "Al Taliya",
+        "homeRawSample": 2,
+        "awayRawSample": 1,
+        "homeBlendedSample": 2,
+        "awayBlendedSample": 3,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 0,
+        "awaySideBlendedSample": 2,
+        "homePriorSample": null,
+        "awayPriorSample": 2,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_syr1_alwahda_alittihadaleppo_20261106",
@@ -9255,14 +9147,14 @@
         "fixtureDate": "2026-11-06T12:00:00.000Z",
         "homeResolvedKey": "Al Wahda",
         "awayResolvedKey": "Al Ittihad Aleppo",
-        "homeRawSample": 4,
-        "awayRawSample": 2,
-        "homeBlendedSample": 6,
-        "awayBlendedSample": 4,
-        "homeSideRawSample": 1,
-        "awaySideRawSample": 1,
-        "homeSideBlendedSample": 3,
-        "awaySideBlendedSample": 3,
+        "homeRawSample": 2,
+        "awayRawSample": 0,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 2,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 2,
+        "awaySideBlendedSample": 2,
         "homePriorSample": 2,
         "awayPriorSample": 2,
         "homeRecentSelected": null,
@@ -9361,74 +9253,37 @@
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.798,
-        "homeWinScore": 0.27,
-        "drawScore": 0.091,
-        "awayWinScore": 0.639,
-        "over15Score": 0.452,
-        "over25Score": 0.404,
-        "bttsScore": 0.412,
-        "signals": [
-          "away_edge",
-          "priors_applied",
-          "close_strength_gap"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "AWAY",
-            "score": 0.639,
-            "gap": 0.369,
-            "drawScore": 0.091,
-            "reasons": [
-              "best_below_0.68"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": false,
-            "pick": "Over 1.5",
-            "score": 0.452,
-            "reasons": [
-              "score_below_0.70"
-            ]
-          },
-          "Over / Under 2.5": {
-            "eligible": false,
-            "pick": "Over 2.5",
-            "score": 0.404,
-            "expectedTotalGoals": 1.792,
-            "reasons": [
-              "score_below_0.65",
-              "expected_goals_below_2.75",
-              "missing_goal_support"
-            ]
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.344,
-            "reasons": [
-              "score_below_0.74",
-              "missing_strong_goal_support"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.412,
-            "reasons": [
-              "score_below_0.68",
-              "missing_btts_support"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample_prior_backed",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Qamishli",
+        "awayTeam": "Hottin",
+        "leagueSlug": "syr.1",
+        "fixtureDate": "2026-11-06T12:00:00.000Z",
+        "homeResolvedKey": "Qamishli",
+        "awayResolvedKey": "Hottin",
+        "homeRawSample": 1,
+        "awayRawSample": 2,
+        "homeBlendedSample": 1,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 0,
+        "awaySideBlendedSample": 2,
+        "homePriorSample": null,
+        "awayPriorSample": 2,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_syr1_tishreen_damascusalahli_20261106",
@@ -9440,74 +9295,37 @@
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.76,
-        "homeWinScore": 0.256,
-        "drawScore": 0.108,
-        "awayWinScore": 0.636,
-        "over15Score": 0.57,
-        "over25Score": 0.487,
-        "bttsScore": 0.387,
-        "signals": [
-          "away_edge",
-          "priors_applied",
-          "close_strength_gap"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "AWAY",
-            "score": 0.636,
-            "gap": 0.38,
-            "drawScore": 0.108,
-            "reasons": [
-              "best_below_0.68"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": false,
-            "pick": "Over 1.5",
-            "score": 0.57,
-            "reasons": [
-              "score_below_0.70"
-            ]
-          },
-          "Over / Under 2.5": {
-            "eligible": false,
-            "pick": "Over 2.5",
-            "score": 0.487,
-            "expectedTotalGoals": 2.3,
-            "reasons": [
-              "score_below_0.65",
-              "expected_goals_below_2.75",
-              "missing_goal_support"
-            ]
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.436,
-            "reasons": [
-              "score_below_0.74",
-              "missing_strong_goal_support"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.387,
-            "reasons": [
-              "score_below_0.68",
-              "missing_btts_support"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample_prior_backed",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Tishreen",
+        "awayTeam": "Damascus Al Ahli",
+        "leagueSlug": "syr.1",
+        "fixtureDate": "2026-11-06T12:00:00.000Z",
+        "homeResolvedKey": "Tishreen",
+        "awayResolvedKey": "Damascus Al Ahli",
+        "homeRawSample": 1,
+        "awayRawSample": 2,
+        "homeBlendedSample": 3,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 2,
+        "awaySideBlendedSample": 2,
+        "homePriorSample": 2,
+        "awayPriorSample": 2,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_tur1_gaziantep_kasimpasa_20261106",
