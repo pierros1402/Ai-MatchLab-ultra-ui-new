@@ -294,9 +294,45 @@ export function buildVerifiedHistoryDay({
     });
   }
 
+  // Canonical display dedup may retain a different provider's canonicalId.
+  // Exact aliases are evidence of a possible lineage bridge, NOT permission
+  // to join final truth or append a second history row. Fail closed.
+  const canonicalAliasOwners = new Map();
+  for (const [retainedId, canonical] of canonicalById) {
+    for (const alias of Array.isArray(canonical?.canonicalAliases)
+      ? canonical.canonicalAliases
+      : []) {
+      const key = clean(alias);
+      if (!key || key === retainedId) continue;
+      if (!canonicalAliasOwners.has(key)) {
+        canonicalAliasOwners.set(key, new Set());
+      }
+      canonicalAliasOwners.get(key).add(retainedId);
+    }
+  }
+
   for (const id of finalById.keys()) {
-    if (!canonicalById.has(id)) {
-      errors.push({ reason: "verified_final_missing_canonical_fixture", matchId: id });
+    if (canonicalById.has(id)) continue;
+
+    const owners = [...(canonicalAliasOwners.get(id) || [])].sort();
+    if (owners.length > 1) {
+      errors.push({
+        reason: "verified_final_canonical_alias_ambiguous",
+        matchId: id,
+        retainedCanonicalIds: owners
+      });
+    } else if (owners.length === 1) {
+      errors.push({
+        reason: "verified_final_canonical_alias_identity_unverified",
+        matchId: id,
+        retainedCanonicalId: owners[0],
+        historyJoinAuthorized: false
+      });
+    } else {
+      errors.push({
+        reason: "verified_final_missing_canonical_fixture",
+        matchId: id
+      });
     }
   }
 
