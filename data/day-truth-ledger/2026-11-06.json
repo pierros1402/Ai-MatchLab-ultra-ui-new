@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-06",
-  "generatedAt": "2026-11-06T13:27:46.671Z",
+  "generatedAt": "2026-11-06T14:12:31.821Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "32a9a27f181197daa9c76b769f762f6864e4f77c3cb985ebeed25cf22782ecd1",
+  "truthFingerprint": "a8a6a31707ba4f960903800d5e80d10ec26f94d1ee05cebf996d5d5b2a6603ab",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 159,
-    "playedTerminal": 16,
+    "playedTerminal": 21,
     "nonPlayedTerminal": 3,
-    "scheduled": 140,
-    "live": 0,
+    "scheduled": 134,
+    "live": 1,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 20,
-    "acceptedVerifiedFinalArtifacts": 20,
-    "convergedPlayedFinal": 16,
+    "verifiedFinalArtifacts": 22,
+    "acceptedVerifiedFinalArtifacts": 22,
+    "convergedPlayedFinal": 21,
     "convergedNonPlayedTerminal": 3,
     "pendingVerifiedFinal": 0,
-    "openRows": 136,
+    "openRows": 134,
     "unresolvedRows": 0,
-    "conflictRows": 4,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 16,
-    "scoredSettlementEligible": 16,
+    "historyEligible": 21,
+    "scoredSettlementEligible": 21,
     "voidSettlementEligible": 3
   },
   "fixtures": [
@@ -3231,14 +3231,14 @@
       "homeTeam": "Shillong Lajong FC",
       "awayTeam": "Chanmari FC",
       "kickoffUtc": "2026-11-06T13:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -3252,7 +3252,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4064,14 +4064,14 @@
       "homeTeam": "Oguzsport",
       "awayTeam": "Falesti",
       "kickoffUtc": "2026-11-06T11:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": true,
@@ -4081,14 +4081,14 @@
         "dayKey": "2026-11-06",
         "scoreHome": 2,
         "scoreAway": 0,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4113,14 +4113,14 @@
       "homeTeam": "Vulturii Cutezatori",
       "awayTeam": "Sparta Selemet",
       "kickoffUtc": "2026-11-06T11:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": true,
@@ -4130,14 +4130,14 @@
         "dayKey": "2026-11-06",
         "scoreHome": 1,
         "scoreAway": 1,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4162,14 +4162,14 @@
       "homeTeam": "Zimbru Chisinau 2",
       "awayTeam": "Iskra Ribnita",
       "kickoffUtc": "2026-11-06T11:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": true,
@@ -4179,14 +4179,14 @@
         "dayKey": "2026-11-06",
         "scoreHome": 1,
         "scoreAway": 2,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4319,18 +4319,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-06",
+        "scoreHome": 1,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -6808,14 +6808,14 @@
       "homeTeam": "Obolon",
       "awayTeam": "Livyi Bereg",
       "kickoffUtc": "2026-11-06T11:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": true,
@@ -6825,14 +6825,14 @@
         "dayKey": "2026-11-06",
         "scoreHome": 1,
         "scoreAway": 1,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -6857,31 +6857,31 @@
       "homeTeam": "Polissya Zhytomyr",
       "awayTeam": "Veres-Rivne",
       "kickoffUtc": "2026-11-06T11:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-06",
+        "scoreHome": 2,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -7836,10 +7836,7 @@
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
     "conflictFixtureIds": [
-      "cid_mda2_oguzsport_falesti_20261106",
-      "cid_mda2_vulturiicutezatori_spartaselemet_20261106",
-      "cid_mda2_zimbruchisinau2_iskraribnita_20261106",
-      "cid_ukr1_obolon_livyibereg_20261106"
+      "cid_mkd1_tikves_skopje_20261106"
     ],
     "pendingVerifiedFinalFixtureIds": []
   },
@@ -8022,7 +8019,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 20814,
+            "count": 20846,
             "informational": true
           }
         },
@@ -11666,13 +11663,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "32a9a27f181197daa9c76b769f762f6864e4f77c3cb985ebeed25cf22782ecd1",
+      "truthFingerprint": "a8a6a31707ba4f960903800d5e80d10ec26f94d1ee05cebf996d5d5b2a6603ab",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 16,
+        "expectedEligibleRows": 21,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_gimnasialaplata_belgranocordoba_20261106",
@@ -11688,9 +11685,14 @@
           "cid_hon1_deportivomarathon_platense_20261106",
           "cid_idn1_psimyogyakarta_dewaunited_20261106",
           "cid_ind2_bengaluruunited_mohammedan_20261106",
+          "cid_mda2_oguzsport_falesti_20261106",
+          "cid_mda2_vulturiicutezatori_spartaselemet_20261106",
+          "cid_mda2_zimbruchisinau2_iskraribnita_20261106",
           "cid_mex2_cancun_piratas_20261106",
           "cid_mex2_durango_leonesnegros_20261106",
-          "cid_par1_rubionu_sportivoluqueno_20261106"
+          "cid_par1_rubionu_sportivoluqueno_20261106",
+          "cid_ukr1_obolon_livyibereg_20261106",
+          "cid_ukr1_polissyazhytomyr_veresrivne_20261106"
         ],
         "unexpectedFixtureIds": [],
         "duplicateFixtureIds": [],
@@ -11750,7 +11752,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-11-06",
-      "fileCount": 20,
+      "fileCount": 22,
       "authority": "scored_final_evidence"
     },
     "downstream": {
