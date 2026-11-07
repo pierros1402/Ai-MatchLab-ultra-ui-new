@@ -1,0 +1,232 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "eng.fa",
+  "homeTeam": "Peterborough United",
+  "awayTeam": "Reading",
+  "homeWinScore": 0.319,
+  "drawScore": 0.148,
+  "awayWinScore": 0.534,
+  "over15Score": 0.724,
+  "over25Score": 0.616,
+  "over35Score": 0.565,
+  "bttsScore": 0.513,
+  "confidence": 0.803,
+  "signals": [
+    "away_edge",
+    "home_form_decay",
+    "form_influence_reduced",
+    "mutual_attack_profile",
+    "priors_applied",
+    "cup_intensity",
+    "close_strength_gap",
+    "away_rest_3"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.425,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.17
+    },
+    "expectedHomeGoals": 1.675,
+    "expectedAwayGoals": 1.56,
+    "expectedTotalGoals": 3.236,
+    "homeStrength": 0.185,
+    "awayStrength": 0.42,
+    "homeEdge": 0.212,
+    "awayPenalty": 0.649,
+    "recency": {
+      "homeOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 13,
+        "daysSinceLastMatch": 18,
+        "spanDays": 17,
+        "maxInternalGap": 14,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.26,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.446
+      },
+      "awayOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 8,
+        "daysSinceLastMatch": 3,
+        "spanDays": 22,
+        "maxInternalGap": 9,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.948
+      },
+      "homeSide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 13,
+        "daysSinceLastMatch": 18,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.26,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.378
+      },
+      "awaySide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 8,
+        "daysSinceLastMatch": 3,
+        "spanDays": 18,
+        "maxInternalGap": 13,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.827
+      }
+    },
+    "matchupSample": 1,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 13,
+      "awayPriorSample": 8,
+      "leaguePriorSample": 552,
+      "matchupPriorSample": 1
+    },
+    "resolution": {
+      "homeInput": "Peterborough United",
+      "awayInput": "Reading",
+      "homeResolvedKey": "FC United",
+      "awayResolvedKey": "Reading",
+      "homeResolveScore": 0.943,
+      "awayResolveScore": 0.82,
+      "matchupResolvedKey": "Peterborough United::Reading",
+      "matchupResolveScore": 0,
+      "homePriorKey": "eng.fa::Peterborough United",
+      "awayPriorKey": "eng.fa::Reading",
+      "matchupPriorKey": "eng.fa|Manchester United|Reading"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "FC United",
+      "awayTeamKey": "Reading",
+      "leagueKey": "eng.fa",
+      "matchupKey": "Peterborough United::Reading"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "form_away_stronger",
+        "impact": 0.08,
+        "note": "Away team has significantly stronger form"
+      },
+      {
+        "code": "ai_away_form_signal",
+        "impact": 0.05,
+        "note": "AI confirmed strong away form edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    }
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "form_away_stronger",
+      "impact": 0.08,
+      "note": "Away team has significantly stronger form"
+    },
+    {
+      "code": "ai_away_form_signal",
+      "impact": 0.05,
+      "note": "AI confirmed strong away form edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "MEDIUM",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0.012,
+      "awayDelta": 0.021,
+      "drawDelta": 0.02,
+      "reasons": [
+        "cup_intensity",
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0.05,
+      "reasons": [
+        "away_rest_3"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "eng.fa",
+    "competitionType": "cup",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 7,
+    "awayRestDays": 3,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 1,
+    "homeMatchesLast14": 2,
+    "awayMatchesLast14": 2,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
