@@ -1,0 +1,208 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "jpn.2",
+  "homeTeam": "Sagan Tosu",
+  "awayTeam": "Toyama",
+  "homeWinScore": 0.433,
+  "drawScore": 0.16,
+  "awayWinScore": 0.408,
+  "over15Score": 0.616,
+  "over25Score": 0.512,
+  "over35Score": 0.466,
+  "bttsScore": 0.469,
+  "confidence": 0.906,
+  "signals": [
+    "home_edge",
+    "away_edge",
+    "priors_applied",
+    "close_strength_gap",
+    "home_rest_4",
+    "away_rest_4"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.5,
+      "awayOverallFormWeight": 0.5,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.2,
+    "expectedAwayGoals": 1.071,
+    "expectedTotalGoals": 2.271,
+    "homeStrength": 0.53,
+    "awayStrength": 0.43,
+    "homeEdge": 0.369,
+    "awayPenalty": 0.337,
+    "recency": {
+      "homeOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 38,
+        "daysSinceLastMatch": 4,
+        "spanDays": 17,
+        "maxInternalGap": 6,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 1,
+        "formContinuityWeight": 1
+      },
+      "awayOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 38,
+        "daysSinceLastMatch": 4,
+        "spanDays": 16,
+        "maxInternalGap": 6,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 1,
+        "formContinuityWeight": 1
+      },
+      "homeSide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 38,
+        "daysSinceLastMatch": 13,
+        "spanDays": 15,
+        "maxInternalGap": 8,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.45,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.635
+      },
+      "awaySide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 38,
+        "daysSinceLastMatch": 7,
+        "spanDays": 27,
+        "maxInternalGap": 18,
+        "gapSeverity": "moderate",
+        "freshnessScore": 1,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.705
+      }
+    },
+    "matchupSample": 2,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 38,
+      "awayPriorSample": 38,
+      "leaguePriorSample": 1695,
+      "matchupPriorSample": 2
+    },
+    "resolution": {
+      "homeInput": "Sagan Tosu",
+      "awayInput": "Toyama",
+      "homeResolvedKey": "Sagan Tosu",
+      "awayResolvedKey": "Toyama",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Sagan Tosu::Toyama",
+      "matchupResolveScore": 0,
+      "homePriorKey": "jpn.2::Sagan Tosu",
+      "awayPriorKey": "jpn.2::Kataller Toyama",
+      "matchupPriorKey": "jpn.2|Kataller Toyama|Sagan Tosu"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Sagan Tosu",
+      "awayTeamKey": "Toyama",
+      "leagueKey": "jpn.2",
+      "matchupKey": "Sagan Tosu::Toyama"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": false,
+    "contextDelta": 0,
+    "contextReasons": [],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    }
+  },
+  "contextAdjusted": false,
+  "contextReasons": [],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0.009,
+      "awayDelta": 0,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0.025,
+      "awayPenalty": 0.025,
+      "reasons": [
+        "home_rest_4",
+        "away_rest_4"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "jpn.2",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 4,
+    "awayRestDays": 4,
+    "homeMatchesLast7": 2,
+    "awayMatchesLast7": 2,
+    "homeMatchesLast14": 2,
+    "awayMatchesLast14": 2,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
