@@ -2,8 +2,8 @@
   "ok": true,
   "dayKey": "2026-11-09",
   "season": "2026-2027",
-  "generatedAt": "2026-11-09T19:50:33.817Z",
-  "startedAt": "2026-11-09T19:48:59.656Z",
+  "generatedAt": "2026-11-09T20:31:48.468Z",
+  "startedAt": "2026-11-09T20:30:39.316Z",
   "source": {
     "inputSource": "canonical_fixtures",
     "canonicalMatches": 53,
@@ -21,17 +21,17 @@
     "totalRows": 52,
     "detailsFound": 51,
     "intelligenceOk": 52,
-    "valueReturned": 10,
-    "valueNull": 42,
+    "valueReturned": 8,
+    "valueNull": 44,
     "valueFailed": 0,
-    "minimumRecentSampleNull": 42
+    "minimumRecentSampleNull": 44
   },
   "breakdown": {
     "nullByReason": {
-      "minimum_recent_sample": 42
+      "minimum_recent_sample": 44
     },
     "nullByClass": {
-      "low_recent_sample_prior_backed": 30,
+      "low_recent_sample_prior_backed": 32,
       "low_recent_sample": 11,
       "missing_team_history_and_prior": 1
     },
@@ -41,6 +41,7 @@
       "esp.2": 3,
       "isr.2": 3,
       "arm.2": 2,
+      "ecu.1": 2,
       "hon.1": 2,
       "per.1": 2,
       "rou.2": 2,
@@ -50,7 +51,6 @@
       "bol.1": 1,
       "chi.1": 1,
       "den.2": 1,
-      "ecu.1": 1,
       "eng.fa": 1,
       "geo.1": 1,
       "gre.2": 1,
@@ -59,6 +59,7 @@
       "mex.2": 1,
       "nor.1": 1,
       "par.1": 1,
+      "por.2": 1,
       "rou.1": 1,
       "rus.2": 1,
       "svk.2": 1,
@@ -68,11 +69,9 @@
       "bra.2": 2,
       "crc.1": 2,
       "col.2": 1,
-      "ecu.1": 1,
       "kos.2": 1,
       "mex.1": 1,
-      "par.1": 1,
-      "por.2": 1
+      "par.1": 1
     }
   },
   "rows": [
@@ -755,15 +754,17 @@
       "nullClass": null,
       "minimumSample": null,
       "valuePreview": {
-        "confidence": 0.787,
-        "homeWinScore": 0.39,
+        "confidence": 0.678,
+        "homeWinScore": 0.396,
         "drawScore": 0.158,
-        "awayWinScore": 0.451,
-        "over15Score": 0.583,
-        "over25Score": 0.44,
-        "bttsScore": 0.444,
+        "awayWinScore": 0.446,
+        "over15Score": 0.495,
+        "over25Score": 0.37,
+        "bttsScore": 0.518,
         "signals": [
           "away_edge",
+          "form_influence_reduced",
+          "defensive_profile",
           "priors_applied",
           "close_strength_gap",
           "home_rest_3",
@@ -773,8 +774,8 @@
           "1X2": {
             "eligible": false,
             "pick": "AWAY",
-            "score": 0.451,
-            "gap": 0.061,
+            "score": 0.446,
+            "gap": 0.04999999999999999,
             "drawScore": 0.158,
             "reasons": [
               "best_below_0.68",
@@ -784,38 +785,42 @@
           "Over / Under 1.5": {
             "eligible": false,
             "pick": "Over 1.5",
-            "score": 0.583,
+            "score": 0.495,
             "reasons": [
-              "score_below_0.70"
+              "score_below_0.70",
+              "goals_blocker"
             ]
           },
           "Over / Under 2.5": {
             "eligible": false,
             "pick": "Over 2.5",
-            "score": 0.44,
-            "expectedTotalGoals": 2.2,
+            "score": 0.37,
+            "expectedTotalGoals": 2.025,
             "reasons": [
               "score_below_0.65",
               "expected_goals_below_2.75",
-              "missing_goal_support"
+              "missing_goal_support",
+              "goals_blocker"
             ]
           },
           "Over / Under 3.5": {
             "eligible": false,
             "pick": "Over 3.5",
-            "score": 0.423,
+            "score": 0.356,
             "reasons": [
               "score_below_0.74",
-              "missing_strong_goal_support"
+              "missing_strong_goal_support",
+              "goals_blocker"
             ]
           },
           "BTTS": {
             "eligible": false,
             "pick": "BTTS YES",
-            "score": 0.444,
+            "score": 0.518,
             "reasons": [
               "score_below_0.68",
-              "missing_btts_support"
+              "missing_btts_support",
+              "btts_blocker"
             ]
           }
         }
@@ -984,7 +989,7 @@
       "leagueSlug": "den.2",
       "homeTeam": "Hvidovre IF",
       "awayTeam": "Aarhus Fremad",
-      "status": "STATUS_SCHEDULED",
+      "status": "FT",
       "kickoffUtc": "2026-11-09T18:00:00.000Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -1026,7 +1031,7 @@
       "leagueSlug": "ecu.1",
       "homeTeam": "Mushuc Runa",
       "awayTeam": "Delfín",
-      "status": "SECOND_HALF",
+      "status": "FT",
       "kickoffUtc": "2026-11-09T18:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -1073,80 +1078,44 @@
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.92,
-        "homeWinScore": 0.362,
-        "drawScore": 0.135,
-        "awayWinScore": 0.502,
-        "over15Score": 0.677,
-        "over25Score": 0.6659999999999999,
-        "bttsScore": 0.524,
-        "signals": [
-          "away_edge",
-          "priors_applied",
-          "close_strength_gap"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "AWAY",
-            "score": 0.502,
-            "gap": 0.14,
-            "drawScore": 0.135,
-            "reasons": [
-              "best_below_0.68"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": false,
-            "pick": "Over 1.5",
-            "score": 0.677,
-            "reasons": [
-              "score_below_0.70"
-            ]
-          },
-          "Over / Under 2.5": {
-            "eligible": false,
-            "pick": "Over 2.5",
-            "score": 0.6659999999999999,
-            "expectedTotalGoals": 2.583,
-            "reasons": [
-              "expected_goals_below_2.75",
-              "missing_goal_support"
-            ]
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.513,
-            "reasons": [
-              "score_below_0.74",
-              "missing_strong_goal_support"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.524,
-            "reasons": [
-              "score_below_0.68",
-              "missing_btts_support"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample_prior_backed",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Técnico Universitario",
+        "awayTeam": "Manta F.C.",
+        "leagueSlug": "ecu.1",
+        "fixtureDate": "2026-11-09T20:30:00.000Z",
+        "homeResolvedKey": "Técnico Universitario",
+        "awayResolvedKey": "Manta F.C.",
+        "homeRawSample": 2,
+        "awayRawSample": 1,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": 142,
+        "awayPriorSample": 52,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_engfa_plymouthparkway_berkhamsted_20261109",
       "leagueSlug": "eng.fa",
       "homeTeam": "Plymouth Parkway",
       "awayTeam": "Berkhamsted",
-      "status": "PRE",
+      "status": "FIRST_HALF",
       "kickoffUtc": "2026-11-09T19:30Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -1188,7 +1157,7 @@
       "leagueSlug": "esp.2",
       "homeTeam": "Las Palmas",
       "awayTeam": "Eldense",
-      "status": "PRE",
+      "status": "FIRST_HALF",
       "kickoffUtc": "2026-11-09T19:30Z",
       "detailsFound": false,
       "intelligenceOk": true,
@@ -1272,7 +1241,7 @@
       "leagueSlug": "esp.2",
       "homeTeam": "CD Sabadell",
       "awayTeam": "Real Sociedad II",
-      "status": "PRE",
+      "status": "FIRST_HALF",
       "kickoffUtc": "2026-11-09T19:30Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -1886,7 +1855,7 @@
       "leagueSlug": "nor.1",
       "homeTeam": "Kristiansund BK",
       "awayTeam": "Vålerenga",
-      "status": "SECOND_HALF",
+      "status": "FT",
       "kickoffUtc": "2026-11-09T18:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -1928,7 +1897,7 @@
       "leagueSlug": "par.1",
       "homeTeam": "Sportivo San Lorenzo",
       "awayTeam": "Rubio Ñú",
-      "status": "PRE",
+      "status": "FIRST_HALF",
       "kickoffUtc": "2026-11-09T20:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -1939,15 +1908,15 @@
       "nullClass": null,
       "minimumSample": null,
       "valuePreview": {
-        "confidence": 0.768,
-        "homeWinScore": 0.481,
+        "confidence": 0.586,
+        "homeWinScore": 0.419,
         "drawScore": 0.163,
-        "awayWinScore": 0.357,
-        "over15Score": 0.775,
-        "over25Score": 0.612,
-        "bttsScore": 0.502,
+        "awayWinScore": 0.418,
+        "over15Score": 0.836,
+        "over25Score": 0.691,
+        "bttsScore": 0.559,
         "signals": [
-          "home_edge",
+          "away_edge",
           "over25_support",
           "close_strength_gap",
           "away_rest_3"
@@ -1956,32 +1925,33 @@
           "1X2": {
             "eligible": false,
             "pick": "HOME",
-            "score": 0.481,
-            "gap": 0.124,
+            "score": 0.419,
+            "gap": 0.0010000000000000009,
             "drawScore": 0.163,
             "reasons": [
-              "best_below_0.68"
+              "best_below_0.68",
+              "gap_below_0.10"
             ]
           },
           "Over / Under 1.5": {
-            "eligible": true,
+            "eligible": false,
             "pick": "Over 1.5",
-            "score": 0.775,
-            "reasons": []
+            "score": 0.836,
+            "reasons": [
+              "suppressed_by_over25"
+            ]
           },
           "Over / Under 2.5": {
-            "eligible": false,
+            "eligible": true,
             "pick": "Over 2.5",
-            "score": 0.612,
-            "expectedTotalGoals": 3,
-            "reasons": [
-              "score_below_0.65"
-            ]
+            "score": 0.691,
+            "expectedTotalGoals": 3.833,
+            "reasons": []
           },
           "Over / Under 3.5": {
             "eligible": false,
             "pick": "Over 3.5",
-            "score": 0.586,
+            "score": 0.698,
             "reasons": [
               "score_below_0.74",
               "missing_strong_goal_support"
@@ -1990,7 +1960,7 @@
           "BTTS": {
             "eligible": false,
             "pick": "BTTS YES",
-            "score": 0.502,
+            "score": 0.559,
             "reasons": [
               "score_below_0.68",
               "missing_btts_support"
@@ -2135,82 +2105,44 @@
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.845,
-        "homeWinScore": 0.375,
-        "drawScore": 0.173,
-        "awayWinScore": 0.452,
-        "over15Score": 0.614,
-        "over25Score": 0.611,
-        "bttsScore": 0.47200000000000003,
-        "signals": [
-          "away_edge",
-          "matchup_goals_history",
-          "priors_applied",
-          "close_strength_gap",
-          "home_rest_4"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "AWAY",
-            "score": 0.452,
-            "gap": 0.07700000000000001,
-            "drawScore": 0.173,
-            "reasons": [
-              "best_below_0.68",
-              "gap_below_0.10"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": false,
-            "pick": "Over 1.5",
-            "score": 0.614,
-            "reasons": [
-              "score_below_0.70"
-            ]
-          },
-          "Over / Under 2.5": {
-            "eligible": false,
-            "pick": "Over 2.5",
-            "score": 0.611,
-            "expectedTotalGoals": 2.38,
-            "reasons": [
-              "score_below_0.65",
-              "expected_goals_below_2.75"
-            ]
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.463,
-            "reasons": [
-              "score_below_0.74"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.47200000000000003,
-            "reasons": [
-              "score_below_0.68",
-              "missing_btts_support"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample_prior_backed",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Torreense",
+        "awayTeam": "Leiria",
+        "leagueSlug": "por.2",
+        "fixtureDate": "2026-11-09T20:15:00.000Z",
+        "homeResolvedKey": "Torreense",
+        "awayResolvedKey": "Leiria",
+        "homeRawSample": 2,
+        "awayRawSample": 1,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": 136,
+        "awayPriorSample": 102,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_rou1_botosani_otelul_20261109",
       "leagueSlug": "rou.1",
       "homeTeam": "FC Botosani",
       "awayTeam": "Otelul",
-      "status": "STATUS_SCHEDULED",
+      "status": "FT",
       "kickoffUtc": "2026-11-09T18:00:00.000Z",
       "detailsFound": true,
       "intelligenceOk": true,
