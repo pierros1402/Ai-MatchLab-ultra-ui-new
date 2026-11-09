@@ -1,17 +1,22 @@
 {
   "schema": "ai-matchlab.foundation-integrity.v1",
-  "generatedAt": "2026-11-09T21:49:17.306Z",
-  "dayKey": "2026-11-09",
+  "generatedAt": "2026-11-09T22:17:10.089Z",
+  "dayKey": "2026-11-10",
   "season": "2026-2027",
-  "ok": true,
+  "ok": false,
   "modelReady": true,
-  "publicationReady": true,
-  "blocked": [],
+  "publicationReady": false,
+  "blocked": [
+    {
+      "component": "details",
+      "reason": "details_foundation_not_ready"
+    }
+  ],
   "warnings": [
     {
       "component": "historySemantic",
       "reason": "age_expired_results_rows_present",
-      "count": 21448,
+      "count": 21456,
       "informational": true
     },
     {
@@ -35,7 +40,7 @@
         "ok": false,
         "clean": false,
         "schema": "ai-matchlab.history-semantic-integrity.v1",
-        "generatedAt": "2026-11-09T21:49:16.168Z",
+        "generatedAt": "2026-11-09T22:17:09.047Z",
         "sourceContract": {
           "readOnlyTruthLayers": true,
           "truthWrites": 0,
@@ -83,7 +88,7 @@
           {
             "type": "results_expired_entries",
             "severity": "info",
-            "count": 21448,
+            "count": 21456,
             "detail": "Age-expired rows are reported separately and are not treated as duplicates."
           }
         ],
@@ -92,7 +97,7 @@
           "teamKeyCount": 17737,
           "entryCount": 434235,
           "reconstructedMatchIdCount": 216997,
-          "expiredEntryCount": 21448,
+          "expiredEntryCount": 21456,
           "invalidEntryCount": 0,
           "orphanMatchIdCount": 1,
           "multiSideMatchIdCount": 194,
@@ -1756,7 +1761,7 @@
             {
               "slug": "chi.1",
               "actionable": 2,
-              "expiredEntryCount": 208,
+              "expiredEntryCount": 210,
               "invalidEntryCount": 0,
               "orphanMatchIdCount": 0,
               "mirrorConflictCount": 1,
@@ -4651,7 +4656,7 @@
       "reason": null,
       "detail": {
         "schema": "ai-matchlab.standings-foundation-audit.v1",
-        "generatedAt": "2026-11-09T21:49:16.265Z",
+        "generatedAt": "2026-11-09T22:17:09.164Z",
         "ok": true,
         "season": "2026-2027",
         "summary": {
@@ -226343,29 +226348,104 @@
       }
     },
     "details": {
-      "ok": true,
-      "reason": null,
+      "ok": false,
+      "reason": "details_foundation_not_ready",
       "detail": {
         "schema": "ai-matchlab.details-foundation-audit.v2",
-        "generatedAt": "2026-11-09T21:49:17.306Z",
-        "dayKey": "2026-11-09",
-        "ok": true,
+        "generatedAt": "2026-11-09T22:17:10.089Z",
+        "dayKey": "2026-11-10",
+        "ok": false,
         "publicationUniverse": {
-          "mode": "intraday_status_only",
-          "currentFixtureCount": 53,
-          "publishedFixtureCount": 52,
-          "deferredFixtureCount": 1,
-          "deferredFixtureIds": [
-            "cid_esp2_laspalmas_eldense_20261109"
-          ]
+          "mode": null,
+          "currentFixtureCount": 28,
+          "publishedFixtureCount": 0,
+          "deferredFixtureCount": 0,
+          "deferredFixtureIds": []
         },
         "summary": {
-          "expectedFixtures": 52,
-          "detailFiles": 52,
-          "checked": 52,
-          "issueCount": 0
+          "expectedFixtures": 0,
+          "detailFiles": 0,
+          "checked": 0,
+          "issueCount": 10
         },
-        "issues": []
+        "issues": [
+          {
+            "code": "PUBLICATION_MANIFEST_MISSING_OR_INVALID"
+          },
+          {
+            "code": "PUBLICATION_UNIVERSE_MISSING"
+          },
+          {
+            "code": "PUBLICATION_MODE_INVALID",
+            "mode": null
+          },
+          {
+            "code": "PUBLICATION_FILE_LAYOUT_INVALID",
+            "fixtures": null,
+            "detailsDir": null
+          },
+          {
+            "code": "CURRENT_FIXTURE_UNACCOUNTED",
+            "ids": [
+              "cid_bol1_aurora_universitariovinto_20261110",
+              "cid_col1_atleticojunior_cucutadeportivo_20261110",
+              "cid_col2_envigado_bocajuniors_20261110",
+              "cid_engtrophy_barnet_leytonorient_20261110",
+              "cid_engtrophy_bradfordcity_yorkcity_20261110",
+              "cid_engtrophy_bristolrovers_reading_20261110",
+              "cid_engtrophy_bromley_miltonkeynesdons_20261110",
+              "cid_engtrophy_burtonalbion_nottscounty_20261110",
+              "cid_engtrophy_colchesterunited_ipswichtownu21_20261110",
+              "cid_engtrophy_crawleytown_brentfordu21_20261110",
+              "cid_engtrophy_crewealexandra_wiganathletic_20261110",
+              "cid_engtrophy_grimsbytown_nottinghamforestu21_20261110",
+              "cid_engtrophy_huddersfieldtown_liverpoolu21_20261110",
+              "cid_engtrophy_leicestercity_walsall_20261110",
+              "cid_engtrophy_mansfieldtown_chesterfield_20261110",
+              "cid_engtrophy_northamptontown_gillingham_20261110",
+              "cid_engtrophy_oxfordunited_cheltenhamtown_20261110",
+              "cid_engtrophy_plymouthargyle_swindontown_20261110",
+              "cid_engtrophy_stevenage_fulhamu21_20261110",
+              "cid_engtrophy_stockportcounty_tranmererovers_20261110",
+              "cid_espcopadelrey_amorebieta_udlogrones_20261110",
+              "cid_espcopadelrey_anaitasuna_alaves_20261110",
+              "cid_espcopadelrey_mijaslaslagunas_realjaen_20261110",
+              "cid_espcopadelrey_pamplona_eibar_20261110",
+              "cid_espcopadelrey_taverneslavalldigna_valencia_20261110",
+              "cid_espcopadelrey_trivalvalderas_leganes_20261110",
+              "cid_rou2_metalulbuzau_steauabucuresti_20261110",
+              "cid_uru2_huracan_riverplate_20261110"
+            ]
+          },
+          {
+            "code": "PUBLICATION_COUNT_MISMATCH",
+            "field": "currentFixtureCount",
+            "declared": null,
+            "actual": 28
+          },
+          {
+            "code": "PUBLICATION_COUNT_MISMATCH",
+            "field": "publishedFixtureCount",
+            "declared": null,
+            "actual": 0
+          },
+          {
+            "code": "PUBLICATION_COUNT_MISMATCH",
+            "field": "deferredFixtureCount",
+            "declared": null,
+            "actual": 0
+          },
+          {
+            "code": "MANIFEST_FIXTURE_COUNT_MISMATCH",
+            "declared": null,
+            "actual": 0
+          },
+          {
+            "code": "MANIFEST_DETAIL_COUNT_MISMATCH",
+            "declared": null,
+            "actual": 0
+          }
+        ]
       }
     }
   },
@@ -226378,5 +226458,5 @@
     "detailsMustMatchCurrentFoundation": true,
     "deploySnapshotUsedAsTruth": false
   },
-  "latestForDay": "2026-11-09"
+  "latestForDay": "2026-11-10"
 }
