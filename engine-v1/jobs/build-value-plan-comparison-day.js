@@ -1484,9 +1484,15 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
     payload.dataReadiness=buildValueDataReadinessDay(dayKey);
     let productionVerified=false;
     try{
-      const result=refreshUnifiedProductionProjection(dayKey);
-      if(result.status==='AVAILABLE'){
-        payload.unifiedPlan=readVerifiedProductionPlan(dataPath('value-unified',dayKey,'public-plan.json'),dayKey);
+      const productionFile=dataPath('value-unified',dayKey,'public-plan.json');
+      if(options.write===true){
+        const result=refreshUnifiedProductionProjection(dayKey);
+        if(result.status==='AVAILABLE'){
+          payload.unifiedPlan=readVerifiedProductionPlan(productionFile,dayKey);
+          productionVerified=true;
+        }
+      }else if(fs.existsSync(productionFile)){
+        payload.unifiedPlan=readVerifiedProductionPlan(productionFile,dayKey);
         productionVerified=true;
       }
     }catch(error){payload.unifiedPlan=unavailableUnifiedPlan(dayKey,error.message);}
