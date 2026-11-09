@@ -1,0 +1,536 @@
+{
+  "ok": true,
+  "date": "2026-11-09",
+  "source": "canonical_fixtures",
+  "planId": "plan-a",
+  "outputMode": "plan-a-observation",
+  "count": 2,
+  "picks": [
+    {
+      "matchId": "cid_kos2_ferizaj_suhareka_20261109",
+      "leagueSlug": "kos.2",
+      "homeTeam": "Ferizaj",
+      "awayTeam": "Suhareka",
+      "kickoff": "2026-11-09T12:00:00.000Z",
+      "market": "Over / Under 2.5",
+      "marketName": "Over / Under 2.5",
+      "pick": "Over 2.5",
+      "score": 0.754,
+      "band": "MEDIUM",
+      "confidence": 0.871,
+      "rawConfidence": 0.902,
+      "readiness": 0.723,
+      "signals": [
+        "home_edge",
+        "mutual_attack_profile",
+        "priors_applied",
+        "close_strength_gap",
+        "match_profile_applied"
+      ],
+      "meta": {
+        "model": "value-engine-v1",
+        "mode": "statistical_plus_context",
+        "formWindow": 5,
+        "formRules": {
+          "sameSeasonOnly": true,
+          "maxAgeDays": 35,
+          "fullStrengthDays": 7,
+          "decayStartDays": 8,
+          "heavyDecayDays": 14,
+          "breakdownDays": 21,
+          "gapModerateDays": 14,
+          "gapHeavyDays": 21,
+          "gapStaleDays": 35,
+          "gapPolicy": "form_weight_reduced_not_rejected"
+        },
+        "baseWeights": {
+          "form": 0.5,
+          "homeAway": 0.2,
+          "goals": 0.2,
+          "matchup": 0.1
+        },
+        "effectiveWeights": {
+          "homeOverallFormWeight": 0.325,
+          "awayOverallFormWeight": 0.5,
+          "homeSideFormWeight": 0.13,
+          "awaySideFormWeight": 0.12
+        },
+        "expectedHomeGoals": 1.751,
+        "expectedAwayGoals": 1.025,
+        "expectedTotalGoals": 2.776,
+        "homeStrength": 0.616,
+        "awayStrength": 0.446,
+        "homeEdge": 0.644,
+        "awayPenalty": 0.422,
+        "recency": {
+          "homeOverall": {
+            "sample": 6,
+            "rawSample": 3,
+            "priorSample": 54,
+            "daysSinceLastMatch": 9,
+            "spanDays": 14,
+            "maxInternalGap": 10,
+            "gapSeverity": "normal",
+            "freshnessScore": 0.65,
+            "continuityScore": 1,
+            "formContinuityWeight": 0.757
+          },
+          "awayOverall": {
+            "sample": 6,
+            "rawSample": 3,
+            "priorSample": 115,
+            "daysSinceLastMatch": 5,
+            "spanDays": 14,
+            "maxInternalGap": 10,
+            "gapSeverity": "normal",
+            "freshnessScore": 1,
+            "continuityScore": 1,
+            "formContinuityWeight": 0.88
+          },
+          "homeSide": {
+            "sample": 5,
+            "rawSample": 2,
+            "priorSample": 54,
+            "daysSinceLastMatch": 9,
+            "spanDays": 10,
+            "maxInternalGap": 10,
+            "gapSeverity": "normal",
+            "freshnessScore": 0.65,
+            "continuityScore": 1,
+            "formContinuityWeight": 0.697
+          },
+          "awaySide": {
+            "sample": 4,
+            "rawSample": 1,
+            "priorSample": 115,
+            "daysSinceLastMatch": 9,
+            "spanDays": 0,
+            "maxInternalGap": 0,
+            "gapSeverity": "normal",
+            "freshnessScore": 0.65,
+            "continuityScore": 1,
+            "formContinuityWeight": 0.638
+          }
+        },
+        "matchupSample": 3,
+        "priorsUsed": true,
+        "priors": {
+          "used": true,
+          "homePriorSample": 54,
+          "awayPriorSample": 115,
+          "leaguePriorSample": 1377,
+          "matchupPriorSample": 5
+        },
+        "resolution": {
+          "homeInput": "Ferizaj",
+          "awayInput": "Suhareka",
+          "homeResolvedKey": "Ferizaj",
+          "awayResolvedKey": "Suhareka",
+          "homeResolveScore": 1,
+          "awayResolveScore": 1,
+          "matchupResolvedKey": "Dinamo Ferizaj::Suhareka",
+          "matchupResolveScore": 0.9,
+          "homePriorKey": "kos.2::KF Ferizaj",
+          "awayPriorKey": "kos.2::FC Suhareka",
+          "matchupPriorKey": "kos.2|FC Suhareka|KF Dinamo Ferizaj"
+        },
+        "sourceKeys": {
+          "homeTeamKey": "Ferizaj",
+          "awayTeamKey": "Suhareka",
+          "leagueKey": "kos.2",
+          "matchupKey": "Dinamo Ferizaj::Suhareka"
+        },
+        "contextModifiers": {
+          "applied": true,
+          "version": "value-context-modifiers-v1.0"
+        },
+        "contextAdjusted": true,
+        "contextDelta": 0,
+        "contextReasons": [
+          {
+            "code": "form_balanced",
+            "impact": 0.04,
+            "note": "Teams have similar recent form"
+          },
+          {
+            "code": "h2h_home_edge",
+            "impact": 0.025,
+            "note": "Recent H2H leans home"
+          },
+          {
+            "code": "h2h_overlean",
+            "impact": 0.03,
+            "note": "Recent H2H goals profile is open"
+          },
+          {
+            "code": "ai_h2h_over_signal",
+            "impact": 0.07,
+            "note": "AI detected open H2H pattern"
+          },
+          {
+            "code": "ai_h2h_home_edge",
+            "impact": 0.06,
+            "note": "AI detected home H2H edge"
+          }
+        ],
+        "aiContext": {
+          "available": true,
+          "importance": "low",
+          "stakes": [],
+          "pressure": [
+            "low_confidence_table"
+          ]
+        },
+        "matchProfileApplied": true,
+        "matchProfileConfidence": 0.6,
+        "matchProfileReasons": [
+          {
+            "code": "match_profile_h2h_home_edge",
+            "impact": 0.011000000000000001,
+            "note": "MatchProfile H2H trend leans home"
+          },
+          {
+            "code": "match_profile_h2h_overlean",
+            "impact": 0.022000000000000002,
+            "note": "MatchProfile H2H goal pattern leans over"
+          }
+        ],
+        "valuePolicy": {
+          "version": "statistical-value-policy-v2.3",
+          "oddsIndependent": true,
+          "type": "statistical_value",
+          "formGapHandling": "reduced_weight_not_rejected"
+        },
+        "readiness": 0.723,
+        "adjustedConfidence": 0.871,
+        "outcomeScores": {
+          "homeWinScore": 0.536,
+          "drawScore": 0.156,
+          "awayWinScore": 0.354,
+          "bestSide": "HOME",
+          "sideGap": 0.18200000000000005,
+          "drawGapToBestSide": 0.38
+        },
+        "policyReason": "over25_near_high_medium_only"
+      },
+      "context": {
+        "season": "2026-2027",
+        "leagueSlug": "kos.2",
+        "competitionType": "league",
+        "phase": "regular",
+        "leagueTrust": "medium",
+        "leagueTier": 2,
+        "homeRestDays": 9,
+        "awayRestDays": 5,
+        "homeMatchesLast7": 0,
+        "awayMatchesLast7": 1,
+        "homeMatchesLast14": 1,
+        "awayMatchesLast14": 2,
+        "homeNextMatchInDays": null,
+        "awayNextMatchInDays": null
+      }
+    },
+    {
+      "matchId": "cid_mex1_queretaro_puebla_20261109",
+      "leagueSlug": "mex.1",
+      "homeTeam": "Querétaro",
+      "awayTeam": "Puebla",
+      "kickoff": "2026-11-09T00:00Z",
+      "market": "Over / Under 2.5",
+      "marketName": "Over / Under 2.5",
+      "pick": "Over 2.5",
+      "score": 0.749,
+      "band": "MEDIUM",
+      "confidence": 0.864,
+      "rawConfidence": 0.901,
+      "readiness": 0.69,
+      "signals": [
+        "away_edge",
+        "over25_support",
+        "btts_support",
+        "priors_applied",
+        "ai_context_medium_importance",
+        "close_strength_gap",
+        "match_profile_applied"
+      ],
+      "meta": {
+        "model": "value-engine-v1",
+        "mode": "statistical_plus_context",
+        "formWindow": 5,
+        "formRules": {
+          "sameSeasonOnly": true,
+          "maxAgeDays": 35,
+          "fullStrengthDays": 7,
+          "decayStartDays": 8,
+          "heavyDecayDays": 14,
+          "breakdownDays": 21,
+          "gapModerateDays": 14,
+          "gapHeavyDays": 21,
+          "gapStaleDays": 35,
+          "gapPolicy": "form_weight_reduced_not_rejected"
+        },
+        "baseWeights": {
+          "form": 0.5,
+          "homeAway": 0.2,
+          "goals": 0.2,
+          "matchup": 0.1
+        },
+        "effectiveWeights": {
+          "homeOverallFormWeight": 0.45,
+          "awayOverallFormWeight": 0.45,
+          "homeSideFormWeight": 0.12,
+          "awaySideFormWeight": 0.12
+        },
+        "expectedHomeGoals": 1.511,
+        "expectedAwayGoals": 1.867,
+        "expectedTotalGoals": 3.378,
+        "homeStrength": 0.142,
+        "awayStrength": 0.274,
+        "homeEdge": 0.011,
+        "awayPenalty": 0.399,
+        "recency": {
+          "homeOverall": {
+            "sample": 6,
+            "rawSample": 3,
+            "priorSample": 3,
+            "daysSinceLastMatch": 8,
+            "spanDays": 10,
+            "maxInternalGap": 5,
+            "gapSeverity": "normal",
+            "freshnessScore": 0.9,
+            "continuityScore": 1,
+            "formContinuityWeight": 0.845
+          },
+          "awayOverall": {
+            "sample": 6,
+            "rawSample": 3,
+            "priorSample": 38,
+            "daysSinceLastMatch": 8,
+            "spanDays": 13,
+            "maxInternalGap": 8,
+            "gapSeverity": "normal",
+            "freshnessScore": 0.9,
+            "continuityScore": 1,
+            "formContinuityWeight": 0.845
+          },
+          "homeSide": {
+            "sample": 4,
+            "rawSample": 1,
+            "priorSample": 3,
+            "daysSinceLastMatch": 13,
+            "spanDays": 0,
+            "maxInternalGap": 0,
+            "gapSeverity": "normal",
+            "freshnessScore": 0.45,
+            "continuityScore": 0.85,
+            "formContinuityWeight": 0.515
+          },
+          "awaySide": {
+            "sample": 5,
+            "rawSample": 2,
+            "priorSample": 38,
+            "daysSinceLastMatch": 14,
+            "spanDays": 8,
+            "maxInternalGap": 8,
+            "gapSeverity": "normal",
+            "freshnessScore": 0.4,
+            "continuityScore": 0.85,
+            "formContinuityWeight": 0.557
+          }
+        },
+        "matchupSample": 2,
+        "priorsUsed": true,
+        "priors": {
+          "used": true,
+          "homePriorSample": 3,
+          "awayPriorSample": 38,
+          "leaguePriorSample": 400,
+          "matchupPriorSample": 2
+        },
+        "resolution": {
+          "homeInput": "Querétaro",
+          "awayInput": "Puebla",
+          "homeResolvedKey": "Querétaro",
+          "awayResolvedKey": "Puebla",
+          "homeResolveScore": 1,
+          "awayResolveScore": 1,
+          "matchupResolvedKey": "Querétaro::Puebla",
+          "matchupResolveScore": 0,
+          "homePriorKey": "mex.1::Querétaro",
+          "awayPriorKey": "mex.1::Puebla",
+          "matchupPriorKey": "mex.1|Puebla|Queretaro"
+        },
+        "sourceKeys": {
+          "homeTeamKey": "Querétaro",
+          "awayTeamKey": "Puebla",
+          "leagueKey": "mex.1",
+          "matchupKey": "Querétaro::Puebla"
+        },
+        "contextModifiers": {
+          "applied": true,
+          "version": "value-context-modifiers-v1.0"
+        },
+        "contextAdjusted": true,
+        "contextDelta": 0,
+        "contextReasons": [
+          {
+            "code": "form_away_stronger",
+            "impact": 0.08,
+            "note": "Away team has significantly stronger form"
+          },
+          {
+            "code": "ai_h2h_home_edge",
+            "impact": 0.06,
+            "note": "AI detected home H2H edge"
+          },
+          {
+            "code": "ai_away_form_signal",
+            "impact": 0.05,
+            "note": "AI confirmed strong away form edge"
+          }
+        ],
+        "aiContext": {
+          "available": true,
+          "importance": "medium",
+          "stakes": {
+            "home": "europe",
+            "away": "europe",
+            "tags": [
+              "playoff_race"
+            ]
+          },
+          "pressure": [
+            "chasing_cutoff"
+          ]
+        },
+        "matchProfileApplied": true,
+        "matchProfileConfidence": 0.74,
+        "matchProfileReasons": [
+          {
+            "code": "match_profile_away_table_edge",
+            "impact": 0.027500000000000004,
+            "note": "MatchProfile table positions: home #11, away #6"
+          },
+          {
+            "code": "match_profile_h2h_home_edge",
+            "impact": 0.011000000000000001,
+            "note": "MatchProfile H2H trend leans home"
+          }
+        ],
+        "valuePolicy": {
+          "version": "statistical-value-policy-v2.3",
+          "oddsIndependent": true,
+          "type": "statistical_value",
+          "formGapHandling": "reduced_weight_not_rejected"
+        },
+        "readiness": 0.69,
+        "adjustedConfidence": 0.864,
+        "outcomeScores": {
+          "homeWinScore": 0.43000000000000005,
+          "drawScore": 0.114,
+          "awayWinScore": 0.5095,
+          "bestSide": "AWAY",
+          "sideGap": 0.0794999999999999,
+          "drawGapToBestSide": 0.39549999999999996
+        },
+        "policyReason": "over25_near_high_medium_only"
+      },
+      "context": {
+        "season": "2026-2027",
+        "leagueSlug": "mex.1",
+        "competitionType": "league",
+        "phase": "regular",
+        "leagueTrust": "medium",
+        "leagueTier": 2,
+        "homeRestDays": 8,
+        "awayRestDays": 8,
+        "homeMatchesLast7": 0,
+        "awayMatchesLast7": 0,
+        "homeMatchesLast14": 2,
+        "awayMatchesLast14": 1,
+        "homeNextMatchInDays": null,
+        "awayNextMatchInDays": null
+      }
+    }
+  ],
+  "fixtureUniverse": {
+    "schema": "ai-matchlab.value-fixture-universe.v1",
+    "source": "canonical_fixtures",
+    "count": 54,
+    "hash": "11d92900fc0896dede97b1727849e94f03d22433ec8672887c2824668a1086df",
+    "canonicalIds": [
+      "cid_arg1_centralcordobasantiagodelestero_lanus_20261109",
+      "cid_arm2_bentonit_avsharararat_20261109",
+      "cid_arm2_mika_shirakgyumri2_20261109",
+      "cid_bol1_blooming_orientepetrolero_20261109",
+      "cid_bra2_ceara_americamineiro_20261109",
+      "cid_bra2_goias_pontepreta_20261109",
+      "cid_bul2_chernomorets1919_yantragabrovo_20261109",
+      "cid_bul2_cskasofiaii_rilskisportist_20261109",
+      "cid_bul2_etar_montana_20261109",
+      "cid_bul2_fratria_svoge_20261109",
+      "cid_chi1_universidadcatolica_deporteslimache_20261109",
+      "cid_chi1_universidadconcepcion_ohiggins_20261109",
+      "cid_col1_alianza_llaneros_20261109",
+      "cid_col1_americacali_deportivocali_20261109",
+      "cid_col1_atleticojunior_cucutadeportivo_20261109",
+      "cid_col1_deportestolima_millonarios_20261109",
+      "cid_col2_indvalledelcauca_umagdalena_20261109",
+      "cid_crc1_herediano_intersancarlos_20261109",
+      "cid_crc1_saprissa_puntarenas_20261109",
+      "cid_den2_hvidovre_aarhusfremad_20261109",
+      "cid_ecu1_mushucruna_delfin_20261109",
+      "cid_ecu1_tecnicouniversitario_manta_20261109",
+      "cid_engfa_plymouthparkway_berkhamsted_20261109",
+      "cid_esp2_sabadell_realsociedadb_20261109",
+      "cid_esp2_sabadell_realsociedadii_20261109",
+      "cid_geo1_iberia1999_gagra_20261109",
+      "cid_gre2_zakynthos_nikivolos_20261109",
+      "cid_gua1_antiguagfc_malacateco_20261109",
+      "cid_hon1_deportivomarathon_choloma_20261109",
+      "cid_hon1_independientesiguatepeque_realespana_20261109",
+      "cid_isr2_hapoelkfarsaba_maccabibneiraina_20261109",
+      "cid_isr2_ironimodiin_hakko_20261109",
+      "cid_isr2_mskafrqasim_hapoelafula_20261109",
+      "cid_kos2_ferizaj_suhareka_20261109",
+      "cid_mex1_leon_guadalajara_20261109",
+      "cid_mex1_queretaro_puebla_20261109",
+      "cid_mex2_piratas_cancun_20261109",
+      "cid_nor1_kristiansund_valerenga_20261109",
+      "cid_par1_sportivosanlorenzo_rubionu_20261109",
+      "cid_par1_sportivotrinidense_sportivoameliano_20261109",
+      "cid_per1_deportivogarcilaso_comerciantesunidos_20261109",
+      "cid_per1_universitario_deportivomoquegua_20261109",
+      "cid_por2_torreense_leiria_20261109",
+      "cid_rou1_botosani_otelul_20261109",
+      "cid_rou2_csdinbucuresti_ramnicuvalcea_20261109",
+      "cid_rou2_politehnicatimisoara_csmresita_20261109",
+      "cid_rus2_velesmoscow_kamaz_20261109",
+      "cid_slv1_fas_fuertesanfrancisco_20261109",
+      "cid_slv1_municipallimeno_atleticobalboa_20261109",
+      "cid_srb2_javor_tsc_20261109",
+      "cid_srb2_napredak_bor1919_20261109",
+      "cid_svk2_lmikulas_mfkbytca_20261109",
+      "cid_ukr2_viktoria_ahrobiznesvolochysk_20261109",
+      "cid_ven2_lara_zamora2_20261109"
+    ]
+  },
+  "schema": "ai-matchlab.value-plan-a-observation.v1",
+  "immutable": true,
+  "trialStartDate": "2026-07-05",
+  "frozenAt": "2026-11-08T17:40:58.613Z",
+  "observationSignature": "6330ff022b50bc5b2cb334397e985b5bfd2945d85d39e5685b2bfdf49babe407",
+  "sourceContract": {
+    "observationInputArtifact": "data/value/2026-11-09.json",
+    "observationImmutable": true,
+    "deploySnapshotUsedAsFinalTruth": false,
+    "trialStartDate": "2026-07-05"
+  },
+  "provenance": {
+    "kind": "daily_cycle_first_value_output",
+    "sourcePath": "data/value/2026-11-09.json",
+    "note": "Freeze the first successful production output before downstream enrichment and midnight rollover."
+  },
+  "publicationAuthority": "frozen_plan_a_observation",
+  "updatedAt": "2026-11-09T11:27:29.824Z"
+}
