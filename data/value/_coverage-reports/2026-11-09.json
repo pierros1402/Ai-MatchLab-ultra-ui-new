@@ -2,8 +2,8 @@
   "ok": true,
   "dayKey": "2026-11-09",
   "season": "2026-2027",
-  "generatedAt": "2026-11-08T23:24:47.444Z",
-  "startedAt": "2026-11-08T23:23:06.583Z",
+  "generatedAt": "2026-11-09T00:09:54.810Z",
+  "startedAt": "2026-11-09T00:08:34.414Z",
   "source": {
     "inputSource": "canonical_fixtures",
     "canonicalMatches": 53,
@@ -21,25 +21,28 @@
     "totalRows": 53,
     "detailsFound": 52,
     "intelligenceOk": 53,
-    "valueReturned": 43,
-    "valueNull": 10,
+    "valueReturned": 41,
+    "valueNull": 12,
     "valueFailed": 0,
-    "minimumRecentSampleNull": 10
+    "minimumRecentSampleNull": 12
   },
   "breakdown": {
     "nullByReason": {
-      "minimum_recent_sample": 10
+      "minimum_recent_sample": 12
     },
     "nullByClass": {
-      "low_recent_sample": 5,
-      "low_recent_sample_prior_backed": 5
+      "low_recent_sample": 6,
+      "low_recent_sample_prior_backed": 5,
+      "missing_team_history_and_prior": 1
     },
     "nullByLeague": {
       "arg.1": 1,
+      "bol.1": 1,
       "bul.2": 1,
       "chi.1": 1,
       "col.1": 1,
       "eng.fa": 1,
+      "gua.1": 1,
       "hon.1": 1,
       "par.1": 1,
       "per.1": 1,
@@ -58,12 +61,10 @@
       "mex.1": 2,
       "rou.2": 2,
       "srb.2": 2,
-      "bol.1": 1,
       "col.2": 1,
       "den.2": 1,
       "geo.1": 1,
       "gre.2": 1,
-      "gua.1": 1,
       "hon.1": 1,
       "kos.2": 1,
       "mex.2": 1,
@@ -84,7 +85,7 @@
       "leagueSlug": "arg.1",
       "homeTeam": "Central Córdoba (Santiago del Estero)",
       "awayTeam": "Lanús",
-      "status": "FIRST_HALF",
+      "status": "LIVE",
       "kickoffUtc": "2026-11-08T22:30Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -279,85 +280,49 @@
       "leagueSlug": "bol.1",
       "homeTeam": "Blooming",
       "awayTeam": "Oriente Petrolero",
-      "status": "PRE",
+      "status": "FIRST_HALF",
       "kickoffUtc": "2026-11-08T23:30Z",
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.647,
-        "homeWinScore": 0.297,
-        "drawScore": 0.122,
-        "awayWinScore": 0.581,
-        "over15Score": 0.477,
-        "over25Score": 0.445,
-        "bttsScore": 0.508,
-        "signals": [
-          "away_edge",
-          "close_strength_gap"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "AWAY",
-            "score": 0.581,
-            "gap": 0.284,
-            "drawScore": 0.122,
-            "reasons": [
-              "best_below_0.68"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": false,
-            "pick": "Over 1.5",
-            "score": 0.477,
-            "reasons": [
-              "score_below_0.70"
-            ]
-          },
-          "Over / Under 2.5": {
-            "eligible": false,
-            "pick": "Over 2.5",
-            "score": 0.445,
-            "expectedTotalGoals": 1.875,
-            "reasons": [
-              "score_below_0.65",
-              "expected_goals_below_2.75",
-              "missing_goal_support"
-            ]
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.37,
-            "reasons": [
-              "score_below_0.74",
-              "missing_strong_goal_support"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.508,
-            "reasons": [
-              "score_below_0.68",
-              "missing_btts_support"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "missing_team_history_and_prior",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Blooming",
+        "awayTeam": "Oriente Petrolero",
+        "leagueSlug": "bol.1",
+        "fixtureDate": "2026-11-08T23:30:00.000Z",
+        "homeResolvedKey": "Blooming",
+        "awayResolvedKey": "Oriente Petrolero",
+        "homeRawSample": 0,
+        "awayRawSample": 3,
+        "homeBlendedSample": 0,
+        "awayBlendedSample": 3,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 0,
+        "awaySideBlendedSample": 1,
+        "homePriorSample": null,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_bra2_ceara_americamineiro_20261109",
       "leagueSlug": "bra.2",
       "homeTeam": "Ceara",
       "awayTeam": "America MG",
-      "status": "FIRST_HALF",
+      "status": "SECOND_HALF",
       "kickoffUtc": "2026-11-08T22:15Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -437,7 +402,7 @@
       "leagueSlug": "bra.2",
       "homeTeam": "Goias",
       "awayTeam": "Ponte Preta",
-      "status": "LIVE",
+      "status": "SECOND_HALF",
       "kickoffUtc": "2026-11-08T22:15Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -798,7 +763,7 @@
       "leagueSlug": "chi.1",
       "homeTeam": "Universidad de Concepción",
       "awayTeam": "O'Higgins",
-      "status": "PRE",
+      "status": "FIRST_HALF",
       "kickoffUtc": "2026-11-08T23:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -1003,7 +968,7 @@
       "leagueSlug": "col.1",
       "homeTeam": "Deportes Tolima",
       "awayTeam": "Millonarios",
-      "status": "PRE",
+      "status": "FIRST_HALF",
       "kickoffUtc": "2026-11-08T23:10Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -1205,7 +1170,7 @@
       "leagueSlug": "crc.1",
       "homeTeam": "Saprissa",
       "awayTeam": "Puntarenas FC",
-      "status": "HALF_TIME",
+      "status": "SECOND_HALF",
       "kickoffUtc": "2026-11-08T22:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -1960,73 +1925,37 @@
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.812,
-        "homeWinScore": 0.642,
-        "drawScore": 0.105,
-        "awayWinScore": 0.253,
-        "over15Score": 0.526,
-        "over25Score": 0.466,
-        "bttsScore": 0.395,
-        "signals": [
-          "home_edge_strong",
-          "close_strength_gap"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "HOME",
-            "score": 0.642,
-            "gap": 0.389,
-            "drawScore": 0.105,
-            "reasons": [
-              "best_below_0.68"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": false,
-            "pick": "Over 1.5",
-            "score": 0.526,
-            "reasons": [
-              "score_below_0.70"
-            ]
-          },
-          "Over / Under 2.5": {
-            "eligible": false,
-            "pick": "Over 2.5",
-            "score": 0.466,
-            "expectedTotalGoals": 2.1,
-            "reasons": [
-              "score_below_0.65",
-              "expected_goals_below_2.75",
-              "missing_goal_support"
-            ]
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.397,
-            "reasons": [
-              "score_below_0.74",
-              "missing_strong_goal_support"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.395,
-            "reasons": [
-              "score_below_0.68",
-              "missing_btts_support"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Antigua GFC",
+        "awayTeam": "CD Malacateco",
+        "leagueSlug": "gua.1",
+        "fixtureDate": "2026-11-09T00:00:00.000Z",
+        "homeResolvedKey": "Antigua GFC",
+        "awayResolvedKey": "CD Malacateco",
+        "homeRawSample": 3,
+        "awayRawSample": 2,
+        "homeBlendedSample": 3,
+        "awayBlendedSample": 2,
+        "homeSideRawSample": 2,
+        "awaySideRawSample": 2,
+        "homeSideBlendedSample": 2,
+        "awaySideBlendedSample": 2,
+        "homePriorSample": null,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_hon1_deportivomarathon_choloma_20261109",
@@ -2112,7 +2041,7 @@
       "leagueSlug": "hon.1",
       "homeTeam": "CA Independiente Siguatepeque",
       "awayTeam": "Real España",
-      "status": "PRE",
+      "status": "LIVE",
       "kickoffUtc": "2026-11-08T23:15Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -2559,15 +2488,15 @@
       "nullClass": null,
       "minimumSample": null,
       "valuePreview": {
-        "confidence": 0.92,
-        "homeWinScore": 0.432,
+        "confidence": 0.901,
+        "homeWinScore": 0.394,
         "drawScore": 0.124,
-        "awayWinScore": 0.444,
-        "over15Score": 0.839,
-        "over25Score": 0.716,
-        "bttsScore": 0.623,
+        "awayWinScore": 0.482,
+        "over15Score": 0.85,
+        "over25Score": 0.729,
+        "bttsScore": 0.658,
         "signals": [
-          "home_edge",
+          "away_edge",
           "over25_support",
           "btts_support",
           "priors_applied",
@@ -2578,8 +2507,8 @@
           "1X2": {
             "eligible": false,
             "pick": "AWAY",
-            "score": 0.444,
-            "gap": 0.01200000000000001,
+            "score": 0.482,
+            "gap": 0.08799999999999997,
             "drawScore": 0.124,
             "reasons": [
               "best_below_0.68",
@@ -2589,7 +2518,7 @@
           "Over / Under 1.5": {
             "eligible": false,
             "pick": "Over 1.5",
-            "score": 0.839,
+            "score": 0.85,
             "reasons": [
               "suppressed_by_over25"
             ]
@@ -2597,14 +2526,14 @@
           "Over / Under 2.5": {
             "eligible": true,
             "pick": "Over 2.5",
-            "score": 0.716,
-            "expectedTotalGoals": 3.374,
+            "score": 0.729,
+            "expectedTotalGoals": 3.378,
             "reasons": []
           },
           "Over / Under 3.5": {
             "eligible": false,
             "pick": "Over 3.5",
-            "score": 0.663,
+            "score": 0.674,
             "reasons": [
               "score_below_0.74",
               "missing_strong_goal_support"
@@ -2613,7 +2542,7 @@
           "BTTS": {
             "eligible": false,
             "pick": "BTTS YES",
-            "score": 0.623,
+            "score": 0.658,
             "reasons": [
               "score_below_0.68"
             ]
@@ -2856,7 +2785,7 @@
       "leagueSlug": "par.1",
       "homeTeam": "Sportivo Trinidense",
       "awayTeam": "Sportivo Ameliano",
-      "status": "FIRST_HALF",
+      "status": "SECOND_HALF",
       "kickoffUtc": "2026-11-08T22:30Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -2898,7 +2827,7 @@
       "leagueSlug": "per.1",
       "homeTeam": "Deportivo Garcilaso",
       "awayTeam": "Comerciantes Unidos",
-      "status": "PRE",
+      "status": "FIRST_HALF",
       "kickoffUtc": "2026-11-08T23:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -3497,7 +3426,7 @@
       "leagueSlug": "slv.1",
       "homeTeam": "CD Municipal Limeño",
       "awayTeam": "Atletico Balboa",
-      "status": "PRE",
+      "status": "FIRST_HALF",
       "kickoffUtc": "2026-11-08T23:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
