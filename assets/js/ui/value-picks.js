@@ -679,7 +679,70 @@ function renderComparisonRow(p) {
   ].join("");
 }
 
-function renderCoverageNotice(plan) {
+// Presentation-only: the full readiness rows are independent from the signed
+// public plan. Show fixture-level gaps only when day, identity and all aggregate
+// counts agree; never silently treat missing/invalid detail as verified coverage.
+function renderFixtureReadinessDetails(summaryReadiness, fullReadiness, day) {
+  const s = summaryReadiness;
+  const f = fullReadiness;
+  if (!s || !f || f.date !== day || !Array.isArray(f.rows) ||
+      !Array.isArray(f.fixtureUniverse?.canonicalIds)) return '';
+  const count = n => Number.isInteger(n) && n >= 0;
+  const a = f.summary || {};
+  for (const key of ['fixtures', 'applicable', 'ready', 'insufficient']) {
+    if (!count(a[key]) || !count(s[key]) || a[key] !== s[key]) return '';
+  }
+  if (a.fixtures !== f.rows.length || f.fixtureUniverse.count !== a.fixtures ||
+      a.applicable !== a.ready + a.insufficient) return '';
+  const ids = f.rows.map(r => r?.canonicalId);
+  if (ids.some(id => typeof id !== 'string' || !id.trim()) ||
+      new Set(ids).size !== ids.length ||
+      new Set(f.fixtureUniverse.canonicalIds).size !== ids.length ||
+      ids.some(id => !f.fixtureUniverse.canonicalIds.includes(id))) return '';
+  const derived = {fixtures: f.rows.length, applicable: 0, ready: 0, insufficient: 0, byReason: {}};
+  for (const row of f.rows) {
+    if (!Array.isArray(row.reasons) ||
+        !['READY', 'INSUFFICIENT_DATA', 'NOT_APPLICABLE'].includes(row.status) ||
+        (row.status === 'READY' && row.reasons.length) ||
+        (row.status === 'INSUFFICIENT_DATA' && !row.reasons.length) ||
+        (row.status === 'NOT_APPLICABLE' && row.reasons.length)) return '';
+    if (row.status === 'NOT_APPLICABLE') continue;
+    derived.applicable++;
+    if (row.status === 'READY') derived.ready++;
+    else derived.insufficient++;
+    for (const reason of row.reasons) {
+      if (typeof reason !== 'string' || !reason.trim()) return '';
+      derived.byReason[reason] = (derived.byReason[reason] || 0) + 1;
+    }
+  }
+  const sortReasons = v => JSON.stringify(Object.entries(v || {}).sort(([a],[b])=>a.localeCompare(b)));
+  if (derived.ready !== a.ready || derived.applicable !== a.applicable ||
+      derived.insufficient !== a.insufficient ||
+      sortReasons(derived.byReason) !== sortReasons(a.byReason) ||
+      sortReasons(derived.byReason) !== sortReasons(s.byReason)) return '';
+  const deficient = f.rows.filter(row => row.status === 'INSUFFICIENT_DATA');
+  if (!deficient.length) return '';
+  const names = {
+    minimum_recent_sample: 'Ανεπαρκές πρόσφατο ιστορικό',
+    missing_model_assessment: 'Απουσία αποθηκευμένης αξιολόγησης',
+    ambiguous_model_assessment: 'Αμφίσημη αξιολόγηση',
+    details_missing: 'Απουσία στοιχείων αγώνα',
+    details_foundation_not_verified: 'Μη επαληθευμένα στοιχεία αγώνα',
+    coverage_missing_or_wrong_universe: 'Μη επιβεβαιωμένη κάλυψη αγώνων',
+    fixture_coverage_missing_or_ambiguous: 'Ελλιπής ή αμφίσημη κάλυψη αγώνα',
+    value_input_not_evaluated: 'Μη αξιολογημένες είσοδοι'
+  };
+  const rows = deficient.map(row =>
+    '<li><strong>' + esc(row.leagueSlug || 'Άγνωστη διοργάνωση') +
+    '</strong> · <code>' + esc(row.canonicalId) + '</code> — ' +
+    row.reasons.map(reason => esc(names[reason] || reason)).join(' · ') + '</li>'
+  ).join('');
+  return '<details class="value-readiness-fixtures" data-value-readiness-detail="verified">' +
+    '<summary>Αναλυτικές ελλείψεις ανά αγώνα (' + deficient.length + ')</summary>' +
+    '<ol>' + rows + '</ol></details>';
+}
+
+function renderCoverageNotice(plan, fullReadiness, day) {
   if (planIsUnavailable(plan)) return '';
   const readiness = plan?.dataReadiness;
   const count = value => Number.isInteger(value) && value >= 0;
@@ -707,7 +770,8 @@ function renderCoverageNotice(plan) {
     if (reasons.length > 1) message += ' Οι αιτίες μπορεί να επικαλύπτονται.';
   }
   message += ' Η ολοκλήρωση των αγώνων και το settlement καταγράφονται χωριστά.';
-  return '<div class="panel-empty" role="status" data-value-coverage="incomplete">' + esc(message) + '</div>';
+  const fixtureDetails = renderFixtureReadinessDetails(readiness, fullReadiness, day);
+  return '<div class="panel-empty" role="status" data-value-coverage="incomplete">' + esc(message) + fixtureDetails + '</div>';
 }
 
 function renderPlanSummary(plan) {
@@ -791,10 +855,24 @@ function renderPlanBlock(plan, title, information) {
       const plan=supplied?.id==='plan-u1'&&supplied.date===payload.date&&supplied.status==='AVAILABLE'&&Array.isArray(supplied.picks)&&supplied.count===supplied.picks.length?supplied:
         {status:'NOT_AVAILABLE',availability:'not_available',picks:[],count:0};
       const heading='<div class="value-head"><div class="value-head-title">Ενιαίο πλάνο</div><div class="value-head-sub">'+esc(payload.date)+'</div></div>';
-      const coverage=renderCoverageNotice(plan);
+      const coverage=renderCoverageNotice(plan,payload.dataReadiness,payload.date);
       const html=coverage+renderPlanBlock(plan,'Ενιαίο πλάνο',
         'Συμφωνία A/A2 ή B/B2 με βαθμολογία τουλάχιστον 0,75 σε κάθε παραλλαγή. Κάθε επιλογή εμφανίζεται μία φορά και οι αντίθετες επιλογές αποκλείονται. Οι επιμέρους βαθμολογίες δεν είναι μία ενιαία πιθανότητα επιτυχίας.');
       if(headWrapEl){headWrapEl.innerHTML=heading;bodyEl.innerHTML=html;}else bodyEl.innerHTML=heading+html;
+      const envelope = payload.comparison?.readinessEvidence || payload.readinessEvidence;
+      if (envelope && !planIsUnavailable(plan)) {
+        import("../live/value-readiness-evidence.js").then(({ verifyReadinessEvidence }) =>
+          verifyReadinessEvidence(envelope, payload.date, plan.dataReadiness)
+        ).then(evidence => {
+          if (!evidence || lastPayload !== payload) return;
+          const affected = evidence.rows.filter(row => row.status === "INSUFFICIENT_DATA");
+          const items = affected.map(row => '<li>' + esc(row.canonicalId + ' · ' + row.leagueSlug +
+            ' · ' + row.reasons.join(', ')) + '</li>').join('');
+          const text = 'Επαληθευμένη προβολή ετοιμότητας Value. Η επίσημη κάλυψη και η πληρότητα σεζόν εκκρεμούν.';
+          bodyEl.insertAdjacentHTML('afterbegin', '<details data-value-readiness="verified"><summary>' +
+            esc(text) + '</summary><ul>' + items + '</ul></details>');
+        }).catch(() => { /* Legacy aggregate notice stays visible when evidence cannot be verified. */ });
+      }
       hideAnalyzingIfHasPicks(1);window.AIML_PANEL?.set(root,'data');return;
     }
 
@@ -1091,6 +1169,7 @@ if (!filtered.length) {
         source: payload?.source || "",
         mode: payload?.mode || "",
         comparison: payload?.comparison || null,
+        dataReadiness: payload?.dataReadiness ?? payload?.comparison?.dataReadiness ?? null,
         unifiedPlan: payload?.unifiedPlan || null
       };
     }

@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {buildUnifiedPublicPlan,isUnifiedPublicDay,unavailableUnifiedPlan} from '../value/unified-public-plan.js';
@@ -1482,6 +1483,10 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
     readJsonSafe(dataPath('value-plans',dayKey,'unified-u1-r2-results.json')));
   if(isUnifiedPublicDay(dayKey)) {
     payload.dataReadiness=buildValueDataReadinessDay(dayKey);
+    const readinessJson = JSON.stringify(payload.dataReadiness);
+    payload.readinessEvidence = { schema: "ai-matchlab.value-readiness-evidence.v1", date: dayKey,
+      fixtureUniverseHash: payload.dataReadiness.fixtureUniverse.hash,
+      sha256: createHash("sha256").update(readinessJson).digest("hex"), json: readinessJson };
     let productionVerified=false;
     try{
       const result=refreshUnifiedProductionProjection(dayKey);
