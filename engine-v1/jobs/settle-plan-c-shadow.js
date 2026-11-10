@@ -212,8 +212,28 @@ function voidRecord(prediction, truth) {
 }
 
 function validateTerminalAgainstCurrent(previous, currentTruth) {
+  if (previous.state === "SETTLED") {
+    assert(
+      previous.truth?.status === "FT" &&
+      Number.isInteger(previous.truth?.scoreHome) &&
+      previous.truth.scoreHome >= 0 &&
+      Number.isInteger(previous.truth?.scoreAway) &&
+      previous.truth.scoreAway >= 0 &&
+      previous.brier != null &&
+      previous.hitRate != null,
+      `previous_settled_integrity_invalid:${previous.canonicalFixtureId}`
+    );
+  }
   if (!currentTruth) return;
   if (previous.state === "SETTLED") {
+    assert(
+      previous.truth?.status === "FT" &&
+      Number.isInteger(previous.truth?.scoreHome) &&
+      Number.isInteger(previous.truth?.scoreAway) &&
+      previous.brier != null &&
+      previous.hitRate != null,
+      `previous_settled_integrity_invalid:${previous.canonicalFixtureId}`
+    );
     assert(currentTruth.status === "FT", `terminal_settled_status_conflict:${previous.canonicalFixtureId}`);
     assert(previous.truth.scoreHome === currentTruth.scoreHome && previous.truth.scoreAway === currentTruth.scoreAway, `terminal_settled_score_conflict:${previous.canonicalFixtureId}`);
   } else if (previous.state === "VOID_EXCLUDED") {

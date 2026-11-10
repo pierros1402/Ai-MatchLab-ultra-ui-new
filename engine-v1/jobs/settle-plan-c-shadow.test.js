@@ -100,3 +100,29 @@ test("void canonical status is excluded from all score denominators", () => {
     fs.rmSync(input.root, { recursive: true, force: true });
   }
 });
+
+test("invalid historical SETTLED is rejected with and without current canonical truth", () => {
+  const input = setup("FT", 2, 1);
+  try {
+    const options = { dayKey: "2026-08-27", ...input };
+    settlePlanCShadow(options);
+
+    const malformed = JSON.parse(fs.readFileSync(input.outputFile, "utf8"));
+    malformed.records[0].truth = null;
+    writeJson(input.outputFile, malformed);
+
+    assert.throws(
+      () => settlePlanCShadow(options),
+      /previous_settled_integrity_invalid/
+    );
+
+    fs.rmSync(path.join(input.truthRoot, "2026-08-27", "test.1.json"));
+
+    assert.throws(
+      () => settlePlanCShadow(options),
+      /previous_settled_integrity_invalid/
+    );
+  } finally {
+    fs.rmSync(input.root, { recursive: true, force: true });
+  }
+});
