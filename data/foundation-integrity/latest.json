@@ -1,17 +1,22 @@
 {
   "schema": "ai-matchlab.foundation-integrity.v1",
-  "generatedAt": "2026-11-10T21:35:43.616Z",
-  "dayKey": "2026-11-10",
+  "generatedAt": "2026-11-10T22:12:51.728Z",
+  "dayKey": "2026-11-11",
   "season": "2026-2027",
-  "ok": true,
+  "ok": false,
   "modelReady": true,
-  "publicationReady": true,
-  "blocked": [],
+  "publicationReady": false,
+  "blocked": [
+    {
+      "component": "details",
+      "reason": "details_foundation_not_ready"
+    }
+  ],
   "warnings": [
     {
       "component": "historySemantic",
       "reason": "age_expired_results_rows_present",
-      "count": 21482,
+      "count": 21488,
       "informational": true
     },
     {
@@ -35,7 +40,7 @@
         "ok": false,
         "clean": false,
         "schema": "ai-matchlab.history-semantic-integrity.v1",
-        "generatedAt": "2026-11-10T21:35:42.776Z",
+        "generatedAt": "2026-11-10T22:12:50.466Z",
         "sourceContract": {
           "readOnlyTruthLayers": true,
           "truthWrites": 0,
@@ -83,7 +88,7 @@
           {
             "type": "results_expired_entries",
             "severity": "info",
-            "count": 21482,
+            "count": 21488,
             "detail": "Age-expired rows are reported separately and are not treated as duplicates."
           }
         ],
@@ -92,7 +97,7 @@
           "teamKeyCount": 17737,
           "entryCount": 434235,
           "reconstructedMatchIdCount": 216997,
-          "expiredEntryCount": 21482,
+          "expiredEntryCount": 21488,
           "invalidEntryCount": 0,
           "orphanMatchIdCount": 1,
           "multiSideMatchIdCount": 194,
@@ -4651,7 +4656,7 @@
       "reason": null,
       "detail": {
         "schema": "ai-matchlab.standings-foundation-audit.v1",
-        "generatedAt": "2026-11-10T21:35:42.829Z",
+        "generatedAt": "2026-11-10T22:12:50.571Z",
         "ok": true,
         "season": "2026-2027",
         "summary": {
@@ -226663,27 +226668,89 @@
       }
     },
     "details": {
-      "ok": true,
-      "reason": null,
+      "ok": false,
+      "reason": "details_foundation_not_ready",
       "detail": {
         "schema": "ai-matchlab.details-foundation-audit.v2",
-        "generatedAt": "2026-11-10T21:35:43.615Z",
-        "dayKey": "2026-11-10",
-        "ok": true,
+        "generatedAt": "2026-11-10T22:12:51.728Z",
+        "dayKey": "2026-11-11",
+        "ok": false,
         "publicationUniverse": {
-          "mode": "intraday_status_only",
-          "currentFixtureCount": 30,
-          "publishedFixtureCount": 30,
+          "mode": null,
+          "currentFixtureCount": 13,
+          "publishedFixtureCount": 0,
           "deferredFixtureCount": 0,
           "deferredFixtureIds": []
         },
         "summary": {
-          "expectedFixtures": 30,
-          "detailFiles": 30,
-          "checked": 30,
-          "issueCount": 0
+          "expectedFixtures": 0,
+          "detailFiles": 0,
+          "checked": 0,
+          "issueCount": 10
         },
-        "issues": []
+        "issues": [
+          {
+            "code": "PUBLICATION_MANIFEST_MISSING_OR_INVALID"
+          },
+          {
+            "code": "PUBLICATION_UNIVERSE_MISSING"
+          },
+          {
+            "code": "PUBLICATION_MODE_INVALID",
+            "mode": null
+          },
+          {
+            "code": "PUBLICATION_FILE_LAYOUT_INVALID",
+            "fixtures": null,
+            "detailsDir": null
+          },
+          {
+            "code": "CURRENT_FIXTURE_UNACCOUNTED",
+            "ids": [
+              "cid_col2_bocajuniors_indvalledelcauca_20261111",
+              "cid_col2_envigado_umagdalena_20261111",
+              "cid_col2_quindio_cartagena_20261111",
+              "cid_col2_tigres_realcundinamarca_20261111",
+              "cid_engtrophy_barnsley_oldhamathletic_20261111",
+              "cid_engtrophy_sheffieldwednesday_accringtonstanley_20261111",
+              "cid_ltu2_babrungas_minija_20261111",
+              "cid_mex2_atlmorelia_leonesnegros_20261111",
+              "cid_mex2_tbdhome_tbdaway_20261111",
+              "cid_uga2_igangaunited_calvary_20261111",
+              "cid_ukr2_chernihiv_inhulets_20261111",
+              "cid_uru2_laluz_fenix_20261111",
+              "cid_uru2_tacuarembo_miramar_20261111"
+            ]
+          },
+          {
+            "code": "PUBLICATION_COUNT_MISMATCH",
+            "field": "currentFixtureCount",
+            "declared": null,
+            "actual": 13
+          },
+          {
+            "code": "PUBLICATION_COUNT_MISMATCH",
+            "field": "publishedFixtureCount",
+            "declared": null,
+            "actual": 0
+          },
+          {
+            "code": "PUBLICATION_COUNT_MISMATCH",
+            "field": "deferredFixtureCount",
+            "declared": null,
+            "actual": 0
+          },
+          {
+            "code": "MANIFEST_FIXTURE_COUNT_MISMATCH",
+            "declared": null,
+            "actual": 0
+          },
+          {
+            "code": "MANIFEST_DETAIL_COUNT_MISMATCH",
+            "declared": null,
+            "actual": 0
+          }
+        ]
       }
     }
   },
@@ -226696,5 +226763,5 @@
     "detailsMustMatchCurrentFoundation": true,
     "deploySnapshotUsedAsTruth": false
   },
-  "latestForDay": "2026-11-10"
+  "latestForDay": "2026-11-11"
 }
