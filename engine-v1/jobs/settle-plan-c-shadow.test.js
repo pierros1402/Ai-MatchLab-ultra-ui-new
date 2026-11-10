@@ -126,3 +126,45 @@ test("invalid historical SETTLED is rejected with and without current canonical 
     fs.rmSync(input.root, { recursive: true, force: true });
   }
 });
+
+test("invalid historical VOID is rejected with and without current truth without overwriting output", () => {
+  const input = setup("POSTP", null, null);
+  try {
+    const options = { dayKey: "2026-08-27", ...input };
+    settlePlanCShadow(options);
+    const original = fs.readFileSync(input.outputFile);
+    const base = JSON.parse(original.toString("utf8"));
+    const truthFile = path.join(input.truthRoot, "2026-08-27", "test.1.json");
+    const truthBytes = fs.readFileSync(truthFile);
+
+    const invalidTruths = [
+      null,
+      { ...base.records[0].truth, status: "FT" },
+      { ...base.records[0].truth, scoreHome: 1 },
+      { ...base.records[0].truth, scoreAway: 2 }
+    ];
+
+    for (const invalid of invalidTruths) {
+      const corrupted = JSON.parse(original.toString("utf8"));
+      corrupted.records[0].truth = invalid;
+      writeJson(input.outputFile, corrupted);
+      const before = fs.readFileSync(input.outputFile);
+
+      assert.throws(() => settlePlanCShadow(options),
+        /previous_void_integrity_invalid/);
+      assert.deepEqual(fs.readFileSync(input.outputFile), before);
+
+      fs.rmSync(truthFile);
+      assert.throws(() => settlePlanCShadow(options),
+        /previous_void_integrity_invalid/);
+      assert.deepEqual(fs.readFileSync(input.outputFile), before);
+      fs.writeFileSync(truthFile, truthBytes);
+    }
+
+    fs.writeFileSync(input.outputFile, original);
+    settlePlanCShadow(options);
+    assert.deepEqual(fs.readFileSync(input.outputFile), original);
+  } finally {
+    fs.rmSync(input.root, { recursive: true, force: true });
+  }
+});

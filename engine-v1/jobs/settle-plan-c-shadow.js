@@ -224,6 +224,20 @@ function validateTerminalAgainstCurrent(previous, currentTruth) {
       `previous_settled_integrity_invalid:${previous.canonicalFixtureId}`
     );
   }
+  if (previous.state === "VOID_EXCLUDED") {
+    const validStatuses = new Set([
+      "POSTP", "ABAND", "CANC", "CANCELLED", "SUSP", "WALK", "WO"
+    ]);
+    assert(
+      validStatuses.has(previous.truth?.status) &&
+      previous.truth?.scoreHome === null &&
+      previous.truth?.scoreAway === null &&
+      previous.brier == null &&
+      previous.hitRate == null &&
+      previous.pendingReason == null,
+      `previous_void_integrity_invalid:${previous.canonicalFixtureId}`
+    );
+  }
   if (!currentTruth) return;
   if (previous.state === "SETTLED") {
     assert(
