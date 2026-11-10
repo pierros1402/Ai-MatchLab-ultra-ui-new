@@ -1,0 +1,3182 @@
+{
+  "ok": true,
+  "schema": "ai-matchlab.value-audit.v1",
+  "policyVersion": "value-policy-v2.3",
+  "generatedAt": "2026-11-10T08:07:31.283Z",
+  "date": "2026-11-10",
+  "source": "derive-value-from-opponent-adjusted-model-assessment",
+  "sourceContract": {
+    "valueInput": "canonical_fixture_universe_joined_with_persistent_ai_assessment",
+    "fixtureUniverse": {
+      "schema": "ai-matchlab.value-fixture-universe.v1",
+      "source": "canonical_fixtures",
+      "count": 30,
+      "hash": "7d2264fe30470eb348fb14018862eb76ae924a0e15e20df00a39fc88931aff19",
+      "canonicalIds": [
+        "cid_bol1_aurora_universitariovinto_20261110",
+        "cid_col1_atleticojunior_cucutadeportivo_20261110",
+        "cid_col2_envigado_bocajuniors_20261110",
+        "cid_engtrophy_barnet_leytonorient_20261110",
+        "cid_engtrophy_bradfordcity_yorkcity_20261110",
+        "cid_engtrophy_bristolrovers_reading_20261110",
+        "cid_engtrophy_bromley_miltonkeynesdons_20261110",
+        "cid_engtrophy_burtonalbion_nottscounty_20261110",
+        "cid_engtrophy_colchesterunited_ipswichtownu21_20261110",
+        "cid_engtrophy_crawleytown_brentfordu21_20261110",
+        "cid_engtrophy_crewealexandra_wiganathletic_20261110",
+        "cid_engtrophy_grimsbytown_nottinghamforestu21_20261110",
+        "cid_engtrophy_huddersfieldtown_liverpoolu21_20261110",
+        "cid_engtrophy_leicestercity_walsall_20261110",
+        "cid_engtrophy_mansfieldtown_chesterfield_20261110",
+        "cid_engtrophy_northamptontown_gillingham_20261110",
+        "cid_engtrophy_oxfordunited_cheltenhamtown_20261110",
+        "cid_engtrophy_plymouthargyle_swindontown_20261110",
+        "cid_engtrophy_stevenage_fulhamu21_20261110",
+        "cid_engtrophy_stockportcounty_tranmererovers_20261110",
+        "cid_espcopadelrey_amorebieta_udlogrones_20261110",
+        "cid_espcopadelrey_anaitasuna_alaves_20261110",
+        "cid_espcopadelrey_mijaslaslagunas_realjaen_20261110",
+        "cid_espcopadelrey_pamplona_eibar_20261110",
+        "cid_espcopadelrey_taverneslavalldigna_valencia_20261110",
+        "cid_espcopadelrey_trivalvalderas_leganes_20261110",
+        "cid_par1_sportivoluqueno_2mayo_20261110",
+        "cid_rou2_metalulbuzau_steauabucuresti_20261110",
+        "cid_slv1_cacahuatique_luisangelfirpo_20261110",
+        "cid_uru2_huracan_riverplate_20261110"
+      ]
+    },
+    "canonicalFixtureUniverseRequired": true,
+    "exactIdentityJoinOnly": true,
+    "oddsMemoryCanCreateFixture": false,
+    "deploySnapshotInput": true,
+    "realBookmakerOddsUsed": false,
+    "note": "Plan A and Plan B receive the identical full canonical fixture universe. Plan B assessment enrichment may come from live memory or its committed persistence fallback; it never changes fixture membership.",
+    "assessmentInputSource": "live_store_with_deploy_snapshot_assessments",
+    "probabilityLayer": "opponent_strength_adjusted"
+  },
+  "inputFailure": null,
+  "membership": {
+    "fixtureUniverse": {
+      "schema": "ai-matchlab.value-fixture-universe.v1",
+      "source": "canonical_fixtures",
+      "count": 30,
+      "hash": "7d2264fe30470eb348fb14018862eb76ae924a0e15e20df00a39fc88931aff19",
+      "canonicalIds": [
+        "cid_bol1_aurora_universitariovinto_20261110",
+        "cid_col1_atleticojunior_cucutadeportivo_20261110",
+        "cid_col2_envigado_bocajuniors_20261110",
+        "cid_engtrophy_barnet_leytonorient_20261110",
+        "cid_engtrophy_bradfordcity_yorkcity_20261110",
+        "cid_engtrophy_bristolrovers_reading_20261110",
+        "cid_engtrophy_bromley_miltonkeynesdons_20261110",
+        "cid_engtrophy_burtonalbion_nottscounty_20261110",
+        "cid_engtrophy_colchesterunited_ipswichtownu21_20261110",
+        "cid_engtrophy_crawleytown_brentfordu21_20261110",
+        "cid_engtrophy_crewealexandra_wiganathletic_20261110",
+        "cid_engtrophy_grimsbytown_nottinghamforestu21_20261110",
+        "cid_engtrophy_huddersfieldtown_liverpoolu21_20261110",
+        "cid_engtrophy_leicestercity_walsall_20261110",
+        "cid_engtrophy_mansfieldtown_chesterfield_20261110",
+        "cid_engtrophy_northamptontown_gillingham_20261110",
+        "cid_engtrophy_oxfordunited_cheltenhamtown_20261110",
+        "cid_engtrophy_plymouthargyle_swindontown_20261110",
+        "cid_engtrophy_stevenage_fulhamu21_20261110",
+        "cid_engtrophy_stockportcounty_tranmererovers_20261110",
+        "cid_espcopadelrey_amorebieta_udlogrones_20261110",
+        "cid_espcopadelrey_anaitasuna_alaves_20261110",
+        "cid_espcopadelrey_mijaslaslagunas_realjaen_20261110",
+        "cid_espcopadelrey_pamplona_eibar_20261110",
+        "cid_espcopadelrey_taverneslavalldigna_valencia_20261110",
+        "cid_espcopadelrey_trivalvalderas_leganes_20261110",
+        "cid_par1_sportivoluqueno_2mayo_20261110",
+        "cid_rou2_metalulbuzau_steauabucuresti_20261110",
+        "cid_slv1_cacahuatique_luisangelfirpo_20261110",
+        "cid_uru2_huracan_riverplate_20261110"
+      ]
+    },
+    "evaluatedFixtureCount": 30,
+    "evaluatedCanonicalIds": [
+      "cid_bol1_aurora_universitariovinto_20261110",
+      "cid_col1_atleticojunior_cucutadeportivo_20261110",
+      "cid_col2_envigado_bocajuniors_20261110",
+      "cid_engtrophy_barnet_leytonorient_20261110",
+      "cid_engtrophy_bradfordcity_yorkcity_20261110",
+      "cid_engtrophy_bristolrovers_reading_20261110",
+      "cid_engtrophy_bromley_miltonkeynesdons_20261110",
+      "cid_engtrophy_burtonalbion_nottscounty_20261110",
+      "cid_engtrophy_colchesterunited_ipswichtownu21_20261110",
+      "cid_engtrophy_crawleytown_brentfordu21_20261110",
+      "cid_engtrophy_crewealexandra_wiganathletic_20261110",
+      "cid_engtrophy_grimsbytown_nottinghamforestu21_20261110",
+      "cid_engtrophy_huddersfieldtown_liverpoolu21_20261110",
+      "cid_engtrophy_leicestercity_walsall_20261110",
+      "cid_engtrophy_mansfieldtown_chesterfield_20261110",
+      "cid_engtrophy_northamptontown_gillingham_20261110",
+      "cid_engtrophy_oxfordunited_cheltenhamtown_20261110",
+      "cid_engtrophy_plymouthargyle_swindontown_20261110",
+      "cid_engtrophy_stevenage_fulhamu21_20261110",
+      "cid_engtrophy_stockportcounty_tranmererovers_20261110",
+      "cid_espcopadelrey_amorebieta_udlogrones_20261110",
+      "cid_espcopadelrey_anaitasuna_alaves_20261110",
+      "cid_espcopadelrey_mijaslaslagunas_realjaen_20261110",
+      "cid_espcopadelrey_pamplona_eibar_20261110",
+      "cid_espcopadelrey_taverneslavalldigna_valencia_20261110",
+      "cid_espcopadelrey_trivalvalderas_leganes_20261110",
+      "cid_par1_sportivoluqueno_2mayo_20261110",
+      "cid_rou2_metalulbuzau_steauabucuresti_20261110",
+      "cid_slv1_cacahuatique_luisangelfirpo_20261110",
+      "cid_uru2_huracan_riverplate_20261110"
+    ],
+    "canonicalFixtures": 30,
+    "inputRows": 21,
+    "assessmentRows": 21,
+    "nonAssessmentInputRows": 0,
+    "joinedMatches": 18,
+    "orphanAssessmentRows": 3,
+    "canonicalRowsWithoutAssessment": 12,
+    "ambiguousCanonicalMatches": [],
+    "canonicalRowsMissingIdentity": [],
+    "ambiguousAssessmentAliases": 0,
+    "supersededLegacyAssessments": 0,
+    "orphanAssessmentMatchIds": [
+      "cid_chi1_universidadchile_cobresal_20261110",
+      "cid_col1_independientesantafe_deportivopasto_20261110",
+      "cid_engtrophy_barnsley_oldhamathletic_20261110"
+    ],
+    "canonicalRowsWithoutAssessmentIds": [
+      "cid_engtrophy_colchesterunited_ipswichtownu21_20261110",
+      "cid_engtrophy_crawleytown_brentfordu21_20261110",
+      "cid_engtrophy_grimsbytown_nottinghamforestu21_20261110",
+      "cid_engtrophy_huddersfieldtown_liverpoolu21_20261110",
+      "cid_engtrophy_stevenage_fulhamu21_20261110",
+      "cid_espcopadelrey_amorebieta_udlogrones_20261110",
+      "cid_espcopadelrey_anaitasuna_alaves_20261110",
+      "cid_espcopadelrey_mijaslaslagunas_realjaen_20261110",
+      "cid_espcopadelrey_pamplona_eibar_20261110",
+      "cid_espcopadelrey_taverneslavalldigna_valencia_20261110",
+      "cid_espcopadelrey_trivalvalderas_leganes_20261110",
+      "cid_par1_sportivoluqueno_2mayo_20261110"
+    ],
+    "outputPicks": 0,
+    "outputValidPicks": 0,
+    "outputOrphanPicks": 0,
+    "outputAmbiguousPicks": 0,
+    "outputOrphanPickIds": [],
+    "outputAmbiguousPickIds": []
+  },
+  "summary": {
+    "fixturesSeen": 30,
+    "candidateMarkets": 0,
+    "approved": 0,
+    "rejected": 0,
+    "approvedByMarket": {},
+    "rejectedByMarket": {},
+    "rejectedByReason": {},
+    "approvedByLeague": {},
+    "rejectedByLeague": {}
+  },
+  "candidateLedger": [],
+  "fixtureLedger": [
+    {
+      "canonicalId": "cid_bol1_aurora_universitariovinto_20261110",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.451,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.246,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.303,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.543,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.457,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.571,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.429,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 10,
+        "awaySample": 9,
+        "deltas": {
+          "reliability": 0.9,
+          "adjustmentScale": 0.162,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "no_strong_opposition_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_col1_atleticojunior_cucutadeportivo_20261110",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.402,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.258,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.34,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.499,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.501,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.537,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.463,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 20,
+        "homeSample": 12,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 1,
+          "adjustmentScale": 0.18,
+          "1X2": {
+            "home": -0.003,
+            "draw": -0.001,
+            "away": 0.003
+          },
+          "OU15": {
+            "over": -0.001,
+            "under": 0.001
+          },
+          "OU25": {
+            "over": -0.001,
+            "under": 0.001
+          },
+          "OU35": {
+            "over": -0.001,
+            "under": 0.001
+          },
+          "BTTS": {
+            "yes": -0.005,
+            "no": 0.005
+          }
+        },
+        "reasonCodes": [],
+        "status": "adjusted"
+      }
+    },
+    {
+      "canonicalId": "cid_col2_envigado_bocajuniors_20261110",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.438,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.258,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.304,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.493,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.507,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.532,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.468,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 12,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 1,
+          "adjustmentScale": 0.18,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "no_strong_opposition_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_engtrophy_barnet_leytonorient_20261110",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.539,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.22,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.241,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.619,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.381,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.611,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.389,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 1,
+        "awaySample": 1,
+        "deltas": {
+          "reliability": 0.033,
+          "adjustmentScale": 0.006,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_engtrophy_bradfordcity_yorkcity_20261110",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.45,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.251,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.299,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.519,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.481,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.552,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.448,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_engtrophy_bristolrovers_reading_20261110",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.322,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.261,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.417,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.486,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.514,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.53,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.47,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 1,
+        "awaySample": 1,
+        "deltas": {
+          "reliability": 0.033,
+          "adjustmentScale": 0.006,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_engtrophy_bromley_miltonkeynesdons_20261110",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.36,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.255,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.385,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.522,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.478,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.561,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.439,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_engtrophy_burtonalbion_nottscounty_20261110",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.39,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.258,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.352,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.507,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.493,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.549,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.451,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_engtrophy_colchesterunited_ipswichtownu21_20261110",
+      "outcome": "missing_model_assessment",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [],
+      "opponentAdjustment": null
+    },
+    {
+      "canonicalId": "cid_engtrophy_crawleytown_brentfordu21_20261110",
+      "outcome": "missing_model_assessment",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [],
+      "opponentAdjustment": null
+    },
+    {
+      "canonicalId": "cid_engtrophy_crewealexandra_wiganathletic_20261110",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.442,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.25,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.307,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.527,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.473,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.559,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.441,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 1,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_engtrophy_grimsbytown_nottinghamforestu21_20261110",
+      "outcome": "missing_model_assessment",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [],
+      "opponentAdjustment": null
+    },
+    {
+      "canonicalId": "cid_engtrophy_huddersfieldtown_liverpoolu21_20261110",
+      "outcome": "missing_model_assessment",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [],
+      "opponentAdjustment": null
+    },
+    {
+      "canonicalId": "cid_engtrophy_leicestercity_walsall_20261110",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.453,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.231,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.316,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.622,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.378,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.633,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.367,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_engtrophy_mansfieldtown_chesterfield_20261110",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.391,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.245,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.364,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.565,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.435,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.594,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.406,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_engtrophy_northamptontown_gillingham_20261110",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.385,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.266,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.349,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.472,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.528,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.521,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.479,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 1,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_engtrophy_oxfordunited_cheltenhamtown_20261110",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.488,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.237,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.276,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.57,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.43,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.585,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.415,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_engtrophy_plymouthargyle_swindontown_20261110",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.38,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.26,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.359,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.498,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.502,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.542,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.458,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_engtrophy_stevenage_fulhamu21_20261110",
+      "outcome": "missing_model_assessment",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [],
+      "opponentAdjustment": null
+    },
+    {
+      "canonicalId": "cid_engtrophy_stockportcounty_tranmererovers_20261110",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.436,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.262,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.302,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.475,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.525,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.518,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.482,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 1,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_espcopadelrey_amorebieta_udlogrones_20261110",
+      "outcome": "missing_model_assessment",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [],
+      "opponentAdjustment": null
+    },
+    {
+      "canonicalId": "cid_espcopadelrey_anaitasuna_alaves_20261110",
+      "outcome": "missing_model_assessment",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [],
+      "opponentAdjustment": null
+    },
+    {
+      "canonicalId": "cid_espcopadelrey_mijaslaslagunas_realjaen_20261110",
+      "outcome": "missing_model_assessment",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [],
+      "opponentAdjustment": null
+    },
+    {
+      "canonicalId": "cid_espcopadelrey_pamplona_eibar_20261110",
+      "outcome": "missing_model_assessment",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [],
+      "opponentAdjustment": null
+    },
+    {
+      "canonicalId": "cid_espcopadelrey_taverneslavalldigna_valencia_20261110",
+      "outcome": "missing_model_assessment",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [],
+      "opponentAdjustment": null
+    },
+    {
+      "canonicalId": "cid_espcopadelrey_trivalvalderas_leganes_20261110",
+      "outcome": "missing_model_assessment",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [],
+      "opponentAdjustment": null
+    },
+    {
+      "canonicalId": "cid_par1_sportivoluqueno_2mayo_20261110",
+      "outcome": "missing_model_assessment",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [],
+      "opponentAdjustment": null
+    },
+    {
+      "canonicalId": "cid_rou2_metalulbuzau_steauabucuresti_20261110",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.451,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.265,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.284,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.458,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.542,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.501,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.499,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 12,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 1,
+          "adjustmentScale": 0.18,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "no_strong_opposition_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_slv1_cacahuatique_luisangelfirpo_20261110",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.282,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.267,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.451,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.448,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.552,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.493,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.507,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 2,
+        "awaySample": 2,
+        "deltas": {
+          "reliability": 0.1,
+          "adjustmentScale": 0.018,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_uru2_huracan_riverplate_20261110",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.316,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.259,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.426,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.494,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.506,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.535,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.465,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 12,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 1,
+          "adjustmentScale": 0.18,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "no_strong_opposition_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    }
+  ],
+  "evaluationAccounting": {
+    "schema": "ai-matchlab.plan-b-evaluation-accounting.v1",
+    "complete": true,
+    "fixturesSeen": 30,
+    "terminalOutcomeCount": 30,
+    "inputGapFixtures": 12,
+    "assessedFixtures": 18,
+    "byOutcome": {
+      "no_eligible_market": 18,
+      "missing_model_assessment": 12
+    },
+    "diagnosis": "incomplete_assessment_coverage"
+  },
+  "decisionInputEvidence": {
+    "schema": "ai-matchlab.value-decision-input-evidence.v1",
+    "executionId": "af808576-7f0a-47cb-b5aa-e3d6a81698e7",
+    "targetDay": "2026-11-10",
+    "planId": "plan-b2",
+    "startedAt": "2026-11-10T08:07:31.206Z",
+    "github": {
+      "runId": "42770935259",
+      "attempt": "1",
+      "workflowHead": "863ac5e09899ddde22d1945ad78be3d679ee663a"
+    },
+    "records": [
+      {
+        "stage": "shared_inputs",
+        "canonicalMatchId": null,
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/9a/9adecc74dffd013eb25014599c63429815197186394d0ece977b438da2d8317b.json",
+          "sha256": "9adecc74dffd013eb25014599c63429815197186394d0ece977b438da2d8317b",
+          "bytes": 3867
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_bol1_aurora_universitariovinto_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/17/179139e97efed696a7ffb6e555bcf283dc749781913cdb15860d36e34e4fadd9.json",
+          "sha256": "179139e97efed696a7ffb6e555bcf283dc749781913cdb15860d36e34e4fadd9",
+          "bytes": 3377
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_col1_atleticojunior_cucutadeportivo_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/c3/c304ee9cfb3e025bc5d4b914c921dde1aded42345f8ec886eda438a39a4c2f5e.json",
+          "sha256": "c304ee9cfb3e025bc5d4b914c921dde1aded42345f8ec886eda438a39a4c2f5e",
+          "bytes": 3382
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_col2_envigado_bocajuniors_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/30/302bdb4a5d7b19e4ce283c8745aa76f3c56378441b44e5e88a80c170772a25fa.json",
+          "sha256": "302bdb4a5d7b19e4ce283c8745aa76f3c56378441b44e5e88a80c170772a25fa",
+          "bytes": 3372
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_engtrophy_barnet_leytonorient_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/2c/2c8e3473962de4ba4650e59272ec02564e2ece6a0131e65dba75aea04e0b3835.json",
+          "sha256": "2c8e3473962de4ba4650e59272ec02564e2ece6a0131e65dba75aea04e0b3835",
+          "bytes": 3376
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_engtrophy_bradfordcity_yorkcity_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/18/1894d59bd5dfbd533090c35997150919961780dec0fdb5b3b08ec564a63ef835.json",
+          "sha256": "1894d59bd5dfbd533090c35997150919961780dec0fdb5b3b08ec564a63ef835",
+          "bytes": 3378
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_engtrophy_bristolrovers_reading_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/24/242cbfc18bbff98fdac42ef434de0ba4321808442139acb2fcf6e8ea1e838c89.json",
+          "sha256": "242cbfc18bbff98fdac42ef434de0ba4321808442139acb2fcf6e8ea1e838c89",
+          "bytes": 3378
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_engtrophy_bromley_miltonkeynesdons_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/93/93849276039f1895ac71af06b6f851103281ce7adfec424282784ab2d775dc03.json",
+          "sha256": "93849276039f1895ac71af06b6f851103281ce7adfec424282784ab2d775dc03",
+          "bytes": 3381
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_engtrophy_burtonalbion_nottscounty_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/07/07df59528939735413ed5d354dbc6b34a2981c4db85c8d95c85301928d658353.json",
+          "sha256": "07df59528939735413ed5d354dbc6b34a2981c4db85c8d95c85301928d658353",
+          "bytes": 3381
+        }
+      },
+      {
+        "stage": "missing_assessment",
+        "canonicalMatchId": "cid_engtrophy_colchesterunited_ipswichtownu21_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/e5/e5291c5cd982d0426d8fc4cc5ab9197890940117deb80cedf1a4dde17877e9a6.json",
+          "sha256": "e5291c5cd982d0426d8fc4cc5ab9197890940117deb80cedf1a4dde17877e9a6",
+          "bytes": 3378
+        }
+      },
+      {
+        "stage": "missing_assessment",
+        "canonicalMatchId": "cid_engtrophy_crawleytown_brentfordu21_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/55/553b57b2fd88222f9141387565c70d6c9754f1e36ee9f60a6fd616b4edc1ff1a.json",
+          "sha256": "553b57b2fd88222f9141387565c70d6c9754f1e36ee9f60a6fd616b4edc1ff1a",
+          "bytes": 3371
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_engtrophy_crewealexandra_wiganathletic_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/07/070bca7916a656ada6c0de3747856a22cc22668886df0cad10eac4d57601354f.json",
+          "sha256": "070bca7916a656ada6c0de3747856a22cc22668886df0cad10eac4d57601354f",
+          "bytes": 3385
+        }
+      },
+      {
+        "stage": "missing_assessment",
+        "canonicalMatchId": "cid_engtrophy_grimsbytown_nottinghamforestu21_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/f5/f5df26ce4487469d58686e345f8613201792c9444b4f55cbe4651c674263d3ae.json",
+          "sha256": "f5df26ce4487469d58686e345f8613201792c9444b4f55cbe4651c674263d3ae",
+          "bytes": 3378
+        }
+      },
+      {
+        "stage": "missing_assessment",
+        "canonicalMatchId": "cid_engtrophy_huddersfieldtown_liverpoolu21_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/3b/3b5eece08aba6c3f3b96b717c5aabbc047cbac663f0916a9e9de191ca537ac95.json",
+          "sha256": "3b5eece08aba6c3f3b96b717c5aabbc047cbac663f0916a9e9de191ca537ac95",
+          "bytes": 3376
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_engtrophy_leicestercity_walsall_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/41/414a2e99a8dbb71b8f5ce82faaf9d3df27305977258e6fa48a4a3d6e61e9e79f.json",
+          "sha256": "414a2e99a8dbb71b8f5ce82faaf9d3df27305977258e6fa48a4a3d6e61e9e79f",
+          "bytes": 3378
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_engtrophy_mansfieldtown_chesterfield_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/ac/ac2af042f23bf01bdad8df3651c15195afcbfe26d8ca677a2c2eb58362d80958.json",
+          "sha256": "ac2af042f23bf01bdad8df3651c15195afcbfe26d8ca677a2c2eb58362d80958",
+          "bytes": 3383
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_engtrophy_northamptontown_gillingham_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/dd/dde5c3ebbda600df324347e8576b4e06d35c941fe15b61518ba1cf6b3c0397a0.json",
+          "sha256": "dde5c3ebbda600df324347e8576b4e06d35c941fe15b61518ba1cf6b3c0397a0",
+          "bytes": 3383
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_engtrophy_oxfordunited_cheltenhamtown_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/a5/a53749fd51ec1bd5aa812a7c686ebf5a2c948c43b4a20079151c81828c768825.json",
+          "sha256": "a53749fd51ec1bd5aa812a7c686ebf5a2c948c43b4a20079151c81828c768825",
+          "bytes": 3384
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_engtrophy_plymouthargyle_swindontown_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/83/8326038beecc5c30efb00dfa4b83717e5eb9ad6113aa9461fb8f3979344d09a1.json",
+          "sha256": "8326038beecc5c30efb00dfa4b83717e5eb9ad6113aa9461fb8f3979344d09a1",
+          "bytes": 3383
+        }
+      },
+      {
+        "stage": "missing_assessment",
+        "canonicalMatchId": "cid_engtrophy_stevenage_fulhamu21_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/86/8668c766d9bedb70b0d4dbb8bad2fb2b35d87418e84ddf40165057a651814112.json",
+          "sha256": "8668c766d9bedb70b0d4dbb8bad2fb2b35d87418e84ddf40165057a651814112",
+          "bytes": 3366
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_engtrophy_stockportcounty_tranmererovers_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/4d/4d4b45fb0bd46c7c6be859bf6ab611278240ff703ed833f8cb6b6889f3fcd3e6.json",
+          "sha256": "4d4b45fb0bd46c7c6be859bf6ab611278240ff703ed833f8cb6b6889f3fcd3e6",
+          "bytes": 3387
+        }
+      },
+      {
+        "stage": "missing_assessment",
+        "canonicalMatchId": "cid_espcopadelrey_amorebieta_udlogrones_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/a5/a51075ea92b51b87ca351ce46ae53da6d0ef5fb3fa770f3e44826048b95d3054.json",
+          "sha256": "a51075ea92b51b87ca351ce46ae53da6d0ef5fb3fa770f3e44826048b95d3054",
+          "bytes": 3372
+        }
+      },
+      {
+        "stage": "missing_assessment",
+        "canonicalMatchId": "cid_espcopadelrey_anaitasuna_alaves_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/52/52cce4716787275e7017922af66464bff5f6c34b1c5145430d76b7c852a05159.json",
+          "sha256": "52cce4716787275e7017922af66464bff5f6c34b1c5145430d76b7c852a05159",
+          "bytes": 3368
+        }
+      },
+      {
+        "stage": "missing_assessment",
+        "canonicalMatchId": "cid_espcopadelrey_mijaslaslagunas_realjaen_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/82/8256409a824b7d33e6cb2d820b60348470d0d6633adf68f4817bd4815ed0c37c.json",
+          "sha256": "8256409a824b7d33e6cb2d820b60348470d0d6633adf68f4817bd4815ed0c37c",
+          "bytes": 3375
+        }
+      },
+      {
+        "stage": "missing_assessment",
+        "canonicalMatchId": "cid_espcopadelrey_pamplona_eibar_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/17/177d99725e8c961a87e14d358c47dc1b1d341312ddf228a149ca6e82bcdb0e88.json",
+          "sha256": "177d99725e8c961a87e14d358c47dc1b1d341312ddf228a149ca6e82bcdb0e88",
+          "bytes": 3365
+        }
+      },
+      {
+        "stage": "missing_assessment",
+        "canonicalMatchId": "cid_espcopadelrey_taverneslavalldigna_valencia_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/e4/e46998193c68b7587fdf5d57661e07716a99768fd8b91e30abfe52f8d8128c05.json",
+          "sha256": "e46998193c68b7587fdf5d57661e07716a99768fd8b91e30abfe52f8d8128c05",
+          "bytes": 3379
+        }
+      },
+      {
+        "stage": "missing_assessment",
+        "canonicalMatchId": "cid_espcopadelrey_trivalvalderas_leganes_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/79/795d15bbca1c57eb03c9d873fc7641dd9ec7f76831f2cf69f009c7d3fd3fe202.json",
+          "sha256": "795d15bbca1c57eb03c9d873fc7641dd9ec7f76831f2cf69f009c7d3fd3fe202",
+          "bytes": 3373
+        }
+      },
+      {
+        "stage": "missing_assessment",
+        "canonicalMatchId": "cid_par1_sportivoluqueno_2mayo_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/98/98b22638ea4d95430a4d6a257d59dcb3f648078b9de415a4384d54ef29da6125.json",
+          "sha256": "98b22638ea4d95430a4d6a257d59dcb3f648078b9de415a4384d54ef29da6125",
+          "bytes": 3363
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_rou2_metalulbuzau_steauabucuresti_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/3f/3fd5ddbfee64fa2926d9ed1f2911bab64576ebc056a4c19657d810e5cbe30c85.json",
+          "sha256": "3fd5ddbfee64fa2926d9ed1f2911bab64576ebc056a4c19657d810e5cbe30c85",
+          "bytes": 3380
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_slv1_cacahuatique_luisangelfirpo_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/79/79380dfcb01d6890868edec9d9972354a36a26591ad337a56fd0487cb1c454a3.json",
+          "sha256": "79380dfcb01d6890868edec9d9972354a36a26591ad337a56fd0487cb1c454a3",
+          "bytes": 3379
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_uru2_huracan_riverplate_20261110",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/95/95ad16e8015568a82063cc38f2c193f32bfa72ec7aab5febb4d82bb4b377e010.json",
+          "sha256": "95ad16e8015568a82063cc38f2c193f32bfa72ec7aab5febb4d82bb4b377e010",
+          "bytes": 3370
+        }
+      },
+      {
+        "stage": "selector_output",
+        "canonicalMatchId": null,
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/6e/6e1efbb321a61264628f4e57aeb5427b303de4be50e6dc1638444b3d163a393c.json",
+          "sha256": "6e1efbb321a61264628f4e57aeb5427b303de4be50e6dc1638444b3d163a393c",
+          "bytes": 4104
+        }
+      }
+    ],
+    "scope": "runtime_value_selector_input_capture_not_reconstructed_historical_evidence",
+    "upstreamRawInputLineageFullyCertified": false
+  }
+}

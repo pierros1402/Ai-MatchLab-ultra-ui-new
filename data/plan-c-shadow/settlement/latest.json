@@ -3,27 +3,27 @@
   "ok": true,
   "mode": "SHADOW",
   "productionEligible": false,
-  "sourcePredictionSetHash": "43c6da81758b340db33ef41afbad96c2b447f9c7081c4ae33ff3c88e62048786",
-  "idempotencyHash": "4dabd5d22d9767cfd38614cd6ac36620e6bd7fb8e0ad8bde11201005719e313c",
+  "sourcePredictionSetHash": "929bc8760813903dd8930d156aa0feee3be5cecc4c7f11104c45edde21786dee",
+  "idempotencyHash": "603d04401d7549ad375018236083616ddfdd37bc0da596c007d9ad417bccecd5",
   "accounting": {
-    "total": 52,
-    "settled": 39,
+    "total": 53,
+    "settled": 40,
     "voidExcluded": 0,
     "pending": 13,
     "balanced": true
   },
   "brierSummary": {
-    "adjustedMeanBrier": 0.2366235,
-    "baselineMeanBrier": 0.23664009,
-    "delta": -0.00001659,
-    "n": 39
+    "adjustedMeanBrier": 0.24527016,
+    "baselineMeanBrier": 0.24519115,
+    "delta": 0.00007901,
+    "n": 40
   },
   "hitRateSummary": {
     "frozenPickCount": 24,
-    "settledPickCount": 19,
+    "settledPickCount": 20,
     "hits": 12,
-    "misses": 7,
-    "hitRate": 0.63157895
+    "misses": 8,
+    "hitRate": 0.6
   },
   "records": [
     {
@@ -149,6 +149,23 @@
         "applicableToHitRate": false,
         "isHit": null
       }
+    },
+    {
+      "canonicalFixtureId": "cid_bra1_botafogo_saopaulo_20261124",
+      "state": "PENDING",
+      "planCPick": false,
+      "prediction": {
+        "signature": "60fff67a65bb33a6b8b1bb79a6fea6977bc0b709a7edc50eca362a76470376bb",
+        "planCPick": false,
+        "pOver25Adjusted": 0.383212,
+        "pOver25Baseline": 0.3832173,
+        "lambdaHomeAdjusted": 1.137279,
+        "lambdaAwayAdjusted": 1.084843
+      },
+      "truth": null,
+      "pendingReason": "CANONICAL_STATUS_PRE",
+      "brier": null,
+      "hitRate": null
     },
     {
       "canonicalFixtureId": "cid_bra1_corinthians_botafogo_20261119",
@@ -1379,7 +1396,7 @@
     },
     {
       "canonicalFixtureId": "cid_ita1_internazionale_como_20261108",
-      "state": "PENDING",
+      "state": "SETTLED",
       "planCPick": true,
       "prediction": {
         "signature": "0c01f148ae4b216e70af855889c16104dceb8cb7eb5f9e1286702548ecc1a41d",
@@ -1389,10 +1406,24 @@
         "lambdaHomeAdjusted": 2.233887,
         "lambdaAwayAdjusted": 1.775273
       },
-      "truth": null,
-      "pendingReason": "CANONICAL_STATUS_HALF_TIME",
-      "brier": null,
-      "hitRate": null
+      "truth": {
+        "status": "FT",
+        "source": "data/canonical-fixtures/2026-11-08/ita.1.json",
+        "sourceSha256": "688524112005011ffb48a28a08b59d87c8698ff7f69519f513fb56cf0426bb50",
+        "scoreHome": 2,
+        "scoreAway": 0,
+        "totalGoals": 2,
+        "actualOver25": 0
+      },
+      "pendingReason": null,
+      "brier": {
+        "adjusted": 0.58248999,
+        "baseline": 0.57868247
+      },
+      "hitRate": {
+        "applicableToHitRate": true,
+        "isHit": false
+      }
     },
     {
       "canonicalFixtureId": "cid_ita1_internazionale_napoli_20260905",
