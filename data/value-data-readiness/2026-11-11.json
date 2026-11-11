@@ -1,7 +1,7 @@
 {
   "schema": "ai-matchlab.value-data-readiness.v1",
   "date": "2026-11-11",
-  "generatedAt": "2026-11-11T00:18:19.368Z",
+  "generatedAt": "2026-11-11T06:28:02.676Z",
   "fixtureUniverse": {
     "schema": "ai-matchlab.value-fixture-universe.v1",
     "source": "canonical_fixtures",
@@ -34,11 +34,11 @@
   "summary": {
     "fixtures": 17,
     "applicable": 13,
-    "ready": 8,
-    "insufficient": 5,
+    "ready": 9,
+    "insufficient": 4,
     "byReason": {
       "minimum_recent_sample": 3,
-      "missing_model_assessment": 3
+      "missing_model_assessment": 2
     }
   },
   "rows": [
@@ -105,7 +105,48 @@
           "FOUNDATION_NOT_PASS"
         ]
       },
-      "predictionCreated": false
+      "predictionCreated": false,
+      "readinessBasis": "signed_prematch_observation",
+      "prematchEvidence": {
+        "recordSignature": "82cb7e5468c7cd4e0307e6ba2d45211865cdaa1f2326d52d01f3480198ad5113",
+        "observedAt": "2026-11-11T00:18:19.373Z",
+        "kickoffUtc": "2026-11-11T01:00Z",
+        "scope": "diagnostics_only_no_selector_inputs_changed"
+      },
+      "currentDiagnostic": {
+        "generatedAt": "2026-11-11T06:28:02.676Z",
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "minimum_recent_sample",
+          "missing_model_assessment"
+        ],
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Isidro Metapán",
+          "awayTeam": "C.D. Platense",
+          "leagueSlug": "slv.1",
+          "fixtureDate": "2026-11-11T01:00:00.000Z",
+          "homeResolvedKey": "Isidro Metapán",
+          "awayResolvedKey": "C.D. Platense",
+          "homeRawSample": 0,
+          "awayRawSample": 2,
+          "homeBlendedSample": 0,
+          "awayBlendedSample": 2,
+          "homeSideRawSample": 0,
+          "awaySideRawSample": 2,
+          "homeSideBlendedSample": 0,
+          "awaySideBlendedSample": 2,
+          "homePriorSample": null,
+          "awayPriorSample": null,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        }
+      }
     },
     {
       "canonicalId": "cid_ukr2_chernihiv_inhulets_20261111",
@@ -418,11 +459,9 @@
       "canonicalId": "cid_slv1_fuertesanfrancisco_alianza_20261111",
       "leagueSlug": "slv.1",
       "kickoffUtc": "2026-11-11T21:30Z",
-      "status": "INSUFFICIENT_DATA",
-      "reasons": [
-        "missing_model_assessment"
-      ],
-      "modelAssessmentAvailable": false,
+      "status": "READY",
+      "reasons": [],
+      "modelAssessmentAvailable": true,
       "recentHistory": null,
       "standings": {
         "usable": false,
@@ -441,5 +480,11 @@
     "realOddsRequiredForStatisticalSelection": false,
     "unverifiedStandingsNeverPromoted": true,
     "thresholdsChanged": false
+  },
+  "readinessTimeBasis": "signed_prematch_evidence_for_started_fixtures_current_diagnostics_for_future_fixtures",
+  "prematchEvidence": {
+    "preservedRows": 1,
+    "invalidRecords": 0,
+    "predictionCreated": false
   }
 }
