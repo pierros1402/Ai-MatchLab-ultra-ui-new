@@ -97,11 +97,9 @@ jobs:
               exit 0
             fi
 
-            if [ "$ATHENS_TOTAL_MINUTES" -ge 1245 ]; then
-              echo "Final pre-midnight release refresh ($ATHENS_HOUR:$ATHENS_MINUTE Athens) -> TOMORROW $DAY_KEY"
-            else
-              echo "Pre-midnight release build ($ATHENS_HOUR:$ATHENS_MINUTE Athens) -> TOMORROW $DAY_KEY"
-            fi
+            # Scheduled full publication has only the admitted early window.
+            # Later LIVE/FT refreshes belong to Intraday, not this full builder.
+            echo "Pre-midnight release build ($ATHENS_HOUR:$ATHENS_MINUTE Athens) -> TOMORROW $DAY_KEY"
           fi
 
           if [ -z "$DAY_KEY" ]; then

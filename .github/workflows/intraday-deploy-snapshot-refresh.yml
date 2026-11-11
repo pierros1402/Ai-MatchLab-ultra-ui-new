@@ -108,6 +108,48 @@ jobs:
           echo "DAY_KEY=$DAY_KEY" >> "$GITHUB_ENV"
           echo "Resolved DAY_KEY=$DAY_KEY"
 
+      # A scheduled Intraday may clear the pre-queue gate then wait behind a writer.
+      # Recheck higher-priority runs AFTER this writer acquired the concurrency slot.
+      # This is a fail-closed mitigation, not an atomic priority/lease guarantee.
+      - name: Recheck higher-priority writers after slot acquisition
+        id: post-slot-priority
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Any failed or incomplete inspection must prevent ALL later writer steps.
+          for WORKFLOW in daily-deploy-snapshot.yml daily-autonomous.yml value-data-alarm.yml value-data-recovery.yml; do
+            API_URL="https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/$WORKFLOW/runs?branch=main&per_page=100"
+            RESPONSE_FILE="$RUNNER_TEMP/$WORKFLOW.post-slot-priority.json"
+            if ! curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" -o "$RESPONSE_FILE" "$API_URL"; then
+              echo "POST_SLOT_PRIORITY=API_UNAVAILABLE; intraday writer skipped"
+              echo "SKIP_BUILD=true" >> "$GITHUB_ENV"
+              exit 0
+            fi
+            if ! python3 - "$RESPONSE_FILE" <<'PY_PRIORITY'
+          import json, sys
+          try:
+              with open(sys.argv[1], encoding="utf-8") as f:
+                  payload = json.load(f)
+              runs = payload["workflow_runs"]
+              if not isinstance(runs, list) or len(runs) >= 100:
+                  sys.exit(1)  # 100 may indicate incomplete pagination: fail closed
+              if any(not isinstance(r, dict) or not isinstance(r.get("status"), str) or not r["status"].strip() for r in runs):
+                  sys.exit(1)
+              if any(r["status"].lower() != "completed" for r in runs):
+                  sys.exit(2)
+          except Exception:
+              sys.exit(1)
+          PY_PRIORITY
+            then
+              echo "POST_SLOT_PRIORITY=HIGHER_PRIORITY_OR_UNVERIFIED; intraday writer skipped"
+              echo "SKIP_BUILD=true" >> "$GITHUB_ENV"
+              exit 0
+            fi
+          done
+          echo "POST_SLOT_PRIORITY=PASS; no listed higher-priority active runs"
+
       - name: Install root dependencies
         if: env.SKIP_BUILD != 'true'
         run: npm ci --no-audit --no-fund
