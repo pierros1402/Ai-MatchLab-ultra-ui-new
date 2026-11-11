@@ -2,8 +2,8 @@
   "ok": true,
   "dayKey": "2026-11-11",
   "season": "2026-2027",
-  "generatedAt": "2026-11-11T16:20:09.818Z",
-  "startedAt": "2026-11-11T16:19:37.522Z",
+  "generatedAt": "2026-11-11T17:03:01.450Z",
+  "startedAt": "2026-11-11T17:02:29.378Z",
   "source": {
     "inputSource": "canonical_fixtures",
     "canonicalMatches": 17,
@@ -21,22 +21,23 @@
     "totalRows": 12,
     "detailsFound": 12,
     "intelligenceOk": 12,
-    "valueReturned": 7,
-    "valueNull": 5,
+    "valueReturned": 6,
+    "valueNull": 6,
     "valueFailed": 0,
-    "minimumRecentSampleNull": 5
+    "minimumRecentSampleNull": 6
   },
   "breakdown": {
     "nullByReason": {
-      "minimum_recent_sample": 5
+      "minimum_recent_sample": 6
     },
     "nullByClass": {
-      "low_recent_sample_prior_backed": 3,
+      "low_recent_sample_prior_backed": 4,
       "missing_both_team_history_and_priors": 1,
       "missing_team_history_and_prior": 1
     },
     "nullByLeague": {
       "mex.2": 2,
+      "ltu.2": 1,
       "lva.1": 1,
       "slv.1": 1,
       "uga.2": 1
@@ -44,7 +45,6 @@
     "returnedByLeague": {
       "eng.trophy": 2,
       "uru.2": 2,
-      "ltu.2": 1,
       "slv.1": 1,
       "ven.2": 1
     }
@@ -214,70 +214,37 @@
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.92,
-        "homeWinScore": 0.491,
-        "drawScore": 0.147,
-        "awayWinScore": 0.361,
-        "over15Score": 0.761,
-        "over25Score": 0.618,
-        "bttsScore": 0.575,
-        "signals": [
-          "home_edge",
-          "over25_support",
-          "mutual_attack_profile",
-          "priors_applied",
-          "close_strength_gap"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "HOME",
-            "score": 0.491,
-            "gap": 0.13,
-            "drawScore": 0.147,
-            "reasons": [
-              "best_below_0.68"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": true,
-            "pick": "Over 1.5",
-            "score": 0.761,
-            "reasons": []
-          },
-          "Over / Under 2.5": {
-            "eligible": false,
-            "pick": "Over 2.5",
-            "score": 0.618,
-            "expectedTotalGoals": 3.101,
-            "reasons": [
-              "score_below_0.65"
-            ]
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.592,
-            "reasons": [
-              "score_below_0.74"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.575,
-            "reasons": [
-              "score_below_0.68"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample_prior_backed",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Babrungas",
+        "awayTeam": "FK Minija",
+        "leagueSlug": "ltu.2",
+        "fixtureDate": "2026-11-11T16:30:00.000Z",
+        "homeResolvedKey": "Babrungas",
+        "awayResolvedKey": "FK Minija",
+        "homeRawSample": 2,
+        "awayRawSample": 3,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 6,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": 133,
+        "awayPriorSample": 134,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_lva1_tukums2000_valmiera_20261111",
@@ -529,7 +496,7 @@
       "leagueSlug": "uga.2",
       "homeTeam": "Iganga United",
       "awayTeam": "Calvary",
-      "status": "STATUS_SCHEDULED",
+      "status": "FT",
       "kickoffUtc": "2026-11-11T13:00:00.000Z",
       "detailsFound": true,
       "intelligenceOk": true,
