@@ -38,13 +38,13 @@
       "terminalConfidence": 0,
       "health": {
         "isStale": false,
-        "lastUpdateAgeMs": 73497241,
-        "elapsedSinceKickoffMs": 12386852,
+        "lastUpdateAgeMs": 109802523,
+        "elapsedSinceKickoffMs": 48692134,
         "observationCount": 1
       },
       "state": "staging",
       "finalized": 0,
-      "updatedAt": 1794367586852,
+      "updatedAt": 1794403892135,
       "sources": {
         "flashscore": {
           "observedAt": 1794294089611,
@@ -113,7 +113,7 @@
             ]
           }
         },
-        "updatedAt": 1794367586852
+        "updatedAt": 1794403892135
       },
       "hasConflict": false,
       "needsReview": false,
@@ -153,13 +153,13 @@
       "terminalConfidence": 1,
       "health": {
         "isStale": false,
-        "lastUpdateAgeMs": 141003,
-        "elapsedSinceKickoffMs": 8786856,
+        "lastUpdateAgeMs": 36446287,
+        "elapsedSinceKickoffMs": 45092140,
         "observationCount": 1
       },
       "state": "staging",
       "finalized": 0,
-      "updatedAt": 1794367586856,
+      "updatedAt": 1794403892140,
       "sources": {
         "espn": {
           "observedAt": 1794367445853,
@@ -200,7 +200,7 @@
         "chosenMinuteSource": "reconciled",
         "disagreement": false,
         "conflictTypes": [],
-        "confidence": 0.941,
+        "confidence": 0.841,
         "observationsCount": 1,
         "decision": {
           "status": {
@@ -228,7 +228,7 @@
             ]
           }
         },
-        "updatedAt": 1794367586856
+        "updatedAt": 1794403892140
       },
       "hasConflict": false,
       "needsReview": false,
@@ -252,37 +252,76 @@
       "kickoffUtc": "2026-11-11T09:30:00.000Z",
       "homeTeam": "FC Chernihiv",
       "awayTeam": "Inhulets",
-      "scoreHome": 0,
-      "scoreAway": 0,
+      "scoreHome": null,
+      "scoreAway": null,
       "penalties": null,
       "decidedBy": null,
-      "status": "STATUS_SCHEDULED",
-      "rawStatus": "STATUS_SCHEDULED",
+      "status": "STATUS_POSTPONED",
+      "rawStatus": "STATUS_POSTPONED",
       "minute": null,
       "venue": null,
       "firstSeenAt": "2026-11-10T01:48:23.185Z",
-      "lastSeenAt": "2026-11-10T22:36:29.688Z",
-      "statusCorrection": null,
-      "operationalState": "PRE",
+      "lastSeenAt": "2026-11-11T13:29:04.180Z",
+      "statusType": "STATUS_POSTPONED",
+      "statusCorrection": {
+        "correctedAt": "2026-11-11T13:29:04.180Z",
+        "decisionId": "flashscore-nonplayed-auto-20261111-vuKJUPm4-v1",
+        "policyVersion": "flashscore-nonplayed-autonomous-v1",
+        "correctedFrom": {
+          "status": "STATUS_SCHEDULED",
+          "statusType": null,
+          "rawStatus": "STATUS_SCHEDULED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "correctedTo": {
+          "status": "STATUS_POSTPONED",
+          "statusType": "STATUS_POSTPONED",
+          "rawStatus": "STATUS_POSTPONED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "reason": "verified_flashscore_nonplayed_decision",
+        "decisionBasis": "exact_provider_id_same_day_ordered_team_terminal_nonplayed",
+        "decisionMode": "autonomous_exact_provider_occurrence",
+        "providerEvidence": {
+          "provider": "flashscore",
+          "providerMatchId": "vuKJUPm4",
+          "home": "FC Chernihiv",
+          "away": "Inhulets",
+          "kickoffUtc": "2026-11-11T09:30:00.000Z",
+          "canonicalSource": "flashscore",
+          "canonicalProviderMatchId": "vuKJUPm4",
+          "statusCode": "3",
+          "statusDetailCode": "4",
+          "playedFinal": false,
+          "finished": false,
+          "nonPlayedTerminal": true,
+          "scoreHome": null,
+          "scoreAway": null
+        }
+      },
       "isDisplayLive": false,
-      "isDisplayPre": true,
+      "isDisplayPre": false,
       "isDisplayFinal": false,
-      "terminalConfidence": 0,
+      "terminalConfidence": 1,
       "health": {
         "isStale": false,
-        "lastUpdateAgeMs": 17397172,
-        "elapsedSinceKickoffMs": -21813140,
+        "lastUpdateAgeMs": 147965,
+        "elapsedSinceKickoffMs": 14492145,
         "observationCount": 1
       },
       "state": "staging",
       "finalized": 0,
-      "updatedAt": 1794367586860,
+      "updatedAt": 1794403892145,
       "sources": {
         "flashscore": {
-          "observedAt": 1794350189688,
+          "observedAt": 1794403744180,
           "sourceId": "vuKJUPm4",
-          "status": "STATUS_SCHEDULED",
-          "rawStatus": "STATUS_SCHEDULED",
+          "status": "STATUS_POSTPONED",
+          "rawStatus": "STATUS_POSTPONED",
           "minute": null,
           "scoreHome": null,
           "scoreAway": null,
@@ -313,25 +352,27 @@
         "chosenKickoffSource": "flashscore",
         "chosenTeamsSource": "flashscore",
         "chosenStatusSource": "flashscore",
-        "chosenScoreSource": "flashscore",
+        "chosenScoreSource": null,
         "chosenMinuteSource": null,
         "disagreement": false,
         "conflictTypes": [],
-        "confidence": 0.67,
+        "confidence": 0.71,
         "observationsCount": 1,
         "decision": {
           "status": {
-            "type": "consensus",
-            "chosen": "STATUS_SCHEDULED",
+            "type": "approved_status_correction",
+            "chosen": "STATUS_POSTPONED",
             "source": "flashscore",
             "sources": [
               "flashscore"
-            ]
+            ],
+            "decisionId": "flashscore-nonplayed-auto-20261111-vuKJUPm4-v1",
+            "policyVersion": "flashscore-nonplayed-autonomous-v1"
           },
           "score": {
             "type": "consensus",
-            "chosen": "0-0",
-            "source": "flashscore",
+            "chosen": "null-null",
+            "source": null,
             "sources": [
               "flashscore"
             ]
@@ -339,13 +380,13 @@
           "minute": {
             "type": "consensus",
             "chosen": null,
-            "source": null,
+            "source": "flashscore",
             "sources": [
               "flashscore"
             ]
           }
         },
-        "updatedAt": 1794367586860
+        "updatedAt": 1794403892145
       },
       "hasConflict": false,
       "needsReview": false,
@@ -397,13 +438,13 @@
       "terminalConfidence": 0,
       "health": {
         "isStale": false,
-        "lastUpdateAgeMs": 17394573,
-        "elapsedSinceKickoffMs": -30813136,
+        "lastUpdateAgeMs": 53699859,
+        "elapsedSinceKickoffMs": 5492150,
         "observationCount": 1
       },
       "state": "staging",
       "finalized": 0,
-      "updatedAt": 1794367586864,
+      "updatedAt": 1794403892150,
       "sources": {
         "flashscore": {
           "observedAt": 1794350192291,
@@ -444,7 +485,7 @@
         "chosenMinuteSource": null,
         "disagreement": false,
         "conflictTypes": [],
-        "confidence": 0.67,
+        "confidence": 0.62,
         "observationsCount": 1,
         "decision": {
           "status": {
@@ -472,7 +513,7 @@
             ]
           }
         },
-        "updatedAt": 1794367586864
+        "updatedAt": 1794403892150
       },
       "hasConflict": false,
       "needsReview": false,
@@ -514,13 +555,13 @@
       "terminalConfidence": 0,
       "health": {
         "isStale": false,
-        "lastUpdateAgeMs": 17347580,
-        "elapsedSinceKickoffMs": -34413132,
+        "lastUpdateAgeMs": 53652867,
+        "elapsedSinceKickoffMs": 1892155,
         "observationCount": 1
       },
       "state": "staging",
       "finalized": 0,
-      "updatedAt": 1794367586868,
+      "updatedAt": 1794403892155,
       "sources": {
         "flashscore": {
           "observedAt": 1794350239288,
@@ -561,7 +602,7 @@
         "chosenMinuteSource": null,
         "disagreement": false,
         "conflictTypes": [],
-        "confidence": 0.67,
+        "confidence": 0.62,
         "observationsCount": 1,
         "decision": {
           "status": {
@@ -589,7 +630,7 @@
             ]
           }
         },
-        "updatedAt": 1794367586868
+        "updatedAt": 1794403892155
       },
       "hasConflict": false,
       "needsReview": false,
@@ -631,13 +672,13 @@
       "terminalConfidence": 0,
       "health": {
         "isStale": false,
-        "lastUpdateAgeMs": 17394525,
-        "elapsedSinceKickoffMs": -47013128,
+        "lastUpdateAgeMs": 53699813,
+        "elapsedSinceKickoffMs": -10707840,
         "observationCount": 1
       },
       "state": "staging",
       "finalized": 0,
-      "updatedAt": 1794367586872,
+      "updatedAt": 1794403892160,
       "sources": {
         "flashscore": {
           "observedAt": 1794350192347,
@@ -678,7 +719,7 @@
         "chosenMinuteSource": null,
         "disagreement": false,
         "conflictTypes": [],
-        "confidence": 0.67,
+        "confidence": 0.62,
         "observationsCount": 1,
         "decision": {
           "status": {
@@ -706,7 +747,7 @@
             ]
           }
         },
-        "updatedAt": 1794367586872
+        "updatedAt": 1794403892160
       },
       "hasConflict": false,
       "needsReview": false,
@@ -748,13 +789,13 @@
       "terminalConfidence": 0,
       "health": {
         "isStale": false,
-        "lastUpdateAgeMs": 17347652,
-        "elapsedSinceKickoffMs": -56013124,
+        "lastUpdateAgeMs": 53652941,
+        "elapsedSinceKickoffMs": -19707835,
         "observationCount": 1
       },
       "state": "staging",
       "finalized": 0,
-      "updatedAt": 1794367586876,
+      "updatedAt": 1794403892165,
       "sources": {
         "flashscore": {
           "observedAt": 1794350239224,
@@ -795,7 +836,7 @@
         "chosenMinuteSource": null,
         "disagreement": false,
         "conflictTypes": [],
-        "confidence": 0.67,
+        "confidence": 0.62,
         "observationsCount": 1,
         "decision": {
           "status": {
@@ -823,7 +864,7 @@
             ]
           }
         },
-        "updatedAt": 1794367586876
+        "updatedAt": 1794403892165
       },
       "hasConflict": false,
       "needsReview": false,
@@ -869,13 +910,13 @@
       "terminalConfidence": 0,
       "health": {
         "isStale": false,
-        "lastUpdateAgeMs": 17344137,
-        "elapsedSinceKickoffMs": -56013119,
+        "lastUpdateAgeMs": 53649426,
+        "elapsedSinceKickoffMs": -19707830,
         "observationCount": 1
       },
       "state": "staging",
       "finalized": 0,
-      "updatedAt": 1794367586881,
+      "updatedAt": 1794403892170,
       "sources": {
         "espn": {
           "observedAt": 1794350242744,
@@ -916,7 +957,7 @@
         "chosenMinuteSource": null,
         "disagreement": false,
         "conflictTypes": [],
-        "confidence": 0.811,
+        "confidence": 0.761,
         "observationsCount": 1,
         "decision": {
           "status": {
@@ -944,7 +985,7 @@
             ]
           }
         },
-        "updatedAt": 1794367586881
+        "updatedAt": 1794403892170
       },
       "hasConflict": false,
       "needsReview": false,
@@ -990,13 +1031,13 @@
       "terminalConfidence": 0,
       "health": {
         "isStale": false,
-        "lastUpdateAgeMs": 17344140,
-        "elapsedSinceKickoffMs": -56013115,
+        "lastUpdateAgeMs": 53649430,
+        "elapsedSinceKickoffMs": -19707825,
         "observationCount": 1
       },
       "state": "staging",
       "finalized": 0,
-      "updatedAt": 1794367586885,
+      "updatedAt": 1794403892175,
       "sources": {
         "espn": {
           "observedAt": 1794350242745,
@@ -1037,7 +1078,7 @@
         "chosenMinuteSource": null,
         "disagreement": false,
         "conflictTypes": [],
-        "confidence": 0.811,
+        "confidence": 0.761,
         "observationsCount": 1,
         "decision": {
           "status": {
@@ -1065,7 +1106,7 @@
             ]
           }
         },
-        "updatedAt": 1794367586885
+        "updatedAt": 1794403892175
       },
       "hasConflict": false,
       "needsReview": false,
@@ -1107,13 +1148,13 @@
       "terminalConfidence": 0,
       "health": {
         "isStale": false,
-        "lastUpdateAgeMs": 17357582,
-        "elapsedSinceKickoffMs": -57813110,
+        "lastUpdateAgeMs": 53662873,
+        "elapsedSinceKickoffMs": -21507819,
         "observationCount": 1
       },
       "state": "staging",
       "finalized": 0,
-      "updatedAt": 1794367586890,
+      "updatedAt": 1794403892181,
       "sources": {
         "flashscore": {
           "observedAt": 1794350229308,
@@ -1154,7 +1195,7 @@
         "chosenMinuteSource": null,
         "disagreement": false,
         "conflictTypes": [],
-        "confidence": 0.67,
+        "confidence": 0.62,
         "observationsCount": 1,
         "decision": {
           "status": {
@@ -1182,7 +1223,7 @@
             ]
           }
         },
-        "updatedAt": 1794367586890
+        "updatedAt": 1794403892181
       },
       "hasConflict": false,
       "needsReview": false,
@@ -1234,13 +1275,13 @@
       "terminalConfidence": 0,
       "health": {
         "isStale": false,
-        "lastUpdateAgeMs": 17357585,
-        "elapsedSinceKickoffMs": -57813106,
+        "lastUpdateAgeMs": 53662877,
+        "elapsedSinceKickoffMs": -21507814,
         "observationCount": 1
       },
       "state": "staging",
       "finalized": 0,
-      "updatedAt": 1794367586894,
+      "updatedAt": 1794403892186,
       "sources": {
         "flashscore": {
           "observedAt": 1794350229309,
@@ -1281,7 +1322,7 @@
         "chosenMinuteSource": null,
         "disagreement": false,
         "conflictTypes": [],
-        "confidence": 0.67,
+        "confidence": 0.62,
         "observationsCount": 1,
         "decision": {
           "status": {
@@ -1309,7 +1350,7 @@
             ]
           }
         },
-        "updatedAt": 1794367586894
+        "updatedAt": 1794403892186
       },
       "hasConflict": false,
       "needsReview": false,
@@ -1361,13 +1402,13 @@
       "terminalConfidence": 0,
       "health": {
         "isStale": false,
-        "lastUpdateAgeMs": 211439030,
-        "elapsedSinceKickoffMs": -59613103,
+        "lastUpdateAgeMs": 247744323,
+        "elapsedSinceKickoffMs": -23307810,
         "observationCount": 1
       },
       "state": "staging",
       "finalized": 0,
-      "updatedAt": 1794367586897,
+      "updatedAt": 1794403892190,
       "sources": {
         "espn": {
           "observedAt": 1794156147867,
@@ -1436,7 +1477,7 @@
             ]
           }
         },
-        "updatedAt": 1794367586897
+        "updatedAt": 1794403892190
       },
       "hasConflict": false,
       "needsReview": false,
@@ -1480,13 +1521,13 @@
       "terminalConfidence": 1,
       "health": {
         "isStale": false,
-        "lastUpdateAgeMs": 17356141,
-        "elapsedSinceKickoffMs": -63213098,
+        "lastUpdateAgeMs": 53661434,
+        "elapsedSinceKickoffMs": -26907805,
         "observationCount": 1
       },
       "state": "staging",
       "finalized": 0,
-      "updatedAt": 1794367586902,
+      "updatedAt": 1794403892195,
       "sources": {
         "flashscore": {
           "observedAt": 1794350230761,
@@ -1527,7 +1568,7 @@
         "chosenMinuteSource": null,
         "disagreement": false,
         "conflictTypes": [],
-        "confidence": 0.66,
+        "confidence": 0.61,
         "observationsCount": 1,
         "decision": {
           "status": {
@@ -1555,7 +1596,7 @@
             ]
           }
         },
-        "updatedAt": 1794367586902
+        "updatedAt": 1794403892195
       },
       "hasConflict": false,
       "needsReview": false,
@@ -1648,13 +1689,13 @@
       "terminalConfidence": 1,
       "health": {
         "isStale": false,
-        "lastUpdateAgeMs": 17356144,
-        "elapsedSinceKickoffMs": -63213095,
+        "lastUpdateAgeMs": 53661439,
+        "elapsedSinceKickoffMs": -26907800,
         "observationCount": 1
       },
       "state": "staging",
       "finalized": 0,
-      "updatedAt": 1794367586905,
+      "updatedAt": 1794403892200,
       "sources": {
         "flashscore": {
           "observedAt": 1794350230761,
@@ -1695,7 +1736,7 @@
         "chosenMinuteSource": null,
         "disagreement": false,
         "conflictTypes": [],
-        "confidence": 0.66,
+        "confidence": 0.61,
         "observationsCount": 1,
         "decision": {
           "status": {
@@ -1725,7 +1766,7 @@
             ]
           }
         },
-        "updatedAt": 1794367586905
+        "updatedAt": 1794403892200
       },
       "hasConflict": false,
       "needsReview": false,
@@ -1779,13 +1820,13 @@
       "terminalConfidence": 1,
       "health": {
         "isStale": false,
-        "lastUpdateAgeMs": 17356148,
-        "elapsedSinceKickoffMs": -63213091,
+        "lastUpdateAgeMs": 53661443,
+        "elapsedSinceKickoffMs": -26907796,
         "observationCount": 1
       },
       "state": "staging",
       "finalized": 0,
-      "updatedAt": 1794367586909,
+      "updatedAt": 1794403892204,
       "sources": {
         "flashscore": {
           "observedAt": 1794350230761,
@@ -1826,7 +1867,7 @@
         "chosenMinuteSource": null,
         "disagreement": false,
         "conflictTypes": [],
-        "confidence": 0.66,
+        "confidence": 0.61,
         "observationsCount": 1,
         "decision": {
           "status": {
@@ -1854,7 +1895,7 @@
             ]
           }
         },
-        "updatedAt": 1794367586909
+        "updatedAt": 1794403892204
       },
       "hasConflict": false,
       "needsReview": false,
@@ -1908,13 +1949,13 @@
       "terminalConfidence": 1,
       "health": {
         "isStale": false,
-        "lastUpdateAgeMs": 17356151,
-        "elapsedSinceKickoffMs": -63213087,
+        "lastUpdateAgeMs": 53661447,
+        "elapsedSinceKickoffMs": -26907791,
         "observationCount": 1
       },
       "state": "staging",
       "finalized": 0,
-      "updatedAt": 1794367586913,
+      "updatedAt": 1794403892209,
       "sources": {
         "flashscore": {
           "observedAt": 1794350230762,
@@ -1955,7 +1996,7 @@
         "chosenMinuteSource": null,
         "disagreement": false,
         "conflictTypes": [],
-        "confidence": 0.66,
+        "confidence": 0.61,
         "observationsCount": 1,
         "decision": {
           "status": {
@@ -1983,7 +2024,7 @@
             ]
           }
         },
-        "updatedAt": 1794367586913
+        "updatedAt": 1794403892209
       },
       "hasConflict": false,
       "needsReview": false,
@@ -2036,13 +2077,13 @@
       "terminalConfidence": 0,
       "health": {
         "isStale": false,
-        "lastUpdateAgeMs": 141135,
-        "elapsedSinceKickoffMs": -65013083,
+        "lastUpdateAgeMs": 36446431,
+        "elapsedSinceKickoffMs": -28707787,
         "observationCount": 1
       },
       "state": "staging",
       "finalized": 0,
-      "updatedAt": 1794367586917,
+      "updatedAt": 1794403892213,
       "sources": {
         "espn": {
           "observedAt": 1794367445782,
@@ -2083,7 +2124,7 @@
         "chosenMinuteSource": null,
         "disagreement": false,
         "conflictTypes": [],
-        "confidence": 0.861,
+        "confidence": 0.761,
         "observationsCount": 1,
         "decision": {
           "status": {
@@ -2111,7 +2152,7 @@
             ]
           }
         },
-        "updatedAt": 1794367586917
+        "updatedAt": 1794403892213
       },
       "hasConflict": false,
       "needsReview": false,
