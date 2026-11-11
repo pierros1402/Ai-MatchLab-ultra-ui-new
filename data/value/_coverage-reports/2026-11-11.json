@@ -2,8 +2,8 @@
   "ok": true,
   "dayKey": "2026-11-11",
   "season": "2026-2027",
-  "generatedAt": "2026-11-11T19:12:46.227Z",
-  "startedAt": "2026-11-11T19:12:21.170Z",
+  "generatedAt": "2026-11-11T19:51:43.690Z",
+  "startedAt": "2026-11-11T19:51:11.594Z",
   "source": {
     "inputSource": "canonical_fixtures",
     "canonicalMatches": 17,
@@ -21,23 +21,24 @@
     "totalRows": 12,
     "detailsFound": 12,
     "intelligenceOk": 12,
-    "valueReturned": 5,
-    "valueNull": 7,
+    "valueReturned": 3,
+    "valueNull": 9,
     "valueFailed": 0,
-    "minimumRecentSampleNull": 7
+    "minimumRecentSampleNull": 9
   },
   "breakdown": {
     "nullByReason": {
-      "minimum_recent_sample": 7
+      "minimum_recent_sample": 9
     },
     "nullByClass": {
-      "low_recent_sample_prior_backed": 4,
+      "low_recent_sample_prior_backed": 6,
       "low_recent_sample": 1,
       "missing_both_team_history_and_priors": 1,
       "missing_team_history_and_prior": 1
     },
     "nullByLeague": {
       "mex.2": 2,
+      "uru.2": 2,
       "ltu.2": 1,
       "lva.1": 1,
       "slv.1": 1,
@@ -46,7 +47,6 @@
     },
     "returnedByLeague": {
       "eng.trophy": 2,
-      "uru.2": 2,
       "slv.1": 1
     }
   },
@@ -56,7 +56,7 @@
       "leagueSlug": "eng.trophy",
       "homeTeam": "Barnsley",
       "awayTeam": "Oldham Athletic",
-      "status": "PRE",
+      "status": "LIVE",
       "kickoffUtc": "2026-11-11T19:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -133,7 +133,7 @@
       "leagueSlug": "eng.trophy",
       "homeTeam": "Sheffield Wednesday",
       "awayTeam": "Accrington Stanley",
-      "status": "PRE",
+      "status": "FIRST_HALF",
       "kickoffUtc": "2026-11-11T19:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -210,7 +210,7 @@
       "leagueSlug": "ltu.2",
       "homeTeam": "Babrungas",
       "awayTeam": "FK Minija",
-      "status": "STATUS_SCHEDULED",
+      "status": "FT",
       "kickoffUtc": "2026-11-11T16:30:00.000Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -544,74 +544,37 @@
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.907,
-        "homeWinScore": 0.336,
-        "drawScore": 0.141,
-        "awayWinScore": 0.522,
-        "over15Score": 0.572,
-        "over25Score": 0.43600000000000005,
-        "bttsScore": 0.411,
-        "signals": [
-          "away_edge",
-          "priors_applied",
-          "close_strength_gap"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "AWAY",
-            "score": 0.522,
-            "gap": 0.186,
-            "drawScore": 0.141,
-            "reasons": [
-              "best_below_0.68"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": false,
-            "pick": "Over 1.5",
-            "score": 0.572,
-            "reasons": [
-              "score_below_0.70"
-            ]
-          },
-          "Over / Under 2.5": {
-            "eligible": false,
-            "pick": "Over 2.5",
-            "score": 0.43600000000000005,
-            "expectedTotalGoals": 2.177,
-            "reasons": [
-              "score_below_0.65",
-              "expected_goals_below_2.75",
-              "missing_goal_support"
-            ]
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.423,
-            "reasons": [
-              "score_below_0.74",
-              "missing_strong_goal_support"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.411,
-            "reasons": [
-              "score_below_0.68",
-              "missing_btts_support"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample_prior_backed",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "La Luz",
+        "awayTeam": "Fenix",
+        "leagueSlug": "uru.2",
+        "fixtureDate": "2026-11-11T19:30:00.000Z",
+        "homeResolvedKey": "La Luz",
+        "awayResolvedKey": "Fenix",
+        "homeRawSample": 2,
+        "awayRawSample": 2,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 5,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 3,
+        "homePriorSample": 94,
+        "awayPriorSample": 32,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_uru2_tacuarembo_miramar_20261111",
@@ -623,73 +586,37 @@
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.893,
-        "homeWinScore": 0.302,
-        "drawScore": 0.121,
-        "awayWinScore": 0.577,
-        "over15Score": 0.626,
-        "over25Score": 0.607,
-        "bttsScore": 0.498,
-        "signals": [
-          "away_edge",
-          "matchup_goals_history",
-          "priors_applied",
-          "close_strength_gap"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "AWAY",
-            "score": 0.577,
-            "gap": 0.27499999999999997,
-            "drawScore": 0.121,
-            "reasons": [
-              "best_below_0.68"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": false,
-            "pick": "Over 1.5",
-            "score": 0.626,
-            "reasons": [
-              "score_below_0.70"
-            ]
-          },
-          "Over / Under 2.5": {
-            "eligible": false,
-            "pick": "Over 2.5",
-            "score": 0.607,
-            "expectedTotalGoals": 2.335,
-            "reasons": [
-              "score_below_0.65",
-              "expected_goals_below_2.75"
-            ]
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.464,
-            "reasons": [
-              "score_below_0.74"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.498,
-            "reasons": [
-              "score_below_0.68",
-              "missing_btts_support"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample_prior_backed",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Tacuarembo",
+        "awayTeam": "Miramar",
+        "leagueSlug": "uru.2",
+        "fixtureDate": "2026-11-11T19:30:00.000Z",
+        "homeResolvedKey": "Tacuarembo",
+        "awayResolvedKey": "Miramar",
+        "homeRawSample": 1,
+        "awayRawSample": 1,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 4,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": 99,
+        "awayPriorSample": 61,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_ven2_zamora2_lara_20261111",
