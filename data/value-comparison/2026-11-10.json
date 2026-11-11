@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-11-10",
-  "generatedAt": "2026-11-10T21:46:08.685Z",
+  "generatedAt": "2026-11-10T23:36:35.926Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,7 +18,7 @@
   "inputs": {
     "fixturesPath": "data/canonical-fixtures/2026-11-10",
     "finalResultsDir": "data/final-results/2026-11-10",
-    "verifiedFinalResults": 25,
+    "verifiedFinalResults": 30,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-11-10",
     "canonicalContradictionsRejected": [],
     "canonicalIdentityAmbiguities": [],
@@ -384,15 +384,16 @@
     "upstreamCoverage": "INCOMPLETE",
     "zeroPicksCertified": false,
     "dataReadiness": {
-      "status": "PARTIAL",
+      "status": "INSUFFICIENT_DATA",
       "complete": false,
-      "checkedAt": "2026-11-10T21:46:09.341Z",
+      "checkedAt": "2026-11-10T23:36:37.025Z",
       "fixtures": 30,
       "applicable": 30,
-      "ready": 17,
-      "insufficient": 13,
+      "ready": 0,
+      "insufficient": 30,
       "byReason": {
-        "minimum_recent_sample": 13,
+        "details_foundation_not_verified": 30,
+        "minimum_recent_sample": 16,
         "missing_model_assessment": 12
       }
     },
@@ -416,12 +417,12 @@
       "unresolved": 0,
       "hitRate": null
     },
-    "projectionSignature": "1073dce70f1d879d2ceec48feda96265ea0eb22801dcbe9e3658237804c7f521"
+    "projectionSignature": "e2a76deabb929f7071199f932285b68b69d33657823b2154e3044933d43b12ce"
   },
   "dataReadiness": {
     "schema": "ai-matchlab.value-data-readiness.v1",
     "date": "2026-11-10",
-    "generatedAt": "2026-11-10T21:46:09.341Z",
+    "generatedAt": "2026-11-10T23:36:37.025Z",
     "fixtureUniverse": {
       "schema": "ai-matchlab.value-fixture-universe.v1",
       "source": "canonical_fixtures",
@@ -463,14 +464,15 @@
     "certifies": "configured_statistical_value_required_inputs_only",
     "allLeagueDataCertified": false,
     "complete": false,
-    "status": "PARTIAL",
+    "status": "INSUFFICIENT_DATA",
     "summary": {
       "fixtures": 30,
       "applicable": 30,
-      "ready": 17,
-      "insufficient": 13,
+      "ready": 0,
+      "insufficient": 30,
       "byReason": {
-        "minimum_recent_sample": 13,
+        "details_foundation_not_verified": 30,
+        "minimum_recent_sample": 16,
         "missing_model_assessment": 12
       }
     },
@@ -481,6 +483,7 @@
         "kickoffUtc": "2026-11-09T22:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -525,8 +528,10 @@
         "canonicalId": "cid_col1_atleticojunior_cucutadeportivo_20261110",
         "leagueSlug": "col.1",
         "kickoffUtc": "2026-11-10T00:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -541,6 +546,7 @@
         "kickoffUtc": "2026-11-10T00:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "details_foundation_not_verified",
           "minimum_recent_sample"
         ],
         "modelAssessmentAvailable": true,
@@ -584,10 +590,38 @@
         "canonicalId": "cid_rou2_metalulbuzau_steauabucuresti_20261110",
         "leagueSlug": "rou.2",
         "kickoffUtc": "2026-11-10T17:30:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Metalul Buzau",
+          "awayTeam": "Steaua Bucuresti",
+          "leagueSlug": "rou.2",
+          "fixtureDate": "2026-11-10T17:30:00.000Z",
+          "homeResolvedKey": "Metalul Buzau",
+          "awayResolvedKey": "Steaua Bucuresti",
+          "homeRawSample": 2,
+          "awayRawSample": 3,
+          "homeBlendedSample": 5,
+          "awayBlendedSample": 6,
+          "homeSideRawSample": 0,
+          "awaySideRawSample": 1,
+          "homeSideBlendedSample": 3,
+          "awaySideBlendedSample": 4,
+          "homePriorSample": 54,
+          "awayPriorSample": 144,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": false,
           "reasons": [
@@ -596,47 +630,7 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "e3ad9bba15c3990692b85e68070f8d1318439ee32575149a16995d31f6cbbbdc",
-          "observedAt": "2026-11-10T08:31:17.101Z",
-          "kickoffUtc": "2026-11-10T17:30:00.000Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-11-10T21:46:09.341Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "Metalul Buzau",
-            "awayTeam": "Steaua Bucuresti",
-            "leagueSlug": "rou.2",
-            "fixtureDate": "2026-11-10T17:30:00.000Z",
-            "homeResolvedKey": "Metalul Buzau",
-            "awayResolvedKey": "Steaua Bucuresti",
-            "homeRawSample": 2,
-            "awayRawSample": 3,
-            "homeBlendedSample": 5,
-            "awayBlendedSample": 6,
-            "homeSideRawSample": 0,
-            "awaySideRawSample": 1,
-            "homeSideBlendedSample": 3,
-            "awaySideBlendedSample": 4,
-            "homePriorSample": 54,
-            "awayPriorSample": 144,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       },
       {
         "canonicalId": "cid_espcopadelrey_anaitasuna_alaves_20261110",
@@ -644,6 +638,7 @@
         "kickoffUtc": "2026-11-10T18:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -690,6 +685,7 @@
         "kickoffUtc": "2026-11-10T18:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -734,8 +730,10 @@
         "canonicalId": "cid_engtrophy_barnet_leytonorient_20261110",
         "leagueSlug": "eng.trophy",
         "kickoffUtc": "2026-11-10T19:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -752,8 +750,10 @@
         "canonicalId": "cid_engtrophy_bristolrovers_reading_20261110",
         "leagueSlug": "eng.trophy",
         "kickoffUtc": "2026-11-10T19:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -770,8 +770,10 @@
         "canonicalId": "cid_engtrophy_burtonalbion_nottscounty_20261110",
         "leagueSlug": "eng.trophy",
         "kickoffUtc": "2026-11-10T19:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -788,8 +790,10 @@
         "canonicalId": "cid_engtrophy_crewealexandra_wiganathletic_20261110",
         "leagueSlug": "eng.trophy",
         "kickoffUtc": "2026-11-10T19:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -808,6 +812,7 @@
         "kickoffUtc": "2026-11-10T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -854,6 +859,7 @@
         "kickoffUtc": "2026-11-10T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -898,8 +904,10 @@
         "canonicalId": "cid_engtrophy_leicestercity_walsall_20261110",
         "leagueSlug": "eng.trophy",
         "kickoffUtc": "2026-11-10T19:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -916,8 +924,10 @@
         "canonicalId": "cid_engtrophy_mansfieldtown_chesterfield_20261110",
         "leagueSlug": "eng.trophy",
         "kickoffUtc": "2026-11-10T19:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -934,8 +944,10 @@
         "canonicalId": "cid_engtrophy_northamptontown_gillingham_20261110",
         "leagueSlug": "eng.trophy",
         "kickoffUtc": "2026-11-10T19:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -952,8 +964,10 @@
         "canonicalId": "cid_engtrophy_oxfordunited_cheltenhamtown_20261110",
         "leagueSlug": "eng.trophy",
         "kickoffUtc": "2026-11-10T19:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -970,8 +984,10 @@
         "canonicalId": "cid_engtrophy_plymouthargyle_swindontown_20261110",
         "leagueSlug": "eng.trophy",
         "kickoffUtc": "2026-11-10T19:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -990,6 +1006,7 @@
         "kickoffUtc": "2026-11-10T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -1034,8 +1051,10 @@
         "canonicalId": "cid_engtrophy_stockportcounty_tranmererovers_20261110",
         "leagueSlug": "eng.trophy",
         "kickoffUtc": "2026-11-10T19:00Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1054,6 +1073,7 @@
         "kickoffUtc": "2026-11-10T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -1100,6 +1120,7 @@
         "kickoffUtc": "2026-11-10T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -1146,6 +1167,7 @@
         "kickoffUtc": "2026-11-10T19:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -1190,10 +1212,38 @@
         "canonicalId": "cid_uru2_huracan_riverplate_20261110",
         "leagueSlug": "uru.2",
         "kickoffUtc": "2026-11-10T19:30:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Huracan FC",
+          "awayTeam": "River Plate",
+          "leagueSlug": "uru.2",
+          "fixtureDate": "2026-11-10T19:30:00.000Z",
+          "homeResolvedKey": "Huracan FC",
+          "awayResolvedKey": "River Plate",
+          "homeRawSample": 2,
+          "awayRawSample": 0,
+          "homeBlendedSample": 2,
+          "awayBlendedSample": 0,
+          "homeSideRawSample": 0,
+          "awaySideRawSample": 0,
+          "homeSideBlendedSample": 0,
+          "awaySideBlendedSample": 0,
+          "homePriorSample": null,
+          "awayPriorSample": null,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": false,
           "reasons": [
@@ -1202,54 +1252,16 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "e3ad9bba15c3990692b85e68070f8d1318439ee32575149a16995d31f6cbbbdc",
-          "observedAt": "2026-11-10T08:31:17.101Z",
-          "kickoffUtc": "2026-11-10T19:30:00.000Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-11-10T21:46:09.341Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "Huracan FC",
-            "awayTeam": "River Plate",
-            "leagueSlug": "uru.2",
-            "fixtureDate": "2026-11-10T19:30:00.000Z",
-            "homeResolvedKey": "Huracan FC",
-            "awayResolvedKey": "River Plate",
-            "homeRawSample": 2,
-            "awayRawSample": 0,
-            "homeBlendedSample": 2,
-            "awayBlendedSample": 0,
-            "homeSideRawSample": 0,
-            "awaySideRawSample": 0,
-            "homeSideBlendedSample": 0,
-            "awaySideBlendedSample": 0,
-            "homePriorSample": null,
-            "awayPriorSample": null,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       },
       {
         "canonicalId": "cid_engtrophy_bradfordcity_yorkcity_20261110",
         "leagueSlug": "eng.trophy",
         "kickoffUtc": "2026-11-10T19:30Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1266,8 +1278,10 @@
         "canonicalId": "cid_engtrophy_bromley_miltonkeynesdons_20261110",
         "leagueSlug": "eng.trophy",
         "kickoffUtc": "2026-11-10T19:30Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1286,6 +1300,7 @@
         "kickoffUtc": "2026-11-10T19:30Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -1332,6 +1347,7 @@
         "kickoffUtc": "2026-11-10T19:45Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -1378,6 +1394,7 @@
         "kickoffUtc": "2026-11-10T20:00Z",
         "status": "INSUFFICIENT_DATA",
         "reasons": [
+          "details_foundation_not_verified",
           "minimum_recent_sample",
           "missing_model_assessment"
         ],
@@ -1422,8 +1439,10 @@
         "canonicalId": "cid_col2_envigado_bocajuniors_20261110",
         "leagueSlug": "col.2",
         "kickoffUtc": "2026-11-10T20:30:00.000Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "details_foundation_not_verified"
+        ],
         "modelAssessmentAvailable": true,
         "recentHistory": null,
         "standings": {
@@ -1440,10 +1459,38 @@
         "canonicalId": "cid_slv1_cacahuatique_luisangelfirpo_20261110",
         "leagueSlug": "slv.1",
         "kickoffUtc": "2026-11-10T21:30Z",
-        "status": "READY",
-        "reasons": [],
+        "status": "INSUFFICIENT_DATA",
+        "reasons": [
+          "details_foundation_not_verified",
+          "minimum_recent_sample"
+        ],
         "modelAssessmentAvailable": true,
-        "recentHistory": null,
+        "recentHistory": {
+          "minRequiredRecentMatches": 3,
+          "sampleBasis": "current_season_raw",
+          "formMaxAgeDays": 35,
+          "formWindow": 5,
+          "homeTeam": "Cacahuatique",
+          "awayTeam": "Luis Ángel Firpo",
+          "leagueSlug": "slv.1",
+          "fixtureDate": "2026-11-10T21:30:00.000Z",
+          "homeResolvedKey": "Cacahuatique",
+          "awayResolvedKey": "Luis Ángel Firpo",
+          "homeRawSample": 1,
+          "awayRawSample": 2,
+          "homeBlendedSample": 1,
+          "awayBlendedSample": 2,
+          "homeSideRawSample": 1,
+          "awaySideRawSample": 0,
+          "homeSideBlendedSample": 1,
+          "awaySideBlendedSample": 0,
+          "homePriorSample": null,
+          "awayPriorSample": null,
+          "homeRecentSelected": null,
+          "awayRecentSelected": null,
+          "homeSideSelected": null,
+          "awaySideSelected": null
+        },
         "standings": {
           "usable": false,
           "reasons": [
@@ -1452,47 +1499,7 @@
             "FOUNDATION_NOT_PASS"
           ]
         },
-        "predictionCreated": false,
-        "readinessBasis": "signed_prematch_observation",
-        "prematchEvidence": {
-          "recordSignature": "e3ad9bba15c3990692b85e68070f8d1318439ee32575149a16995d31f6cbbbdc",
-          "observedAt": "2026-11-10T08:31:17.101Z",
-          "kickoffUtc": "2026-11-10T21:30Z",
-          "scope": "diagnostics_only_no_selector_inputs_changed"
-        },
-        "currentDiagnostic": {
-          "generatedAt": "2026-11-10T21:46:09.341Z",
-          "status": "INSUFFICIENT_DATA",
-          "reasons": [
-            "minimum_recent_sample"
-          ],
-          "recentHistory": {
-            "minRequiredRecentMatches": 3,
-            "sampleBasis": "current_season_raw",
-            "formMaxAgeDays": 35,
-            "formWindow": 5,
-            "homeTeam": "Cacahuatique",
-            "awayTeam": "Luis Ángel Firpo",
-            "leagueSlug": "slv.1",
-            "fixtureDate": "2026-11-10T21:30:00.000Z",
-            "homeResolvedKey": "Cacahuatique",
-            "awayResolvedKey": "Luis Ángel Firpo",
-            "homeRawSample": 1,
-            "awayRawSample": 2,
-            "homeBlendedSample": 1,
-            "awayBlendedSample": 2,
-            "homeSideRawSample": 1,
-            "awaySideRawSample": 0,
-            "homeSideBlendedSample": 1,
-            "awaySideBlendedSample": 0,
-            "homePriorSample": null,
-            "awayPriorSample": null,
-            "homeRecentSelected": null,
-            "awayRecentSelected": null,
-            "homeSideSelected": null,
-            "awaySideSelected": null
-          }
-        }
+        "predictionCreated": false
       }
     ],
     "integrityIsNotCoverage": true,
@@ -1501,12 +1508,6 @@
       "realOddsRequiredForStatisticalSelection": false,
       "unverifiedStandingsNeverPromoted": true,
       "thresholdsChanged": false
-    },
-    "readinessTimeBasis": "signed_prematch_evidence_for_started_fixtures_current_diagnostics_for_future_fixtures",
-    "prematchEvidence": {
-      "preservedRows": 3,
-      "invalidRecords": 0,
-      "predictionCreated": false
     }
   }
 }
