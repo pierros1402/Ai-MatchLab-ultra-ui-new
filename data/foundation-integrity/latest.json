@@ -1,17 +1,22 @@
 {
   "schema": "ai-matchlab.foundation-integrity.v1",
-  "generatedAt": "2026-11-11T21:22:53.769Z",
-  "dayKey": "2026-11-11",
+  "generatedAt": "2026-11-11T22:27:38.718Z",
+  "dayKey": "2026-11-12",
   "season": "2026-2027",
-  "ok": true,
+  "ok": false,
   "modelReady": true,
-  "publicationReady": true,
-  "blocked": [],
+  "publicationReady": false,
+  "blocked": [
+    {
+      "component": "details",
+      "reason": "details_foundation_not_ready"
+    }
+  ],
   "warnings": [
     {
       "component": "historySemantic",
       "reason": "age_expired_results_rows_present",
-      "count": 21532,
+      "count": 21534,
       "informational": true
     },
     {
@@ -35,7 +40,7 @@
         "ok": false,
         "clean": false,
         "schema": "ai-matchlab.history-semantic-integrity.v1",
-        "generatedAt": "2026-11-11T21:22:52.700Z",
+        "generatedAt": "2026-11-11T22:27:37.493Z",
         "sourceContract": {
           "readOnlyTruthLayers": true,
           "truthWrites": 0,
@@ -83,7 +88,7 @@
           {
             "type": "results_expired_entries",
             "severity": "info",
-            "count": 21532,
+            "count": 21534,
             "detail": "Age-expired rows are reported separately and are not treated as duplicates."
           }
         ],
@@ -92,7 +97,7 @@
           "teamKeyCount": 17737,
           "entryCount": 434235,
           "reconstructedMatchIdCount": 216997,
-          "expiredEntryCount": 21532,
+          "expiredEntryCount": 21534,
           "invalidEntryCount": 0,
           "orphanMatchIdCount": 1,
           "multiSideMatchIdCount": 194,
@@ -4651,7 +4656,7 @@
       "reason": null,
       "detail": {
         "schema": "ai-matchlab.standings-foundation-audit.v1",
-        "generatedAt": "2026-11-11T21:22:52.818Z",
+        "generatedAt": "2026-11-11T22:27:37.589Z",
         "ok": true,
         "season": "2026-2027",
         "summary": {
@@ -226903,27 +226908,120 @@
       }
     },
     "details": {
-      "ok": true,
-      "reason": null,
+      "ok": false,
+      "reason": "details_foundation_not_ready",
       "detail": {
         "schema": "ai-matchlab.details-foundation-audit.v2",
-        "generatedAt": "2026-11-11T21:22:53.768Z",
-        "dayKey": "2026-11-11",
-        "ok": true,
+        "generatedAt": "2026-11-11T22:27:38.718Z",
+        "dayKey": "2026-11-12",
+        "ok": false,
         "publicationUniverse": {
-          "mode": "intraday_status_only",
-          "currentFixtureCount": 17,
-          "publishedFixtureCount": 17,
+          "mode": null,
+          "currentFixtureCount": 44,
+          "publishedFixtureCount": 0,
           "deferredFixtureCount": 0,
           "deferredFixtureIds": []
         },
         "summary": {
-          "expectedFixtures": 17,
-          "detailFiles": 17,
-          "checked": 17,
-          "issueCount": 0
+          "expectedFixtures": 0,
+          "detailFiles": 0,
+          "checked": 0,
+          "issueCount": 10
         },
-        "issues": []
+        "issues": [
+          {
+            "code": "PUBLICATION_MANIFEST_MISSING_OR_INVALID"
+          },
+          {
+            "code": "PUBLICATION_UNIVERSE_MISSING"
+          },
+          {
+            "code": "PUBLICATION_MODE_INVALID",
+            "mode": null
+          },
+          {
+            "code": "PUBLICATION_FILE_LAYOUT_INVALID",
+            "fixtures": null,
+            "detailsDir": null
+          },
+          {
+            "code": "CURRENT_FIXTURE_UNACCOUNTED",
+            "ids": [
+              "cid_bra2_londrina_nautico_20261112",
+              "cid_cafnations_benin_centralafrica_20261112",
+              "cid_cafnations_cameroon_namibia_20261112",
+              "cid_cafnations_drcongo_sierraleone_20261112",
+              "cid_cafnations_equatorialguinea_zimbabwe_20261112",
+              "cid_cafnations_ghana_somalia_20261112",
+              "cid_cafnations_guinea_eritrea_20261112",
+              "cid_cafnations_ivorycoast_gambia_20261112",
+              "cid_cafnations_madagascar_guineabissau_20261112",
+              "cid_cafnations_senegal_sudan_20261112",
+              "cid_col1_aguilasdoradas_independientemedellin_20261112",
+              "cid_col1_atleticobucaramanga_fortalezaceif_20261112",
+              "cid_col1_atleticonacional_oncecaldas_20261112",
+              "cid_col1_cucutadeportivo_jaguarescordoba_20261112",
+              "cid_col1_deportivocali_deportestolima_20261112",
+              "cid_col1_deportivopasto_atleticojunior_20261112",
+              "cid_col1_deportivopereira_americacali_20261112",
+              "cid_col1_internacionalbogota_independientesantafe_20261112",
+              "cid_col1_llaneros_boyacachico_20261112",
+              "cid_col1_millonarios_alianza_20261112",
+              "cid_col2_quindio_tigres_20261112",
+              "cid_col2_realcundinamarca_cartagena_20261112",
+              "cid_egy2_alnasr_pharco_20261112",
+              "cid_egy2_dayrout_proxy_20261112",
+              "cid_egy2_deltaunited_alsekka_20261112",
+              "cid_egy2_elentagelharby_baladiyatelmahalla_20261112",
+              "cid_egy2_masar_tersana_20261112",
+              "cid_espcopadelrey_artisticonavalcarnero_realbetis_20261112",
+              "cid_espcopadelrey_calvosotelo_albacete_20261112",
+              "cid_espcopadelrey_tarancon_levante_20261112",
+              "cid_fracoupedefrance_chamberysavoie_grenoble_20261112",
+              "cid_mex2_piratas_atleticolapaz_20261112",
+              "cid_uefanations_albania_finland_20261112",
+              "cid_uefanations_armenia_cyprus_20261112",
+              "cid_uefanations_czechrepublic_spain_20261112",
+              "cid_uefanations_england_croatia_20261112",
+              "cid_uefanations_italy_france_20261112",
+              "cid_uefanations_montenegro_latvia_20261112",
+              "cid_uefanations_sanmarino_belarus_20261112",
+              "cid_uefanations_turkey_belgium_20261112",
+              "cid_uga1_kigezihomeboyz_vipers_20261112",
+              "cid_uru2_atenas_oriental_20261112",
+              "cid_uru2_cerrito_colon_20261112",
+              "cid_uru2_plazacolonia_rentistas_20261112"
+            ]
+          },
+          {
+            "code": "PUBLICATION_COUNT_MISMATCH",
+            "field": "currentFixtureCount",
+            "declared": null,
+            "actual": 44
+          },
+          {
+            "code": "PUBLICATION_COUNT_MISMATCH",
+            "field": "publishedFixtureCount",
+            "declared": null,
+            "actual": 0
+          },
+          {
+            "code": "PUBLICATION_COUNT_MISMATCH",
+            "field": "deferredFixtureCount",
+            "declared": null,
+            "actual": 0
+          },
+          {
+            "code": "MANIFEST_FIXTURE_COUNT_MISMATCH",
+            "declared": null,
+            "actual": 0
+          },
+          {
+            "code": "MANIFEST_DETAIL_COUNT_MISMATCH",
+            "declared": null,
+            "actual": 0
+          }
+        ]
       }
     }
   },
@@ -226936,5 +227034,5 @@
     "detailsMustMatchCurrentFoundation": true,
     "deploySnapshotUsedAsTruth": false
   },
-  "latestForDay": "2026-11-11"
+  "latestForDay": "2026-11-12"
 }
