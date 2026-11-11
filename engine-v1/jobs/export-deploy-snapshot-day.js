@@ -28,7 +28,8 @@ import {
 import {
   buildPlanCShadowExportAudit,
   readPlanCShadowDay,
-  validatePlanCShadowExportPayload
+  validatePlanCShadowExportPayload,
+  validatePlanCShadowPreservedAudit
 } from "../value/plan-c-shadow-export.js";
 
 function readJsonSafe(filePath, fallback = null) {
@@ -1606,7 +1607,7 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
       startedAt
     );
 
-  if (preserveShadow && (!planCShadowAudit || !validatePlanCShadowExportPayload(planCShadowOut, dayKey).ok)) {
+  if (preserveShadow && !validatePlanCShadowPreservedAudit(planCShadowAudit, planCShadowOut, dayKey).ok) {
     throw new Error("preserved_plan_c_shadow_invalid");
   }
 

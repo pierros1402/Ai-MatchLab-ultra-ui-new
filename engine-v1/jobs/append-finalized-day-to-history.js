@@ -1,7 +1,8 @@
-import fs from "node:fs/promises";
 import fsSync from "node:fs";
 import path from "node:path";
 
+import { atomicArtifact, journalHistoryBuild, readOptional, withArtifactLock } from "../storage/evidence-bound-history-store.js";
+import { fingerprint } from "../core/season-closure-contract.js";
 import { ensureDir, resolveDataPath } from "../storage/data-root.js";
 import { currentSeason } from "../core/season.js";
 import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
@@ -21,15 +22,6 @@ function resolveSeasonFromDay(dayKey) {
   const [year, month, day] = String(dayKey).split("-").map(Number);
   if (!year || !month) return "unknown-season";
   return currentSeason(new Date(Date.UTC(year, month - 1, day || 1)));
-}
-
-async function readJsonSafe(filePath, fallback) {
-  try {
-    const raw = await fs.readFile(filePath, "utf8");
-    return JSON.parse(raw);
-  } catch {
-    return fallback;
-  }
 }
 
 function clean(value) {
@@ -100,6 +92,9 @@ function rowDay(row) {
 function terminalHistoryStatus(row) {
   const status = clean(row?.status).toUpperCase();
   if (status === "AET" || status === "PEN") return status;
+  const rawStatus = clean(row?.rawStatus).toUpperCase();
+  if (rawStatus === "STATUS_FINAL_AET") return "AET";
+  if (rawStatus === "STATUS_FINAL_PEN") return "PEN";
   return "FT";
 }
 
@@ -107,20 +102,6 @@ function outcome(home, away) {
   if (home > away) return "HOME";
   if (home < away) return "AWAY";
   return "DRAW";
-}
-
-function normalizeHistoryDays(history) {
-  const rawDays = history?.days;
-  if (!Array.isArray(rawDays)) return [];
-  return rawDays
-    .map(day => ({
-      dayKey: clean(day?.dayKey),
-      matchCount: Array.isArray(day?.rows) ? day.rows.length : 0,
-      rows: Array.isArray(day?.rows) ? day.rows : [],
-      updatedAt: day?.updatedAt || Date.now()
-    }))
-    .filter(day => /^\d{4}-\d{2}-\d{2}$/u.test(day.dayKey))
-    .sort((a, b) => a.dayKey.localeCompare(b.dayKey));
 }
 
 function verifiedHistoryTeamNameMatches(slug, canonicalName, finalName, identityResolver) {
@@ -355,44 +336,62 @@ export function buildHistoryDayFromTruth(dayKey) {
   });
 }
 
-async function writeJsonAtomic(filePath, payload) {
-  await fs.mkdir(path.dirname(filePath), { recursive: true });
-  const tempPath = `${filePath}.tmp-${process.pid}-${Date.now()}`;
-  await fs.writeFile(tempPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
-  await fs.rename(tempPath, filePath);
+function sameHistoryFact(a, b) {
+  const facts = row => [row.id, row.dayKey, row.leagueSlug, row.kickoff_ms, row.homeTeam,
+    row.awayTeam, row.scoreHome, row.scoreAway, row.status];
+  return fingerprint(facts(a)) === fingerprint(facts(b));
+}
+
+export async function persistVerifiedHistoryBuild(build, { journalRoot, historyPath }) {
+  const recovery = await journalHistoryBuild(journalRoot, build);
+  if (!build.ok) return { ...build, recovery };
+  const result = await withArtifactLock(historyPath + ".lock", async () => {
+    const raw = await readOptional(historyPath);
+    let existing;
+    try {
+      existing = raw === null ? { season: build.season, days: [] } : JSON.parse(raw);
+    } catch {
+      return { ok: false, reason: "history_store_unreadable" };
+    }
+    if (existing?.season !== build.season || !Array.isArray(existing?.days) ||
+        existing.days.some(day => !day || !Array.isArray(day.rows) || !/^\d{4}-\d{2}-\d{2}$/u.test(day.dayKey)) ||
+        new Set(existing.days.map(day => day.dayKey)).size !== existing.days.length) {
+      return { ok: false, reason: "history_store_shape_conflict" };
+    }
+
+    const index = existing.days.findIndex(day => day.dayKey === build.dayKey);
+    const previous = existing.days[index];
+    const proposed = new Map(build.rows.map(row => [row.id, row]));
+    const priorRows = previous?.rows ?? [];
+    if (proposed.size !== build.rows.length ||
+        existing.days.some(day => day.dayKey !== build.dayKey && day.rows.some(row => proposed.has(row.id))) ||
+        new Set(priorRows.map(row => row.id)).size !== priorRows.length ||
+        priorRows.some(row => !proposed.has(row.id) || !sameHistoryFact(row, proposed.get(row.id)))) {
+      return { ok: false, reason: "history_review_required" };
+    }
+    if (priorRows.length === proposed.size) return { ok: true, unchanged: true, rowsWritten: 0 };
+
+    const stored = new Map(priorRows.map(row => [row.id, row]));
+    const days = [...existing.days];
+    const rows = build.rows.map(row => stored.get(row.id) ?? row);
+    const payload = { ...previous, dayKey: build.dayKey, matchCount: rows.length, rows, updatedAt: Date.now() };
+    if (index === -1) days.push(payload);
+    else days[index] = payload;
+    days.sort((a, b) => a.dayKey.localeCompare(b.dayKey));
+    await atomicArtifact(historyPath, JSON.stringify({ ...existing, days }, null, 2) + "\n");
+    return { ok: true, rowsWritten: rows.length - priorRows.length, atomicWrite: true };
+  });
+  if (!result.ok) {
+    const hold = await journalHistoryBuild(journalRoot, { ...build, ...result });
+    return { ...build, ...result, historyPath, recovery: hold };
+  }
+  return { ...build, ...result, historyPath, recovery };
 }
 
 export async function appendFinalizedDayToHistory(dayKey) {
   const build = buildHistoryDayFromTruth(dayKey);
-  if (!build.ok) return build;
-
-  const season = build.season;
-  const historyPath = resolveDataPath("history", `${season}.json`);
-  const existingHistory = await readJsonSafe(historyPath, { season, days: [] });
-  const days = normalizeHistoryDays(existingHistory);
-  const existingIndex = days.findIndex(day => day.dayKey === dayKey);
-
-  const dayPayload = {
-    dayKey,
-    matchCount: build.rows.length,
-    rows: build.rows,
-    updatedAt: Date.now()
-  };
-
-  // Replace the whole day atomically. Incremental merge is forbidden: stale
-  // rows from a previously corrupted truth snapshot must not survive a rerun.
-  if (existingIndex >= 0) days[existingIndex] = dayPayload;
-  else days.push(dayPayload);
-  days.sort((a, b) => a.dayKey.localeCompare(b.dayKey));
-
-  const output = { season, days };
-  await writeJsonAtomic(historyPath, output);
-
-  return {
-    ...build,
-    historyPath,
-    rowsWritten: build.rows.length,
-    replacedWholeDay: true,
-    atomicWrite: true
-  };
+  return persistVerifiedHistoryBuild(build, {
+    journalRoot: resolveDataPath("history-recovery-journal"),
+    historyPath: resolveDataPath("history", build.season + ".json")
+  });
 }

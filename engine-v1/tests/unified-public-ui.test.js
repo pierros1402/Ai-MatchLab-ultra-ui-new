@@ -54,3 +54,45 @@ test('malformed coverage counters cannot be presented as verified quantitative c
  const html=panel({date:day,unifiedPlan:currentPlan({analysisComplete:false,dataReadiness:readiness})});assert.match(html,/Δεν έχει επιβεβαιωθεί/);assert.doesNotMatch(html,/αγώνες έτοιμοι/);
  }
 });
+
+
+test('fixture-level gap detail renders only with exact bound universe, day and reason counts',()=>{
+  const make = () => {
+    const rows = [
+      {canonicalId:'cid_missing',leagueSlug:'bol.1',status:'INSUFFICIENT_DATA',reasons:['minimum_recent_sample']},
+      {canonicalId:'cid_ready',leagueSlug:'eng.trophy',status:'READY',reasons:[]}
+    ];
+    const full = {date:day,fixtureUniverse:{count:2,canonicalIds:['cid_missing','cid_ready']},
+      summary:{fixtures:2,applicable:2,ready:1,insufficient:1,byReason:{minimum_recent_sample:1}},rows};
+    const brief = {...full.summary,complete:false,status:'PARTIAL'};
+    return {date:day,unifiedPlan:currentPlan({analysisComplete:false,upstreamCoverage:'INCOMPLETE',dataReadiness:brief}),dataReadiness:full};
+  };
+  const valid=make();
+  const before=JSON.stringify(valid);
+  const html=panel(valid);
+  assert.match(html,/data-value-readiness-detail="verified"/);
+  assert.match(html,/cid_missing/);
+  assert.match(html,/bol\.1/);
+  assert.doesNotMatch(html,/cid_ready<\/code>/);
+  assert.equal(JSON.stringify(valid),before);
+  for(const corrupt of [
+    p=>p.dataReadiness.date='2026-10-17',
+    p=>p.dataReadiness.rows[0].canonicalId='cid_wrong',
+    p=>p.dataReadiness.rows.push({...p.dataReadiness.rows[0]}),
+    p=>p.dataReadiness.summary.byReason={},
+    p=>p.unifiedPlan.dataReadiness.insufficient=2
+  ]) {
+    const bad=make();corrupt(bad);
+    assert.doesNotMatch(panel(bad),/data-value-readiness-detail="verified"/);
+  }
+});
+test('fixture-level detail escapes untrusted diagnostics rather than injecting markup',()=>{
+  const id='cid_<img src=x onerror=alert(1)>';
+  const row={canonicalId:id,leagueSlug:'<script>alert(1)</script>',status:'INSUFFICIENT_DATA',reasons:['custom_<svg onload=x>']};
+  const summary={fixtures:1,applicable:1,ready:0,insufficient:1,byReason:{'custom_<svg onload=x>':1}};
+  const html=panel({date:day,unifiedPlan:currentPlan({analysisComplete:false,upstreamCoverage:'INCOMPLETE',dataReadiness:summary}),
+    dataReadiness:{date:day,summary,fixtureUniverse:{count:1,canonicalIds:[id]},rows:[row]}});
+  assert.match(html,/data-value-readiness-detail="verified"/);
+  assert.doesNotMatch(html,/<script>|<img src=x|<svg onload=x>/);
+  assert.match(html,/&lt;script&gt;/);
+});
