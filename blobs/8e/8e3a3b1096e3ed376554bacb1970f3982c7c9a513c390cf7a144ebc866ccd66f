@@ -1,0 +1,219 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "slv.1",
+  "homeTeam": "Fuerte San Francisco",
+  "awayTeam": "Alianza FC",
+  "homeWinScore": 0.268,
+  "drawScore": 0.232,
+  "awayWinScore": 0.5,
+  "over15Score": 0.781,
+  "over25Score": 0.596,
+  "over35Score": 0.591,
+  "bttsScore": 0.526,
+  "confidence": 0.727,
+  "signals": [
+    "away_edge",
+    "over25_support",
+    "close_strength_gap",
+    "home_rest_2",
+    "away_rest_2"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.425,
+      "awayOverallFormWeight": 0.5,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.4,
+    "expectedAwayGoals": 1.6,
+    "expectedTotalGoals": 3,
+    "homeStrength": 0.236,
+    "awayStrength": 0.463,
+    "homeEdge": 0.239,
+    "awayPenalty": 0.517,
+    "recency": {
+      "homeOverall": {
+        "sample": 5,
+        "rawSample": 5,
+        "priorSample": 0,
+        "daysSinceLastMatch": 2,
+        "spanDays": 22,
+        "maxInternalGap": 7,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.948
+      },
+      "awayOverall": {
+        "sample": 5,
+        "rawSample": 5,
+        "priorSample": 0,
+        "daysSinceLastMatch": 3,
+        "spanDays": 21,
+        "maxInternalGap": 8,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 1,
+        "formContinuityWeight": 1
+      },
+      "homeSide": {
+        "sample": 3,
+        "rawSample": 3,
+        "priorSample": 0,
+        "daysSinceLastMatch": 10,
+        "spanDays": 22,
+        "maxInternalGap": 15,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.6,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.565
+      },
+      "awaySide": {
+        "sample": 4,
+        "rawSample": 4,
+        "priorSample": 0,
+        "daysSinceLastMatch": 6,
+        "spanDays": 26,
+        "maxInternalGap": 15,
+        "gapSeverity": "moderate",
+        "freshnessScore": 1,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.765
+      }
+    },
+    "matchupSample": 0,
+    "priorsUsed": false,
+    "priors": {
+      "used": false,
+      "homePriorSample": 0,
+      "awayPriorSample": 0,
+      "leaguePriorSample": 0,
+      "matchupPriorSample": 0
+    },
+    "resolution": {
+      "homeInput": "Fuerte San Francisco",
+      "awayInput": "Alianza FC",
+      "homeResolvedKey": "Fuerte San Francisco",
+      "awayResolvedKey": "Alianza FC",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Alianza FC::Fuerte San Francisco",
+      "matchupResolveScore": 0.93,
+      "homePriorKey": null,
+      "awayPriorKey": null,
+      "matchupPriorKey": null
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Fuerte San Francisco",
+      "awayTeamKey": "Alianza FC",
+      "leagueKey": "slv.1",
+      "matchupKey": "Alianza FC::Fuerte San Francisco"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "form_balanced",
+        "impact": 0.04,
+        "note": "Teams have similar recent form"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    }
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "form_balanced",
+      "impact": 0.04,
+      "note": "Teams have similar recent form"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "MEDIUM",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0.08,
+      "awayPenalty": 0.08,
+      "reasons": [
+        "home_rest_2",
+        "away_rest_2"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "slv.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 2,
+    "awayRestDays": 2,
+    "homeMatchesLast7": 2,
+    "awayMatchesLast7": 2,
+    "homeMatchesLast14": 2,
+    "awayMatchesLast14": 2,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
