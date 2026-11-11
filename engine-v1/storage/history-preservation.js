@@ -12,7 +12,7 @@ export const HISTORY_ARCHIVE_BRANCH = "codex/history-archive";
 const STORES = new Set([
   "value", "value-plans", "value-comparison", "value-unified", "value-data-readiness", "final-results", "final-result-conflicts",
   "canonical-fixtures", "canonical-registry", "canonical-memory", "expected-matches",
-  "deploy-snapshots", "details", "history", "history-archive", "history-index",
+  "deploy-snapshots", "details", "history", "history-archive", "history-index", "history-recovery-journal",
   "history-resolutions", "history-truth-repair-quarantine", "historical-integrity",
   "model-priors", "standings", "league-memory", "odds-memory", "multi-odds",
   "h2h", "h2h-foundation", "h2h-resolutions", "team-news", "team-geo", "player-usage",

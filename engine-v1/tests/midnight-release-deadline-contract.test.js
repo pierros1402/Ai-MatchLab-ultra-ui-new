@@ -14,52 +14,34 @@ function numberMatch(text, pattern, label) {
   return Number(match[1]);
 }
 
-test("scheduled full publication is tomorrow-only and cannot consume midnight", () => {
+test("scheduled full publication is tomorrow-only and has a bounded admission window", () => {
   const workflow = read(".github/workflows/daily-deploy-snapshot.yml");
+  const admission = read("engine-v1/value/daily-plan-a-checkpoint.js");
 
-  assert.match(workflow, /P3\.1 atomic-midnight contract/);
-  assert.match(workflow, /cron: "17 14,15,16,17,18,19,20 \* \* \*"/);
+  assert.match(workflow, /cron: "0 15 \* \* \*"/);
   assert.match(workflow, /DAY_KEY="\$\(TZ=Europe\/Athens date -d 'tomorrow' \+%F\)"/);
-  assert.match(workflow, /ATHENS_TOTAL_MINUTES/);
-  assert.match(workflow, /-lt 1050/);
-  assert.match(workflow, /-gt 1330/);
-  assert.match(workflow, /Final pre-midnight release refresh/);
-  assert.doesNotMatch(workflow, /Early-morning catch-up/);
-  assert.doesNotMatch(workflow, /catch-up TODAY/);
-  assert.doesNotMatch(workflow, /ATHENS_HOUR_NUM" -le 5/);
-
-  const cutoffMinutes = numberMatch(
-    workflow,
-    /ATHENS_TOTAL_MINUTES" -gt (\d+)/,
-    "scheduled admission cutoff"
-  );
-  const timeoutMatch = workflow.match(
-    /timeout-minutes:\s*\$\{\{\s*github\.event_name\s*==\s*'workflow_dispatch'\s*&&\s*(\d+)\s*\|\|\s*(\d+)\s*\}\}/
-  );
-  assert.ok(timeoutMatch, "missing event-scoped daily job timeout");
-  const manualTimeoutMinutes = Number(timeoutMatch[1]);
-  const timeoutMinutes = Number(timeoutMatch[2]);
-
-  assert.equal(cutoffMinutes, 1330);
-  assert.equal(manualTimeoutMinutes, 300);
-  assert.equal(timeoutMinutes, 100);
-  assert.ok(
-    cutoffMinutes + timeoutMinutes < 1440,
-    `scheduled publication may cross midnight: ${cutoffMinutes}+${timeoutMinutes}`
-  );
-  assert.equal(1440 - (cutoffMinutes + timeoutMinutes), 10);
+  assert.match(workflow, /ATHENS_TOTAL_MINUTES" -lt 1020/);
+  const cutoff = numberMatch(workflow, /ATHENS_TOTAL_MINUTES" -gt (\d+)/, "scheduled admission cutoff");
+  const timeout = numberMatch(workflow, /timeout-minutes:\s*(\d+)/, "daily job timeout");
+  assert.equal(cutoff, 1130);
+  assert.equal(timeout, 300);
+  assert.equal(cutoff + timeout, 1430);
+  assert.ok(cutoff + timeout < 1440);
+  assert.match(admission, /minuteOfDay \+ budgetMinutes <= 1430/);
+  assert.match(workflow, /dailyPublicationAdmission\(process\.env\.DAY_KEY\)/);
+  assert.match(workflow, /if \(!admission\.admitted\)/);
+  assert.doesNotMatch(workflow, /Early-morning catch-up|catch-up TODAY/);
 });
 
-test("duplicate early full builds self-skip but one final refresh remains admitted", () => {
+test("duplicate tomorrow publication skips under the admitted early window", () => {
   const workflow = read(".github/workflows/daily-deploy-snapshot.yml");
-
   assert.match(workflow, /LATEST_DAY=.*deploy-snapshots\/latest\.json/s);
-  assert.match(
-    workflow,
-    /ATHENS_TOTAL_MINUTES" -lt 1245[^\n]*LATEST_DAY" = "\$DAY_KEY"/
-  );
-  assert.match(workflow, /already atomically published; skipping duplicate early full build/);
-  assert.match(workflow, /ATHENS_TOTAL_MINUTES" -ge 1245/);
+  assert.match(workflow, /if \[ "\$LATEST_DAY" = "\$DAY_KEY" \]; then/);
+  assert.match(workflow, /skipping duplicate early full build/);
+  assert.match(workflow, /SKIP_BUILD=true/);
+  assert.doesNotMatch(workflow, /ATHENS_TOTAL_MINUTES" -ge 1245/);
+  // Day-key equality is only a duplicate signal. It does not independently
+  // certify snapshot manifest consistency or public byte-level readback.
 });
 
 test("autonomous work is same-day maintenance at 16 Athens, not rollover publication", () => {

@@ -9,7 +9,8 @@ import { monitorActiveLeagues } from "./monitor-active-leagues.js";
 import { finalizeDayIfSafe } from "./finalize-day.js";
 import {
   appendFinalizedDayToHistory,
-  buildHistoryDayFromTruth
+  buildHistoryDayFromTruth,
+  persistVerifiedHistoryBuild
 } from "./append-finalized-day-to-history.js";
 import {
   shouldRefreshVerifiedFinalTruth,
@@ -1930,10 +1931,9 @@ export async function runDailyCycle(options = {}) {
       console.warn("[daily-cycle] finalize-value-resettle:failed", String(e?.message || e));
     }
 
+    historyAppend = finalize?.historyAppend ?? null;
     if (finalize?.ok) {
-      if (finalizeReadiness?.safeToFinalizeStats) {
-        console.log("[daily-cycle] history-append:start", { finalizeDayKey });
-        historyAppend = await appendFinalizedDayToHistory(finalizeDayKey);
+      if (finalizeReadiness?.safeToFinalizeStats && historyAppend?.ok === true) {
         console.log("[daily-cycle] history-append:done", historyAppend);
 
         // Keep <season>.report.json in sync with the store it describes —
@@ -1955,7 +1955,7 @@ export async function runDailyCycle(options = {}) {
           season: indexesRebuild?.season
         });
       } else {
-        historyAppend = {
+        historyAppend ??= {
           ok: false,
           skipped: true,
           reason: "unsafe_finalization_readiness",
@@ -1977,7 +1977,7 @@ export async function runDailyCycle(options = {}) {
         indexesRebuild = {
           ok: false,
           skipped: true,
-          reason: "history_append_skipped",
+          reason: historyAppend.ok ? "unsafe_finalization_readiness" : historyAppend.reason,
           dayKey: finalizeDayKey
         };
 
@@ -2144,6 +2144,8 @@ export async function runDailyCycle(options = {}) {
           historyParity?.ok === true
         ) {
           append = await appendFinalizedDayToHistory(day);
+        } else if (historyParity && !historyParity.ok) {
+          await persistVerifiedHistoryBuild(historyParity, { journalRoot: resolveDataPath("history-recovery-journal") });
         }
 
         historyCatchUp.push({

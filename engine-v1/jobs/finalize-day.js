@@ -340,8 +340,14 @@ export async function finalizeDayIfSafe(dayKey) {
     };
   }
 
+  const historyAppend = await appendFinalizedDayToHistory(dayKey);
+  const noPlayedResults = historyAppend.reason === "no_verified_terminal_rows" &&
+    historyAppend.canonicalFixtureCount > 0 && historyAppend.canonicalPlayedFinalCount === 0;
+  if (!historyAppend.ok && !noPlayedResults) {
+    return { ok: false, reason: "history_append_failed", dayKey, historyAppend };
+  }
+
   markDayFinal(dayKey);
-  await appendFinalizedDayToHistory(dayKey);
   const valueResolution =
     verifiedSettlementDelegation(
       dayKey
@@ -351,6 +357,7 @@ export async function finalizeDayIfSafe(dayKey) {
     ok: true,
     dayKey,
     finalized: rows.length,
+    historyAppend,
     valueResolution
   };
 }

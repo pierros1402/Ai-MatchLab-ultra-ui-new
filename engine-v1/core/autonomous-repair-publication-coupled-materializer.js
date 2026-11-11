@@ -68,7 +68,7 @@ export const AUTONOMOUS_REPAIR_PUBLICATION_PRODUCER_POLICY =
         contractId: "plan-c-shadow-export-v1",
         sourcePath: "engine-v1/value/plan-c-shadow-export.js",
         normalizedSourceSha256:
-          "ecc6f6ec91cc895b63fb7cba6a90532cb17c0782fb6b214eff235277d2b94581",
+          "aaabb643782ae15f70627de7d6be7be1a0554f96f8c9705adf367bf40c43bf1c",
       }),
     }),
   });

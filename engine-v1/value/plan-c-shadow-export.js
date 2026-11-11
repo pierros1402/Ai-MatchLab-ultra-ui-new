@@ -186,3 +186,53 @@ export function buildPlanCShadowExportAudit(dayKey, loaded, exportedAt) {
     officialPlansUnaffected: true
   };
 }
+
+export function validatePlanCShadowPreservedAudit(audit,payload,dayKey) {
+  const errors=[];
+  const validPayload=validatePlanCShadowExportPayload(payload,dayKey);
+
+  if(!validPayload.ok)errors.push("shadow_payload_invalid");
+  if(!audit||typeof audit!=="object"||Array.isArray(audit)) {
+    return {ok:false,errors:["preserved_audit_not_object",...errors]};
+  }
+
+  if(audit.schema!==PLAN_C_SHADOW_AUDIT_SCHEMA)
+    errors.push("audit_schema_invalid");
+  if(audit.ok!==true)errors.push("audit_not_ok");
+  if(audit.date!==dayKey)errors.push("audit_day_mismatch");
+  if(!validIso(audit.exportedAt))
+    errors.push("audit_exported_at_invalid");
+  if(audit.mode!=="SHADOW")
+    errors.push("audit_mode_invalid");
+  if(audit.productionEligible!==false)
+    errors.push("audit_production_boundary_invalid");
+  if(audit.officialPlansUnaffected!==true)
+    errors.push("audit_official_plans_boundary_invalid");
+
+  const expectedPath=path.posix.join(
+    "data","plan-c-shadow",dayKey+".json"
+  );
+  if(audit.sourcePath!==expectedPath)
+    errors.push("audit_source_path_invalid");
+
+  if(audit.available!==payload?.available)
+    errors.push("audit_availability_mismatch");
+  if(audit.count!==payload?.count)
+    errors.push("audit_count_mismatch");
+  if(audit.pickCount!==payload?.pickCount)
+    errors.push("audit_pick_count_mismatch");
+
+  if(payload?.available===true){
+    if(audit.source!=="validated_daily_artifact")
+      errors.push("audit_source_type_invalid");
+    if(!/^[0-9a-f]{64}$/.test(audit.sourceSha256))
+      errors.push("audit_source_hash_invalid");
+  }else if(payload?.available===false){
+    if(audit.source!=="missing_optional_source")
+      errors.push("audit_source_type_invalid");
+    if(audit.sourceSha256!==null)
+      errors.push("audit_absent_source_hash_invalid");
+  }
+
+  return {ok:errors.length===0,errors};
+}
