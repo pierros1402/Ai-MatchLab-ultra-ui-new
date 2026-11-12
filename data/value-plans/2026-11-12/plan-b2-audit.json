@@ -1,0 +1,6599 @@
+{
+  "ok": true,
+  "schema": "ai-matchlab.value-audit.v1",
+  "policyVersion": "value-policy-v2.3",
+  "generatedAt": "2026-11-12T01:37:44.532Z",
+  "date": "2026-11-12",
+  "source": "derive-value-from-opponent-adjusted-model-assessment",
+  "sourceContract": {
+    "valueInput": "canonical_fixture_universe_joined_with_persistent_ai_assessment",
+    "fixtureUniverse": {
+      "schema": "ai-matchlab.value-fixture-universe.v1",
+      "source": "canonical_fixtures",
+      "count": 47,
+      "hash": "2b42444285f5f2ec228810a42725c132ffa1ea5b897a3c7ba91a9ed09de53c69",
+      "canonicalIds": [
+        "cid_bra2_londrina_nautico_20261112",
+        "cid_cafnations_benin_centralafrica_20261112",
+        "cid_cafnations_cameroon_namibia_20261112",
+        "cid_cafnations_drcongo_sierraleone_20261112",
+        "cid_cafnations_equatorialguinea_zimbabwe_20261112",
+        "cid_cafnations_ghana_somalia_20261112",
+        "cid_cafnations_guinea_eritrea_20261112",
+        "cid_cafnations_ivorycoast_gambia_20261112",
+        "cid_cafnations_madagascar_guineabissau_20261112",
+        "cid_cafnations_senegal_sudan_20261112",
+        "cid_col1_aguilasdoradas_independientemedellin_20261112",
+        "cid_col1_atleticobucaramanga_fortalezaceif_20261112",
+        "cid_col1_atleticonacional_oncecaldas_20261112",
+        "cid_col1_cucutadeportivo_jaguarescordoba_20261112",
+        "cid_col1_deportivocali_deportestolima_20261112",
+        "cid_col1_deportivopasto_atleticojunior_20261112",
+        "cid_col1_deportivopereira_americacali_20261112",
+        "cid_col1_internacionalbogota_independientesantafe_20261112",
+        "cid_col1_llaneros_boyacachico_20261112",
+        "cid_col1_millonarios_alianza_20261112",
+        "cid_col2_quindio_tigres_20261112",
+        "cid_col2_realcundinamarca_cartagena_20261112",
+        "cid_egy2_alnasr_pharco_20261112",
+        "cid_egy2_dayrout_proxy_20261112",
+        "cid_egy2_deltaunited_alsekka_20261112",
+        "cid_egy2_elentagelharby_baladiyatelmahalla_20261112",
+        "cid_egy2_masar_tersana_20261112",
+        "cid_espcopadelrey_artisticonavalcarnero_realbetis_20261112",
+        "cid_espcopadelrey_cspuertollano_albacete_20261112",
+        "cid_espcopadelrey_tarancon_levante_20261112",
+        "cid_fracoupedefrance_chamberysavoie_grenoble_20261112",
+        "cid_mex2_piratas_atleticolapaz_20261112",
+        "cid_slv1_aguila_municipallimeno_20261112",
+        "cid_slv1_atleticobalboa_incaaruba_20261112",
+        "cid_slv1_fas_internacionalsantatecla_20261112",
+        "cid_uefanations_albania_finland_20261112",
+        "cid_uefanations_armenia_cyprus_20261112",
+        "cid_uefanations_czechia_spain_20261112",
+        "cid_uefanations_england_croatia_20261112",
+        "cid_uefanations_italy_france_20261112",
+        "cid_uefanations_montenegro_latvia_20261112",
+        "cid_uefanations_sanmarino_belarus_20261112",
+        "cid_uefanations_turkiye_belgium_20261112",
+        "cid_uga1_kigezihomeboyz_vipers_20261112",
+        "cid_uru2_atenas_oriental_20261112",
+        "cid_uru2_cerrito_colon_20261112",
+        "cid_uru2_plazacolonia_rentistas_20261112"
+      ]
+    },
+    "canonicalFixtureUniverseRequired": true,
+    "exactIdentityJoinOnly": true,
+    "oddsMemoryCanCreateFixture": false,
+    "deploySnapshotInput": true,
+    "realBookmakerOddsUsed": false,
+    "note": "Plan A and Plan B receive the identical full canonical fixture universe. Plan B assessment enrichment may come from live memory or its committed persistence fallback; it never changes fixture membership.",
+    "assessmentInputSource": "live_store_with_deploy_snapshot_assessments",
+    "probabilityLayer": "opponent_strength_adjusted"
+  },
+  "inputFailure": null,
+  "membership": {
+    "fixtureUniverse": {
+      "schema": "ai-matchlab.value-fixture-universe.v1",
+      "source": "canonical_fixtures",
+      "count": 47,
+      "hash": "2b42444285f5f2ec228810a42725c132ffa1ea5b897a3c7ba91a9ed09de53c69",
+      "canonicalIds": [
+        "cid_bra2_londrina_nautico_20261112",
+        "cid_cafnations_benin_centralafrica_20261112",
+        "cid_cafnations_cameroon_namibia_20261112",
+        "cid_cafnations_drcongo_sierraleone_20261112",
+        "cid_cafnations_equatorialguinea_zimbabwe_20261112",
+        "cid_cafnations_ghana_somalia_20261112",
+        "cid_cafnations_guinea_eritrea_20261112",
+        "cid_cafnations_ivorycoast_gambia_20261112",
+        "cid_cafnations_madagascar_guineabissau_20261112",
+        "cid_cafnations_senegal_sudan_20261112",
+        "cid_col1_aguilasdoradas_independientemedellin_20261112",
+        "cid_col1_atleticobucaramanga_fortalezaceif_20261112",
+        "cid_col1_atleticonacional_oncecaldas_20261112",
+        "cid_col1_cucutadeportivo_jaguarescordoba_20261112",
+        "cid_col1_deportivocali_deportestolima_20261112",
+        "cid_col1_deportivopasto_atleticojunior_20261112",
+        "cid_col1_deportivopereira_americacali_20261112",
+        "cid_col1_internacionalbogota_independientesantafe_20261112",
+        "cid_col1_llaneros_boyacachico_20261112",
+        "cid_col1_millonarios_alianza_20261112",
+        "cid_col2_quindio_tigres_20261112",
+        "cid_col2_realcundinamarca_cartagena_20261112",
+        "cid_egy2_alnasr_pharco_20261112",
+        "cid_egy2_dayrout_proxy_20261112",
+        "cid_egy2_deltaunited_alsekka_20261112",
+        "cid_egy2_elentagelharby_baladiyatelmahalla_20261112",
+        "cid_egy2_masar_tersana_20261112",
+        "cid_espcopadelrey_artisticonavalcarnero_realbetis_20261112",
+        "cid_espcopadelrey_cspuertollano_albacete_20261112",
+        "cid_espcopadelrey_tarancon_levante_20261112",
+        "cid_fracoupedefrance_chamberysavoie_grenoble_20261112",
+        "cid_mex2_piratas_atleticolapaz_20261112",
+        "cid_slv1_aguila_municipallimeno_20261112",
+        "cid_slv1_atleticobalboa_incaaruba_20261112",
+        "cid_slv1_fas_internacionalsantatecla_20261112",
+        "cid_uefanations_albania_finland_20261112",
+        "cid_uefanations_armenia_cyprus_20261112",
+        "cid_uefanations_czechia_spain_20261112",
+        "cid_uefanations_england_croatia_20261112",
+        "cid_uefanations_italy_france_20261112",
+        "cid_uefanations_montenegro_latvia_20261112",
+        "cid_uefanations_sanmarino_belarus_20261112",
+        "cid_uefanations_turkiye_belgium_20261112",
+        "cid_uga1_kigezihomeboyz_vipers_20261112",
+        "cid_uru2_atenas_oriental_20261112",
+        "cid_uru2_cerrito_colon_20261112",
+        "cid_uru2_plazacolonia_rentistas_20261112"
+      ]
+    },
+    "evaluatedFixtureCount": 47,
+    "evaluatedCanonicalIds": [
+      "cid_bra2_londrina_nautico_20261112",
+      "cid_cafnations_benin_centralafrica_20261112",
+      "cid_cafnations_cameroon_namibia_20261112",
+      "cid_cafnations_drcongo_sierraleone_20261112",
+      "cid_cafnations_equatorialguinea_zimbabwe_20261112",
+      "cid_cafnations_ghana_somalia_20261112",
+      "cid_cafnations_guinea_eritrea_20261112",
+      "cid_cafnations_ivorycoast_gambia_20261112",
+      "cid_cafnations_madagascar_guineabissau_20261112",
+      "cid_cafnations_senegal_sudan_20261112",
+      "cid_col1_aguilasdoradas_independientemedellin_20261112",
+      "cid_col1_atleticobucaramanga_fortalezaceif_20261112",
+      "cid_col1_atleticonacional_oncecaldas_20261112",
+      "cid_col1_cucutadeportivo_jaguarescordoba_20261112",
+      "cid_col1_deportivocali_deportestolima_20261112",
+      "cid_col1_deportivopasto_atleticojunior_20261112",
+      "cid_col1_deportivopereira_americacali_20261112",
+      "cid_col1_internacionalbogota_independientesantafe_20261112",
+      "cid_col1_llaneros_boyacachico_20261112",
+      "cid_col1_millonarios_alianza_20261112",
+      "cid_col2_quindio_tigres_20261112",
+      "cid_col2_realcundinamarca_cartagena_20261112",
+      "cid_egy2_alnasr_pharco_20261112",
+      "cid_egy2_dayrout_proxy_20261112",
+      "cid_egy2_deltaunited_alsekka_20261112",
+      "cid_egy2_elentagelharby_baladiyatelmahalla_20261112",
+      "cid_egy2_masar_tersana_20261112",
+      "cid_espcopadelrey_artisticonavalcarnero_realbetis_20261112",
+      "cid_espcopadelrey_cspuertollano_albacete_20261112",
+      "cid_espcopadelrey_tarancon_levante_20261112",
+      "cid_fracoupedefrance_chamberysavoie_grenoble_20261112",
+      "cid_mex2_piratas_atleticolapaz_20261112",
+      "cid_slv1_aguila_municipallimeno_20261112",
+      "cid_slv1_atleticobalboa_incaaruba_20261112",
+      "cid_slv1_fas_internacionalsantatecla_20261112",
+      "cid_uefanations_albania_finland_20261112",
+      "cid_uefanations_armenia_cyprus_20261112",
+      "cid_uefanations_czechia_spain_20261112",
+      "cid_uefanations_england_croatia_20261112",
+      "cid_uefanations_italy_france_20261112",
+      "cid_uefanations_montenegro_latvia_20261112",
+      "cid_uefanations_sanmarino_belarus_20261112",
+      "cid_uefanations_turkiye_belgium_20261112",
+      "cid_uga1_kigezihomeboyz_vipers_20261112",
+      "cid_uru2_atenas_oriental_20261112",
+      "cid_uru2_cerrito_colon_20261112",
+      "cid_uru2_plazacolonia_rentistas_20261112"
+    ],
+    "canonicalFixtures": 47,
+    "inputRows": 47,
+    "assessmentRows": 46,
+    "nonAssessmentInputRows": 1,
+    "joinedMatches": 40,
+    "orphanAssessmentRows": 6,
+    "canonicalRowsWithoutAssessment": 7,
+    "ambiguousCanonicalMatches": [],
+    "canonicalRowsMissingIdentity": [],
+    "ambiguousAssessmentAliases": 0,
+    "supersededLegacyAssessments": 1,
+    "orphanAssessmentMatchIds": [
+      "cid_cafafcon_angolau23_congou23_20261112",
+      "cid_cafafcon_ethiopiau23_moroccou23_20261112",
+      "cid_cafafcon_tunisiau23_gabonu23_20261112",
+      "cid_uefanationsleague_barbados_guadeloupe_20261112",
+      "cid_uefanationsleague_bonaire_cuba_20261112",
+      "cid_uefanationsleague_caymanislands_guyana_20261112"
+    ],
+    "canonicalRowsWithoutAssessmentIds": [
+      "cid_espcopadelrey_artisticonavalcarnero_realbetis_20261112",
+      "cid_espcopadelrey_cspuertollano_albacete_20261112",
+      "cid_espcopadelrey_tarancon_levante_20261112",
+      "cid_fracoupedefrance_chamberysavoie_grenoble_20261112",
+      "cid_slv1_aguila_municipallimeno_20261112",
+      "cid_slv1_atleticobalboa_incaaruba_20261112",
+      "cid_slv1_fas_internacionalsantatecla_20261112"
+    ],
+    "outputPicks": 0,
+    "outputValidPicks": 0,
+    "outputOrphanPicks": 0,
+    "outputAmbiguousPicks": 0,
+    "outputOrphanPickIds": [],
+    "outputAmbiguousPickIds": []
+  },
+  "summary": {
+    "fixturesSeen": 47,
+    "candidateMarkets": 2,
+    "approved": 0,
+    "rejected": 2,
+    "approvedByMarket": {},
+    "rejectedByMarket": {
+      "OU25": 1,
+      "BTTS": 1
+    },
+    "rejectedByReason": {
+      "ordinary_medium_over25_excluded": 1,
+      "ordinary_medium_btts_excluded": 1
+    },
+    "approvedByLeague": {},
+    "rejectedByLeague": {
+      "uefa.nations": 2
+    }
+  },
+  "candidateLedger": [
+    {
+      "matchId": "cid_uefanations_england_croatia_20261112",
+      "canonicalId": "cid_uefanations_england_croatia_20261112",
+      "leagueSlug": "uefa.nations",
+      "home": "England",
+      "away": "Croatia",
+      "market": "OU25",
+      "pick": "over",
+      "status": "rejected",
+      "reasonCode": "ordinary_medium_over25_excluded",
+      "modelProb": 0.709,
+      "confidence": "medium",
+      "basis": "model_only"
+    },
+    {
+      "matchId": "cid_uefanations_england_croatia_20261112",
+      "canonicalId": "cid_uefanations_england_croatia_20261112",
+      "leagueSlug": "uefa.nations",
+      "home": "England",
+      "away": "Croatia",
+      "market": "BTTS",
+      "pick": "yes",
+      "status": "rejected",
+      "reasonCode": "ordinary_medium_btts_excluded",
+      "modelProb": 0.667,
+      "confidence": "medium",
+      "basis": "model_only"
+    }
+  ],
+  "fixtureLedger": [
+    {
+      "canonicalId": "cid_bra2_londrina_nautico_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.425,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.25,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.325,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.534,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.466,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.567,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.433,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 12,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 1,
+          "adjustmentScale": 0.18,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "no_strong_opposition_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_cafnations_benin_centralafrica_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.412,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.249,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.339,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.545,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.455,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.577,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.423,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_cafnations_cameroon_namibia_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.412,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.249,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.339,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.545,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.455,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.577,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.423,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_cafnations_drcongo_sierraleone_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.412,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.249,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.339,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.545,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.455,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.577,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.423,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_cafnations_equatorialguinea_zimbabwe_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.412,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.249,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.339,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.545,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.455,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.577,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.423,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_cafnations_ghana_somalia_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.412,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.249,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.339,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.545,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.455,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.577,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.423,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_cafnations_guinea_eritrea_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.412,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.249,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.339,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.545,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.455,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.577,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.423,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_cafnations_ivorycoast_gambia_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.412,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.249,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.339,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.545,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.455,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.577,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.423,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_cafnations_madagascar_guineabissau_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.412,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.249,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.339,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.545,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.455,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.577,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.423,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_cafnations_senegal_sudan_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.412,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.249,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.339,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.545,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.455,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.577,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.423,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_col1_aguilasdoradas_independientemedellin_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.422,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.256,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.322,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.507,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.493,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.549,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.451,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 20,
+        "homeSample": 12,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 1,
+          "adjustmentScale": 0.18,
+          "1X2": {
+            "home": 0.005,
+            "draw": -0.002,
+            "away": -0.005
+          },
+          "OU15": {
+            "over": 0.002,
+            "under": -0.002
+          },
+          "OU25": {
+            "over": 0.004,
+            "under": -0.004
+          },
+          "OU35": {
+            "over": 0.003,
+            "under": -0.003
+          },
+          "BTTS": {
+            "yes": 0.005,
+            "no": -0.005
+          }
+        },
+        "reasonCodes": [],
+        "status": "adjusted"
+      }
+    },
+    {
+      "canonicalId": "cid_col1_atleticobucaramanga_fortalezaceif_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.469,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.253,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.278,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.494,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.506,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.528,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.472,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 20,
+        "homeSample": 12,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 1,
+          "adjustmentScale": 0.18,
+          "1X2": {
+            "home": -0.003,
+            "draw": -0.001,
+            "away": 0.003
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": -0.001,
+            "under": 0.001
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [],
+        "status": "adjusted"
+      }
+    },
+    {
+      "canonicalId": "cid_col1_atleticonacional_oncecaldas_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.486,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.248,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.266,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.508,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.492,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.532,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.468,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 20,
+        "homeSample": 12,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 1,
+          "adjustmentScale": 0.18,
+          "1X2": {
+            "home": 0.003,
+            "draw": -0.001,
+            "away": -0.003
+          },
+          "OU15": {
+            "over": -0.001,
+            "under": 0.001
+          },
+          "OU25": {
+            "over": -0.003,
+            "under": 0.003
+          },
+          "OU35": {
+            "over": -0.002,
+            "under": 0.002
+          },
+          "BTTS": {
+            "yes": -0.006,
+            "no": 0.006
+          }
+        },
+        "reasonCodes": [],
+        "status": "adjusted"
+      }
+    },
+    {
+      "canonicalId": "cid_col1_cucutadeportivo_jaguarescordoba_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.449,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.274,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.277,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.421,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.579,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.472,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.528,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 20,
+        "homeSample": 12,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 1,
+          "adjustmentScale": 0.18,
+          "1X2": {
+            "home": 0.004,
+            "draw": -0.001,
+            "away": -0.004
+          },
+          "OU15": {
+            "over": 0.002,
+            "under": -0.002
+          },
+          "OU25": {
+            "over": 0.003,
+            "under": -0.003
+          },
+          "OU35": {
+            "over": 0.002,
+            "under": -0.002
+          },
+          "BTTS": {
+            "yes": 0.002,
+            "no": -0.002
+          }
+        },
+        "reasonCodes": [],
+        "status": "adjusted"
+      }
+    },
+    {
+      "canonicalId": "cid_col1_deportivocali_deportestolima_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.431,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.264,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.306,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.461,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.539,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.513,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.487,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 20,
+        "homeSample": 12,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 1,
+          "adjustmentScale": 0.18,
+          "1X2": {
+            "home": 0.009,
+            "draw": -0.003,
+            "away": -0.009
+          },
+          "OU15": {
+            "over": -0.001,
+            "under": 0.001
+          },
+          "OU25": {
+            "over": -0.002,
+            "under": 0.002
+          },
+          "OU35": {
+            "over": -0.001,
+            "under": 0.001
+          },
+          "BTTS": {
+            "yes": 0.002,
+            "no": -0.002
+          }
+        },
+        "reasonCodes": [],
+        "status": "adjusted"
+      }
+    },
+    {
+      "canonicalId": "cid_col1_deportivopasto_atleticojunior_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.291,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.278,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.43,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.405,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.595,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.458,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.542,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 20,
+        "homeSample": 12,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 1,
+          "adjustmentScale": 0.18,
+          "1X2": {
+            "home": -0.002,
+            "draw": -0.001,
+            "away": 0.002
+          },
+          "OU15": {
+            "over": -0.001,
+            "under": 0.001
+          },
+          "OU25": {
+            "over": -0.003,
+            "under": 0.003
+          },
+          "OU35": {
+            "over": -0.002,
+            "under": 0.002
+          },
+          "BTTS": {
+            "yes": -0.007,
+            "no": 0.007
+          }
+        },
+        "reasonCodes": [],
+        "status": "adjusted"
+      }
+    },
+    {
+      "canonicalId": "cid_col1_deportivopereira_americacali_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.157,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.247,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.596,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.379,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.621,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.373,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.627,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 20,
+        "homeSample": 12,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 1,
+          "adjustmentScale": 0.18,
+          "1X2": {
+            "home": 0.01,
+            "draw": -0.004,
+            "away": -0.01
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0.002,
+            "no": -0.002
+          }
+        },
+        "reasonCodes": [],
+        "status": "adjusted"
+      }
+    },
+    {
+      "canonicalId": "cid_col1_internacionalbogota_independientesantafe_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.287,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.242,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.471,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.554,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.446,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.579,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.421,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 20,
+        "homeSample": 12,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 1,
+          "adjustmentScale": 0.18,
+          "1X2": {
+            "home": -0.009,
+            "draw": -0.003,
+            "away": 0.009
+          },
+          "OU15": {
+            "over": 0.003,
+            "under": -0.003
+          },
+          "OU25": {
+            "over": 0.006,
+            "under": -0.006
+          },
+          "OU35": {
+            "over": 0.004,
+            "under": -0.004
+          },
+          "BTTS": {
+            "yes": 0.006,
+            "no": -0.006
+          }
+        },
+        "reasonCodes": [],
+        "status": "adjusted"
+      }
+    },
+    {
+      "canonicalId": "cid_col1_llaneros_boyacachico_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.63,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.208,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.162,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.547,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.453,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.504,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.496,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 20,
+        "homeSample": 12,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 1,
+          "adjustmentScale": 0.18,
+          "1X2": {
+            "home": -0.004,
+            "draw": -0.001,
+            "away": 0.004
+          },
+          "OU15": {
+            "over": 0.001,
+            "under": -0.001
+          },
+          "OU25": {
+            "over": 0.001,
+            "under": -0.001
+          },
+          "OU35": {
+            "over": 0.001,
+            "under": -0.001
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [],
+        "status": "adjusted"
+      }
+    },
+    {
+      "canonicalId": "cid_col1_millonarios_alianza_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.507,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.258,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.235,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.454,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.546,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.481,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.519,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 20,
+        "homeSample": 12,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 0.833,
+          "adjustmentScale": 0.15,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0.003,
+            "under": -0.003
+          },
+          "OU25": {
+            "over": 0.005,
+            "under": -0.005
+          },
+          "OU35": {
+            "over": 0.004,
+            "under": -0.004
+          },
+          "BTTS": {
+            "yes": 0.002,
+            "no": -0.002
+          }
+        },
+        "reasonCodes": [],
+        "status": "adjusted"
+      }
+    },
+    {
+      "canonicalId": "cid_col2_quindio_tigres_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.434,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.267,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.3,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.457,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.543,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.504,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.496,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 12,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 1,
+          "adjustmentScale": 0.18,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "no_strong_opposition_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_col2_realcundinamarca_cartagena_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.347,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.283,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.37,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.406,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.594,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.469,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.531,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 12,
+        "awaySample": 5,
+        "deltas": {
+          "reliability": 0.5,
+          "adjustmentScale": 0.09,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "no_strong_opposition_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_egy2_alnasr_pharco_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.434,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.238,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.328,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.591,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.409,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.611,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.389,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 1,
+        "awaySample": 1,
+        "deltas": {
+          "reliability": 0.033,
+          "adjustmentScale": 0.006,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_egy2_dayrout_proxy_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.426,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.252,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.322,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.526,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.474,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.561,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.439,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 12,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 1,
+          "adjustmentScale": 0.18,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "no_strong_opposition_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_egy2_deltaunited_alsekka_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.323,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.234,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.443,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.607,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.393,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.623,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.377,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 1,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_egy2_elentagelharby_baladiyatelmahalla_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.379,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.251,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.37,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.54,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.46,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.575,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.425,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 12,
+        "awaySample": 1,
+        "deltas": {
+          "reliability": 0.033,
+          "adjustmentScale": 0.006,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "no_strong_opposition_sample",
+          "insufficient_opponent_strength_coverage",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_egy2_masar_tersana_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.388,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.249,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.363,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.549,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.451,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.582,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.418,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 12,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 1,
+          "adjustmentScale": 0.18,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "no_strong_opposition_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_espcopadelrey_artisticonavalcarnero_realbetis_20261112",
+      "outcome": "missing_model_assessment",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [],
+      "opponentAdjustment": null
+    },
+    {
+      "canonicalId": "cid_espcopadelrey_cspuertollano_albacete_20261112",
+      "outcome": "missing_model_assessment",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [],
+      "opponentAdjustment": null
+    },
+    {
+      "canonicalId": "cid_espcopadelrey_tarancon_levante_20261112",
+      "outcome": "missing_model_assessment",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [],
+      "opponentAdjustment": null
+    },
+    {
+      "canonicalId": "cid_fracoupedefrance_chamberysavoie_grenoble_20261112",
+      "outcome": "missing_model_assessment",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [],
+      "opponentAdjustment": null
+    },
+    {
+      "canonicalId": "cid_mex2_piratas_atleticolapaz_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.364,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.26,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.376,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.497,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.503,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.541,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.459,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 7,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 0.7,
+          "adjustmentScale": 0.126,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "no_strong_opposition_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_slv1_aguila_municipallimeno_20261112",
+      "outcome": "missing_model_assessment",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [],
+      "opponentAdjustment": null
+    },
+    {
+      "canonicalId": "cid_slv1_atleticobalboa_incaaruba_20261112",
+      "outcome": "missing_model_assessment",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [],
+      "opponentAdjustment": null
+    },
+    {
+      "canonicalId": "cid_slv1_fas_internacionalsantatecla_20261112",
+      "outcome": "missing_model_assessment",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [],
+      "opponentAdjustment": null
+    },
+    {
+      "canonicalId": "cid_uefanations_albania_finland_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.412,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.249,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.339,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.545,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.455,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.577,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.423,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_uefanations_armenia_cyprus_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.412,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.249,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.339,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.545,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.455,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.577,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.423,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_uefanations_czechia_spain_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.412,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.249,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.339,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.545,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.455,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.577,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.423,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_uefanations_england_croatia_20261112",
+      "outcome": "candidates_rejected_by_policy",
+      "candidateMarkets": 2,
+      "approved": 0,
+      "rejected": 2,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.594,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.194,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.212,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.709,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": []
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.291,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.667,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": []
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.333,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_uefanations_italy_france_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.412,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.249,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.339,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.545,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.455,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.577,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.423,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_uefanations_montenegro_latvia_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.412,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.249,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.339,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.545,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.455,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.577,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.423,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_uefanations_sanmarino_belarus_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.412,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.249,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.339,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.545,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.455,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.577,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.423,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_uefanations_turkiye_belgium_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.412,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.249,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.339,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.545,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.455,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.577,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.423,
+          "minimumProbability": 0.65,
+          "formUsed": false,
+          "formSamples": [
+            0,
+            0
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold",
+            "insufficient_form_evidence"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 0,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_uga1_kigezihomeboyz_vipers_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.296,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.262,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.442,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.475,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.525,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.517,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.483,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 0,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 0,
+          "adjustmentScale": 0,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "insufficient_opponent_strength_coverage",
+          "no_strong_opposition_sample",
+          "no_peer_strength_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_uru2_atenas_oriental_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.424,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.27,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.306,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.447,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.553,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.498,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.502,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 12,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 1,
+          "adjustmentScale": 0.18,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "no_strong_opposition_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_uru2_cerrito_colon_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.431,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.257,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.312,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.501,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.499,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.54,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.46,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 12,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 1,
+          "adjustmentScale": 0.18,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "no_strong_opposition_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "canonicalId": "cid_uru2_plazacolonia_rentistas_20261112",
+      "outcome": "no_eligible_market",
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0,
+      "marketEligibility": [
+        {
+          "market": "1X2",
+          "pick": "home",
+          "probability": 0.442,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "draw",
+          "probability": 0.25,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "1X2",
+          "pick": "away",
+          "probability": 0.307,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "over",
+          "probability": 0.527,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "OU25",
+          "pick": "under",
+          "probability": 0.473,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "yes",
+          "probability": 0.559,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        },
+        {
+          "market": "BTTS",
+          "pick": "no",
+          "probability": 0.441,
+          "minimumProbability": 0.65,
+          "formUsed": true,
+          "formSamples": [
+            6,
+            6
+          ],
+          "reasonCodes": [
+            "below_model_probability_threshold"
+          ]
+        }
+      ],
+      "opponentAdjustment": {
+        "standingsCoverage": 0,
+        "homeSample": 12,
+        "awaySample": 12,
+        "deltas": {
+          "reliability": 1,
+          "adjustmentScale": 0.18,
+          "1X2": {
+            "home": 0,
+            "draw": 0,
+            "away": 0
+          },
+          "OU15": {
+            "over": 0,
+            "under": 0
+          },
+          "OU25": {
+            "over": 0,
+            "under": 0
+          },
+          "OU35": {
+            "over": 0,
+            "under": 0
+          },
+          "BTTS": {
+            "yes": 0,
+            "no": 0
+          }
+        },
+        "reasonCodes": [
+          "no_strong_opposition_sample",
+          "trusted_opponent_standings_unavailable"
+        ],
+        "status": "unavailable"
+      }
+    }
+  ],
+  "evaluationAccounting": {
+    "schema": "ai-matchlab.plan-b-evaluation-accounting.v1",
+    "complete": true,
+    "fixturesSeen": 47,
+    "terminalOutcomeCount": 47,
+    "inputGapFixtures": 7,
+    "assessedFixtures": 40,
+    "byOutcome": {
+      "no_eligible_market": 39,
+      "missing_model_assessment": 7,
+      "candidates_rejected_by_policy": 1
+    },
+    "diagnosis": "incomplete_assessment_coverage"
+  },
+  "decisionInputEvidence": {
+    "schema": "ai-matchlab.value-decision-input-evidence.v1",
+    "executionId": "991757a1-a0e7-4a21-8f06-314e244eba00",
+    "targetDay": "2026-11-12",
+    "planId": "plan-b2",
+    "startedAt": "2026-11-12T01:37:44.380Z",
+    "github": {
+      "runId": "43123428759",
+      "attempt": "1",
+      "workflowHead": "aba289f03ca35d6493f37ebf19ef5defec9b59e3"
+    },
+    "records": [
+      {
+        "stage": "shared_inputs",
+        "canonicalMatchId": null,
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/94/94bb6014caa5567b51fbaced80dffa7ce727dd649e4dfd6645d5a71f9d6af6a3.json",
+          "sha256": "94bb6014caa5567b51fbaced80dffa7ce727dd649e4dfd6645d5a71f9d6af6a3",
+          "bytes": 3868
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_bra2_londrina_nautico_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/56/5627c4218c4f46c80dad01bb8c6015eabf2f55ea243408ef04570729f19d6b31.json",
+          "sha256": "5627c4218c4f46c80dad01bb8c6015eabf2f55ea243408ef04570729f19d6b31",
+          "bytes": 3368
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_cafnations_benin_centralafrica_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/06/06ff3a61017a5567e9c4622968ee7d918100aba1e4228a1e5db2aea753dc936f.json",
+          "sha256": "06ff3a61017a5567e9c4622968ee7d918100aba1e4228a1e5db2aea753dc936f",
+          "bytes": 3377
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_cafnations_cameroon_namibia_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/19/1979bf77a56a205bdf6f348cfe921e34783eb1d70aea04eb24f93e7aa2f5ae52.json",
+          "sha256": "1979bf77a56a205bdf6f348cfe921e34783eb1d70aea04eb24f93e7aa2f5ae52",
+          "bytes": 3374
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_cafnations_drcongo_sierraleone_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/03/035e2a91ceef80ad7dceb13cd25f401090a5b82f1e04ad6eee44e5f1e2d76a31.json",
+          "sha256": "035e2a91ceef80ad7dceb13cd25f401090a5b82f1e04ad6eee44e5f1e2d76a31",
+          "bytes": 3377
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_cafnations_equatorialguinea_zimbabwe_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/ab/ab825f09580225c95d24377993294dd0014022601386f40cb5e626fb22dafb22.json",
+          "sha256": "ab825f09580225c95d24377993294dd0014022601386f40cb5e626fb22dafb22",
+          "bytes": 3383
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_cafnations_ghana_somalia_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/3c/3cf3114f7d2baa9271dff052586944d41f85176953e90ab41d97284be23c98ee.json",
+          "sha256": "3cf3114f7d2baa9271dff052586944d41f85176953e90ab41d97284be23c98ee",
+          "bytes": 3371
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_cafnations_guinea_eritrea_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/60/6068f2052f72cc0eba43768b8b8b8a49628bc26b77109727de68150f8558ea31.json",
+          "sha256": "6068f2052f72cc0eba43768b8b8b8a49628bc26b77109727de68150f8558ea31",
+          "bytes": 3372
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_cafnations_ivorycoast_gambia_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/fe/fecd2fd1914a51fb84a044f8e3119b339a44eb58d5817324f28191db93374832.json",
+          "sha256": "fecd2fd1914a51fb84a044f8e3119b339a44eb58d5817324f28191db93374832",
+          "bytes": 3375
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_cafnations_madagascar_guineabissau_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/07/0766b3c8f629f5e503bd702c3f5e1d556b360b00caf124f6b6be3bc2654e39e6.json",
+          "sha256": "0766b3c8f629f5e503bd702c3f5e1d556b360b00caf124f6b6be3bc2654e39e6",
+          "bytes": 3381
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_cafnations_senegal_sudan_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/53/53d5864583d7ae985cbbf0b49626731d9df993bd480165af9031382a9977d908.json",
+          "sha256": "53d5864583d7ae985cbbf0b49626731d9df993bd480165af9031382a9977d908",
+          "bytes": 3371
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_col1_aguilasdoradas_independientemedellin_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/0a/0a77066265a63f3c8faa3c40f33af33d72139225f4fa30015bc73b0bc1a8606b.json",
+          "sha256": "0a77066265a63f3c8faa3c40f33af33d72139225f4fa30015bc73b0bc1a8606b",
+          "bytes": 3388
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_col1_atleticobucaramanga_fortalezaceif_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/3a/3a7dc78d850bf3165acc2d7fc793d56fa997879911593ac278cdd55a946a6ae6.json",
+          "sha256": "3a7dc78d850bf3165acc2d7fc793d56fa997879911593ac278cdd55a946a6ae6",
+          "bytes": 3385
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_col1_atleticonacional_oncecaldas_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/db/db42cca53b92d6231df837f7017f121ad99a23e53e4f39318d6ecf1cec4a9395.json",
+          "sha256": "db42cca53b92d6231df837f7017f121ad99a23e53e4f39318d6ecf1cec4a9395",
+          "bytes": 3379
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_col1_cucutadeportivo_jaguarescordoba_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/05/055371801959c47eca91404a264773d108a239320f81c65c3c92575ae65493b7.json",
+          "sha256": "055371801959c47eca91404a264773d108a239320f81c65c3c92575ae65493b7",
+          "bytes": 3383
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_col1_deportivocali_deportestolima_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/52/52e27ccd46a3e1006c760dcc17f112880bfcad8557645032ee6e04319969693f.json",
+          "sha256": "52e27ccd46a3e1006c760dcc17f112880bfcad8557645032ee6e04319969693f",
+          "bytes": 3380
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_col1_deportivopasto_atleticojunior_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/17/17dee45fbf474d56afb60a9002885341f91686f182a81d8c4c5d3fc827ae6ebb.json",
+          "sha256": "17dee45fbf474d56afb60a9002885341f91686f182a81d8c4c5d3fc827ae6ebb",
+          "bytes": 3381
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_col1_deportivopereira_americacali_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/53/531ac5c2e9ce8cc3a4b678097e59e42dfa71348df5459994f2c0f00f8ef6c175.json",
+          "sha256": "531ac5c2e9ce8cc3a4b678097e59e42dfa71348df5459994f2c0f00f8ef6c175",
+          "bytes": 3380
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_col1_internacionalbogota_independientesantafe_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/47/47b210f6678a30a46a397a2b5068fde5332ce7c6cd917bb168b43bbb14a9d190.json",
+          "sha256": "47b210f6678a30a46a397a2b5068fde5332ce7c6cd917bb168b43bbb14a9d190",
+          "bytes": 3392
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_col1_llaneros_boyacachico_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/c7/c70cd1f53dcab34b42c2970f6a64f3a5f3202c2bb24c0144555e704b1459535b.json",
+          "sha256": "c70cd1f53dcab34b42c2970f6a64f3a5f3202c2bb24c0144555e704b1459535b",
+          "bytes": 3372
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_col1_millonarios_alianza_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/7d/7ddbf1556fd1d8e6e37b5fbb3798fb77158b01d3e97798f9eaa51ef6e441e289.json",
+          "sha256": "7ddbf1556fd1d8e6e37b5fbb3798fb77158b01d3e97798f9eaa51ef6e441e289",
+          "bytes": 3371
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_col2_quindio_tigres_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/3d/3d8552f1606385a3c18ccff27a75fa2ffebe8cbb9c83b008aa652f9712926187.json",
+          "sha256": "3d8552f1606385a3c18ccff27a75fa2ffebe8cbb9c83b008aa652f9712926187",
+          "bytes": 3366
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_col2_realcundinamarca_cartagena_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/92/926a4a93928e5fe2eca97050b8080d9b973e7140034ef99016d72a244e6b6618.json",
+          "sha256": "926a4a93928e5fe2eca97050b8080d9b973e7140034ef99016d72a244e6b6618",
+          "bytes": 3378
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_egy2_alnasr_pharco_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/79/79d4e6b5c672efe1b5689cf68384901f143e559243edad3c7cafee218c0b98a1.json",
+          "sha256": "79d4e6b5c672efe1b5689cf68384901f143e559243edad3c7cafee218c0b98a1",
+          "bytes": 3365
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_egy2_dayrout_proxy_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/1e/1ed620be79a5a6eb74cdb6e371524c660d0e612db18ff2d610e10a1bdfc6f221.json",
+          "sha256": "1ed620be79a5a6eb74cdb6e371524c660d0e612db18ff2d610e10a1bdfc6f221",
+          "bytes": 3365
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_egy2_deltaunited_alsekka_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/54/54571ef02a4e41c227447a61febda3b7544cb209e8d72a06521eff2209160fed.json",
+          "sha256": "54571ef02a4e41c227447a61febda3b7544cb209e8d72a06521eff2209160fed",
+          "bytes": 3371
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_egy2_elentagelharby_baladiyatelmahalla_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/5a/5abaa4359a839690233c7124fe2a8ee79b36d26eed385227428aa6d67e83870a.json",
+          "sha256": "5abaa4359a839690233c7124fe2a8ee79b36d26eed385227428aa6d67e83870a",
+          "bytes": 3385
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_egy2_masar_tersana_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/b7/b73e7b24e0b68d478f49d4dc9b2f7f15c0fbf634b743e782e64cd6d378a78e68.json",
+          "sha256": "b73e7b24e0b68d478f49d4dc9b2f7f15c0fbf634b743e782e64cd6d378a78e68",
+          "bytes": 3365
+        }
+      },
+      {
+        "stage": "missing_assessment",
+        "canonicalMatchId": "cid_espcopadelrey_artisticonavalcarnero_realbetis_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/84/84b8422cd418da3a3c5452688fb875d5003f484d2eadadeb75bc6cf896994347.json",
+          "sha256": "84b8422cd418da3a3c5452688fb875d5003f484d2eadadeb75bc6cf896994347",
+          "bytes": 3382
+        }
+      },
+      {
+        "stage": "missing_assessment",
+        "canonicalMatchId": "cid_espcopadelrey_cspuertollano_albacete_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/df/df7c4be59a2550bb7c78910b5388bbcac06c66a2833e189fb7bc2e5c0133a739.json",
+          "sha256": "df7c4be59a2550bb7c78910b5388bbcac06c66a2833e189fb7bc2e5c0133a739",
+          "bytes": 3373
+        }
+      },
+      {
+        "stage": "missing_assessment",
+        "canonicalMatchId": "cid_espcopadelrey_tarancon_levante_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/68/68877534aca4b3671f461ce9d9ba2e43b5b28c3b89fe8b970fc2be18df73d77b.json",
+          "sha256": "68877534aca4b3671f461ce9d9ba2e43b5b28c3b89fe8b970fc2be18df73d77b",
+          "bytes": 3367
+        }
+      },
+      {
+        "stage": "missing_assessment",
+        "canonicalMatchId": "cid_fracoupedefrance_chamberysavoie_grenoble_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/4a/4ad7f07d8fe2654b5e3831bfd967f0a5c6063fe01d14ae05bfafbc75e21676f6.json",
+          "sha256": "4ad7f07d8fe2654b5e3831bfd967f0a5c6063fe01d14ae05bfafbc75e21676f6",
+          "bytes": 3377
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_mex2_piratas_atleticolapaz_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/b3/b35ad395c681a1eee4344865644bd25643781d328c5f40bf15c48a9688572ba4.json",
+          "sha256": "b35ad395c681a1eee4344865644bd25643781d328c5f40bf15c48a9688572ba4",
+          "bytes": 3373
+        }
+      },
+      {
+        "stage": "missing_assessment",
+        "canonicalMatchId": "cid_slv1_aguila_municipallimeno_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/7d/7dd8ba5ed45337299ab2e0a7690e3d60888ffc5e3dafc36f8ea7672148d39145.json",
+          "sha256": "7dd8ba5ed45337299ab2e0a7690e3d60888ffc5e3dafc36f8ea7672148d39145",
+          "bytes": 3364
+        }
+      },
+      {
+        "stage": "missing_assessment",
+        "canonicalMatchId": "cid_slv1_atleticobalboa_incaaruba_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/cc/cc2d0e1e74063747327c483b0de560fdc69efed1f98935808ac75d138cd84c11.json",
+          "sha256": "cc2d0e1e74063747327c483b0de560fdc69efed1f98935808ac75d138cd84c11",
+          "bytes": 3366
+        }
+      },
+      {
+        "stage": "missing_assessment",
+        "canonicalMatchId": "cid_slv1_fas_internacionalsantatecla_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/62/626a1070cc328f3f880e3a4242e46987ae6ef0209cc2329b393c266aea25d438.json",
+          "sha256": "626a1070cc328f3f880e3a4242e46987ae6ef0209cc2329b393c266aea25d438",
+          "bytes": 3369
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_uefanations_albania_finland_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/f4/f468781fc0618e964a5365f3332ef11b3d83b67f33ddd7e79ff25614b7146947.json",
+          "sha256": "f468781fc0618e964a5365f3332ef11b3d83b67f33ddd7e79ff25614b7146947",
+          "bytes": 3374
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_uefanations_armenia_cyprus_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/5e/5ef8c607299cbcdeedd09c0647a19009abb1bb1d942ff239f5cfde48ee9c5a20.json",
+          "sha256": "5ef8c607299cbcdeedd09c0647a19009abb1bb1d942ff239f5cfde48ee9c5a20",
+          "bytes": 3373
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_uefanations_czechia_spain_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/f9/f9f24e8c0b85ba373a52880084dd20ef6519a43b9f086b04e63c12983b193404.json",
+          "sha256": "f9f24e8c0b85ba373a52880084dd20ef6519a43b9f086b04e63c12983b193404",
+          "bytes": 3372
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_uefanations_england_croatia_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/2a/2a9c432e12ac67cd8499ebe9d3429d0a74c0e1c07706c98d9cca397b1acede49.json",
+          "sha256": "2a9c432e12ac67cd8499ebe9d3429d0a74c0e1c07706c98d9cca397b1acede49",
+          "bytes": 3374
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_uefanations_italy_france_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/ab/ab99eaa06c5295a160ef0a552db9c6ce34a965d4ec455bac1a01e59a9c70bb9e.json",
+          "sha256": "ab99eaa06c5295a160ef0a552db9c6ce34a965d4ec455bac1a01e59a9c70bb9e",
+          "bytes": 3371
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_uefanations_montenegro_latvia_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/ca/ca58ab06626173c2eefcbdbb8cff8300af804eae1c170a52b5ccddcd7ab98d4c.json",
+          "sha256": "ca58ab06626173c2eefcbdbb8cff8300af804eae1c170a52b5ccddcd7ab98d4c",
+          "bytes": 3376
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_uefanations_sanmarino_belarus_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/bb/bbd24d4b498a2e436ad9d1a1cc3f6443740df30055d99d8908fa499ba5663c7c.json",
+          "sha256": "bbd24d4b498a2e436ad9d1a1cc3f6443740df30055d99d8908fa499ba5663c7c",
+          "bytes": 3376
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_uefanations_turkiye_belgium_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/0c/0cb9462def85840478c56d1a2524c3de1b03eeff513f4abc6d80b29ca8b49b1c.json",
+          "sha256": "0cb9462def85840478c56d1a2524c3de1b03eeff513f4abc6d80b29ca8b49b1c",
+          "bytes": 3374
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_uga1_kigezihomeboyz_vipers_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/84/8424704665d7b48eb37bfd1ff532c7b09303af16a4d26cf8a31bd79d75f7ea91.json",
+          "sha256": "8424704665d7b48eb37bfd1ff532c7b09303af16a4d26cf8a31bd79d75f7ea91",
+          "bytes": 3373
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_uru2_atenas_oriental_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/6f/6fddf3cddade736b4a358e409d32d0062f32585687295f9431a794dfc8baab8b.json",
+          "sha256": "6fddf3cddade736b4a358e409d32d0062f32585687295f9431a794dfc8baab8b",
+          "bytes": 3367
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_uru2_cerrito_colon_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/6a/6a6856da61f87f58e15be41f8f82fb6c007c10b8a0e62ca31dbc03a98f85f894.json",
+          "sha256": "6a6856da61f87f58e15be41f8f82fb6c007c10b8a0e62ca31dbc03a98f85f894",
+          "bytes": 3365
+        }
+      },
+      {
+        "stage": "assessment_selector_arguments",
+        "canonicalMatchId": "cid_uru2_plazacolonia_rentistas_20261112",
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/f7/f7e0b4ff37de8f4246329d9c1cf67d38f48606447409a7d1c0a9f3f69ca9cb12.json",
+          "sha256": "f7e0b4ff37de8f4246329d9c1cf67d38f48606447409a7d1c0a9f3f69ca9cb12",
+          "bytes": 3374
+        }
+      },
+      {
+        "stage": "selector_output",
+        "canonicalMatchId": null,
+        "receipt": {
+          "path": "data/value/_execution-evidence/objects/23/2362abcd6b039f99382161181b103b2e9802fac3d332072e6abaf3c58768e776.json",
+          "sha256": "2362abcd6b039f99382161181b103b2e9802fac3d332072e6abaf3c58768e776",
+          "bytes": 4109
+        }
+      }
+    ],
+    "scope": "runtime_value_selector_input_capture_not_reconstructed_historical_evidence",
+    "upstreamRawInputLineageFullyCertified": false
+  }
+}
