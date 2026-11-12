@@ -1,7 +1,7 @@
 {
   "schema": "ai-matchlab.value-data-readiness.v1",
   "date": "2026-11-12",
-  "generatedAt": "2026-11-12T01:59:56.285Z",
+  "generatedAt": "2026-11-12T02:56:50.969Z",
   "fixtureUniverse": {
     "schema": "ai-matchlab.value-fixture-universe.v1",
     "source": "canonical_fixtures",
@@ -64,11 +64,11 @@
   "summary": {
     "fixtures": 47,
     "applicable": 47,
-    "ready": 21,
-    "insufficient": 26,
+    "ready": 22,
+    "insufficient": 25,
     "byReason": {
-      "minimum_recent_sample": 24,
-      "missing_model_assessment": 7
+      "minimum_recent_sample": 25,
+      "missing_model_assessment": 5
     }
   },
   "rows": [
@@ -230,10 +230,37 @@
       "canonicalId": "cid_mex2_piratas_atleticolapaz_20261112",
       "leagueSlug": "mex.2",
       "kickoffUtc": "2026-11-12T02:00Z",
-      "status": "READY",
-      "reasons": [],
+      "status": "INSUFFICIENT_DATA",
+      "reasons": [
+        "minimum_recent_sample"
+      ],
       "modelAssessmentAvailable": true,
-      "recentHistory": null,
+      "recentHistory": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Piratas",
+        "awayTeam": "Club Atlético La Paz",
+        "leagueSlug": "mex.2",
+        "fixtureDate": "2026-11-12T02:00:00.000Z",
+        "homeResolvedKey": "Piratas",
+        "awayResolvedKey": "Club Atlético La Paz",
+        "homeRawSample": 2,
+        "awayRawSample": 3,
+        "homeBlendedSample": 2,
+        "awayBlendedSample": 6,
+        "homeSideRawSample": 1,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 1,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": null,
+        "awayPriorSample": 30,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
       "standings": {
         "usable": false,
         "reasons": [
@@ -1499,11 +1526,9 @@
       "canonicalId": "cid_slv1_aguila_municipallimeno_20261112",
       "leagueSlug": "slv.1",
       "kickoffUtc": "2026-11-12T21:30Z",
-      "status": "INSUFFICIENT_DATA",
-      "reasons": [
-        "missing_model_assessment"
-      ],
-      "modelAssessmentAvailable": false,
+      "status": "READY",
+      "reasons": [],
+      "modelAssessmentAvailable": true,
       "recentHistory": null,
       "standings": {
         "usable": false,
@@ -1519,11 +1544,9 @@
       "canonicalId": "cid_slv1_atleticobalboa_incaaruba_20261112",
       "leagueSlug": "slv.1",
       "kickoffUtc": "2026-11-12T21:30Z",
-      "status": "INSUFFICIENT_DATA",
-      "reasons": [
-        "missing_model_assessment"
-      ],
-      "modelAssessmentAvailable": false,
+      "status": "READY",
+      "reasons": [],
+      "modelAssessmentAvailable": true,
       "recentHistory": null,
       "standings": {
         "usable": false,
@@ -1542,5 +1565,11 @@
     "realOddsRequiredForStatisticalSelection": false,
     "unverifiedStandingsNeverPromoted": true,
     "thresholdsChanged": false
+  },
+  "readinessTimeBasis": "signed_prematch_evidence_for_started_fixtures_current_diagnostics_for_future_fixtures",
+  "prematchEvidence": {
+    "preservedRows": 0,
+    "invalidRecords": 0,
+    "predictionCreated": false
   }
 }
