@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-12",
-  "generatedAt": "2026-11-12T16:00:24.754Z",
+  "generatedAt": "2026-11-12T17:32:53.149Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "70112baa6c3d6fa8d83f8cdc7f673cd310147298c9831ee4b6c3282a906bcb18",
+  "truthFingerprint": "718251d701813196aa0967af7a858b5d585f93c041c6c29410022e15639120c8",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 47,
-    "playedTerminal": 11,
+    "playedTerminal": 12,
     "nonPlayedTerminal": 10,
-    "scheduled": 26,
-    "live": 0,
+    "scheduled": 23,
+    "live": 2,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 11,
-    "acceptedVerifiedFinalArtifacts": 11,
-    "convergedPlayedFinal": 11,
+    "verifiedFinalArtifacts": 12,
+    "acceptedVerifiedFinalArtifacts": 12,
+    "convergedPlayedFinal": 12,
     "convergedNonPlayedTerminal": 10,
     "pendingVerifiedFinal": 0,
-    "openRows": 26,
+    "openRows": 25,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 11,
-    "scoredSettlementEligible": 11,
+    "historyEligible": 12,
+    "scoredSettlementEligible": 12,
     "voidSettlementEligible": 10
   },
   "fixtures": [
@@ -291,31 +291,31 @@
       "homeTeam": "Ghana",
       "awayTeam": "Somalia",
       "kickoffUtc": "2026-11-12T15:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-12",
+        "scoreHome": 2,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1810,14 +1810,14 @@
       "homeTeam": "Armenia",
       "awayTeam": "Cyprus",
       "kickoffUtc": "2026-11-12T17:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1831,7 +1831,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -2104,14 +2104,14 @@
       "homeTeam": "Türkiye",
       "awayTeam": "Belgium",
       "kickoffUtc": "2026-11-12T17:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -2125,7 +2125,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -2532,7 +2532,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 21710,
+            "count": 21724,
             "informational": true
           }
         },
@@ -4541,16 +4541,17 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "70112baa6c3d6fa8d83f8cdc7f673cd310147298c9831ee4b6c3282a906bcb18",
+      "truthFingerprint": "718251d701813196aa0967af7a858b5d585f93c041c6c29410022e15639120c8",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 11,
+        "expectedEligibleRows": 12,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_bra2_londrina_nautico_20261112",
+          "cid_cafnations_ghana_somalia_20261112",
           "cid_col2_quindio_tigres_20261112",
           "cid_col2_realcundinamarca_cartagena_20261112",
           "cid_egy2_alnasr_pharco_20261112",
@@ -4620,7 +4621,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-11-12",
-      "fileCount": 11,
+      "fileCount": 12,
       "authority": "scored_final_evidence"
     },
     "downstream": {
