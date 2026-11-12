@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-12",
-  "generatedAt": "2026-11-12T15:18:38.916Z",
+  "generatedAt": "2026-11-12T16:00:24.754Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "a453eb97228f7c95479ee807d6d14808d7d80aba262ac6ece5bbaa332b39262e",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "70112baa6c3d6fa8d83f8cdc7f673cd310147298c9831ee4b6c3282a906bcb18",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,9 +17,9 @@
   },
   "summary": {
     "canonicalRows": 47,
-    "playedTerminal": 10,
+    "playedTerminal": 11,
     "nonPlayedTerminal": 10,
-    "scheduled": 27,
+    "scheduled": 26,
     "live": 0,
     "interrupted": 0,
     "delayed": 0,
@@ -27,16 +27,16 @@
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 11,
     "acceptedVerifiedFinalArtifacts": 11,
-    "convergedPlayedFinal": 10,
+    "convergedPlayedFinal": 11,
     "convergedNonPlayedTerminal": 10,
     "pendingVerifiedFinal": 0,
     "openRows": 26,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 10,
-    "scoredSettlementEligible": 10,
+    "historyEligible": 11,
+    "scoredSettlementEligible": 11,
     "voidSettlementEligible": 10
   },
   "fixtures": [
@@ -2153,14 +2153,14 @@
       "homeTeam": "Kigezi HomeBoyz",
       "awayTeam": "Vipers",
       "kickoffUtc": "2026-11-12T13:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 4
       },
       "verifiedFinal": {
         "present": true,
@@ -2170,14 +2170,14 @@
         "dayKey": "2026-11-12",
         "scoreHome": 1,
         "scoreAway": 4,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2347,9 +2347,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_uga1_kigezihomeboyz_vipers_20261112"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -2534,7 +2532,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 21706,
+            "count": 21710,
             "informational": true
           }
         },
@@ -4543,13 +4541,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "a453eb97228f7c95479ee807d6d14808d7d80aba262ac6ece5bbaa332b39262e",
+      "truthFingerprint": "70112baa6c3d6fa8d83f8cdc7f673cd310147298c9831ee4b6c3282a906bcb18",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 10,
+        "expectedEligibleRows": 11,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_bra2_londrina_nautico_20261112",
@@ -4561,7 +4559,8 @@
           "cid_egy2_elentagelharby_baladiyatelmahalla_20261112",
           "cid_egy2_masar_tersana_20261112",
           "cid_mex2_piratas_atleticolapaz_20261112",
-          "cid_slv1_fas_internacionalsantatecla_20261112"
+          "cid_slv1_fas_internacionalsantatecla_20261112",
+          "cid_uga1_kigezihomeboyz_vipers_20261112"
         ],
         "unexpectedFixtureIds": [],
         "duplicateFixtureIds": [],
