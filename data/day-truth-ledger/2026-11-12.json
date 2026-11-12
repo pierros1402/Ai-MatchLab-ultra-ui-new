@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-12",
-  "generatedAt": "2026-11-12T20:12:20.271Z",
+  "generatedAt": "2026-11-12T21:02:04.857Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "6a37c01e0206b26c546c073dcb250c0511e54a7cd11fc93ca0a8b8c6d6999817",
+  "truthFingerprint": "0b9697b7260a02781c7b0e0321113d3efed85eeda4fe95954820d83dd773527d",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 47,
-    "playedTerminal": 19,
+    "playedTerminal": 21,
     "nonPlayedTerminal": 10,
-    "scheduled": 12,
+    "scheduled": 9,
     "live": 6,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
-    "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 20,
-    "acceptedVerifiedFinalArtifacts": 20,
-    "convergedPlayedFinal": 19,
+    "operationalUnresolved": 1,
+    "verifiedFinalArtifacts": 22,
+    "acceptedVerifiedFinalArtifacts": 22,
+    "convergedPlayedFinal": 21,
     "convergedNonPlayedTerminal": 10,
     "pendingVerifiedFinal": 0,
-    "openRows": 17,
+    "openRows": 15,
     "unresolvedRows": 0,
     "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 19,
-    "scoredSettlementEligible": 19,
+    "historyEligible": 21,
+    "scoredSettlementEligible": 21,
     "voidSettlementEligible": 10
   },
   "fixtures": [
@@ -1370,27 +1370,27 @@
       "awayTeam": "Real Betis",
       "kickoffUtc": "2026-11-12T18:00Z",
       "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "operationalState": "UNRESOLVED",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "UNKNOWN",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_OVERTIME",
         "scoreHome": 2,
-        "scoreAway": 1
+        "scoreAway": 3
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-12",
+        "scoreHome": 2,
+        "scoreAway": 3,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_unresolved_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1467,31 +1467,31 @@
       "homeTeam": "CD Tarancon",
       "awayTeam": "Levante",
       "kickoffUtc": "2026-11-12T18:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FINAL_AET",
         "scoreHome": 1,
-        "scoreAway": 1
+        "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-12",
+        "scoreHome": 1,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1516,14 +1516,14 @@
       "homeTeam": "Chambéry Savoie",
       "awayTeam": "Grenoble",
       "kickoffUtc": "2026-11-12T18:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 0,
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": true,
@@ -1533,14 +1533,14 @@
         "dayKey": "2026-11-12",
         "scoreHome": 0,
         "scoreAway": 2,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1764,10 +1764,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_HALFTIME",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -1862,11 +1862,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -1908,14 +1908,14 @@
       "homeTeam": "England",
       "awayTeam": "Croatia",
       "kickoffUtc": "2026-11-12T19:45Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_HALFTIME",
+        "scoreHome": 1,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1929,7 +1929,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1957,14 +1957,14 @@
       "homeTeam": "Italy",
       "awayTeam": "France",
       "kickoffUtc": "2026-11-12T19:45Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_HALFTIME",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -1978,7 +1978,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -2009,9 +2009,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -2058,11 +2058,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -2348,7 +2348,7 @@
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
     "conflictFixtureIds": [
-      "cid_fracoupedefrance_chamberysavoie_grenoble_20261112"
+      "cid_espcopadelrey_artisticonavalcarnero_realbetis_20261112"
     ],
     "pendingVerifiedFinalFixtureIds": []
   },
@@ -2534,7 +2534,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 21744,
+            "count": 21746,
             "informational": true
           }
         },
@@ -4543,13 +4543,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "6a37c01e0206b26c546c073dcb250c0511e54a7cd11fc93ca0a8b8c6d6999817",
+      "truthFingerprint": "0b9697b7260a02781c7b0e0321113d3efed85eeda4fe95954820d83dd773527d",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 19,
+        "expectedEligibleRows": 21,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_bra2_londrina_nautico_20261112",
@@ -4566,6 +4566,8 @@
           "cid_egy2_elentagelharby_baladiyatelmahalla_20261112",
           "cid_egy2_masar_tersana_20261112",
           "cid_espcopadelrey_cspuertollano_albacete_20261112",
+          "cid_espcopadelrey_tarancon_levante_20261112",
+          "cid_fracoupedefrance_chamberysavoie_grenoble_20261112",
           "cid_mex2_piratas_atleticolapaz_20261112",
           "cid_slv1_fas_internacionalsantatecla_20261112",
           "cid_uefanations_armenia_cyprus_20261112",
@@ -4630,7 +4632,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-11-12",
-      "fileCount": 20,
+      "fileCount": 22,
       "authority": "scored_final_evidence"
     },
     "downstream": {
