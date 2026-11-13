@@ -87,7 +87,7 @@ test('actual production writer and server contain guard at mutation/read boundar
   const c=writer.indexOf('await updateRuntimeSyncState({ day, ref, manifest, latestPromoted, stats });');
   const d=writer.indexOf('await finishPublication(resolveDataPath(), publication);',c);
   assert.ok(a>=0 && a<b && b<c && c<d);
-  assert.ok(index.includes('app.use((req, res, next) => {\n  if (!isPublicationProtectedRequest'));
+  assert.ok(index.replace(/\r\n/g,'\n').includes('app.use((req, res, next) => {\n  if (!isPublicationProtectedRequest'));
   assert.ok(index.indexOf('runtime_publication_guard_active') < index.indexOf('app.get("/deploy-snapshot/latest"'));
 });
 

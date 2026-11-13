@@ -57,7 +57,7 @@ test('malformed existing pointer is denied; no legacy fallback',()=>env(async({r
  await assert.rejects(prepare(root),/pointer_missing_or_invalid/);
 }));
 test('actual settlement writer prepares revision after drain and activates after mutable mirrors',async()=>{
- const source=await fs.readFile(new URL('./sync-deploy-snapshot-from-github.js',import.meta.url),'utf8');
+ const source=(await fs.readFile(new URL('./sync-deploy-snapshot-from-github.js',import.meta.url),'utf8')).replace(/\r\n/g,'\n');
  const start=source.indexOf('async function syncValueComparison('),end=source.indexOf('async function syncMultiOdds(',start);
  const body=source.slice(start,end);
  const guard=body.indexOf('const publication = await beginPublication(');
