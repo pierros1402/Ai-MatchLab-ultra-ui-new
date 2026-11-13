@@ -1037,6 +1037,15 @@ jobs:
             done
           fi
 
+      # Recheck derived freshness after the FINAL unified comparison writer.
+      # Report-only: the frozen Value recovery contract remains separately gated.
+      - name: Verify freshness after final unified publication
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date="$DAY_KEY"
+
       - name: Stage allowed generated files only
         if: env.SKIP_BUILD != 'true'
         shell: bash
@@ -1395,6 +1404,77 @@ jobs:
               execFileSync("git", ["restore", "--", comparisonFile], { stdio: "inherit" });
             }
           }
+
+          // Finalize freshness AFTER the material-change gate has restored
+          // nonmaterial snapshots and/or a timestamp-only comparison.
+          // Otherwise freshness can describe a transient, uncommitted candidate.
+          const finalFreshnessFile = `data/deploy-snapshots/${day}/freshness-report.json`;
+          execFileSync(process.execPath, [
+            './engine-v1/jobs/verify-artifact-freshness-day.js',
+            `--date=${day}`
+          ], { stdio: 'pipe' });
+
+          const previousFreshness = readJsonFromHeadOrNull(finalFreshnessFile);
+          const currentFreshness = readJsonFile(finalFreshnessFile);
+          if (!currentFreshness || typeof currentFreshness !== 'object') {
+            throw new Error('final_freshness_missing_after_reverification');
+          }
+          // Compare the semantic freshness verdict, not observational timestamps.
+          // Keep manifestGeneratedAt because a materially new manifest needs a
+          // newly bound freshness report even when the verdict is unchanged.
+          function freshnessSemanticState(report) {
+            if (!report || typeof report !== 'object') return null;
+            const normalizedItems = (rows) =>
+              (Array.isArray(rows) ? rows : []).map(row => ({
+                kind: row?.kind ?? null,
+                artifact: row?.artifact ?? null,
+                staleReason: row?.staleReason ?? null,
+                reason: row?.reason ?? null,
+                skipped: row?.skipped ?? null,
+                plan: row?.plan ?? null,
+                preservationReason: row?.preservation?.reason ?? null
+              })).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+            const plans = report.fourPlanContract || {};
+            return {
+              ok: report.ok === true,
+              manifestGeneratedAt: report.manifestGeneratedAt ?? null,
+              reasons: [...(Array.isArray(report.reasons) ? report.reasons : [])].sort(),
+              staleInputs: normalizedItems(report.staleInputs),
+              staleDerivedArtifacts: normalizedItems(report.staleDerivedArtifacts),
+              missingRequiredArtifacts: normalizedItems(report.missingRequiredArtifacts),
+              preservedHistoricalDerivedArtifacts: normalizedItems(report.preservedHistoricalDerivedArtifacts),
+              skippedInputs: normalizedItems(report.skippedInputs),
+              fourPlanContract: {
+                complete: plans.complete === true,
+                requiredPlans: [...(Array.isArray(plans.requiredPlans) ? plans.requiredPlans : [])].sort(),
+                presentPlans: [...(Array.isArray(plans.presentPlans) ? plans.presentPlans : [])].sort()
+              }
+            };
+          }
+
+          const freshnessMaterialChanged = JSON.stringify(
+            freshnessSemanticState(previousFreshness)
+          ) !== JSON.stringify(
+            freshnessSemanticState(currentFreshness)
+          );
+          if (freshnessMaterialChanged) {
+            execFileSync('git', ['add', '--', finalFreshnessFile], { stdio: 'inherit' });
+          } else if (previousFreshness) {
+            // Suppress timestamp-only churn, retain the previously published report.
+            execFileSync('git', ['restore', '--staged', '--', finalFreshnessFile], { stdio: 'inherit' });
+            execFileSync('git', ['restore', '--', finalFreshnessFile], { stdio: 'inherit' });
+          }
+
+          // Regenerate authoritative health against the FINAL freshness and
+          // comparison states, not an intermediate pre-restore candidate.
+          execFileSync(process.execPath, [
+            './engine-v1/jobs/build-system-health-alerts-day.js',
+            `--date=${day}`
+          ], { stdio: 'pipe' });
+          execFileSync('git', ['add', '--',
+            `data/system-health/${day}.json`,
+            'data/system-health/latest.json'
+          ], { stdio: 'inherit' });
 
           let commitNeeded = materialChanged || manifestContractRepair || verifiedDataRepair || recoveryStateChanged;
           if (!commitNeeded) {
