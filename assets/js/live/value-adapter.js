@@ -407,7 +407,7 @@ function normalizePick(p) {
 
   let refreshGeneration = 0;
 
-  async function refreshOnce(dateYmd) {
+  async function refreshOnce(dateYmd, { preserveOnError = false } = {}) {
     const date = validDay(dateYmd) ? dateYmd : ymdTodayAthens();
     const generation = ++refreshGeneration;
     const comparison = await fetchValueComparison(date);
@@ -420,6 +420,9 @@ function normalizePick(p) {
       return;
     }
 
+    // A temporary poll failure cannot erase a previously verified Value plan.
+    if (preserveOnError && window.__AIML_LAST_VALUE?.date === date) return;
+
     emitValuePayload(
       unavailableComparisonPayload(
         date,
@@ -428,6 +431,22 @@ function normalizePick(p) {
     );
   }
 
+  // Only the Engine can settle WIN/LOSS. Keep today's panel current by
+  // re-reading its signed comparison periodically; never infer results from
+  // worker scores or historical day displays.
+  const SETTLEMENT_POLL_MS = 90 * 1000;
+  function refreshCurrentDaySettlement() {
+    if (document.visibilityState === "hidden") return;
+    const today = ymdTodayAthens();
+    const selected = String(window.__AIML_SELECTED_DATE || window.__AIML_LAST_VALUE?.date || "").slice(0, 10);
+    if (selected !== today) return;
+    refreshOnce(today, { preserveOnError: true });
+  }
+
+  window.setInterval(refreshCurrentDaySettlement, SETTLEMENT_POLL_MS);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") refreshCurrentDaySettlement();
+  });
 
   on("date:change", payload => {
     const date = String(payload?.date || "").slice(0, 10);
