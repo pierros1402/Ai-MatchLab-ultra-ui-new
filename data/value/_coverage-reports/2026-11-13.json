@@ -2,8 +2,8 @@
   "ok": true,
   "dayKey": "2026-11-13",
   "season": "2026-2027",
-  "generatedAt": "2026-11-13T01:19:42.155Z",
-  "startedAt": "2026-11-13T01:17:34.142Z",
+  "generatedAt": "2026-11-13T08:29:12.003Z",
+  "startedAt": "2026-11-13T08:27:03.064Z",
   "source": {
     "inputSource": "canonical_fixtures",
     "canonicalMatches": 67,
@@ -21,18 +21,18 @@
     "totalRows": 67,
     "detailsFound": 67,
     "intelligenceOk": 67,
-    "valueReturned": 35,
-    "valueNull": 32,
+    "valueReturned": 34,
+    "valueNull": 33,
     "valueFailed": 0,
-    "minimumRecentSampleNull": 32
+    "minimumRecentSampleNull": 33
   },
   "breakdown": {
     "nullByReason": {
-      "minimum_recent_sample": 32
+      "minimum_recent_sample": 33
     },
     "nullByClass": {
       "missing_both_team_history_and_priors": 21,
-      "low_recent_sample_prior_backed": 6,
+      "low_recent_sample_prior_backed": 7,
       "missing_team_history_and_prior": 3,
       "low_recent_sample": 2
     },
@@ -44,6 +44,7 @@
       "esp.copa_del_rey": 1,
       "gua.1": 1,
       "ind.2": 1,
+      "mex.2": 1,
       "uru.1": 1,
       "ven.1": 1
     },
@@ -56,7 +57,6 @@
       "kos.2": 2,
       "wal.2": 2,
       "esp.2": 1,
-      "mex.2": 1,
       "mne.1": 1,
       "srb.2": 1,
       "ukr.2": 1,
@@ -112,7 +112,7 @@
       "leagueSlug": "bra.2",
       "homeTeam": "Sao Bernardo",
       "awayTeam": "Athletic Club",
-      "status": "SECOND_HALF",
+      "status": "FT",
       "kickoffUtc": "2026-11-12T23:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -658,7 +658,7 @@
       "leagueSlug": "col.1",
       "homeTeam": "Deportivo Pasto",
       "awayTeam": "Atlético Junior",
-      "status": "SECOND_HALF",
+      "status": "FT",
       "kickoffUtc": "2026-11-12T23:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -742,7 +742,7 @@
       "leagueSlug": "col.1",
       "homeTeam": "Llaneros FC",
       "awayTeam": "Boyacá Chicó FC",
-      "status": "FIRST_HALF",
+      "status": "FT",
       "kickoffUtc": "2026-11-13T00:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -1727,76 +1727,42 @@
       "leagueSlug": "mex.2",
       "homeTeam": "Club Atlético Morelia",
       "awayTeam": "Leones Negros",
-      "status": "PRE",
+      "status": "FT",
       "kickoffUtc": "2026-11-13T02:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.92,
-        "homeWinScore": 0.326,
-        "drawScore": 0.124,
-        "awayWinScore": 0.55,
-        "over15Score": 0.733,
-        "over25Score": 0.628,
-        "bttsScore": 0.584,
-        "signals": [
-          "away_edge",
-          "over25_support",
-          "priors_applied",
-          "close_strength_gap"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "AWAY",
-            "score": 0.55,
-            "gap": 0.22400000000000003,
-            "drawScore": 0.124,
-            "reasons": [
-              "best_below_0.68"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": true,
-            "pick": "Over 1.5",
-            "score": 0.733,
-            "reasons": []
-          },
-          "Over / Under 2.5": {
-            "eligible": false,
-            "pick": "Over 2.5",
-            "score": 0.628,
-            "expectedTotalGoals": 2.815,
-            "reasons": [
-              "score_below_0.65"
-            ]
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.567,
-            "reasons": [
-              "score_below_0.74",
-              "missing_strong_goal_support"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.584,
-            "reasons": [
-              "score_below_0.68",
-              "missing_btts_support"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample_prior_backed",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Club Atlético Morelia",
+        "awayTeam": "Leones Negros",
+        "leagueSlug": "mex.2",
+        "fixtureDate": "2026-11-13T02:00:00.000Z",
+        "homeResolvedKey": "Club Atlético Morelia",
+        "awayResolvedKey": "Leones Negros",
+        "homeRawSample": 2,
+        "awayRawSample": 1,
+        "homeBlendedSample": 5,
+        "awayBlendedSample": 4,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 1,
+        "homeSideBlendedSample": 3,
+        "awaySideBlendedSample": 4,
+        "homePriorSample": 8,
+        "awayPriorSample": 30,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_mne1_jezero_buducnost_20261113",
@@ -3779,7 +3745,7 @@
       "leagueSlug": "uru.1",
       "homeTeam": "Cerro Largo",
       "awayTeam": "Progreso",
-      "status": "SECOND_HALF",
+      "status": "FT",
       "kickoffUtc": "2026-11-12T23:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
