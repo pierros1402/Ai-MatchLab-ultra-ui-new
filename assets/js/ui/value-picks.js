@@ -630,13 +630,34 @@ function comparisonScoreLabel(p) {
   return parts.length ? parts.join(" • ") : "—";
 }
 
+// Unified publication intentionally omits model probability / confidence fields.
+// Use only the explicit source policy tier; never infer a probability from
+// rawConfidence, readiness or sourceScores (those have different semantics).
+function unifiedPolicyTier(p) {
+  if (!p?.unified) return null;
+  const reason = String(p?.meta?.policyReason || "").trim();
+  if (/^[a-z0-9_]+_strict_high$/.test(reason)) return "HIGH";
+  if (/^[a-z0-9_]+_medium_only$/.test(reason)) return "MEDIUM";
+  return null;
+}
+
+function comparisonTier(p) {
+  const trusted = unifiedPolicyTier(p);
+  if (trusted) return trusted;
+  if (p?.unified) return null;
+  const raw = String(p?.band || p?.confidence || "").toUpperCase();
+  return raw === "HIGH" || raw === "MEDIUM" || raw === "LOW" ? raw : null;
+}
+
 function renderComparisonRow(p) {
   const country = String(p?.country || "").trim();
   const league = String(p?.leagueName || leagueLabel(p) || "").trim();
   const countryLeague = [country, league].filter(Boolean).join(" • ") || "Unknown League";
   const home = p?.homeTeam || p?.home || "—";
   const away = p?.awayTeam || p?.away || "—";
-  const conf = p?.unified ? 'CONSENSUS' : confidenceKey(p?.band || p?.confidence);
+  const tier = comparisonTier(p);
+  const conf = tier || "UNRATED";
+  const unifiedLabel = p?.unified ? '<span class="value-badge consensus">Συμφωνία</span>' : "";
   const pick = comparisonPickLabel(p);
   const resultBadge = resultBadgeHtml(p?.result);
   const hasVerifiedFinal = Boolean(p?.finalScore?.scoreKey);
@@ -658,7 +679,7 @@ function renderComparisonRow(p) {
     '<div class="value-row value-compare-row conf-' + esc(String(conf).toLowerCase()) + '" data-match-id="' + esc(p?.matchId || "") + '" data-verified-final="' + (hasVerifiedFinal ? "true" : "false") + '">',
     '  <div class="value-row-top">',
     '    <div class="value-league">' + esc(countryLeague) + '</div>',
-    '    <div class="value-meta">' + timeHtml + resultBadge + '</div>',
+    '    <div class="value-meta">' + timeHtml + unifiedLabel + resultBadge + '</div>',
     '  </div>',
     '  <div class="value-row-mid">',
     '    <div class="value-fixture">',
@@ -673,7 +694,7 @@ function renderComparisonRow(p) {
     '      <span class="value-score-pick">' + esc(pick) + '</span>',
     '      ' + mktHtml,
     '    </div>',
-    '    <div class="value-conf">' + esc(p?.unified ? 'Συμφωνία' : conf) + '</div>',
+    '    <div class="value-conf">' + esc(tier || '—') + '</div>',
     '  </div>',
     '</div>'
   ].join("");
