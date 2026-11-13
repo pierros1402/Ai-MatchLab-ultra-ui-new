@@ -3,10 +3,11 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { pathToFileURL } from "node:url";
 import { athensDayKey, shiftDay } from "../core/daykey.js";
-import { fixturesForSnapshotDay } from "../core/day-fixture-universe.js";
+import { fixturesForSnapshotDay, canonicalFixturesForDay } from "../core/day-fixture-universe.js";
 import { resolveDataPath } from "../storage/data-root.js";
 import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
 import { validateStagedRelease } from "./sync-deploy-snapshot-from-github.js";
+import { stageHistoricalStatusRelease } from "./stage-historical-status-release.js";
 import { resolveFederationNonPlayedDecision } from "../source-discovery/federation-nonplayed-decisions.js";
 
 const idOf = row => String(row?.canonicalId || row?.matchId || "");
@@ -17,17 +18,75 @@ const validScore = row => score(row).every(x => Number.isInteger(x) && x >= 0);
 const rowsOf = payload => Array.isArray(payload) ? payload : payload?.fixtures || [];
 const hash = file => crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
 
+// Discovery only: matching a later fixture never authorizes a
+// retrospective status, membership or settlement mutation.
+export function discoverMissingReschedules({ day, published, canonical,
+  lookupDay = canonicalFixturesForDay, windowDays = 21 }) {
+  const currentIds = new Set(canonical.map(idOf));
+  const missing = published.filter(row => !currentIds.has(idOf(row)));
+  if (!missing.length) return [];
+  if (!Number.isInteger(windowDays) || windowDays < 1 || windowDays > 31)
+    throw Error('reschedule_window_invalid');
+  const candidates = [];
+  for (let offset = 1; offset <= windowDays; offset++) {
+    const candidateDay = shiftDay(day, offset);
+    const rows = lookupDay(candidateDay);
+    if (!Array.isArray(rows)) throw Error('reschedule_lookup_invalid');
+    for (const row of rows) candidates.push({ ...row, candidateDay });
+  }
+  return missing.flatMap(previous => {
+    const provider = String(previous.sourceId || '').trim();
+    if (!provider || !previous.leagueSlug || !previous.homeTeam || !previous.awayTeam)
+      return [];
+    const matches = candidates.filter(row =>
+      String(row.sourceId || '').trim() === provider &&
+      row.leagueSlug === previous.leagueSlug &&
+      row.homeTeam === previous.homeTeam &&
+      row.awayTeam === previous.awayTeam &&
+      Boolean(idOf(row)) && idOf(row) !== idOf(previous) &&
+      row.dayKey === row.candidateDay &&
+      Number.isFinite(Date.parse(row.kickoffUtc || '')) &&
+      athensDayKey(new Date(row.kickoffUtc)) === row.candidateDay &&
+      !final(row) &&
+      row.scoreHome == null && row.scoreAway == null &&
+      (row.status === 'SPECIAL' ||
+       row.status === 'STATUS_POSTPONED' ||
+       row.status === 'STATUS_SCHEDULED' ||
+       row.status === 'PRE'));
+    const unique = new Set(matches.map(row => row.candidateDay + ':' + idOf(row)));
+    if (unique.size !== matches.length)
+      throw Error('reschedule_duplicate_candidate:' + idOf(previous));
+    return matches.map(row => ({
+      originalId: idOf(previous),
+      candidateId: idOf(row),
+      providerId: provider,
+      originalDay: day,
+      candidateDay: row.candidateDay,
+      candidateStatus: row.status
+    }));
+  });
+}
+
+
 // No provider calls, model execution, fixture admission, score revision or
 // retrospective observation creation. Only already verified canonical finals.
-export function planPublishedFinalRefresh({ day, published = [], canonical = [], results = new Map(), rescheduled = [] }) {
+export function planPublishedFinalRefresh({ day, published = [], canonical = [], results = new Map(), rescheduled = [], missingReschedules = [] }) {
   const current = new Map(canonical.map(row => [idOf(row), row]));
   if (current.size !== canonical.length || new Set(published.map(idOf)).size !== published.length) throw Error("final_refresh_duplicate_identity");
   const upgrades = [];
   const nonplayed = [];
+  const retainedReschedules = [];
   const newDay = new Map(rescheduled.map(row => [String(row?.sourceId || ""), row]));
   for (const previous of published) {
     const id = idOf(previous), next = current.get(id);
-    if (!id || !next) throw Error(`final_refresh_missing_canonical:${id}`);
+    if (!id) throw Error(`final_refresh_missing_canonical:${id}`);
+    if (!next) {
+      const matches = missingReschedules.filter(x => x.originalId === id);
+      if (final(previous) || matches.length === 0)
+        throw Error(`final_refresh_missing_canonical:${id}`);
+      retainedReschedules.push(...matches);
+      continue;
+    }
     if (final(previous) && (!final(next) || !sameScore(previous, next))) throw Error(`final_refresh_terminal_revision_forbidden:${id}`);
     if (final(previous)) continue;
     if (!final(next)) {
@@ -49,10 +108,18 @@ export function planPublishedFinalRefresh({ day, published = [], canonical = [],
     }
     upgrades.push(id);
   }
-  return { upgrades, nonplayed, fixtureIds: published.map(idOf) };
+  return { upgrades, nonplayed, retainedReschedules, fixtureIds: published.map(idOf) };
 }
 
-export async function refreshPublishedFinalStatusDay(day, { apply = false, today = athensDayKey() } = {}) {
+export function assertPublishedFinalRefreshPublicationSafety(plan, { apply = false } = {}) {
+  if (!plan || !Array.isArray(plan.retainedReschedules) || !Array.isArray(plan.upgrades))
+    throw Error('final_refresh_publication_plan_invalid');
+  if (apply && plan.retainedReschedules.length > 0 && plan.upgrades.length > 0)
+    throw Error('final_refresh_mixed_reschedule_publication_blocked');
+  return true;
+}
+
+export async function refreshPublishedFinalStatusDay(day, { apply = false, today = athensDayKey(), historicalStageObservation = false } = {}) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || day >= today) throw Error("final_refresh_closed_day_required");
   const root = resolveDataPath("deploy-snapshots", day);
   const manifestFile = path.join(root, "manifest.json");
@@ -72,8 +139,36 @@ export async function refreshPublishedFinalStatusDay(day, { apply = false, today
     if (fs.existsSync(file)) results.set(id, JSON.parse(fs.readFileSync(file, "utf8")));
   }
   const rescheduled = day === "2026-10-30" ? fixturesForSnapshotDay("2026-11-01").fixtures : [];
-  const plan = planPublishedFinalRefresh({ day, published, canonical, results, rescheduled });
-  if (!apply || !plan.upgrades.length) return { day, changed: false, plannedUpgrades: plan.upgrades, available: true, hash: beforeManifest.hash };
+  const missingReschedules = discoverMissingReschedules({ day, published, canonical });
+  const plan = planPublishedFinalRefresh({ day, published, canonical, results, rescheduled, missingReschedules });
+  if (historicalStageObservation === true) {
+    if (apply !== false) {
+      throw Error("final_refresh_observation_apply_forbidden");
+    }
+
+    // Explicit observation never invokes the publication exporter.
+    // The stage builder validates and removes its temporary stage.
+    const observation = await stageHistoricalStatusRelease({ day });
+
+    if (observation.ok !== true ||
+        observation.publicationAuthorized !== false ||
+        observation.originalUnchanged !== true ||
+        observation.latestUnchanged !== true) {
+      throw Error("final_refresh_observation_contract_invalid");
+    }
+
+    return {
+      ...observation,
+      day,
+      changed: false,
+      available: true,
+      observationOnly: true,
+      publicationAuthorized: false
+    };
+  }
+
+  assertPublishedFinalRefreshPublicationSafety(plan, { apply });
+  if (!apply || !plan.upgrades.length) return { day, changed: false, plannedUpgrades: plan.upgrades, retainedReschedules: plan.retainedReschedules, available: true, hash: beforeManifest.hash };
   const protectedFiles = ["value.json", "value-audit.json", "plan-c-shadow.json", "plan-c-shadow-audit.json"]
     .map(name => path.join(root, name)).filter(file => fs.existsSync(file));
   const protectedHashes = new Map(protectedFiles.map(file => [file, hash(file)]));
@@ -104,7 +199,7 @@ export async function refreshPublishedFinalStatusDay(day, { apply = false, today
   }
   const manifest = JSON.parse(fs.readFileSync(manifestFile, "utf8"));
   await validateStagedRelease(root, manifest);
-  return { day, changed: true, upgraded: plan.upgrades, available: true, hash: manifest.hash };
+  return { day, changed: true, upgraded: plan.upgrades, retainedReschedules: plan.retainedReschedules, available: true, hash: manifest.hash };
 }
 
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {

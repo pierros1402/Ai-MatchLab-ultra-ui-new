@@ -51,8 +51,19 @@ test("historical snapshot stage accepts only an actual absent comparison (404)",
     assert.equal(result.comparisonBuffer, null);
     assert.equal(stats.filesDownloaded, 0);
     assert.equal(fs.existsSync(path.join(root, "runtime", "value-comparison.json")), false);
-    assert.equal(calls.length, 3);
-    assert.equal(calls[0].optional, true);
+    assert.deepEqual(
+      calls.map(({url}) => new URL(url).pathname.split("/data/")[1]),
+      [
+        "value-comparison/2026-10-27.json",
+        "build-reports/2026-10-27.json",
+        "system-health/2026-10-27.json",
+        "coverage-readiness/2026-10-27.json",
+        "foundation-integrity/2026-10-27.json"
+      ]
+    );
+    assert.deepEqual(calls.map(({optional}) => optional), [
+      true, true, true, true, true
+    ]);
   });
 });
 

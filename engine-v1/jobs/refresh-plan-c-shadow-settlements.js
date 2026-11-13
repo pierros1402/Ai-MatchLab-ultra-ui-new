@@ -18,8 +18,19 @@ export function refreshPlanCSettlements(previous, report) {
     const record = records.get(entry.prediction.canonicalFixtureId);
     if (!record || record.state === "PENDING") continue;
     if (record.prediction?.signature !== entry.prediction.predictionSignature) throw new Error("settlement_prediction_signature_conflict");
-    entry.settlement = { state: record.state, truth: record.truth ?? null,
+    const incoming = { state: record.state, truth: record.truth ?? null,
       pendingReason: record.pendingReason ?? null, brier: record.brier ?? null, hitRate: record.hitRate ?? null };
+    if (["SETTLED", "VOID_EXCLUDED"].includes(entry.settlement.state) &&
+        entry.settlement.state === incoming.state &&
+        /^[a-f0-9]{64}$/.test(entry.settlement.truth?.sourceSha256 ?? "") &&
+        /^[a-f0-9]{64}$/.test(incoming.truth?.sourceSha256 ?? "")) {
+      const priorComparable = structuredClone(entry.settlement);
+      const incomingComparable = structuredClone(incoming);
+      delete priorComparable.truth.sourceSha256;
+      delete incomingComparable.truth.sourceSha256;
+      if (canonicalPlanCJson(priorComparable) === canonicalPlanCJson(incomingComparable)) continue;
+    }
+    entry.settlement = incoming;
   }
   const validation = validatePlanCShadowDay(next, previous.date);
   if (!validation.ok) throw new Error(validation.errors.join(","));

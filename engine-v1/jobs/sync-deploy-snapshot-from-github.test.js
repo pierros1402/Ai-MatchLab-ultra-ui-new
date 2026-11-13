@@ -156,3 +156,55 @@ test("promoteDirectory EXDEV copy fallback restores the previous snapshot after 
   assert.equal(fs.existsSync(fixture.stage), true);
   await assertOriginal(fixture);
 });
+
+test("retainBackup preserves the prior target through rename promotion", async t => {
+  const fixture = await makeFixture();
+  t.after(() => fsp.rm(fixture.root, { recursive: true, force: true }));
+  await promoteDirectory(fixture.stage, fixture.target, fixture.backup, {
+    retainBackup: true
+  });
+  assert.equal(
+    await fsp.readFile(path.join(fixture.target, "manifest.json"), "utf8"),
+    "new-manifest\n"
+  );
+  assert.equal(
+    await fsp.readFile(path.join(fixture.backup, "manifest.json"), "utf8"),
+    "old-manifest\n"
+  );
+});
+
+test("retainBackup preserves the prior target through EXDEV fallback", async t => {
+  const fixture = await makeFixture();
+  t.after(() => fsp.rm(fixture.root, { recursive: true, force: true }));
+  const rename = async () => {
+    throw Object.assign(new Error("forced_exdev"), { code: "EXDEV" });
+  };
+  await promoteDirectory(fixture.stage, fixture.target, fixture.backup, {
+    rename, retainBackup: true
+  });
+  assert.equal(
+    await fsp.readFile(path.join(fixture.target, "manifest.json"), "utf8"),
+    "new-manifest\n"
+  );
+  assert.equal(
+    await fsp.readFile(path.join(fixture.backup, "manifest.json"), "utf8"),
+    "old-manifest\n"
+  );
+});
+
+test("retainBackup rejects an existing backup without deleting it", async t => {
+  const fixture = await makeFixture();
+  t.after(() => fsp.rm(fixture.root, { recursive: true, force: true }));
+  await fsp.mkdir(fixture.backup, { recursive: true });
+  await fsp.writeFile(path.join(fixture.backup, "evidence.txt"), "KEEP");
+  await assert.rejects(
+    promoteDirectory(fixture.stage, fixture.target, fixture.backup, {
+      retainBackup: true
+    }),
+    /retained_backup_preexisting_hold/
+  );
+  assert.equal(
+    await fsp.readFile(path.join(fixture.backup, "evidence.txt"), "utf8"),
+    "KEEP"
+  );
+});

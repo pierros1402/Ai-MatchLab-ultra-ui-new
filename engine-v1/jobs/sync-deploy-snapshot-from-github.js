@@ -12,6 +12,7 @@
  *     manifest hash at the same immutable commit.
  */
 
+import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import fsp from "node:fs/promises";
 import path from "node:path";
@@ -23,6 +24,9 @@ import {
   validateDeploySnapshotManifest
 } from "../core/deploy-snapshot-release-contract.js";
 import { resolveDataPath } from "../storage/data-root.js";
+import { beginPublication, finishPublication, waitForPublicationReadersToDrain } from "../system-health/runtime-publication-guard.js";
+import { prepareImmutableGeneration, activateImmutableGeneration } from "./runtime-immutable-generation.js";
+import { prepareSettlementRevision, activateSettlementRevision } from "./runtime-settlement-generation.js";
 import { athensDayKey, shiftDay } from "../core/daykey.js";
 import { validatePlanCShadowExportPayload } from "../value/plan-c-shadow-export.js";
 import { assertArchivedValueRelease } from "../core/archived-value-release.js";
@@ -463,9 +467,22 @@ async function verifyDirectoryCopy(sourceDir, targetDir) {
   }
 }
 
-async function promoteDirectoryInPlace(stageDayDir, targetDayDir, rollbackDir) {
+async function restoreBackupDirectory(backupDir, targetDayDir, options = {}) {
+  if (typeof options.restoreBackup === "function") {
+    return options.restoreBackup(backupDir, targetDayDir);
+  }
+  await syncDirectoryByCopy(backupDir, targetDayDir);
+  await verifyDirectoryCopy(backupDir, targetDayDir);
+}
+
+async function promoteDirectoryInPlace(stageDayDir, targetDayDir, rollbackDir, options = {}) {
   const targetExists = fs.existsSync(targetDayDir);
-  await fsp.rm(rollbackDir, { recursive: true, force: true });
+  if (options.retainBackup && fs.existsSync(rollbackDir)) {
+    throw new Error("retained_backup_preexisting_hold");
+  }
+  if (!options.retainBackup) {
+    await fsp.rm(rollbackDir, { recursive: true, force: true });
+  }
 
   if (targetExists) {
     await syncDirectoryByCopy(targetDayDir, rollbackDir);
@@ -476,13 +493,14 @@ async function promoteDirectoryInPlace(stageDayDir, targetDayDir, rollbackDir) {
     await syncDirectoryByCopy(stageDayDir, targetDayDir);
     await verifyDirectoryCopy(stageDayDir, targetDayDir);
     await fsp.rm(stageDayDir, { recursive: true, force: true });
-    await fsp.rm(rollbackDir, { recursive: true, force: true });
+    if (!options.retainBackup) {
+      await fsp.rm(rollbackDir, { recursive: true, force: true });
+    }
   } catch (error) {
     let rollbackError = null;
     try {
       if (targetExists && fs.existsSync(rollbackDir)) {
-        await syncDirectoryByCopy(rollbackDir, targetDayDir);
-        await verifyDirectoryCopy(rollbackDir, targetDayDir);
+        await restoreBackupDirectory(rollbackDir, targetDayDir, options);
       } else if (!targetExists) {
         await fsp.rm(targetDayDir, { recursive: true, force: true });
       }
@@ -490,7 +508,9 @@ async function promoteDirectoryInPlace(stageDayDir, targetDayDir, rollbackDir) {
       rollbackError = restoreError;
     }
 
-    await fsp.rm(rollbackDir, { recursive: true, force: true }).catch(() => {});
+    if (!rollbackError) {
+      await fsp.rm(rollbackDir, { recursive: true, force: true }).catch(() => {});
+    }
 
     if (rollbackError) {
       throw new AggregateError([error, rollbackError], "snapshot_promotion_rollback_failed");
@@ -501,7 +521,12 @@ async function promoteDirectoryInPlace(stageDayDir, targetDayDir, rollbackDir) {
 
 export async function promoteDirectory(stageDayDir, targetDayDir, backupDir, options = {}) {
   const rename = typeof options.rename === "function" ? options.rename : fsp.rename;
-  await fsp.rm(backupDir, { recursive: true, force: true });
+  if (options.retainBackup && fs.existsSync(backupDir)) {
+    throw new Error("retained_backup_preexisting_hold");
+  }
+  if (!options.retainBackup) {
+    await fsp.rm(backupDir, { recursive: true, force: true });
+  }
   const targetExists = fs.existsSync(targetDayDir);
   let targetMovedToBackup = false;
 
@@ -511,13 +536,14 @@ export async function promoteDirectory(stageDayDir, targetDayDir, backupDir, opt
       targetMovedToBackup = true;
     }
     await rename(stageDayDir, targetDayDir);
-    await fsp.rm(backupDir, { recursive: true, force: true });
+    if (!options.retainBackup) {
+      await fsp.rm(backupDir, { recursive: true, force: true });
+    }
     return;
   } catch (error) {
     if (targetMovedToBackup && !fs.existsSync(targetDayDir) && fs.existsSync(backupDir)) {
       try {
-        await syncDirectoryByCopy(backupDir, targetDayDir);
-        await verifyDirectoryCopy(backupDir, targetDayDir);
+        await restoreBackupDirectory(backupDir, targetDayDir, options);
         await fsp.rm(backupDir, { recursive: true, force: true });
         targetMovedToBackup = false;
       } catch (restoreError) {
@@ -527,8 +553,10 @@ export async function promoteDirectory(stageDayDir, targetDayDir, backupDir, opt
 
     if (!isCrossDeviceRename(error)) throw error;
 
-    await promoteDirectoryInPlace(stageDayDir, targetDayDir, backupDir);
-    await fsp.rm(backupDir, { recursive: true, force: true });
+    await promoteDirectoryInPlace(stageDayDir, targetDayDir, backupDir, options);
+    if (!options.retainBackup) {
+      await fsp.rm(backupDir, { recursive: true, force: true });
+    }
   }
 }
 
@@ -559,6 +587,31 @@ async function updateRuntimeSyncState({ day, ref, manifest, latestPromoted, stat
     latestRef: latestPromoted ? ref : current?.latestRef || null,
     days
   }, null, 2)));
+}
+
+export function validateRuntimeCoverageFoundationArtifact(buffer, { kind, day }) {
+  const payload = parseJsonBuffer(buffer, kind);
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    throw new Error(`runtime_${kind}_not_object`);
+  }
+  if (String(payload.dayKey || "") !== day) {
+    throw new Error(`runtime_${kind}_day_mismatch`);
+  }
+  if (kind === "coverage") {
+    const proof = payload.activeCompetitionCompleteness;
+    if (!proof || proof.schema !== "ai-matchlab.active-competition-completeness.v1" ||
+        typeof proof.proven !== "boolean") {
+      throw new Error("runtime_coverage_contract_invalid");
+    }
+  } else if (kind === "foundation") {
+    if (typeof payload.modelReady !== "boolean" ||
+        typeof payload.publicationReady !== "boolean") {
+      throw new Error("runtime_foundation_contract_invalid");
+    }
+  } else {
+    throw new Error("runtime_diagnostic_kind_unknown");
+  }
+  return payload;
 }
 
 export async function stageRuntimeReleaseArtifacts({
@@ -597,6 +650,9 @@ export async function stageRuntimeReleaseArtifacts({
     rawUrl(repo, ref, `data/build-reports/${day}.json`),
     { optional: !requireDiagnostics }
   );
+  if (requireDiagnostics && buildBuffer === null) {
+    throw new Error("runtime_build_report_required_for_current_release");
+  }
   if (buildBuffer) {
     const build = parseJsonBuffer(buildBuffer, "build_report");
     const buildDay = String(build?.dayKey || build?.date || "").slice(0, 10);
@@ -607,6 +663,9 @@ export async function stageRuntimeReleaseArtifacts({
     rawUrl(repo, ref, `data/system-health/${day}.json`),
     { optional: !requireDiagnostics }
   );
+  if (requireDiagnostics && alertsBuffer === null) {
+    throw new Error("runtime_authoritative_alert_required_for_current_release");
+  }
   if (alertsBuffer) {
     const alerts = parseJsonBuffer(alertsBuffer, "system_health_alerts");
     if (String(alerts?.dayKey || "") !== day) {
@@ -614,7 +673,32 @@ export async function stageRuntimeReleaseArtifacts({
     }
   }
 
+  // These inputs are part of the SAME commit-pinned staged public release.
+  // Do not mirror independently into mutable root-level diagnostic files.
+  const coverageBuffer = await fetchArtifact(
+    rawUrl(repo, ref, `data/coverage-readiness/${day}.json`),
+    { optional: !requireDiagnostics }
+  );
+  if (requireDiagnostics && coverageBuffer === null) {
+    throw new Error("runtime_coverage_required_for_current_release");
+  }
+  if (coverageBuffer !== null) {
+    validateRuntimeCoverageFoundationArtifact(coverageBuffer, { kind: "coverage", day });
+  }
+  const foundationBuffer = await fetchArtifact(
+    rawUrl(repo, ref, `data/foundation-integrity/${day}.json`),
+    { optional: !requireDiagnostics }
+  );
+  if (requireDiagnostics && foundationBuffer === null) {
+    throw new Error("runtime_foundation_required_for_current_release");
+  }
+  if (foundationBuffer !== null) {
+    validateRuntimeCoverageFoundationArtifact(foundationBuffer, { kind: "foundation", day });
+  }
+
   const staged = [
+    ["coverage-readiness.json", coverageBuffer],
+    ["foundation-integrity.json", foundationBuffer],
     ["value-comparison.json", comparisonBuffer],
     ["build-report.json", buildBuffer],
     ["system-health-alerts.json", alertsBuffer]
@@ -632,7 +716,9 @@ export async function stageRuntimeReleaseArtifacts({
     alertsBuffer,
     comparisonPresent: comparisonBuffer !== null,
     buildReportPresent: Boolean(buildBuffer),
-    systemHealthPresent: Boolean(alertsBuffer)
+    systemHealthPresent: Boolean(alertsBuffer),
+    coverageReadinessPresent: Boolean(coverageBuffer),
+    foundationIntegrityPresent: Boolean(foundationBuffer)
   };
 }
 
@@ -696,6 +782,17 @@ async function syncValueComparison({
     );
 
   let runtimeReleaseWritten = false;
+  const publication = await beginPublication(resolveDataPath(), {
+    day, ref, mode: "settlement"
+  });
+  await waitForPublicationReadersToDrain(resolveDataPath());
+
+  // Preserve snapshot identity and issue a separate immutable settlement revision.
+  // The old pointer is not switched until both legacy mirrors have been updated.
+  // A failure deliberately leaves the publication marker in HOLD.
+  const settlementRevision = await prepareSettlementRevision({
+    dataRoot: resolveDataPath(), day, settlementRef: ref, comparisonBytes: buffer
+  });
 
   // readValueComparisonArtifact() prefers the embedded runtime release.
   // A settlement-only sync must update that copy before the generic
@@ -716,6 +813,10 @@ async function syncValueComparison({
   );
 
   stats.extraFilesWritten += 1;
+  if (settlementRevision) {
+    await activateSettlementRevision(resolveDataPath(), settlementRevision);
+  }
+  await finishPublication(resolveDataPath(), publication);
 
   return {
     present: true,
@@ -758,7 +859,7 @@ export async function syncDeploySnapshotFromGithub(dayKey = athensDayKey(), opti
   const stageRoot = resolveDataPath(".snapshot-sync", `${day}-${ref}-${process.pid}-${Date.now()}`);
   const stageDayDir = path.join(stageRoot, "deploy-snapshots", day);
   const targetDayDir = resolveDataPath("deploy-snapshots", day);
-  const backupDir = resolveDataPath("deploy-snapshots", `.backup-${day}-${process.pid}`);
+  const backupDir = resolveDataPath("deploy-snapshots", `.backup-${day}-${process.pid}-${randomUUID()}`);
   const stats = {
     filesDownloaded: 0,
     filesReused: 0,
@@ -863,6 +964,18 @@ export async function syncDeploySnapshotFromGithub(dayKey = athensDayKey(), opti
       throw new Error("historical_comparison_existing_mirror_requires_review");
     }
 
+    // Exclusive, durable fail-closed marker precedes every live data mutation.
+    // On any error after this point it deliberately remains for operator review.
+    // Capture a fully verified, immutable *additional* generation before any live mutation.
+    // Legacy endpoints still use the existing publication guard; this pointer
+    // is not yet the serving authority until reader migration is qualified.
+    const immutableGeneration = await prepareImmutableGeneration({
+      dataRoot: resolveDataPath(), day, ref, manifestHash: manifest.hash, sourceDir: stageDayDir
+    });
+    const publication = await beginPublication(resolveDataPath(), {
+      day, ref, manifestHash: manifest.hash, mode: "snapshot"
+    });
+    await waitForPublicationReadersToDrain(resolveDataPath());
     await promoteDirectory(stageDayDir, targetDayDir, backupDir);
 
     await mirrorRuntimeReleaseArtifacts({
@@ -883,6 +996,11 @@ export async function syncDeploySnapshotFromGithub(dayKey = athensDayKey(), opti
     }
 
     await updateRuntimeSyncState({ day, ref, manifest, latestPromoted, stats });
+    // Activate only after all legacy publication writes and their witness.
+    // An error here deliberately retains the existing publication HOLD marker.
+    await activateImmutableGeneration(resolveDataPath(), immutableGeneration);
+    // Remove the safety marker only after all publication writes succeed.
+    await finishPublication(resolveDataPath(), publication);
 
     const summary = {
       ok: true,
@@ -897,6 +1015,8 @@ export async function syncDeploySnapshotFromGithub(dayKey = athensDayKey(), opti
       diagnostics: {
         buildReportPresent: runtimeArtifacts.buildReportPresent,
         systemHealthPresent: runtimeArtifacts.systemHealthPresent,
+        coverageReadinessPresent: runtimeArtifacts.coverageReadinessPresent,
+        foundationIntegrityPresent: runtimeArtifacts.foundationIntegrityPresent,
         latestSystemHealthPromoted: latestPromoted
       },
       multiOddsDays,
@@ -908,7 +1028,6 @@ export async function syncDeploySnapshotFromGithub(dayKey = athensDayKey(), opti
     return summary;
   } finally {
     await fsp.rm(stageRoot, { recursive: true, force: true }).catch(() => {});
-    await fsp.rm(backupDir, { recursive: true, force: true }).catch(() => {});
   }
 }
 
