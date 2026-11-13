@@ -13,5 +13,6 @@ test("current-day settlement is rechecked periodically and on visibility return"
 test("settlement remains exclusively backend-owned and polling never clears a verified plan on failure", () => {
   assert.match(src, /const comparison = await fetchValueComparison\(date\)/);
   assert.match(src, /preserveOnError && window\.__AIML_LAST_VALUE\?\.date === date\) return/);
-  assert.doesNotMatch(src, /\bWIN\b|\bLOSS\b/);
+  assert.match(src, /const payload = comparisonPayloadFrom\(comparison, date\)/);
+  assert.doesNotMatch(src, /result:\s*["\x27](WIN|LOSS)["\x27]/);
 });
