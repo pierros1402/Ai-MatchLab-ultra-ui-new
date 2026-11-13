@@ -1,0 +1,206 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "mex.2",
+  "homeTeam": "Club Atlético La Paz",
+  "awayTeam": "Piratas",
+  "homeWinScore": 0.429,
+  "drawScore": 0.179,
+  "awayWinScore": 0.392,
+  "over15Score": 0.59,
+  "over25Score": 0.473,
+  "over35Score": 0.444,
+  "bttsScore": 0.588,
+  "confidence": 0.763,
+  "signals": [
+    "home_edge",
+    "btts_support",
+    "priors_applied",
+    "close_strength_gap",
+    "home_rest_3",
+    "away_rest_3"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.35,
+      "awayOverallFormWeight": 0.3,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.313,
+    "expectedAwayGoals": 1.201,
+    "expectedTotalGoals": 2.514,
+    "homeStrength": 0.429,
+    "awayStrength": 0.314,
+    "homeEdge": 0.219,
+    "awayPenalty": 0.248,
+    "recency": {
+      "homeOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 30,
+        "daysSinceLastMatch": 3,
+        "spanDays": 25,
+        "maxInternalGap": 14,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.7,
+        "formContinuityWeight": 0.835
+      },
+      "awayOverall": {
+        "sample": 3,
+        "rawSample": 3,
+        "priorSample": 0,
+        "daysSinceLastMatch": 3,
+        "spanDays": 6,
+        "maxInternalGap": 3,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 1,
+        "formContinuityWeight": 0.88
+      },
+      "homeSide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 30,
+        "daysSinceLastMatch": 15,
+        "spanDays": 14,
+        "maxInternalGap": 14,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.365,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.423
+      },
+      "awaySide": {
+        "sample": 1,
+        "rawSample": 1,
+        "priorSample": 0,
+        "daysSinceLastMatch": 9,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.65,
+        "continuityScore": 1,
+        "formContinuityWeight": 0.638
+      }
+    },
+    "matchupSample": 1,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 30,
+      "awayPriorSample": 0,
+      "leaguePriorSample": 289,
+      "matchupPriorSample": 0
+    },
+    "resolution": {
+      "homeInput": "Club Atlético La Paz",
+      "awayInput": "Piratas",
+      "homeResolvedKey": "Club Atlético La Paz",
+      "awayResolvedKey": "Piratas",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Club Atlético La Paz::Piratas",
+      "matchupResolveScore": 0.93,
+      "homePriorKey": "mex.2::Club Atlético La Paz",
+      "awayPriorKey": null,
+      "matchupPriorKey": null
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Club Atlético La Paz",
+      "awayTeamKey": "Piratas",
+      "leagueKey": "mex.2",
+      "matchupKey": "Club Atlético La Paz::Piratas"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": false,
+    "contextDelta": 0,
+    "contextReasons": [],
+    "aiContext": {
+      "available": true,
+      "importance": "unknown",
+      "stakes": [],
+      "pressure": []
+    }
+  },
+  "contextAdjusted": false,
+  "contextReasons": [],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0.009,
+      "awayDelta": 0,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0.05,
+      "awayPenalty": 0.05,
+      "reasons": [
+        "home_rest_3",
+        "away_rest_3"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "mex.2",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 3,
+    "awayRestDays": 3,
+    "homeMatchesLast7": 1,
+    "awayMatchesLast7": 2,
+    "homeMatchesLast14": 2,
+    "awayMatchesLast14": 3,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
