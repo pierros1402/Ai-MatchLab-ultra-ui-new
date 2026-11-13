@@ -315,6 +315,23 @@ function invariantWarningIssue(w) {
   );
 }
 
+// Refresh an unchanged same-day alert only when the published manifest has
+// outgrown the public health freshness window. Do not emit timestamp-only
+// commits on every intraday tick or silently certify future/missing manifests.
+export function shouldRefreshStableHealthAlert({
+  previousGeneratedAt,
+  manifestGeneratedAt,
+  now
+} = {}) {
+  const previousMs = Date.parse(String(previousGeneratedAt || ""));
+  const manifestMs = Date.parse(String(manifestGeneratedAt || ""));
+  const nowMs = Date.parse(String(now || ""));
+  if (!Number.isFinite(manifestMs) || !Number.isFinite(nowMs)
+    || nowMs < manifestMs) return false;
+  return !Number.isFinite(previousMs)
+    || manifestMs - previousMs > 9 * 60 * 1000;
+}
+
 export function buildSystemHealthAlertsDay(dayKey) {
   const snapshotDir = resolveDataPath("deploy-snapshots", dayKey);
 
@@ -677,12 +694,33 @@ export function buildSystemHealthAlertsDay(dayKey) {
     persistentIssues
   };
 
-  // Avoid timestamp-only / new-vs-persistent churn in intraday runs.
-  // If the active issue set is unchanged for the same day, keep the previous
-  // report stable so workflows do not commit only generatedAt/history noise.
+  // Preserve history when the same issues persist, but do not leave the
+  // authoritative alert older than the manifest indefinitely. Only the
+  // current Athens day is eligible for automatic freshness re-attestation.
+  // Historical frozen days remain untouched by this policy.
+  const athensToday = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Athens", year: "numeric",
+    month: "2-digit", day: "2-digit"
+  }).formatToParts(new Date()).reduce((out, part) => {
+    if (part.type === "year" || part.type === "month" || part.type === "day") {
+      out[part.type] = part.value;
+    }
+    return out;
+  }, {});
+  const currentAthensDay = `${athensToday.year}-${athensToday.month}-${athensToday.day}`;
+  const refreshStableTimestamp = dayKey === currentAthensDay
+    && shouldRefreshStableHealthAlert({
+      previousGeneratedAt: previousDay?.generatedAt,
+      manifestGeneratedAt: manifest?.generatedAt,
+      now: report.generatedAt
+    });
+
   if (sameActiveIssueSet && previousDay) {
     report = {
       ...previousDay,
+      generatedAt: refreshStableTimestamp
+        ? report.generatedAt
+        : previousDay.generatedAt,
       activeIssues,
       actionableIssues,
       activeIssueCount: activeIssues.length,
