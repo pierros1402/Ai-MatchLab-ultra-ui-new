@@ -8,8 +8,8 @@ test("engine readiness accepts current or next-day atomic publication only", () 
     "utf8"
   ).replace(/\r\n/g, "\n");
 
-  const start = source.indexOf(
-    'app.get("/ready", (_req, res) => {'
+  const start = source.search(
+    /app\.get\("\/ready",\s*(?:async\s+)?\(_req,\s*res\)\s*=>\s*\{/u
   );
 
   const end = source.indexOf(

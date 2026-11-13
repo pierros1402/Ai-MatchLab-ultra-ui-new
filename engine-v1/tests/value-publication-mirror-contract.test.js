@@ -197,7 +197,7 @@ test(
 
     const start =
       index.indexOf(
-        "function readValueComparisonArtifact(date)"
+        "function readValueComparisonArtifact("
       );
 
     const end =

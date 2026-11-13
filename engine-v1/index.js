@@ -1,3 +1,9 @@
+import { readPinnedValuePicksSnapshot } from "./jobs/runtime-generation-value-picks-reader.js";
+import { readSnapshotManifestGeneration } from "./jobs/runtime-generation-snapshot-reader.js";
+import { qualifyGenerationReadiness } from "./system-health/runtime-generation-readiness.js";
+import { readPinnedRuntimeArtifact } from "./jobs/runtime-generation-artifact-reader.js";
+import { runtimePublicationCoherence } from "./system-health/runtime-publication-coherence.js";
+import { isPublicationProtectedRequest, readPublicationGuard, acquirePublicationReadLease } from "./system-health/runtime-publication-guard.js";
 import {VALUE_EXPORT_IDENTITY_FIELDS,VALUE_EXPORT_IDENTITY_LABELS,valueExportIdentityValues} from './core/value-export-identity.js';
 import express from "express";
 import fs from "fs";
@@ -104,6 +110,38 @@ app.use((req, res, next) => {
 });
 
 
+// Fail closed while snapshot or settlement publication mutates legacy mirrors.
+// A crash retains the marker; a human-authorized recovery must clear it.
+app.use((req, res, next) => {
+  if (!isPublicationProtectedRequest(req.method, req.path)) return next();
+  const guard = readPublicationGuard(resolveDataPath());
+  if (!guard.pending) {
+    let releaseLease;
+    try { releaseLease = acquirePublicationReadLease(resolveDataPath()); }
+    catch (error) {
+      return res.status(503).json({
+        ok: false, status: "HOLD", error: "runtime_publication_read_lease_denied",
+        reason: error?.message || "read_lease_failed"
+      });
+    }
+    const release = () => { try { releaseLease(); } catch (error) {
+      console.error("publication_read_lease_release_failed", error);
+    }};
+    res.once("finish", release);
+    res.once("close", release);
+    return next();
+  }
+  return res.status(503).json({
+    ok: false,
+    status: "HOLD",
+    error: "runtime_publication_guard_active",
+    reason: guard.reason,
+    day: guard.day || null,
+    mode: guard.mode || null
+  });
+});
+
+
 function nowIso() {
   return new Date().toISOString();
 }
@@ -187,14 +225,31 @@ function startOpsChildJob({ type, dayKey, ref = null, command, args, cwd }) {
     error: null
   };
 
+  // Protect the complete lifetime of runtime build children.
+  const releaseBuildLease =
+    type === "build-details" || type === "value-build"
+      ? acquirePublicationReadLease(resolveDataPath())
+      : null;
+
   OPS_JOBS.set(id, job);
 
-  const child = spawn(command, args, {
+  let child;
+  try {
+    child = spawn(command, args, {
     cwd,
     env: process.env,
     stdio: ["ignore", "pipe", "pipe"],
     windowsHide: true
-  });
+    });
+  } catch (error) {
+    OPS_JOBS.delete(id);
+    releaseBuildLease?.();
+    throw error;
+  }
+
+  if (releaseBuildLease) {
+    child.once("close", releaseBuildLease);
+  }
 
   job.status = "running";
   job.pid = child.pid;
@@ -1213,7 +1268,26 @@ app.get("/ops/build-details-async", (req, res) => {
     return rejectRuntimeBuild(res, "/ops/build-details-async", dayKey);
   }
 
-  const { created, job } = startBuildDetailsJob(dayKey, { rebuild });
+  if (!authorizeCronRequest(req, res)) return;
+
+  let created, job;
+  try {
+    ({ created, job } = startBuildDetailsJob(dayKey, { rebuild }));
+  } catch (error) {
+    if (error?.message === "publication_read_guard_active") {
+      return res.status(503).json({
+        ok: false,
+        status: "HOLD",
+        error: "runtime_build_publication_hold"
+      });
+    }
+
+    console.error("runtime_build_launcher_failed", error);
+    return res.status(500).json({
+      ok: false,
+      error: "runtime_build_launcher_failed"
+    });
+  }
 
   res.json({
     ok: true,
@@ -1231,7 +1305,26 @@ app.get("/ops/value-build-async", (req, res) => {
     return rejectRuntimeBuild(res, "/ops/value-build-async", dayKey);
   }
 
-  const { created, job } = startValueBuildJob(dayKey, { rebuild });
+  if (!authorizeCronRequest(req, res)) return;
+
+  let created, job;
+  try {
+    ({ created, job } = startValueBuildJob(dayKey, { rebuild }));
+  } catch (error) {
+    if (error?.message === "publication_read_guard_active") {
+      return res.status(503).json({
+        ok: false,
+        status: "HOLD",
+        error: "runtime_build_publication_hold"
+      });
+    }
+
+    console.error("runtime_build_launcher_failed", error);
+    return res.status(500).json({
+      ok: false,
+      error: "runtime_build_launcher_failed"
+    });
+  }
 
   res.json({
     ok: true,
@@ -1423,33 +1516,41 @@ app.get("/ops/sync-value-comparison/status", (req, res) => {
 });
 
 
-app.get("/deploy-snapshot/latest", (_req, res) => {
+app.get("/deploy-snapshot/latest", async (_req, res) => {
   const latest = readDeploySnapshotLatest();
-
-  if (!latest) {
-    res.status(404).json({
-      ok: false,
-      error: "deploy_snapshot_latest_not_found",
-      source: "snapshot"
+  if (!latest) return res.status(404).json({ ok: false, error: "deploy_snapshot_latest_not_found", source: "snapshot" });
+  try {
+    const resolved = await readSnapshotManifestGeneration({
+      dataRoot: resolveDataPath(), day: String(latest.date || ''), latest,
+      strict: truthyEnv(process.env.AIML_STRICT_GENERATION_READS)
     });
-    return;
+    return res.json({ ...latest, source: "snapshot", ...(resolved.mode === "PINNED" ? {
+      runtimeGeneration: { day: resolved.day, generation: resolved.generation, ref: resolved.ref }
+    } : {}) });
+  } catch (error) {
+    return res.status(503).json({ ok: false, status: "HOLD", error: "runtime_generation_read_failed", reason: error?.message || "generation_invalid" });
   }
-
-  res.json({
-    ...latest,
-    source: "snapshot"
-  });
 });
 
-app.get("/release", (_req, res) => {
+app.get("/release", async (_req, res) => {
   const latest = readDeploySnapshotLatest();
+  const generationReadiness = await qualifyGenerationReadiness({
+    dataRoot: resolveDataPath(), latest,
+    strict: truthyEnv(process.env.AIML_STRICT_GENERATION_READS),
+    reader: readSnapshotManifestGeneration
+  });
   const runtimeSync = readRuntimeSnapshotSyncState();
+  const latestManifest = latest?.date ? readDeploySnapshotManifest(String(latest.date)) : null;
+  const publicationConsistency = runtimePublicationCoherence({ latest, manifest: latestManifest, runtimeSync });
 
-  res.json({
-    ok: true,
+  res.status(generationReadiness.ok ? 200 : 503).json({
+    ok: generationReadiness.ok,
+    ...(generationReadiness.ok ? {} : { status: "HOLD" }),
+    runtimeGenerationReadiness: generationReadiness,
     service: "engine-v1",
     gitCommit: deployedGitCommit(),
     processStartedAt: PROCESS_STARTED_AT,
+    runtimePublicationConsistency: publicationConsistency,
     runtimeDisplay: {
       requestTimeOverlaysEnabled: runtimeRequestOverlaysEnabled(),
       cacheContract: "manifest-revision"
@@ -1471,7 +1572,7 @@ app.get("/release", (_req, res) => {
   });
 });
 
-app.get("/ready", (_req, res) => {
+app.get("/ready", async (_req, res) => {
   const calendarDay = athensDayKey();
   const nextDay = shiftDay(calendarDay, 1);
   const latest = readDeploySnapshotLatest();
@@ -1497,9 +1598,16 @@ app.get("/ready", (_req, res) => {
       String(manifest?.hash || "").toLowerCase()
   );
 
+  const generationReadiness = await qualifyGenerationReadiness({
+    dataRoot: resolveDataPath(), latest,
+    strict: truthyEnv(process.env.AIML_STRICT_GENERATION_READS),
+    reader: readSnapshotManifestGeneration
+  });
+
   const ready =
     validation.ok &&
-    latestMatches;
+    latestMatches &&
+    generationReadiness.ok;
 
   const releaseState = ready
     ? latestDay === nextDay
@@ -1522,34 +1630,37 @@ app.get("/ready", (_req, res) => {
     releaseState,
     gitCommit: deployedGitCommit(),
     manifestHash: manifest?.hash || null,
+    runtimeGenerationReadiness: generationReadiness,
     latestDay: latest?.date || null,
     latestHash: latest?.hash || null,
     errors: [
       ...(validation.errors || []),
-      ...(latestMatches ? [] : ["latest_pointer_mismatch"])
+      ...(latestMatches ? [] : ["latest_pointer_mismatch"]),
+      ...(generationReadiness.ok ? [] : ["generation_readiness_hold"])
     ]
   });
 });
-app.get("/deploy-snapshot", (req, res) => {
+app.get("/deploy-snapshot", async (req, res) => {
   const requestedDate = String(req.query.date || "");
   const date = resolveSnapshotDate(requestedDate);
-  const manifest = date ? readDeploySnapshotManifest(date) : null;
-
-  if (!manifest) {
-    res.status(404).json({
-      ok: false,
-      error: "deploy_snapshot_not_found",
-      date: requestedDate,
-      source: "snapshot"
-    });
-    return;
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return res.status(404).json({ ok: false, error: "deploy_snapshot_not_found", date: requestedDate, source: "snapshot" });
   }
-
-  res.json({
-    ok: true,
-    source: "snapshot",
-    date,
-    manifest
+  let manifest;
+  let resolved;
+  try {
+    resolved = await readSnapshotManifestGeneration({
+      dataRoot: resolveDataPath(), day: date,
+      latest: requestedDate ? null : readDeploySnapshotLatest(),
+      strict: truthyEnv(process.env.AIML_STRICT_GENERATION_READS)
+    });
+    manifest = resolved.mode === "PINNED" ? resolved.manifest : readDeploySnapshotManifest(date);
+  } catch (error) {
+    return res.status(503).json({ ok: false, status: "HOLD", error: "runtime_generation_read_failed", reason: error?.message || "generation_invalid", date });
+  }
+  if (!manifest) return res.status(404).json({ ok: false, error: "deploy_snapshot_not_found", date: requestedDate, source: "snapshot" });
+  return res.json({ ok: true, source: "snapshot", date, manifest,
+    ...(resolved.mode === "PINNED" ? { runtimeGeneration: { generation: resolved.generation, ref: resolved.ref } } : {})
   });
 });
 
@@ -1763,6 +1874,10 @@ function buildSystemHealthReport(day) {
     invariant: resolveDataPath("deploy-snapshots", day, "invariant-report.json"),
     freshness: resolveDataPath("deploy-snapshots", day, "freshness-report.json"),
     manifest: resolveDataPath("deploy-snapshots", day, "manifest.json"),
+    foundationIntegrity: preferRuntimeReleaseArtifact(
+      day, "foundation-integrity.json",
+      resolveDataPath("foundation-integrity", day + ".json")
+    ),
     valueAudit: resolveDataPath("deploy-snapshots", day, "value-audit.json"),
     value: resolveDataPath("deploy-snapshots", day, "value.json"),
     valueComparison: preferRuntimeReleaseArtifact(
@@ -1790,9 +1905,9 @@ function buildSystemHealthReport(day) {
   const valueComparison = read.valueComparison.data;
   const coverageReadiness =
     systemHealthReadJson(
-      resolveDataPath(
-        "coverage-readiness",
-        day + ".json"
+      preferRuntimeReleaseArtifact(
+        day, "coverage-readiness.json",
+        resolveDataPath("coverage-readiness", day + ".json")
       )
     ).data;
 
@@ -2306,14 +2421,27 @@ function buildSystemHealthReport(day) {
   return reconcilePublicSystemHealth({
     dayKey: day,
     dynamicReport,
-    alertArtifact
+    alertArtifact,
+    manifestGeneratedAt: manifest?.generatedAt || null
   });
 }
 
-app.get("/system-health-alerts", (req, res) => {
+app.get("/system-health-alerts", async (req, res) => {
   const explicitDay = String(req.query.day || "").slice(0, 10);
   if (explicitDay && !/^\d{4}-\d{2}-\d{2}$/u.test(explicitDay)) {
     return res.status(400).json({ ok: false, error: "invalid_day_key" });
+  }
+
+  if (explicitDay && truthyEnv(process.env.AIML_V35K_GENERATION_READS)) {
+    try {
+      const checked = await readPinnedRuntimeArtifact({
+        dataRoot: resolveDataPath(), day: explicitDay, name: "system-health-alerts.json",
+        mirrorPaths: [deploySnapshotRuntimeArtifactFile(explicitDay, "system-health-alerts.json"), resolveDataPath("system-health", `${explicitDay}.json`)]
+      });
+      if (checked.mode === "PINNED") return res.json(checked.payload);
+    } catch (e) {
+      return res.status(503).json({ok:false,status:"HOLD",error:"system_health_generation_divergence",reason:String(e?.message||e)});
+    }
   }
 
   const file = explicitDay
@@ -2898,8 +3026,8 @@ app.get("/debug/value-inputs", (req, res) => {
   });
 });
 
-function readValueComparisonArtifact(date) {
-  const file = preferRuntimeReleaseArtifact(
+function readValueComparisonArtifact(date, pinnedFile = null) {
+  const file = pinnedFile || preferRuntimeReleaseArtifact(
     date,
     "value-comparison.json",
     resolveDataPath("value-comparison", `${date}.json`)
@@ -2959,7 +3087,7 @@ function readValueComparisonArtifact(date) {
   return { ok: true, file, payload };
 }
 
-app.get("/value-comparison", (req, res) => {
+app.get("/value-comparison", async (req, res) => {
   const date = String(req.query.date || athensDayKey());
   if (!/^\d{4}-\d{2}-\d{2}$/u.test(date)) {
     return res.status(400).json({
@@ -2969,7 +3097,22 @@ app.get("/value-comparison", (req, res) => {
     });
   }
 
-  const artifact = readValueComparisonArtifact(date);
+  let artifact;
+  if (truthyEnv(process.env.AIML_V35K_GENERATION_READS)) {
+    try {
+      const checked = await readPinnedRuntimeArtifact({
+        dataRoot:resolveDataPath(), day:date, name:"value-comparison.json",
+        mirrorPaths:[deploySnapshotRuntimeArtifactFile(date,"value-comparison.json"),resolveDataPath("value-comparison",`${date}.json`)]
+      });
+      artifact=checked.mode === "PINNED"
+        ? readValueComparisonArtifact(date,checked.file)
+        : readValueComparisonArtifact(date);
+    } catch (e) {
+      return res.status(503).json({ok:false,date,status:"HOLD",reason:"value_generation_divergence",detail:String(e?.message||e)});
+    }
+  } else {
+    artifact=readValueComparisonArtifact(date);
+  }
   if (!artifact.ok) {
     const status = artifact.reason === "value_comparison_json_invalid"
       || artifact.reason === "value_comparison_payload_invalid"
@@ -2993,13 +3136,46 @@ app.get("/value-comparison", (req, res) => {
   });
 });
 
+// V3.5M: use the verified generation's value/manifest in snapshot-only mode.
+function snapshotValueResponseFromPinned(dayKey, checked) {
+  const payload=checked.payload, manifest=checked.manifest;
+  const picks=payload.picks;
+  return {
+    ...payload, ok:payload?.ok!==false, date:dayKey,
+    count:picks.length, picks, source:"snapshot", coverage:"complete",
+    snapshot:{
+      date:dayKey,generatedAt:manifest?.generatedAt||null,hash:manifest?.hash||null,
+      valueCount:picks.length,detailsCount:Number(manifest?.counts?.details||0),
+      fixturesCount:Number(manifest?.counts?.fixtures||0)
+    }
+  };
+}
+
 app.get("/value-picks", async (req, res) => {
   const date = String(req.query.date || athensDayKey());
   const rebuild = boolParam(req.query.rebuild, false);
+  const pinnedPicksEnabled = truthyEnv(process.env.AIML_V35M_VALUE_PICKS_GENERATION_READS);
+  if (pinnedPicksEnabled && !/^\d{4}-\d{2}-\d{2}$/u.test(date)) {
+    return res.status(400).json({ok:false,date,reason:"invalid_day_key"});
+  }
 
   if(isUnifiedPublicDay(date)) {
     if(rebuild)return rejectRuntimeBuild(res,'/value-picks?rebuild=true',date);
-    const artifact=readValueComparisonArtifact(date),plan=artifact.payload?.unifiedPlan;
+    let artifact;
+    if (pinnedPicksEnabled) {
+      try {
+        const checked=await readPinnedRuntimeArtifact({
+          dataRoot:resolveDataPath(),day:date,name:"value-comparison.json",
+          mirrorPaths:[deploySnapshotRuntimeArtifactFile(date,"value-comparison.json"),resolveDataPath("value-comparison",`${date}.json`)]
+        });
+        artifact=checked.mode==="PINNED"
+          ? readValueComparisonArtifact(date,checked.file)
+          : readValueComparisonArtifact(date);
+      } catch(error) {
+        return res.status(503).json({ok:false,date,status:"HOLD",reason:"value_picks_generation_divergence",detail:String(error?.message||error)});
+      }
+    } else artifact=readValueComparisonArtifact(date);
+    const plan=artifact.payload?.unifiedPlan;
     if(!artifact.ok||plan?.id!=='plan-u1'||plan.date!==date||plan.status!=='AVAILABLE'||!Array.isArray(plan.picks)||plan.count!==plan.picks.length) {
       return res.status(404).json({ok:false,date,source:'unified-plan',reason:'unified_plan_not_available',picks:[]});
     }
@@ -3012,7 +3188,19 @@ app.get("/value-picks", async (req, res) => {
       return rejectRuntimeBuild(res, "/value-picks?rebuild=true", date);
     }
 
-    const snapshotResult = snapshotValueResponse(date);
+    let snapshotResult;
+    if(pinnedPicksEnabled) {
+      try {
+        const checked=await readPinnedValuePicksSnapshot({
+          dataRoot:resolveDataPath(),day:date,mirrorPath:path.join(deploySnapshotRoot(date),"value.json")
+        });
+        snapshotResult=checked.mode==="PINNED"
+          ? snapshotValueResponseFromPinned(date,checked)
+          : snapshotValueResponse(date);
+      } catch(error) {
+        return res.status(503).json({ok:false,date,status:"HOLD",reason:"value_picks_generation_divergence",detail:String(error?.message||error)});
+      }
+    } else snapshotResult=snapshotValueResponse(date);
 
     if (snapshotResult.ok) {
       res.json(snapshotResult);
