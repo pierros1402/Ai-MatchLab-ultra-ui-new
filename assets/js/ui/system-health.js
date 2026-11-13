@@ -3,7 +3,7 @@
 
   const POLL_INTERVAL_MS = 5 * 60 * 1000; // refresh every 5 min while open
 
-  // έΦΑέΦΑ Helpers έΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑ
+  // -- Helpers --------------------------------------------------------------
 
   function el(id) { return document.getElementById(id); }
 
@@ -45,7 +45,7 @@
   }
 
   function formatTime(iso) {
-    if (!iso) return "έΑΦ";
+    if (!iso) return "N/A";
     const d = new Date(iso);
     if (!Number.isFinite(d.getTime())) return esc(iso);
     return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Athens" }) + " (Athens)";
@@ -53,10 +53,10 @@
 
   function issueTone(severity) {
     const s = String(severity || "").toLowerCase();
-    if (s === "error") return { icon: "έεΩ", color: "#ef4444", label: "ERROR" };
-    if (s === "warning") return { icon: "έγι", color: "#f59e0b", label: "WARNING" };
+    if (s === "error") return { icon: "X", color: "#ef4444", label: "ERROR" };
+    if (s === "warning") return { icon: "!", color: "#f59e0b", label: "WARNING" };
     if (s === "info") return { icon: "i", color: "#38bdf8", label: "INFO" };
-    return { icon: "έεΥ", color: "#22c55e", label: "OK" };
+    return { icon: "OK", color: "#22c55e", label: "OK" };
   }
 
   function compactJson(v) {
@@ -72,15 +72,15 @@
     const type = String(issue?.type || "");
 
     if (type === "coverage_floor_drop") {
-      return `source: ${esc(issue.source)} ┬╖ static floor: <b>${esc(d.staticFloor)}</b> ┬╖ effective floor: <b>${esc(d.effectiveFloor)}</b> ┬╖ actual fixtures: <b>${esc(d.actualFixtures)}</b> ┬╖ drop: <b>${esc(d.drop)}</b>`;
+      return `source: ${esc(issue.source)} · static floor: <b>${esc(d.staticFloor)}</b> · effective floor: <b>${esc(d.effectiveFloor)}</b> · actual fixtures: <b>${esc(d.actualFixtures)}</b> · drop: <b>${esc(d.drop)}</b>`;
     }
 
     if (type === "acquisition_skipped_slugs") {
-      return `source: ${esc(issue.source)} ┬╖ slugs: <b>${esc((d.slugs || []).join(", "))}</b>`;
+      return `source: ${esc(issue.source)} · slugs: <b>${esc((d.slugs || []).join(", "))}</b>`;
     }
 
     if (type === "build_not_strict_clean") {
-      return `source: ${esc(issue.source)} ┬╖ clean: <b>${esc(d.clean)}</b> ┬╖ cleanStrict: <b>${esc(d.cleanStrict)}</b>`;
+      return `source: ${esc(issue.source)} · clean: <b>${esc(d.clean)}</b> · cleanStrict: <b>${esc(d.cleanStrict)}</b>`;
     }
 
     const unresolvedPlanLabels = {
@@ -91,15 +91,15 @@
     };
 
     if (unresolvedPlanLabels[type]) {
-      return `source: ${esc(issue.source)} ┬╖ plan: <b>${esc(unresolvedPlanLabels[type])}</b> ┬╖ picks: <b>${esc(d.picks)}</b> ┬╖ settled: <b>${esc(d.settled)}</b> ┬╖ unresolved: <b>${esc(d.unresolved)}</b>`;
+      return `source: ${esc(issue.source)} · plan: <b>${esc(unresolvedPlanLabels[type])}</b> · picks: <b>${esc(d.picks)}</b> · settled: <b>${esc(d.settled)}</b> · unresolved: <b>${esc(d.unresolved)}</b>`;
     }
 
     if (type === "skipped_freshness_input") {
-      return `source: ${esc(issue.source)} ┬╖ artifact: <b>${esc(d.artifact)}</b> ┬╖ reason: <b>${esc(d.skipped || d.staleReason)}</b>`;
+      return `source: ${esc(issue.source)} · artifact: <b>${esc(d.artifact)}</b> · reason: <b>${esc(d.skipped || d.staleReason)}</b>`;
     }
 
     if (type === "production_value_zero_candidates") {
-      return `source: ${esc(issue.source)} ┬╖ fixturesSeen: <b>${esc(d.fixturesSeen)}</b> ┬╖ eligible: <b>${esc(d.eligibleEvaluated)}</b> ┬╖ candidateMarkets: <b>${esc(d.candidateMarkets)}</b> ┬╖ approved: <b>${esc(d.approved)}</b>`;
+      return `source: ${esc(issue.source)} · fixturesSeen: <b>${esc(d.fixturesSeen)}</b> · eligible: <b>${esc(d.eligibleEvaluated)}</b> · candidateMarkets: <b>${esc(d.candidateMarkets)}</b> · approved: <b>${esc(d.approved)}</b>`;
     }
 
     if (type === "value_plan_comparison_summary") {
@@ -108,21 +108,21 @@
       const b = d.planB || {};
       const b2 = d.planB2 || {};
 
-      return `source: ${esc(issue.source)} ┬╖ A: <b>${esc(a.count)}</b> ┬╖ A2: <b>${esc(a2.count)}</b> ┬╖ B: <b>${esc(b.count)}</b> ┬╖ B2: <b>${esc(b2.count)}</b>`;
+      return `source: ${esc(issue.source)} · A: <b>${esc(a.count)}</b> · A2: <b>${esc(a2.count)}</b> · B: <b>${esc(b.count)}</b> · B2: <b>${esc(b2.count)}</b>`;
     }
 
     if (type === "four_plan_comparison_incomplete") {
-      return `source: ${esc(issue.source)} ┬╖ present: <b>${esc((d.presentPlans || []).join(", ") || "έΑΦ")}</b> ┬╖ missing: <b>${esc((d.missingPlans || []).join(", ") || "έΑΦ")}</b>`;
+      return `source: ${esc(issue.source)} · present: <b>${esc((d.presentPlans || []).join(", ") || "N/A")}</b> · missing: <b>${esc((d.missingPlans || []).join(", ") || "N/A")}</b>`;
     }
 
     if (type === "artifact_missing" || type === "artifact_json_invalid") {
-      return `source: ${esc(issue.source)} ┬╖ artifact: <b>${esc(d.artifact)}</b>${d.error ? " ┬╖ error: " + esc(d.error) : ""}`;
+      return `source: ${esc(issue.source)} · artifact: <b>${esc(d.artifact)}</b>${d.error ? " · error: " + esc(d.error) : ""}`;
     }
 
     const keys = Object.keys(d);
-    if (!keys.length) return `source: ${esc(issue.source || "έΑΦ")}`;
+    if (!keys.length) return `source: ${esc(issue.source || "N/A")}`;
 
-    return `source: ${esc(issue.source || "έΑΦ")}<pre style="white-space:pre-wrap;margin:6px 0 0;color:#94a3b8;font-size:10px;line-height:1.35;">${compactJson(d)}</pre>`;
+    return `source: ${esc(issue.source || "N/A")}<pre style="white-space:pre-wrap;margin:6px 0 0;color:#94a3b8;font-size:10px;line-height:1.35;">${compactJson(d)}</pre>`;
   }
 
   function issueRowFromIssue(issue) {
@@ -135,7 +135,7 @@
     return `<div style="display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06);">
       <span style="color:${tone.color};font-size:14px;min-width:18px;">${tone.icon}</span>
       <div style="min-width:0;">
-        <div style="font-size:12px;color:${tone.color};font-weight:700;">${esc(tone.label)} ┬╖ ${source}${esc(type)}</div>
+        <div style="font-size:12px;color:${tone.color};font-weight:700;">${esc(tone.label)} · ${source}${esc(type)}</div>
         ${message}
         <div style="font-size:11px;color:#94a3b8;margin-top:3px;">${detail}</div>
       </div>
@@ -161,11 +161,11 @@
       const a = artifacts[k] || {};
       const ok = a.exists && a.ok;
       const color = ok ? "#22c55e" : "#ef4444";
-      const mark = ok ? "έεΥ" : "έεΩ";
+      const mark = ok ? "OK" : "X";
       const stamp = a.generatedAt || a.checkedAt || a.updatedAt || "";
       return `<div style="display:flex;justify-content:space-between;gap:8px;font-size:10px;color:#94a3b8;padding:2px 0;">
         <span><span style="color:${color};font-weight:700;">${mark}</span> ${esc(k)}</span>
-        <span style="text-align:right;">${esc(a.path || "")}${stamp ? " ┬╖ " + esc(stamp) : ""}</span>
+        <span style="text-align:right;">${esc(a.path || "")}${stamp ? " · " + esc(stamp) : ""}</span>
       </div>`;
     }).join("");
 
@@ -199,11 +199,11 @@
 
     return `<div style="margin-top:10px;padding:8px 10px;border-radius:6px;background:rgba(15,23,42,.75);border:1px solid rgba(255,255,255,.06);font-size:11px;color:#cbd5e1;">
       <div style="font-weight:700;color:#e2e8f0;margin-bottom:4px;">Value diagnostics</div>
-      <div>Production: <b>${esc(prod.source || "έΑΦ")}</b> ┬╖ picks: <b>${esc(prod.count ?? "έΑΦ")}</b> ┬╖ ok: <b>${esc(prod.ok ?? "έΑΦ")}</b></div>
-      <div>Contract: canonicalOnly=<b>${esc(audit.sourceContract?.canonicalOnly ?? "έΑΦ")}</b> ┬╖ deploySnapshotInput=<b>${esc(audit.sourceContract?.deploySnapshotInput ?? "έΑΦ")}</b></div>
-      <div>Universe: fixtures=<b>${esc(audit.universe?.fixturesSeen ?? "έΑΦ")}</b> ┬╖ candidates=<b>${esc(audit.universe?.candidateMarkets ?? "έΑΦ")}</b> ┬╖ approved=<b>${esc(audit.universe?.approved ?? "έΑΦ")}</b></div>
-      <div>Plans: A=<b>${esc(planA?.count ?? "έΑΦ")}</b> ┬╖ A2=<b>${esc(planA2?.count ?? "έΑΦ")}</b> ┬╖ B=<b>${esc(planB?.count ?? "έΑΦ")}</b> ┬╖ B2=<b>${esc(planB2?.count ?? "έΑΦ")}</b></div>
-      <div>Four-plan contract: <b>${missingPlans.length === 0 ? "complete" : "incomplete"}</b>${missingPlans.length ? " ┬╖ missing: " + esc(missingPlans.join(", ")) : ""}</div>
+      <div>Production: <b>${esc(prod.source || "N/A")}</b> · picks: <b>${esc(prod.count ?? "N/A")}</b> · ok: <b>${esc(prod.ok ?? "N/A")}</b></div>
+      <div>Contract: canonicalOnly=<b>${esc(audit.sourceContract?.canonicalOnly ?? "N/A")}</b> · deploySnapshotInput=<b>${esc(audit.sourceContract?.deploySnapshotInput ?? "N/A")}</b></div>
+      <div>Universe: fixtures=<b>${esc(audit.universe?.fixturesSeen ?? "N/A")}</b> · candidates=<b>${esc(audit.universe?.candidateMarkets ?? "N/A")}</b> · approved=<b>${esc(audit.universe?.approved ?? "N/A")}</b></div>
+      <div>Plans: A=<b>${esc(planA?.count ?? "N/A")}</b> · A2=<b>${esc(planA2?.count ?? "N/A")}</b> · B=<b>${esc(planB?.count ?? "N/A")}</b> · B2=<b>${esc(planB2?.count ?? "N/A")}</b></div>
+      <div>Four-plan contract: <b>${missingPlans.length === 0 ? "complete" : "incomplete"}</b>${missingPlans.length ? " · missing: " + esc(missingPlans.join(", ")) : ""}</div>
     </div>`;
   }
 
@@ -241,8 +241,8 @@
 
     if (report.status === "no_report") {
       return `<div style="padding:10px 0;">
-        <div style="font-size:14px;color:#fbbf24;font-weight:600;">έγι UNKNOWN έΑΦ No diagnostic report</div>
-        <div style="font-size:12px;color:#94a3b8;margin-top:6px;">The daily pipeline has not produced system-health diagnostics for this day.<br>Snapshot integrity is <b>unverified</b> έΑΦ do not treat as clean.</div>
+        <div style="font-size:14px;color:#fbbf24;font-weight:600;">! UNKNOWN N/A No diagnostic report</div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:6px;">The daily pipeline has not produced system-health diagnostics for this day.<br>Snapshot integrity is <b>unverified</b> N/A do not treat as clean.</div>
       </div>`;
     }
 
@@ -258,31 +258,31 @@
     } else {
       for (const b of (report.blocked || [])) {
         let detail = "";
-        if (b.type === "status_mismatch_unpatchable") detail = `${esc(b.match)} έΑΦ fixture:<b>${esc(b.fixtureStatus)}</b> | details:<b>${esc(b.detailStatus)}</b>`;
+        if (b.type === "status_mismatch_unpatchable") detail = `${esc(b.match)} N/A fixture:<b>${esc(b.fixtureStatus)}</b> | details:<b>${esc(b.detailStatus)}</b>`;
         else if (b.type === "manifest_value_count_mismatch") detail = `manifest.valuePicks=${esc(b.manifestValuePicks)} έΚι value.json.count=${esc(b.valueJsonCount)}`;
         else if (b.type === "value_count_array_mismatch") detail = `declared count=${esc(b.declaredCount)} but picks.length=${esc(b.actualCount)}`;
         else detail = compactJson(b);
-        rows.push(issueRow("έεΩ", "#ef4444", String(b.type || "blocked").replace(/_/g, " "), detail));
+        rows.push(issueRow("X", "#ef4444", String(b.type || "blocked").replace(/_/g, " "), detail));
       }
 
       for (const a of (report.autoFixed || [])) {
         let detail = "";
-        if (a.type === "status_mismatch") detail = `${esc(a.match)} έΑΦ ${esc(a.before)} έΗΤ ${esc(a.after)} έεΥ`;
+        if (a.type === "status_mismatch") detail = `${esc(a.match)} N/A ${esc(a.before)} → ${esc(a.after)} OK`;
         else detail = compactJson(a);
-        rows.push(issueRow("έγκ", "#f59e0b", "auto-fixed: " + String(a.type || "issue").replace(/_/g, " "), detail));
+        rows.push(issueRow("FIXED", "#f59e0b", "auto-fixed: " + String(a.type || "issue").replace(/_/g, " "), detail));
       }
 
       for (const w of (report.warnings || [])) {
         let detail = "";
-        if (w.type === "coverage_floor_drop") detail = `floor ${esc(w.staticFloor)}έΗΤ${esc(w.effectiveFloor)} (actual fixtures: ${esc(w.actualFixtures)})`;
+        if (w.type === "coverage_floor_drop") detail = `floor ${esc(w.staticFloor)}→${esc(w.effectiveFloor)} (actual fixtures: ${esc(w.actualFixtures)})`;
         else if (w.type === "minute_double_apostrophe") detail = `match ${esc(w.matchId)}: minute="${esc(w.minute)}"`;
         else detail = compactJson(w);
-        rows.push(issueRow("έγι", "#f59e0b", String(w.type || "warning").replace(/_/g, " "), detail));
+        rows.push(issueRow("!", "#f59e0b", String(w.type || "warning").replace(/_/g, " "), detail));
       }
     }
 
     if (rows.length === 0) {
-      rows.push(issueRow("έεΥ", "#22c55e", "All checks passed", "No issues found"));
+      rows.push(issueRow("OK", "#22c55e", "All checks passed", "No issues found"));
     }
 
     const counts = report.issueCounts || {};
@@ -291,14 +291,14 @@
 
     const header = `<div style="margin-bottom:10px;padding:8px 10px;border-radius:6px;background:rgba(255,255,255,.04);border-left:3px solid ${headerColor};">
       <div style="font-size:13px;color:#e2e8f0;font-weight:700;">System Health: ${esc(severity)}</div>
-      <div style="font-size:11px;color:#94a3b8;margin-top:3px;">Errors: <b>${esc(counts.error || 0)}</b> ┬╖ Warnings: <b>${esc(counts.warning || 0)}</b> ┬╖ Info: <b>${esc(counts.info || 0)}</b></div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:3px;">Errors: <b>${esc(counts.error || 0)}</b> · Warnings: <b>${esc(counts.warning || 0)}</b> · Info: <b>${esc(counts.info || 0)}</b></div>
     </div>`;
 
     return `${header}<div>${rows.join("")}</div>${renderValueSummary(report)}${renderAutonomousRepairSummary(report)}${renderArtifacts(report)}
-      <div style="margin-top:12px;font-size:11px;color:#64748b;">Last check: ${formatTime(report.checkedAt)} ┬╖ Day: ${esc(report.dayKey || "έΑΦ")} ┬╖ Manifest: ${esc(report.manifestGeneratedAt || "έΑΦ")}</div>`;
+      <div style="margin-top:12px;font-size:11px;color:#64748b;">Last check: ${formatTime(report.checkedAt)} · Day: ${esc(report.dayKey || "N/A")} · Manifest: ${esc(report.manifestGeneratedAt || "N/A")}</div>`;
   }
 
-  // έΦΑέΦΑ Modal έΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑ
+  // -- Modal -----------------------------------------------------------------
 
   function buildModal() {
     const existing = el("system-health-modal");
@@ -324,14 +324,14 @@
         padding:16px;
       ">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <span style="font-size:14px;font-weight:600;color:#e2e8f0;">Ώθδκ System Health</span>
+          <span style="font-size:14px;font-weight:600;color:#e2e8f0;">System Health</span>
           <button id="system-health-close" style="
             background:none;border:none;cursor:pointer;
             color:#64748b;font-size:18px;line-height:1;padding:2px 6px;
-          ">├Ω</button>
+          ">×</button>
         </div>
         <div id="system-health-body" style="min-height:60px;">
-          <p style="color:#94a3b8;font-size:13px;">LoadingέΑο</p>
+          <p style="color:#94a3b8;font-size:13px;">Loading...</p>
         </div>
       </div>
     `;
@@ -655,7 +655,7 @@
 
       if (button) {
         button.title = artifact
-          ? `System Health ┬╖ ${String(artifact.severity || "info").toUpperCase()} ┬╖ no actionable alerts`
+          ? `System Health · ${String(artifact.severity || "info").toUpperCase()} · no actionable alerts`
           : "System Health";
       }
 
@@ -692,8 +692,8 @@
 
     if (button) {
       button.title =
-        `System Health alert ┬╖ ${severity.toUpperCase()}` +
-        (count > 0 ? ` ┬╖ ${count} actionable issue${count === 1 ? "" : "s"}` : "");
+        `System Health alert · ${severity.toUpperCase()}` +
+        (count > 0 ? ` · ${count} actionable issue${count === 1 ? "" : "s"}` : "");
     }
   }
 
@@ -746,12 +746,12 @@
         <span style="color:#64748b;">Alert layer</span>
       </div>
       <div style="margin-top:5px;">
-        Active: <b>${esc(active)}</b> ┬╖
-        Actionable: <b>${esc(actionable)}</b> ┬╖
+        Active: <b>${esc(active)}</b> ·
+        Actionable: <b>${esc(actionable)}</b> ·
         New actionable: <b>${esc(newActionable)}</b>
       </div>
       <div style="margin-top:2px;">
-        Persistent: <b>${esc(persistent)}</b> ┬╖
+        Persistent: <b>${esc(persistent)}</b> ·
         Resolved: <b>${esc(resolved)}</b>
       </div>
     </div>`;
@@ -778,7 +778,7 @@
 
     if (body) {
       body.innerHTML =
-        `<p style="color:#94a3b8;font-size:13px;">LoadingέΑο</p>`;
+        `<p style="color:#94a3b8;font-size:13px;">Loading...</p>`;
     }
 
     const [report, artifact] = await Promise.all([
@@ -803,7 +803,7 @@
     }
   }
 
-  // έΦΑέΦΑ Boot έΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑ
+  // -- Boot ------------------------------------------------------------------
 
   function boot() {
     const btn = el("btn-system-health");
