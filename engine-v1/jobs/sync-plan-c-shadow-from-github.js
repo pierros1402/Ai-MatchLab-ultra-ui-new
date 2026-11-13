@@ -4,6 +4,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { promoteDirectory, resolveImmutableGithubRef } from "./sync-deploy-snapshot-from-github.js";
 import { resolveDataPath } from "../storage/data-root.js";
+import { beginPublication, finishPublication, waitForPublicationReadersToDrain } from "../system-health/runtime-publication-guard.js";
 import { validatePlanCShadowDay } from "../value/plan-c-shadow-export.js";
 
 const DEFAULT_REPO = process.env.SNAPSHOT_SYNC_REPO || "pierros1402/Ai-MatchLab-ultra-ui-new";
@@ -107,14 +108,27 @@ export async function syncPlanCShadowFromGithub(dayKey, options = {}) {
     pickCount: verified.pickCount
   };
 
+  let publicationComplete = false;
   try {
     await fsp.writeFile(path.join(stageDir, "plan-c-shadow.json"), payloadBuffer);
     await fsp.writeFile(path.join(stageDir, "plan-c-shadow-audit.json"), auditBuffer);
     await fsp.writeFile(path.join(stageDir, "release.json"), `${JSON.stringify(release, null, 2)}\n`, "utf8");
-    await promoteDirectory(stageDir, targetDir, backupDir);
+    // Plan C shadow uses the same physical dataRoot as the snapshot/Value writers.
+    // The exclusive guard serializes those writers and drains prior HTTP leases
+    // before any shadow directory mutation. A failure retains HOLD evidence.
+    const publication = await beginPublication(resolveDataPath(), {
+      day, ref, mode: "plan-c-shadow"
+    });
+    await waitForPublicationReadersToDrain(resolveDataPath());
+    await promoteDirectory(stageDir, targetDir, backupDir, { retainBackup: true });
+    await finishPublication(resolveDataPath(), publication);
+    publicationComplete = true;
   } finally {
     await fsp.rm(stageDir, { recursive: true, force: true }).catch(() => {});
-    await fsp.rm(backupDir, { recursive: true, force: true }).catch(() => {});
+    // Keep possible rollback evidence after any failed promotion or completion.
+    if (publicationComplete) {
+      await fsp.rm(backupDir, { recursive: true, force: true }).catch(() => {});
+    }
   }
 
   return {

@@ -1,3 +1,5 @@
+import { isDeepStrictEqual } from "node:util";
+
 const ALERT_SCHEMA =
   "ai-matchlab.system-health-alerts.v1";
 
@@ -110,7 +112,8 @@ export function validatePublicSystemHealthAlertArtifact(
 export function reconcilePublicSystemHealth({
   dayKey,
   dynamicReport,
-  alertArtifact
+  alertArtifact,
+  manifestGeneratedAt = null
 } = {}) {
   const dynamic =
     dynamicReport &&
@@ -135,8 +138,23 @@ export function reconcilePublicSystemHealth({
     );
 
   if (!validation.ok) {
+    const invalidAlertIssue = {
+      severity: "error", source: "system-health-alerts",
+      type: "system_health_authoritative_alert_untrusted",
+      message: "Authoritative System Health artifact is absent or invalid for this snapshot.",
+      details: { reason: validation.reason, manifestGeneratedAt }
+    };
+    const unresolvedIssues = [
+      ...(Array.isArray(dynamic.issues) ? dynamic.issues : []),
+      invalidAlertIssue
+    ];
     return {
       ...dynamic,
+      ok: false,
+      severity: "error",
+      status: "error",
+      issues: unresolvedIssues,
+      issueCounts: countIssues(unresolvedIssues),
       classificationSource:
         "dynamic-runtime",
       authoritativeAlertArtifactUsed:
@@ -146,20 +164,67 @@ export function reconcilePublicSystemHealth({
     };
   }
 
+  const runtimeErrorIssues = Array.isArray(dynamic.issues)
+    ? dynamic.issues.filter(issue => issue?.severity === "error")
+    : [];
+  if ((dynamic.ok === false || dynamic.severity === "error") && runtimeErrorIssues.length === 0) {
+    runtimeErrorIssues.push({
+      severity: "error",
+      source: "dynamic-runtime",
+      type: "runtime_error_without_issue",
+      message: "Runtime diagnostics report an error without an actionable error issue."
+    });
+  }
+  const combinedIssues = validation.issues.map(issue => ({ ...issue }));
+  for (const issue of runtimeErrorIssues) {
+    const alreadyPresent = combinedIssues.some(existing =>
+      isDeepStrictEqual(existing, issue)
+    );
+    if (!alreadyPresent) combinedIssues.push({ ...issue });
+  }
+  // A same-day alert is not necessarily fresh relative to the served snapshot.
+  // Missing or invalid timestamps cannot certify freshness.
+  let alertFreshnessIssue = null;
+  if (manifestGeneratedAt !== null && manifestGeneratedAt !== undefined) {
+    const manifestMs = Date.parse(String(manifestGeneratedAt));
+    const alertMs = Date.parse(String(alertArtifact?.generatedAt || ""));
+    if (!Number.isFinite(manifestMs) || !Number.isFinite(alertMs)) {
+      alertFreshnessIssue = {
+        severity: "error", source: "system-health-alerts",
+        type: "system_health_alert_freshness_unverifiable",
+        message: "Authoritative alert or snapshot timestamp is missing or invalid.",
+        details: { alertGeneratedAt: alertArtifact?.generatedAt || null,
+          manifestGeneratedAt }
+      };
+    } else if (manifestMs - alertMs > 10 * 60 * 1000) {
+      alertFreshnessIssue = {
+        severity: "error", source: "system-health-alerts",
+        type: "system_health_alert_stale_against_snapshot",
+        message: "Authoritative System Health is older than the published snapshot.",
+        details: { alertGeneratedAt: alertArtifact.generatedAt,
+          manifestGeneratedAt, lagMinutes: (manifestMs - alertMs) / 60000 }
+      };
+    }
+  }
+  if (alertFreshnessIssue) combinedIssues.push(alertFreshnessIssue);
+  const combinedCounts = countIssues(combinedIssues);
+  const combinedSeverity = severityFromIssues(combinedIssues);
   return {
     ...dynamic,
     ok:
-      validation.severity !== "error",
+      combinedSeverity !== "error",
     severity:
-      validation.severity,
+      combinedSeverity,
     status:
-      validation.status,
+      combinedSeverity,
     issueCounts:
-      validation.issueCounts,
+      combinedCounts,
     issues:
-      validation.issues,
+      combinedIssues,
     classificationSource:
-      "system-health-alerts",
+      runtimeErrorIssues.length > 0 || alertFreshnessIssue !== null
+        ? "system-health-alerts+dynamic-runtime"
+        : "system-health-alerts",
     authoritativeAlertArtifactUsed:
       true,
     authoritativeAlertArtifactReason:

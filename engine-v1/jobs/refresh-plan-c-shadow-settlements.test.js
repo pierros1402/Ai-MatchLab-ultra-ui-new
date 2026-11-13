@@ -20,3 +20,58 @@ test("historical export receives FT settlement without changing frozen predictio
   const duplicate = structuredClone(report); duplicate.records.push(record);
   assert.throws(() => refreshPlanCSettlements(previous, duplicate), /duplicate_settlement/);
 });
+
+test("terminal source-hash drift preserves original settlement and rejects real changes", () => {
+  const previous = structuredClone(sample);
+  const entry = previous.entries.find(e => e.prediction.planCPick);
+  const id = entry.prediction.canonicalFixtureId;
+  const original = {
+    state: "SETTLED",
+    truth: {
+      status: "FT",
+      source: "data/canonical-fixtures/day.json",
+      sourceSha256: "a".repeat(64),
+      scoreHome: 1,
+      scoreAway: 3,
+      totalGoals: 4,
+      actualOver25: 1
+    },
+    pendingReason: null,
+    brier: { adjusted: 0.1, baseline: 0.2 },
+    hitRate: { applicableToHitRate: true, isHit: true }
+  };
+  entry.settlement = structuredClone(original);
+
+  const record = {
+    canonicalFixtureId: id,
+    prediction: { signature: entry.prediction.predictionSignature },
+    ...structuredClone(original),
+    truth: { ...original.truth, sourceSha256: "b".repeat(64) }
+  };
+  const report = {
+    ok: true,
+    mode: "SHADOW",
+    productionEligible: false,
+    records: [record]
+  };
+
+  const preserved = refreshPlanCSettlements(previous, report);
+  assert.equal(preserved.changed, false);
+  assert.deepEqual(
+    preserved.payload.entries.find(e => e.prediction.canonicalFixtureId === id).settlement,
+    original
+  );
+
+  for (const mutate of [
+    r => { r.truth.scoreHome = 2; },
+    r => { r.truth.source = "other-source.json"; },
+    r => { r.brier.adjusted = 0.3; }
+  ]) {
+    const conflicting = structuredClone(report);
+    mutate(conflicting.records[0]);
+    assert.throws(
+      () => refreshPlanCSettlements(previous, conflicting),
+      /terminal_rewrite/
+    );
+  }
+});

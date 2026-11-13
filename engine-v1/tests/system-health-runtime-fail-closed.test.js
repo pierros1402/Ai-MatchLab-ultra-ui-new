@@ -227,3 +227,15 @@ test("alert builder uses the shared missing-artifact policy", () => {
     );
   }
 });
+test("runtime includes foundation-integrity artifact with a concrete date-bound path", () => {
+  const source = fs.readFileSync(
+    new URL("../index.js", import.meta.url), "utf8"
+  );
+  const start = source.indexOf("function buildSystemHealthReport(day)");
+  const end = source.indexOf("const read = {};", start);
+  assert.ok(start >= 0 && end > start, "runtime diagnostic file map exists");
+  const filesMap = source.slice(start, end);
+  assert.match(filesMap,
+    /foundationIntegrity:\s*preferRuntimeReleaseArtifact\(\s*day,\s*"foundation-integrity\.json",\s*resolveDataPath\("foundation-integrity",\s*day\s*\+\s*"\.json"\)\s*\)/
+  );
+});
