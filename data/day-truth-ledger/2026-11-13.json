@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-13",
-  "generatedAt": "2026-11-13T10:47:22.650Z",
+  "generatedAt": "2026-11-13T12:15:06.026Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "b33843c0c52716b1664c9aa484981dd38e1df6638c31a2bacbc10c25b7e01067",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "ec94ee250f16a127e1dee4d2492dcd72b15c917ebb6dd4000f6570e6f79e0b2d",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -25,14 +25,14 @@
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 8,
-    "acceptedVerifiedFinalArtifacts": 8,
+    "verifiedFinalArtifacts": 9,
+    "acceptedVerifiedFinalArtifacts": 9,
     "convergedPlayedFinal": 8,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 59,
+    "openRows": 58,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 8,
@@ -2996,18 +2996,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-13",
+        "scoreHome": 1,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -3327,7 +3327,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_ukr2_prykarpattya_koloskovalivka2_20261113"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -3495,7 +3497,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 21792,
+            "count": 21796,
             "informational": true
           }
         },
@@ -6915,7 +6917,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "b33843c0c52716b1664c9aa484981dd38e1df6638c31a2bacbc10c25b7e01067",
+      "truthFingerprint": "ec94ee250f16a127e1dee4d2492dcd72b15c917ebb6dd4000f6570e6f79e0b2d",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -6991,7 +6993,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-11-13",
-      "fileCount": 8,
+      "fileCount": 9,
       "authority": "scored_final_evidence"
     },
     "downstream": {
