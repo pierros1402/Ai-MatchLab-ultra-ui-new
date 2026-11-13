@@ -1,11 +1,6 @@
 name: Published final status convergence
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - .github/workflows/published-final-status-convergence.yml
-      - engine-v1/jobs/refresh-published-final-status-day.js
   workflow_run:
     workflows: [Daily deploy snapshot]
     types: [completed]
@@ -13,7 +8,12 @@ on:
   schedule:
     - cron: "23 * * * *"
   workflow_dispatch:
-
+    inputs:
+      applyClosedDays:
+        description: "Manual gated application; requires independent repository authorization."
+        required: true
+        type: boolean
+        default: false
 permissions:
   contents: write
   actions: read
@@ -36,7 +36,11 @@ jobs:
           echo "allow=$ALLOW" >> "$GITHUB_OUTPUT"
   converge-closed-days:
     needs: admission
-    if: needs.admission.outputs.allow == 'true' && (github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository))
+    if: >-
+      needs.admission.outputs.allow == 'true' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.applyClosedDays == true &&
+      vars.V35_FINAL_STATUS_APPLY_AUTHORIZED == 'true'
     concurrency:
       group: ai-matchlab-data-writer
       queue: max
