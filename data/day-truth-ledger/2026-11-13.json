@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-13",
-  "generatedAt": "2026-11-13T16:02:56.014Z",
+  "generatedAt": "2026-11-13T17:38:58.619Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "2a2dd12ab4deade150b94f20422fd1f12f8b7cbf508ea28444479e0ab34f46d5",
+  "truthFingerprint": "e478630ec9c70c7a4ac275cb39c5455076fadf7fa72a02ebd35a94ea0315982a",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 67,
-    "playedTerminal": 18,
+    "playedTerminal": 19,
     "nonPlayedTerminal": 1,
-    "scheduled": 48,
-    "live": 0,
+    "scheduled": 46,
+    "live": 1,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 18,
-    "acceptedVerifiedFinalArtifacts": 18,
-    "convergedPlayedFinal": 18,
+    "verifiedFinalArtifacts": 19,
+    "acceptedVerifiedFinalArtifacts": 19,
+    "convergedPlayedFinal": 19,
     "convergedNonPlayedTerminal": 1,
     "pendingVerifiedFinal": 0,
-    "openRows": 48,
+    "openRows": 47,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 18,
-    "scoredSettlementEligible": 18,
+    "historyEligible": 19,
+    "scoredSettlementEligible": 19,
     "voidSettlementEligible": 1
   },
   "fixtures": [
@@ -1565,31 +1565,31 @@
       "homeTeam": "Jezero",
       "awayTeam": "Buducnost",
       "kickoffUtc": "2026-11-13T15:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-13",
+        "scoreHome": 0,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2692,14 +2692,14 @@
       "homeTeam": "Moldova",
       "awayTeam": "Kazakhstan",
       "kickoffUtc": "2026-11-13T17:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -2713,7 +2713,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -3338,7 +3338,7 @@
     "systemHealth": {
       "schema": "ai-matchlab.system-health-alerts.v1",
       "dayKey": "2026-11-13",
-      "generatedAt": "2026-11-13T16:02:55.638Z",
+      "generatedAt": "2026-11-13T17:38:58.167Z",
       "severity": "warning",
       "issueCounts": {
         "error": 0,
@@ -3495,7 +3495,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 21890,
+            "count": 21892,
             "informational": true
           }
         },
@@ -6915,13 +6915,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "2a2dd12ab4deade150b94f20422fd1f12f8b7cbf508ea28444479e0ab34f46d5",
+      "truthFingerprint": "e478630ec9c70c7a4ac275cb39c5455076fadf7fa72a02ebd35a94ea0315982a",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 18,
+        "expectedEligibleRows": 19,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_bra2_pontepreta_operariopr_20261113",
@@ -6939,6 +6939,7 @@
           "cid_kos2_rilindja_mitrovica_20261113",
           "cid_kos2_tefikcanga_vjosa_20261113",
           "cid_mex2_atleticomorelia_leonesnegros_20261113",
+          "cid_mne1_jezero_buducnost_20261113",
           "cid_ukr2_prykarpattya_koloskovalivka2_20261113",
           "cid_uru1_cerrolargo_progreso_20261113",
           "cid_ven1_academiapuertocabello_monagas_20261113"
@@ -7001,7 +7002,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-11-13",
-      "fileCount": 18,
+      "fileCount": 19,
       "authority": "scored_final_evidence"
     },
     "downstream": {
