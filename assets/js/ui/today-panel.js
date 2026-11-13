@@ -497,6 +497,44 @@
     };
   }
 
+  // The 15-second fixture snapshot may lag the 45-second authoritative worker.
+  // Reapply a same-day, exact-canonical live observation after each snapshot
+  // refresh so Today does not flicker from LIVE back to scheduled. This is
+  // display-only: never infer match minute or settlement from kickoff/score.
+  function mergeTodayWorkerObservation(matches, workerPayload, dayKey) {
+    if (!Array.isArray(matches) || workerPayload?.date !== dayKey || dayKey !== todayISO() ||
+        !Array.isArray(workerPayload?.matches)) return matches;
+    const workers = new Map();
+    const ambiguous = new Set();
+    for (const worker of workerPayload.matches) {
+      const id = String(worker?.canonicalId || worker?.matchId || "").trim();
+      if (!/^cid_[a-z0-9_]+$/i.test(id)) continue;
+      if (workers.has(id)) ambiguous.add(id);
+      else workers.set(id, worker);
+    }
+    return matches.map(match => {
+      const id = String(match?.id || "").trim();
+      if (!/^cid_[a-z0-9_]+$/i.test(id) || ambiguous.has(id)) return match;
+      const worker = workers.get(id);
+      if (!worker || worker.staleLive === true || worker.statusUnconfirmed === true ||
+          isStaleLiveMatch(worker) || isFinalMatch(match)) return match;
+      if (!isMatchLive(worker) && !isFinalMatch(worker)) return match;
+      return {
+        ...match,
+        status: worker.status,
+        statusType: worker.statusType,
+        statusName: worker.statusName,
+        live: worker.live,
+        isLive: worker.isLive,
+        staleLive: worker.staleLive,
+        statusUnconfirmed: worker.statusUnconfirmed,
+        scoreHome: worker.scoreHome != null ? worker.scoreHome : match.scoreHome,
+        scoreAway: worker.scoreAway != null ? worker.scoreAway : match.scoreAway,
+        minute: worker.minute ?? null
+      };
+    });
+  }
+
   function render(matches, dateYmd) {
     panel.innerHTML = "";
 
@@ -633,7 +671,7 @@
           m.scoreHome != null && m.scoreAway != null
             ? `${m.scoreHome}-${m.scoreAway}`
             : "";
-        info.textContent = `${min} ${sc}`.trim() || "LIVE";
+        info.textContent = (min ? "LIVE " + min : "LIVE") + (sc ? " • " + sc : "");
         info.classList.add("live");
         if (m.statusUnconfirmed === true) {
           info.classList.add("unconfirmed");
@@ -785,7 +823,11 @@
   document.addEventListener("today-matches:loaded", (event) => {
     const payload = event?.detail || {};
     const raw = Array.isArray(payload.matches) ? payload.matches : [];
-    const matches = dedupeForDisplay(raw.map(mapMatch));
+    const matches = mergeTodayWorkerObservation(
+      dedupeForDisplay(raw.map(mapMatch)),
+      window.__AIML_LAST_LIVE,
+      payload.date
+    );
 
     window.AIML_FIXTURES_TODAY = { matches, date: payload.date };
     render(matches, payload.date);
@@ -794,8 +836,12 @@
   // Replay latest Today payload if fixtures-loader emitted before this panel loaded.
   if (window.__AIML_LAST_TODAY?.matches?.length) {
     const payload = window.__AIML_LAST_TODAY;
-    const matches = dedupeForDisplay(
-      (Array.isArray(payload.matches) ? payload.matches : []).map(mapMatch)
+    const matches = mergeTodayWorkerObservation(
+      dedupeForDisplay(
+        (Array.isArray(payload.matches) ? payload.matches : []).map(mapMatch)
+      ),
+      window.__AIML_LAST_LIVE,
+      payload.date
     );
 
     setTimeout(() => {
