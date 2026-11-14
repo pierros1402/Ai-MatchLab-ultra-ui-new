@@ -1,0 +1,206 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "eng.trophy",
+  "homeTeam": "Luton Town",
+  "awayTeam": "Peterborough United",
+  "homeWinScore": 0.417,
+  "drawScore": 0.152,
+  "awayWinScore": 0.431,
+  "over15Score": 0.677,
+  "over25Score": 0.611,
+  "over35Score": 0.536,
+  "bttsScore": 0.572,
+  "confidence": 0.777,
+  "signals": [
+    "home_edge",
+    "away_edge",
+    "away_form_decay",
+    "form_influence_reduced",
+    "mutual_attack_profile",
+    "priors_applied",
+    "cup_intensity",
+    "close_strength_gap"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.191,
+      "awayOverallFormWeight": 0.12,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.525,
+    "expectedAwayGoals": 1.542,
+    "expectedTotalGoals": 3.067,
+    "homeStrength": 0.395,
+    "awayStrength": 0.287,
+    "homeEdge": 0.376,
+    "awayPenalty": 0.16,
+    "recency": {
+      "homeOverall": {
+        "sample": 5,
+        "rawSample": 5,
+        "priorSample": 0,
+        "daysSinceLastMatch": 13,
+        "spanDays": 17,
+        "maxInternalGap": 7,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.45,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.755
+      },
+      "awayOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 20,
+        "daysSinceLastMatch": 17,
+        "spanDays": 14,
+        "maxInternalGap": 7,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.295,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.571
+      },
+      "homeSide": {
+        "sample": 2,
+        "rawSample": 2,
+        "priorSample": 0,
+        "daysSinceLastMatch": 20,
+        "spanDays": 7,
+        "maxInternalGap": 7,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.19,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.414
+      },
+      "awaySide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 20,
+        "daysSinceLastMatch": 20,
+        "spanDays": 7,
+        "maxInternalGap": 7,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.19,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.414
+      }
+    },
+    "matchupSample": 2,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 0,
+      "awayPriorSample": 20,
+      "leaguePriorSample": 508,
+      "matchupPriorSample": 1
+    },
+    "resolution": {
+      "homeInput": "Luton Town",
+      "awayInput": "Peterborough United",
+      "homeResolvedKey": "Luton Town",
+      "awayResolvedKey": "Peterborough United",
+      "homeResolveScore": 0.82,
+      "awayResolveScore": 0.82,
+      "matchupResolvedKey": "Luton Town::Peterborough United",
+      "matchupResolveScore": 0.93,
+      "homePriorKey": null,
+      "awayPriorKey": "eng.trophy::Peterborough United",
+      "matchupPriorKey": "eng.trophy|Crawley Town|Peterborough United"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Luton Town",
+      "awayTeamKey": "Peterborough United",
+      "leagueKey": "eng.trophy",
+      "matchupKey": "Luton Town::Peterborough United"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": false,
+    "contextDelta": 0,
+    "contextReasons": [],
+    "aiContext": {
+      "available": true,
+      "importance": "unknown",
+      "stakes": [],
+      "pressure": []
+    }
+  },
+  "contextAdjusted": false,
+  "contextReasons": [],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0.012,
+      "awayDelta": 0.021,
+      "drawDelta": 0.02,
+      "reasons": [
+        "cup_intensity",
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "eng.trophy",
+    "competitionType": "cup",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 13,
+    "awayRestDays": 17,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 1,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
