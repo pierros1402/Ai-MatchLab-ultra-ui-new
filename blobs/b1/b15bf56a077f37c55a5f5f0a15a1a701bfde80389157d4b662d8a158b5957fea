@@ -1,0 +1,267 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "ned.2",
+  "homeTeam": "Almere City",
+  "awayTeam": "Helmond Sport",
+  "homeWinScore": 0.455,
+  "drawScore": 0.114,
+  "awayWinScore": 0.431,
+  "over15Score": 0.765,
+  "over25Score": 0.7590000000000001,
+  "over35Score": 0.598,
+  "bttsScore": 0.608,
+  "confidence": 0.853,
+  "signals": [
+    "home_edge",
+    "away_edge",
+    "over25_support",
+    "matchup_goals_history",
+    "priors_applied",
+    "close_strength_gap"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.45,
+      "awayOverallFormWeight": 0.383,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.774,
+    "expectedAwayGoals": 1.376,
+    "expectedTotalGoals": 3.15,
+    "homeStrength": 0.518,
+    "awayStrength": 0.346,
+    "homeEdge": 0.098,
+    "awayPenalty": 0.111,
+    "recency": {
+      "homeOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 114,
+        "daysSinceLastMatch": 8,
+        "spanDays": 20,
+        "maxInternalGap": 10,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.9,
+        "continuityScore": 1,
+        "formContinuityWeight": 0.905
+      },
+      "awayOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 190,
+        "daysSinceLastMatch": 8,
+        "spanDays": 21,
+        "maxInternalGap": 11,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.9,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.853
+      },
+      "homeSide": {
+        "sample": 3,
+        "rawSample": 0,
+        "priorSample": 114,
+        "daysSinceLastMatch": null,
+        "spanDays": null,
+        "maxInternalGap": null,
+        "gapSeverity": "missing",
+        "freshnessScore": 0.2,
+        "continuityScore": 0.2,
+        "formContinuityWeight": 0
+      },
+      "awaySide": {
+        "sample": 3,
+        "rawSample": 0,
+        "priorSample": 190,
+        "daysSinceLastMatch": null,
+        "spanDays": null,
+        "maxInternalGap": null,
+        "gapSeverity": "missing",
+        "freshnessScore": 0.2,
+        "continuityScore": 0.2,
+        "formContinuityWeight": 0
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 114,
+      "awayPriorSample": 190,
+      "leaguePriorSample": 1900,
+      "matchupPriorSample": 6
+    },
+    "resolution": {
+      "homeInput": "Almere City",
+      "awayInput": "Helmond Sport",
+      "homeResolvedKey": "Almere City",
+      "awayResolvedKey": "Helmond Sport",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Almere City::Helmond Sport",
+      "matchupResolveScore": 0,
+      "homePriorKey": "ned.2::Almere City",
+      "awayPriorKey": "ned.2::Helmond Sport",
+      "matchupPriorKey": "ned.2|Almere City|Helmond Sport"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Almere City",
+      "awayTeamKey": "Helmond Sport",
+      "leagueKey": "ned.2",
+      "matchupKey": "Almere City::Helmond Sport"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "form_home_stronger",
+        "impact": 0.08,
+        "note": "Home team has significantly stronger form"
+      },
+      {
+        "code": "h2h_away_edge",
+        "impact": 0.025,
+        "note": "Recent H2H leans away"
+      },
+      {
+        "code": "h2h_overlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is open"
+      },
+      {
+        "code": "ai_h2h_over_signal",
+        "impact": 0.07,
+        "note": "AI detected open H2H pattern"
+      },
+      {
+        "code": "ai_h2h_away_edge",
+        "impact": 0.06,
+        "note": "AI detected away H2H edge"
+      },
+      {
+        "code": "ai_home_form_signal",
+        "impact": 0.05,
+        "note": "AI confirmed strong home form edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    }
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "form_home_stronger",
+      "impact": 0.08,
+      "note": "Home team has significantly stronger form"
+    },
+    {
+      "code": "h2h_away_edge",
+      "impact": 0.025,
+      "note": "Recent H2H leans away"
+    },
+    {
+      "code": "h2h_overlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is open"
+    },
+    {
+      "code": "ai_h2h_over_signal",
+      "impact": 0.07,
+      "note": "AI detected open H2H pattern"
+    },
+    {
+      "code": "ai_h2h_away_edge",
+      "impact": 0.06,
+      "note": "AI detected away H2H edge"
+    },
+    {
+      "code": "ai_home_form_signal",
+      "impact": 0.05,
+      "note": "AI confirmed strong home form edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "MEDIUM",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "ned.2",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 8,
+    "awayRestDays": 8,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 1,
+    "awayMatchesLast14": 1,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
