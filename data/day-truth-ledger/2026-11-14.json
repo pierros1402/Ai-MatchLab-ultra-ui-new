@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-14",
-  "generatedAt": "2026-11-14T20:51:10.857Z",
+  "generatedAt": "2026-11-14T21:48:28.218Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "9e6ce4d085f147c0a62ad27049c9b3be0a13c70a0bf353a422d2e4e551cbab4a",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "d95c7aa7a3c5494554c0abf0eb3604cb8478561f76192009cf05b86d2341a860",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 192,
-    "playedTerminal": 130,
+    "playedTerminal": 150,
     "nonPlayedTerminal": 10,
-    "scheduled": 31,
-    "live": 21,
+    "scheduled": 10,
+    "live": 22,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 129,
-    "acceptedVerifiedFinalArtifacts": 129,
-    "convergedPlayedFinal": 128,
+    "verifiedFinalArtifacts": 150,
+    "acceptedVerifiedFinalArtifacts": 150,
+    "convergedPlayedFinal": 150,
     "convergedNonPlayedTerminal": 10,
-    "pendingVerifiedFinal": 1,
-    "openRows": 52,
+    "pendingVerifiedFinal": 0,
+    "openRows": 32,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 128,
-    "scoredSettlementEligible": 128,
+    "historyEligible": 150,
+    "scoredSettlementEligible": 150,
     "voidSettlementEligible": 10
   },
   "fixtures": [
@@ -95,14 +95,14 @@
       "homeTeam": "Colon Santa Fe",
       "awayTeam": "Midland",
       "kickoffUtc": "2026-11-14T21:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -116,7 +116,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -144,31 +144,31 @@
       "homeTeam": "Temperley",
       "awayTeam": "Ciudad Bolivar",
       "kickoffUtc": "2026-11-14T19:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "LIVE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
-        "scoreAway": 1
+        "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-14",
+        "scoreHome": 1,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -490,11 +490,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -539,10 +539,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -588,9 +588,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 1
       },
@@ -637,11 +637,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -686,9 +686,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -735,10 +735,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 2,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -784,9 +784,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 2,
         "scoreAway": 0
       },
@@ -1026,14 +1026,14 @@
       "homeTeam": "Águilas Doradas",
       "awayTeam": "Independiente Medellín",
       "kickoffUtc": "2026-11-14T20:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1047,7 +1047,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1075,14 +1075,14 @@
       "homeTeam": "Atlético Bucaramanga",
       "awayTeam": "Fortaleza CEIF",
       "kickoffUtc": "2026-11-14T20:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1096,7 +1096,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1124,14 +1124,14 @@
       "homeTeam": "Atlético Nacional",
       "awayTeam": "Once Caldas",
       "kickoffUtc": "2026-11-14T20:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -1145,7 +1145,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1173,14 +1173,14 @@
       "homeTeam": "Cúcuta Deportivo",
       "awayTeam": "Jaguares de Córdoba",
       "kickoffUtc": "2026-11-14T20:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 1,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1194,7 +1194,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1222,14 +1222,14 @@
       "homeTeam": "Deportivo Cali",
       "awayTeam": "Deportes Tolima",
       "kickoffUtc": "2026-11-14T20:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 1,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1243,7 +1243,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1271,14 +1271,14 @@
       "homeTeam": "Deportivo Pereira",
       "awayTeam": "América de Cali",
       "kickoffUtc": "2026-11-14T20:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -1292,7 +1292,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1369,14 +1369,14 @@
       "homeTeam": "Millonarios",
       "awayTeam": "Alianza FC",
       "kickoffUtc": "2026-11-14T20:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_IN_PROGRESS",
+        "scoreHome": 1,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1390,7 +1390,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -3234,10 +3234,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -3525,31 +3525,31 @@
       "homeTeam": "Avenir Foot Lozere",
       "awayTeam": "Entente Crest-Aouste",
       "kickoffUtc": "2026-11-14T18:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 1,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-14",
+        "scoreHome": 1,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3819,31 +3819,31 @@
       "homeTeam": "Boulazac",
       "awayTeam": "Anglet Genets",
       "kickoffUtc": "2026-11-14T18:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FINAL_PEN",
+        "scoreHome": 3,
+        "scoreAway": 3
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-14",
+        "scoreHome": 3,
+        "scoreAway": 3,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3868,31 +3868,31 @@
       "homeTeam": "Bressuire",
       "awayTeam": "FC Challans",
       "kickoffUtc": "2026-11-14T18:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 3,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-14",
+        "scoreHome": 3,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3917,31 +3917,31 @@
       "homeTeam": "Brive",
       "awayTeam": "Angouleme",
       "kickoffUtc": "2026-11-14T18:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 0,
+        "scoreAway": 3
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-14",
+        "scoreHome": 0,
+        "scoreAway": 3,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4015,31 +4015,31 @@
       "homeTeam": "Cercle Paul Bert Brequigny Football",
       "awayTeam": "Montlucon Football",
       "kickoffUtc": "2026-11-14T18:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-14",
+        "scoreHome": 0,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4162,31 +4162,31 @@
       "homeTeam": "Chauny",
       "awayTeam": "Le Pays Du Valois",
       "kickoffUtc": "2026-11-14T18:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 0,
+        "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-14",
+        "scoreHome": 0,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4505,31 +4505,31 @@
       "homeTeam": "ES Buxerolles",
       "awayTeam": "Sablé FC",
       "kickoffUtc": "2026-11-14T18:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 0,
+        "scoreAway": 7
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-14",
+        "scoreHome": 0,
+        "scoreAway": 7,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4701,31 +4701,31 @@
       "homeTeam": "GSI Pontivy",
       "awayTeam": "Rennes TA",
       "kickoffUtc": "2026-11-14T17:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FINAL_PEN",
+        "scoreHome": 2,
+        "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-14",
+        "scoreHome": 2,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4760,21 +4760,21 @@
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-14",
+        "scoreHome": 0,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "PENDING_VERIFIED_FINAL",
-        "reason": "played_terminal_requires_verified_final",
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
         "operationallyClosed": true,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4848,31 +4848,31 @@
       "homeTeam": "Lannion",
       "awayTeam": "Guingamp",
       "kickoffUtc": "2026-11-14T18:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FINAL_PEN",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-14",
+        "scoreHome": 0,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -5044,31 +5044,31 @@
       "homeTeam": "FC Lourdes",
       "awayTeam": "Pau",
       "kickoffUtc": "2026-11-14T18:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 0,
+        "scoreAway": 4
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-14",
+        "scoreHome": 0,
+        "scoreAway": 4,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -5142,31 +5142,31 @@
       "homeTeam": "Olympique des Membres de Cambrai Amerique",
       "awayTeam": "SC Amiens",
       "kickoffUtc": "2026-11-14T19:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 0,
+        "scoreAway": 4
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-14",
+        "scoreHome": 0,
+        "scoreAway": 4,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -5534,31 +5534,31 @@
       "homeTeam": "Stade Béthunois",
       "awayTeam": "AS Nancy Lorraine",
       "kickoffUtc": "2026-11-14T17:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FINAL_PEN",
+        "scoreHome": 3,
+        "scoreAway": 3
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-14",
+        "scoreHome": 3,
+        "scoreAway": 3,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -5632,31 +5632,31 @@
       "homeTeam": "St Andre St Macaire",
       "awayTeam": "Nueillaubiers",
       "kickoffUtc": "2026-11-14T18:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 0,
+        "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-14",
+        "scoreHome": 0,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -7102,31 +7102,31 @@
       "homeTeam": "Almere City",
       "awayTeam": "Helmond Sport",
       "kickoffUtc": "2026-11-14T19:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 3,
-        "scoreAway": 0
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 6,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-14",
+        "scoreHome": 6,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -7151,31 +7151,31 @@
       "homeTeam": "FC Dordrecht",
       "awayTeam": "Heracles Almelo",
       "kickoffUtc": "2026-11-14T19:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 0,
-        "scoreAway": 1
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 1,
+        "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-14",
+        "scoreHome": 1,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -7200,31 +7200,31 @@
       "homeTeam": "De Graafschap",
       "awayTeam": "TOP Oss",
       "kickoffUtc": "2026-11-14T19:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
-        "scoreAway": 1
+        "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-14",
+        "scoreHome": 1,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -7298,31 +7298,31 @@
       "homeTeam": "RKC Waalwijk",
       "awayTeam": "FC Den Bosch",
       "kickoffUtc": "2026-11-14T19:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 2,
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 4,
         "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-14",
+        "scoreHome": 4,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -7347,31 +7347,31 @@
       "homeTeam": "Roda JC Kerkrade",
       "awayTeam": "FC Volendam",
       "kickoffUtc": "2026-11-14T19:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 1,
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 3,
         "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-14",
+        "scoreHome": 3,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -7396,31 +7396,31 @@
       "homeTeam": "VVV-Venlo",
       "awayTeam": "FC Eindhoven",
       "kickoffUtc": "2026-11-14T19:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 0,
-        "scoreAway": 1
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 1,
+        "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-14",
+        "scoreHome": 1,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -8722,9 +8722,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -8869,10 +8869,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -8967,11 +8967,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 3
       },
       "verifiedFinal": {
         "present": false,
@@ -9016,9 +9016,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 0
       },
@@ -9065,11 +9065,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 2,
-        "scoreAway": 0
+        "rawStatus": "STATUS_IN_PROGRESS",
+        "scoreHome": 3,
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -9225,15 +9225,15 @@
         "verdict": "verified_final_result",
         "dayKey": "2026-11-14",
         "scoreHome": 0,
-        "scoreAway": 1,
-        "scoreParity": false
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "canonical_verified_final_score_mismatch",
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
         "operationallyClosed": true,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -9310,11 +9310,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -9452,12 +9452,8 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_ukr2_viktoria_fenixmariupol_20261114"
-    ],
-    "pendingVerifiedFinalFixtureIds": [
-      "cid_fracoupedefrance_iccroix_esthaon_20261114"
-    ]
+    "conflictFixtureIds": [],
+    "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
     "historyObserved": false,
@@ -9467,12 +9463,12 @@
     "systemHealth": {
       "schema": "ai-matchlab.system-health-alerts.v1",
       "dayKey": "2026-11-14",
-      "generatedAt": "2026-11-14T20:51:10.512Z",
+      "generatedAt": "2026-11-14T21:48:27.745Z",
       "severity": "warning",
       "issueCounts": {
         "error": 0,
         "warning": 8,
-        "info": 11
+        "info": 9
       },
       "alert": false,
       "alertCounts": {
@@ -9480,12 +9476,12 @@
         "warning": 0,
         "info": 0
       },
-      "activeIssueCount": 19,
+      "activeIssueCount": 17,
       "actionableIssueCount": 8,
       "newIssueCount": 0,
       "newActionableIssueCount": 0,
-      "resolvedIssueCount": 1,
-      "persistentIssueCount": 19,
+      "resolvedIssueCount": 3,
+      "persistentIssueCount": 17,
       "activeIssues": [
         {
           "severity": "info",
@@ -9734,7 +9730,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 21988,
+            "count": 21992,
             "informational": true
           }
         },
@@ -9876,38 +9872,6 @@
               "rejectedCount": 31,
               "alreadyDeclaredCount": 0
             }
-          }
-        },
-        {
-          "severity": "info",
-          "source": "value-comparison",
-          "type": "plan_a_unresolved_settlement",
-          "message": "Plan A picks are still unresolved.",
-          "details": {
-            "dayKey": "2026-11-14",
-            "todayDayKey": "2026-11-14",
-            "ageDays": 0,
-            "overdue": false,
-            "settlementSource": "value-comparison",
-            "picks": 2,
-            "settled": 0,
-            "unresolved": 2
-          }
-        },
-        {
-          "severity": "info",
-          "source": "value-comparison",
-          "type": "plan_a2_unresolved_settlement",
-          "message": "Plan A2 picks are still unresolved.",
-          "details": {
-            "dayKey": "2026-11-14",
-            "todayDayKey": "2026-11-14",
-            "ageDays": 0,
-            "overdue": false,
-            "settlementSource": "value-comparison",
-            "picks": 2,
-            "settled": 0,
-            "unresolved": 2
           }
         },
         {
@@ -10645,13 +10609,13 @@
               "summary": {
                 "picks": 2,
                 "uniqueMatches": 2,
-                "settled": 0,
-                "wins": 0,
+                "settled": 2,
+                "wins": 2,
                 "losses": 0,
                 "voids": 0,
-                "unresolved": 2,
+                "unresolved": 0,
                 "unsupported": 0,
-                "hitRate": null,
+                "hitRate": 1,
                 "oddsAvailable": 0,
                 "averageOdds": null,
                 "totalStake": null,
@@ -10665,13 +10629,13 @@
               "summary": {
                 "picks": 2,
                 "uniqueMatches": 2,
-                "settled": 0,
-                "wins": 0,
+                "settled": 2,
+                "wins": 2,
                 "losses": 0,
                 "voids": 0,
-                "unresolved": 2,
+                "unresolved": 0,
                 "unsupported": 0,
-                "hitRate": null,
+                "hitRate": 1,
                 "oddsAvailable": 0,
                 "averageOdds": null,
                 "totalStake": null,
@@ -11653,7 +11617,7 @@
             "fixtures": 192,
             "valuePicks": 2,
             "valueSource": "canonical_fixtures",
-            "latestCanonicalUpdatedAt": "2026-11-14T19:37:01.001Z",
+            "latestCanonicalUpdatedAt": "2026-11-14T20:26:56.420Z",
             "valueArtifactAt": "2026-11-14T16:58:52.856Z",
             "valueFreshAgainstCanonical": false,
             "mode": "frozen_snapshot",
@@ -11673,6 +11637,38 @@
             "recoveryUniverseEvidenceHash": null,
             "recoveryUniverseEvidencePlans": [],
             "ok": true
+          }
+        },
+        {
+          "severity": "info",
+          "source": "value-comparison",
+          "type": "plan_a_unresolved_settlement",
+          "message": "Plan A picks are still unresolved.",
+          "details": {
+            "dayKey": "2026-11-14",
+            "todayDayKey": "2026-11-14",
+            "ageDays": 0,
+            "overdue": false,
+            "settlementSource": "value-comparison",
+            "picks": 2,
+            "settled": 0,
+            "unresolved": 2
+          }
+        },
+        {
+          "severity": "info",
+          "source": "value-comparison",
+          "type": "plan_a2_unresolved_settlement",
+          "message": "Plan A2 picks are still unresolved.",
+          "details": {
+            "dayKey": "2026-11-14",
+            "todayDayKey": "2026-11-14",
+            "ageDays": 0,
+            "overdue": false,
+            "settlementSource": "value-comparison",
+            "picks": 2,
+            "settled": 0,
+            "unresolved": 2
           }
         }
       ],
@@ -11924,7 +11920,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 21988,
+            "count": 21992,
             "informational": true
           }
         },
@@ -12066,38 +12062,6 @@
               "rejectedCount": 31,
               "alreadyDeclaredCount": 0
             }
-          }
-        },
-        {
-          "severity": "info",
-          "source": "value-comparison",
-          "type": "plan_a_unresolved_settlement",
-          "message": "Plan A picks are still unresolved.",
-          "details": {
-            "dayKey": "2026-11-14",
-            "todayDayKey": "2026-11-14",
-            "ageDays": 0,
-            "overdue": false,
-            "settlementSource": "value-comparison",
-            "picks": 2,
-            "settled": 0,
-            "unresolved": 2
-          }
-        },
-        {
-          "severity": "info",
-          "source": "value-comparison",
-          "type": "plan_a2_unresolved_settlement",
-          "message": "Plan A2 picks are still unresolved.",
-          "details": {
-            "dayKey": "2026-11-14",
-            "todayDayKey": "2026-11-14",
-            "ageDays": 0,
-            "overdue": false,
-            "settlementSource": "value-comparison",
-            "picks": 2,
-            "settled": 0,
-            "unresolved": 2
           }
         },
         {
@@ -12835,13 +12799,13 @@
               "summary": {
                 "picks": 2,
                 "uniqueMatches": 2,
-                "settled": 0,
-                "wins": 0,
+                "settled": 2,
+                "wins": 2,
                 "losses": 0,
                 "voids": 0,
-                "unresolved": 2,
+                "unresolved": 0,
                 "unsupported": 0,
-                "hitRate": null,
+                "hitRate": 1,
                 "oddsAvailable": 0,
                 "averageOdds": null,
                 "totalStake": null,
@@ -12855,13 +12819,13 @@
               "summary": {
                 "picks": 2,
                 "uniqueMatches": 2,
-                "settled": 0,
-                "wins": 0,
+                "settled": 2,
+                "wins": 2,
                 "losses": 0,
                 "voids": 0,
-                "unresolved": 2,
+                "unresolved": 0,
                 "unsupported": 0,
-                "hitRate": null,
+                "hitRate": 1,
                 "oddsAvailable": 0,
                 "averageOdds": null,
                 "totalStake": null,
@@ -12916,16 +12880,17 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "9e6ce4d085f147c0a62ad27049c9b3be0a13c70a0bf353a422d2e4e551cbab4a",
+      "truthFingerprint": "d95c7aa7a3c5494554c0abf0eb3604cb8478561f76192009cf05b86d2341a860",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 128,
+        "expectedEligibleRows": 150,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg2_atlanta_estudiantesbuenosaires_20261114",
+          "cid_arg2_temperley_ciudadbolivar_20261114",
           "cid_bih2_igmank_travnik_20261114",
           "cid_blr2_dinminsk2_ska1938_20261114",
           "cid_blr2_ostrovets_nivadolbizno_20261114",
@@ -12968,25 +12933,37 @@
           "cid_esp2_realvalladolid_castellon_20261114",
           "cid_fracoupedefrance_amneville_sundhoffen_20261114",
           "cid_fracoupedefrance_aspttdijon_selongey_20261114",
+          "cid_fracoupedefrance_avenirfootlozere_ententecrestaouste_20261114",
           "cid_fracoupedefrance_balagne_montpellier_20261114",
           "cid_fracoupedefrance_balma_castanet_20261114",
           "cid_fracoupedefrance_besancon_apmmetz_20261114",
           "cid_fracoupedefrance_boulay_sochaux_20261114",
+          "cid_fracoupedefrance_boulazac_angletgenets_20261114",
+          "cid_fracoupedefrance_bressuire_challans_20261114",
+          "cid_fracoupedefrance_brive_angouleme_20261114",
           "cid_fracoupedefrance_caen_chambly_20261114",
+          "cid_fracoupedefrance_cerclepaulbertbrequignyfootball_montluconfootball_20261114",
           "cid_fracoupedefrance_chalonsursaone_hautslyonnais_20261114",
           "cid_fracoupedefrance_chateaubriant_horizonpatho_20261114",
+          "cid_fracoupedefrance_chauny_lepaysduvalois_20261114",
           "cid_fracoupedefrance_choisyaubac_caen_20261114",
           "cid_fracoupedefrance_contres_esalinasmontlhery_20261114",
           "cid_fracoupedefrance_cournon_chassieudeclines_20261114",
           "cid_fracoupedefrance_dunkerque_usquevilly_20261114",
+          "cid_fracoupedefrance_esbuxerolles_sable_20261114",
           "cid_fracoupedefrance_firminy_annecy_20261114",
           "cid_fracoupedefrance_fontenayfoot_clermontfoot_20261114",
           "cid_fracoupedefrance_grauduroi_riviera_20261114",
+          "cid_fracoupedefrance_gsipontivy_rennesta_20261114",
+          "cid_fracoupedefrance_iccroix_esthaon_20261114",
           "cid_fracoupedefrance_koetzingue_biesheim_20261114",
+          "cid_fracoupedefrance_lannion_guingamp_20261114",
           "cid_fracoupedefrance_lepoire_vertou_20261114",
           "cid_fracoupedefrance_lepuy_diablesnoirs_20261114",
           "cid_fracoupedefrance_letouquet_avranches_20261114",
+          "cid_fracoupedefrance_lourdes_pau_20261114",
           "cid_fracoupedefrance_lyonladuchere_usfeurs_20261114",
+          "cid_fracoupedefrance_olympiquedesmembrescambraiamerique_amiens_20261114",
           "cid_fracoupedefrance_payssaintomer_afvirois_20261114",
           "cid_fracoupedefrance_pontcheruy_bourgperonnas_20261114",
           "cid_fracoupedefrance_racingbesancon_amdupersonnelmunicipalmetz_20261114",
@@ -12994,6 +12971,8 @@
           "cid_fracoupedefrance_sagcestas_bayonne_20261114",
           "cid_fracoupedefrance_saintbrieuc_rouen_20261114",
           "cid_fracoupedefrance_saintsebastien_labaulelepouliguen_20261114",
+          "cid_fracoupedefrance_stadebethunois_asnancylorraine_20261114",
+          "cid_fracoupedefrance_standrestmacaire_nueillaubiers_20261114",
           "cid_fracoupedefrance_stouenlaumone_boulogne_20261114",
           "cid_fracoupedefrance_strasbourgkoenigshoffen_oberlauterbach_20261114",
           "cid_fracoupedefrance_stsebastien_labaule_20261114",
@@ -13022,7 +13001,13 @@
           "cid_mne2_budva_jedinstvo_20261114",
           "cid_mne2_podgorica_berane_20261114",
           "cid_mne2_zeta_lovcen_20261114",
+          "cid_ned2_almerecity_helmondsport_20261114",
+          "cid_ned2_dordrecht_heraclesalmelo_20261114",
+          "cid_ned2_graafschap_toposs_20261114",
           "cid_ned2_nacbreda_emmen_20261114",
+          "cid_ned2_rkcwaalwijk_denbosch_20261114",
+          "cid_ned2_rodajckerkrade_volendam_20261114",
+          "cid_ned2_vvvvenlo_eindhoven_20261114",
           "cid_nor2_kjelsas_bjarg_20261114",
           "cid_rus2_ulyanovsk_torpedomoscow_20261114",
           "cid_sco2_ayrunited_raithrovers_20261114",
@@ -13051,6 +13036,7 @@
           "cid_uefanations_norway_wales_20261114",
           "cid_ukr1_livyibereg_bukovyna_20261114",
           "cid_ukr2_poltava_ahrobiznesvolochysk_20261114",
+          "cid_ukr2_viktoria_fenixmariupol_20261114",
           "cid_uru1_centralespanolfutbol_bostonriver_20261114",
           "cid_wal2_llanuwchllyn_rhyl_20261114"
         ],
@@ -13092,7 +13078,7 @@
         "sourcePath": "data/system-health/2026-11-14.json",
         "severity": "warning",
         "alert": false,
-        "activeIssueCount": 19,
+        "activeIssueCount": 17,
         "actionableIssueCount": 8
       },
       "authority": {
@@ -13112,7 +13098,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-11-14",
-      "fileCount": 129,
+      "fileCount": 150,
       "authority": "scored_final_evidence"
     },
     "downstream": {
