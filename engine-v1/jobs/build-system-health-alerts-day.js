@@ -1,3 +1,4 @@
+import { collectFrozenValueHealthIssues } from "../system-health/frozen-value-health-policy.js";
 /**
  * build-system-health-alerts-day.js
  *
@@ -351,6 +352,8 @@ export function buildSystemHealthAlertsDay(dayKey) {
   );
 
   const issues = [];
+
+  issues.push(...collectFrozenValueHealthIssues(manifest?.valueGate));
 
   if (!manifest) {
     issues.push(issue(systemHealthMissingArtifactSeverity("manifest"), "manifest", "artifact_missing", "Snapshot manifest is missing.", {

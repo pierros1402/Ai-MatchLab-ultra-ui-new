@@ -1,3 +1,4 @@
+import { collectFrozenValueHealthIssues } from "./system-health/frozen-value-health-policy.js";
 import { readPinnedValuePicksSnapshot } from "./jobs/runtime-generation-value-picks-reader.js";
 import { readSnapshotManifestGeneration } from "./jobs/runtime-generation-snapshot-reader.js";
 import { qualifyGenerationReadiness } from "./system-health/runtime-generation-readiness.js";
@@ -2131,25 +2132,7 @@ function buildSystemHealthReport(day) {
       ));
     }
 
-    if (manifest.valueGate?.ok === false) {
-      issues.push(systemHealthIssue(
-        "error",
-        "manifest",
-        "value_gate_failed",
-        "Manifest Value gate failed.",
-        manifest.valueGate
-      ));
-    }
-
-    if (manifest.valueGate?.valueFreshAgainstCanonical === false) {
-      issues.push(systemHealthIssue(
-        "error",
-        "manifest",
-        "value_stale_against_canonical",
-        "Production Value artifact is stale against canonical fixtures.",
-        manifest.valueGate
-      ));
-    }
+    issues.push(...collectFrozenValueHealthIssues(manifest.valueGate));
 
     if (
       manifest.fixtureJsonCount != null &&

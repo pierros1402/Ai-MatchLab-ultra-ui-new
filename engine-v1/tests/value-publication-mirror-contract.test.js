@@ -290,7 +290,7 @@ test(
 
     const start =
       adapter.indexOf(
-        "async function refreshOnce(dateYmd)"
+        "async function refreshOnce(dateYmd, { preserveOnError = false } = {})"
       );
 
     const end =

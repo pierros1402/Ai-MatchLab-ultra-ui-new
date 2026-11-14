@@ -45,5 +45,8 @@ test("runtime resolves both diagnostic files from staged immutable release", () 
   const src=fs.readFileSync(new URL("../index.js",import.meta.url),"utf8");
   assert.match(src,/preferRuntimeReleaseArtifact\(\s*day, "coverage-readiness\.json"/);
   assert.match(src,/preferRuntimeReleaseArtifact\(\s*day, "foundation-integrity\.json"/);
-  assert.match(src,/valueGate\?\.valueFreshAgainstCanonical === false/);
+  assert.match(src,/frozen-value-health-policy\.js/);
+  const policy=fs.readFileSync(new URL("../system-health/frozen-value-health-policy.js",import.meta.url),"utf8");
+  assert.match(policy,/valueFreshAgainstCanonical/);
+  assert.match(policy,/isFrozenValueGateReleaseSafe/);
 });

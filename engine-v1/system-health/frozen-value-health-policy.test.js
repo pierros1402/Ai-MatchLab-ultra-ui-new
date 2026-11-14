@@ -1,0 +1,18 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import { collectFrozenValueHealthIssues as collect } from "./frozen-value-health-policy.js";
+import { reconcilePublicSystemHealth } from "./public-mirror-policy.js";
+const gate = { ok:true, valueFreshAgainstCanonical:false, mode:"frozen_snapshot", frozenIdentityBound:true, frozenReleaseSafe:true, dayBound:true, canonicalSourceBound:true, orphanPickCount:0, missingMatchIdPickCount:0, recoveryContractBound:false, recoveryPublishedUniverseBound:false };
+const types = x => collect(x).map(i=>[i.severity,i.type]);
+const stale = [["error","value_stale_against_canonical"]];
+const info = [["info","frozen_value_age_preserved"]];
+test("fresh gate has no age issue",()=>assert.deepEqual(types({...gate,valueFreshAgainstCanonical:true}),[]));
+test("safe frozen snapshot needs no recovery sentinel bindings",()=>assert.deepEqual(types(gate),info));
+for(const [name,delta] of Object.entries({live:{mode:"fresh"},identity:{frozenIdentityBound:false},unsafe:{frozenReleaseSafe:false},orphan:{orphanPickCount:1},missingId:{missingMatchIdPickCount:1},missingCount:{orphanPickCount:undefined},nullCount:{missingMatchIdPickCount:null},wrongDay:{dayBound:false},wrongSource:{canonicalSourceBound:false},missingOk:{ok:undefined},missingRelease:{frozenReleaseSafe:undefined},sentinelMissingContract:{mode:"historical_recovery_sentinel",recoveryPublishedUniverseBound:true},sentinelMissingUniverse:{mode:"historical_recovery_sentinel",recoveryContractBound:true}}))test(name+" stays error",()=>assert.deepEqual(types({...gate,...delta}),stale));
+test("bound recovery sentinel",()=>assert.deepEqual(types({...gate,mode:"historical_recovery_sentinel",recoveryContractBound:true,recoveryPublishedUniverseBound:true}),info));
+test("failed gate preserves both errors",()=>assert.deepEqual(types({...gate,ok:false}),[["error","value_gate_failed"],...stale]));
+test("fresh failed gate stays error",()=>assert.deepEqual(types({...gate,ok:false,valueFreshAgainstCanonical:true}),[["error","value_gate_failed"]]));
+test("missing gate leaves existing missing-artifact handling unchanged",()=>assert.deepEqual(types(null),[]));
+test("authoritative info is visible and does not mask unrelated runtime error",()=>{const a=collect(gate);const e={severity:"error",source:"runtime",type:"unrelated"};const dayKey="2026-11-14";const r=reconcilePublicSystemHealth({dayKey,dynamicReport:{ok:false,severity:"error",issues:[...a,e]},alertArtifact:{schema:"ai-matchlab.system-health-alerts.v1",dayKey,activeIssues:a}});assert.equal(r.ok,false);assert.equal(r.issueCounts.error,1);assert.equal(r.issueCounts.info,1);});
+test("runtime and builder both use common policy",()=>{for(const f of ["../index.js","../jobs/build-system-health-alerts-day.js"]){const s=fs.readFileSync(new URL(f,import.meta.url),"utf8");assert.match(s,/issues\.push\(\.\.\.collectFrozenValueHealthIssues\(manifest\??\.valueGate\)\);/);}});
