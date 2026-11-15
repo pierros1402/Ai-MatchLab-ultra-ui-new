@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-15",
-  "generatedAt": "2026-11-15T16:28:01.172Z",
+  "generatedAt": "2026-11-15T17:17:22.835Z",
   "role": "derived_control_plane",
-  "ledgerState": "INCOMPLETE",
-  "truthFingerprint": "b24728e0484b4340d94a2116daafe853af8d0a090558f74ab2cacfa2c246090a",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "22891b4c74a74ea13206763ec9358da646e5032e6b722f15c94352aab891ec89",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 162,
-    "playedTerminal": 102,
+    "playedTerminal": 113,
     "nonPlayedTerminal": 6,
-    "scheduled": 52,
+    "scheduled": 41,
     "live": 1,
     "interrupted": 1,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 101,
-    "acceptedVerifiedFinalArtifacts": 101,
-    "convergedPlayedFinal": 101,
+    "verifiedFinalArtifacts": 118,
+    "acceptedVerifiedFinalArtifacts": 118,
+    "convergedPlayedFinal": 112,
     "convergedNonPlayedTerminal": 6,
     "pendingVerifiedFinal": 1,
-    "openRows": 54,
+    "openRows": 37,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 6,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 101,
-    "scoredSettlementEligible": 101,
+    "historyEligible": 112,
+    "scoredSettlementEligible": 112,
     "voidSettlementEligible": 6
   },
   "fixtures": [
@@ -2058,10 +2058,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -2251,31 +2251,31 @@
       "homeTeam": "Chatou",
       "awayTeam": "Les Ulis",
       "kickoffUtc": "2026-11-15T13:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FINAL_PEN",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-15",
+        "scoreHome": 0,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2300,31 +2300,31 @@
       "homeTeam": "ESAP Metz",
       "awayTeam": "Reipertswiller",
       "kickoffUtc": "2026-11-15T13:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-15",
+        "scoreHome": 0,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2545,31 +2545,31 @@
       "homeTeam": "Neslois",
       "awayTeam": "Furiani-Agliani",
       "kickoffUtc": "2026-11-15T13:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 1,
+        "scoreAway": 4
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-15",
+        "scoreHome": 1,
+        "scoreAway": 4,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2692,31 +2692,31 @@
       "homeTeam": "Perros-Louannec",
       "awayTeam": "Vannes OC",
       "kickoffUtc": "2026-11-15T13:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 0,
+        "scoreAway": 7
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-15",
+        "scoreHome": 0,
+        "scoreAway": 7,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2937,31 +2937,31 @@
       "homeTeam": "Rochefort FC",
       "awayTeam": "Juventus Papus",
       "kickoffUtc": "2026-11-15T13:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FINAL_PEN",
+        "scoreHome": 2,
+        "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-15",
+        "scoreHome": 2,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3427,31 +3427,31 @@
       "homeTeam": "Stade Pontivy",
       "awayTeam": "Plabennec",
       "kickoffUtc": "2026-11-15T13:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FINAL_PEN",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-15",
+        "scoreHome": 0,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3476,31 +3476,31 @@
       "homeTeam": "Stade Sotteville",
       "awayTeam": "USF Fecamp",
       "kickoffUtc": "2026-11-15T13:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FINAL_PEN",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-15",
+        "scoreHome": 0,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3721,31 +3721,31 @@
       "homeTeam": "Tremblay",
       "awayTeam": "Maisons-Alfort",
       "kickoffUtc": "2026-11-15T13:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 2,
+        "scoreAway": 0
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-15",
+        "scoreHome": 2,
+        "scoreAway": 0,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -3917,31 +3917,31 @@
       "homeTeam": "Veauche",
       "awayTeam": "St Paul en Jarez",
       "kickoffUtc": "2026-11-15T13:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 1,
+        "scoreAway": 3
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-15",
+        "scoreHome": 1,
+        "scoreAway": 3,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4015,31 +4015,31 @@
       "homeTeam": "Violaines",
       "awayTeam": "Vermelles",
       "kickoffUtc": "2026-11-15T13:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-15",
+        "scoreHome": 0,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4123,18 +4123,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-15",
+        "scoreHome": 2,
+        "scoreAway": 2,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -5103,18 +5103,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-15",
+        "scoreHome": 0,
+        "scoreAway": 2,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -5152,18 +5152,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-15",
+        "scoreHome": 1,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -5201,18 +5201,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-15",
+        "scoreHome": 2,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -6328,18 +6328,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-15",
+        "scoreHome": 0,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -6377,18 +6377,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-15",
+        "scoreHome": 2,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -7445,31 +7445,31 @@
       "homeTeam": "Buwambo",
       "awayTeam": "Kiyinda Boys",
       "kickoffUtc": "2026-11-15T13:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 5
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-15",
+        "scoreHome": 1,
+        "scoreAway": 5,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -7982,7 +7982,14 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_geo1_spaeri_iberia1999_20261115",
+      "cid_mar2_chababmohammedia_olympiquesafi_20261115",
+      "cid_mar2_jeunessesportivesoualem_olympiquekhouribga_20261115",
+      "cid_mar2_wydadfes_chababatlaskhenifra_20261115",
+      "cid_srb2_metalac_napredak_20261115",
+      "cid_srb2_tsc_jedinstvou_20261115"
+    ],
     "pendingVerifiedFinalFixtureIds": [
       "cid_fracoupedefrance_atlaspaillade_ascannes_20261115"
     ]
@@ -7995,57 +8002,26 @@
     "systemHealth": {
       "schema": "ai-matchlab.system-health-alerts.v1",
       "dayKey": "2026-11-15",
-      "generatedAt": "2026-11-15T16:28:00.767Z",
-      "severity": "warning",
+      "generatedAt": "2026-11-15T17:17:22.322Z",
+      "severity": "error",
       "issueCounts": {
-        "error": 0,
-        "warning": 7,
-        "info": 10
+        "error": 2,
+        "warning": 6,
+        "info": 9
       },
-      "alert": false,
+      "alert": true,
       "alertCounts": {
-        "error": 0,
+        "error": 2,
         "warning": 0,
         "info": 0
       },
       "activeIssueCount": 17,
-      "actionableIssueCount": 7,
-      "newIssueCount": 1,
-      "newActionableIssueCount": 0,
-      "resolvedIssueCount": 0,
-      "persistentIssueCount": 16,
+      "actionableIssueCount": 8,
+      "newIssueCount": 2,
+      "newActionableIssueCount": 2,
+      "resolvedIssueCount": 2,
+      "persistentIssueCount": 15,
       "activeIssues": [
-        {
-          "severity": "info",
-          "source": "manifest",
-          "type": "frozen_value_age_preserved",
-          "message": "Frozen Value artifact predates canonical updates and satisfies the frozen release contract.",
-          "details": {
-            "fixtures": 162,
-            "valuePicks": 0,
-            "valueSource": "canonical_fixtures",
-            "latestCanonicalUpdatedAt": "2026-11-15T16:04:11.708Z",
-            "valueArtifactAt": "2026-11-15T00:25:37.007Z",
-            "valueFreshAgainstCanonical": false,
-            "mode": "frozen_snapshot",
-            "frozenIdentityBound": true,
-            "frozenReleaseSafe": true,
-            "frozenPickCount": 0,
-            "orphanPickCount": 0,
-            "orphanPickIds": [],
-            "missingMatchIdPickCount": 0,
-            "missingMatchIdPickIndexes": [],
-            "dayBound": true,
-            "canonicalSourceBound": true,
-            "recoveryContractBound": false,
-            "recoveryPublishedUniverseBound": false,
-            "recoveryUniverseEvidenceSource": null,
-            "recoveryUniverseEvidenceCount": null,
-            "recoveryUniverseEvidenceHash": null,
-            "recoveryUniverseEvidencePlans": [],
-            "ok": true
-          }
-        },
         {
           "severity": "info",
           "source": "freshness-report",
@@ -8288,6 +8264,38 @@
           }
         },
         {
+          "severity": "error",
+          "source": "live-status-completeness",
+          "type": "stale_open_exact_provider_ids",
+          "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
+          "details": {
+            "raw": "live_status_stale_open_exact_provider_ids:cid_fracoupedefrance_saintpauloise_latamponnaise_20261115",
+            "canonicalIds": [
+              "cid_fracoupedefrance_saintpauloise_latamponnaise_20261115"
+            ],
+            "count": 1,
+            "staleAfterHours": 4,
+            "exactProviderIdOnly": true,
+            "heuristicFinalPromotion": false,
+            "fixtures": [
+              {
+                "canonicalId": "cid_fracoupedefrance_saintpauloise_latamponnaise_20261115",
+                "providerId": "401933096",
+                "source": "espn",
+                "leagueSlug": "fra.coupe_de_france",
+                "providerLeagueSlug": "fra.coupe_de_france",
+                "kickoffUtc": "2026-11-15T13:00Z",
+                "ageHours": 4.021,
+                "status": "PRE",
+                "rawStatus": "STATUS_SCHEDULED",
+                "statusType": null,
+                "operationalState": null,
+                "classification": "stale_open_exact_provider_id"
+              }
+            ]
+          }
+        },
+        {
           "severity": "warning",
           "source": "build-report",
           "type": "acquisition_skipped_slugs",
@@ -8315,14 +8323,13 @@
           }
         },
         {
-          "severity": "warning",
+          "severity": "error",
           "source": "build-report",
-          "type": "build_not_strict_clean",
-          "message": "Build report is clean but not strict-clean.",
+          "type": "build_not_clean",
+          "message": "Build report is not clean.",
           "details": {
-            "clean": true,
-            "cleanStrict": false,
-            "contextOnlyWarnings": false
+            "clean": false,
+            "cleanStrict": false
           }
         },
         {
@@ -9259,6 +9266,38 @@
           }
         },
         {
+          "severity": "error",
+          "source": "live-status-completeness",
+          "type": "stale_open_exact_provider_ids",
+          "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
+          "details": {
+            "raw": "live_status_stale_open_exact_provider_ids:cid_fracoupedefrance_saintpauloise_latamponnaise_20261115",
+            "canonicalIds": [
+              "cid_fracoupedefrance_saintpauloise_latamponnaise_20261115"
+            ],
+            "count": 1,
+            "staleAfterHours": 4,
+            "exactProviderIdOnly": true,
+            "heuristicFinalPromotion": false,
+            "fixtures": [
+              {
+                "canonicalId": "cid_fracoupedefrance_saintpauloise_latamponnaise_20261115",
+                "providerId": "401933096",
+                "source": "espn",
+                "leagueSlug": "fra.coupe_de_france",
+                "providerLeagueSlug": "fra.coupe_de_france",
+                "kickoffUtc": "2026-11-15T13:00Z",
+                "ageHours": 4.021,
+                "status": "PRE",
+                "rawStatus": "STATUS_SCHEDULED",
+                "statusType": null,
+                "operationalState": null,
+                "classification": "stale_open_exact_provider_id"
+              }
+            ]
+          }
+        },
+        {
           "severity": "warning",
           "source": "build-report",
           "type": "acquisition_skipped_slugs",
@@ -9286,14 +9325,13 @@
           }
         },
         {
-          "severity": "warning",
+          "severity": "error",
           "source": "build-report",
-          "type": "build_not_strict_clean",
-          "message": "Build report is clean but not strict-clean.",
+          "type": "build_not_clean",
+          "message": "Build report is not clean.",
           "details": {
-            "clean": true,
-            "cleanStrict": false,
-            "contextOnlyWarnings": false
+            "clean": false,
+            "cleanStrict": false
           }
         },
         {
@@ -9927,6 +9965,94 @@
       ],
       "newIssues": [
         {
+          "severity": "error",
+          "source": "live-status-completeness",
+          "type": "stale_open_exact_provider_ids",
+          "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
+          "details": {
+            "raw": "live_status_stale_open_exact_provider_ids:cid_fracoupedefrance_saintpauloise_latamponnaise_20261115",
+            "canonicalIds": [
+              "cid_fracoupedefrance_saintpauloise_latamponnaise_20261115"
+            ],
+            "count": 1,
+            "staleAfterHours": 4,
+            "exactProviderIdOnly": true,
+            "heuristicFinalPromotion": false,
+            "fixtures": [
+              {
+                "canonicalId": "cid_fracoupedefrance_saintpauloise_latamponnaise_20261115",
+                "providerId": "401933096",
+                "source": "espn",
+                "leagueSlug": "fra.coupe_de_france",
+                "providerLeagueSlug": "fra.coupe_de_france",
+                "kickoffUtc": "2026-11-15T13:00Z",
+                "ageHours": 4.021,
+                "status": "PRE",
+                "rawStatus": "STATUS_SCHEDULED",
+                "statusType": null,
+                "operationalState": null,
+                "classification": "stale_open_exact_provider_id"
+              }
+            ]
+          }
+        },
+        {
+          "severity": "error",
+          "source": "build-report",
+          "type": "build_not_clean",
+          "message": "Build report is not clean.",
+          "details": {
+            "clean": false,
+            "cleanStrict": false
+          }
+        }
+      ],
+      "newActionableIssues": [
+        {
+          "severity": "error",
+          "source": "live-status-completeness",
+          "type": "stale_open_exact_provider_ids",
+          "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
+          "details": {
+            "raw": "live_status_stale_open_exact_provider_ids:cid_fracoupedefrance_saintpauloise_latamponnaise_20261115",
+            "canonicalIds": [
+              "cid_fracoupedefrance_saintpauloise_latamponnaise_20261115"
+            ],
+            "count": 1,
+            "staleAfterHours": 4,
+            "exactProviderIdOnly": true,
+            "heuristicFinalPromotion": false,
+            "fixtures": [
+              {
+                "canonicalId": "cid_fracoupedefrance_saintpauloise_latamponnaise_20261115",
+                "providerId": "401933096",
+                "source": "espn",
+                "leagueSlug": "fra.coupe_de_france",
+                "providerLeagueSlug": "fra.coupe_de_france",
+                "kickoffUtc": "2026-11-15T13:00Z",
+                "ageHours": 4.021,
+                "status": "PRE",
+                "rawStatus": "STATUS_SCHEDULED",
+                "statusType": null,
+                "operationalState": null,
+                "classification": "stale_open_exact_provider_id"
+              }
+            ]
+          }
+        },
+        {
+          "severity": "error",
+          "source": "build-report",
+          "type": "build_not_clean",
+          "message": "Build report is not clean.",
+          "details": {
+            "clean": false,
+            "cleanStrict": false
+          }
+        }
+      ],
+      "resolvedIssues": [
+        {
           "severity": "info",
           "source": "manifest",
           "type": "frozen_value_age_preserved",
@@ -9935,7 +10061,7 @@
             "fixtures": 162,
             "valuePicks": 0,
             "valueSource": "canonical_fixtures",
-            "latestCanonicalUpdatedAt": "2026-11-15T15:12:19.266Z",
+            "latestCanonicalUpdatedAt": "2026-11-15T16:04:11.708Z",
             "valueArtifactAt": "2026-11-15T00:25:37.007Z",
             "valueFreshAgainstCanonical": false,
             "mode": "frozen_snapshot",
@@ -9956,10 +10082,19 @@
             "recoveryUniverseEvidencePlans": [],
             "ok": true
           }
+        },
+        {
+          "severity": "warning",
+          "source": "build-report",
+          "type": "build_not_strict_clean",
+          "message": "Build report is clean but not strict-clean.",
+          "details": {
+            "clean": true,
+            "cleanStrict": false,
+            "contextOnlyWarnings": false
+          }
         }
       ],
-      "newActionableIssues": [],
-      "resolvedIssues": [],
       "persistentIssues": [
         {
           "severity": "info",
@@ -10227,17 +10362,6 @@
             ],
             "raw": "acquisition_skipped_slugs:afc.saff.championship,aus.w.1,bol.copa,caf.nations_qual,concacaf.nations.league,eng.w.1,eng.w.fa,esp.w.1,fra.w.1,mex.w.1,ned.w.1,nonfifa,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
             "contextOnly": false
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "build-report",
-          "type": "build_not_strict_clean",
-          "message": "Build report is clean but not strict-clean.",
-          "details": {
-            "clean": true,
-            "cleanStrict": false,
-            "contextOnlyWarnings": false
           }
         },
         {
@@ -11045,13 +11169,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "b24728e0484b4340d94a2116daafe853af8d0a090558f74ab2cacfa2c246090a",
+      "truthFingerprint": "22891b4c74a74ea13206763ec9358da646e5032e6b722f15c94352aab891ec89",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 101,
+        "expectedEligibleRows": 112,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg2_gimnasiayesgrimajujuy_almirantebrown_20261115",
@@ -11080,16 +11204,21 @@
           "cid_egy2_we_kahrabaaismailia_20261115",
           "cid_esp2_tenerife_ceuta_20261115",
           "cid_fracoupedefrance_astefana_thionville_20261115",
+          "cid_fracoupedefrance_chatou_lesulis_20261115",
+          "cid_fracoupedefrance_esapmetz_reipertswiller_20261115",
           "cid_fracoupedefrance_gfa74_stetienne_20261115",
           "cid_fracoupedefrance_massay_montlouis_20261115",
           "cid_fracoupedefrance_montignylesmetz_pontarlier_20261115",
           "cid_fracoupedefrance_montreuil_loonplage_20261115",
+          "cid_fracoupedefrance_neslois_furianiagliani_20261115",
           "cid_fracoupedefrance_olympiquecharlevilleprixam_olympiquemarcquois_20261115",
           "cid_fracoupedefrance_paris13atletico_redstar93_20261115",
+          "cid_fracoupedefrance_perroslouannec_vannesoc_20261115",
           "cid_fracoupedefrance_racingchambery_chamoisniortais_20261115",
           "cid_fracoupedefrance_rcchambery_niort_20261115",
           "cid_fracoupedefrance_riom_limonest_20261115",
           "cid_fracoupedefrance_rives82_trelissac_20261115",
+          "cid_fracoupedefrance_rochefort_juventuspapus_20261115",
           "cid_fracoupedefrance_rumillyvallieres_saintetienne_20261115",
           "cid_fracoupedefrance_saintdiekellermann_metz_20261115",
           "cid_fracoupedefrance_saintrenan_stadelaval_20261115",
@@ -11097,14 +11226,19 @@
           "cid_fracoupedefrance_senlis_saintpryvesainthilaire_20261115",
           "cid_fracoupedefrance_seyssinet_nimes_20261115",
           "cid_fracoupedefrance_stadecastelbourgeois_nantes_20261115",
+          "cid_fracoupedefrance_stadepontivy_plabennec_20261115",
+          "cid_fracoupedefrance_stadesotteville_usffecamp_20261115",
           "cid_fracoupedefrance_stmartintatinghem_racingfrance_20261115",
           "cid_fracoupedefrance_strenan_laval_20261115",
           "cid_fracoupedefrance_talange_baumelesdames_20261115",
           "cid_fracoupedefrance_tatinghem_racingcff_20261115",
+          "cid_fracoupedefrance_tremblay_maisonsalfort_20261115",
           "cid_fracoupedefrance_usmarseilleendoume_toulon_20261115",
           "cid_fracoupedefrance_valyerrescrosne_unioncosnoise_20261115",
           "cid_fracoupedefrance_vandruvre_epinal_20261115",
+          "cid_fracoupedefrance_veauche_stpaulenjarez_20261115",
           "cid_fracoupedefrance_verson_calais_20261115",
+          "cid_fracoupedefrance_violaines_vermelles_20261115",
           "cid_fracoupedefrance_yerrescrosne_cosne_20261115",
           "cid_gre2_kalamaria_athenskallithea_20261115",
           "cid_gua1_comunicaciones_cobanimperial_20261115",
@@ -11150,6 +11284,7 @@
           "cid_tun2_olympiquekef_moknine_20261115",
           "cid_uefanations_cyprus_montenegro_20261115",
           "cid_uefanations_latvia_armenia_20261115",
+          "cid_uga2_buwambo_kiyindaboys_20261115",
           "cid_ukr2_nyvaternopil_oleksandriya_20261115",
           "cid_ukr2_poltava_ahrobiznesvolochysk_20261115",
           "cid_uru1_nacional_albion_20261115",
@@ -11190,12 +11325,12 @@
       },
       "systemHealth": {
         "observed": true,
-        "state": "OBSERVED_WARNING",
+        "state": "OBSERVED_ERROR",
         "sourcePath": "data/system-health/2026-11-15.json",
-        "severity": "warning",
-        "alert": false,
+        "severity": "error",
+        "alert": true,
         "activeIssueCount": 17,
-        "actionableIssueCount": 7
+        "actionableIssueCount": 8
       },
       "authority": {
         "footballTruthMutable": false,
@@ -11214,7 +11349,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-11-15",
-      "fileCount": 101,
+      "fileCount": 118,
       "authority": "scored_final_evidence"
     },
     "downstream": {
