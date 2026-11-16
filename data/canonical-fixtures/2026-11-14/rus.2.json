@@ -2,7 +2,7 @@
   "dayKey": "2026-11-14",
   "leagueSlug": "rus.2",
   "leagueName": "Russian First League",
-  "updatedAt": "2026-11-14T15:48:34.174Z",
+  "updatedAt": "2026-11-16T01:34:30.779Z",
   "count": 2,
   "sourceMeta": {
     "acquisitionProvider": "flashscore",
@@ -17,7 +17,10 @@
       ],
       "changedRows": 1,
       "mergedAt": "2026-11-14T15:48:34.174Z"
-    }
+    },
+    "crossDayVerifiedFinalSupersessionAt": "2026-11-16T01:34:30.779Z",
+    "crossDayVerifiedFinalSupersessionRows": 1,
+    "crossDayVerifiedFinalSupersessionPolicy": "cross-day-provider-verified-final-v1"
   },
   "fixtures": [
     {
@@ -41,12 +44,78 @@
       "scoreAway": null,
       "penalties": null,
       "decidedBy": null,
-      "status": "STATUS_SCHEDULED",
-      "rawStatus": "STATUS_SCHEDULED",
+      "status": "STATUS_POSTPONED",
+      "rawStatus": "STATUS_POSTPONED",
       "minute": null,
       "venue": null,
       "firstSeenAt": "2026-11-12T00:04:14.300Z",
-      "lastSeenAt": "2026-11-12T00:04:14.341Z"
+      "lastSeenAt": "2026-11-12T00:04:14.341Z",
+      "statusType": "STATUS_POSTPONED",
+      "statusCorrection": {
+        "schema": "ai-matchlab.cross-day-verified-final-supersession.v1",
+        "correctedAt": "2026-11-16T01:34:30.779Z",
+        "decisionId": "cross-day-verified-final-SKCj4JQr-cid_rus2_chelyabinsk_velesmoscow_20261114-v1",
+        "policyVersion": "cross-day-provider-verified-final-v1",
+        "correctedFrom": {
+          "status": "STATUS_SCHEDULED",
+          "statusType": null,
+          "rawStatus": "STATUS_SCHEDULED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "correctedTo": {
+          "status": "STATUS_POSTPONED",
+          "statusType": "STATUS_POSTPONED",
+          "rawStatus": "STATUS_POSTPONED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "reason": "verified_cross_day_provider_reschedule",
+        "decisionBasis": "exact_provider_identity_cross_day_supersession_with_verified_final",
+        "providerEvidence": {
+          "provider": "flashscore",
+          "providerMatchId": "SKCj4JQr",
+          "supersededCanonicalId": "cid_rus2_chelyabinsk_velesmoscow_20261114",
+          "supersededDayKey": "2026-11-14",
+          "supersededKickoffUtc": "2026-11-13T23:00:00.000Z",
+          "evidenceCanonicalId": "cid_rus2_chelyabinsk_velesmoscow_20261115",
+          "evidenceDayKey": "2026-11-15",
+          "evidenceKickoffUtc": "2026-11-15T10:00:00.000Z",
+          "evidenceHomeTeam": "Chelyabinsk",
+          "evidenceAwayTeam": "Veles Moscow",
+          "verifiedFinalArtifact": "data/final-results/2026-11-15/cid_rus2_chelyabinsk_velesmoscow_20261115.json",
+          "verifiedFinalVerdict": "verified_final_result",
+          "verifiedFinalTruth": true,
+          "verifiedFinalScoreHome": 4,
+          "verifiedFinalScoreAway": 2
+        },
+        "guarantees": {
+          "flashscoreProviderOnly": true,
+          "exactProviderIdentity": true,
+          "sameLeague": true,
+          "exactNormalizedOrderedTeamPair": true,
+          "uniqueLatestObservation": true,
+          "strictlyNewerKickoff": true,
+          "minimumKickoffShiftRequired": true,
+          "strictlyNewerObservation": true,
+          "nonOverlappingObservationWindows": true,
+          "oldKickoffPastGraceRequired": true,
+          "oldOccurrenceScorelessScheduledOnly": true,
+          "playedFinalNeverSuperseded": true,
+          "existingExplicitNonPlayedNeverSuperseded": true,
+          "exactVerifiedFinalArtifact": true,
+          "exactVerifiedFinalFlashscoreProviderIdentity": true,
+          "verifiedFinalScoreParity": true,
+          "verifiedFinalTeamPairParity": true,
+          "oldOccurrenceHasNoActiveFinalResult": true,
+          "oldOccurrenceAbsentFromHistory": true,
+          "oldOccurrenceHasNoOfficialValuePick": true,
+          "oldOccurrenceScoreRemainsNull": true,
+          "scoreNeverCopiedBackward": true
+        }
+      }
     },
     {
       "canonicalId": "cid_rus2_ulyanovsk_torpedomoscow_20261114",

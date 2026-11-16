@@ -2,7 +2,7 @@
   "dayKey": "2026-11-13",
   "leagueSlug": "egy.2",
   "leagueName": "Egyptian Second Division",
-  "updatedAt": "2026-11-13T15:34:37.864Z",
+  "updatedAt": "2026-11-16T01:34:30.779Z",
   "count": 5,
   "sourceMeta": {
     "acquisitionProvider": "flashscore",
@@ -17,7 +17,10 @@
       ],
       "changedRows": 1,
       "mergedAt": "2026-11-13T15:34:37.864Z"
-    }
+    },
+    "crossDayVerifiedFinalSupersessionAt": "2026-11-16T01:34:30.779Z",
+    "crossDayVerifiedFinalSupersessionRows": 1,
+    "crossDayVerifiedFinalSupersessionPolicy": "cross-day-provider-verified-final-v1"
   },
   "fixtures": [
     {
@@ -191,12 +194,78 @@
       "scoreAway": null,
       "penalties": null,
       "decidedBy": null,
-      "status": "STATUS_SCHEDULED",
-      "rawStatus": "STATUS_SCHEDULED",
+      "status": "STATUS_POSTPONED",
+      "rawStatus": "STATUS_POSTPONED",
       "minute": null,
       "venue": null,
       "firstSeenAt": "2026-11-10T22:37:22.313Z",
-      "lastSeenAt": "2026-11-12T22:52:26.405Z"
+      "lastSeenAt": "2026-11-12T22:52:26.405Z",
+      "statusType": "STATUS_POSTPONED",
+      "statusCorrection": {
+        "schema": "ai-matchlab.cross-day-verified-final-supersession.v1",
+        "correctedAt": "2026-11-16T01:34:30.779Z",
+        "decisionId": "cross-day-verified-final-GjlnPQ7k-cid_egy2_we_kahrabaaismailia_20261113-v1",
+        "policyVersion": "cross-day-provider-verified-final-v1",
+        "correctedFrom": {
+          "status": "STATUS_SCHEDULED",
+          "statusType": null,
+          "rawStatus": "STATUS_SCHEDULED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "correctedTo": {
+          "status": "STATUS_POSTPONED",
+          "statusType": "STATUS_POSTPONED",
+          "rawStatus": "STATUS_POSTPONED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "reason": "verified_cross_day_provider_reschedule",
+        "decisionBasis": "exact_provider_identity_cross_day_supersession_with_verified_final",
+        "providerEvidence": {
+          "provider": "flashscore",
+          "providerMatchId": "GjlnPQ7k",
+          "supersededCanonicalId": "cid_egy2_we_kahrabaaismailia_20261113",
+          "supersededDayKey": "2026-11-13",
+          "supersededKickoffUtc": "2026-11-13T12:30:00.000Z",
+          "evidenceCanonicalId": "cid_egy2_we_kahrabaaismailia_20261115",
+          "evidenceDayKey": "2026-11-15",
+          "evidenceKickoffUtc": "2026-11-15T12:30:00.000Z",
+          "evidenceHomeTeam": "WE SC",
+          "evidenceAwayTeam": "Kahrabaa Ismailia",
+          "verifiedFinalArtifact": "data/final-results/2026-11-15/cid_egy2_we_kahrabaaismailia_20261115.json",
+          "verifiedFinalVerdict": "verified_final_result",
+          "verifiedFinalTruth": true,
+          "verifiedFinalScoreHome": 1,
+          "verifiedFinalScoreAway": 0
+        },
+        "guarantees": {
+          "flashscoreProviderOnly": true,
+          "exactProviderIdentity": true,
+          "sameLeague": true,
+          "exactNormalizedOrderedTeamPair": true,
+          "uniqueLatestObservation": true,
+          "strictlyNewerKickoff": true,
+          "minimumKickoffShiftRequired": true,
+          "strictlyNewerObservation": true,
+          "nonOverlappingObservationWindows": true,
+          "oldKickoffPastGraceRequired": true,
+          "oldOccurrenceScorelessScheduledOnly": true,
+          "playedFinalNeverSuperseded": true,
+          "existingExplicitNonPlayedNeverSuperseded": true,
+          "exactVerifiedFinalArtifact": true,
+          "exactVerifiedFinalFlashscoreProviderIdentity": true,
+          "verifiedFinalScoreParity": true,
+          "verifiedFinalTeamPairParity": true,
+          "oldOccurrenceHasNoActiveFinalResult": true,
+          "oldOccurrenceAbsentFromHistory": true,
+          "oldOccurrenceHasNoOfficialValuePick": true,
+          "oldOccurrenceScoreRemainsNull": true,
+          "scoreNeverCopiedBackward": true
+        }
+      }
     }
   ]
 }
