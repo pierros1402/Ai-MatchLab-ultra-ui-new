@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-16",
-  "generatedAt": "2026-11-16T04:37:14.010Z",
+  "generatedAt": "2026-11-16T07:11:15.774Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "b2247f8590d24edf48ed6179b6ba86ab9a33fe7bfd91a1f26e823f39c42512ff",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "b1976ae5c0df2546117c2c9b34a4a9c282044fc095583b1d219c0b44f2c67796",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -27,16 +27,16 @@
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 8,
     "acceptedVerifiedFinalArtifacts": 8,
-    "convergedPlayedFinal": 8,
+    "convergedPlayedFinal": 7,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
     "openRows": 32,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 8,
-    "scoredSettlementEligible": 8,
+    "historyEligible": 7,
+    "scoredSettlementEligible": 7,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -454,15 +454,15 @@
         "verdict": "verified_final_result",
         "dayKey": "2026-11-16",
         "scoreHome": 0,
-        "scoreAway": 2,
-        "scoreParity": true
+        "scoreAway": 1,
+        "scoreParity": false
       },
       "decision": {
-        "status": "CONVERGED_PLAYED_FINAL",
-        "reason": "canonical_and_verified_final_converged",
+        "status": "CONFLICT",
+        "reason": "canonical_verified_final_score_mismatch",
         "operationallyClosed": true,
-        "historyEligible": true,
-        "scoredSettlementEligible": true,
+        "historyEligible": false,
+        "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2004,7 +2004,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_col2_quindio_cartagena_20261116"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -4448,18 +4450,17 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "b2247f8590d24edf48ed6179b6ba86ab9a33fe7bfd91a1f26e823f39c42512ff",
+      "truthFingerprint": "b1976ae5c0df2546117c2c9b34a4a9c282044fc095583b1d219c0b44f2c67796",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 8,
+        "expectedEligibleRows": 7,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg2_ferrocarriloeste_gimnasiaytirosalta_20261116",
           "cid_chi2_recoleta_deportesiquique_20261116",
-          "cid_col2_quindio_cartagena_20261116",
           "cid_col2_tigres_realcundinamarca_20261116",
           "cid_gua1_suchitepequez_antiguagfc_20261116",
           "cid_slv1_incaaruba_aguila_20261116",
