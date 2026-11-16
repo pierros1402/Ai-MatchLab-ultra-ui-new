@@ -1,0 +1,2106 @@
+{
+  "schema": "ai-matchlab.system-health-alerts.v1",
+  "dayKey": "2026-11-16",
+  "generatedAt": "2026-11-16T19:05:53.779Z",
+  "severity": "error",
+  "issueCounts": {
+    "error": 3,
+    "warning": 6,
+    "info": 11
+  },
+  "alert": true,
+  "alertCounts": {
+    "error": 1,
+    "warning": 0,
+    "info": 0
+  },
+  "activeIssueCount": 20,
+  "actionableIssueCount": 9,
+  "newIssueCount": 1,
+  "newActionableIssueCount": 1,
+  "resolvedIssueCount": 0,
+  "persistentIssueCount": 19,
+  "activeIssues": [
+    {
+      "severity": "info",
+      "source": "manifest",
+      "type": "frozen_value_age_preserved",
+      "message": "Frozen Value artifact predates canonical updates and satisfies the frozen release contract.",
+      "details": {
+        "fixtures": 40,
+        "valuePicks": 0,
+        "valueSource": "canonical_fixtures",
+        "latestCanonicalUpdatedAt": "2026-11-16T14:04:20.396Z",
+        "valueArtifactAt": "2026-11-16T01:20:41.868Z",
+        "valueFreshAgainstCanonical": false,
+        "mode": "frozen_snapshot",
+        "frozenIdentityBound": true,
+        "frozenReleaseSafe": true,
+        "frozenPickCount": 0,
+        "orphanPickCount": 0,
+        "orphanPickIds": [],
+        "missingMatchIdPickCount": 0,
+        "missingMatchIdPickIndexes": [],
+        "dayBound": true,
+        "canonicalSourceBound": true,
+        "recoveryContractBound": false,
+        "recoveryPublishedUniverseBound": false,
+        "recoveryUniverseEvidenceSource": null,
+        "recoveryUniverseEvidenceCount": null,
+        "recoveryUniverseEvidenceHash": null,
+        "recoveryUniverseEvidencePlans": [],
+        "ok": true
+      }
+    },
+    {
+      "severity": "info",
+      "source": "invariant-report",
+      "type": "coverage_floor_drop",
+      "message": "Canonical fixtures are below static floor but meet the effective floor.",
+      "details": {
+        "type": "coverage_floor_drop",
+        "staticFloor": 45,
+        "effectiveFloor": 37,
+        "actualFixtures": 40,
+        "drop": 8,
+        "reason": "canonical_fixture_count_below_static_floor",
+        "effectiveFloorMet": true
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-11-16.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b",
+        "artifact": "value-plans/2026-11-16/plan-b.json",
+        "at": null,
+        "staleReason": "plan_b_stale_against_canonical",
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-11-16",
+          "currentAthensDay": "2026-11-16",
+          "fixtureCount": 40,
+          "frozenHash": "fb1f2cee544f8a902b1dcd1b8bd9af3127c55943d99a5dc366da90c8e82e21ea",
+          "currentHash": "fb1f2cee544f8a902b1dcd1b8bd9af3127c55943d99a5dc366da90c8e82e21ea",
+          "strictFrozenParity": true,
+          "membershipParity": true,
+          "descriptorDrift": false,
+          "publicationMembershipPreserved": false,
+          "authorizedShrink": false,
+          "removedFixtureIds": [],
+          "deferredCurrentFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "exact_current_frozen_membership"
+        },
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b2",
+        "artifact": "value-plans/2026-11-16/plan-b2.json",
+        "at": null,
+        "staleReason": "plan_b2_stale_against_canonical",
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-11-16",
+          "currentAthensDay": "2026-11-16",
+          "fixtureCount": 40,
+          "frozenHash": "fb1f2cee544f8a902b1dcd1b8bd9af3127c55943d99a5dc366da90c8e82e21ea",
+          "currentHash": "fb1f2cee544f8a902b1dcd1b8bd9af3127c55943d99a5dc366da90c8e82e21ea",
+          "strictFrozenParity": true,
+          "membershipParity": true,
+          "descriptorDrift": false,
+          "publicationMembershipPreserved": false,
+          "authorizedShrink": false,
+          "removedFixtureIds": [],
+          "deferredCurrentFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "exact_current_frozen_membership"
+        },
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-input",
+      "type": "plan_b_assessment_coverage_incomplete",
+      "message": "Plan B ran with incomplete model-assessment coverage; its output is not proof of a fully evaluated zero-pick day.",
+      "details": {
+        "plan": "B",
+        "missing": 2,
+        "ambiguous": 0,
+        "canonicalFixtures": 40,
+        "joinedMatches": 38,
+        "orphanAssessmentRows": 5,
+        "missingCanonicalIds": [
+          "cid_gua1_suchitepequez_antiguagfc_20261116",
+          "cid_slv1_incaaruba_aguila_20261116"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-input",
+      "type": "plan_b2_assessment_coverage_incomplete",
+      "message": "Plan B2 ran with incomplete model-assessment coverage; its output is not proof of a fully evaluated zero-pick day.",
+      "details": {
+        "plan": "B2",
+        "missing": 2,
+        "ambiguous": 0,
+        "canonicalFixtures": 40,
+        "joinedMatches": 38,
+        "orphanAssessmentRows": 5,
+        "missingCanonicalIds": [
+          "cid_gua1_suchitepequez_antiguagfc_20261116",
+          "cid_slv1_incaaruba_aguila_20261116"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-input",
+      "type": "plan_b2_opponent_adjustment_unavailable",
+      "message": "Plan B2 lacks trusted opponent standings for 38 evaluated fixtures.",
+      "details": {
+        "plan": "B2",
+        "fixtures": 38
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "age_expired_results_rows_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "age_expired_results_rows_present",
+        "count": 22054,
+        "informational": true
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "history_semantic_warnings_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "history_semantic_warnings_present",
+        "count": 4,
+        "informational": true
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "score_consistent_alias_mirror_conflicts_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "score_consistent_alias_mirror_conflicts_present",
+        "count": 47,
+        "informational": true
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "live-status-completeness",
+      "type": "stale_open_exact_provider_ids",
+      "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
+      "details": {
+        "raw": "live_status_stale_open_exact_provider_ids:cid_uefanations_faroeislands_moldova_20261116,cid_uefanations_kazakhstan_slovakia_20261116",
+        "canonicalIds": [
+          "cid_uefanations_faroeislands_moldova_20261116",
+          "cid_uefanations_kazakhstan_slovakia_20261116"
+        ],
+        "count": 2,
+        "staleAfterHours": 4,
+        "exactProviderIdOnly": true,
+        "heuristicFinalPromotion": false,
+        "fixtures": [
+          {
+            "canonicalId": "cid_uefanations_faroeislands_moldova_20261116",
+            "providerId": "401861180",
+            "source": "espn",
+            "leagueSlug": "uefa.nations",
+            "providerLeagueSlug": "uefa.nations",
+            "kickoffUtc": "2026-11-16T15:00Z",
+            "ageHours": 4.832,
+            "status": "PRE",
+            "rawStatus": "STATUS_SCHEDULED",
+            "statusType": null,
+            "operationalState": null,
+            "classification": "stale_open_exact_provider_id"
+          },
+          {
+            "canonicalId": "cid_uefanations_kazakhstan_slovakia_20261116",
+            "providerId": "401861181",
+            "source": "espn",
+            "leagueSlug": "uefa.nations",
+            "providerLeagueSlug": "uefa.nations",
+            "kickoffUtc": "2026-11-16T15:00Z",
+            "ageHours": 4.832,
+            "status": "PRE",
+            "rawStatus": "STATUS_SCHEDULED",
+            "statusType": null,
+            "operationalState": null,
+            "classification": "stale_open_exact_provider_id"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "bol.copa",
+          "caf.nations_qual",
+          "concacaf.nations.league",
+          "eng.w.1",
+          "eng.w.fa",
+          "esp.w.1",
+          "mex.w.1",
+          "ned.w.1",
+          "uefa.euro_u21_qual",
+          "usa.ncaa.m.1",
+          "usa.ncaa.w.1",
+          "usa.w.usl.1"
+        ],
+        "raw": "acquisition_skipped_slugs:bol.copa,caf.nations_qual,concacaf.nations.league,eng.w.1,eng.w.fa,esp.w.1,mex.w.1,ned.w.1,uefa.euro_u21_qual,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
+        "contextOnly": false
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
+    },
+    {
+      "severity": "info",
+      "source": "competition-admission",
+      "type": "competition_admission_active",
+      "message": "Persistent domestic competition admissions are active.",
+      "details": {
+        "admittedSlugs": [
+          "crc.1",
+          "gua.1",
+          "hon.1",
+          "par.1",
+          "slv.1"
+        ],
+        "summary": {
+          "evidenceSlugCount": 30,
+          "admittedCount": 5,
+          "pendingCount": 0,
+          "rejectedCount": 30,
+          "alreadyDeclaredCount": 0
+        }
+      }
+    },
+    {
+      "severity": "info",
+      "source": "competition-admission",
+      "type": "competition_admission_rejected",
+      "message": "Observed competition slugs were rejected by the fail-closed admission policy.",
+      "details": {
+        "rejectedSlugs": [
+          "afc.saff.championship",
+          "arg.3",
+          "arg.copa",
+          "arg.supercopa",
+          "aus.w.1",
+          "bol.copa",
+          "caf.nations_qual",
+          "can.w.nsl",
+          "club.friendly",
+          "concacaf.nations.league",
+          "eng.w.1",
+          "eng.w.fa",
+          "eng.w.league_cup",
+          "esp.copa_de_la_reina",
+          "esp.w.1",
+          "fifa.friendly",
+          "fifa.friendly_u21",
+          "fra.w.1",
+          "mex.w.1",
+          "ned.w.1",
+          "nonfifa",
+          "uefa.euro_u21_qual",
+          "uefa.w.europa",
+          "uefa.wchampions",
+          "usa.ncaa.m.1",
+          "usa.ncaa.w.1",
+          "usa.nwsl",
+          "usa.usl.1",
+          "usa.usl.l1",
+          "usa.w.usl.1"
+        ],
+        "summary": {
+          "evidenceSlugCount": 30,
+          "admittedCount": 5,
+          "pendingCount": 0,
+          "rejectedCount": 30,
+          "alreadyDeclaredCount": 0
+        }
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "active-competition-completeness",
+      "type": "active_competition_scope_unresolved",
+      "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
+      "details": {
+        "dayKey": "2026-11-16",
+        "count": 23,
+        "competitions": [
+          {
+            "providerCompetitionId": "ptHQbUeo",
+            "providerPath": "/football/antigua-barbuda/abfa-premier-league/",
+            "providerCountry": "Antigua & Barbuda",
+            "providerName": "ABFA Premier League",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "MiXi65Mj",
+              "pUU6F9a4"
+            ]
+          },
+          {
+            "providerCompetitionId": "SvvJdZT1",
+            "providerPath": "/football/argentina/primera-c/",
+            "providerCountry": "Argentina",
+            "providerName": "Primera C - Promotion - Play Offs",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "WjAduq8m"
+            ]
+          },
+          {
+            "providerCompetitionId": "UJ5yPXGU",
+            "providerPath": "/football/brazil/kings-cup-brazil/",
+            "providerCountry": "Brazil",
+            "providerName": "Kings Cup - Brazil",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "QR01eH6E",
+              "YXDFXDE7"
+            ]
+          },
+          {
+            "providerCompetitionId": "G8gmf8XR",
+            "providerPath": "/football/cameroon/elite-one/",
+            "providerCountry": "Cameroon",
+            "providerName": "Elite One",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "2Pa1Jfte"
+            ]
+          },
+          {
+            "providerCompetitionId": "rizh8dAa",
+            "providerPath": "/football/chile/segunda-division/",
+            "providerCountry": "Chile",
+            "providerName": "Segunda Division - Relegation Group",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "bs65ABoT"
+            ]
+          },
+          {
+            "providerCompetitionId": "fRrUSJBE",
+            "providerPath": "/football/dr-congo/ligue-1/",
+            "providerCountry": "DR Congo",
+            "providerName": "Ligue 1",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "fehqAlrB",
+              "px19aw1D"
+            ]
+          },
+          {
+            "providerCompetitionId": "vF4o1qCD",
+            "providerPath": "/football/el-salvador/primera-division/",
+            "providerCountry": "El Salvador",
+            "providerName": "Primera Division - Apertura",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "v3SiiJyo"
+            ]
+          },
+          {
+            "providerCompetitionId": "CGhHvd9l",
+            "providerPath": "/football/england/baller-league-uk/",
+            "providerCountry": "England",
+            "providerName": "Baller League - UK",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 6,
+            "targetDaySourceIds": [
+              "42girT9l",
+              "8WmOdSOs",
+              "CSdat7v1",
+              "pte7vo9D",
+              "tpnWf6gf",
+              "xlch2l1K"
+            ]
+          },
+          {
+            "providerCompetitionId": "Ol7mLaCk",
+            "providerPath": "/football/england/premier-league-cup/",
+            "providerCountry": "England",
+            "providerName": "Premier League Cup",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "ClS86d9U",
+              "h0Ph5hS8"
+            ]
+          },
+          {
+            "providerCompetitionId": "WElfKJSN",
+            "providerPath": "/football/guatemala/liga-nacional/",
+            "providerCountry": "Guatemala",
+            "providerName": "Liga Nacional - Apertura",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "AsmcbIjL"
+            ]
+          },
+          {
+            "providerCompetitionId": "pGc1BATg",
+            "providerPath": "/football/iran/azadegan-league/",
+            "providerCountry": "Iran",
+            "providerName": "Azadegan League",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 8,
+            "targetDaySourceIds": [
+              "C0zZCxn9",
+              "bw4MjnV6",
+              "jD0Eh80f",
+              "nNrmkZg2",
+              "rRg9dH1S",
+              "rmc6fUVs",
+              "vcuuiePk",
+              "z1j1bwXF"
+            ]
+          },
+          {
+            "providerCompetitionId": "EaiVDG2C",
+            "providerPath": "/football/italy/kings-cup-italy/",
+            "providerCountry": "Italy",
+            "providerName": "Kings Cup - Italy",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 6,
+            "targetDaySourceIds": [
+              "0vMxk45S",
+              "27AGsMc2",
+              "K0KMhn63",
+              "UgC8qrTk",
+              "hEIUjQzG",
+              "hfSzVrEd"
+            ]
+          },
+          {
+            "providerCompetitionId": "nwJV92k5",
+            "providerPath": "/football/italy/serie-c-group-b/",
+            "providerCountry": "Italy",
+            "providerName": "Serie C - Group B",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "r1Q54Ezp"
+            ]
+          },
+          {
+            "providerCompetitionId": "f3Mw8tKH",
+            "providerPath": "/football/italy/serie-c-group-c/",
+            "providerCountry": "Italy",
+            "providerName": "Serie C - Group C",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "U7g5bUNa"
+            ]
+          },
+          {
+            "providerCompetitionId": "tjmWOXSk",
+            "providerPath": "/football/mali/premiere-division/",
+            "providerCountry": "Mali",
+            "providerName": "Premiere Division",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "25emjdrA",
+              "UicuhIDc"
+            ]
+          },
+          {
+            "providerCompetitionId": "GAhlTb0U",
+            "providerPath": "/football/mexico/liga-premier-serie-a/",
+            "providerCountry": "Mexico",
+            "providerName": "Liga Premier Serie A",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "4nT7VhMO"
+            ]
+          },
+          {
+            "providerCompetitionId": "SjBPiEqA",
+            "providerPath": "/football/nigeria/nnl/",
+            "providerCountry": "Nigeria",
+            "providerName": "NNL",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "r14hokDE"
+            ]
+          },
+          {
+            "providerCompetitionId": "WWaZ6HjC",
+            "providerPath": "/football/north-central-america/concacaf-nations-league/",
+            "providerCountry": "North & Central America",
+            "providerName": "CONCACAF Nations League - League A - Play Offs",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "8ExAHmop"
+            ]
+          },
+          {
+            "providerCompetitionId": "WWaZ6HjC",
+            "providerPath": "/football/north-central-america/concacaf-nations-league/",
+            "providerCountry": "North & Central America",
+            "providerName": "CONCACAF Nations League - League B",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 3,
+            "targetDaySourceIds": [
+              "EJo6seyf",
+              "KzuhApBc",
+              "SQDRBcn2"
+            ]
+          },
+          {
+            "providerCompetitionId": "GQYULxF7",
+            "providerPath": "/football/peru/copa-de-la-liga/",
+            "providerCountry": "Peru",
+            "providerName": "Copa de la Liga - Play Offs",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "YTXNUZWa"
+            ]
+          },
+          {
+            "providerCompetitionId": "EovFcuY7",
+            "providerPath": "/football/suriname/sml/",
+            "providerCountry": "Suriname",
+            "providerName": "SML",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "06SWadlo"
+            ]
+          },
+          {
+            "providerCompetitionId": "h0gCkGMN",
+            "providerPath": "/football/ukraine/druha-liga/",
+            "providerCountry": "Ukraine",
+            "providerName": "Druha Liga",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "WzrY3b8E"
+            ]
+          },
+          {
+            "providerCompetitionId": "0",
+            "providerPath": "/football/world/friendly-international/",
+            "providerCountry": "World",
+            "providerName": "Friendly International",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 16,
+            "targetDaySourceIds": [
+              "0UMpBJvp",
+              "2qpLqXEr",
+              "8zlxzHMr",
+              "AkogiWFM",
+              "ERmZth5d",
+              "I9VSo25t",
+              "MRT6wmZp",
+              "OQ0Gg1EL",
+              "SjZKNnfS",
+              "SvokN5IE",
+              "fJhxhoBD",
+              "ltxMEDK0",
+              "n7xZ6G3b",
+              "ncuwTe23",
+              "tAZQ8xZo",
+              "zkCOnV2e"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "active-competition-completeness",
+      "type": "active_competition_structural_adapter_gap",
+      "message": "Effective competition slugs still rely on supplemental acquisition because no league adapter is enabled.",
+      "details": {
+        "dayKey": "2026-11-16",
+        "slugs": [
+          "crc.1",
+          "gua.1",
+          "hon.1",
+          "par.1",
+          "slv.1"
+        ]
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "value_plan_comparison_summary",
+      "message": "Four-plan Value comparison artifact is available.",
+      "details": {
+        "complete": true,
+        "requiredPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "presentPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "missingPlans": [],
+        "planA": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planA2": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planB": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planB2": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        }
+      }
+    }
+  ],
+  "actionableIssues": [
+    {
+      "severity": "warning",
+      "source": "value-input",
+      "type": "plan_b_assessment_coverage_incomplete",
+      "message": "Plan B ran with incomplete model-assessment coverage; its output is not proof of a fully evaluated zero-pick day.",
+      "details": {
+        "plan": "B",
+        "missing": 2,
+        "ambiguous": 0,
+        "canonicalFixtures": 40,
+        "joinedMatches": 38,
+        "orphanAssessmentRows": 5,
+        "missingCanonicalIds": [
+          "cid_gua1_suchitepequez_antiguagfc_20261116",
+          "cid_slv1_incaaruba_aguila_20261116"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-input",
+      "type": "plan_b2_assessment_coverage_incomplete",
+      "message": "Plan B2 ran with incomplete model-assessment coverage; its output is not proof of a fully evaluated zero-pick day.",
+      "details": {
+        "plan": "B2",
+        "missing": 2,
+        "ambiguous": 0,
+        "canonicalFixtures": 40,
+        "joinedMatches": 38,
+        "orphanAssessmentRows": 5,
+        "missingCanonicalIds": [
+          "cid_gua1_suchitepequez_antiguagfc_20261116",
+          "cid_slv1_incaaruba_aguila_20261116"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-input",
+      "type": "plan_b2_opponent_adjustment_unavailable",
+      "message": "Plan B2 lacks trusted opponent standings for 38 evaluated fixtures.",
+      "details": {
+        "plan": "B2",
+        "fixtures": 38
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "live-status-completeness",
+      "type": "stale_open_exact_provider_ids",
+      "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
+      "details": {
+        "raw": "live_status_stale_open_exact_provider_ids:cid_uefanations_faroeislands_moldova_20261116,cid_uefanations_kazakhstan_slovakia_20261116",
+        "canonicalIds": [
+          "cid_uefanations_faroeislands_moldova_20261116",
+          "cid_uefanations_kazakhstan_slovakia_20261116"
+        ],
+        "count": 2,
+        "staleAfterHours": 4,
+        "exactProviderIdOnly": true,
+        "heuristicFinalPromotion": false,
+        "fixtures": [
+          {
+            "canonicalId": "cid_uefanations_faroeislands_moldova_20261116",
+            "providerId": "401861180",
+            "source": "espn",
+            "leagueSlug": "uefa.nations",
+            "providerLeagueSlug": "uefa.nations",
+            "kickoffUtc": "2026-11-16T15:00Z",
+            "ageHours": 4.832,
+            "status": "PRE",
+            "rawStatus": "STATUS_SCHEDULED",
+            "statusType": null,
+            "operationalState": null,
+            "classification": "stale_open_exact_provider_id"
+          },
+          {
+            "canonicalId": "cid_uefanations_kazakhstan_slovakia_20261116",
+            "providerId": "401861181",
+            "source": "espn",
+            "leagueSlug": "uefa.nations",
+            "providerLeagueSlug": "uefa.nations",
+            "kickoffUtc": "2026-11-16T15:00Z",
+            "ageHours": 4.832,
+            "status": "PRE",
+            "rawStatus": "STATUS_SCHEDULED",
+            "statusType": null,
+            "operationalState": null,
+            "classification": "stale_open_exact_provider_id"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "bol.copa",
+          "caf.nations_qual",
+          "concacaf.nations.league",
+          "eng.w.1",
+          "eng.w.fa",
+          "esp.w.1",
+          "mex.w.1",
+          "ned.w.1",
+          "uefa.euro_u21_qual",
+          "usa.ncaa.m.1",
+          "usa.ncaa.w.1",
+          "usa.w.usl.1"
+        ],
+        "raw": "acquisition_skipped_slugs:bol.copa,caf.nations_qual,concacaf.nations.league,eng.w.1,eng.w.fa,esp.w.1,mex.w.1,ned.w.1,uefa.euro_u21_qual,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
+        "contextOnly": false
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "active-competition-completeness",
+      "type": "active_competition_scope_unresolved",
+      "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
+      "details": {
+        "dayKey": "2026-11-16",
+        "count": 23,
+        "competitions": [
+          {
+            "providerCompetitionId": "ptHQbUeo",
+            "providerPath": "/football/antigua-barbuda/abfa-premier-league/",
+            "providerCountry": "Antigua & Barbuda",
+            "providerName": "ABFA Premier League",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "MiXi65Mj",
+              "pUU6F9a4"
+            ]
+          },
+          {
+            "providerCompetitionId": "SvvJdZT1",
+            "providerPath": "/football/argentina/primera-c/",
+            "providerCountry": "Argentina",
+            "providerName": "Primera C - Promotion - Play Offs",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "WjAduq8m"
+            ]
+          },
+          {
+            "providerCompetitionId": "UJ5yPXGU",
+            "providerPath": "/football/brazil/kings-cup-brazil/",
+            "providerCountry": "Brazil",
+            "providerName": "Kings Cup - Brazil",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "QR01eH6E",
+              "YXDFXDE7"
+            ]
+          },
+          {
+            "providerCompetitionId": "G8gmf8XR",
+            "providerPath": "/football/cameroon/elite-one/",
+            "providerCountry": "Cameroon",
+            "providerName": "Elite One",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "2Pa1Jfte"
+            ]
+          },
+          {
+            "providerCompetitionId": "rizh8dAa",
+            "providerPath": "/football/chile/segunda-division/",
+            "providerCountry": "Chile",
+            "providerName": "Segunda Division - Relegation Group",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "bs65ABoT"
+            ]
+          },
+          {
+            "providerCompetitionId": "fRrUSJBE",
+            "providerPath": "/football/dr-congo/ligue-1/",
+            "providerCountry": "DR Congo",
+            "providerName": "Ligue 1",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "fehqAlrB",
+              "px19aw1D"
+            ]
+          },
+          {
+            "providerCompetitionId": "vF4o1qCD",
+            "providerPath": "/football/el-salvador/primera-division/",
+            "providerCountry": "El Salvador",
+            "providerName": "Primera Division - Apertura",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "v3SiiJyo"
+            ]
+          },
+          {
+            "providerCompetitionId": "CGhHvd9l",
+            "providerPath": "/football/england/baller-league-uk/",
+            "providerCountry": "England",
+            "providerName": "Baller League - UK",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 6,
+            "targetDaySourceIds": [
+              "42girT9l",
+              "8WmOdSOs",
+              "CSdat7v1",
+              "pte7vo9D",
+              "tpnWf6gf",
+              "xlch2l1K"
+            ]
+          },
+          {
+            "providerCompetitionId": "Ol7mLaCk",
+            "providerPath": "/football/england/premier-league-cup/",
+            "providerCountry": "England",
+            "providerName": "Premier League Cup",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "ClS86d9U",
+              "h0Ph5hS8"
+            ]
+          },
+          {
+            "providerCompetitionId": "WElfKJSN",
+            "providerPath": "/football/guatemala/liga-nacional/",
+            "providerCountry": "Guatemala",
+            "providerName": "Liga Nacional - Apertura",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "AsmcbIjL"
+            ]
+          },
+          {
+            "providerCompetitionId": "pGc1BATg",
+            "providerPath": "/football/iran/azadegan-league/",
+            "providerCountry": "Iran",
+            "providerName": "Azadegan League",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 8,
+            "targetDaySourceIds": [
+              "C0zZCxn9",
+              "bw4MjnV6",
+              "jD0Eh80f",
+              "nNrmkZg2",
+              "rRg9dH1S",
+              "rmc6fUVs",
+              "vcuuiePk",
+              "z1j1bwXF"
+            ]
+          },
+          {
+            "providerCompetitionId": "EaiVDG2C",
+            "providerPath": "/football/italy/kings-cup-italy/",
+            "providerCountry": "Italy",
+            "providerName": "Kings Cup - Italy",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 6,
+            "targetDaySourceIds": [
+              "0vMxk45S",
+              "27AGsMc2",
+              "K0KMhn63",
+              "UgC8qrTk",
+              "hEIUjQzG",
+              "hfSzVrEd"
+            ]
+          },
+          {
+            "providerCompetitionId": "nwJV92k5",
+            "providerPath": "/football/italy/serie-c-group-b/",
+            "providerCountry": "Italy",
+            "providerName": "Serie C - Group B",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "r1Q54Ezp"
+            ]
+          },
+          {
+            "providerCompetitionId": "f3Mw8tKH",
+            "providerPath": "/football/italy/serie-c-group-c/",
+            "providerCountry": "Italy",
+            "providerName": "Serie C - Group C",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "U7g5bUNa"
+            ]
+          },
+          {
+            "providerCompetitionId": "tjmWOXSk",
+            "providerPath": "/football/mali/premiere-division/",
+            "providerCountry": "Mali",
+            "providerName": "Premiere Division",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "25emjdrA",
+              "UicuhIDc"
+            ]
+          },
+          {
+            "providerCompetitionId": "GAhlTb0U",
+            "providerPath": "/football/mexico/liga-premier-serie-a/",
+            "providerCountry": "Mexico",
+            "providerName": "Liga Premier Serie A",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "4nT7VhMO"
+            ]
+          },
+          {
+            "providerCompetitionId": "SjBPiEqA",
+            "providerPath": "/football/nigeria/nnl/",
+            "providerCountry": "Nigeria",
+            "providerName": "NNL",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "r14hokDE"
+            ]
+          },
+          {
+            "providerCompetitionId": "WWaZ6HjC",
+            "providerPath": "/football/north-central-america/concacaf-nations-league/",
+            "providerCountry": "North & Central America",
+            "providerName": "CONCACAF Nations League - League A - Play Offs",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "8ExAHmop"
+            ]
+          },
+          {
+            "providerCompetitionId": "WWaZ6HjC",
+            "providerPath": "/football/north-central-america/concacaf-nations-league/",
+            "providerCountry": "North & Central America",
+            "providerName": "CONCACAF Nations League - League B",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 3,
+            "targetDaySourceIds": [
+              "EJo6seyf",
+              "KzuhApBc",
+              "SQDRBcn2"
+            ]
+          },
+          {
+            "providerCompetitionId": "GQYULxF7",
+            "providerPath": "/football/peru/copa-de-la-liga/",
+            "providerCountry": "Peru",
+            "providerName": "Copa de la Liga - Play Offs",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "YTXNUZWa"
+            ]
+          },
+          {
+            "providerCompetitionId": "EovFcuY7",
+            "providerPath": "/football/suriname/sml/",
+            "providerCountry": "Suriname",
+            "providerName": "SML",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "06SWadlo"
+            ]
+          },
+          {
+            "providerCompetitionId": "h0gCkGMN",
+            "providerPath": "/football/ukraine/druha-liga/",
+            "providerCountry": "Ukraine",
+            "providerName": "Druha Liga",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "WzrY3b8E"
+            ]
+          },
+          {
+            "providerCompetitionId": "0",
+            "providerPath": "/football/world/friendly-international/",
+            "providerCountry": "World",
+            "providerName": "Friendly International",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 16,
+            "targetDaySourceIds": [
+              "0UMpBJvp",
+              "2qpLqXEr",
+              "8zlxzHMr",
+              "AkogiWFM",
+              "ERmZth5d",
+              "I9VSo25t",
+              "MRT6wmZp",
+              "OQ0Gg1EL",
+              "SjZKNnfS",
+              "SvokN5IE",
+              "fJhxhoBD",
+              "ltxMEDK0",
+              "n7xZ6G3b",
+              "ncuwTe23",
+              "tAZQ8xZo",
+              "zkCOnV2e"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "active-competition-completeness",
+      "type": "active_competition_structural_adapter_gap",
+      "message": "Effective competition slugs still rely on supplemental acquisition because no league adapter is enabled.",
+      "details": {
+        "dayKey": "2026-11-16",
+        "slugs": [
+          "crc.1",
+          "gua.1",
+          "hon.1",
+          "par.1",
+          "slv.1"
+        ]
+      }
+    }
+  ],
+  "newIssues": [
+    {
+      "severity": "error",
+      "source": "live-status-completeness",
+      "type": "stale_open_exact_provider_ids",
+      "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
+      "details": {
+        "raw": "live_status_stale_open_exact_provider_ids:cid_uefanations_faroeislands_moldova_20261116,cid_uefanations_kazakhstan_slovakia_20261116",
+        "canonicalIds": [
+          "cid_uefanations_faroeislands_moldova_20261116",
+          "cid_uefanations_kazakhstan_slovakia_20261116"
+        ],
+        "count": 2,
+        "staleAfterHours": 4,
+        "exactProviderIdOnly": true,
+        "heuristicFinalPromotion": false,
+        "fixtures": [
+          {
+            "canonicalId": "cid_uefanations_faroeislands_moldova_20261116",
+            "providerId": "401861180",
+            "source": "espn",
+            "leagueSlug": "uefa.nations",
+            "providerLeagueSlug": "uefa.nations",
+            "kickoffUtc": "2026-11-16T15:00Z",
+            "ageHours": 4.098,
+            "status": "PRE",
+            "rawStatus": "STATUS_SCHEDULED",
+            "statusType": null,
+            "operationalState": null,
+            "classification": "stale_open_exact_provider_id"
+          },
+          {
+            "canonicalId": "cid_uefanations_kazakhstan_slovakia_20261116",
+            "providerId": "401861181",
+            "source": "espn",
+            "leagueSlug": "uefa.nations",
+            "providerLeagueSlug": "uefa.nations",
+            "kickoffUtc": "2026-11-16T15:00Z",
+            "ageHours": 4.098,
+            "status": "PRE",
+            "rawStatus": "STATUS_SCHEDULED",
+            "statusType": null,
+            "operationalState": null,
+            "classification": "stale_open_exact_provider_id"
+          }
+        ]
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "error",
+      "source": "live-status-completeness",
+      "type": "stale_open_exact_provider_ids",
+      "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
+      "details": {
+        "raw": "live_status_stale_open_exact_provider_ids:cid_uefanations_faroeislands_moldova_20261116,cid_uefanations_kazakhstan_slovakia_20261116",
+        "canonicalIds": [
+          "cid_uefanations_faroeislands_moldova_20261116",
+          "cid_uefanations_kazakhstan_slovakia_20261116"
+        ],
+        "count": 2,
+        "staleAfterHours": 4,
+        "exactProviderIdOnly": true,
+        "heuristicFinalPromotion": false,
+        "fixtures": [
+          {
+            "canonicalId": "cid_uefanations_faroeislands_moldova_20261116",
+            "providerId": "401861180",
+            "source": "espn",
+            "leagueSlug": "uefa.nations",
+            "providerLeagueSlug": "uefa.nations",
+            "kickoffUtc": "2026-11-16T15:00Z",
+            "ageHours": 4.098,
+            "status": "PRE",
+            "rawStatus": "STATUS_SCHEDULED",
+            "statusType": null,
+            "operationalState": null,
+            "classification": "stale_open_exact_provider_id"
+          },
+          {
+            "canonicalId": "cid_uefanations_kazakhstan_slovakia_20261116",
+            "providerId": "401861181",
+            "source": "espn",
+            "leagueSlug": "uefa.nations",
+            "providerLeagueSlug": "uefa.nations",
+            "kickoffUtc": "2026-11-16T15:00Z",
+            "ageHours": 4.098,
+            "status": "PRE",
+            "rawStatus": "STATUS_SCHEDULED",
+            "statusType": null,
+            "operationalState": null,
+            "classification": "stale_open_exact_provider_id"
+          }
+        ]
+      }
+    }
+  ],
+  "resolvedIssues": [],
+  "persistentIssues": [
+    {
+      "severity": "info",
+      "source": "manifest",
+      "type": "frozen_value_age_preserved",
+      "message": "Frozen Value artifact predates canonical updates and satisfies the frozen release contract.",
+      "details": {
+        "fixtures": 40,
+        "valuePicks": 0,
+        "valueSource": "canonical_fixtures",
+        "latestCanonicalUpdatedAt": "2026-11-16T14:04:20.396Z",
+        "valueArtifactAt": "2026-11-16T01:20:41.868Z",
+        "valueFreshAgainstCanonical": false,
+        "mode": "frozen_snapshot",
+        "frozenIdentityBound": true,
+        "frozenReleaseSafe": true,
+        "frozenPickCount": 0,
+        "orphanPickCount": 0,
+        "orphanPickIds": [],
+        "missingMatchIdPickCount": 0,
+        "missingMatchIdPickIndexes": [],
+        "dayBound": true,
+        "canonicalSourceBound": true,
+        "recoveryContractBound": false,
+        "recoveryPublishedUniverseBound": false,
+        "recoveryUniverseEvidenceSource": null,
+        "recoveryUniverseEvidenceCount": null,
+        "recoveryUniverseEvidenceHash": null,
+        "recoveryUniverseEvidencePlans": [],
+        "ok": true
+      }
+    },
+    {
+      "severity": "info",
+      "source": "invariant-report",
+      "type": "coverage_floor_drop",
+      "message": "Canonical fixtures are below static floor but meet the effective floor.",
+      "details": {
+        "type": "coverage_floor_drop",
+        "staticFloor": 45,
+        "effectiveFloor": 37,
+        "actualFixtures": 40,
+        "drop": 8,
+        "reason": "canonical_fixture_count_below_static_floor",
+        "effectiveFloorMet": true
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-11-16.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b",
+        "artifact": "value-plans/2026-11-16/plan-b.json",
+        "at": null,
+        "staleReason": "plan_b_stale_against_canonical",
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-11-16",
+          "currentAthensDay": "2026-11-16",
+          "fixtureCount": 40,
+          "frozenHash": "fb1f2cee544f8a902b1dcd1b8bd9af3127c55943d99a5dc366da90c8e82e21ea",
+          "currentHash": "fb1f2cee544f8a902b1dcd1b8bd9af3127c55943d99a5dc366da90c8e82e21ea",
+          "strictFrozenParity": true,
+          "membershipParity": true,
+          "descriptorDrift": false,
+          "publicationMembershipPreserved": false,
+          "authorizedShrink": false,
+          "removedFixtureIds": [],
+          "deferredCurrentFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "exact_current_frozen_membership"
+        },
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b2",
+        "artifact": "value-plans/2026-11-16/plan-b2.json",
+        "at": null,
+        "staleReason": "plan_b2_stale_against_canonical",
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-11-16",
+          "currentAthensDay": "2026-11-16",
+          "fixtureCount": 40,
+          "frozenHash": "fb1f2cee544f8a902b1dcd1b8bd9af3127c55943d99a5dc366da90c8e82e21ea",
+          "currentHash": "fb1f2cee544f8a902b1dcd1b8bd9af3127c55943d99a5dc366da90c8e82e21ea",
+          "strictFrozenParity": true,
+          "membershipParity": true,
+          "descriptorDrift": false,
+          "publicationMembershipPreserved": false,
+          "authorizedShrink": false,
+          "removedFixtureIds": [],
+          "deferredCurrentFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "exact_current_frozen_membership"
+        },
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-input",
+      "type": "plan_b_assessment_coverage_incomplete",
+      "message": "Plan B ran with incomplete model-assessment coverage; its output is not proof of a fully evaluated zero-pick day.",
+      "details": {
+        "plan": "B",
+        "missing": 2,
+        "ambiguous": 0,
+        "canonicalFixtures": 40,
+        "joinedMatches": 38,
+        "orphanAssessmentRows": 5,
+        "missingCanonicalIds": [
+          "cid_gua1_suchitepequez_antiguagfc_20261116",
+          "cid_slv1_incaaruba_aguila_20261116"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-input",
+      "type": "plan_b2_assessment_coverage_incomplete",
+      "message": "Plan B2 ran with incomplete model-assessment coverage; its output is not proof of a fully evaluated zero-pick day.",
+      "details": {
+        "plan": "B2",
+        "missing": 2,
+        "ambiguous": 0,
+        "canonicalFixtures": 40,
+        "joinedMatches": 38,
+        "orphanAssessmentRows": 5,
+        "missingCanonicalIds": [
+          "cid_gua1_suchitepequez_antiguagfc_20261116",
+          "cid_slv1_incaaruba_aguila_20261116"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "value-input",
+      "type": "plan_b2_opponent_adjustment_unavailable",
+      "message": "Plan B2 lacks trusted opponent standings for 38 evaluated fixtures.",
+      "details": {
+        "plan": "B2",
+        "fixtures": 38
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "age_expired_results_rows_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "age_expired_results_rows_present",
+        "count": 22054,
+        "informational": true
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "history_semantic_warnings_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "history_semantic_warnings_present",
+        "count": 4,
+        "informational": true
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "score_consistent_alias_mirror_conflicts_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "score_consistent_alias_mirror_conflicts_present",
+        "count": 47,
+        "informational": true
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "bol.copa",
+          "caf.nations_qual",
+          "concacaf.nations.league",
+          "eng.w.1",
+          "eng.w.fa",
+          "esp.w.1",
+          "mex.w.1",
+          "ned.w.1",
+          "uefa.euro_u21_qual",
+          "usa.ncaa.m.1",
+          "usa.ncaa.w.1",
+          "usa.w.usl.1"
+        ],
+        "raw": "acquisition_skipped_slugs:bol.copa,caf.nations_qual,concacaf.nations.league,eng.w.1,eng.w.fa,esp.w.1,mex.w.1,ned.w.1,uefa.euro_u21_qual,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
+        "contextOnly": false
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
+    },
+    {
+      "severity": "info",
+      "source": "competition-admission",
+      "type": "competition_admission_active",
+      "message": "Persistent domestic competition admissions are active.",
+      "details": {
+        "admittedSlugs": [
+          "crc.1",
+          "gua.1",
+          "hon.1",
+          "par.1",
+          "slv.1"
+        ],
+        "summary": {
+          "evidenceSlugCount": 30,
+          "admittedCount": 5,
+          "pendingCount": 0,
+          "rejectedCount": 30,
+          "alreadyDeclaredCount": 0
+        }
+      }
+    },
+    {
+      "severity": "info",
+      "source": "competition-admission",
+      "type": "competition_admission_rejected",
+      "message": "Observed competition slugs were rejected by the fail-closed admission policy.",
+      "details": {
+        "rejectedSlugs": [
+          "afc.saff.championship",
+          "arg.3",
+          "arg.copa",
+          "arg.supercopa",
+          "aus.w.1",
+          "bol.copa",
+          "caf.nations_qual",
+          "can.w.nsl",
+          "club.friendly",
+          "concacaf.nations.league",
+          "eng.w.1",
+          "eng.w.fa",
+          "eng.w.league_cup",
+          "esp.copa_de_la_reina",
+          "esp.w.1",
+          "fifa.friendly",
+          "fifa.friendly_u21",
+          "fra.w.1",
+          "mex.w.1",
+          "ned.w.1",
+          "nonfifa",
+          "uefa.euro_u21_qual",
+          "uefa.w.europa",
+          "uefa.wchampions",
+          "usa.ncaa.m.1",
+          "usa.ncaa.w.1",
+          "usa.nwsl",
+          "usa.usl.1",
+          "usa.usl.l1",
+          "usa.w.usl.1"
+        ],
+        "summary": {
+          "evidenceSlugCount": 30,
+          "admittedCount": 5,
+          "pendingCount": 0,
+          "rejectedCount": 30,
+          "alreadyDeclaredCount": 0
+        }
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "active-competition-completeness",
+      "type": "active_competition_scope_unresolved",
+      "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
+      "details": {
+        "dayKey": "2026-11-16",
+        "count": 23,
+        "competitions": [
+          {
+            "providerCompetitionId": "ptHQbUeo",
+            "providerPath": "/football/antigua-barbuda/abfa-premier-league/",
+            "providerCountry": "Antigua & Barbuda",
+            "providerName": "ABFA Premier League",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "MiXi65Mj",
+              "pUU6F9a4"
+            ]
+          },
+          {
+            "providerCompetitionId": "SvvJdZT1",
+            "providerPath": "/football/argentina/primera-c/",
+            "providerCountry": "Argentina",
+            "providerName": "Primera C - Promotion - Play Offs",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "WjAduq8m"
+            ]
+          },
+          {
+            "providerCompetitionId": "UJ5yPXGU",
+            "providerPath": "/football/brazil/kings-cup-brazil/",
+            "providerCountry": "Brazil",
+            "providerName": "Kings Cup - Brazil",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "QR01eH6E",
+              "YXDFXDE7"
+            ]
+          },
+          {
+            "providerCompetitionId": "G8gmf8XR",
+            "providerPath": "/football/cameroon/elite-one/",
+            "providerCountry": "Cameroon",
+            "providerName": "Elite One",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "2Pa1Jfte"
+            ]
+          },
+          {
+            "providerCompetitionId": "rizh8dAa",
+            "providerPath": "/football/chile/segunda-division/",
+            "providerCountry": "Chile",
+            "providerName": "Segunda Division - Relegation Group",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "bs65ABoT"
+            ]
+          },
+          {
+            "providerCompetitionId": "fRrUSJBE",
+            "providerPath": "/football/dr-congo/ligue-1/",
+            "providerCountry": "DR Congo",
+            "providerName": "Ligue 1",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "fehqAlrB",
+              "px19aw1D"
+            ]
+          },
+          {
+            "providerCompetitionId": "vF4o1qCD",
+            "providerPath": "/football/el-salvador/primera-division/",
+            "providerCountry": "El Salvador",
+            "providerName": "Primera Division - Apertura",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "v3SiiJyo"
+            ]
+          },
+          {
+            "providerCompetitionId": "CGhHvd9l",
+            "providerPath": "/football/england/baller-league-uk/",
+            "providerCountry": "England",
+            "providerName": "Baller League - UK",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 6,
+            "targetDaySourceIds": [
+              "42girT9l",
+              "8WmOdSOs",
+              "CSdat7v1",
+              "pte7vo9D",
+              "tpnWf6gf",
+              "xlch2l1K"
+            ]
+          },
+          {
+            "providerCompetitionId": "Ol7mLaCk",
+            "providerPath": "/football/england/premier-league-cup/",
+            "providerCountry": "England",
+            "providerName": "Premier League Cup",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "ClS86d9U",
+              "h0Ph5hS8"
+            ]
+          },
+          {
+            "providerCompetitionId": "WElfKJSN",
+            "providerPath": "/football/guatemala/liga-nacional/",
+            "providerCountry": "Guatemala",
+            "providerName": "Liga Nacional - Apertura",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "AsmcbIjL"
+            ]
+          },
+          {
+            "providerCompetitionId": "pGc1BATg",
+            "providerPath": "/football/iran/azadegan-league/",
+            "providerCountry": "Iran",
+            "providerName": "Azadegan League",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 8,
+            "targetDaySourceIds": [
+              "C0zZCxn9",
+              "bw4MjnV6",
+              "jD0Eh80f",
+              "nNrmkZg2",
+              "rRg9dH1S",
+              "rmc6fUVs",
+              "vcuuiePk",
+              "z1j1bwXF"
+            ]
+          },
+          {
+            "providerCompetitionId": "EaiVDG2C",
+            "providerPath": "/football/italy/kings-cup-italy/",
+            "providerCountry": "Italy",
+            "providerName": "Kings Cup - Italy",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 6,
+            "targetDaySourceIds": [
+              "0vMxk45S",
+              "27AGsMc2",
+              "K0KMhn63",
+              "UgC8qrTk",
+              "hEIUjQzG",
+              "hfSzVrEd"
+            ]
+          },
+          {
+            "providerCompetitionId": "nwJV92k5",
+            "providerPath": "/football/italy/serie-c-group-b/",
+            "providerCountry": "Italy",
+            "providerName": "Serie C - Group B",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "r1Q54Ezp"
+            ]
+          },
+          {
+            "providerCompetitionId": "f3Mw8tKH",
+            "providerPath": "/football/italy/serie-c-group-c/",
+            "providerCountry": "Italy",
+            "providerName": "Serie C - Group C",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "U7g5bUNa"
+            ]
+          },
+          {
+            "providerCompetitionId": "tjmWOXSk",
+            "providerPath": "/football/mali/premiere-division/",
+            "providerCountry": "Mali",
+            "providerName": "Premiere Division",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "25emjdrA",
+              "UicuhIDc"
+            ]
+          },
+          {
+            "providerCompetitionId": "GAhlTb0U",
+            "providerPath": "/football/mexico/liga-premier-serie-a/",
+            "providerCountry": "Mexico",
+            "providerName": "Liga Premier Serie A",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "4nT7VhMO"
+            ]
+          },
+          {
+            "providerCompetitionId": "SjBPiEqA",
+            "providerPath": "/football/nigeria/nnl/",
+            "providerCountry": "Nigeria",
+            "providerName": "NNL",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "r14hokDE"
+            ]
+          },
+          {
+            "providerCompetitionId": "WWaZ6HjC",
+            "providerPath": "/football/north-central-america/concacaf-nations-league/",
+            "providerCountry": "North & Central America",
+            "providerName": "CONCACAF Nations League - League A - Play Offs",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "8ExAHmop"
+            ]
+          },
+          {
+            "providerCompetitionId": "WWaZ6HjC",
+            "providerPath": "/football/north-central-america/concacaf-nations-league/",
+            "providerCountry": "North & Central America",
+            "providerName": "CONCACAF Nations League - League B",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 3,
+            "targetDaySourceIds": [
+              "EJo6seyf",
+              "KzuhApBc",
+              "SQDRBcn2"
+            ]
+          },
+          {
+            "providerCompetitionId": "GQYULxF7",
+            "providerPath": "/football/peru/copa-de-la-liga/",
+            "providerCountry": "Peru",
+            "providerName": "Copa de la Liga - Play Offs",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "YTXNUZWa"
+            ]
+          },
+          {
+            "providerCompetitionId": "EovFcuY7",
+            "providerPath": "/football/suriname/sml/",
+            "providerCountry": "Suriname",
+            "providerName": "SML",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "06SWadlo"
+            ]
+          },
+          {
+            "providerCompetitionId": "h0gCkGMN",
+            "providerPath": "/football/ukraine/druha-liga/",
+            "providerCountry": "Ukraine",
+            "providerName": "Druha Liga",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "WzrY3b8E"
+            ]
+          },
+          {
+            "providerCompetitionId": "0",
+            "providerPath": "/football/world/friendly-international/",
+            "providerCountry": "World",
+            "providerName": "Friendly International",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 16,
+            "targetDaySourceIds": [
+              "0UMpBJvp",
+              "2qpLqXEr",
+              "8zlxzHMr",
+              "AkogiWFM",
+              "ERmZth5d",
+              "I9VSo25t",
+              "MRT6wmZp",
+              "OQ0Gg1EL",
+              "SjZKNnfS",
+              "SvokN5IE",
+              "fJhxhoBD",
+              "ltxMEDK0",
+              "n7xZ6G3b",
+              "ncuwTe23",
+              "tAZQ8xZo",
+              "zkCOnV2e"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "active-competition-completeness",
+      "type": "active_competition_structural_adapter_gap",
+      "message": "Effective competition slugs still rely on supplemental acquisition because no league adapter is enabled.",
+      "details": {
+        "dayKey": "2026-11-16",
+        "slugs": [
+          "crc.1",
+          "gua.1",
+          "hon.1",
+          "par.1",
+          "slv.1"
+        ]
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "value_plan_comparison_summary",
+      "message": "Four-plan Value comparison artifact is available.",
+      "details": {
+        "complete": true,
+        "requiredPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "presentPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "missingPlans": [],
+        "planA": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planA2": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planB": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planB2": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        }
+      }
+    }
+  ],
+  "latestForDay": "2026-11-16"
+}
