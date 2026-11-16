@@ -1,4 +1,5 @@
 import path from "node:path";
+import {loadReviewedTeamAliasBindings} from './reviewed-team-alias-bindings.js';
 import {
   getProjectRoot,
 } from "../storage/data-root.js";
@@ -181,6 +182,7 @@ export function createProductionIdentityResolverRuntime({
     buildExtendedProductionIdentityResolver({
       baseResolver,
       ledger: composite.ledger,
+      reviewedAliasBindings: loadReviewedTeamAliasBindings(paths.projectRoot || getProjectRoot()),
     });
 
   return Object.freeze({

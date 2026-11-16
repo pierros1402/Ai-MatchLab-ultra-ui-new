@@ -1,3 +1,5 @@
+import {validatePlanCShadowExportPayload} from '../value/plan-c-shadow-export.js';
+import {athensDayFromKickoff} from './daykey.js';
 import {valueExportIdentity} from './value-export-identity.js';
 import {isUnifiedPublicDay} from '../value/unified-public-plan.js';
 export const VALUE_EXPORT_PLAN_ORDER = Object.freeze([
@@ -8,9 +10,15 @@ export const VALUE_EXPORT_PLAN_ORDER = Object.freeze([
 ]);
 
 const UNIFIED_EXPORT_PLAN=Object.freeze({key:'U1',id:'plan-u1',label:'Ενιαίο πλάνο'});
-export function valueExportPlanOrder(days){
+export const AUTONOMOUS_EXPORT_PLAN=Object.freeze({key:'B_AUTO',id:'plan-autonomous-preview',label:'Plan B (Autonomous — Research)',researchOnly:true,publicationAuthorized:false});
+export const SHADOW_EXPORT_PLAN=Object.freeze({key:'C_SHADOW',id:'plan-c-shadow',label:'Plan C (Shadow)',researchOnly:true,productionEligible:false});
+function planApplies(key,date){
+ if(key==='C_SHADOW')return true;
+ return (key==='U1'||key==='B_AUTO')===isUnifiedPublicDay(date);
+}
+export function valueExportPlanOrder(days,{includeAutonomous=false,includeShadow=false}={}){
   const old=days.some(d=>!isUnifiedPublicDay(d)),unified=days.some(isUnifiedPublicDay);
-  return [...(old?VALUE_EXPORT_PLAN_ORDER:[]),...(unified?[UNIFIED_EXPORT_PLAN]:[])];
+  return [...(old?VALUE_EXPORT_PLAN_ORDER:[]),...(unified?[UNIFIED_EXPORT_PLAN]:[]),...(unified&&includeAutonomous?[AUTONOMOUS_EXPORT_PLAN]:[]),...(includeShadow?[SHADOW_EXPORT_PLAN]:[])];
 }
 
 function finiteNumber(value) {
@@ -322,7 +330,23 @@ function normalizePickRow(date, plan, source, pick) {
   const market = normalizeValueMarketSelection(pick?.market ?? pick?.marketName, pick?.pick);
   const result = normalizeValueSettlement(pick?.result ?? pick?.settlement);
   const identity = valueExportIdentity(pick,date);
+  const valid = n => typeof n === "number" && Number.isFinite(n) && n >= 0 && n <= 1;
+  const sourceScores = (plan.key === "U1" || pick?.unified === true) ? Object.fromEntries(["A", "A2", "B", "B2"]
+      .filter(k => valid(pick?.sourceScores?.[k])).map(k => [k, pick.sourceScores[k]])) : null;
+  const scores = Object.values(sourceScores || {});
+  const probabilityPlan = plan.key === "B_AUTO" || plan.key === "C_SHADOW";
+  const originalPickValue = sourceScores !== null ? (scores.length && scores.every(n => n === scores[0]) ? scores[0] : null)
+    : probabilityPlan ? (valid(pick?.marketProb) ? pick.marketProb : null) : (valid(pick?.score) ? pick.score : null);
+  const originalPickValueKind = sourceScores !== null ? (scores.length ? "SOURCE_SCORES" : null)
+    : originalPickValue === null ? null : probabilityPlan ? "MODEL_PROBABILITY" : "MODEL_SCORE";
 
+  let finalScore = scoreKey(pick?.finalScore);
+  if (plan.key === "U1" || plan.key === "B_AUTO") {
+    const {scoreHome, scoreAway} = pick?.settlementTruth || {};
+    const verified = [scoreHome, scoreAway].every(n => Number.isInteger(n) && n >= 0) ? `${scoreHome}-${scoreAway}` : null;
+    finalScore = ["WIN", "LOSS"].includes(result) && (plan.key !== "B_AUTO" || pick.timingCertified === true) && verified &&
+      (pick.finalScore == null || finalScore === verified) ? verified : null;
+  }
   return {
     date,
     planKey: plan.key,
@@ -342,13 +366,17 @@ function normalizePickRow(date, plan, source, pick) {
     selectionKey: market.selectionKey,
     selectionLabel: market.selectionLabel,
     score: finiteNumber(pick?.score),
+    // Preserve producer-native original values; never synthesize a Combined score.
+    sourceScores,
+    originalPickValue,
+    originalPickValueKind,
     confidence: finiteNumber(pick?.confidence) ?? pick?.confidence ?? null,
     readiness: finiteNumber(pick?.readiness),
     marketProb: finiteNumber(pick?.marketProb),
     aiFairOdds: finiteNumber(pick?.aiFairOdds),
     oddsDecimal: finiteNumber(pick?.oddsDecimal ?? pick?.exportOdds),
-    finalScore: scoreKey(pick?.finalScore),
-    finalStatus: clean(pick?.finalStatus) || null,
+    finalScore,
+    finalStatus: finalScore && (plan.key === "U1" || plan.key === "B_AUTO") ? "FT" : clean(pick?.finalStatus) || null,
     result,
     source: clean(source) || null
   };
@@ -386,6 +414,46 @@ export function comparisonToValueExportDay({ date, comparison, source = "value_c
   }
 
   return { date, source, plans };
+}
+
+// The caller supplies only the comparison exposed by the pinned runtime reader.
+// Keep new research keys distinct from historical B and preserve native settlements.
+export function attachAutonomousExportDay(day, comparison){
+ const plan=AUTONOMOUS_EXPORT_PLAN, p=comparison?.autonomousPreview;
+ if(!isUnifiedPublicDay(day.date))return day;
+ const available=comparison?.ok===true&&comparison.date===day.date&&comparison.autonomousPreviewMode===true&&
+   p?.id===plan.id&&p.date===day.date&&p.status==='RESEARCH_ONLY'&&p.publicationAuthorized===false&&
+   p.analysisComplete===false&&Array.isArray(p.picks)&&p.count===p.picks.length&&p.picks.every(row=>
+     row?.researchOnly===true&&typeof row.modelProb==='number'&&Number.isFinite(row.modelProb)&&row.modelProb>=0&&row.modelProb<=1&&
+     Number.isFinite(Date.parse(row.kickoffUtc))&&athensDayFromKickoff(row.kickoffUtc)===day.date&&
+     ['PENDING','UNRESOLVED','WIN','LOSS','VOID'].includes(row.result)&&
+     (!['WIN','LOSS','VOID'].includes(row.result)||(row.timingCertified===true&&row.settlementTruth!=null))
+   );
+ const source='pinned_autonomous_research';
+ const picks=available?p.picks.map(row=>({...normalizePickRow(day.date,plan,source,{
+   ...row,planId:plan.id,marketProb:row.modelProb,score:null,confidence:null,
+   finalScore:row.timingCertified===true&&['WIN','LOSS'].includes(row.result)?row.finalScore:null
+ }),researchOnly:true,publicationAuthorized:false,timingCertified:row.timingCertified===true,
+    publicationRecord:row.publicationRecord??null})):[];
+ day.plans[plan.key]={...plan,available,availabilityReason:available?null:'autonomous_research_not_available',source,analysisComplete:available?false:undefined,declaredSummary:available?p.summary:null,picks};
+ return day;
+}
+
+export function attachShadowExportDay(day, loaded){
+ const plan=SHADOW_EXPORT_PLAN,p=loaded?.payload;
+ const cohortAsOf=loaded?.scope==='CUMULATIVE_AS_OF';
+ const available=p?.available===true&&validatePlanCShadowExportPayload(p,cohortAsOf?p.date:day.date).ok;
+ const source='plan_c_shadow:'+String(loaded?.source||'unavailable')+(cohortAsOf&&available?':as_of='+p.date:'');
+ const rows=available?p.entries.filter(e=>e.prediction.planCPick===true&&athensDayFromKickoff(e.prediction.kickoffUtc)===day.date).map(e=>{
+   const q=e.prediction,t=e.settlement.truth,settled=e.settlement.state==='SETTLED';
+   const result=e.settlement.state==='VOID_EXCLUDED'?'VOID':settled?(t.scoreHome+t.scoreAway>=3?'WIN':'LOSS'):'PENDING';
+   return {...normalizePickRow(day.date,plan,source,{planId:plan.id,canonicalMatchId:q.canonicalFixtureId,matchId:q.canonicalFixtureId,
+     kickoffUtc:q.kickoffUtc,leagueSlug:q.leagueSlug,leagueName:q.leagueName,country:q.country,homeTeam:q.homeTeam,awayTeam:q.awayTeam,
+     market:'OU25',pick:'over',marketProb:q.adjusted.pOver25,result,finalStatus:settled?'FT':null,
+     finalScore:settled?{scoreKey:`${t.scoreHome}-${t.scoreAway}`}:null}),researchOnly:true,productionEligible:false,predictionSignature:q.predictionSignature};
+ }):[];
+ day.plans[plan.key]={...plan,available,availabilityReason:available?null:'plan_c_shadow_not_available',source,analysisComplete:available?false:undefined,declaredSummary:null,picks:rows};
+ return day;
 }
 
 export function fallbackPlanAToValueExportDay({ date, picks = [], source = "snapshot_value" }) {
@@ -501,7 +569,7 @@ function marketBreakdown(rows) {
     );
 }
 
-export function buildValueExportReport({ from, to, days, dayRecords, today }) {
+export function buildValueExportReport({ from, to, days, dayRecords, today, includeAutonomous=false, includeShadow=false }) {
   const recordsByDay = new Map(dayRecords.map(record => [record.date, record]));
   const integrity = {
     status: "COMPLETE",
@@ -519,7 +587,7 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
   const plans = {};
   let totalRows = 0;
 
-  const planOrder=valueExportPlanOrder(days);
+  const planOrder=valueExportPlanOrder(days,{includeAutonomous,includeShadow});
   for (const plan of planOrder) {
     const picks = [];
     const daily = [];
@@ -529,9 +597,9 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
     let missingDayRecords = 0;
 
     for (const date of days) {
-      if((plan.key==='U1')!==isUnifiedPublicDay(date))continue;
+      if(!planApplies(plan.key,date))continue;
       const record = recordsByDay.get(date);
-      if (!record) {
+      if (!record || (record.comparisonMissing===true&&plan.key!=='C_SHADOW')) {
         missingDayRecords += 1;
         integrity.missingDays.push(date);
         daily.push({ date, status: "MISSING_DAY", ...emptyCounts() });
@@ -575,7 +643,7 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
           status === "NO_PLAN_RECORD" ? "stored_plan_record_missing_not_proof_plan_did_not_exist" : null,
         ...summary
       });
-      picks.push(...rows);
+      picks.push(...rows.map(row=>plan.key==='U1'&&includeAutonomous?{...row,planLabel:'Plan A (Combined)'}:row));
       addCounts(rangeCounts, summary);
 
       if (available && planDay.declaredSummary) {
@@ -625,13 +693,14 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
       recordedPlanDays: availableDays,
       noPlanRecordDays: notAvailableDays,
       missingDayRecords,
-      totalDays: days.filter(d=>(plan.key==='U1')===isUnifiedPublicDay(d)).length,
+      totalDays: days.filter(d=>planApplies(plan.key,d)).length,
       dayCountBasis: "stored_plan_records_not_execution_or_plan_availability",
       ...finalizeCounts(rangeCounts)
     };
 
     plans[plan.key] = {
       ...plan,
+      ...(plan.key==='U1'&&includeAutonomous?{label:'Plan A (Combined)'}:{}),
       picks,
       daily,
       range,

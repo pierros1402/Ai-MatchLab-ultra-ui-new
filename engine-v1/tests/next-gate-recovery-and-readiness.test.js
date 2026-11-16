@@ -4,7 +4,7 @@ import { mkdtemp, readFile, readdir, mkdir, rm, writeFile } from "node:fs/promis
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { buildHistoryDayFromTruth, persistVerifiedHistoryBuild } from "../jobs/append-finalized-day-to-history.js";
+import { buildHistoryDayFromTruth, buildVerifiedHistoryDay, persistVerifiedHistoryBuild } from "../jobs/append-finalized-day-to-history.js";
 import { promoteVerifiedGeneration, sha256, recordReviewedHistoryLink } from "../storage/evidence-bound-history-store.js";
 import { fingerprint } from "../core/season-closure-contract.js";
 import { verifyReadinessEvidence } from "../../assets/js/live/value-readiness-evidence.js";
@@ -117,11 +117,59 @@ test("real readiness evidence retains 30 canonical IDs and rejects tamper, wrong
 
 test("pinned July and November builds keep acceptance separate from local projection", async t => {
   const july = await workspace(t);
-  const julyBuild = buildHistoryDayFromTruth("2026-07-31");
-  assert.equal(julyBuild.errors.length, 101);
+  // Reviewed post-restoration checkpoint: fixed inputs, identity decisions and
+  // exact output facts. Do not derive expectations from mutable local stores.
+  // See fixtures/july-2026-parity-evidence.md before updating this contract.
+  const evidenceBytes = await readFile(new URL("./fixtures/july-2026-parity-evidence.json", import.meta.url));
+  assert.equal(sha256(evidenceBytes), "1e76087a34af41b714a7f0f95e675d3897c67b96d37464b27bcbd48486e2b984");
+  const evidence = JSON.parse(evidenceBytes);
+  assert.equal(evidence.schema, "ai-matchlab.history-parity-test-evidence.v1");
+  const identityResolver = { resolveTeamReference({ leagueSlug, alias }) {
+    const key = JSON.stringify([leagueSlug, alias]);
+    assert.ok(Object.hasOwn(evidence.identities, key), "unreviewed fixture identity: " + key);
+    return evidence.identities[key];
+  } };
+  const buildJuly = input => buildVerifiedHistoryDay({ ...input, identityResolver });
+  const julyBuild = buildJuly(evidence.input);
+  assert.equal(julyBuild.ok, false);
+  assert.equal(julyBuild.reason, "history_truth_parity_failed");
+  assert.equal(julyBuild.acceptedRows, 60);
+  assert.equal(julyBuild.errors.length, 42);
+  assert.deepEqual(julyBuild.errors, evidence.expected.errors);
+  assert.deepEqual(julyBuild.rows, evidence.expected.rows);
+  assert.equal(new Set(julyBuild.rows.map(row => row.id)).size, 60);
+  assert.ok(julyBuild.errors.every(error => error.reason === "verified_final_missing_canonical_fixture"));
   const held = await persistVerifiedHistoryBuild(julyBuild, july);
-  assert.equal(held.recovery.journaled.length, 1);
+  assert.equal(held.ok, false);
+  assert.deepEqual(held.recovery.journaled.map(row => row.id), julyBuild.rows.map(row => row.id));
+  assert.equal((await readdir(path.join(july.journalRoot, "facts"))).length, 60);
+  for (const entry of held.recovery.journaled) {
+    const record = JSON.parse(await readFile(path.join(july.journalRoot, "facts", entry.revision + ".json")));
+    const { rebuiltAt, ...expectedFact } = julyBuild.rows.find(row => row.id === entry.id);
+    assert.deepEqual(record.fact, expectedFact);
+    assert.equal(fingerprint(record), entry.revision);
+  }
+  assert.ok(held.recovery.quarantineRevision);
+  const quarantine = JSON.parse(await readFile(path.join(july.journalRoot, "holds", held.recovery.quarantineRevision + ".json")));
+  assert.deepEqual(quarantine.errors, evidence.expected.errors);
+  assert.deepEqual(quarantine.eligible, held.recovery.journaled);
+  assert.equal((await persistVerifiedHistoryBuild(julyBuild, july)).recovery.quarantineRevision, held.recovery.quarantineRevision);
   assert.equal(await exists(july.historyPath), false);
+  // A valid digest cannot replace parity checks: corrupt an accepted fact and
+  // require that exact ID to be rejected, with every other fact preserved.
+  const acceptedId = julyBuild.rows[0].id;
+  for (const [field, value, reason] of [
+    ["scoreHome", 99, "canonical_verified_final_score_mismatch"],
+    ["scoreHome", null, "canonical_final_numeric_score_required"],
+  ]) {
+    const input = structuredClone(evidence.input);
+    input.canonicalRows.find(row => row.canonicalId === acceptedId)[field] = value;
+    const rejected = buildJuly(input);
+    assert.equal(rejected.ok, false);
+    assert.equal(rejected.acceptedRows, 59);
+    assert.ok(rejected.errors.some(error => error.matchId === acceptedId && error.reason === reason));
+    assert.deepEqual(rejected.rows, julyBuild.rows.filter(row => row.id !== acceptedId));
+  }
   const november = await workspace(t);
   const novBuild = buildHistoryDayFromTruth("2026-11-10");
   assert.equal(novBuild.ok, true);

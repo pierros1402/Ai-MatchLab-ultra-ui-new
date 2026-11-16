@@ -624,10 +624,32 @@ function comparisonPickLabel(p) {
 }
 
 function comparisonScoreLabel(p) {
-  const parts = [];
-  if (typeof p?.score === "number") parts.push(scoreToPct(p.score));
-  if (p?.finalScore?.scoreKey) parts.push("FT " + p.finalScore.scoreKey);
-  return parts.length ? parts.join(" • ") : "—";
+  const valid = n => typeof n === "number" && Number.isFinite(n) && n >= 0 && n <= 1;
+  const decimal = n => n.toFixed(3).replace(".", ",");
+  if (p?.unified === true) {
+    const entries = ["A", "A2", "B", "B2"].filter(k => valid(p.sourceScores?.[k]));
+    if (entries.length) {
+      const first = p.sourceScores[entries[0]];
+      return entries.every(k => p.sourceScores[k] === first)
+        ? "Score " + entries.join("/") + " " + decimal(first)
+        : "Score " + entries.map(k => k + " " + decimal(p.sourceScores[k])).join(" · ");
+    }
+    return "Score —";
+  }
+  if (p?.researchOnly === true) return valid(p.modelProb) ? "Model " + decimal(p.modelProb) : "Model —";
+  return valid(p?.score) ? scoreToPct(p.score) : "—";
+}
+
+function comparisonFinalScore(p) {
+  const supplied = p?.finalScore?.scoreKey;
+  if (p?.unified === true || p?.researchOnly === true) {
+    if (!["WIN", "LOSS"].includes(p.result) || (p.researchOnly === true && p.timingCertified !== true)) return null;
+    const {scoreHome, scoreAway} = p.settlementTruth || {};
+    if (![scoreHome, scoreAway].every(n => Number.isInteger(n) && n >= 0)) return null;
+    const verified = `${scoreHome}-${scoreAway}`;
+    return supplied == null || supplied === verified ? verified : null;
+  }
+  return typeof supplied === "string" && /^\d+-\d+$/.test(supplied) ? supplied : null;
 }
 
 // Unified publication intentionally omits model probability / confidence fields.
@@ -660,7 +682,8 @@ function renderComparisonRow(p) {
   const unifiedLabel = p?.unified ? '<span class="value-badge consensus">Συμφωνία</span>' : "";
   const pick = comparisonPickLabel(p);
   const resultBadge = resultBadgeHtml(p?.result);
-  const hasVerifiedFinal = Boolean(p?.finalScore?.scoreKey);
+  const finalScore = comparisonFinalScore(p);
+  const hasVerifiedFinal = finalScore !== null;
 
   // Kickoff time (HH:MM)
   const kickoffMs = resolveKickoffMs(p);
@@ -692,6 +715,7 @@ function renderComparisonRow(p) {
     '    <div class="value-score">',
     '      <span class="value-score-pct">' + esc(comparisonScoreLabel(p)) + '</span>',
     '      <span class="value-score-pick">' + esc(pick) + '</span>',
+    (p?.unified === true || p?.researchOnly === true || hasVerifiedFinal) ? '      <span class="value-mkt value-final-score">FT ' + esc(finalScore ?? '—') + '</span>' : '',
     '      ' + mktHtml,
     '    </div>',
     '    <div class="value-conf">' + esc(tier || '—') + '</div>',
@@ -810,7 +834,7 @@ function renderPlanSummary(plan) {
     hitRateLabel(summary?.hitRate);
 }
 
-function renderPlanBlock(plan, title, information) {
+function renderPlanBlock(plan, title, information, cohort = null) {
     const inputIncomplete=plan?.analysisComplete===false||plan?.upstreamCoverage==='INCOMPLETE';
     const unavailable =
       planIsUnavailable(plan);
@@ -854,6 +878,7 @@ function renderPlanBlock(plan, title, information) {
           renderPlanSummary(plan)
         ) +
       '  </div>',
+      cohort ? '<div class="value-plan-summary">' + esc('Περίοδος παρατήρησης: ' + renderPlanSummary({summary:cohort})) + '</div>' : '',
       '  <div class="value-plan-rows">',
       rows ||
         (
@@ -875,10 +900,16 @@ function renderPlanBlock(plan, title, information) {
       const supplied=payload.unifiedPlan||payload.comparison?.unifiedPlan;
       const plan=supplied?.id==='plan-u1'&&supplied.date===payload.date&&supplied.status==='AVAILABLE'&&Array.isArray(supplied.picks)&&supplied.count===supplied.picks.length?supplied:
         {status:'NOT_AVAILABLE',availability:'not_available',picks:[],count:0};
-      const heading='<div class="value-head"><div class="value-head-title">Ενιαίο πλάνο</div><div class="value-head-sub">'+esc(payload.date)+'</div></div>';
       const coverage=renderCoverageNotice(plan,payload.dataReadiness,payload.date);
-      const html=coverage+renderPlanBlock(plan,'Ενιαίο πλάνο',
-        'Συμφωνία A/A2 ή B/B2 με βαθμολογία τουλάχιστον 0,75 σε κάθε παραλλαγή. Κάθε επιλογή εμφανίζεται μία φορά και οι αντίθετες επιλογές αποκλείονται. Οι επιμέρους βαθμολογίες δεν είναι μία ενιαία πιθανότητα επιτυχίας.');
+      const preview=payload.comparison?.autonomousPreview;
+      const previewEnabled=payload.comparison?.autonomousPreviewMode===true&&preview?.id==='plan-autonomous-preview'&&preview.date===payload.date&&['RESEARCH_ONLY','NOT_AVAILABLE'].includes(preview.status)&&preview.publicationAuthorized===false&&Array.isArray(preview.picks)&&preview.count===preview.picks.length;
+      const heading='<div class="value-head"><div class="value-head-title">'+(previewEnabled?'Value A/B':'Ενιαίο πλάνο')+'</div><div class="value-head-sub">'+esc(payload.date)+'</div></div>';
+      const cohort=payload.comparison?.autonomousCohortStats;
+      const cohortValid=previewEnabled&&cohort?.schema==='aiml.autonomous-cohort-statistics.v1'&&cohort.endDay===payload.date&&cohort.performanceCertified===false&&cohort.publicationAuthorized===false&&Array.isArray(cohort.observedDays);
+      const cohortNotice=cohortValid?'<div class="panel-empty" role="status">'+esc('Ερευνητική σύγκριση: '+cohort.observedDays.length+'/'+cohort.calendarDays+' ημέρες με δύο καταγραφές. '+(Array.isArray(cohort.commonStartDays)?cohort.commonStartDays.length:'—')+' ημέρες με κοινή αρχική αναφορά χρόνου. Δεν έχει πιστοποιηθεί προγνωστική απόδοση.')+'</div>':'';
+      const researchNotice=previewEnabled?'<div class="panel-empty" role="status">Plan B: ερευνητική λειτουργία · όχι εγκεκριμένη παραγωγική πρόβλεψη.</div>':'';
+      const html=coverage+researchNotice+cohortNotice+renderPlanBlock(plan,previewEnabled?'Plan A':'Ενιαίο πλάνο',
+        'Συμφωνία A/A2 ή B/B2 με βαθμολογία τουλάχιστον 0,75 σε κάθε παραλλαγή. Κάθε επιλογή εμφανίζεται μία φορά και οι αντίθετες επιλογές αποκλείονται. Οι επιμέρους βαθμολογίες δεν είναι μία ενιαία πιθανότητα επιτυχίας.',cohortValid?cohort.A:null)+(previewEnabled?renderPlanBlock(preview,'Plan B','Αυτόνομο ερευνητικό πλάνο. Μη εγκεκριμένη πολιτική. Η πιθανότητα μοντέλου δεν είναι βαθμολογία Combined A.',cohortValid?cohort.B:null): '');
       if(headWrapEl){headWrapEl.innerHTML=heading;bodyEl.innerHTML=html;}else bodyEl.innerHTML=heading+html;
       const envelope = payload.comparison?.readinessEvidence || payload.readinessEvidence;
       if (envelope && !planIsUnavailable(plan)) {

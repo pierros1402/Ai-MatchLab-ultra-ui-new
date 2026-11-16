@@ -1,0 +1,10 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {buildAutonomousPreview,verifyAutonomousPreview} from './autonomous-preview.js';
+const day='2026-11-14',now=day+'T12:00:00Z';const fixture={canonicalId:'cid1',kickoffUtc:day+'T20:00:00Z',homeTeam:'H',awayTeam:'A',leagueSlug:'eng.1',status:'PRE'};const base=()=>({day,fixtures:[fixture],universe:{canonicalIds:['cid1']},research:{status:'RESEARCH_ONLY_NOT_POLICY_APPROVED',rows:[{canonicalMatchId:'cid1',research:{status:'RESEARCH_ONLY',inputDigest:'a'.repeat(64),variants:{combined:{probabilities:{home:.8,draw:.1,away:.1,over25:.8,btts:.75}}}}}]}});
+test('independent multi-market preview, not production',()=>{const b=base(),old=JSON.stringify(b),p=buildAutonomousPreview(b,now);assert.equal(p.count,3);assert.equal(p.publicationAuthorized,false);assert.equal(p.zeroPicksCertified,false);assert.equal(JSON.stringify(b),old);assert.deepEqual(verifyAutonomousPreview(p),p);});
+test('same digest and deterministic picks',()=>assert.deepEqual(buildAutonomousPreview(base(),now),buildAutonomousPreview(base(),now)));
+test('universe drift rejected',()=>{const b=base();b.universe.canonicalIds.push('extra');assert.throws(()=>buildAutonomousPreview(b,now),/universe_mismatch/);});
+test('duplicate research rejected',()=>{const b=base();b.research.rows.push(b.research.rows[0]);assert.throws(()=>buildAutonomousPreview(b,now),/research_identity_mismatch/);});
+test('missing inputs not a certified zero',()=>{const b=base();b.research.rows=[];const p=buildAutonomousPreview(b,now);assert.equal(p.count,0);assert.equal(p.ledger[0].status,'HOLD');assert.equal(p.zeroPicksCertified,false);});
+test('post kickoff is held',()=>assert.equal(buildAutonomousPreview(base(),day+'T21:00:00Z').count,0));
+test('tampering rejected',()=>{const p=buildAutonomousPreview(base(),now);p.picks[0].modelProb=.99;assert.throws(()=>verifyAutonomousPreview(p));});
+test('invalid probability fail closed',()=>{const b=base();b.research.rows[0].research.variants.combined.probabilities.home=1.2;assert.throws(()=>buildAutonomousPreview(b,now));});

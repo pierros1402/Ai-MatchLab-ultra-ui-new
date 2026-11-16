@@ -741,10 +741,13 @@ function writeJsonFile(file, payload) {
   ensureDir(path.dirname(file));
   writeHistoryJsonAtomic(file, payload);
 }
-export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, outputMode = "production", readFrozenObservation = readFrozenPlanBObservation, decisionEvidenceFactory = createValueDecisionEvidence, publicationRunId = null } = {}) {
+export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, outputMode = "production", readFrozenObservation = readFrozenPlanBObservation, decisionEvidenceFactory = createValueDecisionEvidence, publicationRunId = null, computeOnly = false, buildUniverse = buildValueFixtureUniverse } = {}) {
   const isPlanBObservation = outputMode === "plan-b-observation";
   const isPlanB2Observation = outputMode === "plan-b2-observation";
   const isObservation = isPlanBObservation || isPlanB2Observation;
+  if (computeOnly && (!isObservation || freeze || !publicationRunId || dayKey < athensDayKey() || dayKey > shiftDay(athensDayKey(),1))) {
+    throw new Error("invalid_compute_only_options");
+  }
   if(publicationRunId&&(!isObservation||freeze||!/^[a-f0-9-]{36}$/.test(publicationRunId)||dayKey<athensDayKey()||dayKey>shiftDay(athensDayKey(),1)))throw Error('invalid_prospective_publication_candidate');
   const candidateRoot=publicationRunId?resolveDataPath('value-unified',dayKey,'scratch',publicationRunId):null;
 
@@ -786,15 +789,17 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
       };
 
   const calendarDay = athensDayKey();
-  if (isObservation && !candidateRoot && (freeze || dayKey <= calendarDay)) {
+  if (!computeOnly && isObservation && !candidateRoot && (freeze || dayKey <= calendarDay)) {
     const frozen = readFrozenObservation({ dayKey, outputMode, observationFile: outFile, auditFile: canonicalAuditOut });
     if (frozen) return frozen;
     if (dayKey < calendarDay) throw new Error("missing_historical_plan_b_observation");
   }
 
-  ensureDir(snapshotDir);
-  ensureDir(valueDir);
-  ensureDir(path.dirname(canonicalAuditOut));
+  if (!computeOnly) {
+    ensureDir(snapshotDir);
+    ensureDir(valueDir);
+    ensureDir(path.dirname(canonicalAuditOut));
+  }
 
   const sourceContract = {
     valueInput: "canonical_fixture_universe_joined_with_persistent_ai_assessment",
@@ -808,7 +813,7 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
   };
 
   const valueUniverse =
-    buildValueFixtureUniverse(dayKey);
+    buildUniverse(dayKey);
 
   const canonicalFixtures =
     valueUniverse.fixtures;
@@ -969,6 +974,8 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
     });
     audit.decisionInputEvidence = inputEvidence.summary();
 
+    if (computeOnly) return { result, audit };
+
     writeJsonFile(canonicalAuditOut, audit);
     writeJsonFile(snapshotAuditOut, audit);
     writeJsonFile(canonicalOut, result);
@@ -1124,6 +1131,8 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
     audit.ok = false;
     audit.inputFailure = "plan_b_output_canonical_membership_failed";
 
+    if (computeOnly) return { result: blocked, audit };
+
     writeJsonFile(canonicalAuditOut, audit);
     writeJsonFile(snapshotAuditOut, audit);
     writeJsonFile(canonicalOut, blocked);
@@ -1149,6 +1158,8 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
     mediumConfidence: finalPicks.filter(p => p.confidence === "medium").length,
     picks: finalPicks
   };
+
+  if (computeOnly) return { result, audit };
 
   writeJsonFile(canonicalAuditOut, audit);
   writeJsonFile(snapshotAuditOut, audit);

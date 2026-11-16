@@ -18,6 +18,8 @@ import {
 } from "../core/history-truth-convergence.js";
 import { applyCrossDayVerifiedFinalSupersessionWindow } from "./apply-cross-day-verified-final-supersession.js";
 import { buildHistoryReport } from "./build-history-report.js";
+import { runGlobalHistoryCoverageDay } from './run-global-history-coverage-day.js';
+import { auditGlobalHistoryCoverage } from './audit-global-history-coverage.js';
 import { applyResultsTruthToCanonicalDay } from "./apply-results-truth-to-canonical-day.js";
 import { promoteVerifiedFinalTruthToCanonicalDay } from "./promote-verified-final-truth-to-canonical-day.js";
 import {
@@ -897,6 +899,8 @@ export async function runDailyCycle(options = {}) {
     });
   }
 
+
+  const globalHistoryCoverage = await runGlobalHistoryCoverageDay(dayKey, { recover: true });
 
   console.log("[daily-cycle] details-history-index-foundation:start", {
     dayKey
@@ -2361,6 +2365,9 @@ export async function runDailyCycle(options = {}) {
     throw error;
   }
 
+  // Recheck after all finalization and derived-input builds, without rebuilding
+  // a historical prediction or settlement.
+  const finalGlobalHistoryCoverage = auditGlobalHistoryCoverage({dayKey,write:true,phase:'after'});
   const finishedAt = Date.now();
 
   console.log("[daily-cycle] done", {
@@ -2372,6 +2379,8 @@ export async function runDailyCycle(options = {}) {
     dayKey,
     finalizeDayKey,
     detailsRebuild,
+    globalHistoryCoverage,
+    finalGlobalHistoryCoverage: {status:finalGlobalHistoryCoverage.status,metrics:finalGlobalHistoryCoverage.metrics,fullCoverageCertified:false},
     startedAt,
     finishedAt,
     ms: finishedAt - startedAt,

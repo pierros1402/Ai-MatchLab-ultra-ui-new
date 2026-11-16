@@ -30,6 +30,17 @@ export async function readOptional(file) {
 }
 
 export async function atomicArtifact(file, bytes, { immutable = false } = {}) {
+  // A byte-identical immutable fact is already durably journaled. Verify it
+  // before requesting a redundant hard link, which restricted Windows tokens
+  // can reject even when the destination already exists. New facts still use
+  // the original exclusive hard-link publication primitive below.
+  if(immutable){
+    const existing=await readOptional(file);
+    if(existing!==null){
+      if(existing.equals(Buffer.from(bytes)))return;
+      const error=new Error('immutable_artifact_content_conflict');error.code='EEXIST';throw error;
+    }
+  }
   await mkdir(path.dirname(file), { recursive: true });
   const temporary = file + "." + randomUUID() + ".tmp";
   try {

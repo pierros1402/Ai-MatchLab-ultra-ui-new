@@ -5,6 +5,7 @@ import { currentSeason } from "../core/season.js";
 import { filterHistoryCompetitionRows } from '../core/history-competition-provenance.js';
 import { isCalendarYearLeague } from "../core/season-model.js";
 import { canonicalTeamName } from "../storage/team-aliases-db.js";
+import {getProductionIdentityResolver} from '../core/production-identity-resolver-runtime.js';
 import { LEAGUE_NAME_MAP } from "../../workers/_shared/leagues-registry.js";
 import {
   overlayProductionEvidenceDocumentReadView,
@@ -467,18 +468,24 @@ function normalizedIdentityText(value) {
     .replace(/\s+/g, " ");
 }
 
+const indexTeamIdentityCache=new Map();
+function indexTeamIdentity(row,side){
+  const alias=row?.[side+'Team'],slug=row?.leagueSlug,key=String(slug)+'\0'+String(alias);
+  if(!indexTeamIdentityCache.has(key)){
+    const r=getProductionIdentityResolver().resolveTeamReference({leagueSlug:slug,alias});
+    indexTeamIdentityCache.set(key,r?.ok?'global:'+r.globalClubId:normalizedIdentityText(alias));
+  }
+  return indexTeamIdentityCache.get(key);
+}
+
 export function rowFixtureIdentityKey(row) {
   return [
     normalizedIdentityText(
       row?.leagueSlug
     ),
     rowDayKey(row) || "",
-    normalizedIdentityText(
-      row?.homeTeam
-    ),
-    normalizedIdentityText(
-      row?.awayTeam
-    )
+    indexTeamIdentity(row,'home'),
+    indexTeamIdentity(row,'away')
   ].join("|");
 }
 
@@ -536,12 +543,8 @@ export function rowPairScoreIdentityKey(
     normalizedIdentityText(
       row?.leagueSlug
     ),
-    normalizedIdentityText(
-      row?.homeTeam
-    ),
-    normalizedIdentityText(
-      row?.awayTeam
-    ),
+    indexTeamIdentity(row,'home'),
+    indexTeamIdentity(row,'away'),
     Number(row?.scoreHome),
     Number(row?.scoreAway)
   ].join("|");

@@ -100,7 +100,7 @@ test("value panel follows selected day and never falls back to stale static rele
   assert.match(adapter, /on\("date:change"/);
   assert.match(adapter, /engine-release-unavailable/);
   assert.match(adapter, /AbortController/);
-  assert.match(html, /value-adapter\.js\?v=4/);
+  assert.ok(Number(html.match(/value-adapter\.js\?v=(\d+)/)?.[1]) >= 5, "A/B Value adapter must use the new or a later cache version");
 });
 
 test("odds requests are bound to the selected match day and obsolete requests are aborted", () => {
@@ -131,7 +131,8 @@ test("live worker overlay is bounded and labeled with the shared operational day
     /row\.getAttribute\("data-verified-final"\) === "true"/
   );
   assert.match(overlay, /phase \+ " • " \+ score/);
-  assert.match(valuePicks, /parts\.push\("FT " \+ p\.finalScore\.scoreKey\)/);
+  assert.match(valuePicks, /const finalScore = comparisonFinalScore\(p\)/);
+  assert.match(valuePicks, /value-final-score[^\n]*esc\(finalScore \?\? '—'\)/);
   assert.match(today, /if \(isFinalMatch\(existing\) && !isFinalMatch\(m\)\) continue/);
   assert.match(active, /if \(isFinalStatus\(existing\) && !isFinalStatus\(m\)\) continue/);
   assert.doesNotMatch(today, /Date\.now\(\) - ko/);
@@ -153,7 +154,7 @@ test("UI aborts are terminal and are not retried as fetch failures", () => {
   assert.match(value, /if \(!isAbortError\(err\)\)/);
   assert.match(html, /app\.js\?v=3/);
   assert.match(html, /fixtures-loader\.js\?v=9/);
-  assert.match(html, /value-adapter\.js\?v=4/);
+  assert.ok(Number(html.match(/value-adapter\.js\?v=(\d+)/)?.[1]) >= 5, "A/B Value adapter must use the new or a later cache version");
 });
 
 test("engine package and lock dependencies are synchronized", () => {

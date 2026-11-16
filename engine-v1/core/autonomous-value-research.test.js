@@ -1,0 +1,15 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { evaluateAutonomousResearch, marketProbabilities } from './autonomous-value-research.js';
+const form=(gf,ga)=>({sample:5,gfAvg:gf,gaAvg:ga,freshnessScore:.8,continuityScore:.9,over25Rate:.6,bttsRate:.5});
+const shared=()=>({homeMetrics:form(2,1),awayMetrics:form(1,2),homeSideMetrics:form(3,1),awaySideMetrics:form(1,3),rawHomeMetrics:{sample:5},rawAwayMetrics:{sample:5},leagueBaseline:{sample:100,goalsAvg:2.6}});
+test('probabilities bounded and 1X2 normalized',()=>{for(const [h,a] of [[0,0],[1,1],[6,6],[5,1]]){const p=marketProbabilities(h,a);assert.ok(Object.values(p).every(x=>x>=0&&x<=1));assert.ok(Math.abs(p.home+p.draw+p.away-1)<1e-12);}});
+test('zero goals exact',()=>{const p=marketProbabilities(0,0);assert.equal(p.draw,1);assert.equal(p.over25,0);assert.equal(p.btts,0);});
+test('side symmetry',()=>{const a=marketProbabilities(2,1),b=marketProbabilities(1,2);assert.ok(Math.abs(a.home-b.away)<1e-12);});
+test('candidate deterministic and does not mutate common data',()=>{const s=shared(),old=structuredClone(s);assert.deepEqual(evaluateAutonomousResearch(s),evaluateAutonomousResearch(s));assert.deepEqual(s,old);});
+test('uses actual goal and venue metrics',()=>{const v=evaluateAutonomousResearch(shared()).variants;assert.equal(v.baseline.lambdaHome,2);assert.equal(v.baseline.lambdaAway,1);assert.equal(v.venue.lambdaHome,2.5);assert.equal(v.venue.lambdaAway,1);});
+test('odds and legacy selections not consumed',()=>{const s=shared(),other=structuredClone(s);other.picks=[{market:'BTTS'}];other.bookOdds=1.2;other.homeMetrics.bookOdds=55;assert.deepEqual(evaluateAutonomousResearch(s),evaluateAutonomousResearch(other));});
+test('missing goal statistics fail closed',()=>{const s=shared();delete s.homeMetrics.gfAvg;assert.equal(evaluateAutonomousResearch(s).status,'HOLD');});
+test('league sample missing does not invent recency variants',()=>{const s=shared();s.leagueBaseline.sample=0;const r=evaluateAutonomousResearch(s);assert.equal(r.leagueSupport,'MISSING');assert.equal(r.variants.recency,undefined);assert.equal(r.variants.combined,undefined);});
+test('policies and picks not invented',()=>{const r=evaluateAutonomousResearch(shared());assert.equal(r.policyApproved,false);assert.equal(r.picks,undefined);assert.equal(r.opponentAdjustment,'NOT_EVALUATED');});
+test('input digest changes with an actual statistical input',()=>{const s=shared(),a=evaluateAutonomousResearch(s);s.homeMetrics.gfAvg+=1;assert.notEqual(a.inputDigest,evaluateAutonomousResearch(s).inputDigest);});

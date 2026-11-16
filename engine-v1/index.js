@@ -1,3 +1,6 @@
+import { collectValueABCHealth } from "./system-health/value-abc-health.js";
+import { exposeBoundResearch } from "./value/autonomous-release-binding.js";
+import { readAutonomousPreviewTransport, AB_PREVIEW_SCHEMA } from "./value/autonomous-preview-transport.js";
 import { collectFrozenValueHealthIssues } from "./system-health/frozen-value-health-policy.js";
 import { readPinnedValuePicksSnapshot } from "./jobs/runtime-generation-value-picks-reader.js";
 import { readSnapshotManifestGeneration } from "./jobs/runtime-generation-snapshot-reader.js";
@@ -58,12 +61,13 @@ import {
 } from "./core/runtime-display-policy.js";
 import {
   VALUE_EXPORT_PLAN_ORDER,
-  valueExportPlanOrder,
   buildValueExportReport,
   comparisonToValueExportDay,
   fallbackPlanAToValueExportDay,
   prepareValueComparisonForExport,
-  valueExportCsvRecords
+  valueExportCsvRecords,
+  attachAutonomousExportDay,
+  attachShadowExportDay
 } from "./core/value-export-report.js";
 import { teamPairMatches } from "./core/team-identity.js";
 import {
@@ -2456,15 +2460,22 @@ app.get("/system-health-alerts", async (req, res) => {
   return res.json(payload);
 });
 
-app.get("/system-health", (req, res) => {
+app.get("/system-health", async (req, res) => {
   try {
     const day = String(req.query.day || athensDayKey()).slice(0, 10);
     const report = buildSystemHealthReport(day);
     const autonomousRepair = buildAutonomousRepairSystemHealthFacts();
+    const valuePlanHealth = await collectValueABCHealth({
+      day, generationReads: truthyEnv(process.env.AIML_V35K_GENERATION_READS),
+      previewReads: process.env.AIML_AB_RESEARCH_PREVIEW_READS === "1",
+      readPinned: date => readPinnedRuntimeArtifact({dataRoot:resolveDataPath(),day:date,name:"value-comparison.json",mirrorPaths:valueExportComparisonMirrorPaths(date)}),
+      readComparison: readValueComparisonArtifact,
+      readShadow: readAvailablePlanCShadow
+    });
 
     res.json({
       ...report,
-      autonomousRepair
+      autonomousRepair, valuePlanHealth
     });
   } catch (err) {
     res.status(500).json({
@@ -3031,6 +3042,17 @@ function readValueComparisonArtifact(date, pinnedFile = null) {
     };
   }
 
+  if (payload?.schema === AB_PREVIEW_SCHEMA) {
+    try {
+      const candidate = readAutonomousPreviewTransport(payload, date, {
+        pinned: Boolean(pinnedFile), enabled: process.env.AIML_AB_RESEARCH_PREVIEW_READS === "1"
+      });
+      return { ok: true, file, payload: candidate };
+    } catch (error) {
+      return { ok: false, reason: "value_comparison_payload_invalid", file, error: String(error?.message || error) };
+    }
+  }
+
   const requiredPlans =
     ["A", "A2", "B", "B2"];
 
@@ -3067,7 +3089,9 @@ function readValueComparisonArtifact(date, pinnedFile = null) {
     };
   }
 
-  return { ok: true, file, payload };
+  return { ok: true, file, payload: exposeBoundResearch(payload, date, {
+    pinned: Boolean(pinnedFile), enabled: process.env.AIML_AB_RESEARCH_PREVIEW_READS === "1"
+  }) };
 }
 
 app.get("/value-comparison", async (req, res) => {
@@ -3286,9 +3310,20 @@ function resolveValueExportOdds(oddsEntry, market, marketName, pick) {
 // runtime/public mirror reader. Export may accept evidence-bound historical
 // payload shapes as a read-only compatibility view, while the public
 // /value-comparison contract itself remains strict.
-function loadValueExportComparisonDay(date) {
-  const artifact =
-    readValueComparisonArtifact(date);
+function valueExportComparisonMirrorPaths(date){
+  return [deploySnapshotRuntimeArtifactFile(date,"value-comparison.json"),resolveDataPath("value-comparison",`${date}.json`)];
+}
+async function loadValueExportComparisonDay(date) {
+  let artifact;
+  if (truthyEnv(process.env.AIML_V35K_GENERATION_READS)) {
+    try {
+      const checked=await readPinnedRuntimeArtifact({dataRoot:resolveDataPath(),day:date,name:"value-comparison.json",
+        mirrorPaths:valueExportComparisonMirrorPaths(date)});
+      artifact=checked.mode === "PINNED" ? readValueComparisonArtifact(date,checked.file) : readValueComparisonArtifact(date);
+    } catch(e) {
+      return {ok:false,issue:{code:"VALUE_EXPORT_COMPARISON_INVALID",date,message:"value_generation_divergence:"+String(e?.message||e)}};
+    }
+  } else artifact=readValueComparisonArtifact(date);
 
   if (
     !artifact.ok &&
@@ -3329,12 +3364,11 @@ function loadValueExportComparisonDay(date) {
     };
   }
 
-  const prepared =
-    prepareValueComparisonForExport({
-      date,
-      comparison:
-        artifact.payload
-    });
+  // A standalone transport is accepted only after the existing pinned reader
+  // has validated it. The legacy compatibility path never authorizes research.
+  const prepared = artifact.ok && artifact.payload?.schema === AB_PREVIEW_SCHEMA
+    ? {ok:true,kind:"VERIFIED_RESEARCH_TRANSPORT",comparison:artifact.payload}
+    : prepareValueComparisonForExport({date,comparison:artifact.payload});
 
   if (!prepared.ok) {
     return {
@@ -3356,14 +3390,9 @@ function loadValueExportComparisonDay(date) {
     ok: true,
     compatibilityKind:
       prepared.kind,
-    day:
-      comparisonToValueExportDay({
-        date,
-        comparison:
-          prepared.comparison,
-        source:
-          "value_comparison_release_artifact"
-      })
+    day: attachAutonomousExportDay(comparisonToValueExportDay({
+        date,comparison:prepared.comparison,source:"value_comparison_release_artifact"
+      }), artifact.ok ? artifact.payload : null)
   };
 }
 
@@ -3377,8 +3406,7 @@ function valueExportSourcePicks(result) {
 }
 
 function valueExportDecorateDay(day, oddsMap) {
-  for (const plan of valueExportPlanOrder([day.date])) {
-    const planDay = day?.plans?.[plan.key];
+  for (const planDay of Object.values(day?.plans || {})) {
     if (!planDay?.available || !Array.isArray(planDay.picks)) continue;
 
     planDay.picks = planDay.picks.map(row => {
@@ -3445,11 +3473,11 @@ function setValueExportPercentCell(row, columnNumber) {
 }
 
 function addValueExportPlanSection(sheet, plan) {
-  styleValueExportTitle(sheet, sheet.rowCount + 1, `${plan.label} — Picks`, 19);
+  styleValueExportTitle(sheet, sheet.rowCount + 1, `${plan.label} — Picks`, 22);
   addValueExportTableHeader(sheet, [
     "Date", "Kickoff", "Country", "League", "Home", "Away", "Market", "Pick",
     "Model Score", "Confidence", "Market Prob", "AI Fair Odds", "Display Odds",
-    "Final Score", "Result", "Source", ...VALUE_EXPORT_IDENTITY_LABELS
+    "Final Score", "Result", "Source", "Original Source Scores", "Original Pick Value", "Pick Value Type", ...VALUE_EXPORT_IDENTITY_LABELS
   ]);
 
   if (plan.picks.length === 0) {
@@ -3473,11 +3501,14 @@ function addValueExportPlanSection(sheet, plan) {
         valueExportFinalScore(row),
         row.result,
         row.source || "",
+        Object.entries(row.sourceScores || {}).map(([k,v]) => `${k}=${v}`).join("; "),
+        row.originalPickValue ?? "", row.originalPickValueKind ?? "",
         ...valueExportIdentityValues(row)
       ]);
       for (const column of [9, 10, 11, 12, 13]) {
         added.getCell(column).numFmt = column >= 12 ? "0.00" : "0.000";
       }
+      added.getCell(18).numFmt = "0.000";
     }
   }
 
@@ -3584,10 +3615,11 @@ function valueExportMatchLabel(row) {
 }
 
 function addCompactDailyValuePicks(sheet, report) {
-  styleValueExportTitle(sheet, sheet.rowCount + 1, `Value Picks — ${report.from}`, 14);
+  const extended=report.planOrder.includes("U1")||report.planOrder.includes("B_AUTO")||report.planOrder.includes("C_SHADOW");
+  styleValueExportTitle(sheet, sheet.rowCount + 1, `Value Picks — ${report.from}`, extended?18:14);
   addValueExportTableHeader(sheet, [
     "Plan", "Country", "League", "Match", "Kickoff", "Pick",
-    "Model Score", "Confidence", "Display Odds", "Final Score", "Result", ...VALUE_EXPORT_IDENTITY_LABELS
+    "Model Score", "Confidence", "Display Odds", "Final Score", "Result", ...(extended?["Market Prob", "Original Source Scores", "Original Pick Value", "Pick Value Type"]:[]), ...VALUE_EXPORT_IDENTITY_LABELS
   ]);
 
   let rowCount = 0;
@@ -3606,8 +3638,10 @@ function addCompactDailyValuePicks(sheet, report) {
         row.oddsDecimal ?? "",
         valueExportFinalScore(row),
         row.result || "",
+        ...(extended?[row.marketProb ?? "", Object.entries(row.sourceScores || {}).map(([k,v]) => `${k}=${v}`).join("; "), row.originalPickValue ?? "", row.originalPickValueKind ?? ""]:[]),
         ...valueExportIdentityValues(row)
       ]);
+      if(extended){added.getCell(12).numFmt = "0.000";added.getCell(14).numFmt = "0.000";}
       added.getCell(7).numFmt = "0.000";
       if (typeof added.getCell(8).value === "number") added.getCell(8).numFmt = "0.000";
       added.getCell(9).numFmt = "0.00";
@@ -3617,7 +3651,7 @@ function addCompactDailyValuePicks(sheet, report) {
 
   if (rowCount === 0) {
     const row = sheet.addRow(["No picks for selected day"]);
-    sheet.mergeCells(row.number, 1, row.number, 14);
+    sheet.mergeCells(row.number, 1, row.number, extended?18:14);
   }
 }
 
@@ -3677,8 +3711,8 @@ function addCompactDailyPlanAnalysis(sheet, plan) {
   sheet.addRow([]);
 }
 
-function configureCompactDailyValueExportSheet(sheet) {
-  const widths = [12, 16, 24, 38, 10, 20, 13, 13, 13, 13, 12, 62, 28, 32];
+function configureCompactDailyValueExportSheet(sheet, extended = true) {
+  const widths = extended ? [12, 16, 24, 38, 10, 20, 13, 13, 13, 13, 12, 16, 38, 16, 24, 62, 28, 32] : [12, 16, 24, 38, 10, 20, 13, 13, 13, 13, 12, 62, 28, 32];
   widths.forEach((width, index) => {
     sheet.getColumn(index + 1).width = width;
     sheet.getColumn(index + 1).alignment = {
@@ -3691,7 +3725,7 @@ function configureCompactDailyValueExportSheet(sheet) {
 }
 
 function configureValueExportSheet(sheet) {
-  const widths = [14, 22, 16, 22, 24, 24, 22, 18, 13, 13, 13, 13, 13, 13, 12, 24, 62, 28, 32];
+  const widths = [14, 22, 16, 22, 24, 24, 22, 18, 13, 13, 13, 13, 13, 13, 12, 24, 38, 16, 24, 62, 28, 32];
   widths.forEach((width, index) => {
     sheet.getColumn(index + 1).width = width;
     sheet.getColumn(index + 1).alignment = {
@@ -3708,7 +3742,7 @@ function valueExportCsvHeader() {
     "recordType", "plan", "date", "from", "to", "status", "market", "selection",
     "kickoff", "country", "league", "home", "away", "picks", "wins", "losses",
     "voids", "unresolved", "unsupported", "winRate", "modelScore", "confidence",
-    "marketProb", "aiFairOdds", "odds", "finalScore", "result", "source", ...VALUE_EXPORT_IDENTITY_FIELDS
+    "marketProb", "aiFairOdds", "odds", "finalScore", "result", "source", "sourceScores", "originalPickValue", "originalPickValueKind", ...VALUE_EXPORT_IDENTITY_FIELDS
   ];
 }
 
@@ -3743,6 +3777,9 @@ function valueExportCsvLine(record) {
     summary ? "" : valueExportFinalScore(record),
     summary ? "" : record.result || "",
     summary ? "" : record.source || "",
+    summary ? "" : Object.entries(record.sourceScores || {}).map(([k,v]) => `${k}=${v}`).join("; "),
+    summary ? "" : record.originalPickValue ?? "",
+    summary ? "" : record.originalPickValueKind ?? "",
     ...(summary ? ["", "", ""] : valueExportIdentityValues(record))
   ].map(csvEscape).join(",");
 }
@@ -3760,16 +3797,21 @@ app.get("/value-export/range", async (req, res) => {
 
   const dayRecords = [];
   const sourceIssues = [];
+  const includeAutonomous=process.env.AIML_AB_RESEARCH_PREVIEW_READS === "1";
+  const shadowAsOf = [athensDayKey(), resolveSnapshotDate("")].filter(Boolean)
+    .map(date => readAvailablePlanCShadow(date)).find(entry => entry?.payload?.available === true);
+  const addDay=(day,oddsMap)=>dayRecords.push(valueExportDecorateDay(attachShadowExportDay(day,shadowAsOf?{...shadowAsOf,scope:"CUMULATIVE_AS_OF"}:readAvailablePlanCShadow(day.date)),oddsMap));
 
   for (const date of days) {
     const oddsMap = loadValueExportOddsMap(date);
-    const comparisonResult = !rebuild ? loadValueExportComparisonDay(date) : null;
+    const comparisonResult = !rebuild ? await loadValueExportComparisonDay(date) : null;
 
     if (comparisonResult?.ok === false) {
       if (
         comparisonResult?.issue?.code ===
         "VALUE_EXPORT_COMPARISON_NOT_FOUND"
       ) {
+        addDay({date,plans:{},comparisonMissing:true},oddsMap);
         continue;
       }
 
@@ -3780,7 +3822,7 @@ app.get("/value-export/range", async (req, res) => {
     }
 
     if (comparisonResult?.ok === true) {
-      dayRecords.push(valueExportDecorateDay(comparisonResult.day, oddsMap));
+      addDay(comparisonResult.day,oddsMap);
       continue;
     }
 
@@ -3810,7 +3852,7 @@ app.get("/value-export/range", async (req, res) => {
       picks: valueExportSourcePicks(result),
       source: result?.source || "snapshot_value"
     });
-    dayRecords.push(valueExportDecorateDay(day, oddsMap));
+    addDay(day,oddsMap);
   }
 
   if (sourceIssues.length > 0) {
@@ -3828,7 +3870,7 @@ app.get("/value-export/range", async (req, res) => {
     to,
     days,
     dayRecords,
-    today: athensDayKey()
+    today: athensDayKey(),includeAutonomous,includeShadow:true
   });
 
   if (format === "json") {
@@ -3845,7 +3887,11 @@ app.get("/value-export/range", async (req, res) => {
     const compactDaily = from === to;
 
     if (compactDaily) {
-      configureCompactDailyValueExportSheet(sheet);
+      configureCompactDailyValueExportSheet(sheet, report.planOrder.some(k => ["U1", "B_AUTO", "C_SHADOW"].includes(k)));
+      if(report.planOrder.includes("B_AUTO")||report.planOrder.includes("C_SHADOW")){
+        // Insert before the three unchanged identity columns.
+        for(const [column,width] of [[12,16],[13,62],[14,28],[15,32]])sheet.getColumn(column).width=width;
+      }
       addCompactDailyValuePicks(sheet, report);
       sheet.addRow([]);
       styleValueExportTitle(sheet, sheet.rowCount + 1, "Plan Analysis", 11);
@@ -3860,7 +3906,7 @@ app.get("/value-export/range", async (req, res) => {
       }
     }
 
-    styleValueExportTitle(sheet, sheet.rowCount + 1, "Integrity", compactDaily ? 14 : 19);
+    styleValueExportTitle(sheet, sheet.rowCount + 1, "Integrity", compactDaily ? 15 : 19);
     addValueExportTableHeader(sheet, ["Status", "Issue Count", "Code", "Date", "Plan", "Details"]);
     if (report.integrity.issues.length === 0) {
       sheet.addRow([report.integrity.status, 0, "", "", "", ""]);

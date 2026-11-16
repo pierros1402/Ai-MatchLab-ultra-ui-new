@@ -2,6 +2,9 @@ name: Intraday deploy snapshot refresh
 
 env:
   HISTORY_PRESERVATION_REQUIRED: "1"
+  # Dormant A/B research lane; activation and release are separate approvals.
+  AIML_AB_RESEARCH_ENABLED: "${{ vars.AIML_AB_RESEARCH_ENABLED || '0' }}"
+  AIML_AB_RESEARCH_START_DAY: "${{ vars.AIML_AB_RESEARCH_START_DAY }}"
   VALUE_VERIFIED_HISTORY_POLICY: "exact-native-future-team-v1"
 
 on:
@@ -274,6 +277,12 @@ jobs:
             git add "data/final-result-conflicts/${DAY_KEY}.json"
 
           git add "data/value-comparison/${DAY_KEY}.json"
+          test -f "data/value-unified/${DAY_KEY}/public-plan.json" && git add "data/value-unified/${DAY_KEY}/public-plan.json"
+          if [[ "${AIML_AB_RESEARCH_ENABLED:-0}" == "1" ]]; then
+            if ! node engine-v1/jobs/manage-autonomous-research-day.mjs "$DAY_KEY" --refresh --stage; then
+              echo "AUTONOMOUS_RESEARCH_CURRENT_SETTLEMENT_HOLD=true"
+            fi
+          fi
 
           STAGED="$(git diff --cached --name-only || true)"
 
@@ -281,7 +290,7 @@ jobs:
             node engine-v1/jobs/guard-staged-data-boundary.js \
               --label=current-value-settlement-checkpoint \
               --dayKey="${DAY_KEY}" \
-              --allow="^(data/final-results/${DAY_KEY}/|data/final-result-conflicts/${DAY_KEY}\.json$|data/value-comparison/${DAY_KEY}\.json$)"
+              --allow="^(data/final-results/${DAY_KEY}/|data/final-result-conflicts/${DAY_KEY}\.json$|data/value-unified/${DAY_KEY}/public-plan\.json$|data/value-autonomous-research/${DAY_KEY}/(comparison\.json|release-candidate\.json)$|data/value-comparison/${DAY_KEY}\.json$)"
           fi
 
           if git diff --cached --quiet; then
@@ -1076,6 +1085,12 @@ jobs:
             done <<< "$CANONICAL_STATUS_FILES"
           fi
 
+          if [[ "${AIML_AB_RESEARCH_ENABLED:-0}" == "1" ]]; then
+            if ! node engine-v1/jobs/manage-autonomous-research-day.mjs "$DAY_KEY" --stage --include-observations; then
+              echo "AUTONOMOUS_RESEARCH_STAGE_HOLD=true"
+            fi
+          fi
+
           test -e "data/deploy-snapshots/${DAY_KEY}/fixtures.json" && git add "data/deploy-snapshots/${DAY_KEY}/fixtures.json"
           test -e "data/deploy-snapshots/${DAY_KEY}/manifest.json" && git add "data/deploy-snapshots/${DAY_KEY}/manifest.json"
           test -e "data/deploy-snapshots/${DAY_KEY}/value.json" && git add "data/deploy-snapshots/${DAY_KEY}/value.json"
@@ -1131,7 +1146,7 @@ jobs:
             node engine-v1/jobs/guard-staged-data-boundary.js \
               --label=intraday-deploy-snapshot-refresh \
               --dayKey="${DAY_KEY}" \
-              --allow="^(data/canonical-fixtures/${DAY_KEY}/[^/]+\.json$|data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/foundation-integrity/${DAY_KEY}\.json$|data/foundation-integrity/latest\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/day-truth-ledger/${DAY_KEY}\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-unified/${DAY_KEY}/(observations/[a-f0-9]{64}\.json|public-plan\.json)$|data/value-data-readiness/${DAY_KEY}\.json$|data/value/_coverage-reports/${DAY_KEY}\.json$|data/value-plans/${DAY_KEY}/|data/final-results/${DAY_KEY}/|data/final-result-conflicts/${DAY_KEY}\.json$|data/value-comparison/(${DAY_KEY}\.json|cumulative\.json)$)"
+              --allow="^(data/canonical-fixtures/${DAY_KEY}/[^/]+\.json$|data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/foundation-integrity/${DAY_KEY}\.json$|data/foundation-integrity/latest\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/day-truth-ledger/${DAY_KEY}\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-unified/${DAY_KEY}/(observations/[a-f0-9]{64}\.json|public-plan\.json)$|data/value-autonomous-research/${DAY_KEY}/(observations/[a-f0-9]{64}\.json|comparison\.json|release-candidate\.json)$|data/value-data-readiness/${DAY_KEY}\.json$|data/value/_coverage-reports/${DAY_KEY}\.json$|data/value-plans/${DAY_KEY}/|data/final-results/${DAY_KEY}/|data/final-result-conflicts/${DAY_KEY}\.json$|data/value-comparison/(${DAY_KEY}\.json|cumulative\.json)$)"
 
             BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/canonical-fixtures/|data/deploy-snapshots/|data/build-reports/|data/foundation-integrity/|data/system-health/|data/day-truth-ledger/|data/value/|data/value-unified/|data/value-data-readiness/|data/value-plans/|data/final-results/|data/final-result-conflicts/|data/value-comparison/)' || true)"
             if [ -n "$BAD" ]; then

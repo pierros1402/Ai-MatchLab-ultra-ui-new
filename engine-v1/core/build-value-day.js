@@ -10,11 +10,13 @@ import {
 } from "./value-engine-v1.js";
 import { buildMatchIntelligence, createMatchIntelligenceContext } from "./build-match-intelligence.js";
 import { currentSeason } from "./season.js";
+import { canonicalFixturesForDay } from "./day-fixture-universe.js";
 import {
   buildValueFixtureUniverse,
   valueFixtureUniverseContract
 } from "./value-fixture-universe.js";
 import { adjustPlanAValue } from "./opponent-strength-adjusted-form.js";
+import { captureAutonomousBoundary } from "./autonomous-value-boundary-evidence.js";
 import { loadOpponentAdjustedProfiles } from "./opponent-strength-profile-loader.js";
 import { createValueModifierContext } from "./value-context-modifiers.js";
 
@@ -249,10 +251,7 @@ function isPlayable(match) {
 }
 
 // ------------------------------
-function writeValueSnapshot(date, result, outputPath = null) {
-  ensureDir(outputPath ? path.dirname(path.resolve(outputPath)) : resolveDataPath("value"));
-  const file = outputPath || resolveDataPath("value", `${date}.json`);
-
+function buildValueSnapshotPayload(date, result) {
   const payload = {
     date,
     source: result.source || null,
@@ -262,7 +261,13 @@ function writeValueSnapshot(date, result, outputPath = null) {
     picks: result.picks
   };
 
-  writeHistoryJsonAtomic(file, payload);
+  return payload;
+}
+
+function writeValueSnapshot(date, result, outputPath = null) {
+  ensureDir(outputPath ? path.dirname(path.resolve(outputPath)) : resolveDataPath("value"));
+  const file = outputPath || resolveDataPath("value", `${date}.json`);
+  writeHistoryJsonAtomic(file, buildValueSnapshotPayload(date, result));
 }
 
 // Production value-audit (rejection ledger). Report 2026-07-07 #5: production
@@ -850,7 +855,12 @@ function applyIntelligenceToValue(value, intelligence) {
 }
 
 // ------------------------------
-export async function buildValueDay(date, { rebuild = false, env, opponentAdjusted = false, outputPath = null, auditPath = null, prospectiveOnly = false, decisionEvidenceFactory = createValueDecisionEvidence, buildUniverse = buildValueFixtureUniverse } = {}) {
+export async function buildValueDay(date, { rebuild = false, env, opponentAdjusted = false, outputPath = null, auditPath = null, prospectiveOnly = false, computeOnly = false, autonomousResearch = false, commonFormAsOfMs = null, decisionEvidenceFactory = createValueDecisionEvidence, buildUniverse = buildValueFixtureUniverse } = {}) {
+  if (autonomousResearch && (!computeOnly || opponentAdjusted)) throw new Error("autonomous_research_requires_primary_compute_only");
+  const autonomousResearchRows = [];
+  if (computeOnly && (!rebuild || !prospectiveOnly || outputPath || auditPath)) {
+    throw new Error("invalid_compute_only_options");
+  }
   const season = currentSeason();
   const cacheKey = `${season}:${date}:${opponentAdjusted ? "a2" : "a"}`;
 
@@ -915,6 +925,9 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
     }
   }
   const now = Date.now();
+  if (commonFormAsOfMs !== null && (!computeOnly || !prospectiveOnly || !Number.isSafeInteger(commonFormAsOfMs) || commonFormAsOfMs < 0 || commonFormAsOfMs > now)) {
+    throw new Error("invalid_common_form_cutoff");
+  }
 
   const valueUniverse =
     buildUniverse(date);
@@ -968,7 +981,7 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
   // Only the existing prospective publication path may consume observations
   // acquired today. Historical rebuilds keep their original input boundary.
   const indexes = prospectiveOnly
-    ? (await import('./prospective-value-form-view.js')).prospectiveValueFormView(resources.indexes, season, now)
+    ? (await import('./prospective-value-form-view.js')).prospectiveValueFormView(resources.indexes, season, commonFormAsOfMs ?? now)
     : resources.indexes;
   const inputEvidence = decisionEvidenceFactory(date, opponentAdjusted ? "plan-a2" : "plan-a", {
     canonicalFixtures: sourceMatches,
@@ -1026,7 +1039,7 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
       }
 
       const details = readDetailsSnapshot(date, match.canonicalId, match.matchId);
-      inputEvidence.capture("fixture_context", { fixture: match, details }, evaluatedFixtureId);
+      const fixtureContextReceipt = inputEvidence.capture("fixture_context", { fixture: match, details }, evaluatedFixtureId);
       const matchProfile = details?.researchedFacts?.matchProfile || null;
 
             const competitionContext =
@@ -1053,8 +1066,20 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
                         matchIntelligence: intelligence
                       }
                     };
-                  inputEvidence.capture("engine_arguments", { input: engineInput, intelligence }, evaluatedFixtureId);
-                  const value = await evaluateMatchValue(engineInput, { season, indexes, priors, modifierContext, returnNullDiagnostics: true });
+                  const engineArgumentsReceipt = inputEvidence.capture("engine_arguments", { input: engineInput, intelligence }, evaluatedFixtureId);
+                  const value = await evaluateMatchValue(engineInput, { season, indexes, priors, modifierContext, returnNullDiagnostics: true,
+                    ...(autonomousResearch ? { onAutonomousResearch: research => {
+                      // The existing details and evidence receipts are the only extra inputs.
+                      // No second data acquisition, no A2 output dependency. Diagnostic failure cannot invalidate A.
+                      let boundaryEvidence = null;
+                      try {
+                        const statisticalBoundaryReceipt = research?.status === "RESEARCH_ONLY" && research?.variants?.combined
+                          ? inputEvidence.capture("autonomous_boundary_metrics", { metrics: research.metrics, probabilities: research.variants.combined.probabilities }, evaluatedFixtureId)
+                          : null;
+                        boundaryEvidence = captureAutonomousBoundary({fixture: match, details, observedAt: new Date().toISOString(), research, fixtureContextReceipt, engineArgumentsReceipt, statisticalBoundaryReceipt});
+                      } catch { /* unavailable evidence stays unavailable */ }
+                      autonomousResearchRows.push({ canonicalMatchId: evaluatedFixtureId, research: boundaryEvidence ? {...research, boundaryEvidence} : research });
+                    } } : {}) });
                   // The evaluator also loads input.ai internally. Capture the
                   // argument after that load as well as the returned value.
                   inputEvidence.capture("engine_returned", { input: engineInput, value }, evaluatedFixtureId);
@@ -1190,8 +1215,11 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
       )
   };
 
-  __valueDayCache.set(cacheKey, result);
-  writeValueSnapshot(date, result, outputPath);
+  const computedSnapshot = computeOnly ? buildValueSnapshotPayload(date, result) : null;
+  if (!computeOnly) {
+    __valueDayCache.set(cacheKey, result);
+    writeValueSnapshot(date, result, outputPath);
+  }
 
   // Production value-audit (rejection ledger) — observability only, derived from
   // the counters gathered above; does not affect `result`/picks in any way.
@@ -1349,6 +1377,10 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
       evaluationAccounting;
 
     throw accountingError;
+  }
+
+  if (computeOnly) {
+    return { result: computedSnapshot, audit, ...(autonomousResearch ? { autonomousResearch: { status: "RESEARCH_ONLY_NOT_POLICY_APPROVED", rows: autonomousResearchRows } } : {}) };
   }
 
   try {

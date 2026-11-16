@@ -14,11 +14,15 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import fsSync from "node:fs";
 import { resolveDataPath } from "../storage/data-root.js";
+import { evaluateAutonomousResearch } from "./autonomous-value-research.js";
 import { applyValueContextModifiers } from "./value-context-modifiers.js";
 import { applyValueContextIntegration } from "./value-context-integration.js";
 import { currentSeason } from "./season.js";
 import { sameSquadMarkers } from './team-identity.js';
 import { LEAGUES_COVERAGE } from '../../workers/_shared/leagues-coverage.js';
+import { formMaximumAgeDays, isEligibleFormDate } from './form-recency-policy.js';
+import { canonicalTeamName } from '../storage/team-aliases-db.js';
+import { getProductionIdentityResolver } from './production-identity-resolver-runtime.js';
 import {
   overlayProductionEvidenceDocumentReadView,
 } from "./production-evidence-identity-overlay.js";
@@ -647,11 +651,28 @@ function resolveTeamEntry(teamFormIndex, leagueSlug, teamName, globalClubId = nu
     return { key: teamName, value: null, leagueKey: leagueSlug, score: 0 };
   }
 
+  // Use only an already-adjudicated identity to bridge a display-name change.
+  // For example, Turkey and Türkiye are bound to the same committed club ID.
+  // This neither learns an alias nor relaxes the row-level identity boundary.
+  if (!legacyOnly && !Object.hasOwn(teamFormIndex, teamName)) {
+    const identity=getProductionIdentityResolver().resolveTeamReference({leagueSlug,alias:teamName});
+    const key=identity?.preferredDisplayName;
+    if(identity?.ok && key && Object.hasOwn(teamFormIndex,key) && sameSquadMarkers(teamName,key)
+        && (!globalClubId || globalClubId===identity.globalClubId)) {
+      const value=scopeValueFormEntry(teamFormIndex[key],key,leagueSlug,globalClubId||identity.globalClubId);
+      if(extractRecentMatches(value).length)return {key,value,leagueKey:leagueSlug,score:1};
+    }
+  }
+
   let best = null;
   const exactNameKnown = entries.some(([key]) => normalizeName(key) === normalizeName(teamName));
+  const requestedAlias = canonicalTeamName(leagueSlug, teamName);
 
   for (const [teamKey, value] of entries) {
-    const nameScore = scoreTeamNameMatch(teamName, teamKey);
+    const candidateAlias = requestedAlias && canonicalTeamName(leagueSlug, teamKey);
+    const approvedAliasMatch = candidateAlias && sameSquadMarkers(teamName,teamKey) &&
+      normalizeName(requestedAlias) === normalizeName(candidateAlias);
+    const nameScore = approvedAliasMatch ? 1 : scoreTeamNameMatch(teamName, teamKey);
     if (nameScore < 0.45) continue;
 
     // A known complete club name cannot inherit an extended namesake's
@@ -1144,7 +1165,7 @@ function computeEffectiveFormWeight(baseWeight, freshnessScore, continuityScore,
 
   return clamp(rawWeight, Math.min(0.12, safeBaseWeight), safeBaseWeight);
 }
-function selectValidFormMatches(matches, teamName, side, season, fixtureDate, window = FORM_WINDOW) {
+function selectValidFormMatches(matches, teamName, side, season, fixtureDate, window = FORM_WINDOW, leagueSlug = null) {
   let filtered = safeArray(matches);
 
   if (side === "home") {
@@ -1161,8 +1182,7 @@ function selectValidFormMatches(matches, teamName, side, season, fixtureDate, wi
     })
     .filter(x => x.matchDate instanceof Date)
     .filter(x => {
-      const diff = daysBetween(fixtureDate, x.matchDate);
-      return Number.isFinite(diff) && diff >= 0 && diff <= FORM_MAX_AGE_DAYS;
+      return isEligibleFormDate(x.matchDate, fixtureDate, leagueSlug, FORM_MAX_AGE_DAYS);
     })
     .sort((a, b) => b.matchDate - a.matchDate)
     .slice(0, window);
@@ -1443,7 +1463,7 @@ function computeGoalsProfile(homeMetrics, awayMetrics, leagueBaseline) {
     bttsScore
   };
 }
-function computeMatchupBias(matchupEntry, homeTeam, awayTeam, season, fixtureDate) {
+function computeMatchupBias(matchupEntry, homeTeam, awayTeam, season, fixtureDate, leagueSlug = null) {
   const entry = matchupEntry || {};
   const matches = safeArray(
     pickFirstDefined(
@@ -1457,8 +1477,7 @@ function computeMatchupBias(matchupEntry, homeTeam, awayTeam, season, fixtureDat
     .map(match => ({ match, date: extractMatchDate(match) }))
     .filter(x => x.date instanceof Date)
     .filter(x => {
-      const diff = daysBetween(fixtureDate, x.date);
-      return Number.isFinite(diff) && diff >= 0 && diff <= FORM_MAX_AGE_DAYS;
+      return isEligibleFormDate(x.date, fixtureDate, leagueSlug, FORM_MAX_AGE_DAYS);
     })
     .sort((a, b) => b.date - a.date)
     .slice(0, FORM_WINDOW)
@@ -2039,7 +2058,7 @@ export function diagnoseValueRecentSample(input, indexes, season = DEFAULT_SEASO
   const leagueSlug = String(input.leagueSlug || '');
   const home = resolveTeamEntry(indexes.teamForm, leagueSlug, input.homeTeam, input.homeGlobalClubId || input.productionIdentityBinding?.homeGlobalClubId);
   const away = resolveTeamEntry(indexes.teamForm, leagueSlug, input.awayTeam, input.awayGlobalClubId || input.productionIdentityBinding?.awayGlobalClubId);
-  const select = resolved => selectValidFormMatches(extractRecentMatches(resolved.value), resolved.key, 'all', season, fixtureDate, FORM_WINDOW);
+  const select = resolved => selectValidFormMatches(extractRecentMatches(resolved.value), resolved.key, 'all', season, fixtureDate, FORM_WINDOW, leagueSlug);
   const h = select(home), a = select(away);
   const gate = evaluateMinimumRecentSampleGate({rawHomeMetrics:{sample:h.sample},rawAwayMetrics:{sample:a.sample}});
   const evidence = selection => selection.selected.map(row => ({
@@ -2047,7 +2066,7 @@ export function diagnoseValueRecentSample(input, indexes, season = DEFAULT_SEASO
     homeTeam:row.homeTeam, awayTeam:row.awayTeam, kickoff:row.kickoff || row.kickoffUtc,
     source:row.source, verifiedFinalGeneratedAt:row.verifiedFinalGeneratedAt || null
   }));
-  return {...gate, formMaxAgeDays:FORM_MAX_AGE_DAYS, homeResolvedKey:home.key, awayResolvedKey:away.key,
+  return {...gate, formMaxAgeDays:formMaximumAgeDays(leagueSlug, FORM_MAX_AGE_DAYS), homeResolvedKey:home.key, awayResolvedKey:away.key,
     homeSelected:evidence(h), awaySelected:evidence(a), predictionCreated:false};
 }
 
@@ -2099,7 +2118,8 @@ export async function evaluateMatchValue(input, opts = {}) {
     "all",
     season,
     fixtureDate,
-    FORM_WINDOW
+    FORM_WINDOW,
+    leagueSlug
   );
 
   const awayAllSelection = selectValidFormMatches(
@@ -2108,7 +2128,8 @@ export async function evaluateMatchValue(input, opts = {}) {
     "all",
     season,
     fixtureDate,
-    FORM_WINDOW
+    FORM_WINDOW,
+    leagueSlug
   );
 
   const homeSideSelection = selectValidFormMatches(
@@ -2117,7 +2138,8 @@ export async function evaluateMatchValue(input, opts = {}) {
     "home",
     season,
     fixtureDate,
-    FORM_WINDOW
+    FORM_WINDOW,
+    leagueSlug
   );
 
   const awaySideSelection = selectValidFormMatches(
@@ -2126,7 +2148,8 @@ export async function evaluateMatchValue(input, opts = {}) {
     "away",
     season,
     fixtureDate,
-    FORM_WINDOW
+    FORM_WINDOW,
+    leagueSlug
   );
 
   const rawHomeMetrics = computeTeamMetricsFromSelection(homeResolved.key, homeAllSelection);
@@ -2149,6 +2172,21 @@ export async function evaluateMatchValue(input, opts = {}) {
       awayMetrics
     });
 
+  // Optional research at existing Value calculation boundary; no new data acquisition.
+  // The independent candidate receives the already resolved statistical inputs, not A scores.
+  if (typeof opts.onAutonomousResearch === "function") {
+    let research;
+    try {
+      research = minimumRecentSampleGate.ok
+        ? evaluateAutonomousResearch({ homeMetrics, awayMetrics, homeSideMetrics, awaySideMetrics,
+            rawHomeMetrics, rawAwayMetrics, leagueBaseline })
+        : { status: "HOLD", reason: "minimum_recent_sample", policyApproved: false };
+    } catch {
+      research = { status: "HOLD", reason: "autonomous_research_math_failed", policyApproved: false };
+    }
+    opts.onAutonomousResearch(research);
+  }
+
   if (!minimumRecentSampleGate.ok) {
     if (opts.returnNullDiagnostics === true) {
       return {
@@ -2157,7 +2195,7 @@ export async function evaluateMatchValue(input, opts = {}) {
         minimumRecentSample: {
           minRequiredRecentMatches: MIN_REQUIRED_RECENT_MATCHES,
           sampleBasis: minimumRecentSampleGate.basis,
-          formMaxAgeDays: FORM_MAX_AGE_DAYS,
+          formMaxAgeDays: formMaximumAgeDays(leagueSlug, FORM_MAX_AGE_DAYS),
           formWindow: FORM_WINDOW,
           homeTeam,
           awayTeam,
@@ -2191,7 +2229,8 @@ export async function evaluateMatchValue(input, opts = {}) {
     homeResolved.key,
     awayResolved.key,
     season,
-    fixtureDate
+    fixtureDate,
+    leagueSlug
   );
 
   const matchupBias = blendMatchupBias(
@@ -2273,7 +2312,7 @@ export async function evaluateMatchValue(input, opts = {}) {
       formWindow: FORM_WINDOW,
       formRules: {
         sameSeasonOnly: true,
-        maxAgeDays: FORM_MAX_AGE_DAYS,
+        maxAgeDays: formMaximumAgeDays(leagueSlug, FORM_MAX_AGE_DAYS),
         fullStrengthDays: FORM_FULL_STRENGTH_DAYS,
         decayStartDays: FORM_DECAY_START_DAYS,
         heavyDecayDays: FORM_HEAVY_DECAY_DAYS,

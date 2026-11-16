@@ -219,7 +219,11 @@ function validateTerminalAgainstCurrent(previous, currentTruth) {
       previous.truth.scoreHome >= 0 &&
       Number.isInteger(previous.truth?.scoreAway) &&
       previous.truth.scoreAway >= 0 &&
+      previous.truth.totalGoals === previous.truth.scoreHome + previous.truth.scoreAway &&
+      previous.truth.actualOver25 === (previous.truth.totalGoals > 2 ? 1 : 0) &&
       previous.brier != null &&
+      Number.isFinite(previous.brier.adjusted) &&
+      Number.isFinite(previous.brier.baseline) &&
       previous.hitRate != null,
       `previous_settled_integrity_invalid:${previous.canonicalFixtureId}`
     );

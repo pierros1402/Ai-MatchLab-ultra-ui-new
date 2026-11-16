@@ -1,4 +1,5 @@
 import { collectFrozenValueHealthIssues } from "../system-health/frozen-value-health-policy.js";
+import { collectGlobalHistoryCoverageIssues } from '../system-health/global-history-coverage-policy.js';
 /**
  * build-system-health-alerts-day.js
  *
@@ -85,6 +86,8 @@ function issue(severity, source, type, message, details = {}) {
 
 export function collectFoundationIntegrityIssues(foundationIntegrity, dayKey) {
   const issues = [];
+
+  issues.push(...collectGlobalHistoryCoverageIssues(readJsonSafe(resolveDataPath('history-coverage',dayKey,'after.json'))));
   issues.push(...collectPlanBInputIssues({
     B: readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-b-audit.json")),
     B2: readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-b2-audit.json"))

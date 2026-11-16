@@ -569,6 +569,7 @@ export function validateProductionIdentityExtension({
 export function buildExtendedProductionIdentityResolver({
   baseResolver,
   ledger,
+  reviewedAliasBindings = [],
 } = {}) {
   const validation = validateProductionIdentityExtension({ ledger, baseResolver });
   if (!validation.ok) {
@@ -602,12 +603,25 @@ export function buildExtendedProductionIdentityResolver({
     }
   }
 
-  function resolveExtensionBindingSignal(field, value) {
+  const reviewedByAlias = new Map();
+  for(const entry of reviewedAliasBindings){
+    const anchor=teamByAlias.get(normalizeGenesisAlias(entry.anchorAlias));
+    const anchorBase=baseResolver.resolveTeamReference({alias:entry.anchorAlias,leagueSlug:entry.leagueSlug});
+    const binding=anchor||teamByGlobalId.get(anchorBase?.globalClubId);
+    if(!binding||binding.globalClubId!==entry.globalClubId)throw Error('REVIEWED_ALIAS_EXISTING_EXTENSION_IDENTITY_REQUIRED');
+    const key=entry.leagueSlug+'\0'+normalizeGenesisAlias(entry.alias);
+    const prior=teamByAlias.get(normalizeGenesisAlias(entry.alias))||reviewedByAlias.get(key);
+    const base=baseResolver.resolveTeamReference({alias:entry.alias,leagueSlug:entry.leagueSlug});
+    if((prior&&prior.globalClubId!==entry.globalClubId)||(base.ok&&base.globalClubId!==entry.globalClubId))throw Error('REVIEWED_ALIAS_IDENTITY_CONFLICT');
+    reviewedByAlias.set(key,binding);
+  }
+
+  function resolveExtensionBindingSignal(field, value, leagueSlug) {
     const text = clean(value);
     if (!text) return null;
     if (field === "globalClubId") return teamByGlobalId.get(text) || null;
     if (field === "ledgerTeamIdentityKey") return teamByIdentityKey.get(text) || null;
-    if (field === "alias") return teamByAlias.get(normalizeGenesisAlias(text)) || null;
+    if (field === "alias") return teamByAlias.get(normalizeGenesisAlias(text)) || reviewedByAlias.get(clean(leagueSlug)+'\0'+normalizeGenesisAlias(text)) || null;
     return null;
   }
 
@@ -626,7 +640,7 @@ export function buildExtendedProductionIdentityResolver({
         continue;
       }
 
-      const binding = resolveExtensionBindingSignal(field, value);
+      const binding = resolveExtensionBindingSignal(field, value, reference.leagueSlug);
       if (!binding) {
         return {
           ...base,

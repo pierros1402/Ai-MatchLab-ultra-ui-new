@@ -122,8 +122,23 @@
             typeof data.plans[planKey] === "object"
         );
 
+      // Nested research is exposed only by the verified release reader. A bad
+      // or untrusted research extension must not make the legacy A disappear.
+      const researchShapeValid = sourceLabel === "engine-release" && data?.source === "value-comparison-release-artifact" &&
+        data.ok === true && data.autonomousPreviewMode === true && data.unifiedPlan?.id === "plan-u1" &&
+        data.unifiedPlan.date === data.date && data.unifiedPlan.status === "AVAILABLE" && Array.isArray(data.unifiedPlan.picks) && data.unifiedPlan.count === data.unifiedPlan.picks.length &&
+        data.autonomousPreview?.id === "plan-autonomous-preview" && data.autonomousPreview.date === data.date &&
+        ["RESEARCH_ONLY", "NOT_AVAILABLE"].includes(data.autonomousPreview.status) && data.autonomousPreview.publicationAuthorized === false &&
+        Array.isArray(data.autonomousPreview.picks) && data.autonomousPreview.count === data.autonomousPreview.picks.length;
+      const pairedResearchValid = researchShapeValid && !Object.hasOwn(data,"autonomousResearchEnvelope") && data?.schema === "aiml.combined-autonomous-preview-transport.v1" &&
+        data.researchOnly === true && data.publicationAuthorized === false;
+      if (pairedResearchValid) return data;
       if (hasAllRequiredPlans) {
-        return data;
+        const {autonomousResearchEnvelope, autonomousPreviewMode, autonomousPreview, autonomousDailyStats, autonomousCohortStats, ...ordinary} = data;
+        // Raw unpublished envelopes are never a frontend input.
+        return researchShapeValid && autonomousResearchEnvelope === undefined
+          ? {...ordinary,autonomousPreviewMode,autonomousPreview,autonomousDailyStats,autonomousCohortStats}
+          : ordinary;
       }
 
       console.warn("[value-adapter] comparison payload invalid", sourceLabel, data);

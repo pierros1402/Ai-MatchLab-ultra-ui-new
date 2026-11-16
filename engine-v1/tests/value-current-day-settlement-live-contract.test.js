@@ -104,7 +104,7 @@ test("comparison rows distinguish verified final from display-only worker FT", (
 
   assert.match(
     valuePicks,
-    /const hasVerifiedFinal = Boolean\(p\?\.finalScore\?\.scoreKey\);/
+    /const hasVerifiedFinal = finalScore !== null;/
   );
 
   assert.match(

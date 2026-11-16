@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { getDataRoot } from "./data-root.js";
+import { storeEncodedValueEvidence } from "./value-evidence-object.js";
 
 const schema = "ai-matchlab.value-decision-input-evidence.v1";
 const digest = bytes => crypto.createHash("sha256").update(bytes).digest("hex");
@@ -12,7 +13,7 @@ const codeFiles = [
   "../core/team-identity.js", "../jobs/append-finalized-day-to-history.js",
   "../core/opponent-strength-adjusted-form.js", "../core/opponent-strength-profile-loader.js",
   "../core/plan-b-canonical-membership.js", "../core/plan-b-evaluation-accounting.js",
-  "../jobs/derive-value-from-odds.js", "./value-decision-evidence.js"
+  "../jobs/derive-value-from-odds.js", "./value-decision-evidence.js", "./value-evidence-object.js"
 ];
 // File hashes identify the source visible when this evidence module was loaded.
 // They do not retrospectively certify an upstream assessment producer's inputs.
@@ -36,29 +37,8 @@ function encode(value) {
   }, 2) + "\n", "utf8");
 }
 
-function store(root, value) {
-  const bytes = encode(value), sha256 = digest(bytes);
-  const relative = `value/_execution-evidence/objects/${sha256.slice(0, 2)}/${sha256}.json`;
-  const file = path.join(root, ...relative.split("/"));
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  if (fs.existsSync(file)) {
-    if (digest(fs.readFileSync(file)) !== sha256) throw new Error("immutable_value_input_evidence_conflict");
-  } else {
-    const temporary = `${file}.tmp-${crypto.randomUUID()}`;
-    let fd;
-    try {
-      fd = fs.openSync(temporary, "wx"); fs.writeFileSync(fd, bytes); fs.fsyncSync(fd);
-      fs.closeSync(fd); fd = undefined; fs.renameSync(temporary, file);
-      if (process.platform !== "win32") {
-        const directory = fs.openSync(path.dirname(file), "r");
-        try { fs.fsyncSync(directory); } finally { fs.closeSync(directory); }
-      }
-    } finally {
-      if (fd !== undefined) fs.closeSync(fd);
-      if (fs.existsSync(temporary)) fs.unlinkSync(temporary);
-    }
-  }
-  return { path: `data/${relative}`, sha256, bytes: bytes.length };
+function store(root, value, options) {
+  return storeEncodedValueEvidence(root, encode(value), options);
 }
 
 export function createValueDecisionEvidence(dayKey, planId, sharedInputs, { dataRoot = getDataRoot() } = {}) {
@@ -80,7 +60,7 @@ export function createValueDecisionEvidence(dayKey, planId, sharedInputs, { data
         sourceFilesAtModuleLoad: codeAtModuleLoad,
         encoding: "json_with_explicit_undefined_and_nonfinite_number_tags.v1",
         scope: "actual_value_selector_arguments_and_derived_context_for_this_execution",
-        originalHistoricalObservationCertified: false, upstreamRawInputLineageFullyCertified: false });
+        originalHistoricalObservationCertified: false, upstreamRawInputLineageFullyCertified: false }, { allowChunking: false });
       records.push({ stage, canonicalMatchId, receipt });
       return receipt;
     } catch (cause) {

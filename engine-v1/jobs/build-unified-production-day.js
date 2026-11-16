@@ -1,11 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import {execFileSync} from 'node:child_process';
+import {proveOriginalObservation} from '../value/unified-committed-record-proof.js';
 import {fileURLToPath} from 'node:url';
 import {athensDayKey,shiftDay} from '../core/daykey.js';
 import {resolveDataPath,getProjectRoot} from '../storage/data-root.js';
 import {canonicalFixturesForDay} from '../core/day-fixture-universe.js';
+import {buildValueFixtureUniverse,valueFixtureUniverseContract,assertValueFixtureUniverseParity} from '../core/value-fixture-universe.js';
 import {buildValueDay} from '../core/build-value-day.js';
 import {deriveValueFromOdds} from './derive-value-from-odds.js';
 import {buildValueCoverageReportDay} from './build-value-coverage-report-day.js';
@@ -16,17 +17,10 @@ import {projectUnifiedProduction,validateProductionProjection} from '../value/un
 import {loadFinalResults,evaluatePickResult} from './build-value-settlement-from-final-results-day.js';
 import {isValueSettlementVoidState} from '../core/non-played-state.js';
 import {checkpointHistoryIfRequired,writeHistoryJsonAtomic} from '../storage/history-preservation.js';
+import {collectCommonSourceRefs} from '../value/autonomous-common-source-audit.js';
 function read(file){return JSON.parse(fs.readFileSync(file,'utf8'));}
 function write(file,body){writeHistoryJsonAtomic(file,body);}
-function proof(file){
- try{
-  const cwd=getProjectRoot(),relative=path.relative(cwd,file).replaceAll('\\','/');
-  const git=args=>execFileSync('git',args,{cwd,encoding:'utf8',windowsHide:true,maxBuffer:32*1024*1024});
-  const commits=git(['log','--diff-filter=A','--format=%H','--',relative]).trim().split('\n').filter(Boolean);
-  if(commits.length!==1||digest(Buffer.from(git(['show',`${commits[0]}:${relative}`])))!==digest(fs.readFileSync(file)))return {status:'UNPROVEN'};
-  return {status:'ORIGINAL_COMMITTED_BYTES_VERIFIED',commit:commits[0],committedAt:git(['show','-s','--format=%cI',commits[0]]).trim()};
- }catch{return {status:'UNPROVEN'};}
-}
+function proof(file){return proveOriginalObservation(getProjectRoot(),file);}
 export function productionResults(record,timing,finals,now){
  const observation=record.observation,byId=new Map();
  for(const final of finals.rows)byId.set(final.matchId,[...(byId.get(final.matchId)||[]),final]);
@@ -50,31 +44,71 @@ export function productionResults(record,timing,finals,now){
   observations:[{date:record.date,signature:observation.observationSignature,timing}],rows,conflicts:[]};
  return {...body,reportSignature:signature(body)};
 }
-export async function buildUnifiedProductionDay(day,{capture=true,nowFn=()=>new Date().toISOString(),dependencies={}}={}){
+export async function buildUnifiedProductionDay(day,{capture=true,nowFn=()=>new Date().toISOString(),dependencies={},onAutonomousResearch=null}={}){
+ if(onAutonomousResearch!==null&&typeof onAutonomousResearch!=='function')throw Error('invalid_autonomous_research_sink');
  if(!/^\d{4}-\d{2}-\d{2}$/.test(day)||day<'2026-10-18')throw Error('invalid_unified_production_day');
  const today=athensDayKey(new Date(nowFn()));
  if(capture&&(day<today||day>shiftDay(today,1)))throw Error('unified_capture_outside_prospective_window');
  if(capture&&(dependencies.detailsAudit||auditDetailsFoundationDay)(day).ok!==true)throw Error('production_details_foundation_not_verified');
  const root=dependencies.root||resolveDataPath('value-unified',day),observations=path.join(root,'observations');
  fs.mkdirSync(observations,{recursive:true});
- let readiness=null;
+ let readiness=null,autonomousCapture=null;
  if(capture){
-  const runId=crypto.randomUUID(),scratch=path.join(root,'scratch',runId);fs.mkdirSync(scratch,{recursive:true});
+  const runId=crypto.randomUUID();
+  const computed=new Map();
   let captured=false;
   try{
-   for(const [key,adjusted] of [['A',false],['A2',true]])await (dependencies.buildA||buildValueDay)(day,{rebuild:true,prospectiveOnly:true,opponentAdjusted:adjusted,
-    outputPath:path.join(scratch,`plan-${key.toLowerCase()}.json`),auditPath:path.join(scratch,`plan-${key.toLowerCase()}-audit.json`)});
-   for(const mode of ['plan-b-observation','plan-b2-observation'])(dependencies.buildB||deriveValueFromOdds)(day,{outputMode:mode,publicationRunId:runId,scratchPath:scratch});
-   await (dependencies.coverage||buildValueCoverageReportDay)(day);
-   readiness=(dependencies.readiness||buildValueDataReadinessDay)(day,{write:true});
+   const readFixtures=dependencies.fixtures||canonicalFixturesForDay;
+   const fixtures=structuredClone(readFixtures(day));
+   const universe=buildValueFixtureUniverse(day,{fixtures});
+   const fixtureReadHash=signature(fixtures);
+   const sharedUniverse=()=>structuredClone(universe);
+   // One form-read cutoff for both A variants; each producer still checks real kickoff time.
+   const commonFormAsOfMs=Date.now();
+   for(const [key,adjusted] of [['A',false],['A2',true]]){
+    computed.set(key,await (dependencies.buildA||buildValueDay)(day,{
+     rebuild:true,prospectiveOnly:true,opponentAdjusted:adjusted,computeOnly:true,buildUniverse:sharedUniverse,commonFormAsOfMs,
+     ...(!adjusted&&onAutonomousResearch?{autonomousResearch:true}:{})
+    }));
+   }
+   for(const [key,mode] of [['B','plan-b-observation'],['B2','plan-b2-observation']]){
+    computed.set(key,(dependencies.buildB||deriveValueFromOdds)(day,{
+     outputMode:mode,publicationRunId:runId,computeOnly:true,buildUniverse:sharedUniverse
+    }));
+   }
+   await (dependencies.coverage||buildValueCoverageReportDay)(day,{buildUniverse:sharedUniverse});
+   readiness=(dependencies.readiness||buildValueDataReadinessDay)(day,{write:true,dependencies:{fixtures:()=>structuredClone(fixtures)}});
+   // Optional research sink; never part of the A record or production projection.
+   if(onAutonomousResearch){
+    const primary=computed.get('A');
+    autonomousCapture={day,fixtures:structuredClone(fixtures),research:structuredClone(primary?.autonomousResearch),universe:structuredClone(primary?.audit?.fixtureUniverse),commonSourceRefs:collectCommonSourceRefs(computed)};
+   }
    const sources={},plans={},inputFiles=[];
    for(const key of ['A','A2','B','B2']){
-    const load=name=>{const file=path.join(scratch,name),raw=fs.readFileSync(file);inputFiles.push({path:path.relative(getProjectRoot(),file).replaceAll('\\','/'),sha256:digest(raw),bytes:raw.length,rawUtf8:raw.toString('utf8')});return JSON.parse(raw);};
-    sources[key]={plan:load(`plan-${key.toLowerCase()}.json`),audit:load(`plan-${key.toLowerCase()}-audit.json`)};
+    const candidate=computed.get(key);
+    if(!candidate?.result||!candidate?.audit)throw Error('incomplete_compute_result');
+    const declared=candidate.audit.fixtureUniverse||candidate.audit.membership?.fixtureUniverse;
+    if(!declared)throw Error('unified_missing_declared_fixture_universe:'+key);
+    assertValueFixtureUniverseParity(valueFixtureUniverseContract(universe),declared);
+    const capture=(name,value)=>{
+     const raw=Buffer.from(JSON.stringify(value,null,2)+'\n','utf8');
+     inputFiles.push({
+      path:'computed-inputs/'+runId+'/'+name,
+      sha256:digest(raw),bytes:raw.length,rawUtf8:raw.toString('utf8')
+     });
+     return JSON.parse(raw.toString('utf8'));
+    };
+    sources[key]={
+     plan:capture(key.toLowerCase()+'.json',candidate.result),
+     audit:capture(key.toLowerCase()+'-audit.json',candidate.audit)
+    };
     if(key==='A')sources[key].producerAudit=sources[key].audit;
     plans[key]=sources[key].plan;
    }
-   const fixtures=(dependencies.fixtures||canonicalFixturesForDay)(day),now=nowFn();
+   if(readiness?.fixtureUniverse)assertValueFixtureUniverseParity(valueFixtureUniverseContract(universe),readiness.fixtureUniverse);
+   if(signature(readFixtures(day))!==fixtureReadHash)throw Error('unified_canonical_input_changed_during_capture');
+   const now=nowFn();
+   if(autonomousCapture)autonomousCapture.commonDecisionAt=now;
    const fixtureBytes=Buffer.from(JSON.stringify(fixtures));inputFiles.push({path:'canonical-fixture-read-view.json',sha256:digest(fixtureBytes),bytes:fixtureBytes.length,rawUtf8:fixtureBytes.toString('utf8')});
    const totalBytes=inputFiles.reduce((sum,file)=>sum+file.bytes,0);if(totalBytes>32*1024*1024)throw Error('production_input_capture_size_exceeded');
    const observation=buildUnifiedShadow({day,now,sources,fixtures,inputFiles,run:{runId:process.env.GITHUB_RUN_ID||null}});
@@ -92,23 +126,23 @@ export async function buildUnifiedProductionDay(day,{capture=true,nowFn=()=>new 
    }
   }catch(error){
    const candidates=[];
-   for(const name of fs.readdirSync(scratch).filter(name=>/^plan-[a-z0-9-]+\.json$/.test(name))){
-    const raw=fs.readFileSync(path.join(scratch,name));
-    const entry={name,bytes:raw.length,sha256:digest(raw)};
-    try{const body=JSON.parse(raw);let secret=false;JSON.stringify(body,(key,item)=>{if(/api[_-]?key|authorization|password|credentials?|secrets?|access[_-]?token|cookies?/i.test(key))secret=true;return item;});if(!secret)entry.payload=body;}catch{}
-    candidates.push(entry);
+   for(const [key,value] of computed){
+    const raw=Buffer.from(JSON.stringify(value),'utf8');
+    candidates.push({key,bytes:raw.length,sha256:digest(raw)});
    }
-   write(path.join(root,'failures',runId+'.json'),{schema:'ai-matchlab.unified-production-failure.v1',date:day,reason:'PRODUCTION_CAPTURE_FAILED',candidates});
+   write(path.join(root,'failures',runId+'.json'),{
+    schema:'ai-matchlab.unified-production-failure.v1',
+    date:day,reason:'PRODUCTION_CAPTURE_FAILED',
+    errorCode:String(error?.code||error?.name||'Error').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,80),candidates
+   });
    (dependencies.checkpoint||checkpointHistoryIfRequired)(day,'unified-production-capture-failed');
    throw error;
-  }finally{
-   const real=fs.realpathSync(scratch),expected=path.resolve(root,'scratch',runId);
-   if(real.toLowerCase()!==expected.toLowerCase()||!expected.startsWith(path.resolve(root,'scratch')+path.sep))throw Error('unified_scratch_cleanup_boundary');
-   fs.rmSync(scratch,{recursive:true,force:false});
   }
   if(captured)(dependencies.checkpoint||checkpointHistoryIfRequired)(day,'unified-production-record-captured');
  }
- return refreshUnifiedProductionProjection(day,{readiness,nowFn,dependencies});
+ const result=refreshUnifiedProductionProjection(day,{readiness,nowFn,dependencies});
+ if(autonomousCapture)onAutonomousResearch(autonomousCapture);
+ return result;
 }
 export function refreshUnifiedProductionProjection(day,{readiness=null,nowFn=()=>new Date().toISOString(),dependencies={}}={}){
  const root=dependencies.root||resolveDataPath('value-unified',day),observations=path.join(root,'observations');
@@ -144,5 +178,14 @@ export function refreshUnifiedProductionProjection(day,{readiness=null,nowFn=()=
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const day=process.argv[2],capture=!process.argv.includes('--settle-only');
- console.log(JSON.stringify(await buildUnifiedProductionDay(day,{capture})));
+ if(process.env.AIML_AB_RESEARCH_ENABLED!=='1')console.log(JSON.stringify(await buildUnifiedProductionDay(day,{capture})));
+ else{
+  const {researchStartDay,runCombinedResearchCycle}=await import('../value/autonomous-cycle.js');
+  let startDay=null,configurationError=null;
+  try{startDay=researchStartDay();}catch(e){configurationError=String(e.message||e);}
+  let result;
+  if(configurationError){const combined=await buildUnifiedProductionDay(day,{capture});result={...combined,autonomousResearch:{status:'HOLD',date:day,reason:configurationError}};}
+  else result=await runCombinedResearchCycle(day,{capture,startDay,root:getProjectRoot(),clock:()=>new Date().toISOString(),buildCombined:buildUnifiedProductionDay,loadFinals:loadFinalResults,productionResults,write});
+  console.log(JSON.stringify(result));
+ }
 }

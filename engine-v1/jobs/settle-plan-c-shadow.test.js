@@ -168,3 +168,38 @@ test("invalid historical VOID is rejected with and without current truth without
     fs.rmSync(input.root, { recursive: true, force: true });
   }
 });
+
+
+test("terminal integrity union rejects corrupted historical FT and VOID without writes", () => {
+  const cases = [
+    ["FT", r => { r.truth.totalGoals = 99; }],
+    ["FT", r => { r.truth.actualOver25 = 0; }],
+    ["FT", r => { r.brier.adjusted = null; }],
+    ["FT", r => { r.brier.baseline = "0.2"; }],
+    ["VOID", r => { delete r.truth.scoreHome; }],
+    ["VOID", r => { r.pendingReason = "invalid"; }],
+    ["VOID", r => { r.brier = { adjusted: 0, baseline: 0 }; }],
+    ["VOID", r => { r.hitRate = { isHit: true }; }],
+    ["VOID", r => { r.truth.scoreAway = 2; }],
+    ["FT", r => { r.truth = null; }]
+  ];
+  for (const [kind, mutate] of cases) {
+    const input = kind === "FT" ? setup("FT", 2, 1) : setup("POSTP", null, null);
+    try {
+      const options = { dayKey: "2026-08-27", ...input };
+      settlePlanCShadow(options);
+      const malformed = JSON.parse(fs.readFileSync(input.outputFile, "utf8"));
+      mutate(malformed.records[0]);
+      writeJson(input.outputFile, malformed);
+      const bytes = fs.readFileSync(input.outputFile);
+      const audit = fs.readFileSync(input.auditFile);
+      const expected = kind === "FT" ? /previous_settled_integrity_invalid/ : /previous_void_integrity_invalid/;
+      for (const present of [true, false]) {
+        if (!present) fs.rmSync(path.join(input.truthRoot, "2026-08-27", "test.1.json"));
+        assert.throws(() => settlePlanCShadow(options), expected);
+        assert.deepEqual(fs.readFileSync(input.outputFile), bytes);
+        assert.deepEqual(fs.readFileSync(input.auditFile), audit);
+      }
+    } finally { fs.rmSync(input.root, { recursive: true, force: true }); }
+  }
+});

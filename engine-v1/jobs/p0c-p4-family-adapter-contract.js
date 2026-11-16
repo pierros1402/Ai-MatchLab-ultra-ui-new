@@ -276,6 +276,48 @@ const SOURCE_BINDINGS = Object.freeze({
   }),
 });
 
+// Historical P4 discovery/application evidence remains bound to SOURCE_BINDINGS.
+// This separate, explicitly selected candidate binding does not authorize historical
+// P4 application, repair, publication, or retrospective prediction certification.
+export const P0C_P4_V35_PRODUCER_BINDING_SCHEMA =
+  "ai-matchlab.p0c-p4-v35-producer-binding.v1";
+const V35_SOURCE_BINDINGS = Object.freeze({
+  ...SOURCE_BINDINGS,
+  valueBuilder: Object.freeze({
+    ...SOURCE_BINDINGS.valueBuilder,
+    sha256: "a1d19b4657f7fe95042505e7e521e0d8a989f496ecaef73f9c8eb1fff33d9fbd",
+  }),
+  planBBuilder: Object.freeze({
+    ...SOURCE_BINDINGS.planBBuilder,
+    sha256: "f2b6cd2f97da290d08c8d5f3e15e3108bcedaec1e8185c6d5f3813978f65d4f8",
+  }),
+});
+
+export function getP0CP4V35ProducerBinding() {
+  return Object.freeze({
+    schema: P0C_P4_V35_PRODUCER_BINDING_SCHEMA,
+    historicalContractSchema: P0C_P4_FAMILY_ADAPTER_CONTRACT_SCHEMA,
+    sourceBindings: clone(V35_SOURCE_BINDINGS),
+    repositoryApplicationAuthorized: false,
+    productionAuthorized: false,
+  });
+}
+
+// New source-bound candidate. Never repin the historical or previous v3.5 ledger.
+export const P0C_P4_V35_CHUNKED_PRODUCER_BINDING_SCHEMA =
+  "ai-matchlab.p0c-p4-v35-producer-binding.v2";
+const V35_CHUNKED_SOURCE_BINDINGS = Object.freeze({
+  ...V35_SOURCE_BINDINGS,
+  valueBuilder: Object.freeze({...V35_SOURCE_BINDINGS.valueBuilder, sha256: "c7749ff51a1733f5fdb57d1eb97d1b564790b74cb81023b25d0cd1f6e2d9c7aa"}),
+});
+export function getP0CP4V35ChunkedProducerBinding() {
+  return Object.freeze({...getP0CP4V35ProducerBinding(), schema: P0C_P4_V35_CHUNKED_PRODUCER_BINDING_SCHEMA, sourceBindings: clone(V35_CHUNKED_SOURCE_BINDINGS)});
+}
+export function validateP0CP4V35ChunkedProducerEvidence({sourceRecords} = {}) {
+  return validateExactProducerEvidence(sourceRecords, V35_CHUNKED_SOURCE_BINDINGS,
+    P0C_P4_V35_CHUNKED_PRODUCER_BINDING_SCHEMA, "PASS_P0C_P4_V35_CHUNKED_CANDIDATE_PRODUCER_BINDINGS");
+}
+
 const FAMILY_DESCRIPTORS = Object.freeze([
   Object.freeze({
     family: "DEPLOY_SNAPSHOT_DETAILS",
@@ -498,9 +540,9 @@ function descriptorMap() {
   );
 }
 
-function producerMap() {
+function producerMap(bindings = SOURCE_BINDINGS) {
   return new Map(
-    Object.values(SOURCE_BINDINGS).map(row => [row.path, row]),
+    Object.values(bindings).map(row => [row.path, row]),
   );
 }
 
@@ -619,16 +661,26 @@ export function validateP0CP4FamilyAdapterInventory({
   });
 }
 
-export function validateP0CP4ProducerEvidence({
-  sourceRecords,
-} = {}) {
+export function validateP0CP4ProducerEvidence({ sourceRecords } = {}) {
+  return validateExactProducerEvidence(sourceRecords, SOURCE_BINDINGS,
+    P0C_P4_FAMILY_ADAPTER_CONTRACT_SCHEMA,
+    "PASS_P0C_P4_FAMILY_ADAPTER_PRODUCER_BINDINGS");
+}
+
+export function validateP0CP4V35ProducerEvidence({ sourceRecords } = {}) {
+  return validateExactProducerEvidence(sourceRecords, V35_SOURCE_BINDINGS,
+    P0C_P4_V35_PRODUCER_BINDING_SCHEMA,
+    "PASS_P0C_P4_V35_CANDIDATE_PRODUCER_BINDINGS");
+}
+
+function validateExactProducerEvidence(sourceRecords, bindings, schema, status) {
   if (!Array.isArray(sourceRecords)) {
     throw new Error(
       "p0c_p4_adapter_contract_source_records_required",
     );
   }
 
-  const expected = producerMap();
+  const expected = producerMap(bindings);
   const observed = new Map();
 
   for (const row of sourceRecords) {
@@ -669,8 +721,8 @@ export function validateP0CP4ProducerEvidence({
 
   return Object.freeze({
     ok: true,
-    status: "PASS_P0C_P4_FAMILY_ADAPTER_PRODUCER_BINDINGS",
-    schema: P0C_P4_FAMILY_ADAPTER_CONTRACT_SCHEMA,
+    status,
+    schema,
     requiredSourceCount: expected.size,
     observedSourceCount: observed.size,
     repositoryApplicationAuthorized: false,
