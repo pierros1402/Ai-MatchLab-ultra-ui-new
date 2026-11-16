@@ -2,7 +2,7 @@
   "ok": false,
   "schema": "ai-matchlab.day-build-report.v1",
   "dayKey": "2026-11-16",
-  "generatedAt": "2026-11-16T18:50:04.595Z",
+  "generatedAt": "2026-11-16T19:05:53.488Z",
   "universe": {
     "expected": null,
     "canonical": 40,
@@ -824,22 +824,55 @@
   },
   "liveStatusCompleteness": {
     "schema": "ai-matchlab.live-status-completeness.v1",
-    "ok": true,
+    "ok": false,
     "policy": {
       "staleAfterHours": 4,
       "exactProviderIdOnly": true,
       "exactProviderLineageSupersession": true,
       "heuristicFinalPromotion": false
     },
-    "staleOpenCount": 0,
-    "staleOpenCanonicalIds": [],
-    "staleOpenFixtures": [],
+    "staleOpenCount": 2,
+    "staleOpenCanonicalIds": [
+      "cid_uefanations_faroeislands_moldova_20261116",
+      "cid_uefanations_kazakhstan_slovakia_20261116"
+    ],
+    "staleOpenFixtures": [
+      {
+        "canonicalId": "cid_uefanations_faroeislands_moldova_20261116",
+        "providerId": "401861180",
+        "source": "espn",
+        "leagueSlug": "uefa.nations",
+        "providerLeagueSlug": "uefa.nations",
+        "kickoffUtc": "2026-11-16T15:00Z",
+        "ageHours": 4.098,
+        "status": "PRE",
+        "rawStatus": "STATUS_SCHEDULED",
+        "statusType": null,
+        "operationalState": null,
+        "classification": "stale_open_exact_provider_id"
+      },
+      {
+        "canonicalId": "cid_uefanations_kazakhstan_slovakia_20261116",
+        "providerId": "401861181",
+        "source": "espn",
+        "leagueSlug": "uefa.nations",
+        "providerLeagueSlug": "uefa.nations",
+        "kickoffUtc": "2026-11-16T15:00Z",
+        "ageHours": 4.098,
+        "status": "PRE",
+        "rawStatus": "STATUS_SCHEDULED",
+        "statusType": null,
+        "operationalState": null,
+        "classification": "stale_open_exact_provider_id"
+      }
+    ],
     "supersededOpenCount": 0,
     "supersededOpenCanonicalIds": [],
     "supersededOpenFixtures": []
   },
   "hardFailures": [
-    "snapshot_stale"
+    "snapshot_stale",
+    "live_status_stale_open_exact_provider_ids:cid_uefanations_faroeislands_moldova_20261116,cid_uefanations_kazakhstan_slovakia_20261116"
   ],
   "warnings": [
     "acquisition_skipped_slugs:bol.copa,caf.nations_qual,concacaf.nations.league,eng.w.1,eng.w.fa,esp.w.1,mex.w.1,ned.w.1,uefa.euro_u21_qual,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1"
