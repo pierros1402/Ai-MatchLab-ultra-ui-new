@@ -161,6 +161,12 @@ jobs:
           console.log(JSON.stringify(checkpointDailyPlanA(process.env.DAY_KEY)));
           NODE
 
+      # Fail before expensive acquisition if a reviewed source-binding hash
+      # would differ on this runner (for example from a cross-platform EOL drift).
+      - name: Verify reviewed alias source integrity before acquisition
+        if: env.SKIP_BUILD != 'true'
+        run: node tools/verify-reviewed-alias-source-integrity.mjs
+
       - name: Install root dependencies
         if: env.SKIP_BUILD != 'true'
         run: npm ci --no-audit --no-fund
