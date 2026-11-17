@@ -1,12 +1,12 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-11-17",
-  "generatedAt": "2026-11-17T03:09:55.969Z",
+  "generatedAt": "2026-11-17T06:57:45.288Z",
   "severity": "error",
   "issueCounts": {
-    "error": 11,
+    "error": 10,
     "warning": 3,
-    "info": 1
+    "info": 4
   },
   "alert": true,
   "alertCounts": {
@@ -14,12 +14,12 @@
     "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 15,
-  "actionableIssueCount": 14,
-  "newIssueCount": 1,
+  "activeIssueCount": 17,
+  "actionableIssueCount": 13,
+  "newIssueCount": 4,
   "newActionableIssueCount": 1,
-  "resolvedIssueCount": 0,
-  "persistentIssueCount": 14,
+  "resolvedIssueCount": 2,
+  "persistentIssueCount": 13,
   "activeIssues": [
     {
       "severity": "error",
@@ -51,10 +51,51 @@
     {
       "severity": "error",
       "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
       "details": {
-        "artifact": "data/foundation-integrity/2026-11-17.json"
+        "blocked": [
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "age_expired_results_rows_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "age_expired_results_rows_present",
+        "count": 22112,
+        "informational": true
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "history_semantic_warnings_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "history_semantic_warnings_present",
+        "count": 2,
+        "informational": true
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "score_consistent_alias_mirror_conflicts_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "score_consistent_alias_mirror_conflicts_present",
+        "count": 47,
+        "informational": true
       }
     },
     {
@@ -70,9 +111,9 @@
       "severity": "error",
       "source": "build-report",
       "type": "build_hard_failure",
-      "message": "foundation_integrity_missing",
+      "message": "foundation_publication_not_ready",
       "details": {
-        "failure": "foundation_integrity_missing"
+        "failure": "foundation_publication_not_ready"
       }
     },
     {
@@ -91,38 +132,6 @@
       "message": "value_plan_comparison_missing",
       "details": {
         "failure": "value_plan_comparison_missing"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "live-status-completeness",
-      "type": "stale_open_exact_provider_ids",
-      "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
-      "details": {
-        "raw": "live_status_stale_open_exact_provider_ids:cid_uru1_montevideowanderers_juventud_20261117",
-        "canonicalIds": [
-          "cid_uru1_montevideowanderers_juventud_20261117"
-        ],
-        "count": 1,
-        "staleAfterHours": 4,
-        "exactProviderIdOnly": true,
-        "heuristicFinalPromotion": false,
-        "fixtures": [
-          {
-            "canonicalId": "cid_uru1_montevideowanderers_juventud_20261117",
-            "providerId": "401933375",
-            "source": "espn",
-            "leagueSlug": "uru.1",
-            "providerLeagueSlug": null,
-            "kickoffUtc": "2026-11-16T23:00Z",
-            "ageHours": 7.748,
-            "status": "PRE",
-            "rawStatus": "STATUS_SCHEDULED",
-            "statusType": null,
-            "operationalState": null,
-            "classification": "stale_open_exact_provider_id"
-          }
-        ]
       }
     },
     {
@@ -219,10 +228,15 @@
     {
       "severity": "error",
       "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
       "details": {
-        "artifact": "data/foundation-integrity/2026-11-17.json"
+        "blocked": [
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
       }
     },
     {
@@ -238,9 +252,9 @@
       "severity": "error",
       "source": "build-report",
       "type": "build_hard_failure",
-      "message": "foundation_integrity_missing",
+      "message": "foundation_publication_not_ready",
       "details": {
-        "failure": "foundation_integrity_missing"
+        "failure": "foundation_publication_not_ready"
       }
     },
     {
@@ -259,38 +273,6 @@
       "message": "value_plan_comparison_missing",
       "details": {
         "failure": "value_plan_comparison_missing"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "live-status-completeness",
-      "type": "stale_open_exact_provider_ids",
-      "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
-      "details": {
-        "raw": "live_status_stale_open_exact_provider_ids:cid_uru1_montevideowanderers_juventud_20261117",
-        "canonicalIds": [
-          "cid_uru1_montevideowanderers_juventud_20261117"
-        ],
-        "count": 1,
-        "staleAfterHours": 4,
-        "exactProviderIdOnly": true,
-        "heuristicFinalPromotion": false,
-        "fixtures": [
-          {
-            "canonicalId": "cid_uru1_montevideowanderers_juventud_20261117",
-            "providerId": "401933375",
-            "source": "espn",
-            "leagueSlug": "uru.1",
-            "providerLeagueSlug": null,
-            "kickoffUtc": "2026-11-16T23:00Z",
-            "ageHours": 7.748,
-            "status": "PRE",
-            "rawStatus": "STATUS_SCHEDULED",
-            "statusType": null,
-            "operationalState": null,
-            "classification": "stale_open_exact_provider_id"
-          }
-        ]
       }
     },
     {
@@ -344,38 +326,81 @@
   "newIssues": [
     {
       "severity": "error",
-      "source": "live-status-completeness",
-      "type": "stale_open_exact_provider_ids",
-      "message": "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
       "details": {
-        "raw": "live_status_stale_open_exact_provider_ids:cid_uru1_montevideowanderers_juventud_20261117",
-        "canonicalIds": [
-          "cid_uru1_montevideowanderers_juventud_20261117"
-        ],
-        "count": 1,
-        "staleAfterHours": 4,
-        "exactProviderIdOnly": true,
-        "heuristicFinalPromotion": false,
-        "fixtures": [
+        "blocked": [
           {
-            "canonicalId": "cid_uru1_montevideowanderers_juventud_20261117",
-            "providerId": "401933375",
-            "source": "espn",
-            "leagueSlug": "uru.1",
-            "providerLeagueSlug": null,
-            "kickoffUtc": "2026-11-16T23:00Z",
-            "ageHours": 4.166,
-            "status": "PRE",
-            "rawStatus": "STATUS_SCHEDULED",
-            "statusType": null,
-            "operationalState": null,
-            "classification": "stale_open_exact_provider_id"
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "age_expired_results_rows_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "age_expired_results_rows_present",
+        "count": 22112,
+        "informational": true
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "history_semantic_warnings_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "history_semantic_warnings_present",
+        "count": 2,
+        "informational": true
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "score_consistent_alias_mirror_conflicts_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "score_consistent_alias_mirror_conflicts_present",
+        "count": 47,
+        "informational": true
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
           }
         ]
       }
     }
   ],
-  "newActionableIssues": [
+  "resolvedIssues": [
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "artifact_missing",
+      "message": "Foundation integrity report is missing.",
+      "details": {
+        "artifact": "data/foundation-integrity/2026-11-17.json"
+      }
+    },
     {
       "severity": "error",
       "source": "live-status-completeness",
@@ -398,7 +423,7 @@
             "leagueSlug": "uru.1",
             "providerLeagueSlug": null,
             "kickoffUtc": "2026-11-16T23:00Z",
-            "ageHours": 4.166,
+            "ageHours": 7.748,
             "status": "PRE",
             "rawStatus": "STATUS_SCHEDULED",
             "statusType": null,
@@ -409,7 +434,6 @@
       }
     }
   ],
-  "resolvedIssues": [],
   "persistentIssues": [
     {
       "severity": "error",
@@ -440,15 +464,6 @@
     },
     {
       "severity": "error",
-      "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
-      "details": {
-        "artifact": "data/foundation-integrity/2026-11-17.json"
-      }
-    },
-    {
-      "severity": "error",
       "source": "build-report",
       "type": "build_hard_failure",
       "message": "manifest_missing",
@@ -460,9 +475,9 @@
       "severity": "error",
       "source": "build-report",
       "type": "build_hard_failure",
-      "message": "foundation_integrity_missing",
+      "message": "foundation_publication_not_ready",
       "details": {
-        "failure": "foundation_integrity_missing"
+        "failure": "foundation_publication_not_ready"
       }
     },
     {

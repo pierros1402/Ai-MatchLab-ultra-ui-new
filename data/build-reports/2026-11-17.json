@@ -2,7 +2,7 @@
   "ok": false,
   "schema": "ai-matchlab.day-build-report.v1",
   "dayKey": "2026-11-17",
-  "generatedAt": "2026-11-17T06:44:54.220Z",
+  "generatedAt": "2026-11-17T06:57:45.129Z",
   "universe": {
     "expected": null,
     "canonical": 32,
@@ -50,46 +50,60 @@
     "planB": null
   },
   "settlement": null,
-  "foundationIntegrity": null,
+  "foundationIntegrity": {
+    "schema": "ai-matchlab.foundation-integrity.v1",
+    "generatedAt": "2026-11-17T06:57:44.827Z",
+    "season": "2026-2027",
+    "modelReady": true,
+    "publicationReady": false,
+    "blocked": [
+      {
+        "component": "details",
+        "reason": "details_foundation_not_ready"
+      }
+    ],
+    "warnings": [
+      {
+        "component": "historySemantic",
+        "reason": "age_expired_results_rows_present",
+        "count": 22112,
+        "informational": true
+      },
+      {
+        "component": "historySemantic",
+        "reason": "history_semantic_warnings_present",
+        "count": 2,
+        "informational": true
+      },
+      {
+        "component": "historySemantic",
+        "reason": "score_consistent_alias_mirror_conflicts_present",
+        "count": 47,
+        "informational": true
+      }
+    ]
+  },
   "liveStatusCompleteness": {
     "schema": "ai-matchlab.live-status-completeness.v1",
-    "ok": false,
+    "ok": true,
     "policy": {
       "staleAfterHours": 4,
       "exactProviderIdOnly": true,
       "exactProviderLineageSupersession": true,
       "heuristicFinalPromotion": false
     },
-    "staleOpenCount": 1,
-    "staleOpenCanonicalIds": [
-      "cid_uru1_montevideowanderers_juventud_20261117"
-    ],
-    "staleOpenFixtures": [
-      {
-        "canonicalId": "cid_uru1_montevideowanderers_juventud_20261117",
-        "providerId": "401933375",
-        "source": "espn",
-        "leagueSlug": "uru.1",
-        "providerLeagueSlug": null,
-        "kickoffUtc": "2026-11-16T23:00Z",
-        "ageHours": 7.748,
-        "status": "PRE",
-        "rawStatus": "STATUS_SCHEDULED",
-        "statusType": null,
-        "operationalState": null,
-        "classification": "stale_open_exact_provider_id"
-      }
-    ],
+    "staleOpenCount": 0,
+    "staleOpenCanonicalIds": [],
+    "staleOpenFixtures": [],
     "supersededOpenCount": 0,
     "supersededOpenCanonicalIds": [],
     "supersededOpenFixtures": []
   },
   "hardFailures": [
     "manifest_missing",
-    "foundation_integrity_missing",
+    "foundation_publication_not_ready",
     "snapshot_stale",
-    "value_plan_comparison_missing",
-    "live_status_stale_open_exact_provider_ids:cid_uru1_montevideowanderers_juventud_20261117"
+    "value_plan_comparison_missing"
   ],
   "warnings": [
     "canonical_leagues_missing_from_published:caf.nations,eng.trophy,nir.2,uefa.nations,uga.1,uru.1,usa.2"
