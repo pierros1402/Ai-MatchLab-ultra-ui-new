@@ -1,13 +1,13 @@
 {
-  "ok": false,
+  "ok": true,
   "schema": "ai-matchlab.day-build-report.v1",
   "dayKey": "2026-11-17",
-  "generatedAt": "2026-11-17T17:51:16.861Z",
+  "generatedAt": "2026-11-17T20:09:17.529Z",
   "universe": {
     "expected": null,
     "canonical": 33,
-    "published": 0,
-    "details": 0,
+    "published": 33,
+    "details": 33,
     "byLeague": {
       "expected": {},
       "canonical": {
@@ -20,23 +20,23 @@
         "uru.1": 1,
         "usa.2": 1
       },
-      "published": {}
+      "published": {
+        "uru.1": 1,
+        "usa.2": 1,
+        "ukr.2": 1,
+        "caf.nations": 18,
+        "uga.1": 1,
+        "eng.trophy": 1,
+        "nir.2": 2,
+        "uefa.nations": 8
+      }
     },
-    "canonicalLeaguesMissingFromPublished": [
-      "caf.nations",
-      "eng.trophy",
-      "nir.2",
-      "uefa.nations",
-      "uga.1",
-      "ukr.2",
-      "uru.1",
-      "usa.2"
-    ],
+    "canonicalLeaguesMissingFromPublished": [],
     "expectedLeaguesMissingFromPublished": []
   },
   "acquisition": {
-    "finishedAt": "2026-11-17T11:18:50.155Z",
-    "accepted": 2229,
+    "finishedAt": "2026-11-17T18:10:09.852Z",
+    "accepted": 2224,
     "failedFetches": 0,
     "skippedSlugSample": {
       "afc.saff.championship": 1,
@@ -65,7 +65,7 @@
     },
     "admission": {
       "schema": "ai-matchlab.daily-league-admission.v1",
-      "generatedAt": "2026-11-17T11:18:50.153Z",
+      "generatedAt": "2026-11-17T18:10:09.851Z",
       "summary": {
         "evidenceSlugCount": 26,
         "admittedCount": 5,
@@ -563,39 +563,132 @@
     }
   },
   "freshness": {
-    "ok": false,
-    "manifestGeneratedAt": null,
-    "reasons": [
-      "manifest_missing_or_unreadable"
-    ],
+    "ok": true,
+    "manifestGeneratedAt": "2026-11-17T20:07:43.821Z",
+    "reasons": [],
     "staleInputs": []
   },
-  "invariant": null,
+  "invariant": {
+    "ok": true,
+    "blocked": 0,
+    "warnings": 1,
+    "autoFixed": 0,
+    "checkedAt": "2026-11-17T20:07:44.137Z"
+  },
   "value": {
-    "source": "missing",
+    "source": "canonical_fixtures",
     "count": 0,
     "gateOk": true,
-    "planB2": null,
-    "planB": null
+    "planB2": {
+      "evaluationAccounting": {
+        "schema": "ai-matchlab.plan-b-evaluation-accounting.v1",
+        "complete": true,
+        "fixturesSeen": 33,
+        "terminalOutcomeCount": 33,
+        "inputGapFixtures": 8,
+        "assessedFixtures": 25,
+        "byOutcome": {
+          "no_eligible_market": 25,
+          "missing_model_assessment": 8
+        },
+        "diagnosis": "incomplete_assessment_coverage"
+      },
+      "candidateMarkets": 0,
+      "approved": 0,
+      "rejected": 0
+    },
+    "planB": {
+      "ok": true,
+      "count": 0,
+      "approved": 0,
+      "rejected": 0,
+      "evaluationAccounting": {
+        "schema": "ai-matchlab.plan-b-evaluation-accounting.v1",
+        "complete": true,
+        "fixturesSeen": 33,
+        "terminalOutcomeCount": 33,
+        "inputGapFixtures": 8,
+        "assessedFixtures": 25,
+        "byOutcome": {
+          "no_eligible_market": 25,
+          "missing_model_assessment": 8
+        },
+        "diagnosis": "incomplete_assessment_coverage"
+      },
+      "historicalAvailabilityNotAvailable": false,
+      "canonicalMembershipContractApplicable": true,
+      "canonicalMembershipContractOk": true,
+      "membership": {
+        "canonicalFixtures": 33,
+        "assessmentRows": 64,
+        "joinedMatches": 25,
+        "orphanAssessmentRows": 39,
+        "outputOrphanPicks": 0,
+        "outputAmbiguousPicks": 0
+      }
+    }
   },
-  "settlement": null,
+  "settlement": {
+    "generatedAt": "2026-11-17T20:04:41.985Z",
+    "requiredPlans": [
+      "A",
+      "A2",
+      "B",
+      "B2"
+    ],
+    "presentPlans": [
+      "A",
+      "A2",
+      "B",
+      "B2"
+    ],
+    "missingPlans": [],
+    "complete": true,
+    "planA": {
+      "picks": 0,
+      "settled": 0,
+      "wins": 0,
+      "losses": 0,
+      "voids": 0,
+      "unresolved": 0
+    },
+    "planA2": {
+      "picks": 0,
+      "settled": 0,
+      "wins": 0,
+      "losses": 0,
+      "voids": 0,
+      "unresolved": 0
+    },
+    "planB": {
+      "picks": 0,
+      "settled": 0,
+      "wins": 0,
+      "losses": 0,
+      "voids": 0,
+      "unresolved": 0
+    },
+    "planB2": {
+      "picks": 0,
+      "settled": 0,
+      "wins": 0,
+      "losses": 0,
+      "voids": 0,
+      "unresolved": 0
+    }
+  },
   "foundationIntegrity": {
     "schema": "ai-matchlab.foundation-integrity.v1",
-    "generatedAt": "2026-11-17T17:51:16.589Z",
+    "generatedAt": "2026-11-17T20:08:35.421Z",
     "season": "2026-2027",
     "modelReady": true,
-    "publicationReady": false,
-    "blocked": [
-      {
-        "component": "details",
-        "reason": "details_foundation_not_ready"
-      }
-    ],
+    "publicationReady": true,
+    "blocked": [],
     "warnings": [
       {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 22146,
+        "count": 22160,
         "informational": true
       },
       {
@@ -628,16 +721,10 @@
     "supersededOpenCanonicalIds": [],
     "supersededOpenFixtures": []
   },
-  "hardFailures": [
-    "manifest_missing",
-    "foundation_publication_not_ready",
-    "snapshot_stale",
-    "value_plan_comparison_missing"
-  ],
+  "hardFailures": [],
   "warnings": [
-    "canonical_leagues_missing_from_published:caf.nations,eng.trophy,nir.2,uefa.nations,uga.1,ukr.2,uru.1,usa.2",
     "acquisition_skipped_slugs:afc.saff.championship,caf.nations_qual,col.copa,concacaf.nations.league,uefa.euro_u21_qual"
   ],
-  "clean": false,
+  "clean": true,
   "cleanStrict": false
 }
