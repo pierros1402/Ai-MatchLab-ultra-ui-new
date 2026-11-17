@@ -1,6 +1,6 @@
 {
   "schema": "ai-matchlab.value-data-alarm-day.v1",
-  "generatedAt": "2026-11-17T17:20:18.955Z",
+  "generatedAt": "2026-11-17T17:35:22.197Z",
   "dayKey": "2026-11-17",
   "lookAheadDays": 7,
   "write": true,
@@ -9,12 +9,24 @@
   "historicalOpen": 4619,
   "futureOpen": 46,
   "urgentWithin24Hours": 16,
-  "researchTasks": [],
-  "attemptedResearchTasks": [],
+  "researchTasks": [
+    {
+      "key": "caf.nations|2026-27",
+      "fixtures": 48
+    },
+    {
+      "key": "uefa.nations|2026-27",
+      "fixtures": 78
+    }
+  ],
+  "attemptedResearchTasks": [
+    "caf.nations|2026-27",
+    "uefa.nations|2026-27"
+  ],
   "deferredResearchTasks": [],
   "researchBacklog": {
-    "dueGroups": 0,
-    "selectedGroups": 0,
+    "dueGroups": 2,
+    "selectedGroups": 2,
     "deferredByCapacity": [],
     "deferredByBudget": []
   },
@@ -755,7 +767,77 @@
   ],
   "oddsWrittenDays": [],
   "acquisitionErrors": [],
-  "teamHistoryResearch": [],
+  "teamHistoryResearch": [
+    {
+      "leagueSlug": "caf.nations",
+      "attempts": [],
+      "deferred": 0,
+      "unresolved": [
+        {
+          "canonicalId": "cid_cafnations_botswana_uganda_20261117",
+          "reason": "EXACT_NATIVE_TEAM_ANCHOR_UNAVAILABLE"
+        },
+        {
+          "canonicalId": "cid_cafnations_congo_comoros_20261117",
+          "reason": "EXACT_NATIVE_TEAM_ANCHOR_UNAVAILABLE"
+        },
+        {
+          "canonicalId": "cid_cafnations_liberia_capeverde_20261117",
+          "reason": "EXACT_NATIVE_TEAM_ANCHOR_UNAVAILABLE"
+        },
+        {
+          "canonicalId": "cid_cafnations_mauritania_burkinafaso_20261117",
+          "reason": "EXACT_NATIVE_TEAM_ANCHOR_UNAVAILABLE"
+        },
+        {
+          "canonicalId": "cid_cafnations_rwanda_mali_20261117",
+          "reason": "EXACT_NATIVE_TEAM_ANCHOR_UNAVAILABLE"
+        },
+        {
+          "canonicalId": "cid_cafnations_niger_morocco_20261117",
+          "reason": "EXACT_NATIVE_TEAM_ANCHOR_UNAVAILABLE"
+        }
+      ]
+    },
+    {
+      "leagueSlug": "uefa.nations",
+      "attempts": [
+        {
+          "attemptedAt": "2026-11-17T17:34:54.019Z",
+          "team": "Northern Ireland",
+          "status": "TEAM_RESULTS_AWAIT_CANONICAL_FINAL_VALIDATION",
+          "observedRecentResults": 7,
+          "unmappedCompetitions": [
+            "/football/world/friendly-international/"
+          ],
+          "documents": 1,
+          "url": "https://www.flashscore.com/team/northern-ireland/lQADNSWu/results/"
+        },
+        {
+          "attemptedAt": "2026-11-17T17:34:54.019Z",
+          "team": "Romania",
+          "status": "TEAM_RESULTS_AWAIT_CANONICAL_FINAL_VALIDATION",
+          "observedRecentResults": 7,
+          "unmappedCompetitions": [
+            "/football/world/friendly-international/"
+          ],
+          "documents": 1,
+          "url": "https://www.flashscore.com/team/romania/IaD8jZpU/results/"
+        }
+      ],
+      "deferred": 9,
+      "unresolved": [
+        {
+          "canonicalId": "cid_uefanations_bosniaandherzegovina_romania_20261117",
+          "reason": "CANONICAL_IDENTITY_NOT_UNIQUE"
+        },
+        {
+          "canonicalId": "cid_uefanations_ireland_kosovo_20261117",
+          "reason": "CANONICAL_IDENTITY_NOT_UNIQUE"
+        }
+      ]
+    }
+  ],
   "competitionContractPreparation": {
     "writePaths": [],
     "primary": {
@@ -146858,7 +146940,57 @@
       "blr.2|bwMTgSRI"
     ]
   },
-  "verifiedHistoryRecovery": null,
+  "verifiedHistoryRecovery": {
+    "sourcePolicy": "exact-native-future-team-v1",
+    "attempted": 0,
+    "verified": 0,
+    "deferred": 0,
+    "rejected": [
+      {
+        "canonicalId": "cid_uefanations_hungary_northernireland_20261117",
+        "providerMatchId": "McQArpFs",
+        "existingCanonicalId": "cid_uefanations_bosniaherzegovina_poland_20261005",
+        "reason": "CROSS_PROVIDER_EVENT_RECONCILIATION_REQUIRED"
+      },
+      {
+        "canonicalId": "cid_uefanations_hungary_northernireland_20261117",
+        "providerMatchId": "tp6blFo3",
+        "existingCanonicalId": "cid_uefanations_belgium_france_20260928",
+        "reason": "CROSS_PROVIDER_EVENT_RECONCILIATION_REQUIRED"
+      },
+      {
+        "canonicalId": "cid_uefanations_hungary_northernireland_20261117",
+        "providerMatchId": "jclv1hV8",
+        "existingCanonicalId": "cid_uefanations_armenia_latvia_20260925",
+        "reason": "CROSS_PROVIDER_EVENT_RECONCILIATION_REQUIRED"
+      },
+      {
+        "canonicalId": "cid_uefanations_bosniaherzegovina_romania_20261117",
+        "providerMatchId": "SbevBQf2",
+        "existingCanonicalId": "cid_uefanations_bosniaherzegovina_poland_20261005",
+        "reason": "CROSS_PROVIDER_EVENT_RECONCILIATION_REQUIRED"
+      },
+      {
+        "canonicalId": "cid_uefanations_bosniaherzegovina_romania_20261117",
+        "providerMatchId": "jFVbVftH",
+        "existingCanonicalId": "cid_uefanations_belgium_france_20260928",
+        "reason": "CROSS_PROVIDER_EVENT_RECONCILIATION_REQUIRED"
+      },
+      {
+        "canonicalId": "cid_uefanations_bosniaherzegovina_romania_20261117",
+        "providerMatchId": "f5mQYTn9",
+        "existingCanonicalId": "cid_uefanations_hungary_ukraine_20260925",
+        "reason": "CROSS_PROVIDER_EVENT_RECONCILIATION_REQUIRED"
+      }
+    ],
+    "conflicts": [],
+    "sourceBindings": [],
+    "individualRowsHumanReviewed": false,
+    "appliedMatches": 0,
+    "writePaths": [],
+    "frozenPredictionsRegenerated": false,
+    "fullCoverageCertified": false
+  },
   "historyCompetitionValidation": {
     "scope": "known_explicit_legacy_competition_contradictions",
     "excludedMatches": 0,
@@ -146867,5 +146999,6 @@
   },
   "frozenPredictionsRegenerated": false,
   "resolvedOnlyByVerifiedAssessmentJoin": true,
-  "incidentsExpireAutomatically": false
+  "incidentsExpireAutomatically": false,
+  "postResearchReevaluation": true
 }
