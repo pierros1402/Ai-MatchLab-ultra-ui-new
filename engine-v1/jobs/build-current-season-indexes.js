@@ -151,6 +151,22 @@ async function writeJson(file, data) {
   await fs.writeFile(file, JSON.stringify(data, null, 2), "utf8");
 }
 
+// Keep the matchup payload and its object schema unchanged. Pretty-printing
+// the complete global-season matchup map can exceed GitHub's 100 MB blob limit.
+// This only changes JSON whitespace, not the stored match data.
+async function writeCompactMatchupJson(file, data) {
+  const serialized = JSON.stringify(data);
+  const bytes = Buffer.byteLength(serialized, "utf8");
+  const safeLimit = 95_000_000;
+  if (bytes >= safeLimit) {
+    throw new Error(
+      `matchup_index_blob_too_large:${bytes}:limit=${safeLimit}:file=${file}`
+    );
+  }
+  await ensureDir(path.dirname(file));
+  await fs.writeFile(file, serialized, "utf8");
+}
+
 function sortByKickoff(a, b) {
   return safeNum(a.kickoff_ms) - safeNum(b.kickoff_ms);
 }
@@ -1844,7 +1860,7 @@ export async function buildCurrentSeasonIndexes(options = {}) {
 
   await writeJson(teamOut, teamIndex);
   await writeJson(leagueOut, leagueIndex);
-  await writeJson(matchupOut, matchupIndex);
+  await writeCompactMatchupJson(matchupOut, matchupIndex);
   const foundation = writeHistoryIndexFoundationSync(season);
   await writeJson(path.join(OUT_DIR, 'competition-validation', `${season}.json`), competitionValidation.summary);
 
