@@ -1,0 +1,44 @@
+name: P0 ger1 reviewed alias EOL isolated verification
+on:
+  push:
+    branches:
+      - ci/verify-ger1-alias-eol-20261117
+permissions:
+  contents: read
+jobs:
+  linux-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      HISTORY_PRESERVATION_REQUIRED: "0"
+      CI: "true"
+    steps:
+      - name: Checkout exact reviewed PR commit
+        uses: actions/checkout@v4
+        with:
+          ref: 2fda33a9e21f6dba445c473e13bd7e063434280a
+          persist-credentials: false
+      - name: Assert exact candidate commit and Git attributes
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 2fda33a9e21f6dba445c473e13bd7e063434280a
+          git check-attr text eol -- data/team-aliases/ger.1.json
+          test "$(git check-attr eol -- data/team-aliases/ger.1.json)" = "data/team-aliases/ger.1.json: eol: crlf"
+          test -z "$(git status --porcelain)"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+      - name: Verify exact reviewed alias hash
+        run: |
+          node --input-type=module -e "import fs from 'node:fs'; import crypto from 'node:crypto'; const path='data/team-aliases/ger.1.json'; const expected='ffcb9ae227c34405a4e746d96ef3987f9356b065a03074d8256ed9ad30d05526';const actual=crypto.createHash('sha256').update(fs.readFileSync(path)).digest('hex');if(actual!==expected)throw Error('REVIEWED_ALIAS_SOURCE_HASH_MISMATCH:'+actual);console.log('REVIEWED_ALIAS_SOURCE_SHA256_PASS',actual)"
+      - name: Run Value acquisition regression guards
+        run: node tools/run-value-data-regression-guards.mjs
+      - name: Verify checkout remained unchanged
+        run: test -z "$(git status --porcelain)"
