@@ -1,0 +1,43 @@
+name: Reviewed alias source integrity
+
+on:
+  pull_request:
+    paths:
+      - ".gitattributes"
+      - "data/team-aliases/**"
+      - "data/identity-decisions/production-reviewed-team-aliases.v1.json"
+      - "engine-v1/core/reviewed-team-alias-bindings.js"
+      - "tools/verify-reviewed-alias-source-integrity.mjs"
+      - ".github/workflows/reviewed-alias-source-integrity.yml"
+      - ".github/workflows/daily-deploy-snapshot.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".gitattributes"
+      - "data/team-aliases/**"
+      - "data/identity-decisions/production-reviewed-team-aliases.v1.json"
+      - "engine-v1/core/reviewed-team-alias-bindings.js"
+      - "tools/verify-reviewed-alias-source-integrity.mjs"
+      - ".github/workflows/reviewed-alias-source-integrity.yml"
+      - ".github/workflows/daily-deploy-snapshot.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  source-bytes:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Verify all authoritative reviewed alias source hashes
+        run: node tools/verify-reviewed-alias-source-integrity.mjs
