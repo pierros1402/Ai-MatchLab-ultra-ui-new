@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-18",
-  "generatedAt": "2026-11-18T20:59:41.287Z",
+  "generatedAt": "2026-11-18T21:44:56.787Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "277b5bb9d68a4c02a768c72c8d6e783764e4344620065d8acb29f10ae9fd157b",
+  "ledgerState": "INCOMPLETE",
+  "truthFingerprint": "d40d387b0dca13e31ee22ac3d2967ccf0bef6073c7262ce2c7d3acd6cedc71ed",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 15,
-    "playedTerminal": 8,
+    "playedTerminal": 9,
     "nonPlayedTerminal": 0,
     "scheduled": 2,
-    "live": 5,
+    "live": 1,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
-    "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 8,
-    "acceptedVerifiedFinalArtifacts": 8,
-    "convergedPlayedFinal": 8,
+    "operationalUnresolved": 3,
+    "verifiedFinalArtifacts": 9,
+    "acceptedVerifiedFinalArtifacts": 9,
+    "convergedPlayedFinal": 9,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 7,
-    "unresolvedRows": 0,
+    "openRows": 3,
+    "unresolvedRows": 3,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 8,
-    "scoredSettlementEligible": 8,
+    "historyEligible": 9,
+    "scoredSettlementEligible": 9,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -96,13 +96,13 @@
       "awayTeam": "Mallorca",
       "kickoffUtc": "2026-11-18T19:00Z",
       "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "operationalState": "UNRESOLVED",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "UNKNOWN",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_OVERTIME",
         "scoreHome": 1,
-        "scoreAway": 1
+        "scoreAway": 3
       },
       "verifiedFinal": {
         "present": false,
@@ -115,8 +115,8 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "UNRESOLVED",
+        "reason": "canonical_state_unresolved",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -144,31 +144,31 @@
       "homeTeam": "Badajoz",
       "awayTeam": "Tenerife",
       "kickoffUtc": "2026-11-18T19:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 2,
-        "scoreAway": 4
+        "scoreAway": 5
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-18",
+        "scoreHome": 2,
+        "scoreAway": 5,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -194,12 +194,12 @@
       "awayTeam": "FC Cartagena",
       "kickoffUtc": "2026-11-18T19:30Z",
       "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "operationalState": "UNRESOLVED",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "UNKNOWN",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_OVERTIME",
+        "scoreHome": 1,
         "scoreAway": 1
       },
       "verifiedFinal": {
@@ -213,8 +213,8 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "UNRESOLVED",
+        "reason": "canonical_state_unresolved",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -292,13 +292,13 @@
       "awayTeam": "Barakaldo",
       "kickoffUtc": "2026-11-18T19:30Z",
       "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "operationalState": "UNRESOLVED",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "UNKNOWN",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 0,
-        "scoreAway": 0
+        "rawStatus": "STATUS_OVERTIME",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -311,8 +311,8 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "UNRESOLVED",
+        "reason": "canonical_state_unresolved",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -539,9 +539,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 1
       },
@@ -790,7 +790,7 @@
     "systemHealth": {
       "schema": "ai-matchlab.system-health-alerts.v1",
       "dayKey": "2026-11-18",
-      "generatedAt": "2026-11-18T20:59:40.980Z",
+      "generatedAt": "2026-11-18T21:44:56.445Z",
       "severity": "warning",
       "issueCounts": {
         "error": 0,
@@ -977,7 +977,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 22414,
+            "count": 22416,
             "informational": true
           }
         },
@@ -2631,7 +2631,7 @@
             "fixtures": 15,
             "valuePicks": 1,
             "valueSource": "canonical_fixtures",
-            "latestCanonicalUpdatedAt": "2026-11-18T19:58:46.912Z",
+            "latestCanonicalUpdatedAt": "2026-11-18T20:48:04.638Z",
             "valueArtifactAt": "2026-11-18T19:28:46.531Z",
             "valueFreshAgainstCanonical": false,
             "mode": "frozen_snapshot",
@@ -2822,7 +2822,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 22414,
+            "count": 22416,
             "informational": true
           }
         },
@@ -3726,16 +3726,17 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "277b5bb9d68a4c02a768c72c8d6e783764e4344620065d8acb29f10ae9fd157b",
+      "truthFingerprint": "d40d387b0dca13e31ee22ac3d2967ccf0bef6073c7262ce2c7d3acd6cedc71ed",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 8,
+        "expectedEligibleRows": 9,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_blr2_dinminsk2_bate2_20261118",
+          "cid_espcopadelrey_badajoz_tenerife_20261118",
           "cid_espcopadelrey_portugalete_realunionirun_20261118",
           "cid_espcopadelrey_utebo_sabadell_20261118",
           "cid_ind2_bengaluruunited_sreenidideccan_20261118",
@@ -3802,7 +3803,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-11-18",
-      "fileCount": 8,
+      "fileCount": 9,
       "authority": "scored_final_evidence"
     },
     "downstream": {
