@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-19",
-  "generatedAt": "2026-11-19T17:08:12.987Z",
+  "generatedAt": "2026-11-19T17:47:48.869Z",
   "role": "derived_control_plane",
   "ledgerState": "OPEN",
-  "truthFingerprint": "5291b85b4bcd2452e860a11536a0c9209bd92221878a995c1b212fd9a6c63144",
+  "truthFingerprint": "068ffbde6f5431cadb38912eae587fe0e41f0ddfff01a8c571d4018f7bcd9c1c",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 31,
-    "playedTerminal": 24,
+    "playedTerminal": 26,
     "nonPlayedTerminal": 0,
-    "scheduled": 7,
+    "scheduled": 5,
     "live": 0,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 24,
-    "acceptedVerifiedFinalArtifacts": 24,
-    "convergedPlayedFinal": 24,
+    "verifiedFinalArtifacts": 26,
+    "acceptedVerifiedFinalArtifacts": 26,
+    "convergedPlayedFinal": 26,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 7,
+    "openRows": 5,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 24,
-    "scoredSettlementEligible": 24,
+    "historyEligible": 26,
+    "scoredSettlementEligible": 26,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -1026,31 +1026,31 @@
       "homeTeam": "Al Ahli Doha",
       "awayTeam": "Shamal",
       "kickoffUtc": "2026-11-19T15:30:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-19",
+        "scoreHome": 1,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1124,31 +1124,31 @@
       "homeTeam": "Al Ain",
       "awayTeam": "Al Dhafra",
       "kickoffUtc": "2026-11-19T15:25:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-19",
+        "scoreHome": 2,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1574,12 +1574,12 @@
     "systemHealth": {
       "schema": "ai-matchlab.system-health-alerts.v1",
       "dayKey": "2026-11-19",
-      "generatedAt": "2026-11-19T17:08:12.362Z",
+      "generatedAt": "2026-11-19T17:47:48.415Z",
       "severity": "warning",
       "issueCounts": {
         "error": 0,
         "warning": 8,
-        "info": 11
+        "info": 10
       },
       "alert": false,
       "alertCounts": {
@@ -1587,44 +1587,13 @@
         "warning": 0,
         "info": 0
       },
-      "activeIssueCount": 19,
+      "activeIssueCount": 18,
       "actionableIssueCount": 8,
-      "newIssueCount": 1,
+      "newIssueCount": 0,
       "newActionableIssueCount": 0,
-      "resolvedIssueCount": 0,
+      "resolvedIssueCount": 1,
       "persistentIssueCount": 18,
       "activeIssues": [
-        {
-          "severity": "info",
-          "source": "manifest",
-          "type": "frozen_value_age_preserved",
-          "message": "Frozen Value artifact predates canonical updates and satisfies the frozen release contract.",
-          "details": {
-            "fixtures": 31,
-            "valuePicks": 0,
-            "valueSource": "canonical_fixtures",
-            "latestCanonicalUpdatedAt": "2026-11-19T16:54:40.480Z",
-            "valueArtifactAt": "2026-11-19T01:24:35.709Z",
-            "valueFreshAgainstCanonical": false,
-            "mode": "frozen_snapshot",
-            "frozenIdentityBound": true,
-            "frozenReleaseSafe": true,
-            "frozenPickCount": 0,
-            "orphanPickCount": 0,
-            "orphanPickIds": [],
-            "missingMatchIdPickCount": 0,
-            "missingMatchIdPickIndexes": [],
-            "dayBound": true,
-            "canonicalSourceBound": true,
-            "recoveryContractBound": false,
-            "recoveryPublishedUniverseBound": false,
-            "recoveryUniverseEvidenceSource": null,
-            "recoveryUniverseEvidenceCount": null,
-            "recoveryUniverseEvidenceHash": null,
-            "recoveryUniverseEvidencePlans": [],
-            "ok": true
-          }
-        },
         {
           "severity": "info",
           "source": "invariant-report",
@@ -1784,7 +1753,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 23140,
+            "count": 23146,
             "informational": true
           }
         },
@@ -2941,7 +2910,9 @@
           }
         }
       ],
-      "newIssues": [
+      "newIssues": [],
+      "newActionableIssues": [],
+      "resolvedIssues": [
         {
           "severity": "info",
           "source": "manifest",
@@ -2951,7 +2922,7 @@
             "fixtures": 31,
             "valuePicks": 0,
             "valueSource": "canonical_fixtures",
-            "latestCanonicalUpdatedAt": "2026-11-19T14:48:04.287Z",
+            "latestCanonicalUpdatedAt": "2026-11-19T16:54:40.480Z",
             "valueArtifactAt": "2026-11-19T01:24:35.709Z",
             "valueFreshAgainstCanonical": false,
             "mode": "frozen_snapshot",
@@ -2974,8 +2945,6 @@
           }
         }
       ],
-      "newActionableIssues": [],
-      "resolvedIssues": [],
       "persistentIssues": [
         {
           "severity": "info",
@@ -3136,7 +3105,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 23068,
+            "count": 23146,
             "informational": true
           }
         },
@@ -3786,13 +3755,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "5291b85b4bcd2452e860a11536a0c9209bd92221878a995c1b212fd9a6c63144",
+      "truthFingerprint": "068ffbde6f5431cadb38912eae587fe0e41f0ddfff01a8c571d4018f7bcd9c1c",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 24,
+        "expectedEligibleRows": 26,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arm2_noah2_lernayinartsakh_20261119",
@@ -3813,7 +3782,9 @@
           "cid_egy2_tersana_we_20261119",
           "cid_ind2_demposports_shillonglajong_20261119",
           "cid_ind2_samaleswari_nagalandunited_20261119",
+          "cid_qat1_alahlidoha_shamal_20261119",
           "cid_syr1_alshorta_tishreen_20261119",
+          "cid_uae1_alain_aldhafra_20261119",
           "cid_uae1_alwasl_hatta_20261119",
           "cid_uga1_entebbeuppc_kataka_20261119",
           "cid_uga1_kigezihomeboyz_express_20261119",
@@ -3858,7 +3829,7 @@
         "sourcePath": "data/system-health/2026-11-19.json",
         "severity": "warning",
         "alert": false,
-        "activeIssueCount": 19,
+        "activeIssueCount": 18,
         "actionableIssueCount": 8
       },
       "authority": {
@@ -3878,7 +3849,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-11-19",
-      "fileCount": 24,
+      "fileCount": 26,
       "authority": "scored_final_evidence"
     },
     "downstream": {
