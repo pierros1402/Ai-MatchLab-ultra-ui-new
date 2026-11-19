@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-19",
-  "generatedAt": "2026-11-19T12:34:36.020Z",
+  "generatedAt": "2026-11-19T13:11:14.123Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "6b2b6bb839eee8c1ad9d2749342d6ad7030025ecabe9102e05197b0189af8dd0",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "ad6839d645f39030c03cfd2619df0a64b79276d3d305e25150df2b8297fb4914",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 31,
-    "playedTerminal": 8,
+    "playedTerminal": 9,
     "nonPlayedTerminal": 0,
     "scheduled": 22,
-    "live": 1,
+    "live": 0,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 9,
     "acceptedVerifiedFinalArtifacts": 9,
-    "convergedPlayedFinal": 8,
+    "convergedPlayedFinal": 9,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
     "openRows": 22,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 8,
-    "scoredSettlementEligible": 8,
+    "historyEligible": 9,
+    "scoredSettlementEligible": 9,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -879,12 +879,12 @@
       "homeTeam": "Dempo Sports Club",
       "awayTeam": "Shillong Lajong FC",
       "kickoffUtc": "2026-11-19T10:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 2,
         "scoreAway": 1
       },
@@ -899,11 +899,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -1563,9 +1563,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_ind2_demposports_shillonglajong_20261119"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -1576,12 +1574,12 @@
     "systemHealth": {
       "schema": "ai-matchlab.system-health-alerts.v1",
       "dayKey": "2026-11-19",
-      "generatedAt": "2026-11-19T12:34:35.428Z",
+      "generatedAt": "2026-11-19T13:11:13.509Z",
       "severity": "warning",
       "issueCounts": {
         "error": 0,
         "warning": 8,
-        "info": 12
+        "info": 13
       },
       "alert": false,
       "alertCounts": {
@@ -1589,13 +1587,44 @@
         "warning": 0,
         "info": 0
       },
-      "activeIssueCount": 20,
+      "activeIssueCount": 21,
       "actionableIssueCount": 8,
-      "newIssueCount": 0,
+      "newIssueCount": 1,
       "newActionableIssueCount": 0,
-      "resolvedIssueCount": 1,
+      "resolvedIssueCount": 0,
       "persistentIssueCount": 20,
       "activeIssues": [
+        {
+          "severity": "info",
+          "source": "manifest",
+          "type": "frozen_value_age_preserved",
+          "message": "Frozen Value artifact predates canonical updates and satisfies the frozen release contract.",
+          "details": {
+            "fixtures": 31,
+            "valuePicks": 0,
+            "valueSource": "canonical_fixtures",
+            "latestCanonicalUpdatedAt": "2026-11-19T12:55:09.476Z",
+            "valueArtifactAt": "2026-11-19T01:24:35.709Z",
+            "valueFreshAgainstCanonical": false,
+            "mode": "frozen_snapshot",
+            "frozenIdentityBound": true,
+            "frozenReleaseSafe": true,
+            "frozenPickCount": 0,
+            "orphanPickCount": 0,
+            "orphanPickIds": [],
+            "missingMatchIdPickCount": 0,
+            "missingMatchIdPickIndexes": [],
+            "dayBound": true,
+            "canonicalSourceBound": true,
+            "recoveryContractBound": false,
+            "recoveryPublishedUniverseBound": false,
+            "recoveryUniverseEvidenceSource": null,
+            "recoveryUniverseEvidenceCount": null,
+            "recoveryUniverseEvidenceHash": null,
+            "recoveryUniverseEvidencePlans": [],
+            "ok": true
+          }
+        },
         {
           "severity": "info",
           "source": "invariant-report",
@@ -1755,7 +1784,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 22646,
+            "count": 22698,
             "informational": true
           }
         },
@@ -2944,9 +2973,7 @@
           }
         }
       ],
-      "newIssues": [],
-      "newActionableIssues": [],
-      "resolvedIssues": [
+      "newIssues": [
         {
           "severity": "info",
           "source": "manifest",
@@ -2956,7 +2983,7 @@
             "fixtures": 31,
             "valuePicks": 0,
             "valueSource": "canonical_fixtures",
-            "latestCanonicalUpdatedAt": "2026-11-19T11:19:37.207Z",
+            "latestCanonicalUpdatedAt": "2026-11-19T12:18:47.366Z",
             "valueArtifactAt": "2026-11-19T01:24:35.709Z",
             "valueFreshAgainstCanonical": false,
             "mode": "frozen_snapshot",
@@ -2979,6 +3006,8 @@
           }
         }
       ],
+      "newActionableIssues": [],
+      "resolvedIssues": [],
       "persistentIssues": [
         {
           "severity": "info",
@@ -3821,13 +3850,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "6b2b6bb839eee8c1ad9d2749342d6ad7030025ecabe9102e05197b0189af8dd0",
+      "truthFingerprint": "ad6839d645f39030c03cfd2619df0a64b79276d3d305e25150df2b8297fb4914",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 8,
+        "expectedEligibleRows": 9,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_aze2_moikbaku_sabail_20261119",
@@ -3837,6 +3866,7 @@
           "cid_bra1_flamengo_athleticopr_20261119",
           "cid_bra1_gremio_bahia_20261119",
           "cid_bra1_remo_chapecoense_20261119",
+          "cid_ind2_demposports_shillonglajong_20261119",
           "cid_uru2_colon_oriental_20261119"
         ],
         "unexpectedFixtureIds": [],
@@ -3877,7 +3907,7 @@
         "sourcePath": "data/system-health/2026-11-19.json",
         "severity": "warning",
         "alert": false,
-        "activeIssueCount": 20,
+        "activeIssueCount": 21,
         "actionableIssueCount": 8
       },
       "authority": {
