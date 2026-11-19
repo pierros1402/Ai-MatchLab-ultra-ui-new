@@ -1,0 +1,293 @@
+{
+  "schema": "ai-matchlab.identity-recovery-window.v1",
+  "runDayKey": "2026-11-20",
+  "source": "raw_canonical_fixtures_pre_dedup",
+  "window": {
+    "daysBack": 1,
+    "daysForward": 14
+  },
+  "sourceLatestUpdatedAt": "2026-11-19T22:39:22.544Z",
+  "resolver": {
+    "schema": "ai-matchlab.production-identity-resolver-runtime.v2",
+    "extensionLedgerSha256": "d3f49e0be892694e926824c4fc7b4ec0763d9446a254b05423d0e8f6a89376e9",
+    "effectiveCounts": {
+      "identityBindings": 165,
+      "retainedFixtureIds": 115,
+      "suppressedFixtureAliases": 115,
+      "sourceFixtureIds": 230
+    }
+  },
+  "status": "REVIEW_REQUIRED",
+  "promotionPolicy": {
+    "broadFuzzyAllowed": false,
+    "unresolvedTwoSidedAutoPromotionAllowed": false,
+    "independentConfirmationRequiredForTwoSidedUnknown": true
+  },
+  "summary": {
+    "scannedDays": 16,
+    "scannedLeagueFiles": 505,
+    "inputRows": 1646,
+    "autoPromotable": 2,
+    "pendingIndependentConfirmation": 0,
+    "ambiguous": 0,
+    "conflictRejected": 1,
+    "alreadyManagedPairs": 0
+  },
+  "targetDays": [
+    {
+      "dayKey": "2026-11-19",
+      "leagueFiles": 14,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-20",
+      "leagueFiles": 78,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-21",
+      "leagueFiles": 115,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "esp.2",
+          "inputRows": 5,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [],
+          "conflictRejected": [
+            {
+              "leagueSlug": "esp.2",
+              "kickoffUtc": "2026-11-21T15:15:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "O4iaK1Tp",
+                "canonicalId": "cid_esp2_realsociedadb_cadiz_20261121",
+                "kickoffUtc": "2026-11-21T15:15:00.000Z",
+                "homeTeam": "Real Sociedad B",
+                "awayTeam": "Cadiz CF"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401883108",
+                "canonicalId": "cid_esp2_realsociedadii_cadiz_20261121",
+                "kickoffUtc": "2026-11-21T15:15Z",
+                "homeTeam": "Real Sociedad II",
+                "awayTeam": "Cádiz"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "SQUAD_CONFLICT",
+                  "stable": false,
+                  "conflict": true
+                },
+                "away": {
+                  "kind": "NORMALIZED_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": null,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null,
+                  "productionIdentityComplete": false
+                },
+                "stableSides": 1,
+                "conflict": true
+              },
+              "recoveryStatus": "REJECTED_IDENTITY_CONFLICT",
+              "promotionAuthorized": false
+            }
+          ],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 0,
+            "conflictRejected": 1,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
+    },
+    {
+      "dayKey": "2026-11-22",
+      "leagueFiles": 103,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "arg.2",
+          "inputRows": 2,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [
+            {
+              "leagueSlug": "arg.2",
+              "kickoffUtc": "2026-11-22T00:30:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "pOVr4aYQ",
+                "canonicalId": "cid_arg2_gimnasiajujuy_deportivomadryn_20261122",
+                "kickoffUtc": "2026-11-22T00:30:00.000Z",
+                "homeTeam": "Gimnasia Jujuy",
+                "awayTeam": "Deportivo Madryn"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401933196",
+                "canonicalId": "cid_arg2_gimnasiayesgrimajujuy_deportivomadryn_20261122",
+                "kickoffUtc": "2026-11-22T00:30Z",
+                "homeTeam": "Gimnasia y Esgrima (Jujuy)",
+                "awayTeam": "Deportivo Madryn"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "GLOBAL_ID_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": "gcid_a78224b54af6e51ee5fa1f72"
+                },
+                "away": {
+                  "kind": "NORMALIZED_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": null,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null,
+                  "productionIdentityComplete": false
+                },
+                "stableSides": 2,
+                "conflict": false
+              },
+              "recoveryStatus": "AUTO_PROMOTABLE_IDENTITY_EXTENSION",
+              "promotionAuthorized": true,
+              "requiresIndependentConfirmation": false
+            }
+          ],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 1,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 0,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "bel.1",
+          "inputRows": 5,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [
+            {
+              "leagueSlug": "bel.1",
+              "kickoffUtc": "2026-11-22T18:15:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "CpKBPUQ7",
+                "canonicalId": "cid_bel1_lommelsk_stliege_20261122",
+                "kickoffUtc": "2026-11-22T18:15:00.000Z",
+                "homeTeam": "Lommel SK",
+                "awayTeam": "St. Liege"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401878934",
+                "canonicalId": "cid_bel1_lommelsk_standardliege_20261122",
+                "kickoffUtc": "2026-11-22T18:15Z",
+                "homeTeam": "Lommel SK",
+                "awayTeam": "Standard Liege"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "GLOBAL_ID_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": "gcid_7ba6c84ee9057d3beaccbe2d"
+                },
+                "away": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "stableSides": 1,
+                "conflict": false
+              },
+              "recoveryStatus": "AUTO_PROMOTABLE_IDENTITY_EXTENSION",
+              "promotionAuthorized": true,
+              "requiresIndependentConfirmation": false
+            }
+          ],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 1,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 0,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
+    },
+    {
+      "dayKey": "2026-11-23",
+      "leagueFiles": 19,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-24",
+      "leagueFiles": 15,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-25",
+      "leagueFiles": 9,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-26",
+      "leagueFiles": 8,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-27",
+      "leagueFiles": 23,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-28",
+      "leagueFiles": 35,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-29",
+      "leagueFiles": 30,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-11-30",
+      "leagueFiles": 10,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-12-01",
+      "leagueFiles": 8,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-12-02",
+      "leagueFiles": 9,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-12-03",
+      "leagueFiles": 7,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-12-04",
+      "leagueFiles": 22,
+      "recoveryLeagueReports": []
+    }
+  ]
+}
