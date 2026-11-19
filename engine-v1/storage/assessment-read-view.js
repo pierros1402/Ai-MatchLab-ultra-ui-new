@@ -1,3 +1,4 @@
+import { assessPublicationIdentity } from "../core/assessment-publication-identity.js";
 import { hasModelAssessment } from "../core/plan-b-canonical-membership.js";
 
 export const ASSESSMENT_IDENTITY_FIELDS = [
@@ -12,7 +13,7 @@ export function assessmentIdentityFields(row = {}) {
 
 // Ephemeral runners can have a small fresh set and a complementary persisted set.
 // Union by exact identity; never join by team names or drop one set by row count.
-export function mergeAssessmentReadView(liveRows = [], persistedRows = [], dayKey = null) {
+export function mergeAssessmentReadView(liveRows = [], persistedRows = [], dayKey = null, { publication = false } = {}) {
   const byId = new Map();
   const unidentified = [];
   for (const row of persistedRows) {
@@ -31,6 +32,13 @@ export function mergeAssessmentReadView(liveRows = [], persistedRows = [], dayKe
     const prior = byId.get(id);
     if (seenLive.has(id)) { unidentified.push(row); continue; }
     seenLive.add(id);
+    if (publication && prior) {
+      // Keep model provenance attached to its own source row. Only carry a
+      // persisted model onto fresh bookmaker prices after independent identity proof.
+      const carry = !hasModelAssessment(row) && assessPublicationIdentity(prior, [row]).status === "publish";
+      byId.set(id, carry ? { ...row, aiAssessment: prior.aiAssessment } : row);
+      continue;
+    }
     byId.set(id, prior ? {
       ...prior,
       ...row,

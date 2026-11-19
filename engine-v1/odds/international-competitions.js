@@ -20,7 +20,6 @@ const RULES = [
 
   // UEFA national-team competitions
   { re: /european\s*championship\s*qualif|euro\s*qualif/i, slug: "uefa.euro_qual", label: "Euro Qualification", type: "national" },
-  { re: /nations\s*league/i, slug: "uefa.nations_league", label: "UEFA Nations League", type: "national" },
 
   // UEFA club-cup qualifying rounds (European cups' qualifiers)
   { re: /champions\s*league\s*(qualif|qual\b|playoff|prelim)/i, slug: "uefa.champions_qual", label: "Champions League Qualifying", type: "club" },
@@ -34,13 +33,51 @@ const RULES = [
 ];
 
 /**
+ * Nations League is not an identity: the confederation and provider path must
+ * agree before we allow the existing UEFA mapping. All other Nations League
+ * records are held; CONCACAF admission belongs to the competition registry.
+ * Do not use club-name similarity or a generic domestic fallback.
+ */
+export function nationsLeagueRoutingDecision(competition, country, leaguePath = null) {
+  const label = String(competition ?? "").trim();
+  const region = String(country ?? "").trim();
+  const providerPath = String(leaguePath ?? "").trim().toLowerCase();
+  const combined = `${region} ${label}`;
+  if (!/\bnations[\s-]*league\b/i.test(combined)) {
+    if (/nations[-_]league/i.test(providerPath)) return { kind: "hold", reason: "competition_label_path_disagreement" };
+    return { kind: "other" };
+  }
+
+  // Provider path must identify the ACTUAL competition, not just /football/europe/.
+  const exactUefaPath = /^\/football\/europe\/uefa-nations-league\/?$/i.test(providerPath);
+  const clearlyOtherPath = providerPath !== "" && !exactUefaPath;
+  const explicitUefa = /\buefa\b/i.test(label);
+  const explicitOther = /\bconcacaf\b|\bconmebol\b|\bafc\b|\bcaf\b|\bofc\b/i.test(combined)
+    || /north\s*(?:&|and|-)\s*central\s*america|\bafrica\b|\basia\b|\bsouth america\b/i.test(combined);
+  const regionConflict = /north\s*(?:&|and|-)\s*central\s*america|\bafrica\b|\basia\b|\bsouth america\b/i.test(region);
+
+  if (explicitOther || regionConflict || (explicitUefa && clearlyOtherPath)) {
+    return {kind:"hold", reason:"nations_league_conflicting_or_non_uefa_provenance"};
+  }
+  if (exactUefaPath) {
+    return {kind:"resolved", slug:"uefa.nations", label:"UEFA Nations League", type:"national"};
+  }
+  return {kind:"hold", reason:"nations_league_confederation_unverified"};
+}
+
+/**
  * @param {string} competition  BetExplorer competition name (without country prefix)
  * @param {string} [country]    the country prefix (e.g. "World", "Europe")
  * @returns {{slug,label,type}|null}
  */
-export function resolveInternational(competition, country) {
+export function resolveInternational(competition, country, leaguePath = null) {
   const text = `${country || ""} ${competition || ""}`.trim();
   if (!text) return null;
+  const routing = nationsLeagueRoutingDecision(competition, country, leaguePath);
+  if (routing.kind === "hold") return null;
+  if (routing.kind === "resolved") return {
+    slug: routing.slug, label: routing.label, type: routing.type
+  };
   for (const rule of RULES) {
     if (rule.re.test(text)) return { slug: rule.slug, label: rule.label, type: rule.type };
   }

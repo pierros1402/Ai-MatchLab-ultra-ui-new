@@ -13,7 +13,11 @@ import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { getOddsForDay } from "../storage/odds-memory-db.js";
 import { assessmentIdentityFields } from "../storage/assessment-read-view.js";
 import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
-import { resolveCanonicalAssessmentOwnership } from "../core/plan-b-canonical-membership.js";
+import {
+  resolveCanonicalAssessmentOwnership,
+  joinCanonicalFixturesWithModelAssessments
+} from "../core/plan-b-canonical-membership.js";
+import { classifyAssessmentPublication } from "../core/assessment-publication-identity.js";
 import {
   overlayProductionEvidenceDocumentReadView,
 } from "../core/production-evidence-identity-overlay.js";
@@ -29,7 +33,7 @@ export function assessmentRowCount(matches = []) {
   ).length;
 }
 
-export function snapshotRegressionReason(existingMatches = [], candidateMatches = []) {
+export function snapshotRegressionReason(existingMatches = [], candidateMatches = [], canonicalFixtures = null) {
   const existing = Array.isArray(existingMatches) ? existingMatches : [];
   const candidate = Array.isArray(candidateMatches) ? candidateMatches : [];
 
@@ -37,6 +41,18 @@ export function snapshotRegressionReason(existingMatches = [], candidateMatches 
     return "candidate_empty_regression";
   }
 
+  if (Array.isArray(canonicalFixtures)) {
+    const certifiedIds = rows => {
+      const certified = classifyAssessmentPublication(rows, canonicalFixtures).publishable.map(item => item.row);
+      const joined = joinCanonicalFixturesWithModelAssessments(canonicalFixtures, certified);
+      return new Set(joined.joinedMatches.map(row => row.canonicalId));
+    };
+    const after = certifiedIds(candidate);
+    for (const id of certifiedIds(existing)) {
+      if (!after.has(id)) return "assessment_coverage_regression";
+    }
+    return null;
+  }
   if (assessmentRowCount(existing) > assessmentRowCount(candidate)) {
     return "assessment_coverage_regression";
   }
@@ -62,30 +78,64 @@ export function contentHash(matches) {
 }
 
 export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
-  const day = getOddsForDay(dayKey);
+  const day = getOddsForDay(dayKey, { publication: true });
   const dir = resolveDataPath("deploy-snapshots", dayKey);
-  ensureDir(dir);
+  // Delay filesystem mutation until all identity/read/regression gates pass.
 
   const file = resolveDataPath("deploy-snapshots", dayKey, "odds.json");
   const canonical = canonicalFixturesForDay(dayKey);
   const ownership = resolveCanonicalAssessmentOwnership(canonical, Array.isArray(day?.matches) ? day.matches : []);
-  const candidateMatches = ownership.matches;
+  // Canonical membership is the only authority for publication eligibility.
+  // Retain raw market/price rows; quarantine orphan model evidence only in
+  // this derived public snapshot. Never alter odds memory or historic models.
+  const sourceMatches = ownership.matches;
+  const publication = joinCanonicalFixturesWithModelAssessments(canonical, sourceMatches);
+  const strictIdentity = classifyAssessmentPublication(sourceMatches, canonical);
+  if (strictIdentity.holds.length > 0 ||
+      publication.ambiguousCanonicalMatches.length > 0 ||
+      publication.ambiguousAssessmentAliases.length > 0 ||
+      publication.canonicalRowsMissingIdentity.length > 0) {
+    return {
+      ok: false,
+      dayKey,
+      file,
+      changed: false,
+      reason: "ambiguous_canonical_ownership_publication_hold",
+      ownershipIssues: {
+        orphanAssessments: publication.orphanAssessmentRows.length,
+        strictIdentityHolds: strictIdentity.holds.map(({row,reason})=>({canonicalId:row.canonicalId ?? null,reason})),
+        ambiguousCanonicalMatches: publication.ambiguousCanonicalMatches.length,
+        ambiguousAssessmentAliases: publication.ambiguousAssessmentAliases.length,
+        canonicalRowsMissingIdentity: publication.canonicalRowsMissingIdentity.length
+      }
+    };
+  }
+  // Real membership returns original input-row references in orphanAssessmentRows.
+  // Distinct object identities are intentional: never match or drop by fuzzy names.
+  const quarantined = new Set([
+    ...publication.orphanAssessmentRows,
+    ...strictIdentity.quarantined.map(x=>x.row)
+  ]);
+  const candidateMatches = sourceMatches.map(row => quarantined.has(row)
+    ? { ...row, aiAssessment: null } : row);
+  const quarantinedAssessments = sourceMatches.reduce((count, row) =>
+    count + (quarantined.has(row) && assessmentRowCount([row]) === 1 ? 1 : 0), 0);
   const hash = contentHash(candidateMatches);
 
   let existing = null;
   try {
-    existing = overlayProductionEvidenceDocumentReadView(
-      JSON.parse(fs.readFileSync(file, "utf8")),
-    );
+    const previous = JSON.parse(fs.readFileSync(file, "utf8"));
+    if (!previous || !Array.isArray(previous.matches)) throw new Error("invalid_existing_odds_snapshot");
+    existing = overlayProductionEvidenceDocumentReadView(previous);
   } catch (error) {
-    if (String(error?.code || "").startsWith("production_evidence_read_")) {
-      throw error;
-    }
+    // Missing is the only acceptable absence. Corrupt/unreadable evidence must
+    // never be replaced by silently treating it as an empty previous snapshot.
+    if (error?.code !== "ENOENT") throw error;
   }
 
   if (existing) {
     const existingMatches = Array.isArray(existing?.matches) ? existing.matches : [];
-    const regressionReason = snapshotRegressionReason(resolveCanonicalAssessmentOwnership(canonical, existingMatches).matches, candidateMatches);
+    const regressionReason = snapshotRegressionReason(resolveCanonicalAssessmentOwnership(canonical, existingMatches).matches, candidateMatches, canonical);
     if (regressionReason) {
       return {
         ok: true,
@@ -99,7 +149,7 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
       };
     }
 
-    if (existing.hash === hash) {
+    if (existing.hash === hash && contentHash(existingMatches) === hash) {
       return {
         ok: true,
         dayKey,
@@ -119,11 +169,41 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
     hash,
     count: candidateMatches.length,
     assessmentRows: assessmentRowCount(candidateMatches),
-    assessmentOwnership: { supersededLegacyAssessments: ownership.superseded.length, decisions: ownership.superseded },
+    assessmentOwnership: {
+      supersededLegacyAssessments: ownership.superseded.length,
+      decisions: ownership.superseded,
+      quarantinedOrphanAssessments: quarantinedAssessments,
+      policy: "canonical_join_plus_strict_identity_verified_or_model_quarantined",
+      certifiedAssessmentRows: assessmentRowCount(candidateMatches)
+    },
     matches: candidateMatches
   };
 
-  fs.writeFileSync(file, JSON.stringify(payload, null, 2), "utf8");
+  // Atomic same-directory replacement: an interrupted write must not leave
+  // a partially serialized public snapshot. Preserve the old file on failure.
+  ensureDir(dir);
+  const temp = `${file}.tmp-${process.pid}-${crypto.randomBytes(8).toString("hex")}`;
+  let descriptor;
+  let created = false;
+  try {
+    descriptor = fs.openSync(temp, "wx", 0o600);
+    created = true;
+    fs.writeFileSync(descriptor, JSON.stringify(payload, null, 2), "utf8");
+    fs.fsyncSync(descriptor);
+    fs.closeSync(descriptor);
+    descriptor = undefined;
+    fs.renameSync(temp, file);
+  } catch (error) {
+    if (descriptor !== undefined) {
+      try { fs.closeSync(descriptor); } catch {}
+    }
+    try { if (created) fs.unlinkSync(temp); } catch (cleanupError) {
+      if (cleanupError?.code !== "ENOENT") {
+        error.cleanupError = String(cleanupError?.message || cleanupError);
+      }
+    }
+    throw error;
+  }
   return {
     ok: true,
     dayKey,

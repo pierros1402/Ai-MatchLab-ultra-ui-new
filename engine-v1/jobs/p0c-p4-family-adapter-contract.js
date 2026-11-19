@@ -318,6 +318,29 @@ export function validateP0CP4V35ChunkedProducerEvidence({sourceRecords} = {}) {
     P0C_P4_V35_CHUNKED_PRODUCER_BINDING_SCHEMA, "PASS_P0C_P4_V35_CHUNKED_CANDIDATE_PRODUCER_BINDINGS");
 }
 
+// Keep previous ledgers immutable. Select this binding explicitly for routing candidates.
+export const P0C_P4_V35_ROUTING_BINDING_SCHEMA = "ai-matchlab.p0c-p4-v35-producer-binding.v3";
+const ROUTING_SOURCE_BINDINGS = Object.freeze({
+  ...V35_CHUNKED_SOURCE_BINDINGS,
+  oddsSnapshotExporter: Object.freeze({
+    ...V35_CHUNKED_SOURCE_BINDINGS.oddsSnapshotExporter,
+    sha256: "3105bca43685a775b034ec33974d5fdb4a00f8c83d2935fb584c3eafd025f85f"
+  })
+});
+
+export function getP0CP4V35RoutingProducerBinding() {
+  return Object.freeze({
+    ...getP0CP4V35ChunkedProducerBinding(),
+    schema: P0C_P4_V35_ROUTING_BINDING_SCHEMA,
+    sourceBindings: clone(ROUTING_SOURCE_BINDINGS)
+  });
+}
+
+export function validateP0CP4V35RoutingProducerEvidence({ sourceRecords } = {}) {
+  return validateExactProducerEvidence(sourceRecords, ROUTING_SOURCE_BINDINGS,
+    P0C_P4_V35_ROUTING_BINDING_SCHEMA, "PASS_P0C_P4_V35_ROUTING_CANDIDATE_PRODUCER_BINDINGS");
+}
+
 const FAMILY_DESCRIPTORS = Object.freeze([
   Object.freeze({
     family: "DEPLOY_SNAPSHOT_DETAILS",

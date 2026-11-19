@@ -15,6 +15,8 @@ import { resolveDataPath, ensureDir } from "./data-root.js";
 import { normalizeTeamKey as normTeamKey } from "../core/normalize.js";
 import { buildConsensusIndex, resolveConsensusMarket } from "../odds/multi-odds-consensus.js";
 import { assessmentIdentityFields, mergeAssessmentReadView } from "./assessment-read-view.js";
+import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
+import { projectPublicOddsRow, projectPublicOddsRows } from "../core/public-odds-assessment-projection.js";
 import {
   overlayProductionEvidenceDocumentReadView,
   resolveProductionEvidenceFixtureIdReadView,
@@ -259,7 +261,7 @@ export function getOddsSnapshot(matchId, market = "1X2") {
  * All matches captured for a given Athens day, with their market odds
  * (open/current/delta) and our AI assessment. Powers the day view in the UI.
  */
-export function getOddsForDay(dayKey) {
+export function getOddsForDay(dayKey, { publication = false } = {}) {
   const matches = [];
   // Free broad-coverage fallback: OddsPortal consensus (~63 leagues) when the
   // narrow BetExplorer listing has no market for a match. Index once per day;
@@ -316,7 +318,7 @@ export function getOddsForDay(dayKey) {
   // remain authoritative for the same exact identity.
   const deployed = dayKey ? readDeployedOddsFile(dayKey) : null;
   const deployedMatches = Array.isArray(deployed?.matches) ? deployed.matches : [];
-  const merged = mergeAssessmentReadView(matches, deployedMatches, dayKey);
+  const merged = mergeAssessmentReadView(matches, deployedMatches, dayKey, { publication });
   return {
     ok: true,
     dayKey: dayKey || null,
@@ -356,50 +358,82 @@ function readDeployedOddsFile(dayKey) {
   }
 }
 
-export function getDeployedOddsDay(dayKey) {
+export function getDeployedOddsDay(dayKey, { publication = false } = {}) {
   const snap = readDeployedOddsFile(dayKey);
   if (snap && Array.isArray(snap.matches)) {
-    return { ok: true, dayKey, count: snap.count ?? snap.matches.length, matches: snap.matches, source: "deploy_snapshot" };
+    const matches = publication
+      ? projectPublicOddsRows(snap.matches, canonicalFixturesForDay(dayKey), dayKey)
+      : snap.matches;
+    return { ok: true, dayKey, count: matches.length, matches, source: "deploy_snapshot" };
   }
-  return { ...getOddsForDay(dayKey), source: "live_store" };
+  const live = getOddsForDay(dayKey, { publication });
+  const matches = publication
+    ? projectPublicOddsRows(live.matches, canonicalFixturesForDay(dayKey), dayKey)
+    : live.matches;
+  return { ...live, count: matches.length, matches, source: "live_store" };
 }
 
 // Per-match snapshot (frontend shape) sourced from the deployed day file, with a
 // fallback to the live store. Matches by our matchId.
-export function getDeployedOddsSnapshot(matchId, market = "1X2", dayKey) {
+export function getDeployedOddsSnapshot(matchId, market = "1X2", dayKey, { publication = false } = {}) {
   const id =
     resolveProductionEvidenceFixtureIdReadView(
       matchId,
     ).resolvedFixtureId;
   const days = dayKey ? [dayKey] : [];
+  const fixtures = publication ? canonicalFixturesForDay(dayKey) : [];
+  let ambiguousDeployedIdentity = false;
   for (const d of days) {
     const snap = readDeployedOddsFile(d);
-    const m = snap?.matches?.find(x => String(x.matchId) === id);
+    const candidates = (snap?.matches || []).filter(x => String(x.matchId) === id);
+    if (candidates.length > 1) ambiguousDeployedIdentity = true;
+    const m = candidates[0] || null;
     if (m?.market) {
       const rows = Object.keys(m.market.current).map(sel => ({
         selection: sel, open: m.market.open[sel], current: m.market.current[sel], delta: m.market.delta[sel]
       }));
-      return { ok: true, matchId: id, market, snapshot: { "Market": rows }, aiAssessment: m.aiAssessment || null };
+      return { ok: true, matchId: id, market, snapshot: { "Market": rows }, aiAssessment: publication ? projectPublicOddsRow(m, fixtures, d, { duplicateIdentity: candidates.length !== 1 }).aiAssessment : (m.aiAssessment || null) };
     }
   }
   // fallback to live store
   const live = getOddsSnapshot(id, market);
   const full = readOdds(id);
-  return { ...live, aiAssessment: full?.aiAssessment || null };
+  return { ...live, aiAssessment: publication
+    ? (ambiguousDeployedIdentity
+      ? null : projectPublicOddsRow(full, fixtures, dayKey).aiAssessment ?? null)
+    : full?.aiAssessment || null };
 }
 
 /**
  * Flattened assessment rows for a day (one per match × market) for the export:
  * our pick + odds/prob + verification (yes/no/"" pending) from settlement.
  */
-export function getAssessmentRows(dayKey) {
+export function getAssessmentRows(dayKey, { publication = false } = {}) {
   const rows = [];
+  const fixtures = publication ? canonicalFixturesForDay(dayKey) : [];
+  const ownerCounts = new Map();
+  if (publication) {
+    try {
+      for (const file of fs.readdirSync(DIR)) {
+        if (!file.endsWith(".json")) continue;
+        const record = readOdds(file.replace(/\.json$/, ""));
+        if (!record || record.dayKey !== dayKey) continue;
+        const owner = String(record.canonicalId || record.matchId || "").trim();
+        if (owner) ownerCounts.set(owner, (ownerCounts.get(owner) || 0) + 1);
+      }
+    } catch (error) {
+      if (error?.code !== "ENOENT") throw error;
+    }
+  }
   const argmax = o => Object.keys(o).reduce((b, k) => (o[k] > (o[b] ?? -1) ? k : b), null);
   try {
     for (const f of fs.readdirSync(DIR)) {
       if (!f.endsWith(".json")) continue;
       const d = readOdds(f.replace(/\.json$/, ""));
       if (!d || d.dayKey !== dayKey || !d.aiAssessment?.markets) continue;
+      if (publication && !projectPublicOddsRow(d, fixtures, dayKey, {
+        duplicateIdentity: (ownerCounts.get(String(d.canonicalId || d.matchId || "").trim()) || 0) > 1
+      }).aiAssessment) continue;
       const settle = d.settlement?.markets || {};
       for (const mk of ["1X2", "OU25", "BTTS"]) {
         const m = d.aiAssessment.markets[mk];
@@ -439,4 +473,9 @@ export function getOddsSummary() {
     // dir not created yet
   }
   return { matches: total, marketsTracked: markets };
+}
+
+// HTTP bridge fallback: screen the original identity-bearing display row as well.
+export function projectPublicAssessmentBridge(row, dayKey) {
+  return projectPublicOddsRow(row, canonicalFixturesForDay(dayKey), dayKey);
 }

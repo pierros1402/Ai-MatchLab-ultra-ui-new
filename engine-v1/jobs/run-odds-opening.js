@@ -27,7 +27,7 @@ import { athensDayKey, shiftDay } from "../core/daykey.js";
 import { fetchOddsResilient } from "../odds/odds-providers.js";
 import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
 import { priceMatchFromStandings } from "../odds/ai-odds-model.js";
-import { resolveInternational } from "../odds/international-competitions.js";
+import { resolveInternational, nationsLeagueRoutingDecision } from "../odds/international-competitions.js";
 import { recordOddsSnapshot, getOddsSummary } from "../storage/odds-memory-db.js";
 import { patchFixtureAssessment } from "../storage/json-db.js";
 import { readStandings } from "../storage/standings-memory-db.js";
@@ -81,7 +81,7 @@ function lookupOdds(home, away, pool) {
   return bestScore >= 0.6 ? best : null;
 }
 
-async function main() {
+async function main({ fetchFixtures = fetchFlashscoreFixtures, fetchMarket = fetchOddsResilient, fetchReferees = buildRefereeLookup } = {}) {
   const summary = process.argv.slice(2).includes("--summary");
   if (summary) {
     console.log(JSON.stringify({ ok: true, odds: getOddsSummary() }, null, 2));
@@ -96,18 +96,18 @@ async function main() {
   log("league-index", { activeLeaguesWithStandings: leagues.length, allLeaguesWithStandings: allLeagues.length, window: [...windowSet] });
 
   // Fixtures: the whole day's football (wide coverage).
-  const fixtures = await fetchFlashscoreFixtures({ offsets: [0, 1, 2] });
+  const fixtures = await fetchFixtures({ offsets: [0, 1, 2] });
   log("fixtures:fetched", { rows: fixtures.rows.length, attempts: fixtures.attempts.map(a => `${a.offset}:${a.rows}`) });
 
   // Odds: resilient multi-provider gather (no single-source dependency),
   // matched to fixtures by team names; each price carries its source/book.
-  const market = await fetchOddsResilient();
+  const market = await fetchMarket();
   const oddsPool = buildOddsPool(market.rows);
   log("market-odds:fetched", { rows: market.rows.length, providers: market.providers });
 
   // Appointed referees (+ their card/penalty tendencies) for upcoming fixtures,
   // for the leagues we map to Transfermarkt. Built once; joined per match below.
-  const refereeLookup = await buildRefereeLookup(Object.keys(TM_COMPETITIONS));
+  const refereeLookup = await fetchReferees(Object.keys(TM_COMPETITIONS));
   log("referees:fetched", { leagues: refereeLookup.size });
 
   const stats = {
@@ -123,7 +123,12 @@ async function main() {
     stats.inWindow++;
 
     // Attribution: international by competition, else domestic via standings.
-    const intl = resolveInternational(fx.leagueName, fx.country);
+    const routing = nationsLeagueRoutingDecision(fx.leagueName, fx.country, fx.leaguePath);
+    if (routing.kind === "hold") {
+      stats.routingHold = (stats.routingHold || 0) + 1;
+      continue;
+    }
+    const intl = resolveInternational(fx.leagueName, fx.country, fx.leaguePath);
     let slug, home, away, league = null, isIntl = false;
     let homeSlug = null, awaySlug = null, leagueAvg = 1.35, crossLeague = false;
 
@@ -152,13 +157,16 @@ async function main() {
         const nationalAssessment = { model: { ..._p.model, source: "ai_poisson_national_prior" }, markets: _p.markets, nationalTeams: true };
         const natCid = buildCanonicalId(slug, fx.home, fx.away, dayKey || fx.kickoffUtc);
         const natId = natCid || `fs_${fx.matchId}`;
+        const odds = routing.kind === "resolved" ? lookupOdds(fx.home, fx.away, oddsPool) : null;
+        if (odds) stats.withOdds++;
         recordOddsSnapshot(natId, {
           providerIds: { flashscore: fx.matchId },
           canonicalId: natCid, leagueSlug: slug, competition: intl.label,
           home: fx.home, away: fx.away, dayKey, kickoffUtc: fx.kickoffUtc,
-          source: "flashscore", aiAssessment: nationalAssessment
-        }, {});
-        if (dayKey) patchFixtureAssessment(fx.home, fx.away, dayKey, nationalAssessment);
+          source: odds ? `flashscore+${odds.provider}` : "flashscore",
+          oddsBook: odds?.book ?? null, aiAssessment: nationalAssessment
+        }, { markets: odds ? { "1X2": { odds: odds.odds, oddsMax: odds.oddsMax } } : {} });
+        if (dayKey) patchFixtureAssessment(fx.home, fx.away, dayKey, nationalAssessment, { canonicalId: natCid, providerIds: { flashscore: fx.matchId }, leagueSlug: slug, kickoffUtc: fx.kickoffUtc });
         stats.attributed++; stats.international++; stats.withAiAssessment++;
         stats.byLeague[slug] = (stats.byLeague[slug] || 0) + 1;
         if (dayKey) stats.byDay[dayKey] = (stats.byDay[dayKey] || 0) + 1;
@@ -216,7 +224,7 @@ async function main() {
     // Bridge to canonical store: write assessment under the ESPN/canonical id too,
     // so /details finds it by matchId directly (no findOddsByTeams fallback needed).
     if (aiAssessment && dayKey) {
-      patchFixtureAssessment(fx.home, fx.away, dayKey, aiAssessment);
+      patchFixtureAssessment(fx.home, fx.away, dayKey, aiAssessment, { canonicalId: canonicalId, providerIds: { flashscore: fx.matchId }, leagueSlug: slug, kickoffUtc: fx.kickoffUtc });
     }
 
     stats.attributed++;

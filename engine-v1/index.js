@@ -37,7 +37,7 @@ import {
   selectAuthoritativeDisplayUniverse
 } from "./core/display-contract.js";
 import { buildMatchIntelligence } from "./core/build-match-intelligence.js";
-import { getDeployedOddsSnapshot, getDeployedOddsDay, getAssessmentRows } from "./storage/odds-memory-db.js";
+import { getDeployedOddsSnapshot, getDeployedOddsDay, getAssessmentRows, projectPublicAssessmentBridge } from "./storage/odds-memory-db.js";
 import { getLeagueMetaMap } from "./source-discovery/league-awareness-service.js";
 import { isDisabledLeague } from "./source-discovery/disabled-leagues.js";
 import { fetchMultiBookmakerOdds, prefetchUpcomingOdds } from "./jobs/fetch-multi-bookmaker-odds.js";
@@ -3961,7 +3961,7 @@ app.get("/assessment-export/range", async (req, res) => {
 
   const rows = [];
   for (const date of days) {
-    for (const r of getAssessmentRows(date)) rows.push(r);
+    for (const r of getAssessmentRows(date, { publication: true })) rows.push(r);
   }
 
   if (format === "json") {
@@ -4075,7 +4075,7 @@ function oddsHandler(req, res) {
     res.status(400).json({ ok: false, error: "missing_matchId" });
     return;
   }
-  const direct = getDeployedOddsSnapshot(matchId, market, date);
+  const direct = getDeployedOddsSnapshot(matchId, market, date, { publication: true });
   if (direct && direct.aiAssessment) {
     res.json(direct);
     return;
@@ -4087,8 +4087,9 @@ function oddsHandler(req, res) {
   try {
     const uni = buildDisplayMatchesForDate(date);
     const m = (uni?.matches || []).find(x => String(x.matchId) === matchId);
-    if (m?.aiAssessment) {
-      res.json({ ...direct, ok: true, matchId, market, aiAssessment: m.aiAssessment, reconciled: true });
+    const screened = m ? projectPublicAssessmentBridge(m, date) : null;
+    if (screened?.aiAssessment) {
+      res.json({ ...direct, ok: true, matchId, market, aiAssessment: screened.aiAssessment, reconciled: true });
       return;
     }
   } catch { /* fall through to the direct (empty) result */ }
@@ -4801,7 +4802,7 @@ app.get("/api/leagues", (_req, res) => {
 // Whole-day picture: every captured fixture with market odds + AI assessment.
 app.get("/odds/day", (req, res) => {
   const date = String(req.query.date || athensDayKey());
-  res.json(getDeployedOddsDay(date));
+  res.json(getDeployedOddsDay(date, { publication: true }));
 });
 
 app.get("/match-intelligence", async (req, res) => {

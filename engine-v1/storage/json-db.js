@@ -1,4 +1,5 @@
 ﻿import fs from "fs";
+import { assessPublicationIdentity } from "../core/assessment-publication-identity.js";
 import path from "path";
 import { fileURLToPath } from "node:url";
 import { normalizeTeamKey } from "../core/normalize.js";
@@ -354,11 +355,16 @@ export function upsertFixtureWithMeta(row) {
  * the canonical id and our fs_* id both carry the same assessment — no more
  * findOddsByTeams fallback needed in the details route.
  */
-export function patchFixtureAssessment(homeTeam, awayTeam, dayKey, aiAssessment) {
+export function patchFixtureAssessment(homeTeam, awayTeam, dayKey, aiAssessment, identity = null) {
   if (!aiAssessment || !homeTeam || !awayTeam || !dayKey) return false;
   const db = readDb();
+  const outcome = identity && assessPublicationIdentity({
+    ...identity, home: homeTeam, away: awayTeam, dayKey, aiAssessment
+  }, db.fixtures.filter(row => row.dayKey === dayKey));
+  if (identity && outcome.status !== "publish") return false;
   const nh = normalizeTeamKey(homeTeam), na = normalizeTeamKey(awayTeam);
   const idx = db.fixtures.findIndex(x => {
+    if (identity) return x === outcome.fixture;
     if (x.dayKey !== dayKey) return false;
     return normalizeTeamKey(x.homeTeam) === nh && normalizeTeamKey(x.awayTeam) === na;
   });

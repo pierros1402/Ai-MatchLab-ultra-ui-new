@@ -16,6 +16,9 @@ import {
   P0C_P4_V35_PRODUCER_BINDING_SCHEMA,
   getP0CP4V35ProducerBinding,
   validateP0CP4V35ProducerEvidence,
+  P0C_P4_V35_ROUTING_BINDING_SCHEMA,
+  validateP0CP4V35RoutingProducerEvidence,
+  getP0CP4V35RoutingProducerBinding,
   P0C_P4_V35_CHUNKED_PRODUCER_BINDING_SCHEMA,
   getP0CP4V35ChunkedProducerBinding,
   validateP0CP4V35ChunkedProducerEvidence,
@@ -278,14 +281,14 @@ test("rejects count, family, path and authorization drift", () => {
 
 test("pins all required current producer source hashes against the explicit V3.5 candidate binding", () => {
   const historical = getP0CP4FamilyAdapterContract();
-  const current = getP0CP4V35ChunkedProducerBinding();
-  assert.equal(current.schema, P0C_P4_V35_CHUNKED_PRODUCER_BINDING_SCHEMA);
+  const current = getP0CP4V35RoutingProducerBinding();
+  assert.equal(current.schema, P0C_P4_V35_ROUTING_BINDING_SCHEMA);
   assert.equal(current.repositoryApplicationAuthorized, false);
   assert.equal(current.productionAuthorized, false);
   assert.deepEqual(Object.keys(current.sourceBindings),Object.keys(historical.sourceBindings));
   const changed = Object.keys(current.sourceBindings).filter(key =>
     current.sourceBindings[key].sha256 !== historical.sourceBindings[key].sha256);
-  assert.deepEqual(changed,["valueBuilder","planBBuilder"]);
+  assert.deepEqual(changed.sort(),["oddsSnapshotExporter","planBBuilder","valueBuilder"]);
   for (const key of Object.keys(current.sourceBindings)) {
     const {sha256: oldHash, ...oldFields} = historical.sourceBindings[key];
     const {sha256: newHash, ...newFields} = current.sourceBindings[key];
@@ -298,31 +301,37 @@ test("pins all required current producer source hashes against the explicit V3.5
   const sourceRecords = Object.values(current.sourceBindings).map(row => ({
     path: row.path, sha256: sourceBindingSha256(row.path,row.sha256),
   }));
-  const result = validateP0CP4V35ChunkedProducerEvidence({sourceRecords});
+  const result = validateP0CP4V35RoutingProducerEvidence({sourceRecords});
   assert.equal(result.ok,true);
   assert.equal(result.requiredSourceCount,23);
   assert.equal(result.repositoryApplicationAuthorized,false);
+  const chunked = getP0CP4V35ChunkedProducerBinding();
+  assert.equal(chunked.schema, P0C_P4_V35_CHUNKED_PRODUCER_BINDING_SCHEMA);
+  const chunkedRows = Object.values(chunked.sourceBindings).map(({path, sha256}) => ({path, sha256}));
+  assert.equal(validateP0CP4V35ChunkedProducerEvidence({sourceRecords: chunkedRows}).ok, true);
+  assert.throws(() => validateP0CP4V35ChunkedProducerEvidence({sourceRecords}), /source_hash_mismatch/);
+  assert.throws(() => validateP0CP4V35RoutingProducerEvidence({sourceRecords: chunkedRows}), /source_hash_mismatch/);
   const previous=getP0CP4V35ProducerBinding();
   assert.equal(previous.schema,P0C_P4_V35_PRODUCER_BINDING_SCHEMA);
   assert.equal(previous.sourceBindings.valueBuilder.sha256,"a1d19b4657f7fe95042505e7e521e0d8a989f496ecaef73f9c8eb1fff33d9fbd");
   const previousRows=Object.values(previous.sourceBindings).map(({path,sha256})=>({path,sha256}));
   assert.equal(validateP0CP4V35ProducerEvidence({sourceRecords:previousRows}).ok,true);
-  assert.throws(()=>validateP0CP4V35ChunkedProducerEvidence({sourceRecords:previousRows}),/source_hash_mismatch/);
+  assert.throws(()=>validateP0CP4V35RoutingProducerEvidence({sourceRecords:previousRows}),/source_hash_mismatch/);
   assert.throws(()=>validateP0CP4V35ProducerEvidence({sourceRecords}),/source_hash_mismatch/);
   // The old contract is never silently repinned or made to accept a newer source.
   assert.throws(() => validateP0CP4ProducerEvidence({sourceRecords}),/source_hash_mismatch/);
   for (let i=0;i<sourceRecords.length;i++) {
     const drifted=sourceRecords.map(row=>({...row}));
     drifted[i].sha256="0".repeat(64);
-    assert.throws(()=>validateP0CP4V35ChunkedProducerEvidence({sourceRecords:drifted}),/source_hash_mismatch/);
+    assert.throws(()=>validateP0CP4V35RoutingProducerEvidence({sourceRecords:drifted}),/source_hash_mismatch/);
   }
   for (const key of changed) {
     const old=historical.sourceBindings[key];
     const mixed=sourceRecords.map(row=>row.path===old.path?{path:old.path,sha256:old.sha256}:row);
-    assert.throws(()=>validateP0CP4V35ChunkedProducerEvidence({sourceRecords:mixed}),/source_hash_mismatch/);
+    assert.throws(()=>validateP0CP4V35RoutingProducerEvidence({sourceRecords:mixed}),/source_hash_mismatch/);
   }
-  assert.throws(()=>validateP0CP4V35ChunkedProducerEvidence({sourceRecords:sourceRecords.slice(1)}),/source_missing/);
-  assert.throws(()=>validateP0CP4V35ChunkedProducerEvidence({sourceRecords:[...sourceRecords,sourceRecords[0]]}),/source_record_duplicate/);
+  assert.throws(()=>validateP0CP4V35RoutingProducerEvidence({sourceRecords:sourceRecords.slice(1)}),/source_missing/);
+  assert.throws(()=>validateP0CP4V35RoutingProducerEvidence({sourceRecords:[...sourceRecords,sourceRecords[0]]}),/source_record_duplicate/);
 });
 
 test("unchanged historical producer hash ledger is not a V3.5 ledger", () => {
