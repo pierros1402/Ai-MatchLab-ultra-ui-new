@@ -1,25 +1,25 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-11-18",
-  "generatedAt": "2026-11-18T21:45:00.980Z",
+  "generatedAt": "2026-11-19T00:17:02.693Z",
   "severity": "warning",
   "issueCounts": {
     "error": 0,
     "warning": 8,
-    "info": 13
+    "info": 11
   },
-  "alert": false,
+  "alert": true,
   "alertCounts": {
     "error": 0,
-    "warning": 0,
+    "warning": 2,
     "info": 0
   },
-  "activeIssueCount": 21,
+  "activeIssueCount": 19,
   "actionableIssueCount": 8,
-  "newIssueCount": 1,
-  "newActionableIssueCount": 0,
-  "resolvedIssueCount": 0,
-  "persistentIssueCount": 20,
+  "newIssueCount": 5,
+  "newActionableIssueCount": 2,
+  "resolvedIssueCount": 5,
+  "persistentIssueCount": 14,
   "activeIssues": [
     {
       "severity": "info",
@@ -346,38 +346,6 @@
           "rejectedCount": 29,
           "alreadyDeclaredCount": 0
         }
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a_unresolved_settlement",
-      "message": "Plan A picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-11-18",
-        "todayDayKey": "2026-11-18",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 1,
-        "settled": 0,
-        "unresolved": 1
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a2_unresolved_settlement",
-      "message": "Plan A2 picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-11-18",
-        "todayDayKey": "2026-11-18",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 1,
-        "settled": 0,
-        "unresolved": 1
       }
     },
     {
@@ -1042,13 +1010,13 @@
           "summary": {
             "picks": 1,
             "uniqueMatches": 1,
-            "settled": 0,
+            "settled": 1,
             "wins": 0,
-            "losses": 0,
+            "losses": 1,
             "voids": 0,
-            "unresolved": 1,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": null,
+            "hitRate": 0,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -1062,13 +1030,13 @@
           "summary": {
             "picks": 1,
             "uniqueMatches": 1,
-            "settled": 0,
+            "settled": 1,
             "wins": 0,
-            "losses": 0,
+            "losses": 1,
             "voids": 0,
-            "unresolved": 1,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": null,
+            "hitRate": 0,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -1864,56 +1832,6 @@
   "newIssues": [
     {
       "severity": "info",
-      "source": "manifest",
-      "type": "frozen_value_age_preserved",
-      "message": "Frozen Value artifact predates canonical updates and satisfies the frozen release contract.",
-      "details": {
-        "fixtures": 15,
-        "valuePicks": 1,
-        "valueSource": "canonical_fixtures",
-        "latestCanonicalUpdatedAt": "2026-11-18T21:33:28.042Z",
-        "valueArtifactAt": "2026-11-18T19:28:46.531Z",
-        "valueFreshAgainstCanonical": false,
-        "mode": "frozen_snapshot",
-        "frozenIdentityBound": true,
-        "frozenReleaseSafe": true,
-        "frozenPickCount": 1,
-        "orphanPickCount": 0,
-        "orphanPickIds": [],
-        "missingMatchIdPickCount": 0,
-        "missingMatchIdPickIndexes": [],
-        "dayBound": true,
-        "canonicalSourceBound": true,
-        "recoveryContractBound": false,
-        "recoveryPublishedUniverseBound": false,
-        "recoveryUniverseEvidenceSource": null,
-        "recoveryUniverseEvidenceCount": null,
-        "recoveryUniverseEvidenceHash": null,
-        "recoveryUniverseEvidencePlans": [],
-        "ok": true
-      }
-    }
-  ],
-  "newActionableIssues": [],
-  "resolvedIssues": [],
-  "persistentIssues": [
-    {
-      "severity": "info",
-      "source": "invariant-report",
-      "type": "coverage_floor_drop",
-      "message": "Canonical fixtures are below static floor but meet the effective floor.",
-      "details": {
-        "type": "coverage_floor_drop",
-        "staticFloor": 45,
-        "effectiveFloor": 12,
-        "actualFixtures": 15,
-        "drop": 33,
-        "reason": "canonical_fixture_count_below_static_floor",
-        "effectiveFloorMet": true
-      }
-    },
-    {
-      "severity": "info",
       "source": "freshness-report",
       "type": "skipped_freshness_input",
       "message": "Freshness report skipped an optional/missing input.",
@@ -1998,6 +1916,220 @@
         "readErrors": 0,
         "expectedProviderBaseline": "NOT_VERIFIED",
         "artifact": "data/history-coverage/2026-11-18/after.json"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "afc.saff.championship",
+          "bol.copa",
+          "caf.nations_qual",
+          "col.copa",
+          "concacaf.nations.league",
+          "eng.w.fa",
+          "eng.w.league_cup",
+          "esp.copa_de_la_reina",
+          "uefa.euro_u21_qual",
+          "uefa.wchampions"
+        ],
+        "raw": "acquisition_skipped_slugs:afc.saff.championship,bol.copa,caf.nations_qual,col.copa,concacaf.nations.league,eng.w.fa,eng.w.league_cup,esp.copa_de_la_reina,uefa.euro_u21_qual,uefa.wchampions",
+        "contextOnly": false
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "warning",
+      "source": "history-coverage",
+      "type": "global_history_coverage_unresolved",
+      "message": "Global historical coverage has unresolved gaps or an unverified provider baseline.",
+      "details": {
+        "dayKey": "2026-11-18",
+        "gaps": 1920,
+        "readErrors": 0,
+        "expectedProviderBaseline": "NOT_VERIFIED",
+        "artifact": "data/history-coverage/2026-11-18/after.json"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "afc.saff.championship",
+          "bol.copa",
+          "caf.nations_qual",
+          "col.copa",
+          "concacaf.nations.league",
+          "eng.w.fa",
+          "eng.w.league_cup",
+          "esp.copa_de_la_reina",
+          "uefa.euro_u21_qual",
+          "uefa.wchampions"
+        ],
+        "raw": "acquisition_skipped_slugs:afc.saff.championship,bol.copa,caf.nations_qual,col.copa,concacaf.nations.league,eng.w.fa,eng.w.league_cup,esp.copa_de_la_reina,uefa.euro_u21_qual,uefa.wchampions",
+        "contextOnly": false
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-11-17.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b",
+        "artifact": "value-plans/2026-11-17/plan-b.json",
+        "at": null,
+        "staleReason": "plan_b_stale_against_canonical",
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-11-17",
+          "currentAthensDay": "2026-11-17",
+          "fixtureCount": 33,
+          "frozenHash": "de692187d3c795817fc4460393fa89a088fb7ef161794097b385b27f9fb7a4b0",
+          "currentHash": "de692187d3c795817fc4460393fa89a088fb7ef161794097b385b27f9fb7a4b0",
+          "strictFrozenParity": true,
+          "membershipParity": true,
+          "descriptorDrift": false,
+          "publicationMembershipPreserved": false,
+          "authorizedShrink": false,
+          "removedFixtureIds": [],
+          "deferredCurrentFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "exact_current_frozen_membership"
+        },
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b2",
+        "artifact": "value-plans/2026-11-17/plan-b2.json",
+        "at": null,
+        "staleReason": "plan_b2_stale_against_canonical",
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-11-17",
+          "currentAthensDay": "2026-11-17",
+          "fixtureCount": 33,
+          "frozenHash": "de692187d3c795817fc4460393fa89a088fb7ef161794097b385b27f9fb7a4b0",
+          "currentHash": "de692187d3c795817fc4460393fa89a088fb7ef161794097b385b27f9fb7a4b0",
+          "strictFrozenParity": true,
+          "membershipParity": true,
+          "descriptorDrift": false,
+          "publicationMembershipPreserved": false,
+          "authorizedShrink": false,
+          "removedFixtureIds": [],
+          "deferredCurrentFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [],
+          "resolvedFrozenAliasMappings": [],
+          "removalEvidenceSource": "exact_current_frozen_membership"
+        },
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "history-coverage",
+      "type": "global_history_coverage_unresolved",
+      "message": "Global historical coverage has unresolved gaps or an unverified provider baseline.",
+      "details": {
+        "dayKey": "2026-11-17",
+        "gaps": 1884,
+        "readErrors": 0,
+        "expectedProviderBaseline": "NOT_VERIFIED",
+        "artifact": "data/history-coverage/2026-11-17/after.json"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "afc.saff.championship",
+          "caf.nations_qual",
+          "col.copa",
+          "concacaf.nations.league",
+          "uefa.euro_u21_qual"
+        ],
+        "raw": "acquisition_skipped_slugs:afc.saff.championship,caf.nations_qual,col.copa,concacaf.nations.league,uefa.euro_u21_qual",
+        "contextOnly": false
+      }
+    }
+  ],
+  "persistentIssues": [
+    {
+      "severity": "info",
+      "source": "manifest",
+      "type": "frozen_value_age_preserved",
+      "message": "Frozen Value artifact predates canonical updates and satisfies the frozen release contract.",
+      "details": {
+        "fixtures": 15,
+        "valuePicks": 1,
+        "valueSource": "canonical_fixtures",
+        "latestCanonicalUpdatedAt": "2026-11-18T21:33:28.042Z",
+        "valueArtifactAt": "2026-11-18T19:28:46.531Z",
+        "valueFreshAgainstCanonical": false,
+        "mode": "frozen_snapshot",
+        "frozenIdentityBound": true,
+        "frozenReleaseSafe": true,
+        "frozenPickCount": 1,
+        "orphanPickCount": 0,
+        "orphanPickIds": [],
+        "missingMatchIdPickCount": 0,
+        "missingMatchIdPickIndexes": [],
+        "dayBound": true,
+        "canonicalSourceBound": true,
+        "recoveryContractBound": false,
+        "recoveryPublishedUniverseBound": false,
+        "recoveryUniverseEvidenceSource": null,
+        "recoveryUniverseEvidenceCount": null,
+        "recoveryUniverseEvidenceHash": null,
+        "recoveryUniverseEvidencePlans": [],
+        "ok": true
+      }
+    },
+    {
+      "severity": "info",
+      "source": "invariant-report",
+      "type": "coverage_floor_drop",
+      "message": "Canonical fixtures are below static floor but meet the effective floor.",
+      "details": {
+        "type": "coverage_floor_drop",
+        "staticFloor": 45,
+        "effectiveFloor": 12,
+        "actualFixtures": 15,
+        "drop": 33,
+        "reason": "canonical_fixture_count_below_static_floor",
+        "effectiveFloorMet": true
       }
     },
     {
@@ -2095,28 +2227,6 @@
     {
       "severity": "warning",
       "source": "build-report",
-      "type": "acquisition_skipped_slugs",
-      "message": "Acquisition skipped slugs during fixture acquisition.",
-      "details": {
-        "slugs": [
-          "afc.saff.championship",
-          "bol.copa",
-          "caf.nations_qual",
-          "col.copa",
-          "concacaf.nations.league",
-          "eng.w.fa",
-          "eng.w.league_cup",
-          "esp.copa_de_la_reina",
-          "uefa.euro_u21_qual",
-          "uefa.wchampions"
-        ],
-        "raw": "acquisition_skipped_slugs:afc.saff.championship,bol.copa,caf.nations_qual,col.copa,concacaf.nations.league,eng.w.fa,eng.w.league_cup,esp.copa_de_la_reina,uefa.euro_u21_qual,uefa.wchampions",
-        "contextOnly": false
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
       "type": "build_not_strict_clean",
       "message": "Build report is clean but not strict-clean.",
       "details": {
@@ -2191,38 +2301,6 @@
           "rejectedCount": 29,
           "alreadyDeclaredCount": 0
         }
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a_unresolved_settlement",
-      "message": "Plan A picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-11-18",
-        "todayDayKey": "2026-11-18",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 1,
-        "settled": 0,
-        "unresolved": 1
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a2_unresolved_settlement",
-      "message": "Plan A2 picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-11-18",
-        "todayDayKey": "2026-11-18",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 1,
-        "settled": 0,
-        "unresolved": 1
       }
     },
     {
@@ -2887,13 +2965,13 @@
           "summary": {
             "picks": 1,
             "uniqueMatches": 1,
-            "settled": 0,
+            "settled": 1,
             "wins": 0,
-            "losses": 0,
+            "losses": 1,
             "voids": 0,
-            "unresolved": 1,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": null,
+            "hitRate": 0,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -2907,13 +2985,13 @@
           "summary": {
             "picks": 1,
             "uniqueMatches": 1,
-            "settled": 0,
+            "settled": 1,
             "wins": 0,
-            "losses": 0,
+            "losses": 1,
             "voids": 0,
-            "unresolved": 1,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": null,
+            "hitRate": 0,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
