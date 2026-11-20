@@ -409,3 +409,62 @@ test("refresh fails closed on an explicit odds exporter identity hold", async ()
   );
   assert.equal(persistenceRead, true);
 });
+
+test("refresh repairs freshly computed authentic assessments lost across the exporter boundary", async () => {
+  const date = "2026-11-20";
+  const model = p => ({ markets: { OU25: { probs: { over: p, under: 1 - p } } } });
+  let snapshot = {
+    matches: [{ canonicalId: "old", aiAssessment: model(0.55) }]
+  };
+  let writtenToMemory = 0;
+  let reconciled = 0;
+  const result = await runOddsRefresh(date, {
+    fixtureIdResolver: value => value,
+    readSnapshot: () => snapshot,
+    readCanonical: () => [{ canonicalId: "old" }, { canonicalId: "new" }],
+    updateDecision: () => ({ due: false, reason: "not_due" }),
+    opening: async () => { throw new Error("network capture not permitted in this test"); },
+    exportFixtures: async () => ({ changed: false }),
+    recordOdds: () => { writtenToMemory++; return {}; },
+    supplement: (_date, options) => {
+      options.recordFn("new", {
+        canonicalId: "new", aiAssessment: model(0.61)
+      }, { markets: {} });
+      return { canonicalFixtures: 2, modelEvidenceEligibleFixtureIds: ["old", "new"] };
+    },
+    exportOdds: () => ({ ok: true, count: 1, changed: false, preservedExisting: true,
+      reason: "assessment_coverage_regression" }),
+    reconcile: (_date, options) => {
+      reconciled++;
+      assert.deepEqual(options.requiredIds, ["old", "new"]);
+      assert.equal(options.currentRunAssessments.length, 1);
+      assert.equal(options.currentRunAssessments[0].canonicalId, "new");
+      snapshot = { matches: [...snapshot.matches, {
+        canonicalId: "new", aiAssessment: model(0.61)
+      }] };
+      return { ok: true, changed: true, restored: 1 };
+    }
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.assessmentRows, 2);
+  assert.equal(result.changed, true);
+  assert.equal(writtenToMemory, 1);
+  assert.equal(reconciled, 1);
+});
+
+test("refresh never invents or backfills a missing model without current-run evidence", async () => {
+  await assert.rejects(runOddsRefresh("2026-11-20", {
+    fixtureIdResolver: value => value,
+    readSnapshot: () => ({ matches: [{
+      canonicalId: "old",
+      aiAssessment: { markets: { OU25: { probs: { over: 0.55, under: 0.45 } } } }
+    }] }),
+    readCanonical: () => [{ canonicalId: "old" }, { canonicalId: "new" }],
+    updateDecision: () => ({ due: false, reason: "not_due" }),
+    opening: async () => {},
+    exportFixtures: async () => ({ changed: false }),
+    supplement: () => ({ canonicalFixtures: 2, modelEvidenceEligibleFixtureIds: ["old", "new"] }),
+    exportOdds: () => ({ ok: true, changed: false }),
+    reconcile: () => { throw new Error("recovery must not be invoked without evidence"); }
+  }), error => error?.code === "persisted_model_assessment_coverage_incomplete");
+});
