@@ -3,13 +3,22 @@ on:
   push:
     branches:
       - fix/p0-assessment-snapshot-coverage-20261120
+  pull_request:
+    paths:
+      - engine-v1/jobs/export-odds-snapshot-day.js
+      - engine-v1/jobs/export-odds-snapshot-day.test.js
+      - engine-v1/jobs/run-odds-refresh.js
+      - engine-v1/jobs/run-odds-refresh.test.js
+      - engine-v1/jobs/canonical-assessment-supplement.js
+      - engine-v1/storage/assessment-read-view.js
+      - engine-v1/core/assessment-publication-identity.js
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   model-assessment-regression:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,3 +28,11 @@ jobs:
         run: node --check engine-v1/jobs/export-odds-snapshot-day.js && node --check engine-v1/jobs/export-odds-snapshot-day.test.js
       - name: Targeted assessment regression
         run: node --test engine-v1/jobs/export-odds-snapshot-day.test.js engine-v1/jobs/run-odds-refresh.test.js
+      - name: Full engine regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -d '' TESTS < <(find engine-v1 -type f -name '*.test.js' -print0)
+          printf 'Engine test files: %s\n' "${#TESTS[@]}"
+          test "${#TESTS[@]}" -gt 0
+          node --test "${TESTS[@]}"
