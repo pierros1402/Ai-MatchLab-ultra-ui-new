@@ -15,7 +15,7 @@ permissions:
 jobs:
   assessment-publication-regression:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - name: Checkout exact repair branch
         uses: actions/checkout@v4
@@ -46,6 +46,12 @@ jobs:
       - name: Run source-bound assessment refresh regression
         run: |
           node --test engine-v1/core/assessment-publication-identity.test.js engine-v1/jobs/canonical-assessment-supplement.test.js engine-v1/jobs/export-odds-snapshot-day.test.js engine-v1/jobs/run-odds-refresh.test.js engine-v1/jobs/run-value-data-alarm-day.test.js engine-v1/storage/assessment-read-view.test.js
+      - name: Full engine JavaScript syntax inventory
+        run: |
+          find engine-v1 -type f -name '*.js' -not -path '*/node_modules/*' -print0 | sort -z | xargs -0 -r -n 1 node --check
+      - name: Full engine Node regression
+        run: |
+          find engine-v1 -type f -name '*.test.js' -not -path '*/node_modules/*' -print0 | sort -z | xargs -0 -r node --test
       - name: Replay November 20 missing assessment identity evidence read-only
         run: node engine-v1/jobs/p0-assessment-readonly-replay.js
       - name: Reproduce exporter in disposable runner checkout only
