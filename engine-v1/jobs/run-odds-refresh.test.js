@@ -4,7 +4,8 @@ import assert from "node:assert/strict";
 import {
   runOddsRefresh,
   assertPersistedAssessmentPostcondition,
-  persistedAssessmentSummary
+  persistedAssessmentSummary,
+  fatalAssessmentDiagnostic
 } from "./run-odds-refresh.js";
 
 test("new canonical assessments are persisted even between scheduled odds scrapes", async () => {
@@ -419,4 +420,24 @@ test("refresh fails closed when odds exporter returns a strict publication hold"
       error?.exportReason === "ambiguous_canonical_ownership_publication_hold" &&
       error?.ownershipIssues?.ambiguousCanonicalMatches === 1
   );
+});
+
+test("fatal diagnostic preserves exact missing canonical IDs without leaking arbitrary error data", () => {
+  const error = new Error("coverage incomplete");
+  error.code = "persisted_model_assessment_coverage_incomplete";
+  error.dayKey = "2026-11-20";
+  error.requiredAssessmentRows = 41;
+  error.missingRequiredAssessmentRows = 4;
+  error.missingRequiredAssessmentFixtureIds = ["cid-a", "cid-b", "cid-c", "cid-d"];
+  error.privateToken = "must-not-log";
+  const diagnostic = fatalAssessmentDiagnostic(error);
+  assert.deepEqual(diagnostic, {
+    code: "persisted_model_assessment_coverage_incomplete",
+    dayKey: "2026-11-20",
+    requiredAssessmentRows: 41,
+    missingRequiredAssessmentRows: 4,
+    missingRequiredAssessmentFixtureIds: ["cid-a", "cid-b", "cid-c", "cid-d"]
+  });
+  assert.equal(JSON.stringify(diagnostic).includes("must-not-log"), false);
+  assert.equal(fatalAssessmentDiagnostic(new Error("unrelated")), null);
 });
