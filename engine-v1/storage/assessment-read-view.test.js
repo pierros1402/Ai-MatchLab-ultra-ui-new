@@ -89,3 +89,28 @@ test("publication does not overwrite a fresh valid model with an old persisted m
   const result = mergeAssessmentReadView([live], [prior], "2026-10-01", { publication: true });
   assert.equal(result.matches[0].aiAssessment.markets.OU25.probs.over, 0.9);
 });
+
+test("future-day publication preservation is idempotent and never crosses day boundaries", () => {
+  const prior = {
+    ...row("future-fixture"),
+    dayKey: "2026-12-03",
+    leagueSlug: "test.1",
+    home: "Alpha",
+    away: "Beta",
+    kickoffUtc: "2026-12-03T20:00:00.000Z",
+    providerIds: { espn: "future-123" },
+    market: { current: { home: 1.8 } }
+  };
+  const live = {
+    ...prior,
+    providerIds: {},
+    aiAssessment: null,
+    market: { current: { home: 2.3 } }
+  };
+  const first = mergeAssessmentReadView([live], [prior], "2026-12-03", { publication: true });
+  const repeated = mergeAssessmentReadView([live], first.matches, "2026-12-03", { publication: true });
+  assert.deepEqual(first.matches, [prior]);
+  assert.deepEqual(repeated.matches, first.matches);
+  assert.equal(repeated.assessmentRows, 1);
+  assert.equal(mergeAssessmentReadView([], first.matches, "2026-12-04", { publication: true }).assessmentRows, 0);
+});
