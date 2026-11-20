@@ -391,3 +391,32 @@ test("persisted coverage fails closed when fixture identity normalization has no
       error?.sourceFixtureId === "required-a"
   );
 });
+
+
+test("refresh fails closed when odds exporter returns a strict publication hold", async () => {
+  const snapshot = { matches: [] };
+  await assert.rejects(
+    runOddsRefresh("2026-11-20", {
+      readSnapshot: () => snapshot,
+      readCanonical: () => [{ canonicalId: "required-a" }],
+      fixtureIdResolver: value => value,
+      updateDecision: () => ({ due: false, reason: "not_due" }),
+      opening: async () => { throw new Error("opening not expected"); },
+      exportFixtures: async () => ({ changed: false }),
+      supplement: () => ({
+        canonicalFixtures: 1,
+        modelEvidenceEligibleFixtureIds: ["required-a"]
+      }),
+      exportOdds: () => ({
+        ok: false,
+        reason: "ambiguous_canonical_ownership_publication_hold",
+        ownershipIssues: { ambiguousCanonicalMatches: 1 },
+        changed: false
+      })
+    }),
+    error => error?.code === "odds_snapshot_publication_hold" &&
+      error?.dayKey === "2026-11-20" &&
+      error?.exportReason === "ambiguous_canonical_ownership_publication_hold" &&
+      error?.ownershipIssues?.ambiguousCanonicalMatches === 1
+  );
+});
