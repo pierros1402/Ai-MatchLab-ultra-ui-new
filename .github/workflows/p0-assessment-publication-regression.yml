@@ -29,6 +29,7 @@ jobs:
         run: npm ci --prefix engine-v1 --ignore-scripts
       - name: Check changed JavaScript syntax
         run: |
+          node --check engine-v1/jobs/p0-assessment-ephemeral-export-replay.js
           node --check engine-v1/jobs/p0-assessment-readonly-replay.js
           node --check engine-v1/jobs/run-odds-refresh.js
           node --check engine-v1/jobs/run-odds-refresh.test.js
@@ -41,3 +42,7 @@ jobs:
           node --test engine-v1/jobs/run-odds-refresh.test.js engine-v1/jobs/run-value-data-alarm-day.test.js engine-v1/storage/assessment-read-view.test.js
       - name: Replay November 20 missing assessment identity evidence read-only
         run: node engine-v1/jobs/p0-assessment-readonly-replay.js
+      - name: Reproduce exporter in disposable runner checkout only
+        env:
+          AIML_P0_EPHEMERAL_REPLAY: 'yes'
+        run: node engine-v1/jobs/p0-assessment-ephemeral-export-replay.js
