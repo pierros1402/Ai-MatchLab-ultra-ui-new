@@ -338,7 +338,7 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
     // The normal odds-memory write remains the same, but ephemeral runners can
     // no longer silently lose valid evidence at the snapshot export boundary.
     recordFn: (fixtureId, meta, pricing) => {
-      const result = recordOddsSnapshot(fixtureId, meta, pricing);
+      const result = (opts.recordOdds || recordOddsSnapshot)(fixtureId, meta, pricing);
       if (meta?.aiAssessment?.markets &&
           Object.keys(meta.aiAssessment.markets).length > 0) {
         currentRunAssessments.push({ ...meta, matchId: String(fixtureId) });
@@ -398,7 +398,8 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
     // Attempt a single bounded recovery using only freshly emitted verified
     // pre-kickoff evidence and prior independently certified models.
     // No evidence => retain original failure; never invent a model.
-    if (error?.code !== "persisted_model_assessment_coverage_incomplete" ||
+    if (!["persisted_model_assessment_coverage_incomplete",
+           "persisted_model_assessments_missing"].includes(error?.code) ||
         currentRunAssessments.length === 0) throw error;
     reconciliation = reconcile(dayKey, {
       currentRunAssessments,
