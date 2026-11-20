@@ -107,6 +107,39 @@ jobs:
             persisted,identity,publicationAuthorized:false,releaseReady:false}));
           if(dup.length||invalid.length||raw.length!==canonical.length)throw Error('CANONICAL_IDENTITY_UNIVERSE_INVALID');
           NODE
+      - name: Read-only November 21 provider-ID reuse and placeholder audit
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const day='2026-11-21',dir=path.join('data','canonical-fixtures',day);
+          const files=fs.readdirSync(dir).filter(x=>x.endsWith('.json')).sort();
+          const owners=new Map(),raw=[];
+          for(const name of files){
+            const doc=JSON.parse(fs.readFileSync(path.join(dir,name),'utf8'));
+            for(const row of doc.fixtures||[]){
+              raw.push(row);
+              for(const [provider,native] of Object.entries(row.providerIds||{})){
+                const value=String(native||'').trim();
+                if(!value)continue;
+                const key=provider+':'+value;
+                if(!owners.has(key))owners.set(key,[]);
+                owners.get(key).push({canonicalId:row.canonicalId,leagueSlug:row.leagueSlug,
+                  home:row.homeTeam||row.home,away:row.awayTeam||row.away,kickoffUtc:row.kickoffUtc});
+              }
+            }
+          }
+          const collisions=[...owners].filter(([_,rows])=>new Set(rows.map(r=>r.canonicalId)).size>1)
+            .map(([providerId,rows])=>({providerId,rows}));
+          const placeholders=raw.filter(r=>/\bTBD\b|\bunknown\b/i.test(String(r.homeTeam||r.home||'')+' '+String(r.awayTeam||r.away||'')))
+            .map(r=>({id:r.canonicalId,home:r.homeTeam||r.home,away:r.awayTeam||r.away}));
+          console.log('[p0-nov21-native-id-audit]',JSON.stringify({
+            mode:'READ_ONLY_PROVIDER_ID_COLLISION_DIAGNOSTIC_NOT_RELEASE_AUTHORIZATION',
+            day,canonicalRows:raw.length,providerKeyCount:owners.size,
+            providerCollisionGroups:collisions.length,collisions:collisions.slice(0,50),
+            placeholderTeamRows:placeholders.length,placeholderSample:placeholders.slice(0,25),
+            unresolvedIdentityMustNotBeAutoMerged:true,publicationAuthorized:false}));
+          NODE
       - name: Replay November 20 missing assessment identity evidence read-only
         run: node engine-v1/jobs/p0-assessment-readonly-replay.js
       - name: Reproduce exporter in disposable runner checkout only
