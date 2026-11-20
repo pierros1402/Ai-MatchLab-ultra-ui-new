@@ -49,6 +49,11 @@ jobs:
       - name: Full engine JavaScript syntax inventory
         run: |
           find engine-v1 -type f -name '*.js' -not -path '*/node_modules/*' -print0 | sort -z | xargs -0 -r -n 1 node --check
+      - name: Prepare root module tree for integration tests
+        run: |
+          # Some full-engine integration tests copy repo-root node_modules to a
+          # temporary isolated workspace. This only changes the CI runner.
+          cp -a engine-v1/node_modules ./node_modules
       - name: Full engine Node regression
         run: |
           find engine-v1 -type f -name '*.test.js' -not -path '*/node_modules/*' -print0 | sort -z | xargs -0 -r node --test
