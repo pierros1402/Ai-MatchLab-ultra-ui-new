@@ -406,6 +406,25 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
   };
 }
 
+// CLI diagnostics are an allowlist: never serialize an arbitrary Error object.
+export function fatalAssessmentDiagnostic(error) {
+  const ids = error?.missingRequiredAssessmentFixtureIds;
+  const hasCoverageEvidence = error?.code ===
+    "persisted_model_assessment_coverage_incomplete" ||
+    error?.code === "persisted_model_assessments_missing";
+  if (!hasCoverageEvidence) return null;
+  return {
+    code: error.code,
+    dayKey: error.dayKey || null,
+    requiredAssessmentRows: Number.isInteger(error.requiredAssessmentRows)
+      ? error.requiredAssessmentRows : null,
+    missingRequiredAssessmentRows: Number.isInteger(error.missingRequiredAssessmentRows)
+      ? error.missingRequiredAssessmentRows : null,
+    missingRequiredAssessmentFixtureIds: Array.isArray(ids)
+      ? ids.filter(id => typeof id === "string") : []
+  };
+}
+
 const entryUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;
 if (entryUrl === import.meta.url) {
   const args = process.argv.slice(2);
@@ -415,6 +434,8 @@ if (entryUrl === import.meta.url) {
     console.log(JSON.stringify(r, null, 2));
   }).catch(err => {
     console.error("[run-odds-refresh] fatal", String(err?.message || err));
+    const diagnostic = fatalAssessmentDiagnostic(err);
+    if (diagnostic) console.error("[run-odds-refresh] fatal assessment diagnostic", JSON.stringify(diagnostic));
     process.exitCode = 1;
   });
 }
