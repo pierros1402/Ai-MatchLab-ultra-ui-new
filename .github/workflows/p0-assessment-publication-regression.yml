@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - fix/p0-assessment-publication-gates-20261120
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -28,5 +31,10 @@ jobs:
         run: |
           node --check engine-v1/jobs/run-odds-refresh.js
           node --check engine-v1/jobs/run-odds-refresh.test.js
+          node --check engine-v1/jobs/run-value-data-alarm-day.js
+          node --check engine-v1/jobs/run-value-data-alarm-day.test.js
+          node --check engine-v1/storage/assessment-read-view.js
+          node --check engine-v1/storage/assessment-read-view.test.js
       - name: Run source-bound assessment refresh regression
-        run: node --test engine-v1/jobs/run-odds-refresh.test.js
+        run: |
+          node --test engine-v1/jobs/run-odds-refresh.test.js engine-v1/jobs/run-value-data-alarm-day.test.js engine-v1/storage/assessment-read-view.test.js
