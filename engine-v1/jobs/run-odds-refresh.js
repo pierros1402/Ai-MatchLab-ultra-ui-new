@@ -319,12 +319,24 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
       ? { due: true, reason: "missing_model_assessments", hoursSinceLast: null }
       : updateDecision({ lastScrapeAt, kickoffsUtc });
 
+  // Fixture export is a prerequisite for canonical/model parity. A failed
+  // export must never be reduced to a warning and followed by an odds write.
+  // This is a derived-output gate only: no canonical truth is modified here.
   let fixturesChanged = false;
   try {
     const fx = await exportFixtures(dayKey);
-    fixturesChanged = fx.changed;
-  } catch (err) {
-    console.warn("[run-odds-refresh] fixtures export failed", String(err?.message || err));
+    if (!fx || fx.ok === false) {
+      throw new Error(`fixtures_snapshot_export_not_ready:${dayKey}`);
+    }
+    fixturesChanged = fx.changed === true;
+  } catch (cause) {
+    const error = new Error(`fixtures_snapshot_export_failed:${dayKey}`, { cause });
+    error.code = "fixtures_snapshot_export_failed";
+    error.dayKey = dayKey;
+    console.error("[run-odds-refresh] fixtures export failure", JSON.stringify({
+      dayKey, code: error.code
+    }));
+    throw error;
   }
 
   if (decision.due) await opening();
