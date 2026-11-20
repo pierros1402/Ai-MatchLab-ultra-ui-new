@@ -28,6 +28,47 @@ jobs:
         run: node --check engine-v1/jobs/export-odds-snapshot-day.js && node --check engine-v1/jobs/export-odds-snapshot-day.test.js
       - name: Targeted assessment regression
         run: node --test engine-v1/jobs/export-odds-snapshot-day.test.js engine-v1/jobs/run-odds-refresh.test.js
+      - name: Read-only historical assessment identity coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { supplementCanonicalAssessments, readCanonicalFixtureDay } from './engine-v1/jobs/canonical-assessment-supplement.js';
+          import { resolveProductionEvidenceFixtureIdReadView } from './engine-v1/core/production-evidence-identity-overlay.js';
+          const date = '2026-11-20';
+          const at = '2026-11-20T07:02:00Z';
+          const emitted = new Set();
+          const normalize = id => {
+            const r = resolveProductionEvidenceFixtureIdReadView(String(id), { allowUnmanaged: true });
+            return String(r?.resolvedFixtureId || id);
+          };
+          const result = supplementCanonicalAssessments(date, {
+            nowMs: Date.parse(at),
+            recordFn: id => { emitted.add(normalize(id)); }
+          });
+          const prior = JSON.parse(fs.readFileSync('data/deploy-snapshots/2026-11-20/odds.json', 'utf8'));
+          const have = new Set(prior.matches
+            .filter(x => x.aiAssessment?.markets && Object.keys(x.aiAssessment.markets).length)
+            .map(x => normalize(x.canonicalId || x.matchId)));
+          const canonical = readCanonicalFixtureDay(date);
+          const fixture = new Map(canonical.map(x => [normalize(x.canonicalId || x.matchId), x]));
+          const required = [...new Set(result.modelEvidenceEligibleFixtureIds.map(normalize))];
+          const missing = required.filter(id => !have.has(id));
+          console.log(JSON.stringify({
+            mode: 'READ_ONLY_HISTORICAL_ELIGIBILITY_SIMULATION_NOT_PREDICTION',
+            date, referenceTime: at,
+            required: required.length, existingAssessed: have.size,
+            missingRequiredAgainstCommittedSnapshot: missing.map(id => ({
+              id,
+              league: fixture.get(id)?.leagueSlug || null,
+              kickoffUtc: fixture.get(id)?.kickoffUtc || null,
+              eligibleWasComputedInMemory: emitted.has(id)
+            })),
+            inMemoryAssessmentsRecordedToDisk: 0,
+            productionArtifactsChanged: 0
+          }, null, 2));
+          NODE
       - name: Full engine regression
         shell: bash
         run: |
