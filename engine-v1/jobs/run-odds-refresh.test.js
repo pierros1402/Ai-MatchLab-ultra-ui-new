@@ -460,3 +460,36 @@ test("zero-assessment error preserves exact canonical required identities", () =
         JSON.stringify(["required-a", "required-b"])
   );
 });
+
+test("fixture export throwing fails closed before opening, supplement or odds export", async () => {
+  let touched = false;
+  await assert.rejects(
+    runOddsRefresh("2026-11-21", {
+      readSnapshot: () => ({ matches: [] }),
+      updateDecision: () => ({ due: true, reason: "forced" }),
+      exportFixtures: async () => { throw new Error("fixture export failed"); },
+      opening: async () => { touched = true; },
+      supplement: () => { touched = true; },
+      exportOdds: () => { touched = true; }
+    }),
+    error => error?.code === "fixtures_snapshot_export_failed"
+      && error?.dayKey === "2026-11-21"
+  );
+  assert.equal(touched, false);
+});
+
+test("fixture exporter explicit ok false fails closed with no downstream odds mutation", async () => {
+  let oddsWritten = false;
+  await assert.rejects(
+    runOddsRefresh("2026-11-21", {
+      readSnapshot: () => ({ matches: [] }),
+      updateDecision: () => ({ due: false, reason: "not_due" }),
+      exportFixtures: async () => ({ ok: false, changed: false }),
+      opening: async () => { throw new Error("unexpected opening"); },
+      supplement: () => ({ canonicalFixtures: 0, modelEvidenceEligibleFixtureIds: [] }),
+      exportOdds: () => { oddsWritten = true; return { ok: true }; }
+    }),
+    error => error?.code === "fixtures_snapshot_export_failed"
+  );
+  assert.equal(oddsWritten, false);
+});
