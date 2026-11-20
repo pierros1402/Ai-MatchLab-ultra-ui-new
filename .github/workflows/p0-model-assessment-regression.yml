@@ -1,0 +1,21 @@
+name: P0 model assessment retention validation
+on:
+  push:
+    branches:
+      - fix/p0-assessment-snapshot-coverage-20261120
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  model-assessment-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Syntax validation
+        run: node --check engine-v1/jobs/export-odds-snapshot-day.js && node --check engine-v1/jobs/export-odds-snapshot-day.test.js
+      - name: Targeted assessment regression
+        run: node --test engine-v1/jobs/export-odds-snapshot-day.test.js engine-v1/jobs/run-odds-refresh.test.js
