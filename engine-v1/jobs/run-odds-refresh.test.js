@@ -5,6 +5,7 @@ import {
   runOddsRefresh,
   assertPersistedAssessmentPostcondition,
   persistedAssessmentSummary,
+  prospectiveCanonicalKickoffDrifts,
   fatalAssessmentDiagnostic
 } from "./run-odds-refresh.js";
 
@@ -492,4 +493,67 @@ test("fixture exporter explicit ok false fails closed with no downstream odds mu
     error => error?.code === "fixtures_snapshot_export_failed"
   );
   assert.equal(oddsWritten, false);
+});
+
+test("prospective same-native kickoff drift triggers opening without approving stale model", async () => {
+  const fixture = { canonicalId: "cid-a", dayKey: "2026-11-21", leagueSlug: "test.1",
+    homeTeam: "Alpha", awayTeam: "Beta", kickoffUtc: "2026-11-21T16:00:00Z",
+    providerIds: { flashscore: "native-a" } };
+  const prior = { canonicalId: "cid-a", dayKey: "2026-11-21", leagueSlug: "test.1",
+    home: "Alpha", away: "Beta", kickoffUtc: "2026-11-21T13:00:00Z",
+    providerIds: { flashscore: "native-a" }, aiAssessment: { markets: { OU25: {} } } };
+  const nowMs = Date.parse("2026-11-20T15:00:00Z");
+  assert.deepEqual(prospectiveCanonicalKickoffDrifts({ matches: [prior] }, [fixture], nowMs), ["cid-a"]);
+  assert.deepEqual(prospectiveCanonicalKickoffDrifts({ matches: [prior] }, [fixture],
+    Date.parse("2026-11-21T17:00:00Z")), []);
+  assert.deepEqual(prospectiveCanonicalKickoffDrifts({ matches: [{ ...prior,
+    providerIds: { flashscore: "wrong-event" } }] }, [fixture], nowMs), []);
+  assert.deepEqual(prospectiveCanonicalKickoffDrifts({ matches: [{ ...prior,
+    home: "Other" }] }, [fixture], nowMs), []);
+  assert.deepEqual(prospectiveCanonicalKickoffDrifts({ matches: [{ ...prior,
+    kickoffUtc: fixture.kickoffUtc }] }, [fixture], nowMs), []);
+
+  let openingCalled = false;
+  const heldSnapshot = { matches: [prior] };
+  await assert.rejects(
+    runOddsRefresh("2026-11-21", {
+      readSnapshot: () => heldSnapshot,
+      readCanonical: () => [fixture],
+      nowMs,
+      updateDecision: () => ({ due: false, reason: "not_due" }),
+      opening: async () => { openingCalled = true; },
+      exportFixtures: async () => ({ ok: true, changed: false }),
+      supplement: () => ({ canonicalFixtures: 1,
+        modelEvidenceEligibleFixtureIds: ["cid-a"] }),
+      exportOdds: () => ({ ok: false, changed: false,
+        reason: "ambiguous_canonical_ownership_publication_hold" })
+    }),
+    error => error?.code === "odds_snapshot_publication_hold"
+  );
+  assert.equal(openingCalled, true);
+});
+
+test("already-started kickoff drift does not force a retrospective odds opening", async () => {
+  const fixture = { canonicalId: "cid-a", dayKey: "2026-11-21", leagueSlug: "test.1",
+    homeTeam: "Alpha", awayTeam: "Beta", kickoffUtc: "2026-11-21T16:00:00Z",
+    providerIds: { flashscore: "native-a" } };
+  const prior = { canonicalId: "cid-a", dayKey: "2026-11-21", leagueSlug: "test.1",
+    home: "Alpha", away: "Beta", kickoffUtc: "2026-11-21T13:00:00Z",
+    providerIds: { flashscore: "native-a" }, aiAssessment: { markets: { OU25: {} } } };
+  const nowMs = Date.parse("2026-11-21T17:00:00Z");
+  assert.deepEqual(prospectiveCanonicalKickoffDrifts({ matches: [prior] }, [fixture], nowMs), []);
+  await assert.rejects(
+    runOddsRefresh("2026-11-21", {
+      readSnapshot: () => ({ matches: [prior] }),
+      readCanonical: () => [fixture], nowMs,
+      updateDecision: () => ({ due: false, reason: "not_due" }),
+      opening: async () => { throw Error("must not open retrospectively"); },
+      exportFixtures: async () => ({ ok: true, changed: false }),
+      supplement: () => ({ canonicalFixtures: 1,
+        modelEvidenceEligibleFixtureIds: [] }),
+      exportOdds: () => ({ ok: false, changed: false,
+        reason: "ambiguous_canonical_ownership_publication_hold" })
+    }),
+    error => error?.code === "odds_snapshot_publication_hold"
+  );
 });
