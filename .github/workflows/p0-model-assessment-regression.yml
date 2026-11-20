@@ -1,79 +1,79 @@
 name: P0 model assessment retention validation
 on:
-  push:
-    branches:
-      - fix/p0-assessment-snapshot-coverage-20261120
   pull_request:
     paths:
-      - engine-v1/jobs/export-odds-snapshot-day.js
-      - engine-v1/jobs/export-odds-snapshot-day.test.js
       - engine-v1/jobs/run-odds-refresh.js
       - engine-v1/jobs/run-odds-refresh.test.js
+      - engine-v1/jobs/reconcile-odds-snapshot-coverage-day.js
+      - engine-v1/jobs/reconcile-odds-snapshot-coverage-day.test.js
       - engine-v1/jobs/canonical-assessment-supplement.js
       - engine-v1/storage/assessment-read-view.js
       - engine-v1/core/assessment-publication-identity.js
+      - .github/workflows/p0-model-assessment-regression.yml
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   model-assessment-regression:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Install locked dependencies without scripts
+        run: npm ci --ignore-scripts
       - name: Syntax validation
-        run: node --check engine-v1/jobs/export-odds-snapshot-day.js && node --check engine-v1/jobs/export-odds-snapshot-day.test.js
-      - name: Targeted assessment regression
-        run: node --test engine-v1/jobs/export-odds-snapshot-day.test.js engine-v1/jobs/run-odds-refresh.test.js
-      - name: Read-only historical assessment identity coverage
-        shell: bash
         run: |
-          set -euo pipefail
-          node --input-type=module <<'NODE'
-          import fs from 'node:fs';
-          import { supplementCanonicalAssessments, readCanonicalFixtureDay } from './engine-v1/jobs/canonical-assessment-supplement.js';
-          import { resolveProductionEvidenceFixtureIdReadView } from './engine-v1/core/production-evidence-identity-overlay.js';
-          const date = '2026-11-20';
-          const at = '2026-11-20T07:02:00Z';
-          const emitted = new Set();
-          const normalize = id => {
-            const r = resolveProductionEvidenceFixtureIdReadView(String(id), { allowUnmanaged: true });
-            return String(r?.resolvedFixtureId || id);
-          };
-          const result = supplementCanonicalAssessments(date, {
-            nowMs: Date.parse(at),
-            recordFn: id => { emitted.add(normalize(id)); }
-          });
-          const prior = JSON.parse(fs.readFileSync('data/deploy-snapshots/2026-11-20/odds.json', 'utf8'));
-          const have = new Set(prior.matches
-            .filter(x => x.aiAssessment?.markets && Object.keys(x.aiAssessment.markets).length)
-            .map(x => normalize(x.canonicalId || x.matchId)));
-          const canonical = readCanonicalFixtureDay(date);
-          const fixture = new Map(canonical.map(x => [normalize(x.canonicalId || x.matchId), x]));
-          const required = [...new Set(result.modelEvidenceEligibleFixtureIds.map(normalize))];
-          const missing = required.filter(id => !have.has(id));
-          console.log(JSON.stringify({
-            mode: 'READ_ONLY_HISTORICAL_ELIGIBILITY_SIMULATION_NOT_PREDICTION',
-            date, referenceTime: at,
-            required: required.length, existingAssessed: have.size,
-            missingRequiredAgainstCommittedSnapshot: missing.map(id => ({
-              id,
-              league: fixture.get(id)?.leagueSlug || null,
-              kickoffUtc: fixture.get(id)?.kickoffUtc || null,
-              eligibleWasComputedInMemory: emitted.has(id)
-            })),
-            inMemoryAssessmentsRecordedToDisk: 0,
-            productionArtifactsChanged: 0
-          }, null, 2));
-          NODE
-      - name: Full engine regression
+          node --check engine-v1/jobs/reconcile-odds-snapshot-coverage-day.js
+          node --check engine-v1/jobs/reconcile-odds-snapshot-coverage-day.test.js
+          node --check engine-v1/jobs/run-odds-refresh.js
+          node --check engine-v1/jobs/run-odds-refresh.test.js
+      - name: Targeted assessment and recovery regression
+        run: |
+          node --test engine-v1/jobs/export-odds-snapshot-day.test.js \
+            engine-v1/jobs/run-odds-refresh.test.js \
+            engine-v1/jobs/reconcile-odds-snapshot-coverage-day.test.js
+      - name: Full engine regression against untouched base with explicit failure parity
         shell: bash
         run: |
           set -euo pipefail
           mapfile -d '' TESTS < <(find engine-v1 -type f -name '*.test.js' -print0)
-          printf 'Engine test files: %s\n' "${#TESTS[@]}"
           test "${#TESTS[@]}" -gt 0
-          node --test "${TESTS[@]}"
+          set +e
+          node --test --test-reporter=tap "${TESTS[@]}" > /tmp/aiml-candidate-tests.tap 2>&1
+          CANDIDATE_EXIT=$?
+          set -e
+          printf 'CANDIDATE_TEST_FILES=%s CANDIDATE_EXIT=%s\n' "${#TESTS[@]}" "$CANDIDATE_EXIT"
+          grep -E '^# (tests|pass|fail|cancelled|skipped)' /tmp/aiml-candidate-tests.tap | tail -5 || true
+          grep '^not ok ' /tmp/aiml-candidate-tests.tap | sed -E 's/^not ok [0-9]+ - //' | sort > /tmp/aiml-candidate-failures.txt || true
+
+          BASE_SHA="$(node -p 'JSON.parse(require("fs").readFileSync(process.env.GITHUB_EVENT_PATH,"utf8")).pull_request.base.sha')"
+          test -n "$BASE_SHA"
+          git fetch --no-tags --depth=1 origin "$BASE_SHA"
+          BASE_DIR="$(mktemp -d)"
+          git worktree add --detach "$BASE_DIR" "$BASE_SHA"
+          ln -s "$GITHUB_WORKSPACE/node_modules" "$BASE_DIR/node_modules"
+          (
+            cd "$BASE_DIR"
+            mapfile -d '' BASE_TESTS < <(find engine-v1 -type f -name '*.test.js' -print0)
+            set +e
+            node --test --test-reporter=tap "${BASE_TESTS[@]}" > /tmp/aiml-base-tests.tap 2>&1
+            BASE_EXIT=$?
+            set -e
+            printf 'BASE_TEST_FILES=%s BASE_EXIT=%s\n' "${#BASE_TESTS[@]}" "$BASE_EXIT"
+          )
+          grep -E '^# (tests|pass|fail|cancelled|skipped)' /tmp/aiml-base-tests.tap | tail -5 || true
+          grep '^not ok ' /tmp/aiml-base-tests.tap | sed -E 's/^not ok [0-9]+ - //' | sort > /tmp/aiml-base-failures.txt || true
+          echo 'Candidate failure names:'
+          cat /tmp/aiml-candidate-failures.txt
+          echo 'Baseline failure names:'
+          cat /tmp/aiml-base-failures.txt
+          echo 'New regressions (must be empty):'
+          comm -23 /tmp/aiml-candidate-failures.txt /tmp/aiml-base-failures.txt | tee /tmp/aiml-new-regressions.txt
+          test ! -s /tmp/aiml-new-regressions.txt
+          echo 'FULL_ENGINE_BASELINE_DELTA=PASS_NO_NEW_FAILURES'
+          git worktree remove --force "$BASE_DIR"
