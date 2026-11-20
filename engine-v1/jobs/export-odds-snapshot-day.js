@@ -60,63 +60,6 @@ export function snapshotRegressionReason(existingMatches = [], candidateMatches 
   return null;
 }
 
-/**
- * Carry forward only already-published, exact-canonical, independently
- * certified model evidence. Never synthesize an assessment and never resurrect
- * an orphan/ambiguous row or replace a fresher assessed candidate.
- *
- * A newly acquired fixture with no previously certified evidence remains
- * unassessed and must fail the upstream required-coverage gate.
- */
-export function preserveCertifiedAssessmentCoverage(
-  existingMatches = [],
-  candidateMatches = [],
-  canonicalFixtures = []
-) {
-  const canonicalIds = new Set(
-    canonicalFixtures.map(row => String(row?.canonicalId || row?.matchId || "").trim()).filter(Boolean)
-  );
-  const existingCertified = classifyAssessmentPublication(existingMatches, canonicalFixtures)
-    .publishable.map(item => item.row);
-  const previous = new Map();
-  for (const row of existingCertified) {
-    const id = String(row?.canonicalId || "").trim();
-    if (!id || !canonicalIds.has(id) || !row?.aiAssessment?.markets ||
-        Object.keys(row.aiAssessment.markets).length === 0) continue;
-    if (previous.has(id)) {
-      // Do not arbitrate conflicting evidence for the same canonical identity.
-      previous.set(id, null);
-    } else {
-      previous.set(id, row);
-    }
-  }
-
-  const result = candidateMatches.map(row => ({ ...row }));
-  const candidateIds = new Set();
-  for (let i = 0; i < result.length; i++) {
-    const row = result[i];
-    const id = String(row?.canonicalId || "").trim();
-    if (!id || !canonicalIds.has(id)) continue;
-    candidateIds.add(id);
-    const old = previous.get(id);
-    if (old && assessmentRowCount([row]) === 0) {
-      result[i] = { ...row, aiAssessment: old.aiAssessment };
-    }
-  }
-  for (const [id, old] of previous) {
-    if (old && !candidateIds.has(id)) result.push({ ...old });
-  }
-
-  const certified = classifyAssessmentPublication(result, canonicalFixtures);
-  const joined = joinCanonicalFixturesWithModelAssessments(canonicalFixtures, result);
-  if (certified.holds.length || joined.ambiguousCanonicalMatches.length ||
-      joined.ambiguousAssessmentAliases.length ||
-      joined.canonicalRowsMissingIdentity.length) {
-    return { ok: false, matches: candidateMatches, reason: "carry_forward_identity_hold" };
-  }
-  return { ok: true, matches: result };
-}
-
 export function contentHash(matches) {
   const stable = matches.map(m => ({
     ...assessmentIdentityFields(m),
@@ -173,10 +116,11 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
     ...publication.orphanAssessmentRows,
     ...strictIdentity.quarantined.map(x=>x.row)
   ]);
-  let candidateMatches = sourceMatches.map(row => quarantined.has(row)
+  const candidateMatches = sourceMatches.map(row => quarantined.has(row)
     ? { ...row, aiAssessment: null } : row);
   const quarantinedAssessments = sourceMatches.reduce((count, row) =>
     count + (quarantined.has(row) && assessmentRowCount([row]) === 1 ? 1 : 0), 0);
+  const hash = contentHash(candidateMatches);
 
   let existing = null;
   try {
@@ -191,18 +135,7 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
 
   if (existing) {
     const existingMatches = Array.isArray(existing?.matches) ? existing.matches : [];
-    let regressionReason = snapshotRegressionReason(resolveCanonicalAssessmentOwnership(canonical, existingMatches).matches, candidateMatches, canonical);
-    if (regressionReason === "assessment_coverage_regression") {
-      const carry = preserveCertifiedAssessmentCoverage(existingMatches, candidateMatches, canonical);
-      if (carry.ok) {
-        candidateMatches = carry.matches;
-        regressionReason = snapshotRegressionReason(
-          resolveCanonicalAssessmentOwnership(canonical, existingMatches).matches,
-          candidateMatches,
-          canonical
-        );
-      }
-    }
+    const regressionReason = snapshotRegressionReason(resolveCanonicalAssessmentOwnership(canonical, existingMatches).matches, candidateMatches, canonical);
     if (regressionReason) {
       return {
         ok: true,
@@ -216,8 +149,7 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
       };
     }
 
-    const candidateHash = contentHash(candidateMatches);
-    if (existing.hash === candidateHash && contentHash(existingMatches) === candidateHash) {
+    if (existing.hash === hash && contentHash(existingMatches) === hash) {
       return {
         ok: true,
         dayKey,
@@ -229,7 +161,6 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
     }
   }
 
-  const hash = contentHash(candidateMatches);
   const payload = {
     ok: true,
     date: dayKey,
