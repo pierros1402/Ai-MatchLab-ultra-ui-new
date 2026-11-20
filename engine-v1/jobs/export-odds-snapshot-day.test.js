@@ -12,6 +12,7 @@ function row(prob = 0.55, id = "cid_test_home_away_20260813") {
   return {
     matchId: id,
     canonicalId: id,
+    providerIds: { fixture: id },
     leagueSlug: "test.1",
     competition: "Test League",
     home: "Home",
