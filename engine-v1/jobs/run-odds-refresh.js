@@ -167,6 +167,9 @@ export function assertPersistedAssessmentPostcondition(
       summary.assessmentRows;
     error.canonicalFixtureCount =
       canonicalCount;
+    error.requiredAssessmentRows = requiredSet.size;
+    error.missingRequiredAssessmentRows = requiredSet.size;
+    error.missingRequiredAssessmentFixtureIds = [...requiredSet];
 
     throw error;
   }
