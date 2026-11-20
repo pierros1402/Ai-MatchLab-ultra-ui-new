@@ -333,6 +333,23 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
   const canonicalSupplement = supplement(dayKey);
 
   const snap = exportOdds(dayKey);
+  // Export can return a publication hold without throwing. Do not mistake a
+  // non-written, rejected artifact for a successful model-input refresh.
+  if (snap?.ok === false) {
+    const error = new Error(
+      `odds_snapshot_publication_hold:${dayKey}:${snap.reason || "unknown"}`
+    );
+    error.code = "odds_snapshot_publication_hold";
+    error.dayKey = dayKey;
+    error.exportReason = snap.reason || null;
+    error.ownershipIssues = snap.ownershipIssues || null;
+    console.error("[run-odds-refresh] odds publication hold", JSON.stringify({
+      dayKey,
+      reason: error.exportReason,
+      ownershipIssues: error.ownershipIssues
+    }));
+    throw error;
+  }
   const persisted = readSnapshot(dayKey);
 
   const canonicalFixtureIds =
@@ -345,27 +362,36 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
       )
       .filter(Boolean);
 
-  const persistence =
-    assertPersistedAssessmentPostcondition(
+  let persistence;
+  try {
+    persistence = assertPersistedAssessmentPostcondition(
       persisted,
       dayKey,
       {
-        canonicalFixtureCount:
-          canonicalSupplement.canonicalFixtures,
-
+        canonicalFixtureCount: canonicalSupplement.canonicalFixtures,
         canonicalFixtureIds,
-
         requiredAssessmentFixtureIds:
-          canonicalSupplement
-            .modelEvidenceEligibleFixtureIds,
-
+          canonicalSupplement.modelEvidenceEligibleFixtureIds,
         fixtureIdResolver: opts.fixtureIdResolver || (value =>
           resolveProductionEvidenceFixtureIdReadView(
-            value,
-            { allowUnmanaged: true }
+            value, { allowUnmanaged: true }
           ))
       }
     );
+  } catch (error) {
+    // Log exact missing canonical identities. A count-only failure hides the
+    // source rows that require recovery and encourages unsafe guesswork.
+    console.error("[run-odds-refresh] assessment persistence failure", JSON.stringify({
+      dayKey,
+      code: error?.code || null,
+      requiredAssessmentRows: error?.requiredAssessmentRows ?? null,
+      missingRequiredAssessmentFixtureIds: error?.missingRequiredAssessmentFixtureIds || [],
+      exportReason: snap?.reason || null,
+      exportPreservedExisting: snap?.preservedExisting === true,
+      unassessedEligibleIds: canonicalSupplement.unassessedModelEvidenceEligibleFixtureIds || []
+    }));
+    throw error;
+  }
 
   return {
     ok: true,
