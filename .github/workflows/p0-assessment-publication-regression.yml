@@ -146,3 +146,64 @@ jobs:
         env:
           AIML_P0_EPHEMERAL_REPLAY: 'yes'
         run: node engine-v1/jobs/p0-assessment-ephemeral-export-replay.js
+
+      - name: Read-only native Details foundation integrity at current checkout
+        run: |
+          node --input-type=module <<'NODE'
+          import { validateHistoryIndexFoundationSync, validateH2HFoundationSync } from './engine-v1/core/derived-history-foundation.js';
+          const season = '2026-2027';
+          const index = validateHistoryIndexFoundationSync(season);
+          const h2h = validateH2HFoundationSync();
+          const compact = x => ({
+            ok: x.ok === true, reason: x.reason || null,
+            recordedSourceHash: x.artifact?.source?.sha256 || null,
+            actualSourceHash: x.current?.source?.sha256 || x.artifact?.source?.sha256 || null,
+            recordedOutputHash: x.artifact?.outputs?.sha256 || null,
+            actualOutputHash: x.current?.outputs?.sha256 || x.artifact?.outputs?.sha256 || null,
+            recordedFoundationHash: x.artifact?.foundationFingerprint || null,
+            actualFoundationHash: x.current?.foundationFingerprint || x.artifact?.foundationFingerprint || null,
+            sourceFileCount: x.current?.source?.fileCount ?? x.artifact?.source?.fileCount ?? null,
+            outputFileCount: x.current?.outputs?.fileCount ?? x.artifact?.outputs?.fileCount ?? null
+          });
+          const result = {mode:'READ_ONLY_NATIVE_FOUNDATION_GATE_NOT_RELEASE',season,
+            observedAtUtc:new Date().toISOString(),historyIndex:compact(index),h2h:compact(h2h),
+            detailsFoundationReady:index.ok===true && h2h.ok===true,publicationAuthorized:false};
+          console.log('[p0-native-foundation-integrity]',JSON.stringify(result));
+          NODE
+      - name: Fresh actual-time November 21 pre-kickoff model requirement observation (no writes)
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import {readCanonicalFixtureDay,supplementCanonicalAssessments} from './engine-v1/jobs/canonical-assessment-supplement.js';
+          const day='2026-11-21',nowMs=Date.now(),now=new Date(nowMs).toISOString();
+          const canonical=readCanonicalFixtureDay(day),target=[
+            'cid_kos2_2korriku_kika_20261121',
+            'cid_rus1_orenburg_baltika_20261121',
+            'cid_rus1_akrontogliatti_fakelvoronezh_20261121',
+            'cid_rus1_rubinkazan_zenit_20261121',
+            'cid_ven1_carabobo_portuguesa_20261121'
+          ];
+          const simulated=supplementCanonicalAssessments(day,{canonicalFixtures:canonical,nowMs,recordFn:()=>{}});
+          const required=new Set(simulated.modelEvidenceEligibleFixtureIds||[]);
+          const fixtureById=new Map(canonical.map(f=>[f.canonicalId,f]));
+          const pathToOdds=path.join('data','deploy-snapshots',day,'odds.json');
+          let snapshot=null,snapshotError=null;
+          try { snapshot=JSON.parse(fs.readFileSync(pathToOdds,'utf8')); }
+          catch(e) { snapshotError=e.code==='ENOENT'?'MISSING':String(e.message).slice(0,150); }
+          const assessments=new Set((snapshot?.matches||[]).filter(x=>x?.aiAssessment?.markets &&
+            Object.keys(x.aiAssessment.markets).length>0).map(x=>x.canonicalId));
+          const targets=target.map(id=>({id,kickoffUtc:fixtureById.get(id)?.kickoffUtc||null,
+            kickoffFuture:Number.isFinite(Date.parse(fixtureById.get(id)?.kickoffUtc||'')) &&
+              Date.parse(fixtureById.get(id).kickoffUtc)>nowMs,
+            currentlyEvidenceEligible:required.has(id),
+            persistedAssessmentPresent:assessments.has(id)}));
+          console.log('[p0-nov21-fresh-time-readonly]',JSON.stringify({
+            mode:'READ_ONLY_NO_RECORD_WRITES_NO_ODDS_OPENING',day,observedAtUtc:now,
+            canonicalCount:canonical.length,currentEligible:required.size,
+            simulatedRecords:simulated.assessmentRowsWritten,snapshotError,
+            snapshotRows:snapshot?.matches?.length??null,
+            remainingCurrentRequired:([...required]).filter(id=>!assessments.has(id)),
+            targets,publicationAuthorized:false,releaseReady:false
+          }));
+          NODE
