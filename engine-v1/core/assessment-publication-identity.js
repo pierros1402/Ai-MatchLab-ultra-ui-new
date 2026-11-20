@@ -20,7 +20,7 @@ const approvedAlias = (fixture, cid) => Boolean(cid && Array.isArray(fixture?.ca
 const providers = x => Object.entries(x?.providerIds ?? {}).filter(([k,v])=>value(k)&&value(v)).map(([k,v])=>[value(k).toLowerCase(),value(v)]);
 const hasModel = x => Boolean(x?.aiAssessment?.markets && typeof x.aiAssessment.markets==='object' && Object.keys(x.aiAssessment.markets).length);
 const result=(status,reason,fixture=null)=>({status,reason,fixture});
-export function assessPublicationIdentity(row,fixtures=[]) {
+export function assessPublicationIdentity(row,fixtures=[],options={}) {
   if (!hasModel(row)) return result('not_model','no_assessment');
   const cid=id(row);
   const pid=providers(row);
@@ -48,7 +48,9 @@ export function assessPublicationIdentity(row,fixtures=[]) {
       return result('hold',`${field}_conflict`,f);
   }
   for (const side of ['home','away']) {
-    if (team(row,side) && team(f,side) && !caseOnlyEquivalent(team(row,side),team(f,side)))
+    if (team(row,side) && team(f,side) && !caseOnlyEquivalent(team(row,side),team(f,side)) &&
+        !(typeof options?.approvedTeamAliasEquivalent === 'function' &&
+          options.approvedTeamAliasEquivalent(value(f.leagueSlug),team(row,side),team(f,side))))
       return result('hold',`${side}_team_conflict`,f);
     const key=side+'GlobalClubId';
     const a=value(row[key] ?? row.productionIdentityBinding?.[key]);
@@ -70,7 +72,7 @@ export function assessPublicationIdentity(row,fixtures=[]) {
     return result('quarantine','insufficient_source_evidence',f);
   return result('publish','exact_identity_corroborated',f);
 }
-export function classifyAssessmentPublication(rows=[],fixtures=[]) {
-  const outcomes=(Array.isArray(rows)?rows:[]).map(row=>({row,...assessPublicationIdentity(row,fixtures)}));
+export function classifyAssessmentPublication(rows=[],fixtures=[],options={}) {
+  const outcomes=(Array.isArray(rows)?rows:[]).map(row=>({row,...assessPublicationIdentity(row,fixtures,options)}));
   return {outcomes,holds:outcomes.filter(x=>x.status==='hold'),quarantined:outcomes.filter(x=>x.status==='quarantine'),publishable:outcomes.filter(x=>x.status==='publish')};
 }
