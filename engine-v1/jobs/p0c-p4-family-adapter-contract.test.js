@@ -349,7 +349,7 @@ test("Daily P0 v4 current-source attestation is separate from immutable V3 legac
   assert.deepEqual(Object.keys(now.sourceBindings), Object.keys(old.sourceBindings));
   const different = Object.keys(now.sourceBindings).filter(k =>
     now.sourceBindings[k].sha256 !== old.sourceBindings[k].sha256);
-  assert.deepEqual(different, ["oddsSnapshotExporter"]);
+  assert.deepEqual(different, ["oddsSnapshotExporter", "standaloneValuePipeline"]);
   for (const key of Object.keys(now.sourceBindings)) {
     const {sha256: oldHash, ...oldInfo} = old.sourceBindings[key];
     const {sha256: newHash, ...newInfo} = now.sourceBindings[key];
@@ -359,6 +359,10 @@ test("Daily P0 v4 current-source attestation is separate from immutable V3 legac
     "3105bca43685a775b034ec33974d5fdb4a00f8c83d2935fb584c3eafd025f85f");
   assert.equal(now.sourceBindings.oddsSnapshotExporter.sha256,
     "631ab84e3c5b6733476631c3f549b5268c773a396cf3ec8151ca689dd4e1836d");
+  assert.equal(old.sourceBindings.standaloneValuePipeline.sha256,
+    "510258351e532669525d7c4d49dd3b84a9898dda6c1524554f63a362096c6dfd");
+  assert.equal(now.sourceBindings.standaloneValuePipeline.sha256,
+    "d8a392e48077158a0c50f4d7ffbe5c9170ceee8271e825f6a3d0d659950b3f26");
   const actual = Object.values(now.sourceBindings).map(row => ({
     path: row.path, sha256: sourceBindingSha256(row.path, row.sha256)
   }));
