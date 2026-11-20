@@ -441,3 +441,22 @@ test("fatal diagnostic preserves exact missing canonical IDs without leaking arb
   assert.equal(JSON.stringify(diagnostic).includes("must-not-log"), false);
   assert.equal(fatalAssessmentDiagnostic(new Error("unrelated")), null);
 });
+
+test("zero-assessment error preserves exact canonical required identities", () => {
+  assert.throws(
+    () => assertPersistedAssessmentPostcondition(
+      { matches: [{ matchId: "required-a", aiAssessment: null }] },
+      "2026-11-20",
+      {
+        canonicalFixtureCount: 2,
+        canonicalFixtureIds: ["required-a", "required-b"],
+        requiredAssessmentFixtureIds: ["required-a", "required-b"]
+      }
+    ),
+    error => error?.code === "persisted_model_assessments_missing" &&
+      error?.requiredAssessmentRows === 2 &&
+      error?.missingRequiredAssessmentRows === 2 &&
+      JSON.stringify(error?.missingRequiredAssessmentFixtureIds) ===
+        JSON.stringify(["required-a", "required-b"])
+  );
+});
