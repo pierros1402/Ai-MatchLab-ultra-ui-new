@@ -57,6 +57,56 @@ jobs:
       - name: Full engine Node regression
         run: |
           find engine-v1 -type f -name '*.test.js' -not -path '*/node_modules/*' -print0 | sort -z | xargs -0 -r node --test
+      - name: Read-only prospective 21 November canonical and model coverage diagnostic
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import {readCanonicalFixtureDay,supplementCanonicalAssessments} from './engine-v1/jobs/canonical-assessment-supplement.js';
+          import {assertPersistedAssessmentPostcondition} from './engine-v1/jobs/run-odds-refresh.js';
+          import {classifyAssessmentPublication} from './engine-v1/core/assessment-publication-identity.js';
+          import {approvedPublicationTeamAliasEquivalent} from './engine-v1/jobs/export-odds-snapshot-day.js';
+          import {resolveProductionEvidenceFixtureIdReadView} from './engine-v1/core/production-evidence-identity-overlay.js';
+          const day='2026-11-21',cutoff='2026-11-20T18:00:00Z';
+          const dir=path.join('data','canonical-fixtures',day);
+          const files=fs.readdirSync(dir).filter(x=>x.endsWith('.json')).sort(),raw=[];
+          for(const filename of files){
+            const d=JSON.parse(fs.readFileSync(path.join(dir,filename),'utf8'));
+            if(!Array.isArray(d.fixtures)||d.fixtures.length!==d.count)throw Error('invalid_canonical_file:'+filename);
+            raw.push(...d.fixtures);
+          }
+          const canonical=readCanonicalFixtureDay(day),ids=raw.map(r=>r.canonicalId);
+          const dup=[...new Set(ids.filter((v,i)=>ids.indexOf(v)!==i))];
+          const invalid=raw.filter(r=>!r.canonicalId||!Number.isFinite(Date.parse(r.kickoffUtc||''))||(r.dayKey&&r.dayKey!==day));
+          const simulated=supplementCanonicalAssessments(day,{canonicalFixtures:canonical,nowMs:Date.parse(cutoff),recordFn:()=>{}});
+          let snap=null,snapshotError=null;
+          try{snap=JSON.parse(fs.readFileSync(path.join('data','deploy-snapshots',day,'odds.json'),'utf8'))}
+          catch(e){snapshotError=e.code==='ENOENT'?'SNAPSHOT_MISSING':'SNAPSHOT_UNREADABLE'}
+          let persisted={code:'NOT_CHECKED'},identity={publishable:0,holds:0,quarantined:0,holdSample:[]};
+          if(snap&&Array.isArray(snap.matches)){
+            try{
+              assertPersistedAssessmentPostcondition(snap,day,{canonicalFixtureCount:canonical.length,
+                canonicalFixtureIds:canonical.map(r=>r.canonicalId),
+                requiredAssessmentFixtureIds:simulated.modelEvidenceEligibleFixtureIds||[],
+                fixtureIdResolver:id=>resolveProductionEvidenceFixtureIdReadView(id,{allowUnmanaged:true})});
+              persisted={code:'COVERAGE_PASS'};
+            }catch(e){persisted={code:e.code||'COVERAGE_HOLD',missingIds:e.missingRequiredAssessmentFixtureIds||[]}}
+            const assessed=snap.matches.filter(r=>r.aiAssessment?.markets&&Object.keys(r.aiAssessment.markets).length);
+            const classified=classifyAssessmentPublication(assessed,canonical,{approvedTeamAliasEquivalent:approvedPublicationTeamAliasEquivalent});
+            identity={publishable:classified.publishable.length,holds:classified.holds.length,quarantined:classified.quarantined.length,
+              holdSample:classified.holds.slice(0,25).map(x=>({id:x.row.canonicalId,reason:x.reason}))};
+          }
+          console.log('[p0-nov21-prospective-readonly]',JSON.stringify({
+            mode:'READ_ONLY_DIAGNOSTIC_NOT_PUBLICATION_AUTHORIZATION',day,cutoff,
+            canonicalFiles:files.length,rawRows:raw.length,uniqueRows:canonical.length,duplicateIds:dup,invalidRows:invalid.length,
+            eligibleModelFixtures:simulated.modelEvidenceEligibleFixtures,
+            requiredAssessmentIds:simulated.modelEvidenceEligibleFixtureIds||[],
+            simulatedAssessmentRows:simulated.assessmentRowsWritten,
+            simulationUnassessed:simulated.unassessedModelEvidenceEligibleFixtureIds||[],
+            oddsSnapshotPresent:!!snap,snapshotError,snapshotRows:snap?.matches?.length||0,
+            persisted,identity,publicationAuthorized:false,releaseReady:false}));
+          if(dup.length||invalid.length||raw.length!==canonical.length)throw Error('CANONICAL_IDENTITY_UNIVERSE_INVALID');
+          NODE
       - name: Replay November 20 missing assessment identity evidence read-only
         run: node engine-v1/jobs/p0-assessment-readonly-replay.js
       - name: Reproduce exporter in disposable runner checkout only
