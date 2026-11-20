@@ -14,6 +14,8 @@ import {
   supplementCanonicalAssessments
 } from "./canonical-assessment-supplement.js";
 import { exportOddsSnapshotDay } from "./export-odds-snapshot-day.js";
+import { recordOddsSnapshot } from "../storage/odds-memory-db.js";
+import { reconcileOddsSnapshotCoverageDay } from "./reconcile-odds-snapshot-coverage-day.js";
 import { exportFixturesSnapshotDay } from "./export-fixtures-snapshot-day.js";
 import { oddsUpdateDecision, kickoffToUtcMs } from "../odds/odds-schedule.js";
 import {
@@ -330,7 +332,20 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
   // already-started fixture receives a new assessment.
   // Acquisition and model coverage have separate clocks. Newly acquired canonical
   // fixtures must receive eligible pre-kickoff evidence even between odds scrapes.
-  const canonicalSupplement = supplement(dayKey);
+  const currentRunAssessments = [];
+  const canonicalSupplement = supplement(dayKey, {
+    // Capture only assessments genuinely emitted by this run before kickoff.
+    // The normal odds-memory write remains the same, but ephemeral runners can
+    // no longer silently lose valid evidence at the snapshot export boundary.
+    recordFn: (fixtureId, meta, pricing) => {
+      const result = recordOddsSnapshot(fixtureId, meta, pricing);
+      if (meta?.aiAssessment?.markets &&
+          Object.keys(meta.aiAssessment.markets).length > 0) {
+        currentRunAssessments.push({ ...meta, matchId: String(fixtureId) });
+      }
+      return result;
+    }
+  });
 
   const snap = exportOdds(dayKey);
   if (snap?.ok === false) {
@@ -345,7 +360,7 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
     };
     throw error;
   }
-  const persisted = readSnapshot(dayKey);
+  let persisted = readSnapshot(dayKey);
 
   const canonicalFixtureIds =
     readCanonical(dayKey)
@@ -357,20 +372,15 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
       )
       .filter(Boolean);
 
-  const persistence =
+  const checkPersistence = () =>
     assertPersistedAssessmentPostcondition(
       persisted,
       dayKey,
       {
-        canonicalFixtureCount:
-          canonicalSupplement.canonicalFixtures,
-
+        canonicalFixtureCount: canonicalSupplement.canonicalFixtures,
         canonicalFixtureIds,
-
         requiredAssessmentFixtureIds:
-          canonicalSupplement
-            .modelEvidenceEligibleFixtureIds,
-
+          canonicalSupplement.modelEvidenceEligibleFixtureIds,
         fixtureIdResolver: opts.fixtureIdResolver || (value =>
           resolveProductionEvidenceFixtureIdReadView(
             value,
@@ -379,12 +389,46 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
       }
     );
 
+  const reconcile = opts.reconcile || reconcileOddsSnapshotCoverageDay;
+  let reconciliation = null;
+  let persistence;
+  try {
+    persistence = checkPersistence();
+  } catch (error) {
+    // Attempt a single bounded recovery using only freshly emitted verified
+    // pre-kickoff evidence and prior independently certified models.
+    // No evidence => retain original failure; never invent a model.
+    if (error?.code !== "persisted_model_assessment_coverage_incomplete" ||
+        currentRunAssessments.length === 0) throw error;
+    reconciliation = reconcile(dayKey, {
+      currentRunAssessments,
+      requiredIds: canonicalSupplement.modelEvidenceEligibleFixtureIds
+    });
+    if (!reconciliation?.ok || !reconciliation.changed) throw error;
+    persisted = readSnapshot(dayKey);
+    persistence = checkPersistence();
+  }
+
+  if (snap?.preservedExisting && !reconciliation &&
+      currentRunAssessments.length > 0) {
+    // A stale complete snapshot must not indefinitely mask fresh certified
+    // odds/model coverage. A rejected reconciliation is a safe no-op.
+    reconciliation = reconcile(dayKey, {
+      currentRunAssessments,
+      requiredIds: canonicalSupplement.modelEvidenceEligibleFixtureIds
+    });
+    if (reconciliation?.changed) {
+      persisted = readSnapshot(dayKey);
+      persistence = checkPersistence();
+    }
+  }
+
   return {
     ok: true,
     dayKey,
     due: decision.due,
     reason: decision.reason,
-    changed: snap.changed || fixturesChanged,
+    changed: snap.changed || reconciliation?.changed === true || fixturesChanged,
     fixturesChanged,
     count: snap.count,
     assessmentRows: persistence.assessmentRows,
