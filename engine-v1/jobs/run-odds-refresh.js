@@ -333,6 +333,18 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
   const canonicalSupplement = supplement(dayKey);
 
   const snap = exportOdds(dayKey);
+  if (snap?.ok === false) {
+    const error = new Error(
+      `odds_snapshot_export_failed:${dayKey}:${snap.reason || "unknown"}`
+    );
+    error.code = "odds_snapshot_export_failed";
+    error.dayKey = dayKey;
+    error.exportFailure = {
+      reason: snap.reason || "unknown",
+      ownershipIssues: snap.ownershipIssues || null
+    };
+    throw error;
+  }
   const persisted = readSnapshot(dayKey);
 
   const canonicalFixtureIds =
@@ -389,6 +401,16 @@ if (entryUrl === import.meta.url) {
     console.log(JSON.stringify(r, null, 2));
   }).catch(err => {
     console.error("[run-odds-refresh] fatal", String(err?.message || err));
+    if (err?.code) {
+      console.error("[run-odds-refresh] failure-evidence", JSON.stringify({
+        code: err.code,
+        dayKey: err.dayKey || dayKey,
+        requiredAssessmentRows: err.requiredAssessmentRows ?? null,
+        missingRequiredAssessmentRows: err.missingRequiredAssessmentRows ?? null,
+        missingRequiredAssessmentFixtureIds: err.missingRequiredAssessmentFixtureIds ?? [],
+        exportFailure: err.exportFailure ?? null
+      }));
+    }
     process.exitCode = 1;
   });
 }
