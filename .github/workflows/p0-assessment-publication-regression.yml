@@ -1,0 +1,32 @@
+name: P0 assessment publication safety regression
+
+on:
+  push:
+    branches:
+      - fix/p0-assessment-publication-gates-20261120
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  assessment-publication-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact repair branch
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: engine-v1/package-lock.json
+      - name: Install engine dependencies
+        run: npm ci --prefix engine-v1 --ignore-scripts
+      - name: Check changed JavaScript syntax
+        run: |
+          node --check engine-v1/jobs/run-odds-refresh.js
+          node --check engine-v1/jobs/run-odds-refresh.test.js
+      - name: Run source-bound assessment refresh regression
+        run: node --test engine-v1/jobs/run-odds-refresh.test.js
