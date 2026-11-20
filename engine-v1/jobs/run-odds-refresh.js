@@ -14,6 +14,7 @@ import {
   supplementCanonicalAssessments
 } from "./canonical-assessment-supplement.js";
 import { exportOddsSnapshotDay } from "./export-odds-snapshot-day.js";
+import { assessPublicationIdentity } from "../core/assessment-publication-identity.js";
 import { exportFixturesSnapshotDay } from "./export-fixtures-snapshot-day.js";
 import { oddsUpdateDecision, kickoffToUtcMs } from "../odds/odds-schedule.js";
 import {
@@ -290,6 +291,28 @@ export function assertPersistedAssessmentPostcondition(
   };
 }
 
+// Prospective prevention only. Never relax strict model/kickoff identity:
+ // a future canonical schedule revision may require a new odds opening, but
+ // this signal does NOT approve carry-forward of a historical model.
+export function prospectiveCanonicalKickoffDrifts(existing, canonicalRows, nowMs = Date.now()) {
+  if (!Array.isArray(existing?.matches) || !Array.isArray(canonicalRows)) return [];
+  const byId = new Map(canonicalRows.filter(row => row?.canonicalId)
+    .map(row => [String(row.canonicalId), row]));
+  const found = new Set();
+  const ids = [];
+  for (const row of existing.matches) {
+    const id = String(row?.canonicalId || "").trim();
+    const f = byId.get(id);
+    if (!id || !f || found.has(id)) continue;
+    const kickoffMs = Date.parse(f.kickoffUtc || "");
+    if (!Number.isFinite(kickoffMs) || kickoffMs <= nowMs) continue;
+    if (assessPublicationIdentity(row, [f]).reason !== "kickoff_conflict") continue;
+    found.add(id);
+    ids.push(id);
+  }
+  return ids.sort();
+}
+
 export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
   const readSnapshot = opts.readSnapshot || readExistingSnapshot;
   const readCanonical = opts.readCanonical || readCanonicalFixtureDay;
@@ -313,11 +336,20 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
     existing.matches.length > 0 &&
     existingAssessmentRows === 0;
 
+  const upcomingKickoffDriftIds = prospectiveCanonicalKickoffDrifts(
+    existing, readCanonical(dayKey), Number.isFinite(opts.nowMs) ? opts.nowMs : Date.now()
+  );
+  if (upcomingKickoffDriftIds.length) {
+    console.warn("[run-odds-refresh] prospective kickoff drift requires refresh",
+      JSON.stringify({ dayKey, canonicalFixtureIds: upcomingKickoffDriftIds }));
+  }
   const decision = opts.force
     ? { due: true, reason: "forced", hoursSinceLast: null }
-    : missingAssessmentInput
-      ? { due: true, reason: "missing_model_assessments", hoursSinceLast: null }
-      : updateDecision({ lastScrapeAt, kickoffsUtc });
+    : upcomingKickoffDriftIds.length
+      ? { due: true, reason: "prospective_canonical_kickoff_drift", hoursSinceLast: null }
+      : missingAssessmentInput
+        ? { due: true, reason: "missing_model_assessments", hoursSinceLast: null }
+        : updateDecision({ lastScrapeAt, kickoffsUtc });
 
   // Fixture export is a prerequisite for canonical/model parity. A failed
   // export must never be reduced to a warning and followed by an odds write.
