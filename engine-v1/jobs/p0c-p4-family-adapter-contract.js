@@ -357,6 +357,10 @@ const DAILY_P0_SOURCE_BINDINGS = Object.freeze({
   oddsSnapshotExporter: Object.freeze({
     ...ROUTING_SOURCE_BINDINGS.oddsSnapshotExporter,
     sha256: "631ab84e3c5b6733476631c3f549b5268c773a396cf3ec8151ca689dd4e1836d"
+  }),
+  standaloneValuePipeline: Object.freeze({
+    ...ROUTING_SOURCE_BINDINGS.standaloneValuePipeline,
+    sha256: "d8a392e48077158a0c50f4d7ffbe5c9170ceee8271e825f6a3d0d659950b3f26"
   })
 });
 export function getP0CP4V35DailyP0SourceBinding() {
