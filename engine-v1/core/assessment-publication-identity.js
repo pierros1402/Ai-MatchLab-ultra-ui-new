@@ -5,6 +5,7 @@
  * Retain original odds/market rows outside this module.
  */
 const value = x => String(x ?? '').trim();
+const caseOnlyEquivalent = (a,b) => value(a).normalize('NFC').toLowerCase() === value(b).normalize('NFC').toLowerCase();
 const team = (row, side) => {
   const raw = side === 'home' ? row?.homeTeam ?? row?.home : row?.awayTeam ?? row?.away;
   return typeof raw === 'string' ? value(raw) : value(raw?.name ?? raw?.displayName ?? raw?.shortName);
@@ -47,7 +48,7 @@ export function assessPublicationIdentity(row,fixtures=[]) {
       return result('hold',`${field}_conflict`,f);
   }
   for (const side of ['home','away']) {
-    if (team(row,side) && team(f,side) && team(row,side)!==team(f,side))
+    if (team(row,side) && team(f,side) && !caseOnlyEquivalent(team(row,side),team(f,side)))
       return result('hold',`${side}_team_conflict`,f);
     const key=side+'GlobalClubId';
     const a=value(row[key] ?? row.productionIdentityBinding?.[key]);
