@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { assessPublicationIdentity } from "./assessment-publication-identity.js";
+import { approvedPublicationTeamAliasEquivalent } from "../jobs/export-odds-snapshot-day.js";
 
 const canonical = {
   canonicalId: "cid_esp1_athletic_espanyol_20261120",
@@ -29,4 +30,21 @@ test("provider conflict never passes", () => {
 });
 test("kickoff discrepancy remains HOLD", () => {
   assert.equal(assessPublicationIdentity({ ...assessed, kickoffUtc: "2026-11-20T21:00Z" }, [canonical]).reason, "kickoff_conflict");
+});
+
+test("committed Welsh league alias reconciles only the exact preapproved two labels", () => {
+  const fixture = { ...canonical, canonicalId: "cid_wal1_penybont_haverfordwest_20261120",
+    providerIds: { flashscore: "Cl0znH63" }, leagueSlug: "wal.1",
+    homeTeam: "Penybont", awayTeam: "Haverfordwest",
+    kickoffUtc: "2026-11-20T19:45:00Z" };
+  const odds = { ...assessed, canonicalId: fixture.canonicalId,
+    providerIds: fixture.providerIds, leagueSlug: fixture.leagueSlug,
+    home: "Penybont FC", away: "Haverfordwest", kickoffUtc: fixture.kickoffUtc };
+  assert.equal(assessPublicationIdentity(odds, [fixture]).reason, "home_team_conflict");
+  assert.equal(assessPublicationIdentity(odds, [fixture], {
+    approvedTeamAliasEquivalent: approvedPublicationTeamAliasEquivalent
+  }).status, "publish");
+  assert.equal(approvedPublicationTeamAliasEquivalent("wal.1", "Penybont", "Penybont FC"), true);
+  assert.equal(approvedPublicationTeamAliasEquivalent("esp.1", "Penybont", "Penybont FC"), false);
+  assert.equal(approvedPublicationTeamAliasEquivalent("wal.1", "Penybont", "Unknown Club"), false);
 });
