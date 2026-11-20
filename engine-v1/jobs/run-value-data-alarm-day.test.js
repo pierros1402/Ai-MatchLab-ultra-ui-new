@@ -171,3 +171,48 @@ test('source-policy recovery runs after native profile persistence and cannot cl
  assert.equal(recoveryCalls,1);assert.equal(report.postResearchReevaluation,true);assert.equal(report.verifiedHistoryRecovery.appliedMatches,0);
  assert.equal(report.futureOpen,1);assert.notEqual(queue.incidents[fixture.canonicalId].status,'RESOLVED');
 });
+
+test("odds export hold retains exact reason and ownership evidence without resolving alarm", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-alarm-export-hold-"));
+  const day = "2099-10-04";
+  const fixture = {
+    canonicalId: "cid_alarm_export_hold",
+    leagueSlug: "test.1",
+    homeTeam: "Home",
+    awayTeam: "Away",
+    kickoffUtc: "2099-10-04T20:00:00Z"
+  };
+  const ownershipIssues = {
+    strictIdentityHolds: [{ canonicalId: fixture.canonicalId, reason: "provider_id_conflict" }],
+    ambiguousCanonicalMatches: 1
+  };
+  try {
+    const result = await runValueDataAlarmDay(day, {
+      write: true,
+      lookAheadDays: 0,
+      nowMs: Date.parse("2099-10-04T08:00:00Z"),
+      dependencies: {
+        queueRoot: root,
+        fixtures: () => [fixture],
+        assessments: () => [],
+        standings: () => ({ ok: false }),
+        supplement: () => ({ assessmentRowsWritten: 1 }),
+        exportOdds: async () => ({
+          ok: false,
+          changed: false,
+          reason: "ambiguous_canonical_ownership_publication_hold",
+          ownershipIssues
+        })
+      }
+    });
+    assert.deepEqual(result.report.oddsWrittenDays, []);
+    assert.equal(result.report.acquisitionErrors.length, 1);
+    assert.equal(result.report.acquisitionErrors[0].exportReason, "ambiguous_canonical_ownership_publication_hold");
+    assert.deepEqual(result.report.acquisitionErrors[0].ownershipIssues, ownershipIssues);
+    assert.equal(result.report.days[0].supplement.status, "ASSESSMENT_PRODUCTION_FAILED");
+    assert.notEqual(result.queue.incidents[fixture.canonicalId].status, "RESOLVED");
+  } finally {
+    assert.ok(path.resolve(root).startsWith(path.resolve(os.tmpdir()) + path.sep));
+    fs.rmSync(root, { recursive: true });
+  }
+});
