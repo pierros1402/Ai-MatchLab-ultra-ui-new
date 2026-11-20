@@ -11,8 +11,9 @@ const canonical = {
   awayTeam: "Espanyol",
   kickoffUtc: "2026-11-20T20:00Z"
 };
+const { homeTeam: _canonicalHome, awayTeam: _canonicalAway, ...eventIdentity } = canonical;
 const assessed = {
-  ...canonical,
+  ...eventIdentity,
   home: "athletic club",
   away: "Espanyol",
   aiAssessment: { markets: { OU25: { probs: { over: .6, under: .4 } } } }
