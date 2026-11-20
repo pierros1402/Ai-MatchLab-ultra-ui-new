@@ -341,6 +341,43 @@ export function validateP0CP4V35RoutingProducerEvidence({ sourceRecords } = {}) 
     P0C_P4_V35_ROUTING_BINDING_SCHEMA, "PASS_P0C_P4_V35_ROUTING_CANDIDATE_PRODUCER_BINDINGS");
 }
 
+
+/*
+ * Daily P0 current-source attestation, version 4.
+ *
+ * This is a distinct successor to the frozen P0-C V3.5 routing candidate.
+ * The V1/V2/V3 ledgers remain byte-identical. No P0-C repository
+ * application, retrospective model certification or production permission
+ * can be inferred from a current-source hash match.
+ */
+export const P0C_P4_V35_DAILY_P0_SOURCE_BINDING_SCHEMA =
+  "ai-matchlab.p0c-p4-v35-producer-binding.v4";
+const DAILY_P0_SOURCE_BINDINGS = Object.freeze({
+  ...ROUTING_SOURCE_BINDINGS,
+  oddsSnapshotExporter: Object.freeze({
+    ...ROUTING_SOURCE_BINDINGS.oddsSnapshotExporter,
+    sha256: "631ab84e3c5b6733476631c3f549b5268c773a396cf3ec8151ca689dd4e1836d"
+  })
+});
+export function getP0CP4V35DailyP0SourceBinding() {
+  return Object.freeze({
+    ...getP0CP4V35RoutingProducerBinding(),
+    schema: P0C_P4_V35_DAILY_P0_SOURCE_BINDING_SCHEMA,
+    previousImmutableSchema: P0C_P4_V35_ROUTING_BINDING_SCHEMA,
+    sourceBindings: clone(DAILY_P0_SOURCE_BINDINGS),
+    repositoryApplicationAuthorized: false,
+    productionAuthorized: false,
+    publicationAuthorized: false
+  });
+}
+export function validateP0CP4V35DailyP0SourceEvidence({ sourceRecords } = {}) {
+  return validateExactProducerEvidence(
+    sourceRecords, DAILY_P0_SOURCE_BINDINGS,
+    P0C_P4_V35_DAILY_P0_SOURCE_BINDING_SCHEMA,
+    "PASS_P0C_P4_V35_DAILY_P0_CURRENT_SOURCE_ONLY"
+  );
+}
+
 const FAMILY_DESCRIPTORS = Object.freeze([
   Object.freeze({
     family: "DEPLOY_SNAPSHOT_DETAILS",
