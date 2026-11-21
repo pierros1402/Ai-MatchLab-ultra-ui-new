@@ -291,7 +291,7 @@ test("pins all required current producer source hashes against the explicit V46 
   assert.deepEqual(Object.keys(current.sourceBindings),Object.keys(historical.sourceBindings));
   const changed = Object.keys(current.sourceBindings).filter(key =>
     current.sourceBindings[key].sha256 !== historical.sourceBindings[key].sha256);
-  assert.deepEqual(changed.sort(),["oddsSnapshotExporter","planBBuilder","valueBuilder"]);
+  assert.deepEqual(changed.sort(),["oddsSnapshotExporter","planBBuilder","standaloneValuePipeline","valueBuilder"]);
   for (const key of Object.keys(current.sourceBindings)) {
     const {sha256: oldHash, ...oldFields} = historical.sourceBindings[key];
     const {sha256: newHash, ...newFields} = current.sourceBindings[key];
