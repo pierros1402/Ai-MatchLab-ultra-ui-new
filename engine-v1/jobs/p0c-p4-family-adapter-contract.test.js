@@ -22,6 +22,9 @@ import {
   P0C_P4_V35_CHUNKED_PRODUCER_BINDING_SCHEMA,
   getP0CP4V35ChunkedProducerBinding,
   validateP0CP4V35ChunkedProducerEvidence,
+  P0C_P4_DAILY_P0_V46_BINDING_SCHEMA,
+  getP0CP4DailyP0V46ProducerBinding,
+  validateP0CP4DailyP0V46ProducerEvidence,
 } from "./p0c-p4-family-adapter-contract.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -279,10 +282,10 @@ test("rejects count, family, path and authorization drift", () => {
   );
 });
 
-test("pins all required current producer source hashes against the explicit V3.5 candidate binding", () => {
+test("pins all required current producer source hashes against the explicit V46 candidate binding", () => {
   const historical = getP0CP4FamilyAdapterContract();
-  const current = getP0CP4V35RoutingProducerBinding();
-  assert.equal(current.schema, P0C_P4_V35_ROUTING_BINDING_SCHEMA);
+  const current = getP0CP4DailyP0V46ProducerBinding();
+  assert.equal(current.schema, P0C_P4_DAILY_P0_V46_BINDING_SCHEMA);
   assert.equal(current.repositoryApplicationAuthorized, false);
   assert.equal(current.productionAuthorized, false);
   assert.deepEqual(Object.keys(current.sourceBindings),Object.keys(historical.sourceBindings));
@@ -301,37 +304,44 @@ test("pins all required current producer source hashes against the explicit V3.5
   const sourceRecords = Object.values(current.sourceBindings).map(row => ({
     path: row.path, sha256: sourceBindingSha256(row.path,row.sha256),
   }));
-  const result = validateP0CP4V35RoutingProducerEvidence({sourceRecords});
+  const result = validateP0CP4DailyP0V46ProducerEvidence({sourceRecords});
   assert.equal(result.ok,true);
   assert.equal(result.requiredSourceCount,23);
   assert.equal(result.repositoryApplicationAuthorized,false);
+  const routingHistorical = getP0CP4V35RoutingProducerBinding();
+  assert.equal(routingHistorical.schema,P0C_P4_V35_ROUTING_BINDING_SCHEMA);
+  assert.equal(routingHistorical.sourceBindings.oddsSnapshotExporter.sha256,
+    "3105bca43685a775b034ec33974d5fdb4a00f8c83d2935fb584c3eafd025f85f");
+  const routingRows = Object.values(routingHistorical.sourceBindings).map(({path,sha256})=>({path,sha256}));
+  assert.equal(validateP0CP4V35RoutingProducerEvidence({sourceRecords:routingRows}).ok,true);
+  assert.throws(() => validateP0CP4V35RoutingProducerEvidence({sourceRecords}), /source_hash_mismatch/);
   const chunked = getP0CP4V35ChunkedProducerBinding();
   assert.equal(chunked.schema, P0C_P4_V35_CHUNKED_PRODUCER_BINDING_SCHEMA);
   const chunkedRows = Object.values(chunked.sourceBindings).map(({path, sha256}) => ({path, sha256}));
   assert.equal(validateP0CP4V35ChunkedProducerEvidence({sourceRecords: chunkedRows}).ok, true);
   assert.throws(() => validateP0CP4V35ChunkedProducerEvidence({sourceRecords}), /source_hash_mismatch/);
-  assert.throws(() => validateP0CP4V35RoutingProducerEvidence({sourceRecords: chunkedRows}), /source_hash_mismatch/);
+  assert.throws(() => validateP0CP4DailyP0V46ProducerEvidence({sourceRecords: chunkedRows}), /source_hash_mismatch/);
   const previous=getP0CP4V35ProducerBinding();
   assert.equal(previous.schema,P0C_P4_V35_PRODUCER_BINDING_SCHEMA);
   assert.equal(previous.sourceBindings.valueBuilder.sha256,"a1d19b4657f7fe95042505e7e521e0d8a989f496ecaef73f9c8eb1fff33d9fbd");
   const previousRows=Object.values(previous.sourceBindings).map(({path,sha256})=>({path,sha256}));
   assert.equal(validateP0CP4V35ProducerEvidence({sourceRecords:previousRows}).ok,true);
-  assert.throws(()=>validateP0CP4V35RoutingProducerEvidence({sourceRecords:previousRows}),/source_hash_mismatch/);
+  assert.throws(()=>validateP0CP4DailyP0V46ProducerEvidence({sourceRecords:previousRows}),/source_hash_mismatch/);
   assert.throws(()=>validateP0CP4V35ProducerEvidence({sourceRecords}),/source_hash_mismatch/);
   // The old contract is never silently repinned or made to accept a newer source.
   assert.throws(() => validateP0CP4ProducerEvidence({sourceRecords}),/source_hash_mismatch/);
   for (let i=0;i<sourceRecords.length;i++) {
     const drifted=sourceRecords.map(row=>({...row}));
     drifted[i].sha256="0".repeat(64);
-    assert.throws(()=>validateP0CP4V35RoutingProducerEvidence({sourceRecords:drifted}),/source_hash_mismatch/);
+    assert.throws(()=>validateP0CP4DailyP0V46ProducerEvidence({sourceRecords:drifted}),/source_hash_mismatch/);
   }
   for (const key of changed) {
     const old=historical.sourceBindings[key];
     const mixed=sourceRecords.map(row=>row.path===old.path?{path:old.path,sha256:old.sha256}:row);
-    assert.throws(()=>validateP0CP4V35RoutingProducerEvidence({sourceRecords:mixed}),/source_hash_mismatch/);
+    assert.throws(()=>validateP0CP4DailyP0V46ProducerEvidence({sourceRecords:mixed}),/source_hash_mismatch/);
   }
-  assert.throws(()=>validateP0CP4V35RoutingProducerEvidence({sourceRecords:sourceRecords.slice(1)}),/source_missing/);
-  assert.throws(()=>validateP0CP4V35RoutingProducerEvidence({sourceRecords:[...sourceRecords,sourceRecords[0]]}),/source_record_duplicate/);
+  assert.throws(()=>validateP0CP4DailyP0V46ProducerEvidence({sourceRecords:sourceRecords.slice(1)}),/source_missing/);
+  assert.throws(()=>validateP0CP4DailyP0V46ProducerEvidence({sourceRecords:[...sourceRecords,sourceRecords[0]]}),/source_record_duplicate/);
 });
 
 test("unchanged historical producer hash ledger is not a V3.5 ledger", () => {
