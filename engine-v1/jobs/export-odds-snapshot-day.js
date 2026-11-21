@@ -92,8 +92,11 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
   const sourceMatches = ownership.matches;
   const publication = joinCanonicalFixturesWithModelAssessments(canonical, sourceMatches);
   const strictIdentity = classifyAssessmentPublication(sourceMatches, canonical);
-  if (strictIdentity.holds.length > 0 ||
-      publication.ambiguousCanonicalMatches.length > 0 ||
+  // A conflicting model assessment cannot be published. Quarantine that
+  // model row (not its real bookmaker market) rather than blocking unrelated
+  // independently certified fixtures. Ambiguous ownership of the canonical
+  // universe itself remains a hard global HOLD.
+  if (publication.ambiguousCanonicalMatches.length > 0 ||
       publication.ambiguousAssessmentAliases.length > 0 ||
       publication.canonicalRowsMissingIdentity.length > 0) {
     return {
@@ -115,7 +118,8 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
   // Distinct object identities are intentional: never match or drop by fuzzy names.
   const quarantined = new Set([
     ...publication.orphanAssessmentRows,
-    ...strictIdentity.quarantined.map(x=>x.row)
+    ...strictIdentity.quarantined.map(x=>x.row),
+    ...strictIdentity.holds.map(x=>x.row)
   ]);
   let candidateMatches = sourceMatches.map(row => quarantined.has(row)
     ? { ...row, aiAssessment: null } : row);
@@ -206,6 +210,9 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
       supersededLegacyAssessments: ownership.superseded.length,
       decisions: ownership.superseded,
       quarantinedOrphanAssessments: quarantinedAssessments,
+      quarantinedConflictingIdentityAssessments: strictIdentity.holds.map(({row,reason})=>({
+        canonicalId:row.canonicalId??null, reason
+      })),
       policy: "canonical_join_plus_strict_identity_verified_or_model_quarantined",
       certifiedAssessmentRows: assessmentRowCount(candidateMatches),
       historicalCertifiedMerge: certifiedMerge
