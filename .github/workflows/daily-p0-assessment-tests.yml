@@ -32,6 +32,28 @@ jobs:
           node --check engine-v1/jobs/export-odds-snapshot-day.js
           node --check engine-v1/jobs/run-odds-refresh.js
           node --check engine-v1/jobs/daily-p0-certified-odds-merge.test.js
+      - name: Audit all V46 producer source hashes (read-only)
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import crypto from "node:crypto";
+          import {getP0CP4DailyP0V46ProducerBinding} from "./engine-v1/jobs/p0c-p4-family-adapter-contract.js";
+          const bindings = getP0CP4DailyP0V46ProducerBinding().sourceBindings;
+          let mismatches=0;
+          for (const [key, row] of Object.entries(bindings)) {
+            const bytes = fs.readFileSync(row.path);
+            const raw = crypto.createHash("sha256").update(bytes).digest("hex");
+            const normalized = crypto.createHash("sha256")
+              .update(bytes.toString("utf8").replaceAll("\\r\\n","\\n")).digest("hex");
+            const actual = raw === row.sha256 ? raw : normalized;
+            if (actual !== row.sha256) {
+              console.log(JSON.stringify({key,path:row.path,expected:row.sha256,actual}));
+              mismatches++;
+            }
+          }
+          console.log("V46_SOURCE_BINDING_MISMATCHES="+mismatches);
+          NODE
       - name: Run focused regression against real repository modules
         run: node --test --test-reporter=tap engine-v1/jobs/daily-p0-certified-odds-merge.test.js engine-v1/jobs/run-odds-refresh.test.js
       - name: Full engine test suite
