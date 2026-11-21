@@ -349,7 +349,7 @@ const DAILY_P0_V46_SOURCE_BINDINGS = Object.freeze({
   ...ROUTING_SOURCE_BINDINGS,
   oddsSnapshotExporter: Object.freeze({
     ...ROUTING_SOURCE_BINDINGS.oddsSnapshotExporter,
-    sha256: "c0427e8d98555e6df1f17105172ca9083d81080108ffdf578bee6a8ff97ea15d"
+    sha256: "7ed4c9a6854399afd8108c7c9516c5a5134d764e52cd49414b71b4fcf45bb91a"
   }),
   standaloneValuePipeline: Object.freeze({
     ...ROUTING_SOURCE_BINDINGS.standaloneValuePipeline,
