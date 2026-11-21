@@ -81,7 +81,13 @@ function lookupOdds(home, away, pool) {
   return bestScore >= 0.6 ? best : null;
 }
 
-async function main({ fetchFixtures = fetchFlashscoreFixtures, fetchMarket = fetchOddsResilient, fetchReferees = buildRefereeLookup } = {}) {
+export function openingAssessmentPreKickoff(kickoffUtc, nowMs = Date.now()) {
+  if (typeof kickoffUtc !== "string" || !/(?:Z|[+-]\\d{2}:\\d{2})$/i.test(kickoffUtc)) return false;
+  const kickoffMs = Date.parse(kickoffUtc);
+  return Number.isFinite(kickoffMs) && Number.isFinite(nowMs) && kickoffMs > nowMs;
+}
+
+async function main({ fetchFixtures = fetchFlashscoreFixtures, fetchMarket = fetchOddsResilient, fetchReferees = buildRefereeLookup, nowMs = Date.now() } = {}) {
   const summary = process.argv.slice(2).includes("--summary");
   if (summary) {
     console.log(JSON.stringify({ ok: true, odds: getOddsSummary() }, null, 2));
@@ -121,6 +127,12 @@ async function main({ fetchFixtures = fetchFlashscoreFixtures, fetchMarket = fet
     const dayKey = athensDayKeyFromUtc(fx.kickoffUtc);
     if (dayKey && !windowSet.has(dayKey)) continue;
     stats.inWindow++;
+    // Never construct new model evidence for already-started or un-timed games.
+    // Pre-existing original assessments remain immutable in odds memory;
+    // bookmaker market acquisition may still proceed separately.
+    const preKickoffModelEligible =
+      openingAssessmentPreKickoff(fx.kickoffUtc, nowMs);
+    if (!preKickoffModelEligible) stats.skippedLateModel = (stats.skippedLateModel || 0) + 1;
 
     // Attribution: international by competition, else domestic via standings.
     const routing = nationsLeagueRoutingDecision(fx.leagueName, fx.country, fx.leaguePath);
@@ -151,10 +163,13 @@ async function main({ fetchFixtures = fetchFlashscoreFixtures, fetchMarket = fet
       // No club standings available — run model with league-average prior.
       // null rows → lambdasFromStandings returns leagueAvg for all rates.
       if (intl.type === "national") {
-        const homeForm = teamFormRates(slug, fx.home);
-        const awayForm = teamFormRates(slug, fx.away);
-        const _p = priceMatchFromStandings(null, null, { leagueAvgGoalsPerTeam: leagueAvg, homeForm, awayForm });
-        const nationalAssessment = { model: { ..._p.model, source: "ai_poisson_national_prior" }, markets: _p.markets, nationalTeams: true };
+        let nationalAssessment = null;
+        if (preKickoffModelEligible) {
+          const homeForm = teamFormRates(slug, fx.home);
+          const awayForm = teamFormRates(slug, fx.away);
+          const _p = priceMatchFromStandings(null, null, { leagueAvgGoalsPerTeam: leagueAvg, homeForm, awayForm });
+          nationalAssessment = { model: { ..._p.model, source: "ai_poisson_national_prior" }, markets: _p.markets, nationalTeams: true };
+        }
         const natCid = buildCanonicalId(slug, fx.home, fx.away, dayKey || fx.kickoffUtc);
         const natId = natCid || `fs_${fx.matchId}`;
         const odds = routing.kind === "resolved" ? lookupOdds(fx.home, fx.away, oddsPool) : null;
@@ -164,10 +179,12 @@ async function main({ fetchFixtures = fetchFlashscoreFixtures, fetchMarket = fet
           canonicalId: natCid, leagueSlug: slug, competition: intl.label,
           home: fx.home, away: fx.away, dayKey, kickoffUtc: fx.kickoffUtc,
           source: odds ? `flashscore+${odds.provider}` : "flashscore",
-          oddsBook: odds?.book ?? null, aiAssessment: nationalAssessment
+          oddsBook: odds?.book ?? null,
+          ...(nationalAssessment ? { aiAssessment: nationalAssessment } : {})
         }, { markets: odds ? { "1X2": { odds: odds.odds, oddsMax: odds.oddsMax } } : {} });
-        if (dayKey) patchFixtureAssessment(fx.home, fx.away, dayKey, nationalAssessment, { canonicalId: natCid, providerIds: { flashscore: fx.matchId }, leagueSlug: slug, kickoffUtc: fx.kickoffUtc });
-        stats.attributed++; stats.international++; stats.withAiAssessment++;
+        if (nationalAssessment && dayKey) patchFixtureAssessment(fx.home, fx.away, dayKey, nationalAssessment, { canonicalId: natCid, providerIds: { flashscore: fx.matchId }, leagueSlug: slug, kickoffUtc: fx.kickoffUtc });
+        stats.attributed++; stats.international++;
+        if (nationalAssessment) stats.withAiAssessment++;
         stats.byLeague[slug] = (stats.byLeague[slug] || 0) + 1;
         if (dayKey) stats.byDay[dayKey] = (stats.byDay[dayKey] || 0) + 1;
         continue;
@@ -192,7 +209,7 @@ async function main({ fetchFixtures = fetchFlashscoreFixtures, fetchMarket = fet
     // AI assessment whenever both teams resolved to a standings row — domestic OR
     // cross-league (UEFA qualifiers / cups). Form & xG use each team's own league.
     let aiAssessment = null;
-    if (home && away) {
+    if (preKickoffModelEligible && home && away) {
       const homeForm = teamFormRates(homeSlug, fx.home);
       const awayForm = teamFormRates(awaySlug, fx.away);
       const homeXg = teamXgRates(homeSlug, fx.home);
@@ -218,7 +235,7 @@ async function main({ fetchFixtures = fetchFlashscoreFixtures, fetchMarket = fet
       kickoffUtc: fx.kickoffUtc,
       source: odds ? `flashscore+${odds.provider}` : "flashscore",
       oddsBook: odds ? odds.book : null,
-      aiAssessment
+      ...(aiAssessment ? { aiAssessment } : {})
     }, { markets });
 
     // Bridge to canonical store: write assessment under the ESPN/canonical id too,
