@@ -1,0 +1,209 @@
+name: P0 assessment publication safety regression
+
+on:
+  push:
+    branches:
+      - fix/p0-assessment-publication-gates-20261120
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  assessment-publication-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact repair branch
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: engine-v1/package-lock.json
+      - name: Install engine dependencies
+        run: npm ci --prefix engine-v1 --ignore-scripts
+      - name: Check changed JavaScript syntax
+        run: |
+          node --check engine-v1/jobs/export-odds-snapshot-day.js
+          node --check engine-v1/jobs/export-odds-snapshot-day.test.js
+          node --check engine-v1/core/assessment-publication-identity.js
+          node --check engine-v1/core/assessment-publication-identity.test.js
+          node --check engine-v1/jobs/p0-assessment-ephemeral-export-replay.js
+          node --check engine-v1/jobs/p0-assessment-readonly-replay.js
+          node --check engine-v1/jobs/canonical-assessment-supplement.js
+          node --check engine-v1/jobs/canonical-assessment-supplement.test.js
+          node --check engine-v1/jobs/run-odds-refresh.js
+          node --check engine-v1/jobs/run-odds-refresh.test.js
+          node --check engine-v1/jobs/run-value-data-alarm-day.js
+          node --check engine-v1/jobs/run-value-data-alarm-day.test.js
+          node --check engine-v1/storage/assessment-read-view.js
+          node --check engine-v1/storage/assessment-read-view.test.js
+      - name: Run source-bound assessment refresh regression
+        run: |
+          node --test engine-v1/core/assessment-publication-identity.test.js engine-v1/jobs/canonical-assessment-supplement.test.js engine-v1/jobs/export-odds-snapshot-day.test.js engine-v1/jobs/run-odds-refresh.test.js engine-v1/jobs/run-value-data-alarm-day.test.js engine-v1/storage/assessment-read-view.test.js
+      - name: Full engine JavaScript syntax inventory
+        run: |
+          find engine-v1 -type f -name '*.js' -not -path '*/node_modules/*' -print0 | sort -z | xargs -0 -r -n 1 node --check
+      - name: Prepare root module tree for integration tests
+        run: |
+          # Some full-engine integration tests copy repo-root node_modules to a
+          # temporary isolated workspace. This only changes the CI runner.
+          cp -a engine-v1/node_modules ./node_modules
+      - name: Full engine Node regression
+        run: |
+          find engine-v1 -type f -name '*.test.js' -not -path '*/node_modules/*' -print0 | sort -z | xargs -0 -r node --test
+      - name: Read-only prospective 21 November canonical and model coverage diagnostic
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import {readCanonicalFixtureDay,supplementCanonicalAssessments} from './engine-v1/jobs/canonical-assessment-supplement.js';
+          import {assertPersistedAssessmentPostcondition} from './engine-v1/jobs/run-odds-refresh.js';
+          import {classifyAssessmentPublication} from './engine-v1/core/assessment-publication-identity.js';
+          import {approvedPublicationTeamAliasEquivalent} from './engine-v1/jobs/export-odds-snapshot-day.js';
+          import {resolveProductionEvidenceFixtureIdReadView} from './engine-v1/core/production-evidence-identity-overlay.js';
+          const day='2026-11-21',cutoff='2026-11-20T18:00:00Z';
+          const dir=path.join('data','canonical-fixtures',day);
+          const files=fs.readdirSync(dir).filter(x=>x.endsWith('.json')).sort(),raw=[];
+          for(const filename of files){
+            const d=JSON.parse(fs.readFileSync(path.join(dir,filename),'utf8'));
+            if(!Array.isArray(d.fixtures)||d.fixtures.length!==d.count)throw Error('invalid_canonical_file:'+filename);
+            raw.push(...d.fixtures);
+          }
+          const canonical=readCanonicalFixtureDay(day),ids=raw.map(r=>r.canonicalId);
+          const dup=[...new Set(ids.filter((v,i)=>ids.indexOf(v)!==i))];
+          const invalid=raw.filter(r=>!r.canonicalId||!Number.isFinite(Date.parse(r.kickoffUtc||''))||(r.dayKey&&r.dayKey!==day));
+          const simulated=supplementCanonicalAssessments(day,{canonicalFixtures:canonical,nowMs:Date.parse(cutoff),recordFn:()=>{}});
+          let snap=null,snapshotError=null;
+          try{snap=JSON.parse(fs.readFileSync(path.join('data','deploy-snapshots',day,'odds.json'),'utf8'))}
+          catch(e){snapshotError=e.code==='ENOENT'?'SNAPSHOT_MISSING':'SNAPSHOT_UNREADABLE'}
+          let persisted={code:'NOT_CHECKED'},identity={publishable:0,holds:0,quarantined:0,holdSample:[]};
+          if(snap&&Array.isArray(snap.matches)){
+            try{
+              assertPersistedAssessmentPostcondition(snap,day,{canonicalFixtureCount:canonical.length,
+                canonicalFixtureIds:canonical.map(r=>r.canonicalId),
+                requiredAssessmentFixtureIds:simulated.modelEvidenceEligibleFixtureIds||[],
+                fixtureIdResolver:id=>resolveProductionEvidenceFixtureIdReadView(id,{allowUnmanaged:true})});
+              persisted={code:'COVERAGE_PASS'};
+            }catch(e){persisted={code:e.code||'COVERAGE_HOLD',missingIds:e.missingRequiredAssessmentFixtureIds||[]}}
+            const assessed=snap.matches.filter(r=>r.aiAssessment?.markets&&Object.keys(r.aiAssessment.markets).length);
+            const classified=classifyAssessmentPublication(assessed,canonical,{approvedTeamAliasEquivalent:approvedPublicationTeamAliasEquivalent});
+            identity={publishable:classified.publishable.length,holds:classified.holds.length,quarantined:classified.quarantined.length,
+              holdSample:classified.holds.slice(0,25).map(x=>({id:x.row.canonicalId,reason:x.reason}))};
+          }
+          console.log('[p0-nov21-prospective-readonly]',JSON.stringify({
+            mode:'READ_ONLY_DIAGNOSTIC_NOT_PUBLICATION_AUTHORIZATION',day,cutoff,
+            canonicalFiles:files.length,rawRows:raw.length,uniqueRows:canonical.length,duplicateIds:dup,invalidRows:invalid.length,
+            eligibleModelFixtures:simulated.modelEvidenceEligibleFixtures,
+            requiredAssessmentIds:simulated.modelEvidenceEligibleFixtureIds||[],
+            simulatedAssessmentRows:simulated.assessmentRowsWritten,
+            simulationUnassessed:simulated.unassessedModelEvidenceEligibleFixtureIds||[],
+            oddsSnapshotPresent:!!snap,snapshotError,snapshotRows:snap?.matches?.length||0,
+            persisted,identity,publicationAuthorized:false,releaseReady:false}));
+          if(dup.length||invalid.length||raw.length!==canonical.length)throw Error('CANONICAL_IDENTITY_UNIVERSE_INVALID');
+          NODE
+      - name: Read-only November 21 provider-ID reuse and placeholder audit
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const day='2026-11-21',dir=path.join('data','canonical-fixtures',day);
+          const files=fs.readdirSync(dir).filter(x=>x.endsWith('.json')).sort();
+          const owners=new Map(),raw=[];
+          for(const name of files){
+            const doc=JSON.parse(fs.readFileSync(path.join(dir,name),'utf8'));
+            for(const row of doc.fixtures||[]){
+              raw.push(row);
+              for(const [provider,native] of Object.entries(row.providerIds||{})){
+                const value=String(native||'').trim();
+                if(!value)continue;
+                const key=provider+':'+value;
+                if(!owners.has(key))owners.set(key,[]);
+                owners.get(key).push({canonicalId:row.canonicalId,leagueSlug:row.leagueSlug,
+                  home:row.homeTeam||row.home,away:row.awayTeam||row.away,kickoffUtc:row.kickoffUtc});
+              }
+            }
+          }
+          const collisions=[...owners].filter(([_,rows])=>new Set(rows.map(r=>r.canonicalId)).size>1)
+            .map(([providerId,rows])=>({providerId,rows}));
+          const placeholders=raw.filter(r=>/\bTBD\b|\bunknown\b/i.test(String(r.homeTeam||r.home||'')+' '+String(r.awayTeam||r.away||'')))
+            .map(r=>({id:r.canonicalId,home:r.homeTeam||r.home,away:r.awayTeam||r.away}));
+          console.log('[p0-nov21-native-id-audit]',JSON.stringify({
+            mode:'READ_ONLY_PROVIDER_ID_COLLISION_DIAGNOSTIC_NOT_RELEASE_AUTHORIZATION',
+            day,canonicalRows:raw.length,providerKeyCount:owners.size,
+            providerCollisionGroups:collisions.length,collisions:collisions.slice(0,50),
+            placeholderTeamRows:placeholders.length,placeholderSample:placeholders.slice(0,25),
+            unresolvedIdentityMustNotBeAutoMerged:true,publicationAuthorized:false}));
+          NODE
+      - name: Replay November 20 missing assessment identity evidence read-only
+        run: node engine-v1/jobs/p0-assessment-readonly-replay.js
+      - name: Reproduce exporter in disposable runner checkout only
+        env:
+          AIML_P0_EPHEMERAL_REPLAY: 'yes'
+        run: node engine-v1/jobs/p0-assessment-ephemeral-export-replay.js
+
+      - name: Read-only native Details foundation integrity at current checkout
+        run: |
+          node --input-type=module <<'NODE'
+          import { validateHistoryIndexFoundationSync, validateH2HFoundationSync } from './engine-v1/core/derived-history-foundation.js';
+          const season = '2026-2027';
+          const index = validateHistoryIndexFoundationSync(season);
+          const h2h = validateH2HFoundationSync();
+          const compact = x => ({
+            ok: x.ok === true, reason: x.reason || null,
+            recordedSourceHash: x.artifact?.source?.sha256 || null,
+            actualSourceHash: x.current?.source?.sha256 || x.artifact?.source?.sha256 || null,
+            recordedOutputHash: x.artifact?.outputs?.sha256 || null,
+            actualOutputHash: x.current?.outputs?.sha256 || x.artifact?.outputs?.sha256 || null,
+            recordedFoundationHash: x.artifact?.foundationFingerprint || null,
+            actualFoundationHash: x.current?.foundationFingerprint || x.artifact?.foundationFingerprint || null,
+            sourceFileCount: x.current?.source?.fileCount ?? x.artifact?.source?.fileCount ?? null,
+            outputFileCount: x.current?.outputs?.fileCount ?? x.artifact?.outputs?.fileCount ?? null
+          });
+          const result = {mode:'READ_ONLY_NATIVE_FOUNDATION_GATE_NOT_RELEASE',season,
+            observedAtUtc:new Date().toISOString(),historyIndex:compact(index),h2h:compact(h2h),
+            detailsFoundationReady:index.ok===true && h2h.ok===true,publicationAuthorized:false};
+          console.log('[p0-native-foundation-integrity]',JSON.stringify(result));
+          NODE
+      - name: Fresh actual-time November 21 pre-kickoff model requirement observation (no writes)
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import {readCanonicalFixtureDay,supplementCanonicalAssessments} from './engine-v1/jobs/canonical-assessment-supplement.js';
+          const day='2026-11-21',nowMs=Date.now(),now=new Date(nowMs).toISOString();
+          const canonical=readCanonicalFixtureDay(day),target=[
+            'cid_kos2_2korriku_kika_20261121',
+            'cid_rus1_orenburg_baltika_20261121',
+            'cid_rus1_akrontogliatti_fakelvoronezh_20261121',
+            'cid_rus1_rubinkazan_zenit_20261121',
+            'cid_ven1_carabobo_portuguesa_20261121'
+          ];
+          const simulated=supplementCanonicalAssessments(day,{canonicalFixtures:canonical,nowMs,recordFn:()=>{}});
+          const required=new Set(simulated.modelEvidenceEligibleFixtureIds||[]);
+          const fixtureById=new Map(canonical.map(f=>[f.canonicalId,f]));
+          const pathToOdds=path.join('data','deploy-snapshots',day,'odds.json');
+          let snapshot=null,snapshotError=null;
+          try { snapshot=JSON.parse(fs.readFileSync(pathToOdds,'utf8')); }
+          catch(e) { snapshotError=e.code==='ENOENT'?'MISSING':String(e.message).slice(0,150); }
+          const assessments=new Set((snapshot?.matches||[]).filter(x=>x?.aiAssessment?.markets &&
+            Object.keys(x.aiAssessment.markets).length>0).map(x=>x.canonicalId));
+          const targets=target.map(id=>({id,kickoffUtc:fixtureById.get(id)?.kickoffUtc||null,
+            kickoffFuture:Number.isFinite(Date.parse(fixtureById.get(id)?.kickoffUtc||'')) &&
+              Date.parse(fixtureById.get(id).kickoffUtc)>nowMs,
+            currentlyEvidenceEligible:required.has(id),
+            persistedAssessmentPresent:assessments.has(id)}));
+          console.log('[p0-nov21-fresh-time-readonly]',JSON.stringify({
+            mode:'READ_ONLY_NO_RECORD_WRITES_NO_ODDS_OPENING',day,observedAtUtc:now,
+            canonicalCount:canonical.length,currentEligible:required.size,
+            simulatedRecords:simulated.assessmentRowsWritten,snapshotError,
+            snapshotRows:snapshot?.matches?.length??null,
+            remainingCurrentRequired:([...required]).filter(id=>!assessments.has(id)),
+            targets,publicationAuthorized:false,releaseReady:false
+          }));
+          NODE

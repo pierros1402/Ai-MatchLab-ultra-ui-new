@@ -171,3 +171,82 @@ test('source-policy recovery runs after native profile persistence and cannot cl
  assert.equal(recoveryCalls,1);assert.equal(report.postResearchReevaluation,true);assert.equal(report.verifiedHistoryRecovery.appliedMatches,0);
  assert.equal(report.futureOpen,1);assert.notEqual(queue.incidents[fixture.canonicalId].status,'RESOLVED');
 });
+
+test("odds export hold retains exact reason and ownership evidence without resolving alarm", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-alarm-export-hold-"));
+  const day = "2099-10-04";
+  const fixture = {
+    canonicalId: "cid_alarm_export_hold",
+    leagueSlug: "test.1",
+    homeTeam: "Home",
+    awayTeam: "Away",
+    kickoffUtc: "2099-10-04T20:00:00Z"
+  };
+  const ownershipIssues = {
+    strictIdentityHolds: [{ canonicalId: fixture.canonicalId, reason: "provider_id_conflict" }],
+    ambiguousCanonicalMatches: 1
+  };
+  try {
+    const result = await runValueDataAlarmDay(day, {
+      write: true,
+      lookAheadDays: 0,
+      nowMs: Date.parse("2099-10-04T08:00:00Z"),
+      dependencies: {
+        queueRoot: root,
+        fixtures: () => [fixture],
+        assessments: () => [],
+        standings: () => ({ ok: false }),
+        supplement: () => ({ assessmentRowsWritten: 1 }),
+        exportOdds: async () => ({
+          ok: false,
+          changed: false,
+          reason: "ambiguous_canonical_ownership_publication_hold",
+          ownershipIssues
+        })
+      }
+    });
+    assert.deepEqual(result.report.oddsWrittenDays, []);
+    assert.equal(result.report.acquisitionErrors.length, 1);
+    assert.equal(result.report.acquisitionErrors[0].exportReason, "ambiguous_canonical_ownership_publication_hold");
+    assert.deepEqual(result.report.acquisitionErrors[0].ownershipIssues, ownershipIssues);
+    assert.equal(result.report.days[0].supplement.status, "ASSESSMENT_PRODUCTION_FAILED");
+    assert.notEqual(result.queue.incidents[fixture.canonicalId].status, "RESOLVED");
+  } finally {
+    assert.ok(path.resolve(root).startsWith(path.resolve(os.tmpdir()) + path.sep));
+    fs.rmSync(root, { recursive: true });
+  }
+});
+
+
+test("exporter diagnostics redact unknown fields and bound reason, IDs and hold count", async t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-alarm-bounded-export-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const day = "2099-10-04", nowMs = Date.parse(day + "T08:00:00Z");
+  const fixture = { canonicalId: "cid_bounded_export", leagueSlug: "test.1", homeTeam: "A",
+    awayTeam: "B", kickoffUtc: day + "T20:00:00Z" };
+  const holds = Array.from({ length: 30 }, (_, i) => ({
+    canonicalId: i === 0 ? "sensitive_freeform_id" : "cid_safe_" + i,
+    reason: i === 0 ? "token=private secret" : "kickoff_conflict",
+    secret: "private"
+  }));
+  const out = await runValueDataAlarmDay(day, {
+    write: true, lookAheadDays: 0, nowMs,
+    dependencies: { queueRoot: root, fixtures: () => [fixture], assessments: () => [],
+      standings: () => ({ ok: false }), supplement: () => ({ assessmentRowsWritten: 1 }),
+      exportOdds: async () => ({
+        ok: false, reason: "token=private secret", changed: false,
+        ownershipIssues: { strictIdentityHolds: holds, orphanAssessments: 2,
+          unknownSensitiveField: "private", ambiguousCanonicalMatches: -1 }
+      }) }
+  });
+  const diag = out.report.acquisitionErrors[0];
+  assert.equal(diag.exportReason, "untrusted_export_reason");
+  assert.equal(diag.ownershipIssues.strictIdentityHolds.length, 25);
+  assert.equal(diag.ownershipIssues.omittedStrictIdentityHolds, 5);
+  assert.equal(diag.ownershipIssues.strictIdentityHolds[0].canonicalId, "redacted");
+  assert.equal(diag.ownershipIssues.strictIdentityHolds[0].reason, "untrusted_export_reason");
+  assert.equal(diag.ownershipIssues.ambiguousCanonicalMatches, 0);
+  assert.equal(diag.ownershipIssues.orphanAssessments, 2);
+  assert.equal(JSON.stringify(diag).includes("private"), false);
+  assert.notEqual(out.queue.incidents[fixture.canonicalId].status, "RESOLVED");
+});

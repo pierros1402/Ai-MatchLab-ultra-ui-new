@@ -14,6 +14,7 @@ import {
   supplementCanonicalAssessments
 } from "./canonical-assessment-supplement.js";
 import { exportOddsSnapshotDay } from "./export-odds-snapshot-day.js";
+import { assessPublicationIdentity } from "../core/assessment-publication-identity.js";
 import { exportFixturesSnapshotDay } from "./export-fixtures-snapshot-day.js";
 import { oddsUpdateDecision, kickoffToUtcMs } from "../odds/odds-schedule.js";
 import {
@@ -167,6 +168,9 @@ export function assertPersistedAssessmentPostcondition(
       summary.assessmentRows;
     error.canonicalFixtureCount =
       canonicalCount;
+    error.requiredAssessmentRows = requiredSet.size;
+    error.missingRequiredAssessmentRows = requiredSet.size;
+    error.missingRequiredAssessmentFixtureIds = [...requiredSet];
 
     throw error;
   }
@@ -287,6 +291,28 @@ export function assertPersistedAssessmentPostcondition(
   };
 }
 
+// Prospective prevention only. Never relax strict model/kickoff identity:
+ // a future canonical schedule revision may require a new odds opening, but
+ // this signal does NOT approve carry-forward of a historical model.
+export function prospectiveCanonicalKickoffDrifts(existing, canonicalRows, nowMs = Date.now()) {
+  if (!Array.isArray(existing?.matches) || !Array.isArray(canonicalRows)) return [];
+  const byId = new Map(canonicalRows.filter(row => row?.canonicalId)
+    .map(row => [String(row.canonicalId), row]));
+  const found = new Set();
+  const ids = [];
+  for (const row of existing.matches) {
+    const id = String(row?.canonicalId || "").trim();
+    const f = byId.get(id);
+    if (!id || !f || found.has(id)) continue;
+    const kickoffMs = Date.parse(f.kickoffUtc || "");
+    if (!Number.isFinite(kickoffMs) || kickoffMs <= nowMs) continue;
+    if (assessPublicationIdentity(row, [f]).reason !== "kickoff_conflict") continue;
+    found.add(id);
+    ids.push(id);
+  }
+  return ids.sort();
+}
+
 export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
   const readSnapshot = opts.readSnapshot || readExistingSnapshot;
   const readCanonical = opts.readCanonical || readCanonicalFixtureDay;
@@ -310,18 +336,39 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
     existing.matches.length > 0 &&
     existingAssessmentRows === 0;
 
+  const upcomingKickoffDriftIds = prospectiveCanonicalKickoffDrifts(
+    existing, readCanonical(dayKey), Number.isFinite(opts.nowMs) ? opts.nowMs : Date.now()
+  );
+  if (upcomingKickoffDriftIds.length) {
+    console.warn("[run-odds-refresh] prospective kickoff drift requires refresh",
+      JSON.stringify({ dayKey, canonicalFixtureIds: upcomingKickoffDriftIds }));
+  }
   const decision = opts.force
     ? { due: true, reason: "forced", hoursSinceLast: null }
-    : missingAssessmentInput
-      ? { due: true, reason: "missing_model_assessments", hoursSinceLast: null }
-      : updateDecision({ lastScrapeAt, kickoffsUtc });
+    : upcomingKickoffDriftIds.length
+      ? { due: true, reason: "prospective_canonical_kickoff_drift", hoursSinceLast: null }
+      : missingAssessmentInput
+        ? { due: true, reason: "missing_model_assessments", hoursSinceLast: null }
+        : updateDecision({ lastScrapeAt, kickoffsUtc });
 
+  // Fixture export is a prerequisite for canonical/model parity. A failed
+  // export must never be reduced to a warning and followed by an odds write.
+  // This is a derived-output gate only: no canonical truth is modified here.
   let fixturesChanged = false;
   try {
     const fx = await exportFixtures(dayKey);
-    fixturesChanged = fx.changed;
-  } catch (err) {
-    console.warn("[run-odds-refresh] fixtures export failed", String(err?.message || err));
+    if (!fx || fx.ok === false) {
+      throw new Error(`fixtures_snapshot_export_not_ready:${dayKey}`);
+    }
+    fixturesChanged = fx.changed === true;
+  } catch (cause) {
+    const error = new Error(`fixtures_snapshot_export_failed:${dayKey}`, { cause });
+    error.code = "fixtures_snapshot_export_failed";
+    error.dayKey = dayKey;
+    console.error("[run-odds-refresh] fixtures export failure", JSON.stringify({
+      dayKey, code: error.code
+    }));
+    throw error;
   }
 
   if (decision.due) await opening();
@@ -333,6 +380,23 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
   const canonicalSupplement = supplement(dayKey);
 
   const snap = exportOdds(dayKey);
+  // Export can return a publication hold without throwing. Do not mistake a
+  // non-written, rejected artifact for a successful model-input refresh.
+  if (snap?.ok === false) {
+    const error = new Error(
+      `odds_snapshot_publication_hold:${dayKey}:${snap.reason || "unknown"}`
+    );
+    error.code = "odds_snapshot_publication_hold";
+    error.dayKey = dayKey;
+    error.exportReason = snap.reason || null;
+    error.ownershipIssues = snap.ownershipIssues || null;
+    console.error("[run-odds-refresh] odds publication hold", JSON.stringify({
+      dayKey,
+      reason: error.exportReason,
+      ownershipIssues: error.ownershipIssues
+    }));
+    throw error;
+  }
   const persisted = readSnapshot(dayKey);
 
   const canonicalFixtureIds =
@@ -345,27 +409,36 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
       )
       .filter(Boolean);
 
-  const persistence =
-    assertPersistedAssessmentPostcondition(
+  let persistence;
+  try {
+    persistence = assertPersistedAssessmentPostcondition(
       persisted,
       dayKey,
       {
-        canonicalFixtureCount:
-          canonicalSupplement.canonicalFixtures,
-
+        canonicalFixtureCount: canonicalSupplement.canonicalFixtures,
         canonicalFixtureIds,
-
         requiredAssessmentFixtureIds:
-          canonicalSupplement
-            .modelEvidenceEligibleFixtureIds,
-
+          canonicalSupplement.modelEvidenceEligibleFixtureIds,
         fixtureIdResolver: opts.fixtureIdResolver || (value =>
           resolveProductionEvidenceFixtureIdReadView(
-            value,
-            { allowUnmanaged: true }
+            value, { allowUnmanaged: true }
           ))
       }
     );
+  } catch (error) {
+    // Log exact missing canonical identities. A count-only failure hides the
+    // source rows that require recovery and encourages unsafe guesswork.
+    console.error("[run-odds-refresh] assessment persistence failure", JSON.stringify({
+      dayKey,
+      code: error?.code || null,
+      requiredAssessmentRows: error?.requiredAssessmentRows ?? null,
+      missingRequiredAssessmentFixtureIds: error?.missingRequiredAssessmentFixtureIds || [],
+      exportReason: snap?.reason || null,
+      exportPreservedExisting: snap?.preservedExisting === true,
+      unassessedEligibleIds: canonicalSupplement.unassessedModelEvidenceEligibleFixtureIds || []
+    }));
+    throw error;
+  }
 
   return {
     ok: true,
@@ -380,6 +453,25 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
   };
 }
 
+// CLI diagnostics are an allowlist: never serialize an arbitrary Error object.
+export function fatalAssessmentDiagnostic(error) {
+  const ids = error?.missingRequiredAssessmentFixtureIds;
+  const hasCoverageEvidence = error?.code ===
+    "persisted_model_assessment_coverage_incomplete" ||
+    error?.code === "persisted_model_assessments_missing";
+  if (!hasCoverageEvidence) return null;
+  return {
+    code: error.code,
+    dayKey: error.dayKey || null,
+    requiredAssessmentRows: Number.isInteger(error.requiredAssessmentRows)
+      ? error.requiredAssessmentRows : null,
+    missingRequiredAssessmentRows: Number.isInteger(error.missingRequiredAssessmentRows)
+      ? error.missingRequiredAssessmentRows : null,
+    missingRequiredAssessmentFixtureIds: Array.isArray(ids)
+      ? ids.filter(id => typeof id === "string") : []
+  };
+}
+
 const entryUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;
 if (entryUrl === import.meta.url) {
   const args = process.argv.slice(2);
@@ -389,6 +481,8 @@ if (entryUrl === import.meta.url) {
     console.log(JSON.stringify(r, null, 2));
   }).catch(err => {
     console.error("[run-odds-refresh] fatal", String(err?.message || err));
+    const diagnostic = fatalAssessmentDiagnostic(err);
+    if (diagnostic) console.error("[run-odds-refresh] fatal assessment diagnostic", JSON.stringify(diagnostic));
     process.exitCode = 1;
   });
 }

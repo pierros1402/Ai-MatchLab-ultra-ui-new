@@ -4,7 +4,9 @@ import assert from "node:assert/strict";
 import {
   runOddsRefresh,
   assertPersistedAssessmentPostcondition,
-  persistedAssessmentSummary
+  persistedAssessmentSummary,
+  prospectiveCanonicalKickoffDrifts,
+  fatalAssessmentDiagnostic
 } from "./run-odds-refresh.js";
 
 test("new canonical assessments are persisted even between scheduled odds scrapes", async () => {
@@ -389,5 +391,169 @@ test("persisted coverage fails closed when fixture identity normalization has no
       error?.code ===
         "persisted_assessment_fixture_identity_resolution_failed" &&
       error?.sourceFixtureId === "required-a"
+  );
+});
+
+
+test("refresh fails closed when odds exporter returns a strict publication hold", async () => {
+  const snapshot = { matches: [] };
+  await assert.rejects(
+    runOddsRefresh("2026-11-20", {
+      readSnapshot: () => snapshot,
+      readCanonical: () => [{ canonicalId: "required-a" }],
+      fixtureIdResolver: value => value,
+      updateDecision: () => ({ due: false, reason: "not_due" }),
+      opening: async () => { throw new Error("opening not expected"); },
+      exportFixtures: async () => ({ changed: false }),
+      supplement: () => ({
+        canonicalFixtures: 1,
+        modelEvidenceEligibleFixtureIds: ["required-a"]
+      }),
+      exportOdds: () => ({
+        ok: false,
+        reason: "ambiguous_canonical_ownership_publication_hold",
+        ownershipIssues: { ambiguousCanonicalMatches: 1 },
+        changed: false
+      })
+    }),
+    error => error?.code === "odds_snapshot_publication_hold" &&
+      error?.dayKey === "2026-11-20" &&
+      error?.exportReason === "ambiguous_canonical_ownership_publication_hold" &&
+      error?.ownershipIssues?.ambiguousCanonicalMatches === 1
+  );
+});
+
+test("fatal diagnostic preserves exact missing canonical IDs without leaking arbitrary error data", () => {
+  const error = new Error("coverage incomplete");
+  error.code = "persisted_model_assessment_coverage_incomplete";
+  error.dayKey = "2026-11-20";
+  error.requiredAssessmentRows = 41;
+  error.missingRequiredAssessmentRows = 4;
+  error.missingRequiredAssessmentFixtureIds = ["cid-a", "cid-b", "cid-c", "cid-d"];
+  error.privateToken = "must-not-log";
+  const diagnostic = fatalAssessmentDiagnostic(error);
+  assert.deepEqual(diagnostic, {
+    code: "persisted_model_assessment_coverage_incomplete",
+    dayKey: "2026-11-20",
+    requiredAssessmentRows: 41,
+    missingRequiredAssessmentRows: 4,
+    missingRequiredAssessmentFixtureIds: ["cid-a", "cid-b", "cid-c", "cid-d"]
+  });
+  assert.equal(JSON.stringify(diagnostic).includes("must-not-log"), false);
+  assert.equal(fatalAssessmentDiagnostic(new Error("unrelated")), null);
+});
+
+test("zero-assessment error preserves exact canonical required identities", () => {
+  assert.throws(
+    () => assertPersistedAssessmentPostcondition(
+      { matches: [{ matchId: "required-a", aiAssessment: null }] },
+      "2026-11-20",
+      {
+        canonicalFixtureCount: 2,
+        canonicalFixtureIds: ["required-a", "required-b"],
+        requiredAssessmentFixtureIds: ["required-a", "required-b"]
+      }
+    ),
+    error => error?.code === "persisted_model_assessments_missing" &&
+      error?.requiredAssessmentRows === 2 &&
+      error?.missingRequiredAssessmentRows === 2 &&
+      JSON.stringify(error?.missingRequiredAssessmentFixtureIds) ===
+        JSON.stringify(["required-a", "required-b"])
+  );
+});
+
+test("fixture export throwing fails closed before opening, supplement or odds export", async () => {
+  let touched = false;
+  await assert.rejects(
+    runOddsRefresh("2026-11-21", {
+      readSnapshot: () => ({ matches: [] }),
+      updateDecision: () => ({ due: true, reason: "forced" }),
+      exportFixtures: async () => { throw new Error("fixture export failed"); },
+      opening: async () => { touched = true; },
+      supplement: () => { touched = true; },
+      exportOdds: () => { touched = true; }
+    }),
+    error => error?.code === "fixtures_snapshot_export_failed"
+      && error?.dayKey === "2026-11-21"
+  );
+  assert.equal(touched, false);
+});
+
+test("fixture exporter explicit ok false fails closed with no downstream odds mutation", async () => {
+  let oddsWritten = false;
+  await assert.rejects(
+    runOddsRefresh("2026-11-21", {
+      readSnapshot: () => ({ matches: [] }),
+      updateDecision: () => ({ due: false, reason: "not_due" }),
+      exportFixtures: async () => ({ ok: false, changed: false }),
+      opening: async () => { throw new Error("unexpected opening"); },
+      supplement: () => ({ canonicalFixtures: 0, modelEvidenceEligibleFixtureIds: [] }),
+      exportOdds: () => { oddsWritten = true; return { ok: true }; }
+    }),
+    error => error?.code === "fixtures_snapshot_export_failed"
+  );
+  assert.equal(oddsWritten, false);
+});
+
+test("prospective same-native kickoff drift triggers opening without approving stale model", async () => {
+  const fixture = { canonicalId: "cid-a", dayKey: "2026-11-21", leagueSlug: "test.1",
+    homeTeam: "Alpha", awayTeam: "Beta", kickoffUtc: "2026-11-21T16:00:00Z",
+    providerIds: { flashscore: "native-a" } };
+  const prior = { canonicalId: "cid-a", dayKey: "2026-11-21", leagueSlug: "test.1",
+    home: "Alpha", away: "Beta", kickoffUtc: "2026-11-21T13:00:00Z",
+    providerIds: { flashscore: "native-a" }, aiAssessment: { markets: { OU25: {} } } };
+  const nowMs = Date.parse("2026-11-20T15:00:00Z");
+  assert.deepEqual(prospectiveCanonicalKickoffDrifts({ matches: [prior] }, [fixture], nowMs), ["cid-a"]);
+  assert.deepEqual(prospectiveCanonicalKickoffDrifts({ matches: [prior] }, [fixture],
+    Date.parse("2026-11-21T17:00:00Z")), []);
+  assert.deepEqual(prospectiveCanonicalKickoffDrifts({ matches: [{ ...prior,
+    providerIds: { flashscore: "wrong-event" } }] }, [fixture], nowMs), []);
+  assert.deepEqual(prospectiveCanonicalKickoffDrifts({ matches: [{ ...prior,
+    home: "Other" }] }, [fixture], nowMs), []);
+  assert.deepEqual(prospectiveCanonicalKickoffDrifts({ matches: [{ ...prior,
+    kickoffUtc: fixture.kickoffUtc }] }, [fixture], nowMs), []);
+
+  let openingCalled = false;
+  const heldSnapshot = { matches: [prior] };
+  await assert.rejects(
+    runOddsRefresh("2026-11-21", {
+      readSnapshot: () => heldSnapshot,
+      readCanonical: () => [fixture],
+      nowMs,
+      updateDecision: () => ({ due: false, reason: "not_due" }),
+      opening: async () => { openingCalled = true; },
+      exportFixtures: async () => ({ ok: true, changed: false }),
+      supplement: () => ({ canonicalFixtures: 1,
+        modelEvidenceEligibleFixtureIds: ["cid-a"] }),
+      exportOdds: () => ({ ok: false, changed: false,
+        reason: "ambiguous_canonical_ownership_publication_hold" })
+    }),
+    error => error?.code === "odds_snapshot_publication_hold"
+  );
+  assert.equal(openingCalled, true);
+});
+
+test("already-started kickoff drift does not force a retrospective odds opening", async () => {
+  const fixture = { canonicalId: "cid-a", dayKey: "2026-11-21", leagueSlug: "test.1",
+    homeTeam: "Alpha", awayTeam: "Beta", kickoffUtc: "2026-11-21T16:00:00Z",
+    providerIds: { flashscore: "native-a" } };
+  const prior = { canonicalId: "cid-a", dayKey: "2026-11-21", leagueSlug: "test.1",
+    home: "Alpha", away: "Beta", kickoffUtc: "2026-11-21T13:00:00Z",
+    providerIds: { flashscore: "native-a" }, aiAssessment: { markets: { OU25: {} } } };
+  const nowMs = Date.parse("2026-11-21T17:00:00Z");
+  assert.deepEqual(prospectiveCanonicalKickoffDrifts({ matches: [prior] }, [fixture], nowMs), []);
+  await assert.rejects(
+    runOddsRefresh("2026-11-21", {
+      readSnapshot: () => ({ matches: [prior] }),
+      readCanonical: () => [fixture], nowMs,
+      updateDecision: () => ({ due: false, reason: "not_due" }),
+      opening: async () => { throw Error("must not open retrospectively"); },
+      exportFixtures: async () => ({ ok: true, changed: false }),
+      supplement: () => ({ canonicalFixtures: 1,
+        modelEvidenceEligibleFixtureIds: [] }),
+      exportOdds: () => ({ ok: false, changed: false,
+        reason: "ambiguous_canonical_ownership_publication_hold" })
+    }),
+    error => error?.code === "odds_snapshot_publication_hold"
   );
 });

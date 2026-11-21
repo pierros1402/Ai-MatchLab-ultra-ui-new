@@ -91,6 +91,29 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
       }
     }
     if (write) save(queueFile, queue); // Durable alarm is checkpointed before attempting acquisition.
+    // Diagnostics are persisted and may reach GitHub logs: only export fixed, bounded codes.
+    const safeExportReason = value =>
+      typeof value === "string" && /^[a-z][a-z0-9_]{0,95}$/.test(value)
+        ? value : "untrusted_export_reason";
+    const safeCount = value => Number.isSafeInteger(value) && value >= 0 ? value : 0;
+    const safeOwnershipIssues = value => {
+      if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+      const result = {};
+      for (const key of ["orphanAssessments", "ambiguousCanonicalMatches",
+                         "ambiguousAssessmentAliases", "canonicalRowsMissingIdentity"]) {
+        if (Object.hasOwn(value, key)) result[key] = safeCount(value[key]);
+      }
+      if (Array.isArray(value.strictIdentityHolds)) {
+        result.strictIdentityHolds = value.strictIdentityHolds.slice(0, 25).map(row => ({
+          canonicalId: typeof row?.canonicalId === "string" && /^cid_[a-z0-9_]{1,155}$/.test(row.canonicalId)
+            ? row.canonicalId : "redacted",
+          reason: safeExportReason(row?.reason)
+        }));
+        if (value.strictIdentityHolds.length > 25)
+          result.omittedStrictIdentityHolds = value.strictIdentityHolds.length - 25;
+      }
+      return result;
+    };
     let supplement = null;
     const upcoming = join.canonicalRowsWithoutAssessment.filter(row => Date.parse(row.kickoffUtc) > nowMs);
     if (write && upcoming.length) {
@@ -107,7 +130,15 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
       if (supplement.assessmentRowsWritten > 0) {
         const exportOdds = dependencies.exportOdds || (await import("./export-odds-snapshot-day.js")).exportOddsSnapshotDay;
         const exported = await exportOdds(day);
-        if (exported?.ok !== true) throw new Error("alarm_odds_export_failed");
+        if (exported?.ok !== true) {
+          // Preserve the exporter hold reason and canonical ownership evidence.
+          // A generic alarm error hides the actual source-bound repair target.
+          const reason = safeExportReason(exported?.reason);
+          const error = new Error(`alarm_odds_export_failed:${reason}`);
+          error.exportReason = reason;
+          error.ownershipIssues = safeOwnershipIssues(exported?.ownershipIssues);
+          throw error;
+        }
         if (exported.changed) oddsWrittenDays.push(day);
         // Resolve only from the persisted public input, not ephemeral memory.
         const persisted = dependencies.persistedOdds ? dependencies.persistedOdds(day) : load(resolveDataPath("deploy-snapshots", day, "odds.json"));
@@ -117,8 +148,22 @@ export async function runValueDataAlarmDay(dayKey, { write = false, research = f
         save(queueFile, queue);
       }
       } catch (error) {
-        acquisitionErrors.push({ day, error: error.message });
-        supplement = { status: "ASSESSMENT_PRODUCTION_FAILED", error: error.message };
+        acquisitionErrors.push({
+          day,
+          error: error.message,
+          ...(error.exportReason ? {
+            exportReason: error.exportReason,
+            ownershipIssues: error.ownershipIssues
+          } : {})
+        });
+        supplement = {
+          status: "ASSESSMENT_PRODUCTION_FAILED",
+          error: error.message,
+          ...(error.exportReason ? {
+            exportReason: error.exportReason,
+            ownershipIssues: error.ownershipIssues
+          } : {})
+        };
         for (const row of upcoming) {
           const incident = queue.incidents[row.canonicalId];
           if (incident && incident.status !== "RESOLVED") incident.lastProductionError = { at: new Date(nowMs).toISOString(), error: error.message };
