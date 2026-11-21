@@ -30,7 +30,7 @@ export function mergeCertifiedOddsAssessments(existingRows, candidateRows, canon
     if (previousCertified.has(key)) throw new Error(`duplicate_previous_certified_identity:${key}`);
     previousCertified.set(key, row);
   }
-  let carriedRows = 0, restoredModels = 0;
+  let carriedRows = 0, restoredModels = 0, retainedCertifiedPriorRows = 0;
   for (const [key, prior] of previousCertified) {
     const matches = grouped.get(key) || [];
     if (matches.length > 1) throw new Error(`ambiguous_candidate_identity:${key}`);
@@ -44,16 +44,27 @@ export function mergeCertifiedOddsAssessments(existingRows, candidateRows, canon
       if (!certified(current)) throw new Error(`uncertified_candidate_assessment:${key}`);
       continue;
     }
-    for (const field of ["dayKey", "leagueSlug", "home", "away", "kickoffUtc"]) {
-      if (String(current[field] ?? "") !== String(prior[field] ?? ""))
-        throw new Error(`prior_assessment_identity_drift:${key}:${field}`);
+    const identityDrift = ["dayKey", "leagueSlug", "home", "away", "kickoffUtc"].some(
+      field => String(current[field] ?? "") !== String(prior[field] ?? "")
+    );
+    const providerDrift =
+      JSON.stringify(current.providerIds || {}) !== JSON.stringify(prior.providerIds || {});
+    if (identityDrift || providerDrift) {
+      // The current unverified row must not donate bookmaker markets or team
+      // identity to a previously certified model. Keep the entire prior row
+      // intact in the derived snapshot; original current odds memory is untouched.
+      candidates[index] = {...prior};
+      retainedCertifiedPriorRows++;
+      continue;
     }
-    if (JSON.stringify(current.providerIds || {}) !== JSON.stringify(prior.providerIds || {}))
-      throw new Error(`prior_assessment_provider_drift:${key}`);
     const proposed = {...current, aiAssessment: prior.aiAssessment};
-    if (!certified(proposed)) throw new Error(`prior_assessment_not_certified_on_current:${key}`);
+    if (!certified(proposed)) {
+      candidates[index] = {...prior};
+      retainedCertifiedPriorRows++;
+      continue;
+    }
     candidates[index] = proposed;
     restoredModels++;
   }
-  return {matches: candidates, carriedRows, restoredModels};
+  return {matches: candidates, carriedRows, restoredModels, retainedCertifiedPriorRows};
 }
