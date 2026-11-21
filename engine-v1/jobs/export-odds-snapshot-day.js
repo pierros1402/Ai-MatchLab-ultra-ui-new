@@ -159,8 +159,14 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
         throw new Error(`certified_assessment_merge_incomplete:${dayKey}:${stillRegressing}`);
       }
       const rechecked = classifyAssessmentPublication(candidateMatches, canonical);
-      if (rechecked.holds.length) {
-        throw new Error(`certified_assessment_merge_identity_hold:${dayKey}:${rechecked.holds.length}`);
+      const rejoined = joinCanonicalFixturesWithModelAssessments(
+        canonical, resolveCanonicalAssessmentOwnership(canonical, candidateMatches).matches
+      );
+      if (rechecked.holds.length ||
+          rejoined.ambiguousCanonicalMatches.length ||
+          rejoined.ambiguousAssessmentAliases.length ||
+          rejoined.canonicalRowsMissingIdentity.length) {
+        throw new Error(`certified_assessment_merge_identity_hold:${dayKey}:${rechecked.holds.length}:${rejoined.ambiguousCanonicalMatches.length}:${rejoined.ambiguousAssessmentAliases.length}`);
       }
       hash = contentHash(candidateMatches);
     } else if (regressionReason) {
