@@ -477,6 +477,17 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
                   }
                 : null,
           markets,
+          // Additive, producer-observed lineage for NEW prospective assessments.
+          // Not an independent provider schedule certificate or a permission
+          // to retime/reuse a previously frozen model after kickoff changes.
+          generationEvidence: {
+            schema: "ai-matchlab.assessment-generation-evidence.v1",
+            computedAtUtc: new Date(nowMs).toISOString(),
+            canonicalId,
+            sourceFixtureKickoffUtc: new Date(kickoffMs).toISOString(),
+            nativeProviderIds: assessmentIdentityFields(fixture).providerIds || {},
+            provenanceStatus: "PRODUCER_OBSERVATION_NOT_INDEPENDENTLY_CERTIFIED"
+          },
           inputSource:
             assessmentPath ===
               "cross_competition_team_form_fallback"

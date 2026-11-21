@@ -12,6 +12,7 @@ import { athensDayKey } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { getOddsForDay } from "../storage/odds-memory-db.js";
 import { assessmentIdentityFields } from "../storage/assessment-read-view.js";
+import { canonicalTeamName } from "../storage/team-aliases-db.js";
 import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
 import {
   resolveCanonicalAssessmentOwnership,
@@ -33,7 +34,19 @@ export function assessmentRowCount(matches = []) {
   ).length;
 }
 
-export function snapshotRegressionReason(existingMatches = [], candidateMatches = [], canonicalFixtures = null) {
+// Only a preexisting, league-scoped canonical alias may reconcile two team
+// labels; never infer a spelling equivalence from suffixes or fuzzy names.
+export function approvedPublicationTeamAliasEquivalent(leagueSlug, left, right) {
+  if (!leagueSlug || !left || !right) return false;
+  const a = canonicalTeamName(leagueSlug, left);
+  const b = canonicalTeamName(leagueSlug, right);
+  return Boolean(a && b && a === b);
+}
+const publicationIdentityOptions = {
+  approvedTeamAliasEquivalent: approvedPublicationTeamAliasEquivalent
+};
+
+export function snapshotRegressionReason(existingMatches = [], candidateMatches = [], canonicalFixtures = null, identityOptions = {}) {
   const existing = Array.isArray(existingMatches) ? existingMatches : [];
   const candidate = Array.isArray(candidateMatches) ? candidateMatches : [];
 
@@ -43,7 +56,7 @@ export function snapshotRegressionReason(existingMatches = [], candidateMatches 
 
   if (Array.isArray(canonicalFixtures)) {
     const certifiedIds = rows => {
-      const certified = classifyAssessmentPublication(rows, canonicalFixtures).publishable.map(item => item.row);
+      const certified = classifyAssessmentPublication(rows, canonicalFixtures, identityOptions).publishable.map(item => item.row);
       const joined = joinCanonicalFixturesWithModelAssessments(canonicalFixtures, certified);
       return new Set(joined.joinedMatches.map(row => row.canonicalId));
     };
@@ -90,7 +103,7 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
   // this derived public snapshot. Never alter odds memory or historic models.
   const sourceMatches = ownership.matches;
   const publication = joinCanonicalFixturesWithModelAssessments(canonical, sourceMatches);
-  const strictIdentity = classifyAssessmentPublication(sourceMatches, canonical);
+  const strictIdentity = classifyAssessmentPublication(sourceMatches, canonical, publicationIdentityOptions);
   if (strictIdentity.holds.length > 0 ||
       publication.ambiguousCanonicalMatches.length > 0 ||
       publication.ambiguousAssessmentAliases.length > 0 ||
@@ -135,7 +148,7 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
 
   if (existing) {
     const existingMatches = Array.isArray(existing?.matches) ? existing.matches : [];
-    const regressionReason = snapshotRegressionReason(resolveCanonicalAssessmentOwnership(canonical, existingMatches).matches, candidateMatches, canonical);
+    const regressionReason = snapshotRegressionReason(resolveCanonicalAssessmentOwnership(canonical, existingMatches).matches, candidateMatches, canonical, publicationIdentityOptions);
     if (regressionReason) {
       return {
         ok: true,

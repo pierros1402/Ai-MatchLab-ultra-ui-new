@@ -35,8 +35,20 @@ export function mergeAssessmentReadView(liveRows = [], persistedRows = [], dayKe
     if (publication && prior) {
       // Keep model provenance attached to its own source row. Only carry a
       // persisted model onto fresh bookmaker prices after independent identity proof.
-      const carry = !hasModelAssessment(row) && assessPublicationIdentity(prior, [row]).status === "publish";
-      byId.set(id, carry ? { ...row, aiAssessment: prior.aiAssessment } : row);
+      const verification = !hasModelAssessment(row)
+        ? assessPublicationIdentity(prior, [row])
+        : null;
+      const carry = verification?.status === "publish";
+      // When fresh prices lack independent provider evidence, do not attach
+      // the old model to those prices. Preserve its ORIGINAL persisted row
+      // intact for later canonical certification, instead of silently erasing
+      // a previously verified model. Any identity contradiction still rejects
+      // the carry; the strict publication gate remains authoritative.
+      const preservePrior = verification?.status === "quarantine" &&
+        verification.reason === "provider_identity_not_corrobated";
+      byId.set(id, carry
+        ? { ...row, aiAssessment: prior.aiAssessment }
+        : preservePrior ? prior : row);
       continue;
     }
     byId.set(id, prior ? {

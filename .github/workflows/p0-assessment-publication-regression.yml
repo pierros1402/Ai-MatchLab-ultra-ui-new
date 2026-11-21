@@ -1,0 +1,65 @@
+name: P0 assessment publication safety regression
+
+on:
+  push:
+    branches:
+      - fix/p0-assessment-publication-gates-20261120
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  assessment-publication-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact repair branch
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: engine-v1/package-lock.json
+      - name: Install engine dependencies
+        run: npm ci --prefix engine-v1 --ignore-scripts
+      - name: Check changed JavaScript syntax
+        run: |
+          node --check engine-v1/jobs/export-odds-snapshot-day.js
+          node --check engine-v1/jobs/export-odds-snapshot-day.test.js
+          node --check engine-v1/core/assessment-publication-identity.js
+          node --check engine-v1/core/assessment-publication-identity.test.js
+          node --check engine-v1/jobs/p0-assessment-ephemeral-export-replay.js
+          node --check engine-v1/jobs/p0-assessment-readonly-replay.js
+          node --check engine-v1/jobs/canonical-assessment-supplement.js
+          node --check engine-v1/jobs/canonical-assessment-supplement.test.js
+          node --check engine-v1/jobs/run-odds-refresh.js
+          node --check engine-v1/jobs/run-odds-refresh.test.js
+          node --check engine-v1/jobs/run-value-data-alarm-day.js
+          node --check engine-v1/jobs/run-value-data-alarm-day.test.js
+          node --check engine-v1/storage/assessment-read-view.js
+          node --check engine-v1/storage/assessment-read-view.test.js
+      - name: Run source-bound assessment refresh regression
+        run: |
+          node --test engine-v1/core/assessment-publication-identity.test.js engine-v1/jobs/canonical-assessment-supplement.test.js engine-v1/jobs/export-odds-snapshot-day.test.js engine-v1/jobs/run-odds-refresh.test.js engine-v1/jobs/run-value-data-alarm-day.test.js engine-v1/storage/assessment-read-view.test.js
+      - name: Full engine JavaScript syntax inventory
+        run: |
+          find engine-v1 -type f -name '*.js' -not -path '*/node_modules/*' -print0 | sort -z | xargs -0 -r -n 1 node --check
+      - name: Prepare root module tree for integration tests
+        run: |
+          # Some full-engine integration tests copy repo-root node_modules to a
+          # temporary isolated workspace. This only changes the CI runner.
+          cp -a engine-v1/node_modules ./node_modules
+      - name: Full engine Node regression
+        run: |
+          find engine-v1 -type f -name '*.test.js' -not -path '*/node_modules/*' -print0 | sort -z | xargs -0 -r node --test
+      - name: Replay November 20 missing assessment identity evidence read-only
+        run: node engine-v1/jobs/p0-assessment-readonly-replay.js
+      - name: Reproduce exporter in disposable runner checkout only
+        env:
+          AIML_P0_EPHEMERAL_REPLAY: 'yes'
+        run: node engine-v1/jobs/p0-assessment-ephemeral-export-replay.js

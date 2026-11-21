@@ -50,6 +50,14 @@ test("canonical supplement prices upcoming canonical fixtures without bookmaker 
   assert.equal(recorded.length, 1);
   assert.equal(recorded[0].id, "cid_test_home_away_20260814");
   assert.equal(recorded[0].meta.aiAssessment.inputSource, "canonical_fixture_trusted_standings");
+  assert.deepEqual(recorded[0].meta.aiAssessment.generationEvidence, {
+    schema: "ai-matchlab.assessment-generation-evidence.v1",
+    computedAtUtc: new Date(NOW).toISOString(),
+    canonicalId: "cid_test_home_away_20260814",
+    sourceFixtureKickoffUtc: "2026-08-14T18:00:00.000Z",
+    nativeProviderIds: {},
+    provenanceStatus: "PRODUCER_OBSERVATION_NOT_INDEPENDENTLY_CERTIFIED"
+  });
   assert.deepEqual(recorded[0].pricing, { markets: {} });
 });
 
