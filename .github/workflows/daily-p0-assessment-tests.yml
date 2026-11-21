@@ -45,7 +45,7 @@ jobs:
             const bytes = fs.readFileSync(row.path);
             const raw = crypto.createHash("sha256").update(bytes).digest("hex");
             const normalized = crypto.createHash("sha256")
-              .update(bytes.toString("utf8").replaceAll("\\r\\n","\\n")).digest("hex");
+              .update(bytes.toString("utf8").replaceAll("\r\n","\n")).digest("hex");
             const actual = raw === row.sha256 ? raw : normalized;
             if (actual !== row.sha256) {
               console.log(JSON.stringify({key,path:row.path,expected:row.sha256,actual}));
