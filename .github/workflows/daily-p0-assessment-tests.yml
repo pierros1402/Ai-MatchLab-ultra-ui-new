@@ -6,6 +6,8 @@ on:
       - "engine-v1/core/merge-certified-odds-assessments.js"
       - "engine-v1/jobs/export-odds-snapshot-day.js"
       - "engine-v1/jobs/run-odds-refresh.js"
+      - "engine-v1/jobs/run-odds-opening.js"
+      - "engine-v1/jobs/run-odds-opening-prekickoff.test.js"
       - "engine-v1/jobs/daily-p0-certified-odds-merge.test.js"
       - ".github/workflows/daily-p0-assessment-tests.yml"
   workflow_dispatch:
@@ -31,6 +33,8 @@ jobs:
           node --check engine-v1/core/merge-certified-odds-assessments.js
           node --check engine-v1/jobs/export-odds-snapshot-day.js
           node --check engine-v1/jobs/run-odds-refresh.js
+          node --check engine-v1/jobs/run-odds-opening.js
+          node --check engine-v1/jobs/run-odds-opening-prekickoff.test.js
           node --check engine-v1/jobs/daily-p0-certified-odds-merge.test.js
       - name: Audit all V46 producer source hashes (read-only)
         shell: bash
@@ -55,7 +59,7 @@ jobs:
           console.log("V46_SOURCE_BINDING_MISMATCHES="+mismatches);
           NODE
       - name: Run focused regression against real repository modules
-        run: node --test --test-reporter=tap engine-v1/jobs/daily-p0-certified-odds-merge.test.js engine-v1/jobs/run-odds-refresh.test.js
+        run: node --test --test-reporter=tap engine-v1/jobs/daily-p0-certified-odds-merge.test.js engine-v1/jobs/run-odds-refresh.test.js engine-v1/jobs/run-odds-opening-prekickoff.test.js
       - name: Full engine test suite
         shell: bash
         run: |
