@@ -35,7 +35,16 @@ jobs:
       - name: Run focused regression against real repository modules
         run: node --test --test-reporter=tap engine-v1/jobs/daily-p0-certified-odds-merge.test.js engine-v1/jobs/run-odds-refresh.test.js
       - name: Full engine test suite
+        shell: bash
         run: |
+          set +e
           find engine-v1 -type f -name '*.test.js' -not -path '*/node_modules/*' -print0 |
-            xargs -0 -r node --test --test-reporter=tap > /tmp/engine-suite.tap
-          tail -n 30 /tmp/engine-suite.tap
+            xargs -0 -r node --test --test-reporter=tap > /tmp/engine-suite.tap 2>&1
+          status=$?
+          echo "=== ENGINE SUITE TAIL ==="
+          tail -n 90 /tmp/engine-suite.tap
+          if [ "$status" -ne 0 ]; then
+            echo "=== EXACT FAILURES ==="
+            grep -n -A 24 -B 3 -E '^not ok [0-9]+|^# (fail|tests|pass)' /tmp/engine-suite.tap | tail -n 450 || true
+          fi
+          exit "$status"
