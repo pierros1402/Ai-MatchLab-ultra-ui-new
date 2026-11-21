@@ -18,6 +18,7 @@ import {
   joinCanonicalFixturesWithModelAssessments
 } from "../core/plan-b-canonical-membership.js";
 import { classifyAssessmentPublication } from "../core/assessment-publication-identity.js";
+import { mergeCertifiedOddsAssessments } from "../core/merge-certified-odds-assessments.js";
 import {
   overlayProductionEvidenceDocumentReadView,
 } from "../core/production-evidence-identity-overlay.js";
@@ -116,11 +117,12 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
     ...publication.orphanAssessmentRows,
     ...strictIdentity.quarantined.map(x=>x.row)
   ]);
-  const candidateMatches = sourceMatches.map(row => quarantined.has(row)
+  let candidateMatches = sourceMatches.map(row => quarantined.has(row)
     ? { ...row, aiAssessment: null } : row);
   const quarantinedAssessments = sourceMatches.reduce((count, row) =>
     count + (quarantined.has(row) && assessmentRowCount([row]) === 1 ? 1 : 0), 0);
-  const hash = contentHash(candidateMatches);
+  let hash = contentHash(candidateMatches);
+  let certifiedMerge = { carriedRows: 0, restoredModels: 0 };
 
   let existing = null;
   try {
@@ -136,7 +138,32 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
   if (existing) {
     const existingMatches = Array.isArray(existing?.matches) ? existing.matches : [];
     const regressionReason = snapshotRegressionReason(resolveCanonicalAssessmentOwnership(canonical, existingMatches).matches, candidateMatches, canonical);
-    if (regressionReason) {
+    if (regressionReason === "assessment_coverage_regression") {
+      // Previously a complete old odds.json was retained and newly certified
+      // canonical assessments from this cycle were silently excluded. Preserve
+      // old certified evidence *and* the new rows, with strict identity gates.
+      const merged = mergeCertifiedOddsAssessments(
+        existingMatches, candidateMatches, canonical, classifyAssessmentPublication
+      );
+      candidateMatches = merged.matches;
+      certifiedMerge = {
+        carriedRows: merged.carriedRows,
+        restoredModels: merged.restoredModels
+      };
+      const stillRegressing = snapshotRegressionReason(
+        resolveCanonicalAssessmentOwnership(canonical, existingMatches).matches,
+        candidateMatches,
+        canonical
+      );
+      if (stillRegressing) {
+        throw new Error(`certified_assessment_merge_incomplete:${dayKey}:${stillRegressing}`);
+      }
+      const rechecked = classifyAssessmentPublication(candidateMatches, canonical);
+      if (rechecked.holds.length) {
+        throw new Error(`certified_assessment_merge_identity_hold:${dayKey}:${rechecked.holds.length}`);
+      }
+      hash = contentHash(candidateMatches);
+    } else if (regressionReason) {
       return {
         ok: true,
         dayKey,
@@ -174,7 +201,8 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
       decisions: ownership.superseded,
       quarantinedOrphanAssessments: quarantinedAssessments,
       policy: "canonical_join_plus_strict_identity_verified_or_model_quarantined",
-      certifiedAssessmentRows: assessmentRowCount(candidateMatches)
+      certifiedAssessmentRows: assessmentRowCount(candidateMatches),
+      historicalCertifiedMerge: certifiedMerge
     },
     matches: candidateMatches
   };
@@ -210,7 +238,8 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
     count: candidateMatches.length,
     assessmentRows: payload.assessmentRows,
     file,
-    changed: true
+    changed: true,
+    historicalCertifiedMerge: certifiedMerge
   };
 }
 
