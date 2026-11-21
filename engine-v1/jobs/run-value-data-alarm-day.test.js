@@ -216,3 +216,37 @@ test("odds export hold retains exact reason and ownership evidence without resol
     fs.rmSync(root, { recursive: true });
   }
 });
+
+
+test("exporter diagnostics redact unknown fields and bound reason, IDs and hold count", async t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-alarm-bounded-export-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const day = "2099-10-04", nowMs = Date.parse(day + "T08:00:00Z");
+  const fixture = { canonicalId: "cid_bounded_export", leagueSlug: "test.1", homeTeam: "A",
+    awayTeam: "B", kickoffUtc: day + "T20:00:00Z" };
+  const holds = Array.from({ length: 30 }, (_, i) => ({
+    canonicalId: i === 0 ? "sensitive_freeform_id" : "cid_safe_" + i,
+    reason: i === 0 ? "token=private secret" : "kickoff_conflict",
+    secret: "private"
+  }));
+  const out = await runValueDataAlarmDay(day, {
+    write: true, lookAheadDays: 0, nowMs,
+    dependencies: { queueRoot: root, fixtures: () => [fixture], assessments: () => [],
+      standings: () => ({ ok: false }), supplement: () => ({ assessmentRowsWritten: 1 }),
+      exportOdds: async () => ({
+        ok: false, reason: "token=private secret", changed: false,
+        ownershipIssues: { strictIdentityHolds: holds, orphanAssessments: 2,
+          unknownSensitiveField: "private", ambiguousCanonicalMatches: -1 }
+      }) }
+  });
+  const diag = out.report.acquisitionErrors[0];
+  assert.equal(diag.exportReason, "untrusted_export_reason");
+  assert.equal(diag.ownershipIssues.strictIdentityHolds.length, 25);
+  assert.equal(diag.ownershipIssues.omittedStrictIdentityHolds, 5);
+  assert.equal(diag.ownershipIssues.strictIdentityHolds[0].canonicalId, "redacted");
+  assert.equal(diag.ownershipIssues.strictIdentityHolds[0].reason, "untrusted_export_reason");
+  assert.equal(diag.ownershipIssues.ambiguousCanonicalMatches, 0);
+  assert.equal(diag.ownershipIssues.orphanAssessments, 2);
+  assert.equal(JSON.stringify(diag).includes("private"), false);
+  assert.notEqual(out.queue.incidents[fixture.canonicalId].status, "RESOLVED");
+});
