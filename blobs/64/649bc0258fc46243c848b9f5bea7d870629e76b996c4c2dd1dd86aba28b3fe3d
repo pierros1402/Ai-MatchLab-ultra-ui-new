@@ -1,0 +1,210 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "bra.1",
+  "homeTeam": "Vasco da Gama",
+  "awayTeam": "Internacional",
+  "homeWinScore": 0.321,
+  "drawScore": 0.17,
+  "awayWinScore": 0.509,
+  "over15Score": 0.728,
+  "over25Score": 0.597,
+  "over35Score": 0.557,
+  "bttsScore": 0.51,
+  "confidence": 0.788,
+  "signals": [
+    "away_edge",
+    "home_form_decay",
+    "away_form_decay",
+    "form_influence_reduced",
+    "mutual_attack_profile",
+    "matchup_goals_history",
+    "priors_applied",
+    "close_strength_gap",
+    "home_next_1",
+    "away_next_1"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.12,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.439,
+    "expectedAwayGoals": 1.544,
+    "expectedTotalGoals": 2.983,
+    "homeStrength": 0.279,
+    "awayStrength": 0.25,
+    "homeEdge": 0.275,
+    "awayPenalty": 0.066,
+    "recency": {
+      "homeOverall": {
+        "sample": 5,
+        "rawSample": 4,
+        "priorSample": 1,
+        "daysSinceLastMatch": 15,
+        "spanDays": 17,
+        "maxInternalGap": 6,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.365,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.595
+      },
+      "awayOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 182,
+        "daysSinceLastMatch": 15,
+        "spanDays": 18,
+        "maxInternalGap": 7,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.365,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.595
+      },
+      "homeSide": {
+        "sample": 3,
+        "rawSample": 2,
+        "priorSample": 1,
+        "daysSinceLastMatch": 20,
+        "spanDays": 5,
+        "maxInternalGap": 5,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.19,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.414
+      },
+      "awaySide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 182,
+        "daysSinceLastMatch": 22,
+        "spanDays": 11,
+        "maxInternalGap": 11,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.2,
+        "formContinuityWeight": 0.218
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 1,
+      "awayPriorSample": 182,
+      "leaguePriorSample": 1830,
+      "matchupPriorSample": 6
+    },
+    "resolution": {
+      "homeInput": "Vasco da Gama",
+      "awayInput": "Internacional",
+      "homeResolvedKey": "Vasco da Gama",
+      "awayResolvedKey": "Internacional",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Vasco da Gama::Internacional",
+      "matchupResolveScore": 0,
+      "homePriorKey": "bra.1::Vasco da Gama",
+      "awayPriorKey": "bra.1::Internacional",
+      "matchupPriorKey": "bra.1|Internacional|Vasco"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Vasco da Gama",
+      "awayTeamKey": "Internacional",
+      "leagueKey": "bra.1",
+      "matchupKey": "Vasco da Gama::Internacional"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": false,
+    "contextDelta": 0,
+    "contextReasons": [],
+    "aiContext": {
+      "available": true,
+      "importance": "unknown",
+      "stakes": [],
+      "pressure": []
+    }
+  },
+  "contextAdjusted": false,
+  "contextReasons": [],
+  "contextDelta": 0,
+  "band": {
+    "over15": "MEDIUM",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0.04,
+      "awayPenalty": 0.04,
+      "reasons": [
+        "home_next_1",
+        "away_next_1"
+      ]
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "bra.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 15,
+    "awayRestDays": 15,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": 1,
+    "awayNextMatchInDays": 1
+  }
+}
