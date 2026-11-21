@@ -92,7 +92,18 @@ test("Flashscore routing, canonical membership and snapshot publication", async 
   assert.deepEqual(read(), before);
   assert.deepEqual(fs.readdirSync(path.dirname(result.file)), ["odds.json"]);
   recordOddsSnapshot(fixture.canonicalId, { ...recovered, providerIds: { flashscore: "contradiction" } }, {});
-  assert.equal(exportOddsSnapshotDay(day).ok, false);
+  const quarantinedResult = exportOddsSnapshotDay(day);
+  // The conflicting evidence remains untouched in odds memory, while the
+  // previously certified public model is preserved without grafting the
+  // contradictory provider or its bookmaker market.
+  assert.equal(quarantinedResult.ok, true);
+  const persistedAfterConflict = JSON.parse(read());
+  const publiclyCertified = persistedAfterConflict.matches.find(
+    row => row.canonicalId === fixture.canonicalId
+  );
+  assert.ok(publiclyCertified?.aiAssessment?.markets);
+  assert.equal(publiclyCertified.providerIds.flashscore, fixture.providerIds.flashscore);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(memory, fixture.canonicalId + ".json"))).providerIds.flashscore, "contradiction");
   assert.deepEqual(read(), before);
   recordOddsSnapshot(fixture.canonicalId, recovered, {});
   fs.writeFileSync(result.file, "null");

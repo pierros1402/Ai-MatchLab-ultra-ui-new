@@ -1,0 +1,76 @@
+name: Daily P0 assessment regression tests
+
+on:
+  pull_request:
+    paths:
+      - "engine-v1/core/merge-certified-odds-assessments.js"
+      - "engine-v1/jobs/export-odds-snapshot-day.js"
+      - "engine-v1/jobs/run-odds-refresh.js"
+      - "engine-v1/jobs/run-odds-opening.js"
+      - "engine-v1/jobs/run-odds-opening-prekickoff.test.js"
+      - "engine-v1/jobs/daily-p0-certified-odds-merge.test.js"
+      - ".github/workflows/daily-p0-assessment-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Install engine dependencies
+        run: npm ci --prefix engine-v1 --no-audit --no-fund
+      - name: Verify modified JavaScript syntax
+        run: |
+          node --check engine-v1/core/merge-certified-odds-assessments.js
+          node --check engine-v1/jobs/export-odds-snapshot-day.js
+          node --check engine-v1/jobs/run-odds-refresh.js
+          node --check engine-v1/jobs/run-odds-opening.js
+          node --check engine-v1/jobs/run-odds-opening-prekickoff.test.js
+          node --check engine-v1/jobs/daily-p0-certified-odds-merge.test.js
+      - name: Audit all V46 producer source hashes (read-only)
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import crypto from "node:crypto";
+          import {getP0CP4DailyP0V46ProducerBinding} from "./engine-v1/jobs/p0c-p4-family-adapter-contract.js";
+          const bindings = getP0CP4DailyP0V46ProducerBinding().sourceBindings;
+          let mismatches=0;
+          for (const [key, row] of Object.entries(bindings)) {
+            const bytes = fs.readFileSync(row.path);
+            const raw = crypto.createHash("sha256").update(bytes).digest("hex");
+            const normalized = crypto.createHash("sha256")
+              .update(bytes.toString("utf8").replaceAll("\r\n","\n")).digest("hex");
+            const actual = raw === row.sha256 ? raw : normalized;
+            if (actual !== row.sha256) {
+              console.log(JSON.stringify({key,path:row.path,expected:row.sha256,actual}));
+              mismatches++;
+            }
+          }
+          console.log("V46_SOURCE_BINDING_MISMATCHES="+mismatches);
+          NODE
+      - name: Run focused regression against real repository modules
+        run: node --test --test-reporter=tap engine-v1/jobs/daily-p0-certified-odds-merge.test.js engine-v1/jobs/run-odds-refresh.test.js engine-v1/jobs/run-odds-opening-prekickoff.test.js
+      - name: Full engine test suite
+        shell: bash
+        run: |
+          set +e
+          find engine-v1 -type f -name '*.test.js' -not -path '*/node_modules/*' -print0 |
+            xargs -0 -r node --test --test-reporter=tap > /tmp/engine-suite.tap 2>&1
+          status=$?
+          echo "=== ENGINE SUITE TAIL ==="
+          tail -n 90 /tmp/engine-suite.tap
+          if [ "$status" -ne 0 ]; then
+            echo "=== EXACT FAILURES ==="
+            grep -n -A 24 -B 3 -E '^not ok [0-9]+|^# (fail|tests|pass)' /tmp/engine-suite.tap | tail -n 450 || true
+          fi
+          exit "$status"

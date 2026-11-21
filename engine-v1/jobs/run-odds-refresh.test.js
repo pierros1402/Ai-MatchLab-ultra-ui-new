@@ -18,7 +18,7 @@ test("new canonical assessments are persisted even between scheduled odds scrape
     opening: async () => { throw new Error("network scrape should not run"); },
     exportFixtures: async () => ({ changed: false }),
     supplement: () => { supplemented = true; return { canonicalFixtures: 2, modelEvidenceEligibleFixtureIds: ["new"] }; },
-    exportOdds: () => { snapshot.matches.push({ canonicalId: "new", aiAssessment: { markets: { OU25: {} } } }); return { count: 2, changed: true }; }
+    exportOdds: () => { snapshot.matches.push({ canonicalId: "new", aiAssessment: { markets: { OU25: {} } } }); return { ok: true, count: 2, changed: true }; }
   });
   assert.equal(supplemented, true);
   assert.equal(result.due, false);

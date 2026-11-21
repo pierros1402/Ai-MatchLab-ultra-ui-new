@@ -1,0 +1,167 @@
+name: Daily P0 archived recovery sandbox replay
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/daily-p0-recovery-sandbox.yml"
+      - "engine-v1/jobs/export-odds-snapshot-day.js"
+      - "engine-v1/core/merge-certified-odds-assessments.js"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  archived-odds-simulation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Install engine dependencies
+        run: npm ci --prefix engine-v1 --no-audit --no-fund
+      - name: Download original failed-run evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: history-recovery-44888282815-1
+          run-id: 44888282815
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/daily-p0-recovery
+      - name: Verify exact archive manifest and overlay ephemeral runner only
+        env:
+          ARCHIVE_DIR: ${{ runner.temp }}/daily-p0-recovery
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib,shutil,stat,sys
+          root=pathlib.Path(os.environ["ARCHIVE_DIR"]).resolve()
+          doc=json.loads((root/"manifest.json").read_text())
+          expected={"schema":"ai-matchlab.history-recovery-bundle.v1","dayKey":"2026-11-21","runId":"44888282815","attempt":"1"}
+          for k,v in expected.items():
+              if str(doc.get(k))!=v: raise SystemExit("archive_manifest_binding_mismatch:"+k)
+          entries=doc["files"]
+          if len(entries)!=18301: raise SystemExit("archive_file_count_mismatch")
+          seen=set()
+          destination=pathlib.Path.cwd().resolve()
+          for entry in entries:
+              rel=entry["path"]
+              parts=pathlib.PurePosixPath(rel).parts
+              if not parts or parts[0]!="data" or ".." in parts or rel.startswith("/"):raise SystemExit("unsafe_archive_path")
+              if rel in seen:raise SystemExit("duplicate_archive_path")
+              seen.add(rel)
+              file=(root/rel)
+              if not file.is_file() or file.is_symlink():raise SystemExit("archive_nonregular")
+              b=file.read_bytes()
+              if len(b)!=entry["bytes"] or hashlib.sha256(b).hexdigest()!=entry["sha256"]:
+                  raise SystemExit("archive_payload_hash_mismatch:"+rel)
+          print("RESTORE_INPUT_HASHES_PASS="+str(len(seen)))
+          for rel in sorted(seen):
+              target=destination/rel
+              target.parent.mkdir(parents=True,exist_ok=True)
+              shutil.copyfile(root/rel,target)
+          print("EPHEMERAL_DATA_OVERLAY_COMPLETE=18301")
+          print("ARCHIVE_PUBLICATION_APPROVED="+str(doc.get("publicationApproved")))
+          PY
+      - name: Reconstruct required assessment identities at original failed-run cutoff (read-only)
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import crypto from "node:crypto";
+          import {supplementCanonicalAssessments, readCanonicalFixtureDay} from "./engine-v1/jobs/canonical-assessment-supplement.js";
+          import {assertPersistedAssessmentPostcondition} from "./engine-v1/jobs/run-odds-refresh.js";
+          import {resolveProductionEvidenceFixtureIdReadView} from "./engine-v1/core/production-evidence-identity-overlay.js";
+          const day="2026-11-21";
+          const initial=JSON.parse(fs.readFileSync("data/deploy-snapshots/"+day+"/odds.json","utf8"));
+          const archivedCutoff="2026-11-21T12:51:01.000Z";
+          const originalSnapshotSha256=crypto.createHash("sha256")
+            .update(fs.readFileSync("data/deploy-snapshots/"+day+"/odds.json")).digest("hex");
+          const canonical=readCanonicalFixtureDay(day);
+          const summary=supplementCanonicalAssessments(day,{
+            canonicalFixtures: canonical,
+            nowMs:Date.parse(archivedCutoff),
+            recordFn:()=>{ /* STRICTLY no writing in reenactment */ }
+          });
+          const required=summary.modelEvidenceEligibleFixtureIds;
+          if (required.length !== 109) throw new Error("original_required_count_not_reproduced:"+required.length);
+          const originalMissing = [
+            "cid_bol1_abb_aurora_20261121",
+            "cid_ecu1_tecnicouniversitario_deportivocuenca_20261121",
+            "cid_ecu1_universidadcatolicaquito_barcelona_20261121",
+            "cid_ind1_northeastunited_goa_20261121",
+            "cid_portacaportugal_avs_tondela_20261121",
+            "cid_ven1_carabobo_portuguesa_20261121",
+            "cid_ven1_deportivotachira_caracas_20261121"
+          ];
+          const currentSet=new Set(initial.matches.filter(m=>Object.keys(m.aiAssessment?.markets||{}).length).map(m=>m.canonicalId));
+          const originalMissingRecomputed=required.filter(id=>!currentSet.has(id)).sort();
+          if (JSON.stringify(originalMissingRecomputed)!==JSON.stringify([...originalMissing].sort()))
+            throw new Error("original_seven_id_set_not_reproduced");
+          fs.writeFileSync("/tmp/daily-p0-required-2026-11-21.json",JSON.stringify({required,originalMissing}));
+          console.log("RECONSTRUCTED_REQUIRED_SUMMARY="+JSON.stringify({
+            originalSnapshotSha256, archivedCutoff,
+            canonicalCount:canonical.length, requiredCount:required.length,
+            assessmentRows:initial.matches?.filter(m=>Object.keys(m.aiAssessment?.markets||{}).length>0).length
+          }));
+          try {
+            const result=assertPersistedAssessmentPostcondition(initial,day,{
+              canonicalFixtureCount:canonical.length,
+              canonicalFixtureIds:canonical.map(f=>f.canonicalId||f.matchId),
+              requiredAssessmentFixtureIds:required,
+              fixtureIdResolver:v=>resolveProductionEvidenceFixtureIdReadView(v,{allowUnmanaged:true})
+            });
+            console.log("RECONSTRUCTED_COVERAGE="+JSON.stringify(result));
+          } catch(err) {
+            console.log("RECONSTRUCTED_MISSING="+JSON.stringify({
+              code:err.code,required:err.requiredAssessmentRows,
+              missing:err.missingRequiredAssessmentRows,
+              missingIds:err.missingRequiredAssessmentFixtureIds
+            }));
+          }
+          console.log("EVIDENCE_LIMIT=REENACTMENT_WITH_ARCHIVED_POST_FAILURE_INPUTS_NOT_INDEPENDENTLY_FROZEN_PRE_KICKOFF");
+          NODE
+      - name: Replay only derived odds exporter (no acquisition, no promotion)
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import {exportOddsSnapshotDay} from "./engine-v1/jobs/export-odds-snapshot-day.js";
+          import {readCanonicalFixtureDay} from "./engine-v1/jobs/canonical-assessment-supplement.js";
+          import {persistedAssessmentSummary} from "./engine-v1/jobs/run-odds-refresh.js";
+          const day="2026-11-21";
+          const preFile="data/deploy-snapshots/"+day+"/odds.json";
+          const prior=fs.existsSync(preFile) ? JSON.parse(fs.readFileSync(preFile,"utf8")) : null;
+          const before=persistedAssessmentSummary(prior);
+          const result=exportOddsSnapshotDay(day);
+          console.log("REPLAY_ODDS_EXPORT="+JSON.stringify(result));
+          if (result.ok!==true) throw new Error("replay_export_not_approved");
+          const post=JSON.parse(fs.readFileSync(preFile,"utf8"));
+          const after=persistedAssessmentSummary(post);
+          const canonical=readCanonicalFixtureDay(day);
+          const {required,originalMissing}=JSON.parse(fs.readFileSync("/tmp/daily-p0-required-2026-11-21.json","utf8"));
+          const persistedIds=new Set(post.matches.filter(row=>Object.keys(row.aiAssessment?.markets||{}).length)
+            .map(row=>String(row.canonicalId||row.matchId||"")));
+          const missingRequired=required.filter(id=>!persistedIds.has(id));
+          const missingPreviously=originalMissing.filter(id=>!persistedIds.has(id));
+          const quarantined=post.assessmentOwnership?.quarantinedConflictingIdentityAssessments||[];
+          console.log("REPLAY_REQUIRED_COVERAGE="+JSON.stringify({
+            required:required.length,
+            present:required.length-missingRequired.length,
+            missingRequired, missingPreviously,
+            quarantineCount:quarantined.length,
+            quarantineReasons:quarantined
+          }));
+          if (missingRequired.length!==0 || missingPreviously.length!==0)
+            throw new Error("replay_required_assessment_coverage_not_restored");
+          console.log("REPLAY_COUNTS="+JSON.stringify({before,after,canonicalRows:canonical.length,changed:result.changed,preservedExisting:result.preservedExisting||false}));
+          if (after.assessmentRows < before.assessmentRows) throw new Error("replay_assessment_count_regression");
+          console.log("REPLAY_SCOPE=DERIVED_EXPORT_ONLY;HISTORICAL_REQUIRED_DENOMINATOR_NOT_ATTESTED;PUBLICATION_FORBIDDEN");
+          NODE
+      - name: Confirm no remote publishing authority
+        if: always()
+        run: |
+          echo "NO_GIT_PUSH_NO_DEPLOY_NO_CANONICAL_WRITES"
+          git remote -v

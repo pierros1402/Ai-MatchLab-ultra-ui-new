@@ -333,6 +333,16 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
   const canonicalSupplement = supplement(dayKey);
 
   const snap = exportOdds(dayKey);
+  // An exporter identity HOLD is not an empty update or a successful write.
+  // Without this gate the refresh can accidentally verify yesterday's stale
+  // persisted snapshot and misreport the actual failure as missing coverage.
+  if (!snap || snap.ok !== true) {
+    const error = new Error(`odds_export_not_approved:${dayKey}:${snap?.reason || "unknown"}`);
+    error.code = "odds_export_not_approved";
+    error.dayKey = dayKey;
+    error.exportResult = snap ?? null;
+    throw error;
+  }
   const persisted = readSnapshot(dayKey);
 
   const canonicalFixtureIds =
@@ -389,6 +399,15 @@ if (entryUrl === import.meta.url) {
     console.log(JSON.stringify(r, null, 2));
   }).catch(err => {
     console.error("[run-odds-refresh] fatal", String(err?.message || err));
+    if (err?.code === "persisted_model_assessment_coverage_incomplete" || err?.code === "odds_export_not_approved") {
+      console.error("[run-odds-refresh] gate_evidence", JSON.stringify({
+        dayKey: err.dayKey,
+        code: err.code,
+        missingRequiredAssessmentFixtureIds: err.missingRequiredAssessmentFixtureIds || [],
+        requiredAssessmentRows: err.requiredAssessmentRows ?? null,
+        exportResult: err.exportResult || null
+      }));
+    }
     process.exitCode = 1;
   });
 }
