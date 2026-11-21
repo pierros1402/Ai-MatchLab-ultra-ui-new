@@ -66,6 +66,49 @@ jobs:
           print("EPHEMERAL_DATA_OVERLAY_COMPLETE=18301")
           print("ARCHIVE_PUBLICATION_APPROVED="+str(doc.get("publicationApproved")))
           PY
+      - name: Reconstruct required assessment identities at original failed-run cutoff (read-only)
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import crypto from "node:crypto";
+          import {supplementCanonicalAssessments, readCanonicalFixtureDay} from "./engine-v1/jobs/canonical-assessment-supplement.js";
+          import {assertPersistedAssessmentPostcondition} from "./engine-v1/jobs/run-odds-refresh.js";
+          import {resolveProductionEvidenceFixtureIdReadView} from "./engine-v1/core/production-evidence-identity-overlay.js";
+          const day="2026-11-21";
+          const initial=JSON.parse(fs.readFileSync("data/deploy-snapshots/"+day+"/odds.json","utf8"));
+          const archivedCutoff="2026-11-21T12:51:01.000Z";
+          const originalSnapshotSha256=crypto.createHash("sha256")
+            .update(fs.readFileSync("data/deploy-snapshots/"+day+"/odds.json")).digest("hex");
+          const canonical=readCanonicalFixtureDay(day);
+          const summary=supplementCanonicalAssessments(day,{
+            canonicalFixtures: canonical,
+            nowMs:Date.parse(archivedCutoff),
+            recordFn:()=>{ /* STRICTLY no writing in reenactment */ }
+          });
+          const required=summary.modelEvidenceEligibleFixtureIds;
+          console.log("RECONSTRUCTED_REQUIRED_SUMMARY="+JSON.stringify({
+            originalSnapshotSha256, archivedCutoff,
+            canonicalCount:canonical.length, requiredCount:required.length,
+            assessmentRows:initial.matches?.filter(m=>Object.keys(m.aiAssessment?.markets||{}).length>0).length
+          }));
+          try {
+            const result=assertPersistedAssessmentPostcondition(initial,day,{
+              canonicalFixtureCount:canonical.length,
+              canonicalFixtureIds:canonical.map(f=>f.canonicalId||f.matchId),
+              requiredAssessmentFixtureIds:required,
+              fixtureIdResolver:v=>resolveProductionEvidenceFixtureIdReadView(v,{allowUnmanaged:true})
+            });
+            console.log("RECONSTRUCTED_COVERAGE="+JSON.stringify(result));
+          } catch(err) {
+            console.log("RECONSTRUCTED_MISSING="+JSON.stringify({
+              code:err.code,required:err.requiredAssessmentRows,
+              missing:err.missingRequiredAssessmentRows,
+              missingIds:err.missingRequiredAssessmentFixtureIds
+            }));
+          }
+          console.log("EVIDENCE_LIMIT=REENACTMENT_WITH_ARCHIVED_POST_FAILURE_INPUTS_NOT_INDEPENDENTLY_FROZEN_PRE_KICKOFF");
+          NODE
       - name: Replay only derived odds exporter (no acquisition, no promotion)
         run: |
           node --input-type=module <<'NODE'
