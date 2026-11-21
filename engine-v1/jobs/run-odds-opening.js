@@ -87,14 +87,14 @@ export function openingAssessmentPreKickoff(kickoffUtc, nowMs = Date.now()) {
   return Number.isFinite(kickoffMs) && Number.isFinite(nowMs) && kickoffMs > nowMs;
 }
 
-async function main({ fetchFixtures = fetchFlashscoreFixtures, fetchMarket = fetchOddsResilient, fetchReferees = buildRefereeLookup, nowMs = Date.now() } = {}) {
+async function main({ fetchFixtures = fetchFlashscoreFixtures, fetchMarket = fetchOddsResilient, fetchReferees = buildRefereeLookup, nowMs = Date.now(), todayDayKey = athensDayKey(), recordFn = recordOddsSnapshot, patchFn = patchFixtureAssessment } = {}) {
   const summary = process.argv.slice(2).includes("--summary");
   if (summary) {
     console.log(JSON.stringify({ ok: true, odds: getOddsSummary() }, null, 2));
     return;
   }
 
-  const today = athensDayKey();
+  const today = todayDayKey;
   const windowSet = new Set([today, shiftDay(today, 1), shiftDay(today, 2)]);
 
   const leagues = buildLeagueIndex();
@@ -174,7 +174,7 @@ async function main({ fetchFixtures = fetchFlashscoreFixtures, fetchMarket = fet
         const natId = natCid || `fs_${fx.matchId}`;
         const odds = routing.kind === "resolved" ? lookupOdds(fx.home, fx.away, oddsPool) : null;
         if (odds) stats.withOdds++;
-        recordOddsSnapshot(natId, {
+        recordFn(natId, {
           providerIds: { flashscore: fx.matchId },
           canonicalId: natCid, leagueSlug: slug, competition: intl.label,
           home: fx.home, away: fx.away, dayKey, kickoffUtc: fx.kickoffUtc,
@@ -182,7 +182,7 @@ async function main({ fetchFixtures = fetchFlashscoreFixtures, fetchMarket = fet
           oddsBook: odds?.book ?? null,
           ...(nationalAssessment ? { aiAssessment: nationalAssessment } : {})
         }, { markets: odds ? { "1X2": { odds: odds.odds, oddsMax: odds.oddsMax } } : {} });
-        if (nationalAssessment && dayKey) patchFixtureAssessment(fx.home, fx.away, dayKey, nationalAssessment, { canonicalId: natCid, providerIds: { flashscore: fx.matchId }, leagueSlug: slug, kickoffUtc: fx.kickoffUtc });
+        if (nationalAssessment && dayKey) patchFn(fx.home, fx.away, dayKey, nationalAssessment, { canonicalId: natCid, providerIds: { flashscore: fx.matchId }, leagueSlug: slug, kickoffUtc: fx.kickoffUtc });
         stats.attributed++; stats.international++;
         if (nationalAssessment) stats.withAiAssessment++;
         stats.byLeague[slug] = (stats.byLeague[slug] || 0) + 1;
@@ -224,7 +224,7 @@ async function main({ fetchFixtures = fetchFlashscoreFixtures, fetchMarket = fet
       stats.withAiAssessment++;
     }
 
-    const result = recordOddsSnapshot(id, {
+    const result = recordFn(id, {
       providerIds: { flashscore: fx.matchId },
       canonicalId,
       leagueSlug: slug,
@@ -241,7 +241,7 @@ async function main({ fetchFixtures = fetchFlashscoreFixtures, fetchMarket = fet
     // Bridge to canonical store: write assessment under the ESPN/canonical id too,
     // so /details finds it by matchId directly (no findOddsByTeams fallback needed).
     if (aiAssessment && dayKey) {
-      patchFixtureAssessment(fx.home, fx.away, dayKey, aiAssessment, { canonicalId: canonicalId, providerIds: { flashscore: fx.matchId }, leagueSlug: slug, kickoffUtc: fx.kickoffUtc });
+      patchFn(fx.home, fx.away, dayKey, aiAssessment, { canonicalId: canonicalId, providerIds: { flashscore: fx.matchId }, leagueSlug: slug, kickoffUtc: fx.kickoffUtc });
     }
 
     stats.attributed++;
@@ -263,6 +263,7 @@ async function main({ fetchFixtures = fetchFlashscoreFixtures, fetchMarket = fet
     odds: getOddsSummary(),
     guarantees: { canonicalWrites: 0, productionWrite: false, espnUsed: false, oddsApiUsed: false }
   }, null, 2));
+  return stats;
 }
 
 const entryUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;
