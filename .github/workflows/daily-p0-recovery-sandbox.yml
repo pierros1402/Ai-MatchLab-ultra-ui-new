@@ -87,6 +87,21 @@ jobs:
             recordFn:()=>{ /* STRICTLY no writing in reenactment */ }
           });
           const required=summary.modelEvidenceEligibleFixtureIds;
+          if (required.length !== 109) throw new Error("original_required_count_not_reproduced:"+required.length);
+          const originalMissing = [
+            "cid_bol1_abb_aurora_20261121",
+            "cid_ecu1_tecnicouniversitario_deportivocuenca_20261121",
+            "cid_ecu1_universidadcatolicaquito_barcelona_20261121",
+            "cid_ind1_northeastunited_goa_20261121",
+            "cid_portacaportugal_avs_tondela_20261121",
+            "cid_ven1_carabobo_portuguesa_20261121",
+            "cid_ven1_deportivotachira_caracas_20261121"
+          ];
+          const currentSet=new Set(initial.matches.filter(m=>Object.keys(m.aiAssessment?.markets||{}).length).map(m=>m.canonicalId));
+          const originalMissingRecomputed=required.filter(id=>!currentSet.has(id)).sort();
+          if (JSON.stringify(originalMissingRecomputed)!==JSON.stringify([...originalMissing].sort()))
+            throw new Error("original_seven_id_set_not_reproduced");
+          fs.writeFileSync("/tmp/daily-p0-required-2026-11-21.json",JSON.stringify({required,originalMissing}));
           console.log("RECONSTRUCTED_REQUIRED_SUMMARY="+JSON.stringify({
             originalSnapshotSha256, archivedCutoff,
             canonicalCount:canonical.length, requiredCount:required.length,
@@ -126,6 +141,21 @@ jobs:
           const post=JSON.parse(fs.readFileSync(preFile,"utf8"));
           const after=persistedAssessmentSummary(post);
           const canonical=readCanonicalFixtureDay(day);
+          const {required,originalMissing}=JSON.parse(fs.readFileSync("/tmp/daily-p0-required-2026-11-21.json","utf8"));
+          const persistedIds=new Set(post.matches.filter(row=>Object.keys(row.aiAssessment?.markets||{}).length)
+            .map(row=>String(row.canonicalId||row.matchId||"")));
+          const missingRequired=required.filter(id=>!persistedIds.has(id));
+          const missingPreviously=originalMissing.filter(id=>!persistedIds.has(id));
+          const quarantined=post.assessmentOwnership?.quarantinedConflictingIdentityAssessments||[];
+          console.log("REPLAY_REQUIRED_COVERAGE="+JSON.stringify({
+            required:required.length,
+            present:required.length-missingRequired.length,
+            missingRequired, missingPreviously,
+            quarantineCount:quarantined.length,
+            quarantineReasons:quarantined
+          }));
+          if (missingRequired.length!==0 || missingPreviously.length!==0)
+            throw new Error("replay_required_assessment_coverage_not_restored");
           console.log("REPLAY_COUNTS="+JSON.stringify({before,after,canonicalRows:canonical.length,changed:result.changed,preservedExisting:result.preservedExisting||false}));
           if (after.assessmentRows < before.assessmentRows) throw new Error("replay_assessment_count_regression");
           console.log("REPLAY_SCOPE=DERIVED_EXPORT_ONLY;HISTORICAL_REQUIRED_DENOMINATOR_NOT_ATTESTED;PUBLICATION_FORBIDDEN");
