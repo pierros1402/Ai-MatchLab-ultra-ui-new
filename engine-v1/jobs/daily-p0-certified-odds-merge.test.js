@@ -37,14 +37,21 @@ test("certified merge never overwrites a new certified model", () => {
   assert.deepEqual(v.matches[0].aiAssessment, current.aiAssessment);
 });
 
-test("certified merge rejects conflicting team identities", () => {
-  assert.throws(() => merge([row("a")],[{...row("a",false),home:"Other"}],
-    [fixture("a")], classifyAssessmentPublication), /identity_drift/);
+test("certified merge retains exact prior row when candidate team identity conflicts", () => {
+  const candidate={...row("a",false),home:"Other",market:{open:{home:7}}};
+  const v=merge([row("a")],[candidate],[fixture("a")],classifyAssessmentPublication);
+  assert.equal(v.retainedCertifiedPriorRows,1);
+  assert.equal(v.matches[0].home,"Home");
+  assert.equal(v.matches[0].market.open.home,2);
+  assert.deepEqual(v.matches[0].aiAssessment,model);
 });
 
-test("certified merge rejects different provider event IDs", () => {
-  assert.throws(() => merge([row("a")],[{...row("a",false),providerIds:{flashscore:"other"}}],
-    [fixture("a")], classifyAssessmentPublication), /provider_drift/);
+test("certified merge does not graft unverified provider market onto historical model", () => {
+  const candidate={...row("a",false),providerIds:{flashscore:"other"},market:{open:{home:9}}};
+  const v=merge([row("a")],[candidate],[fixture("a")],classifyAssessmentPublication);
+  assert.equal(v.retainedCertifiedPriorRows,1);
+  assert.deepEqual(v.matches[0].providerIds,{flashscore:"a"});
+  assert.equal(v.matches[0].market.open.home,2);
 });
 
 test("certified merge rejects duplicate prior certified rows", () => {
