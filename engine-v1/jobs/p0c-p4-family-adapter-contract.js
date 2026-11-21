@@ -350,6 +350,10 @@ const DAILY_P0_V46_SOURCE_BINDINGS = Object.freeze({
   oddsSnapshotExporter: Object.freeze({
     ...ROUTING_SOURCE_BINDINGS.oddsSnapshotExporter,
     sha256: "c0427e8d98555e6df1f17105172ca9083d81080108ffdf578bee6a8ff97ea15d"
+  }),
+  standaloneValuePipeline: Object.freeze({
+    ...ROUTING_SOURCE_BINDINGS.standaloneValuePipeline,
+    sha256: "d8a392e48077158a0c50f4d7ffbe5c9170ceee8271e825f6a3d0d659950b3f26"
   })
 });
 export function getP0CP4DailyP0V46ProducerBinding() {
