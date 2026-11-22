@@ -15,7 +15,9 @@ import { assessmentIdentityFields } from "../storage/assessment-read-view.js";
 import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
 import {
   resolveCanonicalAssessmentOwnership,
-  joinCanonicalFixturesWithModelAssessments
+  joinCanonicalFixturesWithModelAssessments,
+  exactFixtureAliases,
+  hasModelAssessment
 } from "../core/plan-b-canonical-membership.js";
 import { classifyAssessmentPublication } from "../core/assessment-publication-identity.js";
 import { mergeCertifiedOddsAssessments } from "../core/merge-certified-odds-assessments.js";
@@ -78,6 +80,27 @@ export function contentHash(matches) {
   return crypto.createHash("sha1").update(JSON.stringify(stable)).digest("hex");
 }
 
+// A collision between historical assessment aliases must never suppress
+// unrelated independently certified fixtures. Drop ONLY the model from
+// implicated publication-view rows; source odds/history stay untouched.
+// Re-run the canonical join after quarantine and keep a hard HOLD if any
+// ambiguous ownership survives. No candidate is reassigned by name.
+export function quarantineAmbiguousAssessmentModels(canonical, rows) {
+  const initial = joinCanonicalFixturesWithModelAssessments(canonical, rows);
+  const ambiguous = new Set(initial.ambiguousAssessmentAliases);
+  for (const collision of initial.ambiguousCanonicalMatches) {
+    for (const alias of collision.aliases || []) ambiguous.add(alias);
+  }
+  if (!ambiguous.size) return { rows, quarantinedIds: [], initial };
+  const quarantinedIds = [];
+  const safeRows = rows.map(row => {
+    if (!hasModelAssessment(row) || !exactFixtureAliases(row).some(alias => ambiguous.has(alias))) return row;
+    quarantinedIds.push(String(row.canonicalId || row.matchId || ""));
+    return { ...row, aiAssessment: null };
+  });
+  return { rows: safeRows, quarantinedIds, initial };
+}
+
 export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
   const day = getOddsForDay(dayKey, { publication: true });
   const dir = resolveDataPath("deploy-snapshots", dayKey);
@@ -90,8 +113,10 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
   // Retain raw market/price rows; quarantine orphan model evidence only in
   // this derived public snapshot. Never alter odds memory or historic models.
   const sourceMatches = ownership.matches;
-  const publication = joinCanonicalFixturesWithModelAssessments(canonical, sourceMatches);
-  const strictIdentity = classifyAssessmentPublication(sourceMatches, canonical);
+  const ambiguity = quarantineAmbiguousAssessmentModels(canonical, sourceMatches);
+  const screenedMatches = ambiguity.rows;
+  const publication = joinCanonicalFixturesWithModelAssessments(canonical, screenedMatches);
+  const strictIdentity = classifyAssessmentPublication(screenedMatches, canonical);
   // A conflicting model assessment cannot be published. Quarantine that
   // model row (not its real bookmaker market) rather than blocking unrelated
   // independently certified fixtures. Ambiguous ownership of the canonical
@@ -117,6 +142,7 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
   // Real membership returns original input-row references in orphanAssessmentRows.
   // Distinct object identities are intentional: never match or drop by fuzzy names.
   const quarantined = new Set([
+    ...sourceMatches.filter((row, index) => hasModelAssessment(row) && !hasModelAssessment(screenedMatches[index])),
     ...publication.orphanAssessmentRows,
     ...strictIdentity.quarantined.map(x=>x.row),
     ...strictIdentity.holds.map(x=>x.row)
@@ -208,6 +234,7 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
     assessmentRows: assessmentRowCount(candidateMatches),
     assessmentOwnership: {
       supersededLegacyAssessments: ownership.superseded.length,
+      quarantinedAmbiguousAssessmentIds: ambiguity.quarantinedIds,
       decisions: ownership.superseded,
       quarantinedOrphanAssessments: quarantinedAssessments,
       quarantinedConflictingIdentityAssessments: strictIdentity.holds.map(({row,reason})=>({
