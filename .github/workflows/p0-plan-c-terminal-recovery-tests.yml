@@ -1,0 +1,42 @@
+name: P0 Plan C terminal recovery regression
+
+on:
+  pull_request:
+    paths:
+      - "engine-v1/jobs/settle-plan-c-shadow.js"
+      - "engine-v1/jobs/settle-plan-c-shadow.test.js"
+      - ".github/workflows/plan-c-shadow-daily.yml"
+      - ".github/workflows/p0-plan-c-terminal-recovery-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install engine dependencies
+        run: npm ci --prefix engine-v1 --no-audit --no-fund
+      - name: Validate source and test syntax
+        run: |
+          node --check engine-v1/jobs/settle-plan-c-shadow.js
+          node --check engine-v1/jobs/settle-plan-c-shadow.test.js
+      - name: Plan C exact regression
+        run: node --test --test-reporter=tap engine-v1/jobs/settle-plan-c-shadow.test.js engine-v1/jobs/build-plan-c-shadow-day.test.js
+      - name: Full engine suite
+        shell: bash
+        run: |
+          set +e
+          find engine-v1 -type f -name '*.test.js' -not -path '*/node_modules/*' -print0 | xargs -0 -r node --test --test-reporter=tap > /tmp/engine-suite.tap 2>&1
+          status=$?
+          tail -n 80 /tmp/engine-suite.tap
+          if [ "$status" -ne 0 ]; then
+            grep -n -A 24 -B 3 -E '^not ok [0-9]+|^# (fail|tests|pass)' /tmp/engine-suite.tap | tail -n 450 || true
+          fi
+          exit "$status"
