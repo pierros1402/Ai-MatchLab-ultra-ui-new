@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { planCPredictionSetHash, planCPredictionSignature } from "../value/plan-c-shadow-export.js";
-import { settlePlanCShadow } from "./settle-plan-c-shadow.js";
+import { settlePlanCShadow, recoverLegacyPendingTerminal } from "./settle-plan-c-shadow.js";
 
 function writeJson(filePath, payload) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -202,4 +202,76 @@ test("terminal integrity union rejects corrupted historical FT and VOID without 
       }
     } finally { fs.rmSync(input.root, { recursive: true, force: true }); }
   }
+});
+
+
+test("exact source-bound pending-shaped terminal can be reconstructed only with explicit authorization", () => {
+  const input = setup("FT", 2, 1);
+  try {
+    const options = { dayKey: "2026-08-27", ...input };
+    settlePlanCShadow(options);
+    // Even opt-in recovery must reject unrelated fixture identities.
+    const malformed = JSON.parse(fs.readFileSync(input.outputFile, "utf8"));
+    const row = malformed.records[0];
+    row.state = "SETTLED";
+    row.truth = null;
+    row.pendingReason = "CANONICAL_STATUS_FIRST_HALF";
+    row.brier = null;
+    row.hitRate = null;
+    writeJson(input.outputFile, malformed);
+    const originalBytes = fs.readFileSync(input.outputFile);
+    assert.throws(() => settlePlanCShadow({...options, repairLegacyPendingShapedTerminal: true}),
+      /previous_settled_integrity_invalid/);
+    assert.deepEqual(fs.readFileSync(input.outputFile), originalBytes);
+  } finally { fs.rmSync(input.root, { recursive: true, force: true }); }
+});
+
+test("all generated terminal rows are checked before write and normal FT remains idempotent", () => {
+  const input = setup("FT", 2, 1);
+  try {
+    const options = { dayKey: "2026-08-27", ...input };
+    const first = settlePlanCShadow(options);
+    const original = fs.readFileSync(input.outputFile);
+    assert.equal(first.report.accounting.settled, 1);
+    const second = settlePlanCShadow(options);
+    assert.equal(second.audit.explicitLegacyPendingTerminalRecovery.length, 0);
+    assert.deepEqual(fs.readFileSync(input.outputFile), original);
+  } finally { fs.rmSync(input.root, { recursive: true, force: true }); }
+});
+
+
+test("pinned recovery restores only the exact mislabeled record using authoritative FT", () => {
+  const id = "cid_bra1_cruzeiro_palmeiras_20261119";
+  const signature = "f9b634412aac9e72de2a6e0b1bcad48c91a6eabdb4952e37b0e81df6fe5b8624";
+  const original = {
+    canonicalFixtureId: id, state: "SETTLED", planCPick: false,
+    prediction: {signature, planCPick: false}, truth: null,
+    pendingReason: "CANONICAL_STATUS_FIRST_HALF", brier: null, hitRate: null
+  };
+  const prediction = {
+    canonicalFixtureId: id, predictionSignature: signature, planCPick: false,
+    adjusted: {pOver25: 0.48600796, lambdaHome: 1.283993, lambdaAway: 1.333721},
+    baseline: {pOver25: 0.48593504}
+  };
+  const truth = {
+    canonicalFixtureId: id, status: "FT", scoreHome: 2, scoreAway: 1,
+    sourcePath: "data/canonical-fixtures/2026-11-19/bra.1.json",
+    sourceSha256: "14a2b1b84e6b59bd5b50ed40a3eeb2a6cfa008a13011d4a36031468dc4edcaf6"
+  };
+  assert.equal(recoverLegacyPendingTerminal(original, prediction, truth, false), null);
+  const repaired = recoverLegacyPendingTerminal(original, prediction, truth, true);
+  assert.equal(repaired.state, "SETTLED");
+  assert.equal(repaired.truth.status, "FT");
+  assert.deepEqual([repaired.truth.scoreHome, repaired.truth.scoreAway], [2, 1]);
+  assert.equal(repaired.brier.adjusted, 0.26418782);
+  assert.equal(repaired.brier.baseline, 0.26426278);
+  assert.equal(repaired.hitRate.applicableToHitRate, false);
+  assert.equal(repaired.hitRate.isHit, null);
+  assert.equal(original.truth, null);
+  assert.throws(() => recoverLegacyPendingTerminal(original, prediction, {...truth, status: "FIRST_HALF"}, true),
+    /legacy_pending_terminal_recovery_not_authorized/);
+  assert.throws(() => recoverLegacyPendingTerminal({...original, pendingReason: "UNKNOWN"}, prediction, truth, true),
+    /legacy_pending_terminal_recovery_not_authorized/);
+  assert.throws(() => recoverLegacyPendingTerminal(original, {...prediction, predictionSignature: "f".repeat(64)}, truth, true),
+    /legacy_pending_terminal_recovery_not_authorized/);
 });
