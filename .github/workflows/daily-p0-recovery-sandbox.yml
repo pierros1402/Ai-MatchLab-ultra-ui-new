@@ -99,8 +99,17 @@ jobs:
           ];
           const currentSet=new Set(initial.matches.filter(m=>Object.keys(m.aiAssessment?.markets||{}).length).map(m=>m.canonicalId));
           const originalMissingRecomputed=required.filter(id=>!currentSet.has(id)).sort();
-          if (JSON.stringify(originalMissingRecomputed)!==JSON.stringify([...originalMissing].sort()))
+          if (JSON.stringify(originalMissingRecomputed)!==JSON.stringify([...originalMissing].sort())) {
+            console.log("ORIGINAL_SEVEN_SET_DISCREPANCY="+JSON.stringify({
+              archivedCutoff,requiredCount:required.length,
+              expectedMissing:[...originalMissing].sort(),
+              observedMissing:originalMissingRecomputed,
+              unexpectedMissing:originalMissingRecomputed.filter(id=>!originalMissing.includes(id)),
+              expectedButNowPresent:originalMissing.filter(id=>!originalMissingRecomputed.includes(id)),
+              assessedCanonicalIds: [...currentSet].sort()
+            }));
             throw new Error("original_seven_id_set_not_reproduced");
+          }
           fs.writeFileSync("/tmp/daily-p0-required-2026-11-21.json",JSON.stringify({required,originalMissing}));
           console.log("RECONSTRUCTED_REQUIRED_SUMMARY="+JSON.stringify({
             originalSnapshotSha256, archivedCutoff,
