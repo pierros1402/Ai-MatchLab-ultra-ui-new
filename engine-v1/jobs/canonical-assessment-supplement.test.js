@@ -666,3 +666,32 @@ test("model evidence eligibility remains visible when pricing returns no markets
     0
   );
 });
+
+test("canonical supplement records publication names for an explicit acquisition alias", () => {
+  const metaRows = [];
+  const fixture = {
+    canonicalId: "cid_ecu1_ligaquito_aucas_20261122",
+    canonicalAliases: ["cid_ecu1_lduquito_aucas_20261122"],
+    providerIds: { espn: "401921327" },
+    leagueSlug: "ecu.1",
+    dayKey: "2026-11-22",
+    kickoffUtc: "2026-11-22T21:30Z",
+    homeTeam: "Liga de Quito",
+    awayTeam: "Aucas"
+  };
+  supplementCanonicalAssessments(fixture.dayKey, {
+    nowMs: Date.parse("2026-11-22T04:00Z"),
+    canonicalFixtures: [fixture],
+    readStandingsFn: () => null,
+    resolveAliasesFn: (_slug, name) => [name],
+    formFn: () => ({ sample: 6, gfRate: 1, gaRate: 1, ppg: 1 }),
+    xgFn: noRates,
+    recordFn: (_id, meta) => metaRows.push(meta)
+  });
+  assert.equal(metaRows.length, 1);
+  assert.equal(metaRows[0].home, "liga de quito");
+  assert.equal(metaRows[0].away, fixture.awayTeam);
+  assert.deepEqual(metaRows[0].providerIds, fixture.providerIds);
+  assert.deepEqual(metaRows[0].canonicalAliases, fixture.canonicalAliases);
+  assert.equal(fixture.homeTeam, "Liga de Quito");
+});
