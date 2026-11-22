@@ -355,8 +355,14 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
       )
       .filter(Boolean);
 
-  const persistence =
-    assertPersistedAssessmentPostcondition(
+  // The exporter has already atomically written the identity-screened
+  // snapshot. On the hourly durable writer, checkpoint certified progress even
+  // if some required models are missing. The separate final workflow step
+  // MUST still fail the coverage gate after the checkpoint commit.
+  let persistence;
+  let coverageGate = null;
+  try {
+    persistence = assertPersistedAssessmentPostcondition(
       persisted,
       dayKey,
       {
@@ -366,8 +372,7 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
         canonicalFixtureIds,
 
         requiredAssessmentFixtureIds:
-          canonicalSupplement
-            .modelEvidenceEligibleFixtureIds,
+          canonicalSupplement.modelEvidenceEligibleFixtureIds,
 
         fixtureIdResolver: opts.fixtureIdResolver || (value =>
           resolveProductionEvidenceFixtureIdReadView(
@@ -376,9 +381,28 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
           ))
       }
     );
+  } catch (error) {
+    const checkpointable =
+      error?.code === "persisted_model_assessment_coverage_incomplete" ||
+      error?.code === "persisted_model_assessments_missing";
+    if (!opts.checkpointIncompleteCoverage || !checkpointable) throw error;
+    coverageGate = {
+      status: "FAILED",
+      code: error.code,
+      dayKey,
+      requiredAssessmentRows: error.requiredAssessmentRows ??
+        canonicalSupplement.modelEvidenceEligibleFixtureIds?.length ?? 0,
+      missingRequiredAssessmentFixtureIds:
+        error.missingRequiredAssessmentFixtureIds || [],
+      missingRequiredAssessmentRows:
+        error.missingRequiredAssessmentRows ?? null
+    };
+    persistence = persistedAssessmentSummary(persisted);
+  }
 
   return {
-    ok: true,
+    ok: coverageGate === null,
+    coverageGate,
     dayKey,
     due: decision.due,
     reason: decision.reason,
@@ -395,7 +419,19 @@ if (entryUrl === import.meta.url) {
   const args = process.argv.slice(2);
   const dayKey = args.find(a => /^\d{4}-\d{2}-\d{2}$/.test(a)) || athensDayKey();
   const force = args.includes("--force");
-  runOddsRefresh(dayKey, { force }).then(r => {
+  const checkpointIncompleteCoverage = args.includes("--checkpoint-incomplete-coverage");
+  // This mode is only safe when the caller records a durable final status
+  // outside the repository and enforces it after the data checkpoint commit.
+  const statusFile = process.env.ODDS_COVERAGE_STATUS_FILE;
+  if (checkpointIncompleteCoverage && !statusFile) {
+    throw new Error("ODDS_COVERAGE_STATUS_FILE_required_for_deferred_gate");
+  }
+  runOddsRefresh(dayKey, { force, checkpointIncompleteCoverage }).then(r => {
+    if (checkpointIncompleteCoverage) {
+      fs.writeFileSync(statusFile, JSON.stringify({
+        dayKey, ok: r.ok, coverageGate: r.coverageGate
+      }, null, 2) + "\n", { flag: "wx" });
+    }
     console.log(JSON.stringify(r, null, 2));
   }).catch(err => {
     console.error("[run-odds-refresh] fatal", String(err?.message || err));
