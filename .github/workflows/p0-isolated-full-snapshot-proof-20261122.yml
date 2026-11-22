@@ -52,12 +52,9 @@ jobs:
           NODE
       - name: Refresh complete Value artifacts from the newly generated full snapshot
         run: node ./engine-v1/jobs/refresh-value-artifacts-day.js --date=2026-11-22 --no-update-latest
-      - name: Synchronize details with final Value state
-        run: node ./engine-v1/jobs/build-details-day.js 2026-11-22 --rebuild
-      - name: Re-export final full snapshot
-        run: node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-11-22 --no-update-latest --replace-details --no-build-missing-details --fail-on-missing-details
-      - name: Generate final snapshot invariant report
-        run: node ./engine-v1/jobs/run-snapshot-invariant-check.js 2026-11-22
+      # Value refresh already updates manifest, freshness, invariant and build report.
+      # Rebuilding all 268 details again here would invalidate that final report
+      # and consumed the remaining timeout in evidence run 44995004477.
       - name: Enforce final strict invariant
         run: node ./engine-v1/jobs/run-snapshot-invariant-check.js 2026-11-22 --gate
       - name: Prove B and B2 consume disk-only model assessments
@@ -79,6 +76,9 @@ jobs:
           retention-days: 7
           if-no-files-found: warn
           path: |
+            data/deploy-snapshots/2026-11-22/fixtures.json
+            data/deploy-snapshots/2026-11-22/details/
+            data/deploy-snapshots/2026-11-22/value.json
             data/deploy-snapshots/2026-11-22/manifest.json
             data/deploy-snapshots/2026-11-22/invariant-report.json
             data/deploy-snapshots/2026-11-22/odds.json
