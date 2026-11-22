@@ -1,0 +1,41 @@
+name: P0 independent committed model consumer proof
+on:
+  push:
+    branches: [verify/p0-independent-persisted-model-read-20261122]
+    paths: [.github/workflows/p0-independent-persisted-model-read-20261122.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 9f2efd3621ac36e55b979fe7209d51c031b3f6b0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install exact dependencies
+        run: npm ci --no-audit --no-fund && npm ci --prefix engine-v1 --no-audit --no-fund
+      - name: Prove committed assessments survive producer and runner termination
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { deriveValueFromOdds } from './engine-v1/jobs/derive-value-from-odds.js';
+          const day='2026-11-22';
+          const file='data/deploy-snapshots/'+day+'/odds.json';
+          const odds=JSON.parse(fs.readFileSync(file,'utf8'));
+          const certified=odds.assessmentOwnership?.certifiedAssessmentRows;
+          const stored=odds.assessmentRows;
+          const withAssessment=odds.matches.filter(x=>x.aiAssessment && typeof x.aiAssessment==='object').length;
+          console.log('P0_COMMITTED_CHECKPOINT',JSON.stringify({stored,certified,withAssessment,source:odds.source}));
+          if(odds.ok!==true || stored!==251 || certified!==251 || withAssessment<certified) throw new Error('P0_COMMITTED_ASSESSMENTS_NOT_CERTIFIED');
+          if(fs.existsSync('data/odds-memory'))fs.renameSync('data/odds-memory',process.env.RUNNER_TEMP+'/p0-disabled-odds-memory');
+          const b=deriveValueFromOdds(day,{freeze:false,outputMode:'plan-b-observation'});
+          const b2=deriveValueFromOdds(day,{freeze:false,outputMode:'plan-b2-observation'});
+          const summary={B:{ok:b?.ok,count:b?.count,input:b?.sourceContract?.assessmentInputSource},B2:{ok:b2?.ok,count:b2?.count,input:b2?.sourceContract?.assessmentInputSource}};
+          console.log('P0_INDEPENDENT_COMMITTED_CONSUMERS',JSON.stringify(summary));
+          if(![b,b2].every(x=>x?.ok===true && x.sourceContract?.assessmentInputSource==='deploy_snapshot_assessment_fallback')) throw new Error('P0_PERSISTED_CONSUMERS_FAILED');
+          NODE
