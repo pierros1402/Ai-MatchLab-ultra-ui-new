@@ -50,7 +50,15 @@ jobs:
           console.log('P0_FULL_EXPORT_EVIDENCE',JSON.stringify(evidence));
           if(!manifest.ok || rows.length===0 || ids.some(id=>!id) || new Set(ids).size!==ids.length || missing.length || !(odds.assessmentRows>0)) throw new Error('P0_FULL_BOOTSTRAP_CONTRACT_NOT_MET');
           NODE
-      - name: Post-export strict invariant
+      - name: Refresh complete Value artifacts from the newly generated full snapshot
+        run: node ./engine-v1/jobs/refresh-value-artifacts-day.js --date=2026-11-22 --no-update-latest
+      - name: Synchronize details with final Value state
+        run: node ./engine-v1/jobs/build-details-day.js 2026-11-22 --rebuild
+      - name: Re-export final full snapshot
+        run: node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-11-22 --no-update-latest --replace-details --no-build-missing-details --fail-on-missing-details
+      - name: Generate final snapshot invariant report
+        run: node ./engine-v1/jobs/run-snapshot-invariant-check.js 2026-11-22
+      - name: Enforce final strict invariant
         run: node ./engine-v1/jobs/run-snapshot-invariant-check.js 2026-11-22 --gate
       - name: Prove B and B2 consume disk-only model assessments
         run: |
