@@ -263,7 +263,7 @@ function validateTerminalAgainstCurrent(previous, currentTruth) {
 // This is NOT a general exception to immutable terminal-settlement integrity.
 const LEGACY_PENDING_TERMINAL_RECOVERY = Object.freeze({
   canonicalFixtureId: "cid_bra1_cruzeiro_palmeiras_20261119",
-  predictionSignature: "f9b634412aac9e72de2a6eabdb4952e37b0e81df6fe5b8624",
+  predictionSignature: "f9b634412aac9e72de2a6e0b1bcad48c91a6eabdb4952e37b0e81df6fe5b8624",
   pendingReason: "CANONICAL_STATUS_FIRST_HALF"
 });
 
