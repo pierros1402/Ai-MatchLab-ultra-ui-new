@@ -4,7 +4,8 @@ import assert from "node:assert/strict";
 import {
   assessmentRowCount,
   contentHash,
-  snapshotRegressionReason
+  snapshotRegressionReason,
+  quarantineAmbiguousAssessmentModels
 } from "./export-odds-snapshot-day.js";
 
 function row(prob = 0.55, id = "cid_test_home_away_20260813") {
@@ -54,4 +55,28 @@ test("assessment coverage cannot regress", () => {
 
 test("equal assessment coverage is not treated as regression", () => {
   assert.equal(snapshotRegressionReason([row()], [row(0.61)]), null);
+});
+
+
+test("ambiguous historical assessment aliases quarantine only implicated models, preserving raw evidence", () => {
+  const fixtureA = { ...row(0.55, "cid_a"), providerIds: { espn: "100" } };
+  const fixtureB = { ...row(0.55, "cid_b"), providerIds: { espn: "200" } };
+  const stale = { ...row(0.51, "cid_old"), providerIds: { espn: "100" }, market: { bookmaker: 2.3 } };
+  const fresh = { ...fixtureA, aiAssessment: row(0.65).aiAssessment };
+  const independent = { ...fixtureB };
+  const inputs = [stale, fresh, independent];
+  const result = quarantineAmbiguousAssessmentModels([fixtureA, fixtureB], inputs);
+  assert.equal(result.initial.ambiguousAssessmentAliases.length > 0, true);
+  assert.equal(result.rows[0].aiAssessment, null);
+  assert.equal(result.rows[1].aiAssessment, null);
+  assert.deepEqual(result.rows[0].market, stale.market);
+  assert.equal(result.rows[2].aiAssessment, independent.aiAssessment);
+  assert.equal(inputs[0].aiAssessment, stale.aiAssessment);
+});
+
+test("no alias collision leaves assessed rows untouched", () => {
+  const fixture = { ...row(), providerIds: { espn: "501" } };
+  const result = quarantineAmbiguousAssessmentModels([fixture], [fixture]);
+  assert.deepEqual(result.quarantinedIds, []);
+  assert.equal(result.rows[0], fixture);
 });
