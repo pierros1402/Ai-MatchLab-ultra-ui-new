@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 83e809801b80dd671880c4e6c0d287e6e059f517
+          ref: e7458e4512be5d9bdde1a7381f2858991022878e
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -31,14 +31,22 @@ jobs:
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           import {deriveValueFromOdds} from './engine-v1/jobs/derive-value-from-odds.js';
-          import {buildValueA2B2Day,shouldFreezeAdjustedValueObservations} from './engine-v1/jobs/build-value-a2-b2-day.js';
+          import {shouldFreezeAdjustedValueObservations} from './engine-v1/jobs/build-value-a2-b2-day.js';
           import {athensDayKey} from './engine-v1/core/daykey.js';
           const day='2026-11-22';
           const odds=JSON.parse(fs.readFileSync('data/deploy-snapshots/'+day+'/odds.json'));
           console.log('Persisted models',odds.assessmentRows,'ownership',odds.assessmentOwnership);
+          if (fs.existsSync('data/odds-memory')) fs.renameSync('data/odds-memory', process.env.RUNNER_TEMP+'/verification-odds-memory');
           const b=deriveValueFromOdds(day,{freeze:shouldFreezeAdjustedValueObservations(day,athensDayKey()),outputMode:'plan-b-observation'});
-          const adjusted=await buildValueA2B2Day(day,{allowCurrentDayBootstrap:true});
-          const b2=adjusted?.plans?.B2;
-          console.log(JSON.stringify({B:{ok:b?.ok,source:b?.source,count:b?.count,contract:b?.sourceContract},B2:{ok:b2?.ok,source:b2?.source,count:b2?.count,contract:b2?.sourceContract},reason:adjusted?.reason}));
-          if (b?.ok!==true || b2?.ok!==true) process.exitCode=1;
+          const b2=deriveValueFromOdds(day,{freeze:false,outputMode:'plan-b2-observation'});
+          console.log(JSON.stringify({B:{ok:b?.ok,source:b?.source,count:b?.count,contract:b?.sourceContract},B2:{ok:b2?.ok,source:b2?.source,count:b2?.count,contract:b2?.sourceContract}}));
+          if (![b,b2].every(p=>p?.ok===true && p.sourceContract?.assessmentInputSource==='deploy_snapshot_assessment_fallback')) process.exitCode=1;
           NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: isolated-model-consumer-evidence
+          retention-days: 7
+          path: |
+            data/deploy-snapshots/2026-11-22/odds.json
+            data/value-plans/2026-11-22/plan-b*.json
