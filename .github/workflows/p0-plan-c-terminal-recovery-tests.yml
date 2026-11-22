@@ -92,20 +92,43 @@ jobs:
              !Number.isFinite(repaired.brier?.baseline) ||
              repaired.hitRate?.applicableToHitRate!==false)
             throw Error("real_plan_c_recovery_invalid");
+          const beforeById=new Map(before.records.map(r=>[r.canonicalFixtureId,r]));
+          const afterById=new Map(after.records.map(r=>[r.canonicalFixtureId,r]));
+          if(beforeById.size!==61 || afterById.size!==61 ||
+             [...beforeById.keys()].some(key=>!afterById.has(key)))
+            throw Error("real_plan_c_recovery_fixture_set_changed");
           const changes=after.records.filter(r=>
-            JSON.stringify(r)!==JSON.stringify(before.records.find(b=>b.canonicalFixtureId===r.canonicalFixtureId)));
-          if(changes.length!==1 || changes[0].canonicalFixtureId!==id)
-            throw Error("real_plan_c_recovery_non_target_mutation:"+changes.map(x=>x.canonicalFixtureId));
-          if(after.records.length!==61 || after.accounting.total!==61 ||
-             after.accounting.settled!==41 || after.accounting.pending!==20 ||
-             after.brierSummary.n!==41 || !after.accounting.balanced)
+            JSON.stringify(r)!==JSON.stringify(beforeById.get(r.canonicalFixtureId)));
+          const newSettlements=[];
+          for(const row of changes){
+            const old=beforeById.get(row.canonicalFixtureId);
+            if(row.canonicalFixtureId===id) continue;
+            if(old.state!=="PENDING" || row.state!=="SETTLED" ||
+               row.truth?.status!=="FT" ||
+               !Number.isInteger(row.truth.scoreHome) || !Number.isInteger(row.truth.scoreAway) ||
+               !Number.isFinite(row.brier?.adjusted) || !Number.isFinite(row.brier?.baseline) ||
+               row.pendingReason!==null ||
+               old.prediction?.signature!==row.prediction?.signature)
+              throw Error("real_plan_c_recovery_illegal_other_transition:"+row.canonicalFixtureId);
+            newSettlements.push(row.canonicalFixtureId);
+          }
+          if(changes.filter(r=>r.canonicalFixtureId===id).length!==1 ||
+             changes.length!==newSettlements.length+1)
+            throw Error("real_plan_c_recovery_target_missing_or_duplicated");
+          if(after.records.length!==before.records.length ||
+             after.accounting.total!==before.records.length ||
+             after.accounting.settled!==before.accounting.settled+newSettlements.length ||
+             after.accounting.pending!==before.accounting.pending-newSettlements.length ||
+             after.brierSummary.n!==after.accounting.settled ||
+             !after.accounting.balanced ||
+             after.accounting.total!==after.accounting.settled+after.accounting.pending+after.accounting.voidExcluded)
             throw Error("real_plan_c_recovery_accounting_invalid");
           if(audit.explicitLegacyPendingTerminalRecovery?.length!==1 ||
              audit.explicitLegacyPendingTerminalRecovery[0].canonicalFixtureId!==id)
             throw Error("real_plan_c_recovery_audit_invalid");
           const digest=crypto.createHash("sha256").update(fs.readFileSync(root+"/latest.json")).digest("hex");
           console.log("REAL_PLAN_C_REPLAY_PASS="+JSON.stringify({
-            repairedId:id,changedRecords:changes.length,recordCount:after.records.length,
+            repairedId:id,changedRecords:changes.length,additionalCanonicalFTSettlements:newSettlements,recordCount:after.records.length,
             accounting:after.accounting,derivedOutputSha256:digest,
             canonicalSourceSha256:audit.explicitLegacyPendingTerminalRecovery[0].canonicalSourceSha256
           }));
