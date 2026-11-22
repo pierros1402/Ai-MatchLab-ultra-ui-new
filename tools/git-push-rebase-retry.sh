@@ -191,6 +191,15 @@ for i in $(seq 1 "${ATTEMPTS}"); do
     exit 0
   fi
 
+  # Plan C settlement and shadow artifacts are an atomic derived data family.
+  # A textual rebase can merge incompatible snapshots and leave accounting
+  # from one generation with terminal records from another. Never rebase them.
+  if git diff-tree --no-commit-id --name-only -r HEAD | grep -Eq '^data/plan-c-shadow/'; then
+    echo "ERROR: plan_c_snapshot_rebase_forbidden_after_push_rejection"
+    echo "P0: regenerate from fresh canonical and frozen prediction inputs; do not merge JSON."
+    exit 1
+  fi
+
   echo "git push rejected (attempt ${i}/${ATTEMPTS}) — rebasing onto latest origin/${BRANCH}"
 
   backup_untracked
