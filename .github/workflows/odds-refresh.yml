@@ -127,7 +127,9 @@ jobs:
           set -euo pipefail
           FORCE_FLAG=""
           [ "${{ inputs.force }}" = "true" ] && FORCE_FLAG="--force"
-          node ./engine-v1/jobs/run-odds-refresh.js "$DAY_KEY" $FORCE_FLAG | tee odds-refresh-result.json
+          ODDS_COVERAGE_STATUS_FILE="$RUNNER_TEMP/odds-coverage-status.json" \
+            node ./engine-v1/jobs/run-odds-refresh.js "$DAY_KEY" $FORCE_FLAG \
+              --checkpoint-incomplete-coverage | tee odds-refresh-result.json
           node engine-v1/jobs/preserve-history-checkpoint.js --stage=odds-refresh-produced
 
       - name: Capture multi-bookmaker odds on the durable GitHub writer
@@ -170,6 +172,26 @@ jobs:
             git commit -m "Refresh odds + fixtures snapshot for ${DAY_KEY}"
             bash tools/git-push-rebase-retry.sh
           fi
+
+      # A partial, identity-screened snapshot must survive the ephemeral runner
+      # even when the required model universe is incomplete. Do not release it
+      # as a successful coverage run: fail explicitly AFTER the guarded push.
+      - name: Enforce assessment coverage after durable snapshot checkpoint
+        if: env.SKIP != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          STATUS_FILE="$RUNNER_TEMP/odds-coverage-status.json"
+          test -s "$STATUS_FILE" || { echo "Missing persisted assessment coverage gate status"; exit 1; }
+          node - "$STATUS_FILE" <<'NODE'
+          const fs = require("fs");
+          const result = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+          if (result.ok !== true || result.coverageGate !== null) {
+            console.error("Assessment coverage still incomplete after durable checkpoint", JSON.stringify(result));
+            process.exit(1);
+          }
+          console.log("Persisted model assessment coverage gate passed.");
+          NODE
 
       - name: Preserve odds and assessment evidence independently of publication
         if: ${{ always() && env.DAY_KEY != '' && env.SKIP != 'true' }}
