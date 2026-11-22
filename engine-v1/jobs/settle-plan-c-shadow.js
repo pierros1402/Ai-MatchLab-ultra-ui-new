@@ -267,7 +267,7 @@ const LEGACY_PENDING_TERMINAL_RECOVERY = Object.freeze({
   pendingReason: "CANONICAL_STATUS_FIRST_HALF"
 });
 
-function recoverLegacyPendingTerminal(previous, prediction, currentTruth, enabled) {
+export function recoverLegacyPendingTerminal(previous, prediction, currentTruth, enabled) {
   if (!enabled) return null;
   const pinned = LEGACY_PENDING_TERMINAL_RECOVERY;
   if (previous?.canonicalFixtureId !== pinned.canonicalFixtureId) return null;
