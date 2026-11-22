@@ -1,0 +1,77 @@
+name: P0 isolated full snapshot bootstrap proof
+on:
+  push:
+    branches: [verify/p0-full-snapshot-bootstrap-20261122]
+    paths: [.github/workflows/p0-isolated-full-snapshot-proof-20261122.yml]
+permissions:
+  contents: read
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install exact dependencies
+        run: npm ci --no-audit --no-fund && npm ci --prefix engine-v1 --no-audit --no-fund
+      - name: Produce certified model evidence without bookmaker network
+        run: |
+          node --input-type=module <<'NODE'
+          import {runOddsRefresh} from './engine-v1/jobs/run-odds-refresh.js';
+          const day='2026-11-22';
+          const r=await runOddsRefresh(day,{updateDecision:()=>({due:false,reason:'isolated_model_only_bootstrap'})});
+          const info={ok:r.ok,assessmentRows:r.assessmentRows,required:r.canonicalSupplement?.modelEvidenceEligibleFixtureIds?.length};
+          console.log('P0_MODEL_CHECKPOINT',JSON.stringify(info));
+          if (!r.ok || !(info.assessmentRows>0) || !(info.required>0)) throw new Error('P0_CERTIFIED_MODEL_INPUT_NOT_READY');
+          NODE
+      - name: Rebuild details from current canonical source
+        run: node ./engine-v1/jobs/build-details-day.js 2026-11-22 --rebuild
+      - name: Full bootstrap export, never status-only
+        run: node ./engine-v1/jobs/export-deploy-snapshot-day.js 2026-11-22 --no-update-latest --replace-details --no-build-missing-details --fail-on-missing-details
+      - name: Verify complete snapshot fixture-detail and assessment contract
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const day='2026-11-22';
+          const root='data/deploy-snapshots/'+day;
+          const read=(f)=>JSON.parse(fs.readFileSync(root+'/'+f,'utf8'));
+          const fixtures=read('fixtures.json');
+          const manifest=read('manifest.json');
+          const odds=read('odds.json');
+          const rows=Array.isArray(fixtures)?fixtures:(fixtures.fixtures||fixtures.matches||[]);
+          const details=new Set(fs.readdirSync(root+'/details').filter(x=>x.endsWith('.json')).map(x=>x.slice(0,-5)));
+          const ids=rows.map(x=>String(x.canonicalId||x.matchId||''));
+          const missing=ids.filter(id=>!details.has(id));
+          const evidence={fixtureRows:rows.length,uniqueFixtureIds:new Set(ids).size,details:details.size,missingDetails:missing.length,assessmentRows:odds.assessmentRows,manifestOk:manifest.ok,manifestSource:manifest.source,manifestCounts:manifest.counts};
+          console.log('P0_FULL_EXPORT_EVIDENCE',JSON.stringify(evidence));
+          if(!manifest.ok || rows.length===0 || ids.some(id=>!id) || new Set(ids).size!==ids.length || missing.length || !(odds.assessmentRows>0)) throw new Error('P0_FULL_BOOTSTRAP_CONTRACT_NOT_MET');
+          NODE
+      - name: Post-export strict invariant
+        run: node ./engine-v1/jobs/run-snapshot-invariant-check.js 2026-11-22 --gate
+      - name: Prove B and B2 consume disk-only model assessments
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import {deriveValueFromOdds} from './engine-v1/jobs/derive-value-from-odds.js';
+          if(fs.existsSync('data/odds-memory')) fs.renameSync('data/odds-memory',process.env.RUNNER_TEMP+'/p0-odds-memory');
+          const day='2026-11-22';
+          const B=deriveValueFromOdds(day,{freeze:false,outputMode:'plan-b-observation'});
+          const B2=deriveValueFromOdds(day,{freeze:false,outputMode:'plan-b2-observation'});
+          console.log('P0_DISK_ONLY_CONSUMERS',JSON.stringify({B:{ok:B?.ok,count:B?.count,source:B?.sourceContract?.assessmentInputSource},B2:{ok:B2?.ok,count:B2?.count,source:B2?.sourceContract?.assessmentInputSource}}));
+          if(![B,B2].every(v=>v?.ok===true&&v.sourceContract?.assessmentInputSource==='deploy_snapshot_assessment_fallback'))throw new Error('P0_DISK_CONSUMERS_FAILED');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: p0-isolated-full-snapshot-evidence
+          retention-days: 7
+          if-no-files-found: warn
+          path: |
+            data/deploy-snapshots/2026-11-22/manifest.json
+            data/deploy-snapshots/2026-11-22/invariant-report.json
+            data/deploy-snapshots/2026-11-22/odds.json
+            data/value-plans/2026-11-22/plan-b*.json
