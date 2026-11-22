@@ -1,0 +1,279 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "usa.1",
+  "homeTeam": "Nashville SC",
+  "awayTeam": "FC Cincinnati",
+  "homeWinScore": 0.339,
+  "drawScore": 0.125,
+  "awayWinScore": 0.561,
+  "over15Score": 0.61,
+  "over25Score": 0.6720000000000002,
+  "over35Score": 0.472,
+  "bttsScore": 0.5455,
+  "confidence": 0.88,
+  "signals": [
+    "away_edge",
+    "home_form_decay",
+    "away_form_decay",
+    "form_influence_reduced",
+    "priors_applied",
+    "close_strength_gap",
+    "match_profile_applied"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.12,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.415,
+    "expectedAwayGoals": 1.325,
+    "expectedTotalGoals": 2.739,
+    "homeStrength": 0.253,
+    "awayStrength": 0.262,
+    "homeEdge": 0.213,
+    "awayPenalty": 0.077,
+    "recency": {
+      "homeOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 167,
+        "daysSinceLastMatch": 15,
+        "spanDays": 20,
+        "maxInternalGap": 6,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.365,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.655
+      },
+      "awayOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 173,
+        "daysSinceLastMatch": 15,
+        "spanDays": 16,
+        "maxInternalGap": 7,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.365,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.655
+      },
+      "homeSide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 167,
+        "daysSinceLastMatch": 20,
+        "spanDays": 3,
+        "maxInternalGap": 3,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.19,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.414
+      },
+      "awaySide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 173,
+        "daysSinceLastMatch": 24,
+        "spanDays": 4,
+        "maxInternalGap": 4,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.27
+      }
+    },
+    "matchupSample": 4,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 167,
+      "awayPriorSample": 173,
+      "leaguePriorSample": 2396,
+      "matchupPriorSample": 9
+    },
+    "resolution": {
+      "homeInput": "Nashville SC",
+      "awayInput": "FC Cincinnati",
+      "homeResolvedKey": "Nashville SC",
+      "awayResolvedKey": "FC Cincinnati",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "FC Cincinnati::Nashville SC",
+      "matchupResolveScore": 0.93,
+      "homePriorKey": "usa.1::Nashville SC",
+      "awayPriorKey": "usa.1::FC Cincinnati",
+      "matchupPriorKey": "usa.1|FC Cincinnati|Nashville SC"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Nashville SC",
+      "awayTeamKey": "FC Cincinnati",
+      "leagueKey": "usa.1",
+      "matchupKey": "FC Cincinnati::Nashville SC"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "h2h_away_edge",
+        "impact": 0.025,
+        "note": "Recent H2H leans away"
+      },
+      {
+        "code": "h2h_overlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is open"
+      },
+      {
+        "code": "ai_h2h_over_signal",
+        "impact": 0.07,
+        "note": "AI detected open H2H pattern"
+      },
+      {
+        "code": "ai_h2h_away_edge",
+        "impact": 0.06,
+        "note": "AI detected away H2H edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    },
+    "matchProfileApplied": true,
+    "matchProfileConfidence": 0.67,
+    "matchProfileReasons": [
+      {
+        "code": "match_profile_h2h_away_edge",
+        "impact": 0.011000000000000001,
+        "note": "MatchProfile H2H trend leans away"
+      },
+      {
+        "code": "match_profile_h2h_overlean",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile H2H goal pattern leans over"
+      }
+    ]
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "h2h_away_edge",
+      "impact": 0.025,
+      "note": "Recent H2H leans away"
+    },
+    {
+      "code": "h2h_overlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is open"
+    },
+    {
+      "code": "ai_h2h_over_signal",
+      "impact": 0.07,
+      "note": "AI detected open H2H pattern"
+    },
+    {
+      "code": "ai_h2h_away_edge",
+      "impact": 0.06,
+      "note": "AI detected away H2H edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "usa.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 15,
+    "awayRestDays": 15,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  },
+  "intelligence": {
+    "applied": true,
+    "mode": "partial",
+    "coverage": {
+      "hasStandings": false,
+      "hasHomeForm": true,
+      "hasAwayForm": true,
+      "hasH2H": true,
+      "hasPhaseContext": false,
+      "coverageCount": 3,
+      "mode": "partial"
+    },
+    "signals": [
+      "form_balanced",
+      "attack_support"
+    ]
+  }
+}
