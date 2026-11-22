@@ -1,0 +1,44 @@
+name: Verify current model producer and consumers in isolation
+on:
+  push:
+    branches: [verify/p0-model-consumers-20261122]
+    paths: [.github/workflows/verify-model-consumers-20261122.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 83e809801b80dd671880c4e6c0d287e6e059f517
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --no-audit --no-fund && npm ci --prefix engine-v1 --no-audit --no-fund
+      - name: Produce from committed model evidence and enforce persistent coverage
+        run: |
+          node --input-type=module <<'NODE'
+          import {runOddsRefresh} from './engine-v1/jobs/run-odds-refresh.js';
+          const result = await runOddsRefresh('2026-11-22', {updateDecision: () => ({due:false,reason:'model_only_verification'})});
+          console.log(JSON.stringify({ok:result.ok, count:result.count, assessments:result.assessmentRows, required:result.canonicalSupplement.modelEvidenceEligibleFixtureIds.length}));
+          if (!result.ok) process.exitCode = 1;
+          NODE
+      - name: Read snapshot from disk and execute B and B2
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import {deriveValueFromOdds} from './engine-v1/jobs/derive-value-from-odds.js';
+          import {buildValueA2B2Day,shouldFreezeAdjustedValueObservations} from './engine-v1/jobs/build-value-a2-b2-day.js';
+          import {athensDayKey} from './engine-v1/core/daykey.js';
+          const day='2026-11-22';
+          const odds=JSON.parse(fs.readFileSync('data/deploy-snapshots/'+day+'/odds.json'));
+          console.log('Persisted models',odds.assessmentRows,'ownership',odds.assessmentOwnership);
+          const b=deriveValueFromOdds(day,{freeze:shouldFreezeAdjustedValueObservations(day,athensDayKey()),outputMode:'plan-b-observation'});
+          const adjusted=await buildValueA2B2Day(day,{allowCurrentDayBootstrap:true});
+          const b2=adjusted?.plans?.B2;
+          console.log(JSON.stringify({B:{ok:b?.ok,source:b?.source,count:b?.count,contract:b?.sourceContract},B2:{ok:b2?.ok,source:b2?.source,count:b2?.count,contract:b2?.sourceContract},reason:adjusted?.reason}));
+          if (b?.ok!==true || b2?.ok!==true) process.exitCode=1;
+          NODE
