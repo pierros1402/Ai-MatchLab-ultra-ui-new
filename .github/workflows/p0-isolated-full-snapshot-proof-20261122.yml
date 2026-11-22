@@ -67,7 +67,7 @@ jobs:
           const B=deriveValueFromOdds(day,{freeze:false,outputMode:'plan-b-observation'});
           const B2=deriveValueFromOdds(day,{freeze:false,outputMode:'plan-b2-observation'});
           console.log('P0_DISK_ONLY_CONSUMERS',JSON.stringify({B:{ok:B?.ok,count:B?.count,source:B?.sourceContract?.assessmentInputSource},B2:{ok:B2?.ok,count:B2?.count,source:B2?.sourceContract?.assessmentInputSource}}));
-          if(![B,B2].every(v=>v?.ok===true&&v.sourceContract?.assessmentInputSource==='deploy_snapshot_assessment_fallback'))throw new Error('P0_DISK_CONSUMERS_FAILED');
+          if(![B,B2].every(v=>v?.ok===true&&v.count>0&&v.sourceContract?.deploySnapshotInput===true&&['deploy_snapshot_assessment_fallback','live_store_with_deploy_snapshot_assessments'].includes(v.sourceContract?.assessmentInputSource)))throw new Error('P0_DISK_CONSUMERS_FAILED');
           NODE
       - uses: actions/upload-artifact@v4
         if: always()
