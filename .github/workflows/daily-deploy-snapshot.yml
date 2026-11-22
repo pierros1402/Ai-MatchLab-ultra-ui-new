@@ -477,7 +477,8 @@ jobs:
           node ./engine-v1/jobs/settle-plan-c-shadow.js \
             "$DAY_KEY" \
             --prediction-root "$PREDICTION_ROOT" \
-            --output "$SETTLEMENT_FILE"
+            --output "$SETTLEMENT_FILE" \
+            --repair-legacy-pending-terminal
 
           node ./engine-v1/jobs/build-plan-c-shadow-day.js \
             "$DAY_KEY" \
