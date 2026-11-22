@@ -1,0 +1,65 @@
+name: P0 current-day assessment qualification (read-only)
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/p0-current-day-assessment-qualification.yml"
+      - "engine-v1/jobs/export-odds-snapshot-day.js"
+      - "engine-v1/jobs/run-odds-refresh.js"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify-current-persisted-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Install engine dependencies
+        run: npm ci --prefix engine-v1 --no-audit --no-fund
+      - name: Validate pinned snapshot's canonical model-eligible coverage
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import crypto from "node:crypto";
+          import {readCanonicalFixtureDay,supplementCanonicalAssessments} from "./engine-v1/jobs/canonical-assessment-supplement.js";
+          import {assertPersistedAssessmentPostcondition,persistedAssessmentSummary} from "./engine-v1/jobs/run-odds-refresh.js";
+          import {resolveProductionEvidenceFixtureIdReadView} from "./engine-v1/core/production-evidence-identity-overlay.js";
+          const day="2026-11-22", file="data/deploy-snapshots/"+day+"/odds.json";
+          const bytes=fs.readFileSync(file);
+          const gitBlob=crypto.createHash("sha1").update("blob "+bytes.length+"\0").update(bytes).digest("hex");
+          if(gitBlob!=="c74dfe49c350a4a6d90c01376dd6bd9c24cc8600")
+            throw Error("pinned_current_day_odds_changed_requires_review:"+gitBlob);
+          const snapshot=JSON.parse(bytes);
+          const canonical=readCanonicalFixtureDay(day);
+          if(canonical.length!==269 || snapshot.matches?.length!==264)
+            throw Error("pinned_current_day_fixture_count_drift");
+          const required=supplementCanonicalAssessments(day,{
+            canonicalFixtures:canonical,
+            nowMs:Date.parse(snapshot.generatedAt),
+            recordFn:()=>{}
+          });
+          const prior=persistedAssessmentSummary(snapshot);
+          console.log("CURRENT_DAY_BASELINE="+JSON.stringify({day,generatedAt:snapshot.generatedAt,
+            canonical:canonical.length,oddsRows:prior.matchRows,assessmentRows:prior.assessmentRows,
+            eligible:required.modelEvidenceEligibleFixtures,unavailable:required.modelEvidenceUnavailableFixtures,
+            requiredIds:required.modelEvidenceEligibleFixtureIds}));
+          const result=assertPersistedAssessmentPostcondition(snapshot,day,{
+            canonicalFixtureCount:canonical.length,
+            canonicalFixtureIds:canonical.map(row=>row.canonicalId||row.matchId),
+            requiredAssessmentFixtureIds:required.modelEvidenceEligibleFixtureIds,
+            fixtureIdResolver:value=>resolveProductionEvidenceFixtureIdReadView(value,{allowUnmanaged:true})
+          });
+          if(result.missingRequiredAssessmentRows!==0 || result.canonicalOrphanAssessmentRows!==0)
+            throw Error("current_day_identity_or_coverage_not_certified");
+          console.log("CURRENT_DAY_ASSESSMENT_COVERAGE_PASS="+JSON.stringify(result));
+          console.log("SCOPE=PERSISTED_SNAPSHOT_ONLY_NO_B_B2_VALUE_OR_INTRADAY_PUBLICATION_ATTESTATION");
+          NODE

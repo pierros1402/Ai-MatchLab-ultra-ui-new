@@ -65,7 +65,7 @@ jobs:
           PREDICTION_ROOT="data/plan-c-shadow/frozen/i2b-20260825"
           PREDICTION_CREATED_AT="$(node -e 'process.stdout.write(new Date().toISOString())')"
           node ./engine-v1/jobs/generate-plan-c-shadow-predictions.js "$DAY_KEY" --prediction-root "$PREDICTION_ROOT" --prediction-created-at "$PREDICTION_CREATED_AT" --days-forward 14 --max-snapshot-age-days 30
-          node ./engine-v1/jobs/settle-plan-c-shadow.js "$DAY_KEY" --prediction-root "$PREDICTION_ROOT" --output data/plan-c-shadow/settlement/latest.json
+          node ./engine-v1/jobs/settle-plan-c-shadow.js "$DAY_KEY" --prediction-root "$PREDICTION_ROOT" --output data/plan-c-shadow/settlement/latest.json --repair-legacy-pending-terminal
           node ./engine-v1/jobs/build-plan-c-shadow-day.js "$DAY_KEY" --prediction-root "$PREDICTION_ROOT" --settlement-report data/plan-c-shadow/settlement/latest.json
           node ./engine-v1/jobs/refresh-plan-c-shadow-settlements.js "$DAY_KEY"
           node engine-v1/jobs/preserve-history-checkpoint.js --stage=plan-c-produced
@@ -94,7 +94,7 @@ jobs:
           fi
           if ! git diff --cached --quiet; then
             git commit -m "Refresh Plan C shadow export for ${DAY_KEY}"
-            bash tools/git-push-rebase-retry.sh
+            git push origin "HEAD:${GITHUB_REF_NAME:-main}"
           fi
           echo "PUBLISHED_REF=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
@@ -115,7 +115,7 @@ jobs:
           node engine-v1/jobs/guard-staged-data-boundary.js --label=plan-c-settlement-sync-ack --dayKey="${DAY_KEY}" --allow="^data/plan-c-shadow/_audit/settlement-sync-pending\.json$"
           if ! git diff --cached --quiet; then
             git commit -m "Acknowledge verified Plan C settlement publication"
-            bash tools/git-push-rebase-retry.sh
+            git push origin "HEAD:${GITHUB_REF_NAME:-main}"
           fi
 
       - name: Preserve shadow history independently of publication

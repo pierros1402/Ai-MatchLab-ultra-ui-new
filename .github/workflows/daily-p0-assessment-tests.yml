@@ -42,8 +42,8 @@ jobs:
           node --input-type=module <<'NODE'
           import fs from "node:fs";
           import crypto from "node:crypto";
-          import {getP0CP4DailyP0V46ProducerBinding} from "./engine-v1/jobs/p0c-p4-family-adapter-contract.js";
-          const bindings = getP0CP4DailyP0V46ProducerBinding().sourceBindings;
+          import {getP0CP4DailyP0V47ProducerBinding} from "./engine-v1/jobs/p0c-p4-family-adapter-contract.js";
+          const bindings = getP0CP4DailyP0V47ProducerBinding().sourceBindings;
           let mismatches=0;
           for (const [key, row] of Object.entries(bindings)) {
             const bytes = fs.readFileSync(row.path);
@@ -56,7 +56,7 @@ jobs:
               mismatches++;
             }
           }
-          console.log("V46_SOURCE_BINDING_MISMATCHES="+mismatches);
+          console.log("V47_SOURCE_BINDING_MISMATCHES="+mismatches);
           NODE
       - name: Run focused regression against real repository modules
         run: node --test --test-reporter=tap engine-v1/jobs/daily-p0-certified-odds-merge.test.js engine-v1/jobs/run-odds-refresh.test.js engine-v1/jobs/run-odds-opening-prekickoff.test.js

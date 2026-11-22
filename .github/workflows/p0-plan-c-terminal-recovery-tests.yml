@@ -1,0 +1,136 @@
+name: P0 Plan C terminal recovery regression
+
+on:
+  pull_request:
+    paths:
+      - "engine-v1/jobs/settle-plan-c-shadow.js"
+      - "engine-v1/jobs/settle-plan-c-shadow.test.js"
+      - "tools/git-push-rebase-retry.sh"
+      - ".github/workflows/daily-deploy-snapshot.yml"
+      - ".github/workflows/plan-c-shadow-daily.yml"
+      - ".github/workflows/p0-plan-c-terminal-recovery-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Install engine dependencies
+        run: npm ci --prefix engine-v1 --no-audit --no-fund
+      - name: Validate source and test syntax
+        run: |
+          node --check engine-v1/jobs/settle-plan-c-shadow.js
+          node --check engine-v1/jobs/settle-plan-c-shadow.test.js
+          bash -n tools/git-push-rebase-retry.sh
+      - name: Plan C exact regression
+        run: node --test --test-reporter=tap engine-v1/jobs/settle-plan-c-shadow.test.js engine-v1/jobs/build-plan-c-shadow-day.test.js
+      - name: Full engine suite
+        shell: bash
+        run: |
+          set +e
+          find engine-v1 -type f -name '*.test.js' -not -path '*/node_modules/*' -print0 | xargs -0 -r node --test --test-reporter=tap > /tmp/engine-suite.tap 2>&1
+          status=$?
+          tail -n 80 /tmp/engine-suite.tap
+          if [ "$status" -ne 0 ]; then
+            grep -n -A 24 -B 3 -E '^not ok [0-9]+|^# (fail|tests|pass)' /tmp/engine-suite.tap | tail -n 450 || true
+          fi
+          exit "$status"
+      - name: Replay pinned historical Plan C corruption in isolated files
+        shell: bash
+        run: |
+          set -euo pipefail
+          ORIGINAL="data/plan-c-shadow/settlement/latest.json"
+          PREDICTIONS="data/plan-c-shadow/frozen/i2b-20260825"
+          TEST_ROOT="$RUNNER_TEMP/plan-c-p0-replay"
+          mkdir -p "$TEST_ROOT"
+          cp "$ORIGINAL" "$TEST_ROOT/latest.json"
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import crypto from "node:crypto";
+          const file="data/plan-c-shadow/settlement/latest.json";
+          const bytes=fs.readFileSync(file);
+          const gitBlob=crypto.createHash("sha1").update("blob "+bytes.length+"\0").update(bytes).digest("hex");
+          if(gitBlob!=="93b90e013fcd1b3c8bef36aaa51a0087d277e0ed")
+            throw Error("pinned_original_settlement_blob_drift:"+gitBlob);
+          const doc=JSON.parse(bytes);
+          const bad=doc.records.filter(r=>r.state==="SETTLED" && (r.truth===null || r.brier===null || r.hitRate===null));
+          if(doc.records.length!==61 || bad.length!==1 ||
+              bad[0].canonicalFixtureId!=="cid_bra1_cruzeiro_palmeiras_20261119" ||
+              bad[0].prediction?.signature!=="f9b634412aac9e72de2a6e0b1bcad48c91a6eabdb4952e37b0e81df6fe5b8624")
+            throw Error("unexpected_historical_settlement_shape");
+          console.log("PINNED_CORRUPTION_REPRODUCED="+bad[0].canonicalFixtureId);
+          NODE
+          node engine-v1/jobs/settle-plan-c-shadow.js 2026-11-22 \
+            --prediction-root "$PREDICTIONS" \
+            --output "$TEST_ROOT/latest.json" \
+            --audit "$TEST_ROOT/audit.json" \
+            --repair-legacy-pending-terminal
+          TEST_ROOT="$TEST_ROOT" node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import crypto from "node:crypto";
+          const root=process.env.TEST_ROOT;
+          const before=JSON.parse(fs.readFileSync("data/plan-c-shadow/settlement/latest.json","utf8"));
+          const after=JSON.parse(fs.readFileSync(root+"/latest.json","utf8"));
+          const audit=JSON.parse(fs.readFileSync(root+"/audit.json","utf8"));
+          const id="cid_bra1_cruzeiro_palmeiras_20261119";
+          const prior=before.records.find(r=>r.canonicalFixtureId===id);
+          const repaired=after.records.find(r=>r.canonicalFixtureId===id);
+          if(!prior || !repaired || prior.truth!==null || repaired.state!=="SETTLED" ||
+             repaired.truth?.status!=="FT" || repaired.truth?.scoreHome!==2 ||
+             repaired.truth?.scoreAway!==1 ||
+             !Number.isFinite(repaired.brier?.adjusted) ||
+             !Number.isFinite(repaired.brier?.baseline) ||
+             repaired.hitRate?.applicableToHitRate!==false)
+            throw Error("real_plan_c_recovery_invalid");
+          const beforeById=new Map(before.records.map(r=>[r.canonicalFixtureId,r]));
+          const afterById=new Map(after.records.map(r=>[r.canonicalFixtureId,r]));
+          if(beforeById.size!==61 || afterById.size!==61 ||
+             [...beforeById.keys()].some(key=>!afterById.has(key)))
+            throw Error("real_plan_c_recovery_fixture_set_changed");
+          const changes=after.records.filter(r=>
+            JSON.stringify(r)!==JSON.stringify(beforeById.get(r.canonicalFixtureId)));
+          const newSettlements=[];
+          for(const row of changes){
+            const old=beforeById.get(row.canonicalFixtureId);
+            if(row.canonicalFixtureId===id) continue;
+            if(old.state!=="PENDING" || row.state!=="SETTLED" ||
+               row.truth?.status!=="FT" ||
+               !Number.isInteger(row.truth.scoreHome) || !Number.isInteger(row.truth.scoreAway) ||
+               !Number.isFinite(row.brier?.adjusted) || !Number.isFinite(row.brier?.baseline) ||
+               row.pendingReason!==null ||
+               old.prediction?.signature!==row.prediction?.signature)
+              throw Error("real_plan_c_recovery_illegal_other_transition:"+row.canonicalFixtureId);
+            newSettlements.push(row.canonicalFixtureId);
+          }
+          if(changes.filter(r=>r.canonicalFixtureId===id).length!==1 ||
+             changes.length!==newSettlements.length+1)
+            throw Error("real_plan_c_recovery_target_missing_or_duplicated");
+          if(after.records.length!==before.records.length ||
+             after.accounting.total!==before.records.length ||
+             after.accounting.settled!==before.accounting.settled+newSettlements.length ||
+             after.accounting.pending!==before.accounting.pending-newSettlements.length ||
+             after.brierSummary.n!==after.accounting.settled ||
+             !after.accounting.balanced ||
+             after.accounting.total!==after.accounting.settled+after.accounting.pending+after.accounting.voidExcluded)
+            throw Error("real_plan_c_recovery_accounting_invalid");
+          if(audit.explicitLegacyPendingTerminalRecovery?.length!==1 ||
+             audit.explicitLegacyPendingTerminalRecovery[0].canonicalFixtureId!==id)
+            throw Error("real_plan_c_recovery_audit_invalid");
+          const digest=crypto.createHash("sha256").update(fs.readFileSync(root+"/latest.json")).digest("hex");
+          console.log("REAL_PLAN_C_REPLAY_PASS="+JSON.stringify({
+            repairedId:id,changedRecords:changes.length,additionalCanonicalFTSettlements:newSettlements,recordCount:after.records.length,
+            accounting:after.accounting,derivedOutputSha256:digest,
+            canonicalSourceSha256:audit.explicitLegacyPendingTerminalRecovery[0].canonicalSourceSha256
+          }));
+          NODE
+          echo "EPHEMERAL_REPLAY_ONLY_NO_REPO_WRITE_NO_PUSH_NO_DEPLOY"

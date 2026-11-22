@@ -370,6 +370,32 @@ export function validateP0CP4DailyP0V46ProducerEvidence({sourceRecords} = {}) {
     P0C_P4_DAILY_P0_V46_BINDING_SCHEMA, "PASS_P0C_P4_DAILY_P0_V46_CANDIDATE_PRODUCER_BINDINGS");
 }
 
+// Versioned candidate source evidence for the P0 alias-quarantine exporter.
+// Preserve V46 source evidence without rewriting the old ledger.
+export const P0C_P4_DAILY_P0_V47_BINDING_SCHEMA =
+  "ai-matchlab.p0c-p4-daily-p0-v47-producer-binding.v1";
+const DAILY_P0_V47_SOURCE_BINDINGS = Object.freeze({
+  ...DAILY_P0_V46_SOURCE_BINDINGS,
+  oddsSnapshotExporter: Object.freeze({
+    ...DAILY_P0_V46_SOURCE_BINDINGS.oddsSnapshotExporter,
+    sha256: "b7a1f268bb2f4f4116550317587481d5d8c6b6d51683fba6e13a1519d05a0058"
+  })
+});
+export function getP0CP4DailyP0V47ProducerBinding() {
+  return Object.freeze({
+    ...getP0CP4DailyP0V46ProducerBinding(),
+    schema: P0C_P4_DAILY_P0_V47_BINDING_SCHEMA,
+    sourceBindings: clone(DAILY_P0_V47_SOURCE_BINDINGS),
+    repositoryApplicationAuthorized: false,
+    productionAuthorized: false
+  });
+}
+export function validateP0CP4DailyP0V47ProducerEvidence({sourceRecords} = {}) {
+  return validateExactProducerEvidence(sourceRecords, DAILY_P0_V47_SOURCE_BINDINGS,
+    P0C_P4_DAILY_P0_V47_BINDING_SCHEMA, "PASS_P0C_P4_DAILY_P0_V47_CANDIDATE_PRODUCER_BINDINGS");
+}
+
+
 const FAMILY_DESCRIPTORS = Object.freeze([
   Object.freeze({
     family: "DEPLOY_SNAPSHOT_DETAILS",
