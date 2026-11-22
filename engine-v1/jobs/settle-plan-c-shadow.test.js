@@ -203,3 +203,38 @@ test("terminal integrity union rejects corrupted historical FT and VOID without 
     } finally { fs.rmSync(input.root, { recursive: true, force: true }); }
   }
 });
+
+
+test("exact source-bound pending-shaped terminal can be reconstructed only with explicit authorization", () => {
+  const input = setup("FT", 2, 1);
+  try {
+    const options = { dayKey: "2026-08-27", ...input };
+    settlePlanCShadow(options);
+    // Even opt-in recovery must reject unrelated fixture identities.
+    const malformed = JSON.parse(fs.readFileSync(input.outputFile, "utf8"));
+    const row = malformed.records[0];
+    row.state = "SETTLED";
+    row.truth = null;
+    row.pendingReason = "CANONICAL_STATUS_FIRST_HALF";
+    row.brier = null;
+    row.hitRate = null;
+    writeJson(input.outputFile, malformed);
+    const originalBytes = fs.readFileSync(input.outputFile);
+    assert.throws(() => settlePlanCShadow({...options, repairLegacyPendingShapedTerminal: true}),
+      /previous_settled_integrity_invalid/);
+    assert.deepEqual(fs.readFileSync(input.outputFile), originalBytes);
+  } finally { fs.rmSync(input.root, { recursive: true, force: true }); }
+});
+
+test("all generated terminal rows are checked before write and normal FT remains idempotent", () => {
+  const input = setup("FT", 2, 1);
+  try {
+    const options = { dayKey: "2026-08-27", ...input };
+    const first = settlePlanCShadow(options);
+    const original = fs.readFileSync(input.outputFile);
+    assert.equal(first.report.accounting.settled, 1);
+    const second = settlePlanCShadow(options);
+    assert.equal(second.audit.explicitLegacyPendingTerminalRecovery.length, 0);
+    assert.deepEqual(fs.readFileSync(input.outputFile), original);
+  } finally { fs.rmSync(input.root, { recursive: true, force: true }); }
+});
