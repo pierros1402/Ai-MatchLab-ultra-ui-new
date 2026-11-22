@@ -66,6 +66,35 @@ jobs:
           print("EPHEMERAL_DATA_OVERLAY_COMPLETE=18301")
           print("ARCHIVE_PUBLICATION_APPROVED="+str(doc.get("publicationApproved")))
           PY
+      - name: Bind replay input to original archived source commit (not current PR odds)
+        shell: bash
+        env:
+          ARCHIVE_DIR: ${{ runner.temp }}/daily-p0-recovery
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,os,pathlib
+          manifest=json.loads((pathlib.Path(os.environ["ARCHIVE_DIR"])/"manifest.json").read_text())
+          assert manifest["sourceCommit"]=="6afd413bb3aa18d7361bc86b32508a5bfd7325bb", "historical_source_commit_drift"
+          assert manifest["baselineCommit"]=="fdf041e9ceb43becab5d9ed98f56b1ded144adf1", "historical_baseline_commit_drift"
+          assert "data/deploy-snapshots/2026-11-21/odds.json" not in {item["path"] for item in manifest["files"]}, "odds_archive_override_unexpected"
+          print("ARCHIVE_ODDS_SNAPSHOT_ABSENT_RESTORE_FROM_PINNED_SOURCE=true")
+          PY
+          git fetch --no-tags --depth=1 origin 6afd413bb3aa18d7361bc86b32508a5bfd7325bb
+          git show 6afd413bb3aa18d7361bc86b32508a5bfd7325bb:data/deploy-snapshots/2026-11-21/odds.json > "$RUNNER_TEMP/pinned-2026-11-21-odds.json"
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import crypto from "node:crypto";
+          const p=process.env.RUNNER_TEMP+"/pinned-2026-11-21-odds.json";
+          const bytes=fs.readFileSync(p);
+          const blob=crypto.createHash("sha1").update("blob "+bytes.length+"\0").update(bytes).digest("hex");
+          if(blob!=="1f29048af9fc17c0bf6e05e6ee4aba54414871f1")
+            throw Error("historical_odds_blob_drift:"+blob);
+          const doc=JSON.parse(bytes);
+          if(!Array.isArray(doc.matches)) throw Error("pinned_historical_odds_matches_missing");
+          fs.copyFileSync(p,"data/deploy-snapshots/2026-11-21/odds.json");
+          console.log("HISTORICAL_ODDS_SOURCE_BOUND="+JSON.stringify({blob,rows:doc.matches.length,sourceCommit:"6afd413bb3aa18d7361bc86b32508a5bfd7325bb"}));
+          NODE
       - name: Reconstruct required assessment identities at original failed-run cutoff (read-only)
         shell: bash
         run: |
@@ -99,8 +128,17 @@ jobs:
           ];
           const currentSet=new Set(initial.matches.filter(m=>Object.keys(m.aiAssessment?.markets||{}).length).map(m=>m.canonicalId));
           const originalMissingRecomputed=required.filter(id=>!currentSet.has(id)).sort();
-          if (JSON.stringify(originalMissingRecomputed)!==JSON.stringify([...originalMissing].sort()))
+          if (JSON.stringify(originalMissingRecomputed)!==JSON.stringify([...originalMissing].sort())) {
+            console.log("ORIGINAL_SEVEN_SET_DISCREPANCY="+JSON.stringify({
+              archivedCutoff,requiredCount:required.length,
+              expectedMissing:[...originalMissing].sort(),
+              observedMissing:originalMissingRecomputed,
+              unexpectedMissing:originalMissingRecomputed.filter(id=>!originalMissing.includes(id)),
+              expectedButNowPresent:originalMissing.filter(id=>!originalMissingRecomputed.includes(id)),
+              assessedCanonicalIds: [...currentSet].sort()
+            }));
             throw new Error("original_seven_id_set_not_reproduced");
+          }
           fs.writeFileSync("/tmp/daily-p0-required-2026-11-21.json",JSON.stringify({required,originalMissing}));
           console.log("RECONSTRUCTED_REQUIRED_SUMMARY="+JSON.stringify({
             originalSnapshotSha256, archivedCutoff,
