@@ -391,3 +391,57 @@ test("persisted coverage fails closed when fixture identity normalization has no
       error?.sourceFixtureId === "required-a"
   );
 });
+
+test("durable writer checkpoints certified partial coverage but reports a failing gate", async () => {
+  let snapshot = {
+    generatedAt: "2026-11-22T08:00:00Z",
+    matches: [
+      { canonicalId: "a", aiAssessment: { markets: { OU25: { probs: { over: 0.6 } } } } },
+      { canonicalId: "b", aiAssessment: null }
+    ]
+  };
+  const result = await runOddsRefresh("2026-11-22", {
+    checkpointIncompleteCoverage: true,
+    readSnapshot: () => snapshot,
+    fixtureIdResolver: value => value,
+    readCanonical: () => [{ canonicalId: "a" }, { canonicalId: "b" }],
+    updateDecision: () => ({ due: false, reason: "not_due" }),
+    opening: async () => { throw new Error("scrape must not run"); },
+    exportFixtures: async () => ({ changed: false }),
+    supplement: () => ({
+      canonicalFixtures: 2,
+      modelEvidenceEligibleFixtureIds: ["a", "b"]
+    }),
+    exportOdds: () => ({ ok: true, changed: true, count: 2 })
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.assessmentRows, 1);
+  assert.equal(result.coverageGate.status, "FAILED");
+  assert.equal(result.coverageGate.code, "persisted_model_assessment_coverage_incomplete");
+  assert.deepEqual(result.coverageGate.missingRequiredAssessmentFixtureIds, ["b"]);
+});
+
+test("ordinary daily path still fails coverage; checkpoint mode never masks exporter HOLD", async () => {
+  const base = {
+    readSnapshot: () => ({
+      matches: [{ canonicalId: "a", aiAssessment: { markets: { BTTS: {} } } }]
+    }),
+    fixtureIdResolver: value => value,
+    readCanonical: () => [{ canonicalId: "a" }, { canonicalId: "b" }],
+    updateDecision: () => ({ due: false, reason: "not_due" }),
+    opening: async () => { throw new Error("unexpected scrape"); },
+    exportFixtures: async () => ({ changed: false }),
+    supplement: () => ({
+      canonicalFixtures: 2,
+      modelEvidenceEligibleFixtureIds: ["a", "b"]
+    }),
+    exportOdds: () => ({ ok: true, count: 2, changed: false })
+  };
+  await assert.rejects(runOddsRefresh("2026-11-22", base),
+    error => error.code === "persisted_model_assessment_coverage_incomplete");
+  await assert.rejects(runOddsRefresh("2026-11-22", {
+    ...base,
+    checkpointIncompleteCoverage: true,
+    exportOdds: () => ({ ok: false, reason: "identity_hold" })
+  }), error => error.code === "odds_export_not_approved");
+});
