@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { joinCanonicalFixturesWithModelAssessments } from "../core/plan-b-canonical-membership.js";
 
 import {
   assessmentRowCount,
@@ -79,4 +80,23 @@ test("no alias collision leaves assessed rows untouched", () => {
   const result = quarantineAmbiguousAssessmentModels([fixture], [fixture]);
   assert.deepEqual(result.quarantinedIds, []);
   assert.equal(result.rows[0], fixture);
+});
+
+
+test("post-quarantine canonical join has no alias collision and retains independent assessment", () => {
+  const fixtureA = { ...row(0.55, "cid_a"), providerIds: { espn: "100" } };
+  const fixtureB = { ...row(0.55, "cid_b"), providerIds: { espn: "200" } };
+  const original = [
+    { ...row(0.51, "cid_old"), providerIds: { espn: "100" }, market: { sourcePrice: 2.3 } },
+    { ...fixtureA, aiAssessment: row(0.65).aiAssessment },
+    fixtureB
+  ];
+  const screened = quarantineAmbiguousAssessmentModels([fixtureA, fixtureB], original);
+  const joined = joinCanonicalFixturesWithModelAssessments([fixtureA, fixtureB], screened.rows);
+  assert.equal(joined.ambiguousAssessmentAliases.length, 0);
+  assert.equal(joined.ambiguousCanonicalMatches.length, 0);
+  assert.deepEqual(joined.joinedMatches.map(match => match.canonicalId), ["cid_b"]);
+  assert.deepEqual(screened.rows[0].market, original[0].market);
+  assert.equal(original[0].aiAssessment !== null, true);
+  assert.equal(original[1].aiAssessment !== null, true);
 });
