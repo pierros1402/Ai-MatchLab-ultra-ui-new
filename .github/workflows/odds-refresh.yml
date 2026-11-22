@@ -132,6 +132,36 @@ jobs:
               --checkpoint-incomplete-coverage | tee odds-refresh-result.json
           node engine-v1/jobs/preserve-history-checkpoint.js --stage=odds-refresh-produced
 
+      # Commit the identity-screened, canonical-only model evidence before
+      # touching independent external bookmaker APIs. A provider timeout or
+      # multi-odds adapter failure must never discard this runner's already
+      # certified pre-kickoff assessment progress.
+      - name: Persist certified assessment checkpoint before bookmaker collection
+        if: env.SKIP != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git restore --staged . || true
+
+          ODDS_FILE="data/deploy-snapshots/${DAY_KEY}/odds.json"
+          FIXTURES_FILE="data/deploy-snapshots/${DAY_KEY}/fixtures-all.json"
+          [ -f "$ODDS_FILE" ] && git add "$ODDS_FILE"
+          [ -f "$FIXTURES_FILE" ] && git add "$FIXTURES_FILE"
+
+          node engine-v1/jobs/guard-staged-data-boundary.js \
+            --label=odds-assessment-pre-bookmaker-checkpoint \
+            --dayKey="${DAY_KEY}" \
+            --allow="^data/deploy-snapshots/${DAY_KEY}/(odds\\.json|fixtures-all\\.json)$"
+
+          if git diff --cached --quiet; then
+            echo "No model assessment checkpoint changes to commit."
+          else
+            git commit -m "Checkpoint certified model assessments for ${DAY_KEY}"
+            bash tools/git-push-rebase-retry.sh
+          fi
+
       - name: Capture multi-bookmaker odds on the durable GitHub writer
         if: env.SKIP != 'true'
         env:
