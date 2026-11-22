@@ -259,6 +259,33 @@ function validateTerminalAgainstCurrent(previous, currentTruth) {
   }
 }
 
+// Explicit, source-bound recovery for one historically mislabeled pending row.
+// This is NOT a general exception to immutable terminal-settlement integrity.
+const LEGACY_PENDING_TERMINAL_RECOVERY = Object.freeze({
+  canonicalFixtureId: "cid_bra1_cruzeiro_palmeiras_20261119",
+  predictionSignature: "f9b634412aac9e72de2a6eabdb4952e37b0e81df6fe5b8624",
+  pendingReason: "CANONICAL_STATUS_FIRST_HALF"
+});
+
+function recoverLegacyPendingTerminal(previous, prediction, currentTruth, enabled) {
+  if (!enabled) return null;
+  const pinned = LEGACY_PENDING_TERMINAL_RECOVERY;
+  if (previous?.canonicalFixtureId !== pinned.canonicalFixtureId) return null;
+  assert(previous.state === "SETTLED" &&
+    previous.truth === null && previous.brier === null && previous.hitRate === null &&
+    previous.pendingReason === pinned.pendingReason && previous.planCPick === false &&
+    previous.prediction?.planCPick === false &&
+    previous.prediction?.signature === pinned.predictionSignature &&
+    prediction.predictionSignature === pinned.predictionSignature &&
+    currentTruth?.status === "FT" &&
+    Number.isInteger(currentTruth.scoreHome) && currentTruth.scoreHome >= 0 &&
+    Number.isInteger(currentTruth.scoreAway) && currentTruth.scoreAway >= 0,
+    `legacy_pending_terminal_recovery_not_authorized:${pinned.canonicalFixtureId}`);
+  // Recalculate from the already-verified immutable prediction and the
+  // authoritative canonical FT; never reuse or invent a historical score.
+  return settledRecord(prediction, currentTruth);
+}
+
 function mean(values) {
   if (!values.length) return null;
   return round(values.reduce((sum, value) => sum + value, 0) / values.length);
@@ -286,11 +313,27 @@ export function settlePlanCShadow(options) {
   for (const id of previousById.keys()) assert(predictionIds.has(id), `settlement_prediction_removed:${id}`);
 
   const voidStatuses = new Set(["POSTP", "ABAND", "CANC", "CANCELLED", "SUSP", "WALK", "WO"]);
+  const recoveryEvidence = [];
   const records = loaded.predictions.map(prediction => {
     const currentTruth = truth.truthById.get(prediction.canonicalFixtureId) || null;
     const oldRecord = previousById.get(prediction.canonicalFixtureId) || null;
     if (oldRecord && ["SETTLED", "VOID_EXCLUDED"].includes(oldRecord.state)) {
       assert(oldRecord?.prediction?.signature === prediction.predictionSignature, `terminal_prediction_signature_conflict:${prediction.canonicalFixtureId}`);
+      const recovered = recoverLegacyPendingTerminal(oldRecord, prediction, currentTruth,
+        options.repairLegacyPendingShapedTerminal === true);
+      if (recovered) {
+        recoveryEvidence.push({
+          canonicalFixtureId: prediction.canonicalFixtureId,
+          originalRecordSha256: sha256(Buffer.from(canonicalPlanCJson(oldRecord), "utf8")),
+          recoveredRecordSha256: sha256(Buffer.from(canonicalPlanCJson(recovered), "utf8")),
+          predictionSignature: prediction.predictionSignature,
+          canonicalSourcePath: currentTruth.sourcePath,
+          canonicalSourceSha256: currentTruth.sourceSha256,
+          canonicalScoreHome: currentTruth.scoreHome,
+          canonicalScoreAway: currentTruth.scoreAway
+        });
+        return recovered;
+      }
       validateTerminalAgainstCurrent(oldRecord, currentTruth);
       return oldRecord;
     }
@@ -338,6 +381,13 @@ export function settlePlanCShadow(options) {
     records
   };
   assert(report.accounting.balanced, "settlement_accounting_unbalanced");
+  // Validate every derived terminal BEFORE replacing the old output, including
+  // newly constructed rows. An invalid terminal may never be persisted again.
+  for (const record of records) {
+    if (record.state === "SETTLED" || record.state === "VOID_EXCLUDED") {
+      validateTerminalAgainstCurrent(record, truth.truthById.get(record.canonicalFixtureId) || null);
+    }
+  }
   writeJsonAtomic(outputFile, report);
   const audit = {
     schema: "ai-matchlab.plan-c-settlement-audit.v1",
@@ -354,6 +404,7 @@ export function settlePlanCShadow(options) {
     hitRateSummary: report.hitRateSummary,
     idempotencyHash: report.idempotencyHash,
     outputSha256: sha256(fs.readFileSync(outputFile)),
+    explicitLegacyPendingTerminalRecovery: recoveryEvidence,
     officialPlansUnaffected: true
   };
   writeJsonAtomic(auditFile, audit);
@@ -370,6 +421,7 @@ export function parseSettlePlanCCli(argv = process.argv.slice(2)) {
     else if (arg === "--truth-root") out.truthRoot = next();
     else if (arg === "--output") out.outputFile = next();
     else if (arg === "--audit") out.auditFile = next();
+    else if (arg === "--repair-legacy-pending-terminal") out.repairLegacyPendingShapedTerminal = true;
     else throw new Error(`unknown_argument:${arg}`);
   }
   return out;
