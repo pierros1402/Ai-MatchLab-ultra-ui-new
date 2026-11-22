@@ -242,7 +242,7 @@ test("all generated terminal rows are checked before write and normal FT remains
 
 test("pinned recovery restores only the exact mislabeled record using authoritative FT", () => {
   const id = "cid_bra1_cruzeiro_palmeiras_20261119";
-  const signature = "f9b634412aac9e72de2a6eabdb4952e37b0e81df6fe5b8624";
+  const signature = "f9b634412aac9e72de2a6e0b1bcad48c91a6eabdb4952e37b0e81df6fe5b8624";
   const original = {
     canonicalFixtureId: id, state: "SETTLED", planCPick: false,
     prediction: {signature, planCPick: false}, truth: null,
