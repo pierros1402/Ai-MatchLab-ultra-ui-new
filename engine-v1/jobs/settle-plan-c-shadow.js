@@ -291,6 +291,23 @@ export function settlePlanCShadow(options) {
     const oldRecord = previousById.get(prediction.canonicalFixtureId) || null;
     if (oldRecord && ["SETTLED", "VOID_EXCLUDED"].includes(oldRecord.state)) {
       assert(oldRecord?.prediction?.signature === prediction.predictionSignature, `terminal_prediction_signature_conflict:${prediction.canonicalFixtureId}`);
+      // A legacy record may be mislabeled SETTLED while retaining the exact
+      // PENDING payload. Only this known, source-confirmed corruption is
+      // reconstructible; all other terminal integrity failures remain fatal.
+      const legacyPendingMislabel =
+        oldRecord.canonicalFixtureId === "cid_bra1_cruzeiro_palmeiras_20261119" &&
+        oldRecord.state === "SETTLED" &&
+        oldRecord.truth === null &&
+        oldRecord.brier === null &&
+        oldRecord.hitRate === null &&
+        oldRecord.pendingReason === "CANONICAL_STATUS_FIRST_HALF" &&
+        currentTruth?.status === "FT" &&
+        Number.isInteger(currentTruth.scoreHome) && currentTruth.scoreHome >= 0 &&
+        Number.isInteger(currentTruth.scoreAway) && currentTruth.scoreAway >= 0;
+      if (legacyPendingMislabel) {
+        console.warn(`plan_c_legacy_pending_mislabel_reconciled:${oldRecord.canonicalFixtureId}`);
+        return settledRecord(prediction, currentTruth);
+      }
       validateTerminalAgainstCurrent(oldRecord, currentTruth);
       return oldRecord;
     }

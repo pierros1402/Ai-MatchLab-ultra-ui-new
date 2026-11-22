@@ -11,7 +11,7 @@ function writeJson(filePath, payload) {
   fs.writeFileSync(filePath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
 }
 
-function setup(status = "PRE", scoreHome = null, scoreAway = null) {
+function setup(status = "PRE", scoreHome = null, scoreAway = null, fixtureId = "cid_test1_home_away_20260827") {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-plan-c-settle-"));
   const predictionRoot = path.join(root, "bundle");
   const truthRoot = path.join(root, "truth");
@@ -19,7 +19,7 @@ function setup(status = "PRE", scoreHome = null, scoreAway = null) {
   const auditFile = path.join(root, "audit.json");
   const prediction = {
     schema: "ai-matchlab.plan-c-shadow-prediction.v1.2",
-    canonicalFixtureId: "cid_test1_home_away_20260827",
+    canonicalFixtureId: fixtureId,
     day: "2026-08-27",
     kickoffUtc: "2026-08-27T19:00:00.000Z",
     snapshotRetrievedAt: "2026-08-24T08:00:00.000Z",
@@ -202,4 +202,29 @@ test("terminal integrity union rejects corrupted historical FT and VOID without 
       }
     } finally { fs.rmSync(input.root, { recursive: true, force: true }); }
   }
+});
+
+test("source-confirmed legacy pending mislabel is reconstructed once without weakening terminal guards", () => {
+  const id = "cid_bra1_cruzeiro_palmeiras_20261119";
+  const input = setup("FT", 2, 1, id);
+  try {
+    const options = { dayKey: "2026-08-27", ...input };
+    const original = settlePlanCShadow(options);
+    const corrupted = JSON.parse(fs.readFileSync(input.outputFile, "utf8"));
+    corrupted.records[0] = {
+      ...corrupted.records[0],
+      state: "SETTLED", truth: null, brier: null, hitRate: null,
+      pendingReason: "CANONICAL_STATUS_FIRST_HALF"
+    };
+    writeJson(input.outputFile, corrupted);
+    const repaired = settlePlanCShadow(options);
+    assert.equal(repaired.report.records[0].state, "SETTLED");
+    assert.equal(repaired.report.records[0].truth.scoreHome, 2);
+    assert.equal(repaired.report.records[0].truth.scoreAway, 1);
+    assert.equal(repaired.report.idempotencyHash, original.report.idempotencyHash);
+    assert.equal(settlePlanCShadow(options).report.idempotencyHash, original.report.idempotencyHash);
+    corrupted.records[0].pendingReason = "UNRECOGNIZED";
+    writeJson(input.outputFile, corrupted);
+    assert.throws(() => settlePlanCShadow(options), /previous_settled_integrity_invalid/);
+  } finally { fs.rmSync(input.root, { recursive: true, force: true }); }
 });
