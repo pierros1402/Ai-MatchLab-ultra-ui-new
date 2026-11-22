@@ -14,6 +14,7 @@
 
 import fs from "fs";
 
+import { canonicalizeFixtureDisplayNames } from "../core/day-fixture-universe.js";
 import { resolveDataPath } from "../storage/data-root.js";
 import { assessmentIdentityFields } from "../storage/assessment-read-view.js";
 import { readStandings } from "../storage/standings-memory-db.js";
@@ -428,6 +429,9 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
       continue;
     }
 
+    // Keep the model inputs in their source spelling. Persist the same fixture
+    // display names the strict publication gate derives from canonical acquisition.
+    const displayFixture = canonicalizeFixtureDisplayNames(fixture);
     recordFn(
       canonicalId,
       {
@@ -435,8 +439,8 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
         canonicalId,
         leagueSlug,
         competition: fixture?.leagueName || fixture?.competition || null,
-        home,
-        away,
+        home: displayFixture.homeTeam || home,
+        away: displayFixture.awayTeam || away,
         dayKey,
         kickoffUtc: fixture?.kickoffUtc || null,
         aiAssessment: {
