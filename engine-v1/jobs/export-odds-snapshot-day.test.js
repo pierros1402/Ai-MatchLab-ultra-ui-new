@@ -1,10 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { joinCanonicalFixturesWithModelAssessments } from "../core/plan-b-canonical-membership.js";
 
 import {
   assessmentRowCount,
   contentHash,
-  snapshotRegressionReason
+  snapshotRegressionReason,
+  quarantineAmbiguousAssessmentModels
 } from "./export-odds-snapshot-day.js";
 
 function row(prob = 0.55, id = "cid_test_home_away_20260813") {
@@ -54,4 +56,47 @@ test("assessment coverage cannot regress", () => {
 
 test("equal assessment coverage is not treated as regression", () => {
   assert.equal(snapshotRegressionReason([row()], [row(0.61)]), null);
+});
+
+
+test("ambiguous historical assessment aliases quarantine only implicated models, preserving raw evidence", () => {
+  const fixtureA = { ...row(0.55, "cid_a"), providerIds: { espn: "100" } };
+  const fixtureB = { ...row(0.55, "cid_b"), providerIds: { espn: "200" } };
+  const stale = { ...row(0.51, "cid_old"), providerIds: { espn: "100" }, market: { bookmaker: 2.3 } };
+  const fresh = { ...fixtureA, aiAssessment: row(0.65).aiAssessment };
+  const independent = { ...fixtureB };
+  const inputs = [stale, fresh, independent];
+  const result = quarantineAmbiguousAssessmentModels([fixtureA, fixtureB], inputs);
+  assert.equal(result.initial.ambiguousAssessmentAliases.length > 0, true);
+  assert.equal(result.rows[0].aiAssessment, null);
+  assert.equal(result.rows[1].aiAssessment, null);
+  assert.deepEqual(result.rows[0].market, stale.market);
+  assert.equal(result.rows[2].aiAssessment, independent.aiAssessment);
+  assert.equal(inputs[0].aiAssessment, stale.aiAssessment);
+});
+
+test("no alias collision leaves assessed rows untouched", () => {
+  const fixture = { ...row(), providerIds: { espn: "501" } };
+  const result = quarantineAmbiguousAssessmentModels([fixture], [fixture]);
+  assert.deepEqual(result.quarantinedIds, []);
+  assert.equal(result.rows[0], fixture);
+});
+
+
+test("post-quarantine canonical join has no alias collision and retains independent assessment", () => {
+  const fixtureA = { ...row(0.55, "cid_a"), providerIds: { espn: "100" } };
+  const fixtureB = { ...row(0.55, "cid_b"), providerIds: { espn: "200" } };
+  const original = [
+    { ...row(0.51, "cid_old"), providerIds: { espn: "100" }, market: { sourcePrice: 2.3 } },
+    { ...fixtureA, aiAssessment: row(0.65).aiAssessment },
+    fixtureB
+  ];
+  const screened = quarantineAmbiguousAssessmentModels([fixtureA, fixtureB], original);
+  const joined = joinCanonicalFixturesWithModelAssessments([fixtureA, fixtureB], screened.rows);
+  assert.equal(joined.ambiguousAssessmentAliases.length, 0);
+  assert.equal(joined.ambiguousCanonicalMatches.length, 0);
+  assert.deepEqual(joined.joinedMatches.map(match => match.canonicalId), ["cid_b"]);
+  assert.deepEqual(screened.rows[0].market, original[0].market);
+  assert.equal(original[0].aiAssessment !== null, true);
+  assert.equal(original[1].aiAssessment !== null, true);
 });
