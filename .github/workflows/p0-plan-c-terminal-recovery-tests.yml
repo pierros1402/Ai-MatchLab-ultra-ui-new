@@ -66,7 +66,7 @@ jobs:
           const bad=doc.records.filter(r=>r.state==="SETTLED" && (r.truth===null || r.brier===null || r.hitRate===null));
           if(doc.records.length!==61 || bad.length!==1 ||
               bad[0].canonicalFixtureId!=="cid_bra1_cruzeiro_palmeiras_20261119" ||
-              bad[0].prediction?.signature!=="f9b634412aac9e72de2a6eabdb4952e37b0e81df6fe5b8624")
+              bad[0].prediction?.signature!=="f9b634412aac9e72de2a6e0b1bcad48c91a6eabdb4952e37b0e81df6fe5b8624")
             throw Error("unexpected_historical_settlement_shape");
           console.log("PINNED_CORRUPTION_REPRODUCED="+bad[0].canonicalFixtureId);
           NODE
