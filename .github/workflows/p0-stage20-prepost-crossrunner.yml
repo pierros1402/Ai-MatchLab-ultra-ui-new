@@ -1,0 +1,70 @@
+name: P0 Stage20 ignored-inclusive cross-runner archive proof (synthetic)
+on:
+  pull_request:
+    paths:
+      - "tools/test-stage20-prepost-crossrunner.mjs"
+      - ".github/workflows/p0-stage20-prepost-crossrunner.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  produce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      digest: ${{ steps.upload.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            tools/test-stage20-prepost-crossrunner.mjs
+            engine-v1/core/daily-resume-complete-data-inventory.mjs
+            engine-v1/core/daily-resume-prepost-delta-archive.mjs
+            engine-v1/core/daily-resume-stage20-admission.mjs
+            .github/workflows/p0-stage20-prepost-crossrunner.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Build deterministic synthetic ignored-inclusive SHA prepost archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check tools/test-stage20-prepost-crossrunner.mjs
+          node tools/test-stage20-prepost-crossrunner.mjs produce \
+            "$RUNNER_TEMP/aiml-stage20-prepost-output"
+      - uses: actions/upload-artifact@v4
+        id: upload
+        with:
+          name: aiml-prepost-synthetic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/aiml-stage20-prepost-output
+          retention-days: 1
+          if-no-files-found: error
+  consume:
+    runs-on: ubuntu-latest
+    needs: produce
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            tools/test-stage20-prepost-crossrunner.mjs
+            engine-v1/core/daily-resume-complete-data-inventory.mjs
+            engine-v1/core/daily-resume-prepost-delta-archive.mjs
+            engine-v1/core/daily-resume-stage20-admission.mjs
+            .github/workflows/p0-stage20-prepost-crossrunner.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: actions/download-artifact@v4
+        with:
+          name: aiml-prepost-synthetic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/aiml-stage20-prepost-downloaded
+      - name: Independently rebuild original synthetic pre/post trees and verify bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "EXPECTED_${{ steps.upload.outputs.artifact-digest }}"
+          node tools/test-stage20-prepost-crossrunner.mjs consume \
+            "$RUNNER_TEMP/aiml-stage20-prepost-downloaded"
+          git diff --exit-code HEAD -- .github/workflows/daily-deploy-snapshot.yml data/
+          echo "CROSS_RUNNER_SYNTHETIC_ONLY_NO_PRODUCTION_RESUME_NO_PUBLISH"
