@@ -10,7 +10,7 @@ test("exact default OFF Stage20 pre-cycle and post-cycle observer boundaries",()
   assert.equal(r.defaultOff,true);
   assert.equal(r.productionResumeAuthorized,false);
   assert.equal(r.publicationAuthorized,false);
-  assert.deepEqual(r.boundaryOrder,["pre","cycle","failed-cycle-diagnostic","post","existing-shadow-capture"]);
+  assert.deepEqual(r.boundaryOrder,["pre","cycle","failed-cycle-diagnostic","failure-summary","post","existing-shadow-capture"]);
 });
 test("moving pre observer after Daily is denied",()=>{
   const broken=source.replace("      - name: "+pre,"      - name: MOVED_PRE")
@@ -74,4 +74,23 @@ test("failed-cycle observation cannot become always-on",()=>{
   );
   assert.throws(()=>auditStage20ObserverWiring(broken),
     /stage20_failed_cycle_observation_guard_missing/);
+});
+
+test("failure summary upload cannot include full manifest or private data paths",()=>{
+  const broken=source.replace(
+    "path: ${{ runner.temp }}/aiml-stage20-failure-summary.json",
+    "path: ${{ runner.temp }}/aiml-stage20-failure-post.json"
+  );
+  assert.throws(()=>auditStage20ObserverWiring(broken),
+    /stage20_failed_cycle_summary_upload_unsafe/);
+});
+test("failure summary upload cannot occur without verified failed-cycle observation",()=>{
+  const broken=source.replace(" && steps.shadow_stage20_failed_cycle.outcome == 'success'","");
+  assert.throws(()=>auditStage20ObserverWiring(broken),
+    /stage20_failed_cycle_summary_upload_unsafe/);
+});
+test("failure summary upload retention cannot become indefinite",()=>{
+  const broken=source.replace("retention-days: 1","retention-days: 90");
+  assert.throws(()=>auditStage20ObserverWiring(broken),
+    /stage20_failed_cycle_summary_upload_unsafe/);
 });
