@@ -1,0 +1,38 @@
+name: P0 Daily stage20 checkpoint capture admission (isolated)
+
+on:
+  pull_request:
+    paths:
+      - "engine-v1/core/daily-resume-stage20-admission.mjs"
+      - "engine-v1/jobs/capture-stage20-worktree.mjs"
+      - "engine-v1/jobs/capture-stage20-worktree.test.mjs"
+      - ".github/workflows/daily-resume-stage20-admission-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1/core
+            engine-v1/jobs/capture-stage20-worktree.mjs
+            engine-v1/jobs/capture-stage20-worktree.test.mjs
+            .github/workflows
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Check exact source syntax
+        run: |
+          node --check engine-v1/core/daily-resume-stage20-admission.mjs
+          node --check engine-v1/jobs/capture-stage20-worktree.mjs
+          node --check engine-v1/jobs/capture-stage20-worktree.test.mjs
+      - name: Prove stage20 source-bound capture and recovery on scratch Git repos
+        run: node --test --test-reporter=tap engine-v1/jobs/capture-stage20-worktree.test.mjs
+      - name: Protect production workflows and data
+        run: git diff --exit-code HEAD -- .github/workflows/daily-deploy-snapshot.yml data/
