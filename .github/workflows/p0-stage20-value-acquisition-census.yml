@@ -1,0 +1,65 @@
+name: P0 Stage20 value acquisition census (read-only)
+on:
+  pull_request:
+    paths:
+      - "tools/audit-stage20-value-acquisition-census.mjs"
+      - "tools/audit-stage20-value-acquisition-census.test.mjs"
+      - ".github/workflows/p0-stage20-value-acquisition-census.yml"
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            tools/audit-stage20-value-acquisition-census.mjs
+            tools/audit-stage20-value-acquisition-census.test.mjs
+            tools/audit-daily954-stage20-history.mjs
+            engine-v1/core/daily-resume-stage20-admission.mjs
+            engine-v1/core/daily-resume-stage20-journal-admission.mjs
+            engine-v1/core/season-closure-contract.js
+            .github/workflows/p0-stage20-value-acquisition-census.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Syntax and fail-closed negative controls
+        run: |
+          node --check tools/audit-stage20-value-acquisition-census.mjs
+          node --check tools/audit-stage20-value-acquisition-census.test.mjs
+          node --test --test-reporter=tap tools/audit-stage20-value-acquisition-census.test.mjs
+      - uses: actions/download-artifact@v4
+        with:
+          name: history-recovery-45137286904-1
+          run-id: 45137286904
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/value-acquisition-original
+      - name: Verify original archive and nineteen payload shapes
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/audit-stage20-value-acquisition-census.mjs "$RUNNER_TEMP/value-acquisition-original" > "$RUNNER_TEMP/value-acquisition-census.txt"
+          cat "$RUNNER_TEMP/value-acquisition-census.txt"
+          node --input-type=module - "$RUNNER_TEMP/value-acquisition-census.txt" <<'NODE'
+          import assert from "node:assert/strict";
+          import fs from "node:fs";
+          const line=fs.readFileSync(process.argv[2],"utf8").trim();
+          assert.ok(line.startsWith("STAGE20_VALUE_ACQUISITION_CENSUS="));
+          const x=JSON.parse(line.slice(line.indexOf("=")+1));
+          assert.equal(x.files,19);
+          assert.ok(x.bytes>0);
+          assert.equal(x.archivedBytesIndividuallyVerified,true);
+          assert.equal(x.producerContractMatched,false);
+          assert.equal(x.externalInputFreshnessProven,false);
+          assert.equal(x.safeForCrossRunReuse,false);
+          assert.equal(x.omissionAuthorized,false);
+          assert.equal(x.stageSkipAuthorized,false);
+          assert.equal(x.productionWrites,0);
+          NODE
+      - name: No production mutation
+        run: |
+          git diff --exit-code HEAD -- data/ .github/workflows/daily-deploy-snapshot.yml
+          echo "VALUE_ACQUISITION_NOT_ADMITTED_FOR_RESUME"
