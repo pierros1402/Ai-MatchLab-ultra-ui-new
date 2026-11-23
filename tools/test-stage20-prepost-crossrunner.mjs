@@ -7,6 +7,7 @@ import {execFileSync} from "node:child_process";
 import {fileURLToPath} from "node:url";
 import {inventoryDataTree,compareDataInventories} from "../engine-v1/core/daily-resume-complete-data-inventory.mjs";
 import {capturePrepostDeltaToIsolatedArchive,verifyPrepostDeltaArchive} from "../engine-v1/core/daily-resume-prepost-delta-archive.mjs";
+import {replayPrepostDeltaToIsolatedClone} from "../engine-v1/core/daily-resume-prepost-isolated-replay.mjs";
 const DAY="2026-11-23";
 const fixedEnv={...process.env,
   GIT_AUTHOR_DATE:"2000-01-01T00:00:00+00:00",
@@ -52,6 +53,25 @@ export function consumeSyntheticPrepostTransport(root) {
   try {
     const independentlyComputedBefore=inventoryDataTree(independent,DAY);
     assert.deepEqual(independentlyComputedBefore,before,"different_runner_before_snapshot_mismatch");
+    // Distinct workflow-run consumer reconstructs the COMPLETE final data
+    // filesystem from the independently pinned untouched baseline + archived
+    // ignored-inclusive delta. Never writes producer, baseline or public data.
+    const restored=replayPrepostDeltaToIsolatedClone({
+      sourceRepoRoot:independent,
+      archiveRoot:path.join(root,"archive"),
+      before,after,parent:os.tmpdir()
+    });
+    try {
+      assert.equal(restored.completeBaselineParity,true);
+      assert.equal(restored.completeFinalTreeParity,true);
+      assert.equal(restored.afterSha256,after.manifestSha256);
+      assert.equal(restored.resumeAuthorized,false);
+      assert.equal(restored.publicationAuthorized,false);
+      assert.equal(inventoryDataTree(restored.stagingClone,DAY).manifestSha256,
+        after.manifestSha256);
+    } finally {
+      fs.rmSync(restored.stagingClone,{recursive:true,force:true});
+    }
     mutation(independent);
     const independentlyComputedAfter=inventoryDataTree(independent,DAY);
     assert.deepEqual(independentlyComputedAfter,after,"different_runner_after_snapshot_mismatch");
@@ -62,7 +82,9 @@ export function consumeSyntheticPrepostTransport(root) {
     assert.equal(checked.entries,3);
     assert.equal(checked.replayAuthorized,false);
     return {verified:true,entries:3,added:1,modified:1,deleted:1,
-      ignoredModified:true,byteExact:true,sourceCommit:before.sourceCommit,
+      ignoredModified:true,byteExact:true,fullTreeReconstruction:true,
+      beforeSha256:before.manifestSha256,afterSha256:after.manifestSha256,
+      sourceCommit:before.sourceCommit,
       resumeAuthorized:false,publicationAuthorized:false};
   }finally{fs.rmSync(independent,{recursive:true,force:true});}
 }
