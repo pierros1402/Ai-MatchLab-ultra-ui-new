@@ -5,6 +5,8 @@ on:
     paths:
       - "engine-v1/core/daily-resume-contract.mjs"
       - "engine-v1/core/daily-resume-contract.test.mjs"
+      - "engine-v1/core/daily-resume-artifact-store.mjs"
+      - "engine-v1/core/daily-resume-artifact-store.test.mjs"
       - ".github/workflows/daily-resume-contract-tests.yml"
   workflow_dispatch:
 
@@ -24,8 +26,10 @@ jobs:
         run: |
           node --check engine-v1/core/daily-resume-contract.mjs
           node --check engine-v1/core/daily-resume-contract.test.mjs
+          node --check engine-v1/core/daily-resume-artifact-store.mjs
+          node --check engine-v1/core/daily-resume-artifact-store.test.mjs
       - name: Test fail-closed resume decisions with isolated files
-        run: node --test --test-reporter=tap engine-v1/core/daily-resume-contract.test.mjs
+        run: node --test --test-reporter=tap engine-v1/core/daily-resume-contract.test.mjs engine-v1/core/daily-resume-artifact-store.test.mjs
       - name: Confirm no production workflow or data was mutated
         run: |
           git diff --exit-code HEAD -- .github/workflows/daily-deploy-snapshot.yml data/
