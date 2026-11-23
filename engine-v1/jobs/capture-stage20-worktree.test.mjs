@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
-import { evaluateStage20CapturePaths } from "../core/daily-resume-stage20-admission.mjs";
+import { evaluateStage20CapturePaths, STAGE20_APPROVED_FAMILIES } from "../core/daily-resume-stage20-admission.mjs";
 import { inspectStage20Worktree, captureStage20Worktree } from "./capture-stage20-worktree.mjs";
 import { inspectDailyWorktreeDelta, replayDailyWorktreeDeltaToIsolatedClone } from "../core/daily-resume-worktree-delta.mjs";
 function cmd(root, ...args) {
@@ -42,26 +42,17 @@ test("writes, deletion and byte parity reconstruct only in temporary clone", () 
   assert.equal(r.files, 3); assert.equal(r.writes, 2); assert.equal(r.deletions, 1);
   const checked = inspectDailyWorktreeDelta(f.archive, {
     dayKey: r.dayKey, stageId: r.stageId, baseCommit: r.baseCommit,
-    allowedPrefixes: (awaitPolicyFamilies())
+    allowedPrefixes: (STAGE20_APPROVED_FAMILIES)
   });
   assert.equal(checked.ok, true);
   const restored = replayDailyWorktreeDeltaToIsolatedClone(f.repo, f.archive, {
     dayKey: r.dayKey, stageId: r.stageId, baseCommit: r.baseCommit,
-    allowedPrefixes: (awaitPolicyFamilies())
+    allowedPrefixes: (STAGE20_APPROVED_FAMILIES)
   }, f.home);
   assert.equal(fs.readFileSync(path.join(restored.stagingClone, "data", "canonical-fixtures", "old.json"), "utf8"), "{\"score\":2}\n");
   assert.equal(fs.existsSync(path.join(restored.stagingClone, "data", "canonical-fixtures", "remove.json")), false);
   assert.equal(fs.readFileSync(path.join(restored.stagingClone, "data", "value", "new.json"), "utf8"), "{\"count\":1}\n");
 }));
-function awaitPolicyFamilies() {
-  // Importing the policy constant under the exact approved contract is intentional.
-  return ["data/canonical-fixtures/","data/standings/","data/team-geo/","data/multi-odds/",
-    "data/history/","data/history-index/","data/history-coverage/","data/h2h/",
-    "data/h2h-foundation/","data/model-priors/","data/coverage-readiness/",
-    "data/competition-discovery/","data/provider-competition-registry/","data/team-news/",
-    "data/player-usage/","data/plan-c-shadow/","data/value/","data/value-plans/",
-    "data/value-comparison/","data/final-results/","data/football-truth/","data/deploy-snapshots/"];
-}
 test("unknown changed path stops capture before archive creation", () => fixture(f => {
   fs.writeFileSync(path.join(f.repo, "unexpected.txt"), "not approved");
   const p = inspectStage20Worktree(f.repo, "2026-11-23");
