@@ -1,0 +1,61 @@
+name: P0 sandbox cross-job checkpoint artifact replay
+on:
+  pull_request:
+    paths:
+      - "engine-v1/jobs/p0-daily-cross-job-sandbox-replay.mjs"
+      - "engine-v1/core/daily-resume-fresh-runner-sandbox.mjs"
+      - ".github/workflows/p0-daily-cross-job-sandbox-replay.yml"
+permissions:
+  contents: read
+jobs:
+  produce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1/jobs/p0-daily-cross-job-sandbox-replay.mjs
+            engine-v1/core/daily-resume-fresh-runner-sandbox.mjs
+            engine-v1/core/daily-resume-artifact-store.mjs
+            engine-v1/core/daily-resume-contract.mjs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Inject stage 27 crash after archiving 26 validated stages
+        run: |
+          set -euo pipefail
+          node --check engine-v1/jobs/p0-daily-cross-job-sandbox-replay.mjs
+          node engine-v1/jobs/p0-daily-cross-job-sandbox-replay.mjs produce "$RUNNER_TEMP/aiml-proof"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aiml-cross-job-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/aiml-proof/store/
+          if-no-files-found: error
+          retention-days: 1
+          include-hidden-files: false
+  consume:
+    needs: produce
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1/jobs/p0-daily-cross-job-sandbox-replay.mjs
+            engine-v1/core/daily-resume-fresh-runner-sandbox.mjs
+            engine-v1/core/daily-resume-artifact-store.mjs
+            engine-v1/core/daily-resume-contract.mjs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: actions/download-artifact@v4
+        with:
+          name: aiml-cross-job-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/aiml-proof/store/
+      - name: Verify downloaded bytes and restore 26 stages in fresh runner
+        run: |
+          set -euo pipefail
+          node engine-v1/jobs/p0-daily-cross-job-sandbox-replay.mjs consume "$RUNNER_TEMP/aiml-proof"
+          git diff --exit-code HEAD -- data/ .github/workflows/daily-deploy-snapshot.yml
+          echo "CROSS_JOB_SANDBOX_PROOF_ONLY_NO_PRODUCTION_DAILY_RESUME"
