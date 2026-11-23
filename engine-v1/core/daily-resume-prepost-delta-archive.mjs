@@ -89,13 +89,13 @@ export function verifyPrepostDeltaArchive(archiveRoot,before,after) {
     let total=0;
     for(const e of doc.entries) {
       if(e.op!=="WRITE")continue;
-      const bytes=fs.readFileSync(fileAt(archiveRoot,"data/"+e.path));
+      const bytes=fs.readFileSync(fileAt(path.join(archiveRoot,"files"),e.path));
       total+=bytes.length;
       check(bytes.length===e.bytes && digest(bytes)===e.sha256 &&
         total<=512*1024*1024,"stage20_prepost_archive_bytes_mismatch");
-      expectedFiles.push("data/"+e.path);
+      expectedFiles.push(e.path);
     }
-    const found=listFiles(path.join(archiveRoot,"data"));
+    const found=listFiles(path.join(archiveRoot,"files"));
     check(JSON.stringify(found)===JSON.stringify(expectedFiles.sort()),
       "stage20_prepost_archive_file_set_mismatch");
     return {ok:true,evidenceSha256,entries:doc.entries.length,
@@ -123,7 +123,7 @@ export function capturePrepostDeltaToIsolatedArchive(root,archiveRoot,before,aft
       const bytes=fs.readFileSync(fileAt(root,row.path));
       check(bytes.length===row.bytes && digest(bytes)===row.sha256,
         "stage20_prepost_source_drift");
-      const target=path.join(tmp,"data",row.path);
+      const target=path.join(tmp,"files",row.path);
       fs.mkdirSync(path.dirname(target),{recursive:true});
       fs.writeFileSync(target,bytes,{flag:"wx",mode:0o600});
     }
