@@ -1,0 +1,37 @@
+name: P0 Stage20 ignored-inclusive isolated prepost archive tests
+on:
+  pull_request:
+    paths:
+      - "engine-v1/core/daily-resume-prepost-delta-archive.mjs"
+      - "engine-v1/core/daily-resume-prepost-delta-archive.test.mjs"
+      - "engine-v1/core/daily-resume-complete-data-inventory.mjs"
+      - ".github/workflows/p0-stage20-prepost-archive.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1/core/daily-resume-prepost-delta-archive.mjs
+            engine-v1/core/daily-resume-prepost-delta-archive.test.mjs
+            engine-v1/core/daily-resume-complete-data-inventory.mjs
+            engine-v1/core/daily-resume-stage20-admission.mjs
+            .github/workflows/p0-stage20-prepost-archive.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Exact syntax checks
+        run: |
+          node --check engine-v1/core/daily-resume-prepost-delta-archive.mjs
+          node --check engine-v1/core/daily-resume-prepost-delta-archive.test.mjs
+      - name: Verify isolated hash-bound archive including ignored modifications and deletions
+        run: node --test --test-reporter=tap engine-v1/core/daily-resume-prepost-delta-archive.test.mjs
+      - name: No production capture/replay or writes
+        run: |
+          git diff --exit-code HEAD -- .github/workflows/daily-deploy-snapshot.yml data/
+          echo "ISOLATED_PREPOST_DELTA_ONLY_NO_PRODUCTION_RESUME_NO_PUBLISH"
