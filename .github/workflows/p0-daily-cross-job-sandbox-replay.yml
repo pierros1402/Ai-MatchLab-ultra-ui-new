@@ -4,6 +4,7 @@ on:
     paths:
       - "engine-v1/jobs/p0-daily-cross-job-sandbox-replay.mjs"
       - "engine-v1/core/daily-resume-fresh-runner-sandbox.mjs"
+      - "engine-v1/core/daily-resume-fresh-runner-sandbox.test.mjs"
       - ".github/workflows/p0-daily-cross-job-sandbox-replay.yml"
 permissions:
   contents: read
@@ -17,11 +18,14 @@ jobs:
           sparse-checkout: |
             engine-v1/jobs/p0-daily-cross-job-sandbox-replay.mjs
             engine-v1/core/daily-resume-fresh-runner-sandbox.mjs
+            engine-v1/core/daily-resume-fresh-runner-sandbox.test.mjs
             engine-v1/core/daily-resume-artifact-store.mjs
             engine-v1/core/daily-resume-contract.mjs
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
+      - name: Assert atomic rollback and restore negative tests
+        run: node --test engine-v1/core/daily-resume-fresh-runner-sandbox.test.mjs
       - name: Inject stage 27 crash after archiving 26 validated stages
         run: |
           set -euo pipefail
