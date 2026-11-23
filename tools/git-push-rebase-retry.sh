@@ -234,6 +234,11 @@ for i in $(seq 1 "${ATTEMPTS}"); do
     node ./engine-v1/jobs/verify-daily-publish-contract.js --date="${DAY_KEY}" --prepublish --gate
     node ./engine-v1/jobs/verify-daily-publish-contract.js --date="${DAY_KEY}" --gate
     echo "PLAN_C_AUDIT_ONLY_REBASE_REVALIDATED=true"
+    # Even on the last configured attempt, submit the validated commit once.
+    if git push origin "HEAD:${BRANCH}"; then
+      exit 0
+    fi
+    echo "Plan C audit-only safe push raced again; next attempt must re-admit remote changes."
     continue
   fi
 
