@@ -1,15 +1,28 @@
 // Isolated execution proof of a stage DAG, NOT a production Daily adapter.
 // Fail-closed: only authenticated source/contract/input/output bytes may skip.
 // Any invalid stage forces a suffix rebuild; gates and volatile inputs always run.
+import fs from "node:fs";
+import path from "node:path";
 import {validateGraph,verifyCheckpoint} from "./daily-resume-contract.mjs";
 import {archiveStage,verifyArchive} from "./daily-resume-artifact-store.mjs";
 const CLASSES=new Set(["frozen","derived","external","mutable","gate"]);
 const MANDATORY=new Set(["prepublish-gate","commit-snapshot","public-verify"]);
 function requireThat(ok,reason){if(!ok)throw Error(reason);}
 export async function runSandboxRecoveryDAG({
-  stages,binding,previousCheckpoints={},storeRoot,runStage,sandboxAuthorized=false
+  stages,binding,previousCheckpoints={},storeRoot,runStage,sandboxAuthorized=false,sandboxRoot
 }={}){
   requireThat(sandboxAuthorized===true,"sandbox_execution_not_authorized");
+  requireThat(typeof sandboxRoot==="string"&&fs.existsSync(sandboxRoot),"sandbox_root_required");
+  const base=fs.realpathSync(sandboxRoot);
+  function inside(p){return typeof p==="string"&&path.resolve(p).startsWith(base+path.sep);}
+  requireThat(inside(binding?.root)&&inside(storeRoot),"sandbox_path_outside_boundary");
+  for(const target of [binding.root,storeRoot]){
+    let item=base;
+    for(const segment of path.relative(base,path.resolve(target)).split(path.sep)){
+      item=path.join(item,segment);
+      if(fs.existsSync(item))requireThat(!fs.lstatSync(item).isSymbolicLink(),"sandbox_symlink_forbidden");
+    }
+  }
   validateGraph(stages);
   requireThat(typeof runStage==="function"&&typeof storeRoot==="string"&&storeRoot.length>0&&
     previousCheckpoints&&typeof previousCheckpoints==="object"&&!Array.isArray(previousCheckpoints),
