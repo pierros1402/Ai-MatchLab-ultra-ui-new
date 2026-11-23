@@ -128,8 +128,8 @@ const invoked=process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(i
 if(invoked){
   try{
     const [phase,day]=process.argv.slice(2);
-    check(process.argv.length===4 && ["pre","post"].includes(phase),
-      "stage20_observation_usage_pre_or_post_day");
+    check(process.argv.length===4 && ["pre","post","failed-post"].includes(phase),
+      "stage20_observation_usage_pre_post_or_failed_post_day");
     const temp=process.env.RUNNER_TEMP;
     const report=phase==="pre"?observeStage20Pre(process.cwd(),day,temp):
       phase==="post"?observeStage20Post(process.cwd(),day,temp):
