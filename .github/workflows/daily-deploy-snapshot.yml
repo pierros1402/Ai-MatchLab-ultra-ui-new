@@ -404,7 +404,26 @@ jobs:
           # dead OddsPortal scraper). Free tier ~100 req/h; the adapter caps
           # itself at 80 requests per cycle run. Without the key it skips.
           ODDS_API_IO_KEY: ${{ secrets.ODDS_API_IO_KEY }}
-        run: node ./engine-v1/jobs/run-daily-cycle.js "$DAY_KEY"
+        run: |
+          set -euo pipefail
+          if [[ "${{ vars.AIML_DAILY_RUNTIME_BOUNDARY_JOURNAL_ENABLED }}" == '1' ]]; then
+            node ./engine-v1/jobs/observe-daily-runtime-boundaries.mjs "$DAY_KEY"
+          else
+            node ./engine-v1/jobs/run-daily-cycle.js "$DAY_KEY"
+          fi
+
+      # Minimal sanitized runtime markers only. This is not a checkpoint
+      # manifest; never use these records for stage skipping or publication.
+      - name: Preserve optional Daily runtime boundary diagnostic
+        if: ${{ always() && env.SKIP_BUILD != 'true' && vars.AIML_DAILY_RUNTIME_BOUNDARY_JOURNAL_ENABLED == '1' }}
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: aiml-daily-boundary-journal-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/aiml-daily-boundary-journal.jsonl
+          if-no-files-found: warn
+          retention-days: 2
+          include-hidden-files: false
 
       # A failed monolithic cycle is NOT a completed resumable checkpoint.
       # Distinct runner-temp evidence exists only to investigate interrupted
