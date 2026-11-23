@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { auditDailyResumeStageBoundaries, auditDailyResumeRepository, auditRealCyclePairs } from "./daily-resume-stage-boundary-audit.mjs";
+import { auditDailyResumeStageBoundaries, auditDailyResumeRepository, auditRealCyclePairs, auditCompleteCycleMarkerInventory } from "./daily-resume-stage-boundary-audit.mjs";
 
 const root = process.cwd();
 const wf = fs.readFileSync(path.join(root, ".github/workflows/daily-deploy-snapshot.yml"), "utf8");
@@ -63,4 +63,37 @@ test("a swapped real execution boundary blocks the audit", () => {
     cycle.replace(start, "TEMP_BOUNDARY").replace(done, start)
       .replace("TEMP_BOUNDARY", done)),
     /resume_real_cycle_pair_order_changed:value-build/);
+});
+
+test("complete source inventory includes all 63 literal start/done pairs and 7 done-only markers", () => {
+  const report = auditDailyResumeRepository(root);
+  const all = report.completeCycleInventory;
+  assert.equal(all.pairedCount, 63);
+  assert.equal(all.doneOnlyCount, 7);
+  assert.equal(all.literalMarkerCount, 133);
+  assert.equal(all.staticSourceOnly, true);
+  assert.equal(all.crossRunResumeAuthorized, false);
+  assert.equal(all.publicationAuthorized, false);
+  assert.ok(all.pairs.every(x => x.startOffset < x.doneOffset &&
+    x.resumeAllowed === false && x.persistedManifest === false));
+  assert.ok(all.doneOnly.every(x => x.resumeAllowed === false));
+  assert.ok(report.realCyclePairs.every(x => all.pairs.some(y => y.id === x.id)));
+});
+test("complete inventory rejects missing done boundary from conditional source", () => {
+  assert.throws(() => auditCompleteCycleMarkerInventory(cycle.replace(
+    "[daily-cycle] team-news-research-run:done", "removed-team-news-done")),
+    /resume_complete_inventory_missing_done:team-news-research-run/);
+});
+test("complete inventory rejects duplicate literal boundaries", () => {
+  assert.throws(() => auditCompleteCycleMarkerInventory(cycle +
+    '\\nconsole.log("[daily-cycle] details-build:start");'),
+    /resume_complete_inventory_duplicate:details-build/);
+});
+test("complete inventory rejects reversed conditional boundary", () => {
+  const start = "[daily-cycle] team-news-build:start";
+  const done = "[daily-cycle] team-news-build:done";
+  assert.throws(() => auditCompleteCycleMarkerInventory(cycle
+    .replace(start, "TEMP_SOURCE_MARKER").replace(done, start)
+    .replace("TEMP_SOURCE_MARKER", done)),
+    /resume_complete_inventory_pair_order_changed:team-news-build/);
 });
