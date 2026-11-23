@@ -1,4 +1,4 @@
-name: P0 Stage20 98 league accumulated results FORM memory source proof
+name: P0 Stage20 96 legacy standings evidence source and gate proof
 on:
   pull_request:
     paths:
@@ -19,7 +19,7 @@ jobs:
             tools/audit-stage20-results-memory-custody.mjs
             tools/audit-stage20-results-memory-custody.test.mjs
             tools/audit-daily954-stage20-history.mjs
-            engine-v1/storage/results-memory-db.js
+            engine-v1/storage/standings-memory-db.js
             engine-v1/core/daily-resume-stage20-admission.mjs
             engine-v1/core/daily-resume-stage20-journal-admission.mjs
             engine-v1/core/season-closure-contract.js
@@ -38,7 +38,7 @@ jobs:
           run-id: 45137286904
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/stage20-original
-      - name: Inspect 98 actual results-memory payloads and original writer lineage
+      - name: Inspect 96 actual standings evidence payloads and trusted model gate
         shell: bash
         run: |
           set -euo pipefail
@@ -50,19 +50,22 @@ jobs:
           import fs from "node:fs";
           import assert from "node:assert/strict";
           const raw=fs.readFileSync(process.argv[2],"utf8").trim();
-          assert.ok(raw.startsWith("STAGE20_RESULTS_MEMORY_CUSTODY="));
+          assert.ok(raw.startsWith("STAGE20_LEAGUE_STANDINGS_CUSTODY="));
           const r=JSON.parse(raw.slice(raw.indexOf("=")+1));
-          assert.equal(r.files,98);
-          assert.equal(r.validPayloads,98);
+          assert.equal(r.files,96);
+          assert.equal(r.allLeagueMemoryFiles,99);
+          assert.equal(r.rootFilesNeedingSeparateWriterProof,3);
+          assert.equal(r.validPayloads,96);
           assert.equal(r.invalidPaths,0);
           assert.equal(r.invalidShape,0);
-          assert.equal(r.writer.valueFormInput,true);
-          assert.equal(r.requireExactResultsMemoryBaseline,true);
+          assert.equal(r.writer.trustedStandingsGateRequired,true);
+          assert.equal(r.writer.productionModelTruthFromLegacyMemory,false);
+          assert.equal(r.exactStandingsLegacyBytesRequired,true);
           assert.equal(r.omissionAuthorized,false);
-          assert.equal(r.resultIdentityTruthIndependentlyVerified,false);
+          assert.equal(r.productionStandingsTruthIndependentlyVerified,false);
           assert.equal(r.productionWrites,0);
           NODE
       - name: No production mutation or Stage20 omitted baseline
         run: |
           git diff --exit-code HEAD -- data/ .github/workflows/daily-deploy-snapshot.yml
-          echo "RESULTS_MEMORY_FORM_SOURCE_BOUND_NO_DROP_NO_RESUME_NO_PUBLISH"
+          echo "STANDINGS_LEGACY_SOURCE_BOUND_GATE_RETAINED_NO_RESUME_NO_PUBLISH"
