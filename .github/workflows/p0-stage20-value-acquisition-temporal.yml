@@ -1,0 +1,68 @@
+name: P0 Stage20 acquisition temporal evidence (read-only)
+on:
+  pull_request:
+    paths:
+      - "tools/audit-stage20-value-acquisition-temporal.mjs"
+      - "tools/audit-stage20-value-acquisition-temporal.test.mjs"
+      - ".github/workflows/p0-stage20-value-acquisition-temporal.yml"
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            tools/audit-stage20-value-acquisition-temporal.mjs
+            tools/audit-stage20-value-acquisition-temporal.test.mjs
+            tools/audit-stage20-value-acquisition-writer-map.mjs
+            tools/audit-stage20-value-acquisition-census.mjs
+            tools/audit-daily954-stage20-history.mjs
+            engine-v1/jobs/run-value-data-alarm-day.js
+            engine-v1/core/daily-resume-stage20-admission.mjs
+            engine-v1/core/daily-resume-stage20-journal-admission.mjs
+            engine-v1/core/season-closure-contract.js
+            .github/workflows/p0-stage20-value-acquisition-temporal.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Source hash, syntax and negative tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object engine-v1/jobs/run-value-data-alarm-day.js)" = "c6faf0f18af5da26f6fbf0b09db68be8ef022131"
+          node --check tools/audit-stage20-value-acquisition-temporal.mjs
+          node --check tools/audit-stage20-value-acquisition-temporal.test.mjs
+          node --test --test-reporter=tap tools/audit-stage20-value-acquisition-temporal.test.mjs
+      - uses: actions/download-artifact@v4
+        with:
+          name: history-recovery-45137286904-1
+          run-id: 45137286904
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/original
+      - name: Audit exact original 19 and preserve HOLD
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/audit-stage20-value-acquisition-temporal.mjs "$RUNNER_TEMP/original" > "$RUNNER_TEMP/report.txt"
+          cat "$RUNNER_TEMP/report.txt"
+          node --input-type=module - "$RUNNER_TEMP/report.txt" <<'NODE'
+          import fs from "node:fs";import assert from "node:assert/strict";
+          const s=fs.readFileSync(process.argv[2],"utf8").trim();
+          assert.ok(s.startsWith("STAGE20_VALUE_TEMPORAL="));
+          const x=JSON.parse(s.slice(s.indexOf("=")+1));
+          assert.equal(x.originalFiles,19);assert.equal(x.files,19);
+          assert.equal(x.originalBytes,20251721);
+          assert.equal(Object.values(x.byWriterPathFamily).reduce((n,v)=>n+v.files,0),19);
+          for(const k of ["sourceTimestampAuthenticationProven","providerResponseEquivalenceProven",
+            "transitiveDependencyClosureVerified","timeEvidenceEstablishesFreshness",
+            "crossRunReuseAuthorized","omissionAuthorized","checkpointAuthorized"])assert.equal(x[k],false,k);
+          assert.equal(x.productionWrites,0);
+          NODE
+      - name: Production unchanged
+        run: |
+          git diff --exit-code HEAD -- data/ engine-v1/ .github/workflows/daily-deploy-snapshot.yml
+          echo "TEMPORAL_INDICATORS_ONLY_NO_RESUME_AUTHORIZATION"
