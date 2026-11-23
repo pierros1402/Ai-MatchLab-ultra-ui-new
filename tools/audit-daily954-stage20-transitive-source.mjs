@@ -5,6 +5,8 @@ import path from "node:path";
 import crypto from "node:crypto";
 import {execFileSync} from "node:child_process";
 import {fileURLToPath} from "node:url";
+import {builtinModules} from "node:module";
+const BUILTINS=new Set(builtinModules.map(x=>x.replace(/^node:/,"")));
 export const CLOSURE_SCHEMA="ai-matchlab.daily-stage20-source-closure-audit.v1";
 export const DAILY954_SOURCE="33eaa635a8745e75fc0a6075a3594f4cd86d3b32";
 export const ENTRY="engine-v1/jobs/run-daily-cycle.js";
@@ -39,7 +41,9 @@ export function scanStaticSourceImports(src) {
   check(typeof src==="string","closure_source_invalid");
   const specs=new Set();
   // Import/export declarations with literal module specifiers and CJS literal require.
-  for(const m of src.matchAll(/(?:\bfrom\s*|\bimport\s*|\brequire\s*\(\s*)["']([^"'\\\n]+)["']/g))
+  for(const m of src.matchAll(/(?:^|\n)\s*(?:import|export)\s+(?:(?:[^;]{0,2400}?)\s+from\s*)?["']([^"'\\\n]+)["']/g))
+    specs.add(m[1]);
+  for(const m of src.matchAll(/\brequire\s*\(\s*["']([^"'\\\n]+)["']/g))
     specs.add(m[1]);
   const flags=[];
   if(/\bimport\s*\(/.test(src))flags.push("dynamic_import_call");
@@ -75,7 +79,7 @@ function scope(root,commit,entry=ENTRY,maxFiles=MAX_FILES) {
     for(const flag of scan.riskFlags)risks.push({file:name,reason:flag});
     for(const spec of scan.specifiers) {
       if(isExternal(spec)){
-        if(!spec.startsWith("node:") && !["fs","path","url","os","crypto","util","http","https","child_process","events","stream","buffer","process","assert","timers","module","zlib","dns","net","tls","readline","worker_threads"].includes(spec)) packages.add(spec);
+        if(!spec.startsWith("node:") && !BUILTINS.has(spec)) packages.add(spec);
         continue;
       }
       let resolved=null;
