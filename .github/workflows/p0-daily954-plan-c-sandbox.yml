@@ -55,6 +55,10 @@ jobs:
         run: |
           set -euo pipefail
           cd "$RESCUE_ROOT/historical"
+          # The production settlement is append-only. Seed the isolated
+          # output with the real prior record, or terminal source hashes
+          # would be recomputed and the correct immutable guard would fail.
+          cp data/plan-c-shadow/settlement/latest.json "$RESCUE_ROOT/settlement.json"
           node engine-v1/jobs/settle-plan-c-shadow.js 2026-11-23 \
             --prediction-root data/plan-c-shadow/frozen/i2b-20260825 \
             --output "$RESCUE_ROOT/settlement.json" \
