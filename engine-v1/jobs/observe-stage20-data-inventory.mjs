@@ -13,7 +13,8 @@ function check(ok,code){if(!ok)throw Error(code);}
 function runnerOutput(tempRoot,name) {
   check(typeof tempRoot==="string" && path.isAbsolute(tempRoot) &&
     ["aiml-stage20-pre.json","aiml-stage20-post.json","aiml-stage20-delta.json",
-      "aiml-stage20-failure-post.json","aiml-stage20-failure-delta.json"].includes(name),
+      "aiml-stage20-failure-post.json","aiml-stage20-failure-delta.json",
+      "aiml-stage20-failure-summary.json"].includes(name),
     "stage20_observation_temp_binding_invalid");
   const base=path.resolve(tempRoot);
   check(fs.existsSync(base) && fs.lstatSync(base).isDirectory() &&
@@ -90,9 +91,11 @@ export function observeStage20FailedCycle(root,dayKey,tempRoot,scanOptions={}) {
   const beforeFile=runnerOutput(tempRoot,"aiml-stage20-pre.json");
   const failedPostFile=runnerOutput(tempRoot,"aiml-stage20-failure-post.json");
   const failedDeltaFile=runnerOutput(tempRoot,"aiml-stage20-failure-delta.json");
+  const summaryFile=runnerOutput(tempRoot,"aiml-stage20-failure-summary.json");
   check(fs.existsSync(beforeFile) && !fs.lstatSync(beforeFile).isSymbolicLink(),
     "stage20_failed_cycle_pre_missing");
-  check(!fs.existsSync(failedPostFile) && !fs.existsSync(failedDeltaFile),
+  check(!fs.existsSync(failedPostFile) && !fs.existsSync(failedDeltaFile) &&
+    !fs.existsSync(summaryFile),
     "stage20_observation_evidence_exists");
   // An ordinary successful post-stage attestation and a failure attestation
   // are mutually exclusive for one runner attempt.
@@ -111,6 +114,23 @@ export function observeStage20FailedCycle(root,dayKey,tempRoot,scanOptions={}) {
     ...delta,stageComplete:false,cycleOutcome:"failure",
     resumable:false,publicationAuthorized:false
   },tempRoot);
+  // Only the short, allowlisted aggregate is transportable across Actions
+  // attempts. Raw full-tree inventories and changed path names stay private
+  // to the ephemeral runner filesystem.
+  const summary={
+    schema:"ai-matchlab.daily-stage20-failed-cycle-summary.v1",
+    dayKey,sourceCommit:after.sourceCommit,
+    stageId:"daily-cycle",cycleOutcome:"failure",stageComplete:false,
+    preInventorySha256:before.manifestSha256,
+    failedPostInventorySha256:after.manifestSha256,
+    beforeFileCount:before.fileCount,afterFileCount:after.fileCount,
+    added:delta.added,modified:delta.modified,deleted:delta.deleted,
+    stableReadPasses:2,ignoredIncluded:true,
+    writerQuiescenceAttested:false,
+    checkpointReusable:false,resumeAuthorized:false,
+    publicationAuthorized:false,productionWrites:0
+  };
+  atomicEvidence(summaryFile,summary,tempRoot);
   return {
     schema:STAGE20_OBSERVATION_SCHEMA,phase:"failed-cycle",dayKey,
     cycleOutcome:"failure",stageComplete:false,
@@ -128,8 +148,8 @@ const invoked=process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(i
 if(invoked){
   try{
     const [phase,day]=process.argv.slice(2);
-    check(process.argv.length===4 && ["pre","post"].includes(phase),
-      "stage20_observation_usage_pre_or_post_day");
+    check(process.argv.length===4 && ["pre","post","failed-post"].includes(phase),
+      "stage20_observation_usage_pre_post_or_failed_post_day");
     const temp=process.env.RUNNER_TEMP;
     const report=phase==="pre"?observeStage20Pre(process.cwd(),day,temp):
       phase==="post"?observeStage20Post(process.cwd(),day,temp):
