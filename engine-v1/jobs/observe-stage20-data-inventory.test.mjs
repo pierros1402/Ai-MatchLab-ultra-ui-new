@@ -77,3 +77,29 @@ test("symlink in data denies preflight evidence",()=>fixture(x=>{
   assert.throws(()=>observeStage20Pre(x.repo,"2026-11-23",x.temp),/stage20_inventory_symlink_forbidden/);
   assert.equal(fs.readdirSync(x.temp).length,0);
 }));
+
+test("pre observer double-scan drift denies evidence and leaves runner temp untouched",()=>fixture(x=>{
+  assert.throws(()=>observeStage20Pre(x.repo,"2026-11-23",x.temp,{
+    betweenPasses:()=>fs.writeFileSync(path.join(x.repo,"data/value/ignored.json"),"{\"drift\":1}\n")
+  }),/stage20_data_changed_between_passes/);
+  assert.deepEqual(fs.readdirSync(x.temp),[]);
+}));
+test("post observer double-scan drift denies post/delta evidence while retaining verified pre",()=>fixture(x=>{
+  const pre=observeStage20Pre(x.repo,"2026-11-23",x.temp);
+  assert.equal(pre.consecutiveVerifiedPasses,2);
+  fs.writeFileSync(path.join(x.repo,"data/value/new.json"),"{\"new\":true}\n");
+  assert.throws(()=>observeStage20Post(x.repo,"2026-11-23",x.temp,{
+    betweenPasses:()=>fs.writeFileSync(path.join(x.repo,"data/value/ignored.json"),"{\"drift\":2}\n")
+  }),/stage20_data_changed_between_passes/);
+  assert.deepEqual(fs.readdirSync(x.temp),["aiml-stage20-pre.json"]);
+}));
+test("successful pre/post observer attests exactly two stable passes, never writer lease",()=>fixture(x=>{
+  const pre=observeStage20Pre(x.repo,"2026-11-23",x.temp);
+  fs.writeFileSync(path.join(x.repo,"data/value/new.json"),"{}\n");
+  const post=observeStage20Post(x.repo,"2026-11-23",x.temp);
+  assert.equal(pre.consecutiveVerifiedPasses,2);
+  assert.equal(post.consecutiveVerifiedPasses,2);
+  assert.equal(pre.writerQuiescenceAttested,false);
+  assert.equal(post.writerQuiescenceAttested,false);
+  assert.equal(post.resumeAuthorized,false);
+}));
