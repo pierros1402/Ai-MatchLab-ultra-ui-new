@@ -377,6 +377,18 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         run: bash tools/preflight-plan-c-terminal.sh "$DAY_KEY"
 
+      # Read-only filesystem evidence around the expensive monolithic stage.
+      # Explicit flag defaults OFF; no execution skipped, no archive uploaded.
+      # Both steps are best-effort and can only write inside RUNNER_TEMP.
+      - name: Shadow read-only Stage20 pre-cycle data inventory (default OFF)
+        id: shadow_stage20_pre
+        if: env.SKIP_BUILD != 'true' && vars.AIML_DAILY_STAGE20_PREPOST_INVENTORY_ENABLED == '1'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          node engine-v1/jobs/observe-stage20-data-inventory.mjs pre "$DAY_KEY"
+
       - name: Run daily cycle
         if: env.SKIP_BUILD != 'true'
         env:
@@ -392,6 +404,15 @@ jobs:
           # itself at 80 requests per cycle run. Without the key it skips.
           ODDS_API_IO_KEY: ${{ secrets.ODDS_API_IO_KEY }}
         run: node ./engine-v1/jobs/run-daily-cycle.js "$DAY_KEY"
+
+      - name: Shadow read-only Stage20 post-cycle data inventory (default OFF)
+        id: shadow_stage20_post
+        if: env.SKIP_BUILD != 'true' && vars.AIML_DAILY_STAGE20_PREPOST_INVENTORY_ENABLED == '1' && steps.shadow_stage20_pre.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          node engine-v1/jobs/observe-stage20-data-inventory.mjs post "$DAY_KEY"
 
       # Optional, default-OFF capture of the completed expensive stage. It does
       # not reuse or skip any work, publish data, or modify the repository.

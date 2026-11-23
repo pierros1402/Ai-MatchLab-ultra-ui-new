@@ -1,0 +1,47 @@
+name: P0 Stage20 production-boundary observer default-OFF guards
+on:
+  pull_request:
+    paths:
+      - "engine-v1/jobs/observe-stage20-data-inventory.mjs"
+      - "engine-v1/jobs/observe-stage20-data-inventory.test.mjs"
+      - "engine-v1/core/daily-resume-stage20-observer-wiring.mjs"
+      - "engine-v1/core/daily-resume-stage20-observer-wiring.test.mjs"
+      - ".github/workflows/daily-deploy-snapshot.yml"
+      - ".github/workflows/p0-stage20-observer-guards.yml"
+permissions:
+  contents: read
+jobs:
+  guards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1/jobs/observe-stage20-data-inventory.mjs
+            engine-v1/jobs/observe-stage20-data-inventory.test.mjs
+            engine-v1/core/daily-resume-complete-data-inventory.mjs
+            engine-v1/core/daily-resume-stage20-observer-wiring.mjs
+            engine-v1/core/daily-resume-stage20-observer-wiring.test.mjs
+            engine-v1/core/daily-resume-stage20-shadow-wiring.test.mjs
+            .github/workflows/daily-deploy-snapshot.yml
+            .github/workflows/p0-stage20-observer-guards.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Check source syntax
+        run: |
+          node --check engine-v1/jobs/observe-stage20-data-inventory.mjs
+          node --check engine-v1/jobs/observe-stage20-data-inventory.test.mjs
+          node --check engine-v1/core/daily-resume-stage20-observer-wiring.mjs
+          node --check engine-v1/core/daily-resume-stage20-observer-wiring.test.mjs
+      - name: Source-bound observer and existing Stage20 shadow wiring regressions
+        run: |
+          node --test --test-reporter=tap \
+            engine-v1/jobs/observe-stage20-data-inventory.test.mjs \
+            engine-v1/core/daily-resume-stage20-observer-wiring.test.mjs \
+            engine-v1/core/daily-resume-stage20-shadow-wiring.test.mjs
+      - name: Enforce no direct source data changes in this workflow
+        run: |
+          git diff --exit-code HEAD -- data/
+          echo "DEFAULT_OFF_STAGE20_OBSERVER_NO_PRODUCTION_RESUME_NO_PUBLISH"
