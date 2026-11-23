@@ -1,0 +1,57 @@
+name: P0 Daily954 cross-commit source drift audit (read-only)
+on:
+  pull_request:
+    paths:
+      - "tools/audit-daily954-crosscommit-source-drift.mjs"
+      - "tools/audit-daily954-crosscommit-source-drift.test.mjs"
+      - ".github/workflows/p0-daily954-crosscommit-audit.yml"
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            tools/audit-daily954-crosscommit-source-drift.mjs
+            tools/audit-daily954-crosscommit-source-drift.test.mjs
+            .github/workflows/p0-daily954-crosscommit-audit.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Source syntax and fail-closed classification controls
+        run: |
+          node --check tools/audit-daily954-crosscommit-source-drift.mjs
+          node --check tools/audit-daily954-crosscommit-source-drift.test.mjs
+          node --test --test-reporter=tap tools/audit-daily954-crosscommit-source-drift.test.mjs
+      - name: Fetch exact original failed-run producer code commit read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin 33eaa635a8745e75fc0a6075a3594f4cd86d3b32
+          test "$(git rev-parse '33eaa635a8745e75fc0a6075a3594f4cd86d3b32^{commit}')" = "33eaa635a8745e75fc0a6075a3594f4cd86d3b32"
+      - name: Compare real producer and current source, contracts and data paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/audit-daily954-crosscommit-source-drift.mjs > "$RUNNER_TEMP/source-drift.jsonl"
+          cat "$RUNNER_TEMP/source-drift.jsonl"
+          node --input-type=module - "$RUNNER_TEMP/source-drift.jsonl" <<'NODE'
+          import fs from "node:fs";
+          import assert from "node:assert/strict";
+          const raw=fs.readFileSync(process.argv[2],"utf8").trim();
+          assert.ok(raw.startsWith("DAILY954_CROSSCOMMIT_SOURCE_DRIFT="));
+          const audit=JSON.parse(raw.slice(raw.indexOf("=")+1));
+          assert.ok(audit.totalChanged>0);
+          assert.equal(audit.sourceAndControlPathsChanged+audit.dataPathsChanged,audit.totalChanged);
+          assert.equal(audit.crossCommitResumeAuthorized,false);
+          assert.equal(audit.stageScopedTransitiveClosureVerified,false);
+          assert.equal(audit.productionWrites,0);
+          NODE
+      - name: No Daily, data, source or publish mutation
+        run: |
+          git diff --exit-code HEAD -- .github/workflows/daily-deploy-snapshot.yml data/
+          echo "CROSSCOMMIT_SOURCE_DIAGNOSTIC_ONLY_NO_RESUME_NO_PUBLISH"
