@@ -4,6 +4,7 @@ import os from "node:os";
 import crypto from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { isApprovedStage20DetailsPath } from "./daily-resume-stage20-admission.mjs";
+import {isApprovedStage20JournalPath,inspectStage20JournalRecord,STAGE20_JOURNAL_PREFIX} from "./daily-resume-stage20-journal-admission.mjs";
 
 export const DELTA_SCHEMA = "ai-matchlab.daily-resume-worktree-delta.v1";
 function check(ok, code) { if (!ok) throw Error(code); }
@@ -33,6 +34,8 @@ function allowed(p, prefixes) {
   // path inspector. A family prefix alone must never admit arbitrary Details.
   if (p.startsWith("data/details/"))
     check(isApprovedStage20DetailsPath(p), "resume_delta_unapproved_details_path");
+  if (p.startsWith(STAGE20_JOURNAL_PREFIX))
+    check(isApprovedStage20JournalPath(p),"resume_delta_unapproved_journal_path");
   check(Array.isArray(prefixes) && prefixes.length > 0 && new Set(prefixes).size === prefixes.length,
     "resume_delta_allowlist_invalid");
   for (const prefix of prefixes) check(prefix.endsWith("/") && relative(prefix.slice(0, -1)), "resume_delta_allowlist_invalid");
@@ -63,6 +66,8 @@ function state(root, prefixes) {
       return { path: name, op };
     }
     const bytes = fs.readFileSync(normalFile(root, name));
+    if(name.startsWith(STAGE20_JOURNAL_PREFIX))
+      check(inspectStage20JournalRecord(name,bytes).ok,"resume_delta_journal_source_content_invalid");
     totalBytes += bytes.length;
     check(totalBytes <= 512 * 1024 * 1024, "resume_delta_total_size_exceeded");
     return { path: name, op, bytes: bytes.length, sha256: digest(bytes) };
@@ -101,6 +106,8 @@ function verifyArchive(archiveRoot, expected) {
       check(Number.isSafeInteger(e.bytes) && e.bytes >= 0 && /^[0-9a-f]{64}$/.test(e.sha256),
         "resume_delta_file_record_invalid");
       const bytes = fs.readFileSync(normalFile(archiveRoot, "files/" + e.path));
+      if(e.path.startsWith(STAGE20_JOURNAL_PREFIX))
+        check(inspectStage20JournalRecord(e.path,bytes).ok,"resume_delta_journal_archive_content_invalid");
       total += bytes.length;
       check(total <= 512 * 1024 * 1024 && bytes.length === e.bytes && digest(bytes) === e.sha256,
         "resume_delta_archive_bytes_invalid");
@@ -139,6 +146,8 @@ export function captureDailyWorktreeDelta(repoRoot, archiveRoot, options) {
   try {
     for (const e of entries.filter(x => x.op === "WRITE")) {
       const bytes = fs.readFileSync(normalFile(repoRoot, e.path));
+      if(e.path.startsWith(STAGE20_JOURNAL_PREFIX))
+        check(inspectStage20JournalRecord(e.path,bytes).ok,"resume_delta_journal_source_content_invalid");
       check(bytes.length === e.bytes && digest(bytes) === e.sha256, "resume_delta_source_changed");
       const target = path.join(temporary, "files", e.path);
       fs.mkdirSync(path.dirname(target), { recursive: true });
