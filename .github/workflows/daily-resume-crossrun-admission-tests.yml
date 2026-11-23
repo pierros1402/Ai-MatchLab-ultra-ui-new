@@ -1,0 +1,35 @@
+name: P0 Daily cross-workflow artifact admission (isolated)
+
+on:
+  pull_request:
+    paths:
+      - "engine-v1/core/daily-resume-crossrun-admission.mjs"
+      - "engine-v1/core/daily-resume-crossrun-admission.test.mjs"
+      - ".github/workflows/daily-resume-crossrun-admission-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1/core/daily-resume-crossrun-admission.mjs
+            engine-v1/core/daily-resume-crossrun-admission.test.mjs
+            .github/workflows/daily-resume-crossrun-admission-tests.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Validate isolated source syntax
+        run: |
+          node --check engine-v1/core/daily-resume-crossrun-admission.mjs
+          node --check engine-v1/core/daily-resume-crossrun-admission.test.mjs
+      - name: Verify producer run and GitHub artifact admission negatives
+        run: node --test --test-reporter=tap engine-v1/core/daily-resume-crossrun-admission.test.mjs
+      - name: Prove no Daily workflow or production data mutation
+        run: git diff --exit-code HEAD -- .github/workflows/daily-deploy-snapshot.yml data/
