@@ -33,6 +33,10 @@ jobs:
           set -euo pipefail
           git fetch --no-tags --depth=1 origin 33eaa635a8745e75fc0a6075a3594f4cd86d3b32
           test "$(git rev-parse '33eaa635a8745e75fc0a6075a3594f4cd86d3b32^{commit}')" = "33eaa635a8745e75fc0a6075a3594f4cd86d3b32"
+          git fetch --no-tags --depth=1 origin main
+          MAIN_SHA="$(git rev-parse FETCH_HEAD)"
+          test "$(git rev-parse "${MAIN_SHA}^{commit}")" = "$MAIN_SHA"
+          echo "AIML_CONSUMER_MAIN_SHA=$MAIN_SHA" >> "$GITHUB_ENV"
       - name: Compare real producer and current source, contracts and data paths
         shell: bash
         run: |
