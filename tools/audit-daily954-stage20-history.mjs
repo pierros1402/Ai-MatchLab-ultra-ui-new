@@ -71,8 +71,8 @@ export function auditHistorical954(root, pin = HISTORICAL_954) {
     textCandidates:0, jsonParseFailures:0, suspiciousFieldCandidates:0,
     binaryOrUnsupported:0, undecodableCandidates:0, maxDeniedFileBytes:0
   };
-  const sensitiveField=/(?:["'])(?:[^"']{0,48})?(?:password|secret|api[_-]?key|access[_-]?token|refresh[_-]?token|authorization|private[_-]?key)(?:[^"']{0,48})?(?:["'])\\s*:/i;
-  const bearerLike=/\\bBearer\\s+[A-Za-z0-9._-]{12,}/i;
+  const sensitiveField=/(?:["'])(?:[^"']{0,48})?(?:password|secret|api[_-]?key|access[_-]?token|refresh[_-]?token|authorization|private[_-]?key)(?:[^"']{0,48})?(?:["'])\s*:/i;
+  const bearerLike=/\bBearer\s+[A-Za-z0-9._-]{12,}/i;
   for(const row of doc.files) {
     const name=safePath(row.path);
     requireThat(!observed.has(name),"historical_duplicate_file");
@@ -95,12 +95,12 @@ export function auditHistorical954(root, pin = HISTORICAL_954) {
     if(!dateKeys.length) dates["undated_path"]=(dates["undated_path"]||0)+1;
     if(!allow) {
       deniedContentSummary.maxDeniedFileBytes=Math.max(deniedContentSummary.maxDeniedFileBytes,buffer.length);
-      if(!/\\.(json|jsonl|ndjson|csv)$/i.test(name)){
+      if(!/\.(json|jsonl|ndjson|csv)$/i.test(name)){
         deniedContentSummary.binaryOrUnsupported++;
       } else {
         deniedContentSummary.textCandidates++;
         const text=buffer.toString("utf8");
-        if(text.includes("\\uFFFD")) deniedContentSummary.undecodableCandidates++;
+        if(text.includes("\uFFFD")) deniedContentSummary.undecodableCandidates++;
         if(sensitiveField.test(text)||bearerLike.test(text))
           deniedContentSummary.suspiciousFieldCandidates++;
         if(name.toLowerCase().endsWith(".json")){
