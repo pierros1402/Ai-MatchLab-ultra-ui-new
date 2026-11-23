@@ -20,6 +20,7 @@ jobs:
             tools/audit-stage20-league-root-custody.test.mjs
             tools/audit-daily954-stage20-history.mjs
             engine-v1/storage/league-memory-db.js
+            engine-v1/storage/source-memory-db.js
             engine-v1/source-discovery/standings-researcher.js
             engine-v1/core/daily-resume-stage20-admission.mjs
             engine-v1/core/daily-resume-stage20-journal-admission.mjs
@@ -55,6 +56,9 @@ jobs:
           const a=JSON.parse(raw.slice(raw.indexOf("=")+1));
           assert.equal(a.files.length,3);
           assert.equal(a.counts.invalid,0);
+          assert.equal(a.counts.sourceMapped,3);
+          assert.equal(a.counts.unmapped,0);
+          assert.equal(a.sourceAuthorityComplete,true);
           assert.equal(a.allRootFilesVerified,true);
           assert.equal(a.omissionAuthorized,false);
           assert.equal(a.resumeAuthorized,false);
