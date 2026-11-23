@@ -381,6 +381,8 @@ jobs:
           set -euo pipefail
           PREFLIGHT_ROOT="$(mktemp -d)"
           trap 'rm -rf "$PREFLIGHT_ROOT"' EXIT
+          # Preserve the real previous terminal rows for immutable replay checks.
+          cp data/plan-c-shadow/settlement/latest.json "$PREFLIGHT_ROOT/settlement.json"
           node ./engine-v1/jobs/settle-plan-c-shadow.js "$DAY_KEY" \
             --prediction-root data/plan-c-shadow/frozen/i2b-20260825 \
             --output "$PREFLIGHT_ROOT/settlement.json" \
