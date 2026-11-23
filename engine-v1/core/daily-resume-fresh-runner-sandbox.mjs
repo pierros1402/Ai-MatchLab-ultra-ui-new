@@ -30,10 +30,19 @@ function restoreVerifiedOutputs(stage, binding, dependencies, storeRoot, evidenc
       return { source: path.join(staged.staging, name), target };
     });
     // All destinations are checked before materialization. Never overwrite a local file.
-    for (const { source, target } of destinations) {
-      fs.mkdirSync(path.dirname(target), { recursive: true });
-      noSymlinkPath(binding.root, target);
-      fs.renameSync(source, target);
+    // Recovery is all-or-nothing: a late mkdir/rename failure must not leave
+    // earlier outputs in the next runner as apparently completed stage data.
+    const materialized = [];
+    try {
+      for (const { source, target } of destinations) {
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        noSymlinkPath(binding.root, target);
+        fs.renameSync(source, target);
+        materialized.push(target);
+      }
+    } catch (error) {
+      for (const target of materialized.reverse()) fs.rmSync(target, { force: true });
+      throw error;
     }
   } finally { fs.rmSync(staged.staging, { recursive: true, force: true }); }
 }
