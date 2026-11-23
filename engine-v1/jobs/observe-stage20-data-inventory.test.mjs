@@ -140,3 +140,19 @@ test("failed-cycle instability rejects before writing incomplete post artifacts"
   }),/stage20_data_changed_between_passes/);
   assert.deepEqual(fs.readdirSync(x.temp),["aiml-stage20-pre.json"]);
 }));
+
+test("actual failed-post CLI dispatches and preserves incomplete state with real runner env",()=>fixture(x=>{
+  observeStage20Pre(x.repo,"2026-11-23",x.temp);
+  fs.writeFileSync(path.join(x.repo,"data/value/ignored.json"),"{\"partial\":17}\n");
+  const cli=path.resolve("engine-v1/jobs/observe-stage20-data-inventory.mjs");
+  const output=execFileSync(process.execPath,[cli,"failed-post","2026-11-23"],{
+    cwd:x.repo,encoding:"utf8",env:{...process.env,RUNNER_TEMP:x.temp}
+  }).trim();
+  assert.ok(output.startsWith("STAGE20_BOUNDARY_OBSERVATION="));
+  const report=JSON.parse(output.slice(output.indexOf("=")+1));
+  assert.equal(report.phase,"failed-cycle");
+  assert.equal(report.stageComplete,false);
+  assert.equal(report.resumeAuthorized,false);
+  assert.equal(fs.existsSync(path.join(x.temp,"aiml-stage20-failure-delta.json")),true);
+  assert.equal(fs.existsSync(path.join(x.temp,"aiml-stage20-post.json")),false);
+}));
