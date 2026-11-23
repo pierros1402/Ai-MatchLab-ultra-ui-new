@@ -3,6 +3,7 @@
 const PRE="Shadow read-only Stage20 pre-cycle data inventory (default OFF)";
 const CYCLE="Run daily cycle";
 const POST="Shadow read-only Stage20 post-cycle data inventory (default OFF)";
+const FAILURE="Shadow read-only incomplete Stage20 inventory after failed cycle (default OFF)";
 const MARKER="Shadow capture verified stage-20 worktree delta (opt-in only)";
 const FLAG="vars.AIML_DAILY_STAGE20_PREPOST_INVENTORY_ENABLED == '1'";
 function check(ok,reason){if(!ok)throw Error(reason);}
@@ -16,8 +17,8 @@ function step(text,name) {
 export function auditStage20ObserverWiring(workflow) {
   check(typeof workflow==="string","stage20_observer_workflow_missing");
   const before=step(workflow,PRE),cycle=step(workflow,CYCLE),
-    after=step(workflow,POST),old=step(workflow,MARKER);
-  check(before.at<cycle.at && cycle.at<after.at && after.at<old.at,
+    failed=step(workflow,FAILURE),after=step(workflow,POST),old=step(workflow,MARKER);
+  check(before.at<cycle.at && cycle.at<failed.at && failed.at<after.at && after.at<old.at,
     "stage20_observer_wrong_boundary_order");
   for(const entry of [before,after]){
     check(entry.body.includes(FLAG) &&
@@ -41,8 +42,22 @@ export function auditStage20ObserverWiring(workflow) {
   check(!cycle.body.includes("continue-on-error: true") &&
     cycle.body.includes('node ./engine-v1/jobs/run-daily-cycle.js "$DAY_KEY"'),
     "stage20_observer_cycle_failure_not_propagated");
+  check(cycle.body.includes("id: daily_cycle") &&
+    failed.body.includes("id: shadow_stage20_failed_cycle") &&
+    failed.body.includes("failure()") &&
+    failed.body.includes(FLAG) &&
+    failed.body.includes("steps.shadow_stage20_pre.outcome == 'success'") &&
+    failed.body.includes("steps.daily_cycle.outcome == 'failure'") &&
+    failed.body.includes("env.SKIP_BUILD != 'true'") &&
+    failed.body.includes("continue-on-error: true") &&
+    failed.body.includes('observe-stage20-data-inventory.mjs failed-post "$DAY_KEY"') &&
+    !failed.body.includes("actions/upload-artifact") &&
+    !failed.body.includes("resumeFrom") &&
+    !failed.body.includes("git push") &&
+    !failed.body.includes("|| true"),
+    "stage20_failed_cycle_observation_guard_missing");
   return {schema:"ai-matchlab.stage20-boundary-observer-wiring.v1",
-    boundaryOrder:["pre","cycle","post","existing-shadow-capture"],
+    boundaryOrder:["pre","cycle","failed-cycle-diagnostic","post","existing-shadow-capture"],
     defaultOff:true,nonBlockingObserver:true,
     sourceBound:true,productionResumeAuthorized:false,
     publicationAuthorized:false};

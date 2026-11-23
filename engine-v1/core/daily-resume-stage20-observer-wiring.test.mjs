@@ -10,7 +10,7 @@ test("exact default OFF Stage20 pre-cycle and post-cycle observer boundaries",()
   assert.equal(r.defaultOff,true);
   assert.equal(r.productionResumeAuthorized,false);
   assert.equal(r.publicationAuthorized,false);
-  assert.deepEqual(r.boundaryOrder,["pre","cycle","post","existing-shadow-capture"]);
+  assert.deepEqual(r.boundaryOrder,["pre","cycle","failed-cycle-diagnostic","post","existing-shadow-capture"]);
 });
 test("moving pre observer after Daily is denied",()=>{
   const broken=source.replace("      - name: "+pre,"      - name: MOVED_PRE")
@@ -24,7 +24,10 @@ test("unconditional pre-capture activation denied",()=>{
     "if: env.SKIP_BUILD != 'true'")) ,/stage20_observer_fail_closed_guard_missing/);
 });
 test("post cannot run without verified success of pre",()=>{
-  const broken=source.replace(" && steps.shadow_stage20_pre.outcome == 'success'","");
+  const broken=source.replace(
+    "if: env.SKIP_BUILD != 'true' && vars.AIML_DAILY_STAGE20_PREPOST_INVENTORY_ENABLED == '1' && steps.shadow_stage20_pre.outcome == 'success'",
+    "if: env.SKIP_BUILD != 'true' && vars.AIML_DAILY_STAGE20_PREPOST_INVENTORY_ENABLED == '1'"
+  );
   assert.throws(()=>auditStage20ObserverWiring(broken),/stage20_observer_post_binding_invalid/);
 });
 test("observer errors must not block normal Daily publication",()=>{
@@ -49,4 +52,26 @@ test("observer must not upload its unreviewed manifest",()=>{
     'node engine-v1/jobs/observe-stage20-data-inventory.mjs post "$DAY_KEY"\n          actions/upload-artifact@v4'
   );
   assert.throws(()=>auditStage20ObserverWiring(broken),/stage20_observer_fail_closed_guard_missing/);
+});
+
+test("failure-only observer must require actual failed Daily cycle outcome",()=>{
+  const broken=source.replace(" && steps.daily_cycle.outcome == 'failure'","");
+  assert.throws(()=>auditStage20ObserverWiring(broken),
+    /stage20_failed_cycle_observation_guard_missing/);
+});
+test("failed-cycle observation never overrides failed Daily or uploads incomplete evidence",()=>{
+  const broken=source.replace(
+    'observe-stage20-data-inventory.mjs failed-post "$DAY_KEY"',
+    'observe-stage20-data-inventory.mjs failed-post "$DAY_KEY"\n          git push origin main'
+  );
+  assert.throws(()=>auditStage20ObserverWiring(broken),
+    /stage20_failed_cycle_observation_guard_missing/);
+});
+test("failed-cycle observation cannot become always-on",()=>{
+  const broken=source.replace(
+    "failure() && env.SKIP_BUILD != 'true' && vars.AIML_DAILY_STAGE20_PREPOST_INVENTORY_ENABLED == '1'",
+    "failure() && env.SKIP_BUILD != 'true'"
+  );
+  assert.throws(()=>auditStage20ObserverWiring(broken),
+    /stage20_failed_cycle_observation_guard_missing/);
 });

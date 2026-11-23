@@ -390,6 +390,7 @@ jobs:
           node engine-v1/jobs/observe-stage20-data-inventory.mjs pre "$DAY_KEY"
 
       - name: Run daily cycle
+        id: daily_cycle
         if: env.SKIP_BUILD != 'true'
         env:
           # Transfermarkt blocks the GitHub Actions IP range; the team-news
@@ -404,6 +405,18 @@ jobs:
           # itself at 80 requests per cycle run. Without the key it skips.
           ODDS_API_IO_KEY: ${{ secrets.ODDS_API_IO_KEY }}
         run: node ./engine-v1/jobs/run-daily-cycle.js "$DAY_KEY"
+
+      # A failed monolithic cycle is NOT a completed resumable checkpoint.
+      # Distinct runner-temp evidence exists only to investigate interrupted
+      # stages. It cannot be uploaded or treated as a stage success receipt.
+      - name: Shadow read-only incomplete Stage20 inventory after failed cycle (default OFF)
+        id: shadow_stage20_failed_cycle
+        if: ${{ failure() && env.SKIP_BUILD != 'true' && vars.AIML_DAILY_STAGE20_PREPOST_INVENTORY_ENABLED == '1' && steps.shadow_stage20_pre.outcome == 'success' && steps.daily_cycle.outcome == 'failure' }}
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          node engine-v1/jobs/observe-stage20-data-inventory.mjs failed-post "$DAY_KEY"
 
       - name: Shadow read-only Stage20 post-cycle data inventory (default OFF)
         id: shadow_stage20_post
