@@ -1,0 +1,111 @@
+name: P0 Stage20 9083-file two-pass stability scale (isolated)
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/p0-stage20-historical-stability-scale.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            tools/audit-daily954-stage20-history.mjs
+            engine-v1/core/daily-resume-stable-data-scan.mjs
+            engine-v1/core/daily-resume-complete-data-inventory.mjs
+            engine-v1/core/daily-resume-stage20-admission.mjs
+            .github/workflows/p0-stage20-historical-stability-scale.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: actions/download-artifact@v4
+        with:
+          name: history-recovery-45137286904-1
+          run-id: 45137286904
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/stage20-original
+      - name: Validate immutable original 9083-file artifact including byte SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/audit-daily954-stage20-history.mjs "$RUNNER_TEMP/stage20-original" > "$RUNNER_TEMP/stage20-original-verification.txt"
+          node --input-type=module - "$RUNNER_TEMP/stage20-original-verification.txt" <<'NODE'
+          import fs from "node:fs";
+          import assert from "node:assert/strict";
+          const x=fs.readFileSync(process.argv[2],"utf8").trim();
+          assert.ok(x.startsWith("DAILY954_STAGE20_HISTORICAL_INVENTORY="));
+          const r=JSON.parse(x.slice(x.indexOf("=")+1));
+          assert.equal(r.files,9083);
+          assert.equal(r.bytes,428113899);
+          assert.equal(r.manifestSha256,"12c19ca0c9c97aca10c25fe62f3184ceaa02d87b5e9d66fa4340e0d5589ce1c0");
+          console.log("STAGE20_ORIGINAL_9083_VERIFIED=true");
+          NODE
+      - name: Materialize original immutable files in a disposable isolated Git root
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$RUNNER_TEMP/stage20-scale-scratch"
+          mkdir "$ROOT"
+          cd "$ROOT"
+          git init -q --initial-branch=main
+          git config user.name "Stable Scan Fixture"
+          git config user.email "ci@example.invalid"
+          printf "scratch marker\n" > README.md
+          git add README.md
+          git commit -qm "synthetic source"
+          cp -a "$RUNNER_TEMP/stage20-original/data" "$ROOT/data"
+      - name: Prove two consecutive complete scans on all real 9083 recovered files
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 300 node --input-type=module <<'NODE'
+          import assert from "node:assert/strict";
+          import fs from "node:fs";
+          import {inventoryStableDataTree} from "./engine-v1/core/daily-resume-stable-data-scan.mjs";
+          const root=process.env.RUNNER_TEMP+"/stage20-scale-scratch";
+          const result=inventoryStableDataTree(root,"2026-11-23");
+          assert.equal(result.stability.ok,true);
+          assert.equal(result.inventory.fileCount,9083);
+          assert.equal(result.inventory.totalBytes,428113899);
+          assert.equal(result.stability.consecutivePasses,2);
+          assert.equal(result.stability.writerQuiescenceAttested,false);
+          assert.equal(result.stability.resumeAuthorized,false);
+          assert.equal(result.stability.publicationAuthorized,false);
+          console.log("STAGE20_9083_STABLE_TWO_PASS="+JSON.stringify({
+            files:result.inventory.fileCount,bytes:result.inventory.totalBytes,
+            manifestSha256:result.inventory.manifestSha256,
+            consecutivePasses:result.stability.consecutivePasses,
+            writerQuiescenceAttested:false,resumeAuthorized:false,publicationAuthorized:false
+          }));
+          NODE
+      - name: Prove synthetic ignored mutation between real-size scan passes fails closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 300 node --input-type=module <<'NODE'
+          import assert from "node:assert/strict";
+          import fs from "node:fs";
+          import path from "node:path";
+          import {inventoryStableDataTree} from "./engine-v1/core/daily-resume-stable-data-scan.mjs";
+          const root=process.env.RUNNER_TEMP+"/stage20-scale-scratch";
+          const canary=path.join(root,"data/value","stage20-stable-scan-canary.json");
+          assert.equal(fs.existsSync(canary),false);
+          let caught=null;
+          try {
+            inventoryStableDataTree(root,"2026-11-23",{
+              betweenPasses:()=>fs.writeFileSync(canary,'{"syntheticMutation":true}\n',{flag:"wx"})
+            });
+          }catch(e){caught=e;}
+          assert.match(String(caught?.message||""),/stage20_data_changed_between_passes/);
+          fs.rmSync(canary);
+          console.log("STAGE20_9083_MUTATION_FAILURE_CLOSED=true");
+          NODE
+      - name: Read-only isolated proof, no real Daily, no production changes
+        run: |
+          git diff --exit-code HEAD -- .github/workflows/daily-deploy-snapshot.yml data/
+          echo "STAGE20_REAL_SCALE_NO_QUIESCENCE_NO_RESUME_NO_PUBLISH"
