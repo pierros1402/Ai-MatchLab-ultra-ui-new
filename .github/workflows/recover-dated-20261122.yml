@@ -1,0 +1,108 @@
+name: Recover dated snapshot from verified Daily evidence
+on:
+  push:
+    branches: [recovery/dated-publication-20261122]
+    paths: [.github/workflows/recover-dated-20261122.yml]
+permissions:
+  actions: read
+  contents: read
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      DAY_KEY: '2026-11-22'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: 38fa1f9ecb12afcc229e43f997934a7846e3143f
+          filter: blob:none
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@v4
+        with:
+          name: history-recovery-45043566135-1
+          run-id: 45043566135
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/daily-evidence
+      - name: Restore original inputs and verify current canonical identity
+        run: |
+          set -euo pipefail
+          git fetch --depth=1 --filter=blob:none origin main
+          export SOURCE_HEAD=$(git rev-parse FETCH_HEAD)
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import assert from 'node:assert/strict';
+          import {createHash} from 'node:crypto';
+          import {execFileSync} from 'node:child_process';
+          import {isHistoryEvidencePath} from './engine-v1/storage/history-preservation.js';
+          const root = path.join(process.env.RUNNER_TEMP,'daily-evidence');
+          const manifest = JSON.parse(fs.readFileSync(path.join(root,'manifest.json')));
+          assert.equal(manifest.baselineCommit,'38fa1f9ecb12afcc229e43f997934a7846e3143f');
+          assert.equal(manifest.dayKey,process.env.DAY_KEY);
+          assert.equal(String(manifest.runId),'45043566135');
+          assert.equal(String(manifest.attempt),'1');
+          for (const name of manifest.absentPaths) {
+            assert.ok(isHistoryEvidencePath(name));
+            fs.rmSync(name,{force:true});
+          }
+          for (const {path:name,sha256,bytes} of manifest.files) {
+            assert.ok(isHistoryEvidencePath(name));
+            const data = fs.readFileSync(path.join(root,name));
+            assert.equal(data.length,bytes);
+            assert.equal(createHash('sha256').update(data).digest('hex'),sha256);
+            fs.mkdirSync(path.dirname(name),{recursive:true});
+            fs.writeFileSync(name,data);
+          }
+          const name='data/canonical-fixtures/2026-11-22/nor.1.json';
+          const previous=JSON.parse(fs.readFileSync(name));
+          const current=JSON.parse(execFileSync('git',['show',process.env.SOURCE_HEAD+':'+name]));
+          const id='cid_nor1_kfumoslo_skbrann_20261122';
+          const rows=previous.fixtures.filter(x=>x.canonicalId===id);
+          const finals=current.fixtures.filter(x=>x.canonicalId===id);
+          assert.equal(rows.length,1);
+          assert.equal(finals.length,1);
+          for(const row of [rows[0],finals[0]]) {
+            assert.equal(row.sourceMatchId,'401843488');
+            assert.equal(row.homeTeam,'KFUM Oslo');
+            assert.equal(row.awayTeam,'SK Brann');
+            assert.equal(row.dayKey,process.env.DAY_KEY);
+          }
+          assert.deepEqual([finals[0].status,finals[0].scoreHome,finals[0].scoreAway],['FT',3,4]);
+          previous.fixtures[previous.fixtures.indexOf(rows[0])]=finals[0];
+          fs.writeFileSync(name,JSON.stringify(previous,null,2)+'\n');
+          console.log('Verified canonical source',process.env.SOURCE_HEAD,'and restored',manifest.files.length,'checkpoint files');
+          JS
+      - run: npm ci --no-audit --no-fund && npm --prefix engine-v1 ci --no-audit --no-fund
+      - name: Rebuild dated derivatives from recovered observations
+        run: |
+          set -euo pipefail
+          sha256sum data/value-plans/$DAY_KEY/plan-a.json data/plan-c-shadow/$DAY_KEY.json > "$RUNNER_TEMP/frozen.sha"
+          node --input-type=module -e 'import {syncCanonicalFixturesToJsonDbDay as sync} from "./engine-v1/jobs/sync-canonical-fixtures-to-json-db-day.js"; if(!sync(process.env.DAY_KEY,{write:true}).ok) process.exit(1)'
+          node engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
+          node engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY" --no-update-latest --replace-details --no-build-missing-details --fail-on-missing-details
+          node engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY" --no-update-latest
+          node engine-v1/jobs/build-value-comparison-cumulative.js --write
+          sha256sum -c "$RUNNER_TEMP/frozen.sha"
+      - name: Verify dated release gates
+        run: |
+          set -euo pipefail
+          node engine-v1/jobs/verify-details-value-mirror-day.js --date="$DAY_KEY" --gate
+          node engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" --gate
+          node engine-v1/jobs/check-value-artifact-gate.js --date="$DAY_KEY"
+          node engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY" --gate
+          node engine-v1/jobs/verify-artifact-freshness-day.js --date="$DAY_KEY" --gate
+          node engine-v1/jobs/build-value-coverage-report-day.js "$DAY_KEY"
+          node engine-v1/jobs/build-day-report.js --date="$DAY_KEY"
+          node engine-v1/jobs/build-system-health-alerts-day.js --date="$DAY_KEY"
+          node engine-v1/jobs/build-day-truth-ledger-day.js --date="$DAY_KEY" --write
+          node engine-v1/jobs/verify-daily-publish-contract.js --date="$DAY_KEY" --prepublish --gate
+          node engine-v1/jobs/check-publication-ft.mjs --day="$DAY_KEY" --root="$GITHUB_WORKSPACE"
+          sha256sum -c "$RUNNER_TEMP/frozen.sha"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verified-dated-snapshot-20261122
+          path: data/deploy-snapshots/2026-11-22/
+          if-no-files-found: error
