@@ -82,7 +82,7 @@ test("pre-stage symlink is rejected",()=>fixture(f=>{
   const target=path.join(f.baseline,"data/value/ignored.json");
   fs.unlinkSync(target);
   fs.symlinkSync(path.join(f.baseline,"data/value/old.json"),target);
-  assert.throws(()=>replay(f),/stage20_replay_symlink_forbidden/);
+  assert.throws(()=>replay(f),/stage20_inventory_symlink_forbidden/);
 }));
 test("invalid parent or binding cannot proceed",()=>fixture(f=>{
   assert.throws(()=>replayPrepostDeltaToIsolatedClone({
