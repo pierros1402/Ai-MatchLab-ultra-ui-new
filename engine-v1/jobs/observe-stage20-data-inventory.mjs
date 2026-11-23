@@ -4,8 +4,9 @@ import fs from "node:fs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {
-  inventoryDataTree, verifyDataInventory, compareDataInventories
+  verifyDataInventory, compareDataInventories
 } from "../core/daily-resume-complete-data-inventory.mjs";
+import { inventoryStableDataTree } from "../core/daily-resume-stable-data-scan.mjs";
 export const STAGE20_OBSERVATION_SCHEMA="ai-matchlab.daily-stage20-boundary-observation.v1";
 const DAY=/^\d{4}-\d{2}-\d{2}$/;
 function check(ok,code){if(!ok)throw Error(code);}
@@ -32,22 +33,25 @@ function atomicEvidence(file,document,tempRoot) {
     fs.unlinkSync(pending);
   }finally{fs.rmSync(directory,{recursive:true,force:true});}
 }
-export function observeStage20Pre(root,dayKey,tempRoot) {
+export function observeStage20Pre(root,dayKey,tempRoot,scanOptions={}) {
   check(DAY.test(dayKey),"stage20_observation_day_invalid");
   const file=runnerOutput(tempRoot,"aiml-stage20-pre.json");
   check(!fs.existsSync(file),"stage20_observation_evidence_exists");
-  const inventory=inventoryDataTree(root,dayKey);
+  const {inventory,stability}=inventoryStableDataTree(root,dayKey,scanOptions);
+  check(stability.ok && stability.writerQuiescenceAttested===false,
+    "stage20_observation_stability_not_proven");
   check(verifyDataInventory(inventory).ok,"stage20_observation_pre_invalid");
   atomicEvidence(file,inventory,tempRoot);
   return {
     schema:STAGE20_OBSERVATION_SCHEMA,phase:"pre",dayKey,
     sourceCommit:inventory.sourceCommit,manifestSha256:inventory.manifestSha256,
     fileCount:inventory.fileCount,totalBytes:inventory.totalBytes,
-    completeTreePreCaptured:true,stageCaptureAuthorized:false,
+    completeTreePreCaptured:true,consecutiveVerifiedPasses:stability.consecutivePasses,
+    writerQuiescenceAttested:false,stageCaptureAuthorized:false,
     resumeAuthorized:false,publicationAuthorized:false
   };
 }
-export function observeStage20Post(root,dayKey,tempRoot) {
+export function observeStage20Post(root,dayKey,tempRoot,scanOptions={}) {
   check(DAY.test(dayKey),"stage20_observation_day_invalid");
   const beforeFile=runnerOutput(tempRoot,"aiml-stage20-pre.json");
   const afterFile=runnerOutput(tempRoot,"aiml-stage20-post.json");
@@ -59,7 +63,9 @@ export function observeStage20Post(root,dayKey,tempRoot) {
   const before=JSON.parse(fs.readFileSync(beforeFile,"utf8"));
   check(verifyDataInventory(before).ok && before.dayKey===dayKey,
     "stage20_observation_pre_invalid");
-  const after=inventoryDataTree(root,dayKey);
+  const {inventory:after,stability}=inventoryStableDataTree(root,dayKey,scanOptions);
+  check(stability.ok && stability.writerQuiescenceAttested===false,
+    "stage20_observation_stability_not_proven");
   const delta=compareDataInventories(before,after);
   atomicEvidence(afterFile,after,tempRoot);
   atomicEvidence(deltaFile,delta,tempRoot);
@@ -70,6 +76,7 @@ export function observeStage20Post(root,dayKey,tempRoot) {
     beforeFiles:before.fileCount,afterFiles:after.fileCount,
     added:delta.added,modified:delta.modified,deleted:delta.deleted,
     sourceHashConsistent:true,ignoredIncluded:true,
+    consecutiveVerifiedPasses:stability.consecutivePasses,writerQuiescenceAttested:false,
     stageCaptureAuthorized:false,resumeAuthorized:false,
     publicationAuthorized:false
   };
