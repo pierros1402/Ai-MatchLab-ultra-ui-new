@@ -83,6 +83,16 @@ export function auditHistoricalResultsMemory(root,sourceRoot){
     path.join(sourceRoot,"engine-v1/storage/results-memory-db.js"),"utf8"));
   const manifest=JSON.parse(fs.readFileSync(path.join(root,"manifest.json"),"utf8"));
   const rows=manifest.files.filter(r=>r.path.startsWith("data/league-memory/results/"));
+  // Read-only path topology to locate the actual archived producer namespace.
+  // No file payloads, league slugs or full paths printed.
+  const allLeague=manifest.files.filter(r=>r.path.startsWith("data/league-memory/"));
+  const topology={};
+  for(const row of allLeague){
+    const segments=row.path.split("/");
+    const k=segments.length===3?"(root-file)":segments[2]+"/";
+    topology[k]=(topology[k]||0)+1;
+  }
+  console.log("STAGE20_LEAGUE_TOPOLOGY="+JSON.stringify({total:allLeague.length,groups:topology}));
   const report=summarizeResultsMemoryRows(rows,root);
   check(report.files===98 && report.invalidPaths===0 && report.invalidShape===0 &&
     report.validPayloads===98,"results_memory_historical_shape_incomplete:"+JSON.stringify({files:report.files,validPayloads:report.validPayloads,invalidPaths:report.invalidPaths,invalidShape:report.invalidShape}));
