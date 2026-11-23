@@ -10,7 +10,8 @@ const sha=b=>crypto.createHash("sha256").update(b).digest("hex");
 function check(ok,reason){if(!ok)throw Error(reason);}
 const known=Object.freeze({
   "state.json":"storage/league-memory-db.js",
-  "standings-url-cache.json":"source-discovery/standings-researcher.js"
+  "standings-url-cache.json":"source-discovery/standings-researcher.js",
+  "source-memory.json":"storage/source-memory-db.js"
 });
 export function classifyLeagueRoot(name,bytes){
   check(typeof name==="string" &&
@@ -43,10 +44,15 @@ export function auditHistoricalLeagueRoot(root,sourceRoot){
     path.join(sourceRoot,"engine-v1/storage/league-memory-db.js"),"utf8");
   const urlSource=fs.readFileSync(
     path.join(sourceRoot,"engine-v1/source-discovery/standings-researcher.js"),"utf8");
+  const reliabilitySource=fs.readFileSync(
+    path.join(sourceRoot,"engine-v1/storage/source-memory-db.js"),"utf8");
   check(stateSource.includes('resolveDataPath("league-memory", "state.json")') &&
     stateSource.includes("export function writeLeagueState(") &&
     urlSource.includes('resolveDataPath("league-memory", "standings-url-cache.json")') &&
-    urlSource.includes("function writeUrlCache("),
+    urlSource.includes("function writeUrlCache(") &&
+    reliabilitySource.includes('resolveDataPath("league-memory", "source-memory.json")') &&
+    reliabilitySource.includes("export function recordSourceSuccess(") &&
+    reliabilitySource.includes("export function recordSourceFailure("),
     "stage20_league_root_source_contract_changed");
   const counts={sourceMapped:details.filter(x=>x.kind.includes(".js")).length,
     unmapped:details.filter(x=>x.kind==="unknown-producer").length,
@@ -55,7 +61,8 @@ export function auditHistoricalLeagueRoot(root,sourceRoot){
   return {
     schema:LEAGUE_ROOT_SCHEMA,dayKey:original.dayKey,
     originalManifestSha256:original.manifestSha256,
-    sourceHashes:{leagueState:sha(stateSource),urlCache:sha(urlSource)},
+    sourceHashes:{leagueState:sha(stateSource),urlCache:sha(urlSource),
+      sourceReliability:sha(reliabilitySource)},
     files:details.sort((a,b)=>a.name.localeCompare(b.name)),
     counts,allRootFilesVerified:true,
     sourceAuthorityComplete:counts.unmapped===0,
