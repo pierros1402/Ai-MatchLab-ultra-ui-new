@@ -96,6 +96,35 @@ jobs:
         run: |
           set -euo pipefail
           node tools/rehearse-daily954-value-refresh.mjs "$RESCUE_ROOT/historical"
+      - name: Classify exact Details foundation failures in recovered scratch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RESCUE_ROOT/historical"
+          node --input-type=module <<'NODE'
+          import { auditDetailsFoundationDay } from "./engine-v1/jobs/audit-details-foundation-day.js";
+          import fs from "node:fs";
+          const day="2026-11-23";
+          const audit=auditDetailsFoundationDay(day, { includeAllIssues: true });
+          const byCode={};
+          const examples={};
+          for(const issue of audit.issues || []) {
+            const code=String(issue.code || "unknown");
+            byCode[code]=(byCode[code]||0)+1;
+            if(!examples[code]) examples[code]=[];
+            if(examples[code].length<3) examples[code].push(issue);
+          }
+          const foundation=JSON.parse(fs.readFileSync("data/foundation-integrity/"+day+".json","utf8"));
+          console.log("DAILY954_DETAILS_FOUNDATION_DIAGNOSTIC="+JSON.stringify({
+            dayKey:day,ok:audit.ok,summary:audit.summary,
+            publicationUniverse:audit.publicationUniverse,byCode,examples,
+            foundationModelReady:foundation.modelReady,
+            foundationPublicationReady:foundation.publicationReady,
+            foundationBlocked:foundation.blocked,
+            publicationApproved:false,productionWrites:0
+          }));
+          if(audit.ok !== true && Object.keys(byCode).length===0) throw Error("missing_foundation_issue_codes");
+          NODE
       # Observe the next real release gate with the recovered post-27 scratch
       # worktree. This is diagnostic only: no artifacts are promoted or published.
       - name: Diagnose remaining prepublish blockers without publishing
