@@ -7,6 +7,7 @@ on:
       - "engine-v1/jobs/settle-plan-c-shadow.test.js"
       - "engine-v1/jobs/fixtures/plan-c-legacy-settlement-20261119.json"
       - "tools/git-push-rebase-retry.sh"
+      - "tools/preflight-plan-c-terminal.sh"
       - ".github/workflows/daily-deploy-snapshot.yml"
       - ".github/workflows/plan-c-shadow-daily.yml"
       - ".github/workflows/p0-plan-c-terminal-recovery-tests.yml"
@@ -33,6 +34,7 @@ jobs:
           node --check engine-v1/jobs/settle-plan-c-shadow.js
           node --check engine-v1/jobs/settle-plan-c-shadow.test.js
           bash -n tools/git-push-rebase-retry.sh
+          bash -n tools/preflight-plan-c-terminal.sh
       - name: Plan C exact regression
         run: node --test --test-reporter=tap engine-v1/jobs/settle-plan-c-shadow.test.js engine-v1/jobs/build-plan-c-shadow-day.test.js
       - name: Full engine suite
@@ -46,6 +48,9 @@ jobs:
             grep -n -A 24 -B 3 -E '^not ok [0-9]+|^# (fail|tests|pass)' /tmp/engine-suite.tap | tail -n 450 || true
           fi
           exit "$status"
+      - name: Execute actual Plan C Daily fail-fast preflight
+        shell: bash
+        run: bash tools/preflight-plan-c-terminal.sh 2026-11-23
       - name: Replay pinned historical Plan C corruption in isolated files
         shell: bash
         run: |

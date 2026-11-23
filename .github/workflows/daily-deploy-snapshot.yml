@@ -371,6 +371,12 @@ jobs:
           VALUE_MAX_RESEARCH_LEAGUES: "12"
         run: bash tools/persist-value-data-alarm.sh "$DAY_KEY"
 
+      # Validate existing immutable Plan C terminals before the expensive cycle.
+      # The same script runs in PR CI; it writes only to runner temp files.
+      - name: Preflight existing Plan C settlement before long daily cycle
+        if: env.SKIP_BUILD != 'true'
+        run: bash tools/preflight-plan-c-terminal.sh "$DAY_KEY"
+
       - name: Run daily cycle
         if: env.SKIP_BUILD != 'true'
         env:
