@@ -5,7 +5,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import {execFileSync} from "node:child_process";
 import {
-  verifyDataInventory,compareDataInventories
+  inventoryDataTree,verifyDataInventory,compareDataInventories
 } from "./daily-resume-complete-data-inventory.mjs";
 import {evaluateStage20CapturePaths} from "./daily-resume-stage20-admission.mjs";
 export const PREPOST_DELTA_SCHEMA="ai-matchlab.daily-stage20-prepost-delta-archive.v1";
@@ -103,7 +103,9 @@ export function verifyPrepostDeltaArchive(archiveRoot,before,after) {
       resumeAuthorized:false,publicationAuthorized:false};
   }catch(e){return {ok:false,reason:e.message,replayAuthorized:false,resumeAuthorized:false,publicationAuthorized:false};}
 }
-export function capturePrepostDeltaToIsolatedArchive(root,archiveRoot,before,after) {
+export function capturePrepostDeltaToIsolatedArchive(root,archiveRoot,before,after,options={}) {
+  check(options && (options.beforeFinalScan===undefined || typeof options.beforeFinalScan==="function"),
+    "stage20_prepost_retest_hook_invalid");
   const delta=validateInputs(before,after);
   const head=execFileSync("git",["rev-parse","HEAD"],{cwd:root,encoding:"utf8"}).trim();
   check(head===before.sourceCommit,"stage20_prepost_head_drift");
@@ -130,9 +132,19 @@ export function capturePrepostDeltaToIsolatedArchive(root,archiveRoot,before,aft
     fs.writeFileSync(path.join(tmp,"manifest.json"),JSON.stringify(manifest),{flag:"wx",mode:0o600});
     const verification=verifyPrepostDeltaArchive(tmp,before,after);
     check(verification.ok,"stage20_prepost_internal_verification_failed:"+verification.reason);
+    // The manifest post-scan may predate copying. Validate the ENTIRE data
+    // tree again, not only modified paths: ignored/unmodified concurrent changes
+    // are otherwise invisible. This remains a two-instant observation, not a
+    // writer lease or monotonic filesystem transaction.
+    if(options.beforeFinalScan)options.beforeFinalScan();
+    const reattested=inventoryDataTree(root,after.dayKey);
+    check(reattested.manifestSha256===after.manifestSha256 &&
+      reattested.sourceCommit===after.sourceCommit,
+      "stage20_prepost_final_tree_drift");
     fs.renameSync(tmp,archiveRoot);
     return {schema:PREPOST_DELTA_SCHEMA,
-      checkpointSha256:manifest.evidenceSha256,added:delta.added,
+      checkpointSha256:manifest.evidenceSha256,postCaptureTreeReattested:true,
+      writerQuiescenceAttested:false,added:delta.added,
       modified:delta.modified,deleted:delta.deleted,
       completeBaseTreeIncluded:false,replayAuthorized:false,
       resumeAuthorized:false,publicationAuthorized:false};
