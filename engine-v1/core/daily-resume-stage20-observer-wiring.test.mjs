@@ -41,8 +41,8 @@ test("observer errors must not block normal Daily publication",()=>{
 });
 test("Daily cycle remains mandatory and cannot be hidden by observer",()=>{
   const broken=source.replace(
-    'run: node ./engine-v1/jobs/run-daily-cycle.js "$DAY_KEY"',
-    'continue-on-error: true\n        run: node ./engine-v1/jobs/run-daily-cycle.js "$DAY_KEY"'
+    'id: daily_cycle\n        if: env.SKIP_BUILD != \'true\'',
+    'id: daily_cycle\n        continue-on-error: true\n        if: env.SKIP_BUILD != \'true\''
   );
   assert.throws(()=>auditStage20ObserverWiring(broken),/stage20_observer_cycle_failure_not_propagated/);
 });

@@ -10,6 +10,9 @@ on:
       - "engine-v1/core/daily-resume-artifact-store.mjs"
       - "engine-v1/core/daily-resume-artifact-store.test.mjs"
       - ".github/workflows/daily-resume-contract-tests.yml"
+      - "engine-v1/jobs/observe-daily-runtime-boundaries.mjs"
+      - "engine-v1/jobs/observe-daily-runtime-boundaries.test.mjs"
+      - ".github/workflows/daily-deploy-snapshot.yml"
   workflow_dispatch:
 
 permissions:
@@ -32,10 +35,14 @@ jobs:
           node --check engine-v1/core/daily-resume-contract.test.mjs
           node --check engine-v1/core/daily-resume-artifact-store.mjs
           node --check engine-v1/core/daily-resume-artifact-store.test.mjs
+          node --check engine-v1/jobs/observe-daily-runtime-boundaries.mjs
+          node --check engine-v1/jobs/observe-daily-runtime-boundaries.test.mjs
       - name: Test fail-closed resume decisions with isolated files
         run: node --test --test-reporter=tap engine-v1/core/daily-resume-contract.test.mjs engine-v1/core/daily-resume-artifact-store.test.mjs
       - name: Verify current Daily stage boundary inventory
         run: node --test --test-reporter=tap engine-v1/core/daily-resume-stage-boundary-audit.test.mjs
+      - name: Test optional runtime journal without production execution
+        run: node --test --test-reporter=tap engine-v1/jobs/observe-daily-runtime-boundaries.test.mjs
       - name: Confirm no production workflow or data was mutated
         run: |
-          git diff --exit-code HEAD -- .github/workflows/daily-deploy-snapshot.yml data/
+          git diff --exit-code HEAD -- data/
