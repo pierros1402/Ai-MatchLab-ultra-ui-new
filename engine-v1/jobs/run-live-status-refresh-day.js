@@ -669,6 +669,17 @@ export function isConfirmedDelayedFinal(row, occurrence) {
     Number.isInteger(final.scoreAway) && final.scoreAway >= 0;
 }
 
+export function mergeConfirmedDelayedFinal(row, occurrence) {
+  if (!isConfirmedDelayedFinal(row, occurrence)) return row;
+  const previous = { ...row };
+  // Clear only the obsolete delayed marker. Other protected states and any
+  // authoritative terminal writeback remain subject to the ordinary vetoes.
+  if (previous.rawStatus === "STATUS_DELAYED") delete previous.rawStatus;
+  const merged = mergeStatusRow(previous, occurrence.incoming);
+  if (!isFinalLike(merged)) return row;
+  return { ...merged, kickoffUtc: occurrence.incoming.kickoffUtc, matchKey: occurrence.incoming.matchKey };
+}
+
 export function mergeStatusRow(
   previous,
   incoming
@@ -1766,11 +1777,12 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
       // A delayed scoreboard entry can outlive the match. Consult its exact
       // event summary as well, while retaining the scoreboard on uncertainty.
       const delayedRows = new Map();
+      const verifiedDelayedFinals = new Map();
       for (const row of current?.fixtures || []) {
         const id = stableFixtureId(row);
         const board = sourceById.get(id);
         if (row.source === "espn" && !isFinalLike(row) &&
-            board?.rawStatus === "STATUS_DELAYED") {
+            (board?.rawStatus === "STATUS_DELAYED" || row.rawStatus === "STATUS_DELAYED")) {
           delayedRows.set(id, row);
         }
       }
@@ -1832,7 +1844,10 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
 
               if (occurrence.providerMatchId !== id) continue;
               const delayed = delayedRows.get(id);
-              if (delayed && !isConfirmedDelayedFinal(delayed, occurrence)) continue;
+              if (delayed) {
+                if (!isConfirmedDelayedFinal(delayed, occurrence)) continue;
+                verifiedDelayedFinals.set(id, occurrence);
+              }
 
               if (
                 occurrence.kind ===
@@ -1981,7 +1996,9 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
         stats.matchedRows++;
 
         const before = rowStatusSignature(row);
-        const merged = mergeStatusRow(row, incoming);
+        const merged = verifiedDelayedFinals.has(id)
+          ? mergeConfirmedDelayedFinal(row, verifiedDelayedFinals.get(id))
+          : mergeStatusRow(row, incoming);
         const after = rowStatusSignature(merged);
 
         if (before !== after) {
