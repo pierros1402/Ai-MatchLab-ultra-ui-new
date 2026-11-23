@@ -1,0 +1,70 @@
+name: P0 Stage20 value acquisition writer paths (read-only)
+on:
+  pull_request:
+    paths:
+      - "tools/audit-stage20-value-acquisition-writer-map.mjs"
+      - "tools/audit-stage20-value-acquisition-writer-map.test.mjs"
+      - ".github/workflows/p0-stage20-value-acquisition-writer-map.yml"
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            tools/audit-stage20-value-acquisition-writer-map.mjs
+            tools/audit-stage20-value-acquisition-writer-map.test.mjs
+            tools/audit-stage20-value-acquisition-census.mjs
+            tools/audit-daily954-stage20-history.mjs
+            engine-v1/jobs/run-value-data-alarm-day.js
+            engine-v1/core/daily-resume-stage20-admission.mjs
+            engine-v1/core/daily-resume-stage20-journal-admission.mjs
+            engine-v1/core/season-closure-contract.js
+            .github/workflows/p0-stage20-value-acquisition-writer-map.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Verify exact original writer Git blob
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object engine-v1/jobs/run-value-data-alarm-day.js)" = "c6faf0f18af5da26f6fbf0b09db68be8ef022131"
+      - name: Syntax and negatives
+        run: |
+          node --check tools/audit-stage20-value-acquisition-writer-map.mjs
+          node --check tools/audit-stage20-value-acquisition-writer-map.test.mjs
+          node --test --test-reporter=tap tools/audit-stage20-value-acquisition-writer-map.test.mjs
+      - uses: actions/download-artifact@v4
+        with:
+          name: history-recovery-45137286904-1
+          run-id: 45137286904
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/value-writer-original
+      - name: Classify all original 19 files; preserve HOLD
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/audit-stage20-value-acquisition-writer-map.mjs "$RUNNER_TEMP/value-writer-original" > "$RUNNER_TEMP/value-writer-report.txt"
+          cat "$RUNNER_TEMP/value-writer-report.txt"
+          node --input-type=module - "$RUNNER_TEMP/value-writer-report.txt" <<'NODE'
+          import fs from "node:fs";import assert from "node:assert/strict";
+          const line=fs.readFileSync(process.argv[2],"utf8").trim();
+          assert.ok(line.startsWith("STAGE20_VALUE_WRITER_PATHS="));
+          const x=JSON.parse(line.slice(line.indexOf("=")+1));
+          assert.equal(x.originalFiles,19);
+          assert.equal(x.patternMatches+x.unattributedPaths,19);
+          assert.equal(x.originalBytes,20251721);
+          assert.equal(x.dynamicDependencyClosureVerified,false);
+          assert.equal(x.externalProviderEquivalenceProven,false);
+          assert.equal(x.freshnessVerified,false);
+          assert.equal(x.resumeAuthorized,false);
+          assert.equal(x.productionWrites,0);
+          NODE
+      - name: Production untouched
+        run: |
+          git diff --exit-code HEAD -- data/ .github/workflows/daily-deploy-snapshot.yml
+          echo "WRITER_PATHS_ONLY_NO_CROSS_RUN_REUSE"
