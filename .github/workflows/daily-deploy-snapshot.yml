@@ -1367,7 +1367,9 @@ jobs:
           fi
 
           git commit -m "Auto refresh deploy snapshot for ${DAY_KEY}"
-          bash tools/git-push-rebase-retry.sh
+          # Strict exception only for final release and only for remote read-only
+          # Stage20 audit additions. Gate the rebased release before publishing.
+          PUSH_RETRY_PLAN_C_AUDIT_ONLY=1 bash tools/git-push-rebase-retry.sh
           PUBLISHED_REF="$(git rev-parse HEAD)"
           echo "PUBLISHED_REF=${PUBLISHED_REF}" >> "$GITHUB_ENV"
           echo "DAILY_SNAPSHOT_COMMITTED=true" >> "$GITHUB_ENV"

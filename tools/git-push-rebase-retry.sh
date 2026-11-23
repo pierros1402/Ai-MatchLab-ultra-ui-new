@@ -195,9 +195,51 @@ for i in $(seq 1 "${ATTEMPTS}"); do
   # A textual rebase can merge incompatible snapshots and leave accounting
   # from one generation with terminal records from another. Never rebase them.
   if git diff-tree --no-commit-id --name-only -r HEAD | grep -Eq '^data/plan-c-shadow/'; then
-    echo "ERROR: plan_c_snapshot_rebase_forbidden_after_push_rejection"
-    echo "P0: regenerate from fresh canonical and frozen prediction inputs; do not merge JSON."
-    exit 1
+    # No generic rebase of Plan C truth/prediction data. The opt-in exception
+    # accepts ONLY concurrent, explicitly named read-only audit code; no other
+    # production file may change remotely. Revalidate release after replay.
+    if [[ "${PUSH_RETRY_PLAN_C_AUDIT_ONLY:-0}" != "1" || -z "${DAY_KEY:-}" ]]; then
+      echo "ERROR: plan_c_snapshot_rebase_forbidden_after_push_rejection"
+      exit 1
+    fi
+    git fetch --no-tags origin "${BRANCH}"
+    REMOTE_REF="refs/remotes/origin/${BRANCH}"
+    MERGE_BASE="$(git merge-base HEAD "${REMOTE_REF}")"
+    if ! git merge-base --is-ancestor "${MERGE_BASE}" HEAD ||
+       ! git merge-base --is-ancestor "${MERGE_BASE}" "${REMOTE_REF}"; then
+      echo "ERROR: plan_c_remote_ancestry_invalid"
+      exit 1
+    fi
+    if ! git diff --name-only -z "${MERGE_BASE}" "${REMOTE_REF}" |
+         node tools/plan-c-audit-only-push-admission.mjs; then
+      echo "ERROR: plan_c_remote_diff_not_audit_only"
+      exit 1
+    fi
+    backup_untracked
+    if ! git -c rebase.autoStash=true rebase "${REMOTE_REF}"; then
+      git rebase --abort || true
+      restore_untracked || true
+      echo "ERROR: plan_c_audit_only_rebase_failed"
+      exit 1
+    fi
+    restore_untracked
+    cleanup_backup
+    BACKUP_ROOT=""
+    UNTRACKED_LIST=""
+    # All gates must still pass on the rebased tree; the prior approval is
+    # not portable to a new Git commit. Never publish on partial success.
+    node ./engine-v1/jobs/run-snapshot-invariant-check.js "${DAY_KEY}" --gate
+    node ./engine-v1/jobs/verify-details-value-mirror-day.js --date="${DAY_KEY}" --gate
+    node ./engine-v1/jobs/check-publication-ft.mjs --day="${DAY_KEY}" --root="$PWD"
+    node ./engine-v1/jobs/verify-daily-publish-contract.js --date="${DAY_KEY}" --prepublish --gate
+    node ./engine-v1/jobs/verify-daily-publish-contract.js --date="${DAY_KEY}" --gate
+    echo "PLAN_C_AUDIT_ONLY_REBASE_REVALIDATED=true"
+    # Even on the last configured attempt, submit the validated commit once.
+    if git push origin "HEAD:${BRANCH}"; then
+      exit 0
+    fi
+    echo "Plan C audit-only safe push raced again; next attempt must re-admit remote changes."
+    continue
   fi
 
   echo "git push rejected (attempt ${i}/${ATTEMPTS}) — rebasing onto latest origin/${BRANCH}"
