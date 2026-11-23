@@ -156,3 +156,33 @@ test("actual failed-post CLI dispatches and preserves incomplete state with real
   assert.equal(fs.existsSync(path.join(x.temp,"aiml-stage20-failure-delta.json")),true);
   assert.equal(fs.existsSync(path.join(x.temp,"aiml-stage20-post.json")),false);
 }));
+
+test("failed-cycle artifact summary exposes only fixed aggregate fields and never raw paths",()=>fixture(x=>{
+  observeStage20Pre(x.repo,"2026-11-23",x.temp);
+  fs.writeFileSync(path.join(x.repo,"data/value/new.json"),"{\"shouldNotLeak\":\"SYNTHETIC_MARKER\"}\n");
+  observeStage20FailedCycle(x.repo,"2026-11-23",x.temp);
+  const file=path.join(x.temp,"aiml-stage20-failure-summary.json");
+  const bytes=fs.readFileSync(file,"utf8");
+  const summary=JSON.parse(bytes);
+  assert.equal(summary.schema,"ai-matchlab.daily-stage20-failed-cycle-summary.v1");
+  assert.equal(summary.cycleOutcome,"failure");
+  assert.equal(summary.stageComplete,false);
+  assert.equal(summary.checkpointReusable,false);
+  assert.equal(summary.resumeAuthorized,false);
+  assert.equal(summary.productionWrites,0);
+  assert.equal(summary.added,1);
+  assert.equal(summary.stableReadPasses,2);
+  assert.equal(summary.writerQuiescenceAttested,false);
+  assert.ok(!bytes.includes("SYNTHETIC_MARKER"));
+  assert.ok(!bytes.includes("data/value/new.json"));
+  assert.ok(!Object.keys(summary).includes("changes"));
+  assert.ok(!Object.keys(summary).includes("files"));
+}));
+test("failed-cycle summary cannot be overwritten by second observation",()=>fixture(x=>{
+  observeStage20Pre(x.repo,"2026-11-23",x.temp);
+  observeStage20FailedCycle(x.repo,"2026-11-23",x.temp);
+  const before=fs.readFileSync(path.join(x.temp,"aiml-stage20-failure-summary.json"));
+  assert.throws(()=>observeStage20FailedCycle(x.repo,"2026-11-23",x.temp),
+    /stage20_observation_evidence_exists/);
+  assert.deepEqual(fs.readFileSync(path.join(x.temp,"aiml-stage20-failure-summary.json")),before);
+}));
