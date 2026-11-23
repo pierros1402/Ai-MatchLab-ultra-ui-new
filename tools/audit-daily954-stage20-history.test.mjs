@@ -73,3 +73,24 @@ test("duplicate tombstone is never accepted",()=>fixture(x=>{
   const bytes=Buffer.from(JSON.stringify(doc));fs.writeFileSync(f,bytes);
   assert.throws(()=>auditHistorical954(x.root,{...x.pin,manifestSha256:sha(bytes)}),/historical_absent_paths_invalid/);
 }));
+test("denied sensitive key is counted without exposing its value or filename",()=>fixture(x=>{
+  const target=path.join(x.root,"data/odds-memory/day.json");
+  const marker="SYNTHETIC_NON_SECRET_TEST_VALUE";
+  const raw=JSON.stringify({api_key:marker});
+  fs.writeFileSync(target,raw);
+  const file=path.join(x.root,"manifest.json");
+  const doc=JSON.parse(fs.readFileSync(file,"utf8"));
+  const row=doc.files.find(r=>r.path==="data/odds-memory/day.json");
+  row.bytes=Buffer.byteLength(raw);
+  row.sha256=sha(raw);
+  const bytes=Buffer.from(JSON.stringify(doc));
+  fs.writeFileSync(file,bytes);
+  const pin={...x.pin,manifestSha256:sha(bytes),
+    bytes:x.pin.bytes-Buffer.byteLength(x.files[1][1])+Buffer.byteLength(raw)};
+  const r=auditHistorical954(x.root,pin);
+  assert.equal(r.deniedContentSummary.suspiciousFieldCandidates,1);
+  assert.equal(r.deniedContentSummary.jsonParseFailures,0);
+  assert.equal(r.sensitiveContentApproval,false);
+  assert.ok(!JSON.stringify(r).includes(marker));
+  assert.ok(!JSON.stringify(r).includes("data/odds-memory/day.json"));
+}));
