@@ -1,0 +1,31 @@
+name: P0 Daily checkpoint resume contract (isolated)
+
+on:
+  pull_request:
+    paths:
+      - "engine-v1/core/daily-resume-contract.mjs"
+      - "engine-v1/core/daily-resume-contract.test.mjs"
+      - ".github/workflows/daily-resume-contract-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Validate checkpoint contract syntax
+        run: |
+          node --check engine-v1/core/daily-resume-contract.mjs
+          node --check engine-v1/core/daily-resume-contract.test.mjs
+      - name: Test fail-closed resume decisions with isolated files
+        run: node --test --test-reporter=tap engine-v1/core/daily-resume-contract.test.mjs
+      - name: Confirm no production workflow or data was mutated
+        run: |
+          git diff --exit-code HEAD -- .github/workflows/daily-deploy-snapshot.yml data/
