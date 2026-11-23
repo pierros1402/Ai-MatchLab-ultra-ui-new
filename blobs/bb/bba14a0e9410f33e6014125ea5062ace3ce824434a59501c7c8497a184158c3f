@@ -1,0 +1,204 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "kor.1",
+  "homeTeam": "Gwangju FC",
+  "awayTeam": "Bucheon FC 1995",
+  "homeWinScore": 0.445,
+  "drawScore": 0.151,
+  "awayWinScore": 0.403,
+  "over15Score": 0.614,
+  "over25Score": 0.536,
+  "over35Score": 0.47,
+  "bttsScore": 0.465,
+  "confidence": 0.761,
+  "signals": [
+    "home_edge",
+    "home_form_decay",
+    "form_influence_reduced",
+    "priors_applied",
+    "playoff_pressure",
+    "close_strength_gap"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.157,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.39,
+    "expectedAwayGoals": 1.102,
+    "expectedTotalGoals": 2.492,
+    "homeStrength": 0.236,
+    "awayStrength": 0.204,
+    "homeEdge": 0.174,
+    "awayPenalty": 0.122,
+    "recency": {
+      "homeOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 133,
+        "daysSinceLastMatch": 15,
+        "spanDays": 14,
+        "maxInternalGap": 7,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.365,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.535
+      },
+      "awayOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 5,
+        "daysSinceLastMatch": 13,
+        "spanDays": 22,
+        "maxInternalGap": 8,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.45,
+        "continuityScore": 0.7,
+        "formContinuityWeight": 0.643
+      },
+      "homeSide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 133,
+        "daysSinceLastMatch": 21,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.155,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.342
+      },
+      "awaySide": {
+        "sample": 4,
+        "rawSample": 2,
+        "priorSample": 5,
+        "daysSinceLastMatch": 20,
+        "spanDays": 15,
+        "maxInternalGap": 15,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.19,
+        "continuityScore": 0.3,
+        "formContinuityWeight": 0.291
+      }
+    },
+    "matchupSample": 1,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 133,
+      "awayPriorSample": 5,
+      "leaguePriorSample": 1055,
+      "matchupPriorSample": 0
+    },
+    "resolution": {
+      "homeInput": "Gwangju FC",
+      "awayInput": "Bucheon FC 1995",
+      "homeResolvedKey": "Gwangju FC",
+      "awayResolvedKey": "Bucheon FC 1995",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Bucheon FC 1995::Gwangju FC",
+      "matchupResolveScore": 0.93,
+      "homePriorKey": "kor.1::Gwangju FC",
+      "awayPriorKey": "kor.1::Bucheon FC 1995",
+      "matchupPriorKey": null
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Gwangju FC",
+      "awayTeamKey": "Bucheon FC 1995",
+      "leagueKey": "kor.1",
+      "matchupKey": "Bucheon FC 1995::Gwangju FC"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": false,
+    "contextDelta": 0,
+    "contextReasons": [],
+    "aiContext": {
+      "available": true,
+      "importance": "unknown",
+      "stakes": [],
+      "pressure": []
+    }
+  },
+  "contextAdjusted": false,
+  "contextReasons": [],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0.02925,
+      "awayDelta": 0.02025,
+      "drawDelta": 0.022,
+      "reasons": [
+        "playoff_pressure",
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "kor.1",
+    "competitionType": "league",
+    "phase": "relegation",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 15,
+    "awayRestDays": 13,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 1,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
