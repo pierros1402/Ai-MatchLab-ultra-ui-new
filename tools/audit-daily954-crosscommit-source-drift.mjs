@@ -56,10 +56,12 @@ export function summarizeHistoricalSourceDrift(rows) {
   };
 }
 function git(root,...args){return execFileSync("git",args,{cwd:root,encoding:"buffer",maxBuffer:128*1024*1024});}
-export function auditOriginalDaily954SourceDrift(root) {
-  const head=git(root,"rev-parse","HEAD").toString("utf8").trim();
+export function auditOriginalDaily954SourceDrift(root, consumerMainCommit) {
+  const head=String(consumerMainCommit||"").trim();
   check(SHA40.test(head) && head!==ORIGINAL_DAILY954_COMMIT,
     "crosscommit_consumer_identity_invalid");
+  check(git(root,"rev-parse",head+"^{commit}").toString("utf8").trim()===head,
+    "crosscommit_consumer_commit_not_resolved");
   const original=git(root,"rev-parse",ORIGINAL_DAILY954_COMMIT+"^{commit}").toString("utf8").trim();
   check(original===ORIGINAL_DAILY954_COMMIT,"crosscommit_producer_identity_invalid");
   const raw=git(root,"diff","--no-renames","--name-status","-z",original,head,"--");
@@ -71,7 +73,7 @@ export function auditOriginalDaily954SourceDrift(root) {
   const result=summarizeHistoricalSourceDrift(rows);
   return {
     schema:"ai-matchlab.daily954-crosscommit-source-drift-audit.v1",
-    originalProducerCommit:original,consumerCommit:head,
+    originalProducerCommit:original,consumerMainCommit:head,
     gitDiffSha256:crypto.createHash("sha256").update(raw).digest("hex"),
     ...result,readOnly:true,productionWrites:0
   };
@@ -80,6 +82,6 @@ const invoked=process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(imp
 if(invoked){
   try{
     check(process.argv.length===2,"crosscommit_usage_no_args");
-    console.log("DAILY954_CROSSCOMMIT_SOURCE_DRIFT="+JSON.stringify(auditOriginalDaily954SourceDrift(process.cwd())));
+    console.log("DAILY954_CROSSCOMMIT_SOURCE_DRIFT="+JSON.stringify(auditOriginalDaily954SourceDrift(process.cwd(),process.env.AIML_CONSUMER_MAIN_SHA)));
   }catch(e){console.error("DAILY954_CROSSCOMMIT_DENIED="+e.message);process.exitCode=1;}
 }
