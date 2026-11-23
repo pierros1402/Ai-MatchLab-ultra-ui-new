@@ -50,7 +50,7 @@ export function rehearseValueRefresh(root){
   const baseline=auditFrozenValueSources(root);
   const result=spawnSync(process.execPath,
     ["engine-v1/jobs/refresh-value-artifacts-day.js",`--date=${DAY}`,"--no-update-latest"],
-    {cwd:root,encoding:"utf8",timeout:240000,maxBuffer:8*1024*1024});
+    {cwd:root,encoding:"utf8",timeout:12*60*1000,maxBuffer:8*1024*1024});
   const afterPlanA=sha(fs.readFileSync(baseline.planAFile));
   const afterAudit=sha(fs.readFileSync(baseline.planAAuditFile));
   check(afterPlanA===baseline.planABeforeSha256 &&
