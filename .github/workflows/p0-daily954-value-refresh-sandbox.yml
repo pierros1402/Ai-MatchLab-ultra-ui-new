@@ -14,7 +14,7 @@ permissions:
 jobs:
   replay:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v4
         with:
@@ -91,11 +91,39 @@ jobs:
           set -euo pipefail
           npm ci --prefix "$RESCUE_ROOT/historical" --no-audit --no-fund
           npm ci --prefix "$RESCUE_ROOT/historical/engine-v1" --no-audit --no-fund
+      - name: Rebuild exactly recovered Details against current validated foundations in scratch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RESCUE_ROOT/historical"
+          BEFORE_A="$(sha256sum data/value-plans/2026-11-23/plan-a.json | cut -d' ' -f1)"
+          BEFORE_A_AUDIT="$(sha256sum data/value-plans/2026-11-23/plan-a-audit.json | cut -d' ' -f1)"
+          if ! node engine-v1/jobs/build-details-day.js 2026-11-23 --rebuild > "$RESCUE_ROOT/details-build.log" 2>&1; then
+            tail -n 100 "$RESCUE_ROOT/details-build.log"
+            exit 1
+          fi
+          tail -n 25 "$RESCUE_ROOT/details-build.log"
+          node engine-v1/jobs/export-deploy-snapshot-day.js 2026-11-23 \
+            --replace-details --preserve-value --no-update-latest --fail-on-missing-details \
+            > "$RESCUE_ROOT/snapshot-export.log" 2>&1 || {
+              tail -n 100 "$RESCUE_ROOT/snapshot-export.log"
+              exit 1
+            }
+          tail -n 35 "$RESCUE_ROOT/snapshot-export.log"
+          test "$BEFORE_A" = "$(sha256sum data/value-plans/2026-11-23/plan-a.json | cut -d' ' -f1)"
+          test "$BEFORE_A_AUDIT" = "$(sha256sum data/value-plans/2026-11-23/plan-a-audit.json | cut -d' ' -f1)"
+          echo "DAILY954_DETAILS_REBUILD_FROZEN_PLAN_A_PRESERVED=true"
       - name: Rebuild Value A2 B B2 and comparison only from original recovered pre-kickoff assessments
         shell: bash
         run: |
           set -euo pipefail
           node tools/rehearse-daily954-value-refresh.mjs "$RESCUE_ROOT/historical"
+      - name: Refresh scratch System Health after source-derived Details and Value
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RESCUE_ROOT/historical"
+          node engine-v1/jobs/build-system-health-alerts-day.js --date=2026-11-23
       - name: Classify exact Details foundation failures in recovered scratch only
         shell: bash
         run: |
@@ -124,6 +152,7 @@ jobs:
             publicationApproved:false,productionWrites:0
           }));
           if(audit.ok !== true && Object.keys(byCode).length===0) throw Error("missing_foundation_issue_codes");
+          if(audit.ok !== true) throw Error("recovered_details_foundation_still_invalid");
           NODE
       # Observe the next real release gate with the recovered post-27 scratch
       # worktree. This is diagnostic only: no artifacts are promoted or published.
