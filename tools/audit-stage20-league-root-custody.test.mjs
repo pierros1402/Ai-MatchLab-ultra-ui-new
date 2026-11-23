@@ -6,6 +6,8 @@ test("known state cache and URL memory roots map to source, not replay authority
   const url=classifyLeagueRoot("data/league-memory/standings-url-cache.json",Buffer.from("{}"));
   assert.equal(state.kind,"storage/league-memory-db.js");
   assert.equal(url.kind,"source-discovery/standings-researcher.js");
+  const reliability=classifyLeagueRoot("data/league-memory/source-memory.json",Buffer.from("{}"));
+  assert.equal(reliability.kind,"storage/source-memory-db.js");
   assert.equal(state.verifiedJson,true);
 });
 test("unknown root remains unqualified, never silently approved",()=>{
