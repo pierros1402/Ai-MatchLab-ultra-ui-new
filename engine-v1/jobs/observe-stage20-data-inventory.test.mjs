@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {execFileSync} from "node:child_process";
-import {observeStage20Pre,observeStage20Post} from "./observe-stage20-data-inventory.mjs";
+import {observeStage20Pre,observeStage20Post,observeStage20FailedCycle} from "./observe-stage20-data-inventory.mjs";
 const git=(root,...args)=>execFileSync("git",args,{cwd:root,encoding:"utf8"}).trim();
 function fixture(fn) {
   const parent=fs.mkdtempSync(path.join(os.tmpdir(),"aiml-stage20-boundary-"));
@@ -102,4 +102,41 @@ test("successful pre/post observer attests exactly two stable passes, never writ
   assert.equal(pre.writerQuiescenceAttested,false);
   assert.equal(post.writerQuiescenceAttested,false);
   assert.equal(post.resumeAuthorized,false);
+}));
+
+test("failed cycle produces separate incomplete evidence, not a reusable checkpoint",()=>fixture(x=>{
+  observeStage20Pre(x.repo,"2026-11-23",x.temp);
+  fs.writeFileSync(path.join(x.repo,"data/value/ignored.json"),"{\"partial\":true}\n");
+  const report=observeStage20FailedCycle(x.repo,"2026-11-23",x.temp);
+  assert.equal(report.phase,"failed-cycle");
+  assert.equal(report.cycleOutcome,"failure");
+  assert.equal(report.stageComplete,false);
+  assert.equal(report.resumeAuthorized,false);
+  assert.equal(report.publicationAuthorized,false);
+  assert.equal(report.consecutiveVerifiedPasses,2);
+  assert.equal(report.modified,1);
+  assert.equal(fs.existsSync(path.join(x.temp,"aiml-stage20-post.json")),false);
+  assert.equal(fs.existsSync(path.join(x.temp,"aiml-stage20-delta.json")),false);
+  const doc=JSON.parse(fs.readFileSync(path.join(x.temp,"aiml-stage20-failure-delta.json"),"utf8"));
+  assert.equal(doc.stageComplete,false);
+  assert.equal(doc.resumable,false);
+}));
+test("failed cycle evidence requires completed pre and leaves no partial evidence on missing pre",()=>fixture(x=>{
+  assert.throws(()=>observeStage20FailedCycle(x.repo,"2026-11-23",x.temp),
+    /stage20_failed_cycle_pre_missing/);
+  assert.deepEqual(fs.readdirSync(x.temp),[]);
+}));
+test("failed cycle cannot reclassify prior complete post evidence",()=>fixture(x=>{
+  observeStage20Pre(x.repo,"2026-11-23",x.temp);
+  observeStage20Post(x.repo,"2026-11-23",x.temp);
+  assert.throws(()=>observeStage20FailedCycle(x.repo,"2026-11-23",x.temp),
+    /stage20_failed_cycle_success_evidence_conflict/);
+  assert.equal(fs.existsSync(path.join(x.temp,"aiml-stage20-failure-post.json")),false);
+}));
+test("failed-cycle instability rejects before writing incomplete post artifacts",()=>fixture(x=>{
+  observeStage20Pre(x.repo,"2026-11-23",x.temp);
+  assert.throws(()=>observeStage20FailedCycle(x.repo,"2026-11-23",x.temp,{
+    betweenPasses:()=>fs.writeFileSync(path.join(x.repo,"data/value/ignored.json"),"{\"unstable\":1}\n")
+  }),/stage20_data_changed_between_passes/);
+  assert.deepEqual(fs.readdirSync(x.temp),["aiml-stage20-pre.json"]);
 }));
