@@ -1,8 +1,10 @@
+import {isApprovedStage20JournalPath} from "./daily-resume-stage20-journal-admission.mjs";
 // Source-bound policy for the first (not-yet-active) post-cycle checkpoint.
 // No command runs production or authorizes a skip. All unknown paths deny capture.
 const FAMILIES = Object.freeze([
   "data/canonical-fixtures/",
   "data/details/",
+  "data/history-recovery-journal/",
   "data/standings/",
   "data/team-geo/",
   "data/multi-odds/",
@@ -47,6 +49,7 @@ const forbidden = (p) => typeof p !== "string" || !p.startsWith("data/") ||
   p.split("/").some(s => !s || s === "." || s === "..") ||
   p.length > 511 || !EXT.test(p) || SECRET.test(p) ||
   (p.startsWith("data/details/") && !isApprovedStage20DetailsPath(p)) ||
+  (p.startsWith("data/history-recovery-journal/") && !isApprovedStage20JournalPath(p)) ||
   !FAMILIES.some(prefix => p.startsWith(prefix));
 export const STAGE20_POLICY_SCHEMA = "ai-matchlab.daily-stage20-capture-admission.v1";
 export const STAGE20_APPROVED_FAMILIES = FAMILIES;
