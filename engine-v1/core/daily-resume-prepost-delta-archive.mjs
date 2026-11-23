@@ -8,6 +8,7 @@ import {
   inventoryDataTree,verifyDataInventory,compareDataInventories
 } from "./daily-resume-complete-data-inventory.mjs";
 import {evaluateStage20CapturePaths} from "./daily-resume-stage20-admission.mjs";
+import {inspectStage20JournalRecord,STAGE20_JOURNAL_PREFIX} from "./daily-resume-stage20-journal-admission.mjs";
 export const PREPOST_DELTA_SCHEMA="ai-matchlab.daily-stage20-prepost-delta-archive.v1";
 const digest=buf=>crypto.createHash("sha256").update(buf).digest("hex");
 const SHA256=/^[a-f0-9]{64}$/;
@@ -90,6 +91,8 @@ export function verifyPrepostDeltaArchive(archiveRoot,before,after) {
     for(const e of doc.entries) {
       if(e.op!=="WRITE")continue;
       const bytes=fs.readFileSync(fileAt(path.join(archiveRoot,"files"),e.path));
+      if(e.path.startsWith(STAGE20_JOURNAL_PREFIX))
+        check(inspectStage20JournalRecord(e.path,bytes).ok,"stage20_journal_archive_content_invalid");
       total+=bytes.length;
       check(bytes.length===e.bytes && digest(bytes)===e.sha256 &&
         total<=512*1024*1024,"stage20_prepost_archive_bytes_mismatch");
@@ -123,6 +126,8 @@ export function capturePrepostDeltaToIsolatedArchive(root,archiveRoot,before,aft
         continue;
       }
       const bytes=fs.readFileSync(fileAt(root,row.path));
+      if(row.path.startsWith(STAGE20_JOURNAL_PREFIX))
+        check(inspectStage20JournalRecord(row.path,bytes).ok,"stage20_journal_source_content_invalid");
       check(bytes.length===row.bytes && digest(bytes)===row.sha256,
         "stage20_prepost_source_drift");
       const target=path.join(tmp,"files",row.path);

@@ -1,0 +1,84 @@
+name: P0 Stage20 typed journal full-content admission (isolated)
+on:
+  pull_request:
+    paths:
+      - "engine-v1/core/daily-resume-stage20-journal-admission.mjs"
+      - "engine-v1/core/daily-resume-stage20-journal-admission.test.mjs"
+      - "engine-v1/core/daily-resume-stage20-admission.mjs"
+      - "engine-v1/core/daily-resume-worktree-delta.mjs"
+      - "engine-v1/core/daily-resume-prepost-delta-archive.mjs"
+      - ".github/workflows/p0-stage20-journal-admission.yml"
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1/core
+            tools/audit-stage20-history-journal-candidates.mjs
+            tools/audit-daily954-stage20-history.mjs
+            .github/workflows/p0-stage20-journal-admission.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Strict source syntax and source/archive negative tests
+        run: |
+          node --check engine-v1/core/daily-resume-stage20-journal-admission.mjs
+          node --check engine-v1/core/daily-resume-stage20-journal-admission.test.mjs
+          node --check engine-v1/core/daily-resume-prepost-delta-archive.mjs
+          node --check engine-v1/core/daily-resume-worktree-delta.mjs
+          node --test --test-reporter=tap \
+            engine-v1/core/daily-resume-stage20-journal-admission.test.mjs \
+            engine-v1/core/daily-resume-worktree-delta.test.mjs \
+            engine-v1/core/daily-resume-prepost-delta-archive.test.mjs
+      - uses: actions/download-artifact@v4
+        with:
+          name: history-recovery-45137286904-1
+          run-id: 45137286904
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/stage20-journal-original
+      - name: Full original 9083 SHA-proof and ALL 996 typed journal contents audited
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import assert from "node:assert/strict";
+          import fs from "node:fs";
+          import path from "node:path";
+          import {auditHistorical954} from "./tools/audit-daily954-stage20-history.mjs";
+          import {auditHistoricalHistoryJournal} from "./tools/audit-stage20-history-journal-candidates.mjs";
+          import {inspectStage20JournalRecord} from "./engine-v1/core/daily-resume-stage20-journal-admission.mjs";
+          const root=process.env.RUNNER_TEMP+"/stage20-journal-original";
+          const inventory=auditHistorical954(root);
+          assert.equal(inventory.files,9083);
+          assert.equal(inventory.bytes,428113899);
+          assert.equal(inventory.admitted,8535);
+          assert.equal(inventory.denied,548);
+          const typed=auditHistoricalHistoryJournal(root);
+          assert.equal(typed.journalFiles,996);
+          assert.equal(typed.counts.eligible,996);
+          const manifest=JSON.parse(fs.readFileSync(path.join(root,"manifest.json"),"utf8"));
+          const rows=manifest.files.filter(r=>r.path.startsWith("data/history-recovery-journal/"));
+          assert.equal(rows.length,996);
+          for(const item of rows){
+            const result=inspectStage20JournalRecord(item.path,fs.readFileSync(path.join(root,item.path)));
+            assert.equal(result.ok,true,result.reason);
+          }
+          console.log("STAGE20_JOURNAL_EXACT_ADMISSION="+JSON.stringify({
+            originalFiles:inventory.files,originalBytes:inventory.bytes,
+            admitted:inventory.admitted,denied:inventory.denied,
+            journalFiles:rows.length,typedFacts:typed.kinds.facts,
+            typedHolds:typed.kinds.holds,typedLinks:typed.kinds.links,
+            journalContentVerified:true,resumeAuthorized:false,
+            publicationAuthorized:false,productionWrites:0
+          }));
+          NODE
+      - name: Guard no publication, capture activation or data changes
+        run: |
+          git diff --exit-code HEAD -- .github/workflows/daily-deploy-snapshot.yml data/
+          echo "STRICT_JOURNAL_ADMISSION_ONLY_NO_RESUME_NO_PUBLISH"
