@@ -71,3 +71,18 @@ test("symlink archive output forbidden", () => exercise(f => {
   fs.symlinkSync(path.join(f.data, "result"), file);
   assert.equal(verifyArchive(f.stage, f.binding, {}, f.store, a.checkpoint.evidenceSha256).ok, false);
 }));
+
+test("lost runner output is recoverable from verified archive only into staging", () => exercise(f => {
+  const a = archiveStage(f.stage, f.binding, {}, f.store);
+  fs.unlinkSync(path.join(f.data, "result"));
+  const staged = stageArchive(f.stage, f.binding, {}, f.store, a.checkpoint.evidenceSha256, f.root);
+  assert.equal(fs.readFileSync(path.join(staged.staging, "result"), "utf8"), "bravo");
+  assert.equal(fs.existsSync(path.join(f.data, "result")), false);
+}));
+test("interrupted archive is rejected and never staged", () => exercise(f => {
+  const a = archiveStage(f.stage, f.binding, {}, f.store);
+  fs.unlinkSync(path.join(a.folder, "manifest.json"));
+  assert.equal(verifyArchive(f.stage, f.binding, {}, f.store, a.checkpoint.evidenceSha256).ok, false);
+  assert.throws(() => stageArchive(f.stage, f.binding, {}, f.store, a.checkpoint.evidenceSha256, f.root),
+    /resume_archive_not_verified/);
+}));
