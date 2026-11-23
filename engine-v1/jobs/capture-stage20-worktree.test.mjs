@@ -117,3 +117,46 @@ test("ignored files outside data scope do not change Stage20 data admission", ()
   assert.equal(observed.ok, true);
   assert.equal(observed.ignoredDataFileCount, 0);
 }));
+
+test("canonical dated Details for previous and current days are admitted and byte-exact", () => fixture(f => {
+  for(const day of ["2026-11-22","2026-11-23"]) {
+    const dir=path.join(f.repo,"data","details",day);
+    fs.mkdirSync(dir,{recursive:true});
+    const compact=day.replaceAll("-","");
+    fs.writeFileSync(path.join(dir,"cid_eng1_arsenal_chelsea_"+compact+".json"),
+      JSON.stringify({matchId:"cid_eng1_arsenal_chelsea_"+compact})+"\n");
+  }
+  const inspected=inspectStage20Worktree(f.repo,"2026-11-23");
+  assert.equal(inspected.ok,true);
+  assert.equal(inspected.approved.length,5);
+  const archive=captureStage20Worktree(f.repo,"2026-11-23",f.archive);
+  assert.equal(archive.files,5);
+  const checked=inspectDailyWorktreeDelta(f.archive,{
+    dayKey:"2026-11-23",stageId:"daily-cycle",baseCommit:f.baseCommit,
+    allowedPrefixes:STAGE20_APPROVED_FAMILIES
+  });
+  assert.equal(checked.ok,true);
+  const restored=replayDailyWorktreeDeltaToIsolatedClone(f.repo,f.archive,{
+    dayKey:"2026-11-23",stageId:"daily-cycle",baseCommit:f.baseCommit,
+    allowedPrefixes:STAGE20_APPROVED_FAMILIES
+  },f.home);
+  assert.ok(fs.existsSync(path.join(restored.stagingClone,"data/details/2026-11-22/cid_eng1_arsenal_chelsea_20261122.json")));
+  assert.ok(fs.existsSync(path.join(restored.stagingClone,"data/details/2026-11-23/cid_eng1_arsenal_chelsea_20261123.json")));
+}));
+test("wrong canonical day and noncanonical Details cannot enter capture despite approved prefix",()=>fixture(f=>{
+  const dir=path.join(f.repo,"data/details/2026-11-23");
+  fs.mkdirSync(dir,{recursive:true});
+  fs.writeFileSync(path.join(dir,"cid_eng1_arsenal_chelsea_20261122.json"),"{}\n");
+  const check=inspectStage20Worktree(f.repo,"2026-11-23");
+  assert.equal(check.ok,false);
+  assert.equal(check.reason,"stage20_capture_unapproved_paths");
+  assert.throws(()=>captureStage20Worktree(f.repo,"2026-11-23",f.archive),/stage20_capture_denied/);
+  assert.equal(fs.existsSync(f.archive),false);
+}));
+test("invalid calendar date and secret-like Details filename remain denied",()=>{
+  for(const name of [
+    "data/details/2026-02-30/cid_eng1_a_b_20260230.json",
+    "data/details/2026-11-23/private-key.json",
+    "data/details/2026-11-23/cid_eng1_a_b_20261122.json"
+  ]) assert.equal(evaluateStage20CapturePaths({dayKey:"2026-11-23",paths:[name]}).ok,false);
+});

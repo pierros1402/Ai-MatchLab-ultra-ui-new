@@ -1,0 +1,81 @@
+name: P0 Stage20 narrowly approved canonical Details family (isolated)
+on:
+  pull_request:
+    paths:
+      - "engine-v1/core/daily-resume-stage20-admission.mjs"
+      - "engine-v1/core/daily-resume-worktree-delta.mjs"
+      - "engine-v1/core/daily-resume-worktree-delta.test.mjs"
+      - "engine-v1/jobs/capture-stage20-worktree.test.mjs"
+      - ".github/workflows/p0-stage20-canonical-details-admission.yml"
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1/core/daily-resume-stage20-admission.mjs
+            engine-v1/core/daily-resume-worktree-delta.mjs
+            engine-v1/core/daily-resume-worktree-delta.test.mjs
+            engine-v1/jobs/capture-stage20-worktree.mjs
+            engine-v1/jobs/capture-stage20-worktree.test.mjs
+            tools/audit-daily954-stage20-history.mjs
+            tools/audit-stage20-details-family-candidate.mjs
+            .github/workflows/p0-stage20-canonical-details-admission.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Validate exact source syntax
+        run: |
+          node --check engine-v1/core/daily-resume-stage20-admission.mjs
+          node --check engine-v1/core/daily-resume-worktree-delta.mjs
+          node --check engine-v1/core/daily-resume-worktree-delta.test.mjs
+          node --check engine-v1/jobs/capture-stage20-worktree.test.mjs
+      - name: Prove writer, inspector, byte replay and invalid-path negatives
+        run: |
+          node --test --test-reporter=tap \
+            engine-v1/jobs/capture-stage20-worktree.test.mjs \
+            engine-v1/core/daily-resume-worktree-delta.test.mjs
+      - uses: actions/download-artifact@v4
+        with:
+          name: history-recovery-45137286904-1
+          run-id: 45137286904
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/stage20-details-approval-input
+      - name: Independently verify all 9083 original artifact bytes and exact policy delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import assert from "node:assert/strict";
+          import {auditHistorical954} from "./tools/audit-daily954-stage20-history.mjs";
+          import {auditHistoricalDetailsCandidates} from "./tools/audit-stage20-details-family-candidate.mjs";
+          const dir=process.env.RUNNER_TEMP+"/stage20-details-approval-input";
+          const audit=auditHistorical954(dir);
+          assert.equal(audit.files,9083);
+          assert.equal(audit.bytes,428113899);
+          assert.equal(audit.admitted,7539);
+          assert.equal(audit.denied,1544);
+          assert.equal(audit.familyCounts["data/details"].admitted,349);
+          assert.equal(audit.familyCounts["data/details"].denied,0);
+          const d=auditHistoricalDetailsCandidates(dir);
+          assert.equal(d.eligible,349);
+          assert.equal(d.identityMismatch,0);
+          assert.equal(d.invalidPath,0);
+          assert.equal(d.policyChangeApproved,false);
+          console.log("STAGE20_CANONICAL_DETAILS_POLICY_EVIDENCE="+JSON.stringify({
+            sourceFiles:audit.files,admitted:audit.admitted,denied:audit.denied,
+            newlyAdmittedCanonicalDetails:d.eligible,
+            previousDayDetails:d.dateCounts["2026-11-22"],
+            currentDayDetails:d.dateCounts["2026-11-23"],
+            resumeAuthorized:false,publicationAuthorized:false
+          }));
+          NODE
+      - name: No production Daily activation or generated data changes
+        run: |
+          git diff --exit-code HEAD -- .github/workflows/daily-deploy-snapshot.yml data/
+          echo "NARROW_CANONICAL_DETAILS_ONLY_CAPTURE_OFF_NO_RESUME_NO_PUBLISH"
