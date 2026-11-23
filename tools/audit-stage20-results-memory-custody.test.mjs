@@ -17,7 +17,7 @@ test("results-memory source establishes append retention and downstream team FOR
 });
 test("source drift cannot silently approve rebuilding instead of baseline retention",()=>{
   const source=fs.readFileSync("engine-v1/storage/results-memory-db.js","utf8");
-  assert.throws(()=>inspectResultsMemoryWriter(source.replace("applyMatchLevelRetention","removed")),
+  assert.throws(()=>inspectResultsMemoryWriter(source.replace("export function recordMatchResult(","export function renamedResult(")),
     /results_memory_source_contract_mismatch/);
 });
 test("source-bound league result payload counts teams and accumulated rows",()=>{
@@ -52,6 +52,13 @@ test("traversal and duplicate results paths refused",()=>{
   for(const p of ["data/league-memory/results/../secrets.json",
     "data/league-memory/results\\bad.json"])
     assert.throws(()=>summarizeResultsMemoryRows([{path:p}],root),/results_memory_path_invalid/);
-  const same={path:"data/league-memory/results/foo.json"};
-  assert.throws(()=>summarizeResultsMemoryRows([same,same],root),/results_memory_path_invalid/);
+  const scratch=fs.mkdtempSync(path.join(os.tmpdir(),"aiml-results-dupe-"));
+  try{
+    const name="data/league-memory/results/foo.json";
+    const bytes='{"teams":{}}';
+    fs.mkdirSync(path.dirname(path.join(scratch,name)),{recursive:true});
+    fs.writeFileSync(path.join(scratch,name),bytes);
+    const same={path:name,bytes:Buffer.byteLength(bytes),sha256:sha(bytes)};
+    assert.throws(()=>summarizeResultsMemoryRows([same,same],scratch),/results_memory_path_invalid/);
+  }finally{fs.rmSync(scratch,{recursive:true,force:true});}
 });
