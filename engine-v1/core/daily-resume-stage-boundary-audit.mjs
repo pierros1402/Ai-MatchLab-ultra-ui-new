@@ -23,6 +23,46 @@ const CYCLE_MARKERS = [
   "[daily-cycle] final-model-priors-foundation:done",
   "[daily-cycle] done"
 ];
+
+// Source-bound execution boundaries for the real monolithic cycle. A pair
+// proves source order only; it never authorizes reuse, stage completion or skips.
+const REAL_CYCLE_PAIRS = Object.freeze([
+  ["provider-competition-discovery", "external"],
+  ["canonical-fixtures-sync", "mutable"],
+  ["discover-active-leagues", "derived"],
+  ["standings-build", "external"],
+  ["details-history-index-foundation", "derived"],
+  ["details-h2h-foundation", "derived"],
+  ["details-build", "derived"],
+  ["fixture-acquisition-v2-readiness", "gate"],
+  ["value-build", "derived"],
+  ["four-plan-settlement-bundle", "mutable"],
+  ["authoritative-terminal-promotion", "mutable"],
+  ["final-details-sync", "mutable"],
+  ["deploy-snapshot-export", "derived"],
+  ["h2h-foundation-rebuild", "derived"],
+  ["final-standings-foundation", "derived"],
+  ["final-model-priors-foundation", "derived"]
+]);
+export function auditRealCyclePairs(cycleText) {
+  invariant(typeof cycleText === "string", "resume_cycle_source_missing");
+  let previous = -1;
+  return REAL_CYCLE_PAIRS.map(([id, reuseClass]) => {
+    const startMarker = "[daily-cycle] " + id + ":start";
+    const doneMarker = "[daily-cycle] " + id + ":done";
+    const start = cycleText.indexOf(startMarker);
+    const done = cycleText.indexOf(doneMarker);
+    invariant(start >= 0 && done >= 0, "resume_real_cycle_pair_missing:" + id);
+    invariant(start > previous && done > start, "resume_real_cycle_pair_order_changed:" + id);
+    invariant(cycleText.indexOf(startMarker, start + 1) === -1 &&
+      cycleText.indexOf(doneMarker, done + 1) === -1,
+      "resume_real_cycle_pair_ambiguous:" + id);
+    previous = done;
+    return { id, reuseClass, startOffset: start, doneOffset: done,
+      resumeAllowed: false, persistedManifest: false };
+  });
+}
+
 function invariant(ok, reason) { if (!ok) throw new Error(reason); }
 function sha256(s) { return crypto.createHash("sha256").update(s).digest("hex"); }
 function stepLocations(workflowText) {
@@ -57,6 +97,7 @@ export function auditDailyResumeStageBoundaries(workflowText, cycleText) {
     invariant(at > previous, "resume_cycle_marker_order_changed:" + marker);
     previous = at;
   }
+  const realCyclePairs = auditRealCyclePairs(cycleText);
   // The expensive cycle still contains stateful provider, value, previous-day
   // settlement and history writes. No inferred cut point is safe for resume.
   return {
@@ -65,6 +106,7 @@ export function auditDailyResumeStageBoundaries(workflowText, cycleText) {
     dailyCycleSha256: sha256(cycleText),
     sourceBound: true,
     stages,
+    realCyclePairs,
     monolithicCycleSplitApproved: false,
     crossRunResumeAuthorized: false,
     publicationAuthorized: false
