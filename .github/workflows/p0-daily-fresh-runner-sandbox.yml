@@ -1,0 +1,35 @@
+name: P0 sandbox fresh-runner archive restoration tests
+on:
+  pull_request:
+    paths:
+      - "engine-v1/core/daily-resume-fresh-runner-sandbox.mjs"
+      - "engine-v1/core/daily-resume-fresh-runner-sandbox.test.mjs"
+      - ".github/workflows/p0-daily-fresh-runner-sandbox.yml"
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1/core/daily-resume-fresh-runner-sandbox.mjs
+            engine-v1/core/daily-resume-fresh-runner-sandbox.test.mjs
+            engine-v1/core/daily-resume-contract.mjs
+            engine-v1/core/daily-resume-artifact-store.mjs
+            .github/workflows/p0-daily-fresh-runner-sandbox.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Verify cross-run restoration and negative cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/core/daily-resume-fresh-runner-sandbox.mjs
+          node --check engine-v1/core/daily-resume-fresh-runner-sandbox.test.mjs
+          node --test --test-reporter=tap engine-v1/core/daily-resume-fresh-runner-sandbox.test.mjs
+          node --test --test-reporter=tap engine-v1/core/daily-resume-stage-executor-sandbox.test.mjs || test ! -f engine-v1/core/daily-resume-stage-executor-sandbox.test.mjs
+          git diff --exit-code HEAD -- data/ .github/workflows/daily-deploy-snapshot.yml
+          echo "FRESH_RUNNER_SANDBOX_ONLY_NO_PRODUCTION_AUTHORIZATION"
