@@ -40,5 +40,5 @@ test("missing successful capture guard on upload is rejected", () => {
 });
 test("shadow lane must not bypass publication", () => {
   assert.throws(() => assertBounded(yml.replace("retention-days: 2", "retention-days: 2\n          git push origin main")),
-    /doesNotMatch/);
+    /not match/);
 });
