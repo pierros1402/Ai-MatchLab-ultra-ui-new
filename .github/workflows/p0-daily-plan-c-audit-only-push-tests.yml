@@ -1,0 +1,38 @@
+name: P0 Daily Plan C audit-only push race tests
+on:
+  pull_request:
+    paths:
+      - "tools/git-push-rebase-retry.sh"
+      - "tools/plan-c-audit-only-push-admission.mjs"
+      - "tools/plan-c-audit-only-push-admission.test.mjs"
+      - ".github/workflows/daily-deploy-snapshot.yml"
+      - ".github/workflows/p0-daily-plan-c-audit-only-push-tests.yml"
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Strict boundary and regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n tools/git-push-rebase-retry.sh
+          node --check tools/plan-c-audit-only-push-admission.mjs
+          node --check tools/plan-c-audit-only-push-admission.test.mjs
+          node --test --test-reporter=tap tools/plan-c-audit-only-push-admission.test.mjs
+          printf '%s\0' tools/audit-stage20-test.mjs | node tools/plan-c-audit-only-push-admission.mjs
+          if printf '%s\0' data/plan-c-shadow/settlement/latest.json | node tools/plan-c-audit-only-push-admission.mjs; then
+            echo "ERROR: Plan C data changes must deny reconciliation"
+            exit 1
+          fi
+      - name: No production mutation
+        shell: bash
+        run: |
+          git diff --exit-code HEAD -- data/ engine-v1/
+          echo "SAFE_AUDIT_ONLY_PUSH_RETRY_TESTS_COMPLETE"
