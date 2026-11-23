@@ -119,3 +119,29 @@ test("requires explicit sandbox opt-in and denies escaped workspaces",async()=>{
     await assert.rejects(f.run(next,{},next.execute,{storeRoot:path.dirname(f.tmp)}),/sandbox_path_outside_boundary/);
   }finally{f.clean();}
 });
+
+test("late restore failure rolls back previously materialized output files", async () => {
+  const f=fixture();
+  try {
+    const stages=[{id:"stage-01",dependsOn:[],inputs:["data/seed.txt"],
+      outputs:["data/a.txt","data/not-dir/part.txt"],reuseClass:"frozen"}];
+    const first=f.makeRunner("first");
+    await f.run(first,{},async () => {
+      fs.writeFileSync(path.join(first.root,"data/a.txt"),"first-output");
+      fs.mkdirSync(path.join(first.root,"data/not-dir"));
+      fs.writeFileSync(path.join(first.root,"data/not-dir/part.txt"),"second-output");
+      return {ok:true};
+    },{stages});
+    const next=f.makeRunner("fresh");
+    const blocker=path.join(next.root,"data/not-dir");
+    fs.writeFileSync(blocker,"block-parent-directory");
+    let executed=0;
+    await assert.rejects(f.run(next,f.load(first.binding),async () => {
+      executed++;return {ok:true};
+    },{stages}),/ENOTDIR|EEXIST/);
+    assert.equal(executed,0,"a validated archive was selected for restoration");
+    assert.equal(fs.existsSync(path.join(next.root,"data/a.txt")),false,
+      "no partial restored output may survive");
+    assert.equal(fs.readFileSync(blocker,"utf8"),"block-parent-directory");
+  } finally {f.clean();}
+});
