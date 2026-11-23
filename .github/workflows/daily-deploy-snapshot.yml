@@ -418,6 +418,21 @@ jobs:
           set -euo pipefail
           node engine-v1/jobs/observe-stage20-data-inventory.mjs failed-post "$DAY_KEY"
 
+      # Retain ONLY a minimal, fixed-field aggregate following a real failed
+      # Daily cycle. The full data pre/post manifests and payloads are never
+      # uploaded by this diagnostic lane, and cannot authorize a restart.
+      - name: Preserve incomplete Stage20 failure summary only (default OFF)
+        id: shadow_stage20_failure_summary
+        if: ${{ failure() && env.SKIP_BUILD != 'true' && vars.AIML_DAILY_STAGE20_PREPOST_INVENTORY_ENABLED == '1' && steps.daily_cycle.outcome == 'failure' && steps.shadow_stage20_failed_cycle.outcome == 'success' }}
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: aiml-stage20-failure-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/aiml-stage20-failure-summary.json
+          if-no-files-found: error
+          retention-days: 1
+          include-hidden-files: false
+
       - name: Shadow read-only Stage20 post-cycle data inventory (default OFF)
         id: shadow_stage20_post
         if: env.SKIP_BUILD != 'true' && vars.AIML_DAILY_STAGE20_PREPOST_INVENTORY_ENABLED == '1' && steps.shadow_stage20_pre.outcome == 'success'
