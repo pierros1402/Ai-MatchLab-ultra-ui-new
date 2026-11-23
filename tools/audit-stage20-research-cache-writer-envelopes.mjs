@@ -72,7 +72,7 @@ export function auditResearchCacheEnvelopes(root) {
     byVersion:Object.fromEntries(Object.entries(byVersion).sort()),
     earliestObservedFetchedAtTs:timeRange.earliestTs,
     latestObservedFetchedAtTs:timeRange.latestTs,
-    writerSourceByteParityProvenByWorkflow:true,
+    writerSourceByteParityProvenByWorkflow:false,
     providerResponseReproducibilityProven:false,
     pointInTimeCacheUsabilityProven:false,
     archiveRetentionAuthorized:false,omissionAuthorized:false,
