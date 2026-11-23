@@ -176,6 +176,7 @@ test("terminal integrity union rejects corrupted historical FT and VOID without 
     ["FT", r => { r.truth.actualOver25 = 0; }],
     ["FT", r => { r.brier.adjusted = null; }],
     ["FT", r => { r.brier.baseline = "0.2"; }],
+    ["FT", r => { r.pendingReason = "CANONICAL_STATUS_FIRST_HALF"; }],
     ["VOID", r => { delete r.truth.scoreHome; }],
     ["VOID", r => { r.pendingReason = "invalid"; }],
     ["VOID", r => { r.brier = { adjusted: 0, baseline: 0 }; }],
@@ -268,6 +269,17 @@ test("pinned recovery restores only the exact mislabeled record using authoritat
   assert.equal(repaired.hitRate.applicableToHitRate, false);
   assert.equal(repaired.hitRate.isHit, null);
   assert.equal(original.truth, null);
+
+  // Once recovered, the same pinned record must bypass exceptional repair,
+  // and still undergo ordinary terminal-integrity checks in the caller.
+  assert.equal(recoverLegacyPendingTerminal(repaired, prediction, truth, true), null);
+  const finalizedWithWrongPendingReason = {...repaired, pendingReason: "CANONICAL_STATUS_FIRST_HALF"};
+  assert.equal(recoverLegacyPendingTerminal(finalizedWithWrongPendingReason, prediction, truth, true), null);
+
+  // The legacy shape without its pinned pending reason stays unauthorized.
+  assert.throws(() => recoverLegacyPendingTerminal(
+    {...original, pendingReason: null}, prediction, truth, true),
+    /legacy_pending_terminal_recovery_not_authorized/);
   assert.throws(() => recoverLegacyPendingTerminal(original, prediction, {...truth, status: "FIRST_HALF"}, true),
     /legacy_pending_terminal_recovery_not_authorized/);
   assert.throws(() => recoverLegacyPendingTerminal({...original, pendingReason: "UNKNOWN"}, prediction, truth, true),
