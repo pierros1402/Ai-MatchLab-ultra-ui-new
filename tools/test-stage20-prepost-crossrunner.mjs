@@ -53,9 +53,6 @@ export function consumeSyntheticPrepostTransport(root) {
   try {
     const independentlyComputedBefore=inventoryDataTree(independent,DAY);
     assert.deepEqual(independentlyComputedBefore,before,"different_runner_before_snapshot_mismatch");
-    mutation(independent);
-    const independentlyComputedAfter=inventoryDataTree(independent,DAY);
-    assert.deepEqual(independentlyComputedAfter,after,"different_runner_after_snapshot_mismatch");
     // Distinct workflow-run consumer reconstructs the COMPLETE final data
     // filesystem from the independently pinned untouched baseline + archived
     // ignored-inclusive delta. Never writes producer, baseline or public data.
@@ -75,6 +72,9 @@ export function consumeSyntheticPrepostTransport(root) {
     } finally {
       fs.rmSync(restored.stagingClone,{recursive:true,force:true});
     }
+    mutation(independent);
+    const independentlyComputedAfter=inventoryDataTree(independent,DAY);
+    assert.deepEqual(independentlyComputedAfter,after,"different_runner_after_snapshot_mismatch");
     const delta=compareDataInventories(before,after);
     assert.deepEqual([delta.added,delta.modified,delta.deleted],[1,1,1]);
     const checked=verifyPrepostDeltaArchive(path.join(root,"archive"),before,after);
