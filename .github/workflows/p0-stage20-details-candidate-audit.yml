@@ -1,0 +1,61 @@
+name: P0 Stage20 real canonical Details family candidate audit
+on:
+  pull_request:
+    paths:
+      - "tools/audit-stage20-details-family-candidate.mjs"
+      - "tools/audit-stage20-details-family-candidate.test.mjs"
+      - ".github/workflows/p0-stage20-details-candidate-audit.yml"
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            tools/audit-stage20-details-family-candidate.mjs
+            tools/audit-stage20-details-family-candidate.test.mjs
+            tools/audit-daily954-stage20-history.mjs
+            engine-v1/core/daily-resume-stage20-admission.mjs
+            .github/workflows/p0-stage20-details-candidate-audit.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Syntax and candidate scope negatives
+        run: |
+          node --check tools/audit-stage20-details-family-candidate.mjs
+          node --check tools/audit-stage20-details-family-candidate.test.mjs
+          node --test --test-reporter=tap tools/audit-stage20-details-family-candidate.test.mjs
+      - uses: actions/download-artifact@v4
+        with:
+          name: history-recovery-45137286904-1
+          run-id: 45137286904
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/stage20-details-candidate
+      - name: Independently inspect 349 actual Details files after 9083-file SHA proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/audit-stage20-details-family-candidate.mjs \
+            "$RUNNER_TEMP/stage20-details-candidate" \
+            > "$RUNNER_TEMP/details-candidate-report.jsonl"
+          cat "$RUNNER_TEMP/details-candidate-report.jsonl"
+          node --input-type=module - "$RUNNER_TEMP/details-candidate-report.jsonl" <<'NODE'
+          import fs from "node:fs";
+          import assert from "node:assert/strict";
+          const text=fs.readFileSync(process.argv[2],"utf8").trim();
+          assert.ok(text.startsWith("STAGE20_DETAILS_FAMILY_CANDIDATE="));
+          const r=JSON.parse(text.slice(text.indexOf("=")+1));
+          assert.equal(r.sourceFiles,9083);
+          assert.equal(r.detailsFiles,349);
+          assert.equal(r.eligible+r.invalidPath+r.identityMismatch+r.jsonParseFailed,349);
+          assert.equal(r.policyChangeApproved,false);
+          assert.equal(r.productionWrites,0);
+          NODE
+      - name: No promotion or publication
+        run: |
+          git diff --exit-code HEAD -- data/ .github/workflows/daily-deploy-snapshot.yml
+          echo "DETAILS_CANDIDATE_CLASSIFICATION_ONLY_NO_CAPTURE_NO_PUBLISH"
