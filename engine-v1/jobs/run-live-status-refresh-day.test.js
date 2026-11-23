@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   canRemoveEspnWrongDayCanonicalRow,
   isConfirmedDelayedFinal,
+  mergeConfirmedDelayedFinal,
   normalizeSourceRows,
   parseLiveStatusRefreshCliArgs,
   resolveApprovedFlashscoreFinalScoreRevision,
@@ -614,6 +615,13 @@ test("delayed scoreboard finals require matching event, teams, day, league and s
     id: event.id, competitions: event.competitions
   }}, "nor.1", "2026-07-23");
   const row = { ...occurrence.incoming, status: "LIVE", rawStatus: "STATUS_DELAYED" };
+  row.statusType = null;
+  const merged = mergeConfirmedDelayedFinal(row, occurrence);
+  assert.equal(merged.status, "FT");
+  assert.equal(merged.rawStatus, occurrence.incoming.rawStatus);
+  assert.equal(merged.scoreHome, 4);
+  const postponed = { ...row, status: "POSTPONED" };
+  assert.deepEqual(mergeConfirmedDelayedFinal(postponed, occurrence), postponed);
   assert.equal(isConfirmedDelayedFinal(row, occurrence), true);
   for (const changes of [
     { sourceMatchId: "different" }, { homeTeam: row.awayTeam },
