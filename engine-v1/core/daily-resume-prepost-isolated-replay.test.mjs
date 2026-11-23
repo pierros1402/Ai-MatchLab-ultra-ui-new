@@ -57,7 +57,7 @@ test("verified full baseline and delta recover exact final tree including ignore
 }));
 test("altered ignored baseline byte fails before delta replay",()=>fixture(f=>{
   fs.writeFileSync(path.join(f.baseline,"data/value/ignored.json"),"{\"wrong\":true}\n");
-  assert.throws(()=>replay(f),/stage20_replay_baseline_sha_mismatch/);
+  assert.throws(()=>replay(f),/stage20_replay_source_baseline_inventory_mismatch/);
 }));
 test("missing old baseline path blocks complete parity",()=>fixture(f=>{
   fs.unlinkSync(path.join(f.baseline,"data/value/old.json"));
@@ -71,7 +71,7 @@ test("archive payload tampering denies replay before source changes",()=>fixture
 test("unexpected pre-stage file is not silently carried into final clone",()=>fixture(f=>{
   fs.writeFileSync(path.join(f.baseline,"data/value/extra.json"),"{}\n");
   // All baseline data, including unexpected files, are copied; hash parity rejects.
-  assert.throws(()=>replay(f),/stage20_replay_baseline_sha_mismatch/);
+  assert.throws(()=>replay(f),/stage20_replay_source_baseline_inventory_mismatch/);
 }));
 test("different source commit refuses replay",()=>fixture(f=>{
   fs.writeFileSync(path.join(f.baseline,"README.md"),"changed\n");
