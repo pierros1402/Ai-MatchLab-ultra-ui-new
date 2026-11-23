@@ -68,3 +68,11 @@ test("missing relative dependency remains counted and unapproved",()=>fixture(x=
 test("unknown commit and unresolvable source denied",()=>fixture(x=>{
   assert.throws(()=>auditStage20SourceClosure(x.root,"0".repeat(40),x.producer));
 }));
+
+test("ordinary prose and logging strings containing from are not imported modules",()=>{
+  const src='console.log("0 picks generated from analysis");\n'+
+    'const text="no data from source";\n'+
+    'import x from "node:fs/promises";\n';
+  const scan=scanStaticSourceImports(src);
+  assert.deepEqual(scan.specifiers,["node:fs/promises"]);
+});
