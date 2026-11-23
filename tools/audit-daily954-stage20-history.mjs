@@ -47,8 +47,8 @@ function physicalInventory(root) {
 }
 function family(name) { return name.split("/").slice(0,2).join("/"); }
 function denyReason(name) {
-  if (/(^|[._/-])(secret|credential|password|token|private[-_]?key|\\.env)([._/-]|$)/i.test(name)) return "secret_like_path";
-  if (!/\\.(json|jsonl|ndjson|csv)$/i.test(name)) return "unsupported_extension";
+  if (/(^|[._/-])(secret|credential|password|token|private[-_]?key|\.env)([._/-]|$)/i.test(name)) return "secret_like_path";
+  if (!/\.(json|jsonl|ndjson|csv)$/i.test(name)) return "unsupported_extension";
   if (!STAGE20_APPROVED_FAMILIES.some(prefix=>name.startsWith(prefix))) return "unapproved_family";
   return "unknown";
 }
@@ -82,7 +82,7 @@ export function auditHistorical954(root, pin = HISTORICAL_954) {
     record[allow?"admitted":"denied"]++;
     record.bytes+=buffer.length;
     reasons[reason]=(reasons[reason]||0)+1;
-    const dateKeys=[...name.matchAll(/20\\d{2}-\\d{2}-\\d{2}/g)].map(m=>m[0]);
+    const dateKeys=[...name.matchAll(/20\d{2}-\d{2}-\d{2}/g)].map(m=>m[0]);
     if(dateKeys.length && !dateKeys.includes(pin.dayKey)) dates["other_day_path"]=(dates["other_day_path"]||0)+1;
     if(!dateKeys.length) dates["undated_path"]=(dates["undated_path"]||0)+1;
     if(allow) approved++; else denied++;
