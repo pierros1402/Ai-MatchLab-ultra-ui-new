@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   canRemoveEspnWrongDayCanonicalRow,
+  isConfirmedDelayedFinal,
   normalizeSourceRows,
   parseLiveStatusRefreshCliArgs,
   resolveApprovedFlashscoreFinalScoreRevision,
@@ -605,4 +606,20 @@ test("live status CLI keeps legacy status-refresh behavior by default", () => {
     appendNewFixtures: false,
     includeAllOpenStates: false
   });
+});
+
+test("delayed scoreboard finals require matching event, teams, day, league and scores", () => {
+  const event = espnEvent();
+  const occurrence = resolveEspnExactEventOccurrence({header: {
+    id: event.id, competitions: event.competitions
+  }}, "nor.1", "2026-07-23");
+  const row = { ...occurrence.incoming, status: "LIVE", rawStatus: "STATUS_DELAYED" };
+  assert.equal(isConfirmedDelayedFinal(row, occurrence), true);
+  for (const changes of [
+    { sourceMatchId: "different" }, { homeTeam: row.awayTeam },
+    { dayKey: "2026-07-24" }, { leagueSlug: "nor.2" }
+  ]) assert.equal(isConfirmedDelayedFinal({ ...row, ...changes }, occurrence), false);
+  for (const changes of [{ scoreHome: null }, { scoreAway: -1 }, { status: "LIVE", rawStatus: "STATUS_DELAYED", statusType: "STATUS_DELAYED" }]) {
+    assert.equal(isConfirmedDelayedFinal(row, { ...occurrence, incoming: { ...occurrence.incoming, ...changes } }), false);
+  }
 });
