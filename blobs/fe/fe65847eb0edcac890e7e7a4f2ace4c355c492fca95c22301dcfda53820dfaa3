@@ -1,0 +1,206 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "mex.1",
+  "homeTeam": "Club Leon",
+  "awayTeam": "Cruz Azul",
+  "homeWinScore": 0.299,
+  "drawScore": 0.163,
+  "awayWinScore": 0.538,
+  "over15Score": 0.648,
+  "over25Score": 0.548,
+  "over35Score": 0.503,
+  "bttsScore": 0.556,
+  "confidence": 0.835,
+  "signals": [
+    "away_edge",
+    "away_form_decay",
+    "form_influence_reduced",
+    "matchup_goals_history",
+    "priors_applied",
+    "close_strength_gap",
+    "home_rest_3"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.25,
+      "awayOverallFormWeight": 0.12,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.076,
+    "expectedAwayGoals": 1.69,
+    "expectedTotalGoals": 2.766,
+    "homeStrength": 0.286,
+    "awayStrength": 0.294,
+    "homeEdge": 0.02,
+    "awayPenalty": 0.103,
+    "recency": {
+      "homeOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 5,
+        "daysSinceLastMatch": 3,
+        "spanDays": 31,
+        "maxInternalGap": 12,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.825
+      },
+      "awayOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 45,
+        "daysSinceLastMatch": 17,
+        "spanDays": 16,
+        "maxInternalGap": 7,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.295,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.571
+      },
+      "homeSide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 5,
+        "daysSinceLastMatch": 16,
+        "spanDays": 15,
+        "maxInternalGap": 15,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.33,
+        "continuityScore": 0.3,
+        "formContinuityWeight": 0.34
+      },
+      "awaySide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 45,
+        "daysSinceLastMatch": 17,
+        "spanDays": 16,
+        "maxInternalGap": 13,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.295,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.458
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 5,
+      "awayPriorSample": 45,
+      "leaguePriorSample": 400,
+      "matchupPriorSample": 2
+    },
+    "resolution": {
+      "homeInput": "Club Leon",
+      "awayInput": "Cruz Azul",
+      "homeResolvedKey": "León",
+      "awayResolvedKey": "Cruz Azul",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Cruz Azul::León",
+      "matchupResolveScore": 0.93,
+      "homePriorKey": "mex.1::León",
+      "awayPriorKey": "mex.1::Cruz Azul",
+      "matchupPriorKey": "mex.1|Club Leon|Cruz Azul"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "León",
+      "awayTeamKey": "Cruz Azul",
+      "leagueKey": "mex.1",
+      "matchupKey": "Cruz Azul::León"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": false,
+    "contextDelta": 0,
+    "contextReasons": [],
+    "aiContext": {
+      "available": true,
+      "importance": "unknown",
+      "stakes": [],
+      "pressure": []
+    }
+  },
+  "contextAdjusted": false,
+  "contextReasons": [],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0.05,
+      "awayPenalty": 0,
+      "reasons": [
+        "home_rest_3"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "mex.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 3,
+    "awayRestDays": 17,
+    "homeMatchesLast7": 1,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 1,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
