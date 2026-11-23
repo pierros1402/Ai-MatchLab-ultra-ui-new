@@ -1,0 +1,61 @@
+name: P0 Daily worktree delta transfer between runners (isolated)
+
+on:
+  pull_request:
+    paths:
+      - "tools/test-daily-resume-delta-cross-run.mjs"
+      - ".github/workflows/daily-resume-delta-cross-run-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  produce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1/core
+            tools
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Validate replay harness
+        run: node --check tools/test-daily-resume-delta-cross-run.mjs
+      - name: Capture actual Git changes in first isolated runner
+        env:
+          PACKAGE_ROOT: ${{ runner.temp }}/aiml-resume-delta-package
+        run: node tools/test-daily-resume-delta-cross-run.mjs produce "$PACKAGE_ROOT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aiml-delta-cross-run-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/aiml-resume-delta-package/
+          if-no-files-found: error
+          retention-days: 1
+
+  consume:
+    needs: produce
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1/core
+            tools
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: actions/download-artifact@v4
+        with:
+          name: aiml-delta-cross-run-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/aiml-resume-delta-downloaded
+      - name: Reconstruct exact Git delta in new isolated clone
+        env:
+          PACKAGE_ROOT: ${{ runner.temp }}/aiml-resume-delta-downloaded
+        run: node tools/test-daily-resume-delta-cross-run.mjs consume "$PACKAGE_ROOT"
+      - name: Check no production writes
+        run: git diff --exit-code HEAD -- data/ .github/workflows/daily-deploy-snapshot.yml
