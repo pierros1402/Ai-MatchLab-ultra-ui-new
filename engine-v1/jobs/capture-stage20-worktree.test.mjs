@@ -92,3 +92,28 @@ test("archive cannot be overwritten by repeat capture", () => fixture(f => {
   captureStage20Worktree(f.repo,"2026-11-23",f.archive);
   assert.throws(() => captureStage20Worktree(f.repo,"2026-11-23",f.archive), /stage20_capture_archive_exists/);
 }));
+
+test("ignored Stage20 data output denies capture rather than creating incomplete checkpoint", () => fixture(f => {
+  fs.writeFileSync(path.join(f.repo, ".gitignore"), "data/value/ignored.json\n");
+  fs.writeFileSync(path.join(f.repo, "data", "value", "ignored.json"), "{\"critical\":true}\n");
+  const observed = inspectStage20Worktree(f.repo, "2026-11-23");
+  assert.equal(observed.ok, false);
+  assert.equal(observed.reason, "stage20_ignored_outputs_unaccounted");
+  assert.equal(observed.ignoredDataFileCount, 1);
+  assert.equal(observed.resumeAuthorized, false);
+  assert.throws(
+    () => captureStage20Worktree(f.repo, "2026-11-23", f.archive),
+    /stage20_capture_denied:stage20_ignored_outputs_unaccounted/
+  );
+  assert.equal(fs.existsSync(f.archive), false);
+}));
+test("ignored files outside data scope do not change Stage20 data admission", () => fixture(f => {
+  fs.writeFileSync(path.join(f.repo, ".gitignore"), "scratch.log\n");
+  fs.writeFileSync(path.join(f.repo, "scratch.log"), "log\n");
+  // Remove the untracked .gitignore itself from the in-scope change inventory.
+  cmd(f.repo, "add", ".gitignore");
+  cmd(f.repo, "commit", "-qm", "add ignore policy");
+  const observed = inspectStage20Worktree(f.repo, "2026-11-23");
+  assert.equal(observed.ok, true);
+  assert.equal(observed.ignoredDataFileCount, 0);
+}));
