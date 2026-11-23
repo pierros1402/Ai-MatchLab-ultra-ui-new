@@ -5,6 +5,7 @@ on:
     paths:
       - "engine-v1/jobs/settle-plan-c-shadow.js"
       - "engine-v1/jobs/settle-plan-c-shadow.test.js"
+      - "engine-v1/jobs/fixtures/plan-c-legacy-settlement-20261119.json"
       - "tools/git-push-rebase-retry.sh"
       - ".github/workflows/daily-deploy-snapshot.yml"
       - ".github/workflows/plan-c-shadow-daily.yml"
@@ -49,7 +50,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ORIGINAL="data/plan-c-shadow/settlement/latest.json"
+          ORIGINAL="engine-v1/jobs/fixtures/plan-c-legacy-settlement-20261119.json"
           PREDICTIONS="data/plan-c-shadow/frozen/i2b-20260825"
           TEST_ROOT="$RUNNER_TEMP/plan-c-p0-replay"
           mkdir -p "$TEST_ROOT"
@@ -57,7 +58,7 @@ jobs:
           node --input-type=module <<'NODE'
           import fs from "node:fs";
           import crypto from "node:crypto";
-          const file="data/plan-c-shadow/settlement/latest.json";
+          const file="engine-v1/jobs/fixtures/plan-c-legacy-settlement-20261119.json";
           const bytes=fs.readFileSync(file);
           const gitBlob=crypto.createHash("sha1").update("blob "+bytes.length+"\0").update(bytes).digest("hex");
           if(gitBlob!=="93b90e013fcd1b3c8bef36aaa51a0087d277e0ed")
@@ -79,7 +80,7 @@ jobs:
           import fs from "node:fs";
           import crypto from "node:crypto";
           const root=process.env.TEST_ROOT;
-          const before=JSON.parse(fs.readFileSync("data/plan-c-shadow/settlement/latest.json","utf8"));
+          const before=JSON.parse(fs.readFileSync("engine-v1/jobs/fixtures/plan-c-legacy-settlement-20261119.json","utf8"));
           const after=JSON.parse(fs.readFileSync(root+"/latest.json","utf8"));
           const audit=JSON.parse(fs.readFileSync(root+"/audit.json","utf8"));
           const id="cid_bra1_cruzeiro_palmeiras_20261119";
