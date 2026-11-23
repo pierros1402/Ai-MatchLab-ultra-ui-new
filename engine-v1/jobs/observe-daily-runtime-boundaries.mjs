@@ -96,7 +96,7 @@ export async function runObservedDaily({
     processText(decoder.end());
     if (tail) append(tail);
     if (observerError) throw observerError;
-    return outcome.signal ? 128 + (process.binding ? 15 : 15) : outcome.code ?? 1;
+    return outcome.signal ? 128 + (outcome.signal === "SIGINT" ? 2 : 15) : outcome.code ?? 1;
   } finally { fs.closeSync(fd); }
 }
 // CLI: no changes to the underlying Daily semantics, no skip or restoration.
