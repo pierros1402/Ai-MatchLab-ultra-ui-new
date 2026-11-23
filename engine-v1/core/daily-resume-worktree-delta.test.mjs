@@ -116,3 +116,23 @@ test("symlink archive injection rejected", () => use(f => {
   fs.symlinkSync(path.join(f.repo, "baseline", "keep.txt"), p);
   assert.equal(inspectDailyWorktreeDelta(f.archive, f.options).ok, false);
 }));
+
+test("delta writer accepts explicitly approved canonical Details path",()=>use(f=>{
+  const dir=path.join(f.repo,"data/details/2026-11-23");
+  fs.mkdirSync(dir,{recursive:true});
+  const name="cid_eng1_arsenal_chelsea_20261123.json";
+  fs.writeFileSync(path.join(dir,name),"{\"matchId\":\"cid_eng1_arsenal_chelsea_20261123\"}\n");
+  const options={...f.options,allowedPrefixes:["data/details/"]};
+  const result=captureDailyWorktreeDelta(f.repo,f.archive,options);
+  assert.equal(result.writes,1);
+  assert.equal(inspectDailyWorktreeDelta(f.archive,options).ok,true);
+},false));
+test("delta writer rejects malicious Details path even when prefix itself is allowlisted",()=>use(f=>{
+  const dir=path.join(f.repo,"data/details/2026-11-23");
+  fs.mkdirSync(dir,{recursive:true});
+  fs.writeFileSync(path.join(dir,"private-key.json"),"{}");
+  assert.throws(()=>captureDailyWorktreeDelta(f.repo,f.archive,{
+    ...f.options,allowedPrefixes:["data/details/"]
+  }),/resume_delta_unapproved_details_path/);
+  assert.equal(fs.existsSync(f.archive),false);
+},false));
