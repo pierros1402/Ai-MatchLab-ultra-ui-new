@@ -1,0 +1,36 @@
+name: P0 Daily cycle source boundary audit
+on:
+  pull_request:
+    paths:
+      - "engine-v1/jobs/run-daily-cycle.js"
+      - "engine-v1/jobs/audit-daily-cycle-boundaries.mjs"
+      - "engine-v1/jobs/audit-daily-cycle-boundaries.test.mjs"
+      - ".github/workflows/p0-daily-cycle-boundary-audit.yml"
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1/jobs/run-daily-cycle.js
+            engine-v1/jobs/audit-daily-cycle-boundaries.mjs
+            engine-v1/jobs/audit-daily-cycle-boundaries.test.mjs
+            .github/workflows/p0-daily-cycle-boundary-audit.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Syntax and source-bound boundary regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/jobs/audit-daily-cycle-boundaries.mjs
+          node --check engine-v1/jobs/audit-daily-cycle-boundaries.test.mjs
+          node --test --test-reporter=tap engine-v1/jobs/audit-daily-cycle-boundaries.test.mjs
+          node engine-v1/jobs/audit-daily-cycle-boundaries.mjs > "$RUNNER_TEMP/daily-boundaries.json"
+          node --input-type=module -e 'import fs from "node:fs"; const r=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));if(r.pairedCount<60||r.missingRequired.length||r.semantics.productionResumeAuthorized!==false)process.exit(1);console.log("SOURCE_ONLY_BOUNDARIES",r.pairedCount,"SHA",r.sourceSha256)' "$RUNNER_TEMP/daily-boundaries.json"
+          git diff --exit-code HEAD -- data/ .github/workflows/daily-deploy-snapshot.yml
+          echo "OBSERVABILITY_ONLY_NOT_PRODUCTION_RESUME"
