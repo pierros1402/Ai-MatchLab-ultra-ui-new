@@ -65,6 +65,14 @@ export function auditHistorical954(root, pin = HISTORICAL_954) {
   const observed = new Set(["manifest.json"]);
   const rows=[], counts={}, reasons={}, dates={};
   let bytes=0, approved=0, denied=0;
+  // Confidentiality triage: aggregate indicators only; never log sample values,
+  // token strings, raw sensitive filenames or extracted content.
+  const deniedContentSummary={
+    textCandidates:0, jsonParseFailures:0, suspiciousFieldCandidates:0,
+    binaryOrUnsupported:0, undecodableCandidates:0, maxDeniedFileBytes:0
+  };
+  const sensitiveField=/(?:["'])(?:[^"']{0,48})?(?:password|secret|api[_-]?key|access[_-]?token|refresh[_-]?token|authorization|private[_-]?key)(?:[^"']{0,48})?(?:["'])\\s*:/i;
+  const bearerLike=/\\bBearer\\s+[A-Za-z0-9._-]{12,}/i;
   for(const row of doc.files) {
     const name=safePath(row.path);
     requireThat(!observed.has(name),"historical_duplicate_file");
@@ -85,6 +93,21 @@ export function auditHistorical954(root, pin = HISTORICAL_954) {
     const dateKeys=[...name.matchAll(/20\d{2}-\d{2}-\d{2}/g)].map(m=>m[0]);
     if(dateKeys.length && !dateKeys.includes(pin.dayKey)) dates["other_day_path"]=(dates["other_day_path"]||0)+1;
     if(!dateKeys.length) dates["undated_path"]=(dates["undated_path"]||0)+1;
+    if(!allow) {
+      deniedContentSummary.maxDeniedFileBytes=Math.max(deniedContentSummary.maxDeniedFileBytes,buffer.length);
+      if(!/\\.(json|jsonl|ndjson|csv)$/i.test(name)){
+        deniedContentSummary.binaryOrUnsupported++;
+      } else {
+        deniedContentSummary.textCandidates++;
+        const text=buffer.toString("utf8");
+        if(text.includes("\\uFFFD")) deniedContentSummary.undecodableCandidates++;
+        if(sensitiveField.test(text)||bearerLike.test(text))
+          deniedContentSummary.suspiciousFieldCandidates++;
+        if(name.toLowerCase().endsWith(".json")){
+          try { JSON.parse(text); } catch { deniedContentSummary.jsonParseFailures++; }
+        }
+      }
+    }
     if(allow) approved++; else denied++;
     rows.push(name);
   }
@@ -102,6 +125,8 @@ export function auditHistorical954(root, pin = HISTORICAL_954) {
     admitted:approved, denied, familyCounts:Object.fromEntries(Object.entries(counts).sort()),
     denyReasons:Object.fromEntries(Object.entries(reasons).sort()),
     datePathIndicators:dates, absentPathCount:absentPaths.length,
+    deniedContentSummary,
+    sensitiveContentApproval:false,
     completeForGitTrackedAndUntrackedEvidence:true,
     completeStage20CaptureProven:false,
     ignoredFilesAudited:false, preStage20BaselineAudited:false,
