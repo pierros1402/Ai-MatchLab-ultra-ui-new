@@ -1,0 +1,63 @@
+name: P0 Stage20 source dependency closure audit (read-only)
+on:
+  pull_request:
+    paths:
+      - "tools/audit-daily954-stage20-transitive-source.mjs"
+      - "tools/audit-daily954-stage20-transitive-source.test.mjs"
+      - ".github/workflows/p0-stage20-source-closure-audit.yml"
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            tools/audit-daily954-stage20-transitive-source.mjs
+            tools/audit-daily954-stage20-transitive-source.test.mjs
+            .github/workflows/p0-stage20-source-closure-audit.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Exact syntax and conservative source closure negatives
+        run: |
+          node --check tools/audit-daily954-stage20-transitive-source.mjs
+          node --check tools/audit-daily954-stage20-transitive-source.test.mjs
+          node --test --test-reporter=tap tools/audit-daily954-stage20-transitive-source.test.mjs
+      - name: Bind original failed Daily producer and exact current main commits
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin 33eaa635a8745e75fc0a6075a3594f4cd86d3b32
+          git fetch --no-tags --depth=1 origin main
+          MAIN_SHA="$(git rev-parse FETCH_HEAD)"
+          test "$(git rev-parse "$MAIN_SHA^{commit}")" = "$MAIN_SHA"
+          echo "AIML_CONSUMER_MAIN_SHA=$MAIN_SHA" >> "$GITHUB_ENV"
+      - name: Inspect static imports, runtime-opaque dependencies and workflow bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/audit-daily954-stage20-transitive-source.mjs > "$RUNNER_TEMP/stage20-closure.jsonl"
+          cat "$RUNNER_TEMP/stage20-closure.jsonl"
+          node --input-type=module - "$RUNNER_TEMP/stage20-closure.jsonl" <<'NODE'
+          import fs from "node:fs";
+          import assert from "node:assert/strict";
+          const raw=fs.readFileSync(process.argv[2],"utf8").trim();
+          assert.ok(raw.startsWith("DAILY954_STAGE20_SOURCE_CLOSURE="));
+          const x=JSON.parse(raw.slice(raw.indexOf("=")+1));
+          assert.ok(x.producerModules>0 && x.consumerModules>0);
+          assert.equal(x.producerCommit,"33eaa635a8745e75fc0a6075a3594f4cd86d3b32");
+          assert.equal(x.consumerCommit,process.env.AIML_CONSUMER_MAIN_SHA);
+          assert.equal(x.runtimeDependencyClosureProven,false);
+          assert.equal(x.immutableInputLineageVerified,false);
+          assert.equal(x.completeCodeCompatibilityProven,false);
+          assert.equal(x.crossCommitResumeAuthorized,false);
+          assert.equal(x.productionWrites,0);
+          NODE
+      - name: No production mutations or unauthorized resume
+        run: |
+          git diff --exit-code HEAD -- data/ .github/workflows/daily-deploy-snapshot.yml
+          echo "STAGE20_SOURCE_CLOSURE_AUDIT_ONLY_NO_RESUME_NO_PUBLISH"
