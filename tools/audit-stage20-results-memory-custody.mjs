@@ -85,7 +85,7 @@ export function auditHistoricalResultsMemory(root,sourceRoot){
   const rows=manifest.files.filter(r=>r.path.startsWith("data/league-memory/results/"));
   const report=summarizeResultsMemoryRows(rows,root);
   check(report.files===98 && report.invalidPaths===0 && report.invalidShape===0 &&
-    report.validPayloads===98,"results_memory_historical_shape_incomplete");
+    report.validPayloads===98,"results_memory_historical_shape_incomplete:"+JSON.stringify({files:report.files,validPayloads:report.validPayloads,invalidPaths:report.invalidPaths,invalidShape:report.invalidShape}));
   return {
     schema:RESULTS_CUSTODY_SCHEMA,dayKey:archive.dayKey,
     sourceManifestSha256:archive.manifestSha256,writer:source,...report,
