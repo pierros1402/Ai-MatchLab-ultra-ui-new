@@ -1,0 +1,65 @@
+name: P0 Stage20 real historical output inventory (read-only)
+on:
+  pull_request:
+    paths:
+      - "tools/audit-daily954-stage20-history.mjs"
+      - "tools/audit-daily954-stage20-history.test.mjs"
+      - ".github/workflows/p0-stage20-historical-inventory.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            tools/audit-daily954-stage20-history.mjs
+            tools/audit-daily954-stage20-history.test.mjs
+            engine-v1/core/daily-resume-stage20-admission.mjs
+            .github/workflows/p0-stage20-historical-inventory.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Exact source syntax and negative regressions
+        run: |
+          node --check tools/audit-daily954-stage20-history.mjs
+          node --check tools/audit-daily954-stage20-history.test.mjs
+          node --test tools/audit-daily954-stage20-history.test.mjs
+      - name: Retrieve original failed Daily #954 artifact without rerunning Daily
+        uses: actions/download-artifact@v4
+        with:
+          name: history-recovery-45137286904-1
+          run-id: 45137286904
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/daily954-stage20-inventory
+      - name: Verify pinned manifest, all bytes and exact file-set; classify denied families
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/audit-daily954-stage20-history.mjs \
+            "$RUNNER_TEMP/daily954-stage20-inventory" > "$RUNNER_TEMP/stage20-inventory.jsonl"
+          cat "$RUNNER_TEMP/stage20-inventory.jsonl"
+          node --input-type=module - "$RUNNER_TEMP/stage20-inventory.jsonl" <<'NODE'
+          import fs from "node:fs";
+          import assert from "node:assert/strict";
+          const line=fs.readFileSync(process.argv[2],"utf8").trim();
+          assert.ok(line.startsWith("DAILY954_STAGE20_HISTORICAL_INVENTORY="));
+          const report=JSON.parse(line.slice(line.indexOf("=")+1));
+          assert.equal(report.files,9083);
+          assert.equal(report.bytes,428113899);
+          assert.equal(report.admitted+report.denied,9083);
+          assert.ok(report.denied>0);
+          assert.equal(report.completeStage20CaptureProven,false);
+          assert.equal(report.ignoredFilesAudited,false);
+          assert.equal(report.crossCommitResumeAuthorized,false);
+          assert.equal(report.publicationApproved,false);
+          assert.equal(report.productionWrites,0);
+          NODE
+      - name: No production changes or publish authorization
+        run: |
+          git diff --exit-code HEAD -- .github/workflows/daily-deploy-snapshot.yml data/
+          echo "STAGE20_READ_ONLY_AUDIT_NO_RESUME_NO_PUBLISH"
