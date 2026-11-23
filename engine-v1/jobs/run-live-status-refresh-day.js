@@ -659,6 +659,16 @@ export function canRemoveEspnWrongDayCanonicalRow(
   );
 }
 
+export function isConfirmedDelayedFinal(row, occurrence) {
+  const final = occurrence?.incoming;
+  return occurrence?.kind === "same_day" && final &&
+    stableFixtureId(row) === occurrence.providerMatchId &&
+    final.dayKey === row.dayKey && final.leagueSlug === row.leagueSlug &&
+    teamPairMatches(row.homeTeam, row.awayTeam, final.homeTeam, final.awayTeam) &&
+    isFinalLike(final) && Number.isInteger(final.scoreHome) && final.scoreHome >= 0 &&
+    Number.isInteger(final.scoreAway) && final.scoreAway >= 0;
+}
+
 export function mergeStatusRow(
   previous,
   incoming
@@ -1753,15 +1763,22 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
       const wrongDayExactIds =
         new Map();
 
-      leagueStats.exactSummaryCandidates =
-        missingExactIds.size;
+      // A delayed scoreboard entry can outlive the match. Consult its exact
+      // event summary as well, while retaining the scoreboard on uncertainty.
+      const delayedRows = new Map();
+      for (const row of current?.fixtures || []) {
+        const id = stableFixtureId(row);
+        const board = sourceById.get(id);
+        if (row.source === "espn" && !isFinalLike(row) &&
+            board?.rawStatus === "STATUS_DELAYED") {
+          delayedRows.set(id, row);
+        }
+      }
+      const summaryIds = new Set([...missingExactIds, ...delayedRows.keys()]);
+      leagueStats.exactSummaryCandidates = summaryIds.size;
 
-      if (missingExactIds.size > 0) {
-        for (
-          const id of [
-            ...missingExactIds
-          ]
-        ) {
+      if (summaryIds.size > 0) {
+        for (const id of summaryIds) {
           for (
             const providerSlug of
             providerFetchSlugs
@@ -1812,6 +1829,10 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
                     occurrence.reason ||
                     null
                 });
+
+              if (occurrence.providerMatchId !== id) continue;
+              const delayed = delayedRows.get(id);
+              if (delayed && !isConfirmedDelayedFinal(delayed, occurrence)) continue;
 
               if (
                 occurrence.kind ===
