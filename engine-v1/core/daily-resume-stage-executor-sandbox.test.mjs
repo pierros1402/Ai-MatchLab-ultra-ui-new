@@ -37,19 +37,19 @@ test("stage 27 interruption reuses 26 verified stages; byte exact final parity",
  try{
   let call=0;
   await assert.rejects(runSandboxRecoveryDAG({
-   stages:f.stages,binding:f.binding,storeRoot:f.store,sandboxAuthorized:true,
+   stages:f.stages,binding:f.binding,storeRoot:f.store,sandboxAuthorized:true,sandboxRoot:f.tmp,
    runStage:async(s)=>{call++;if(s.id==="stage-27")throw Error("injected_stage27_crash");return f.execute(s);}
   }),/injected_stage27_crash/);
   assert.equal(call,27);assert.equal(Object.keys(f.load()).length,26);
   const calls=[];
   const resumed=await runSandboxRecoveryDAG({
-   stages:f.stages,binding:f.binding,storeRoot:f.store,previousCheckpoints:f.load(),sandboxAuthorized:true,
+   stages:f.stages,binding:f.binding,storeRoot:f.store,previousCheckpoints:f.load(),sandboxAuthorized:true,sandboxRoot:f.tmp,
    runStage:async(s)=>{calls.push(s.id);return f.execute(s);}
   });
   assert.deepEqual(calls,["stage-27","stage-28"]);
   assert.equal(resumed.reusedStages,26);assert.equal(resumed.executedStages,2);
   assert.equal(resumed.resumedFrom,"stage-27");
-  await runSandboxRecoveryDAG({stages:clean.stages,binding:clean.binding,storeRoot:clean.store,sandboxAuthorized:true,runStage:clean.execute});
+  await runSandboxRecoveryDAG({stages:clean.stages,binding:clean.binding,storeRoot:clean.store,sandboxAuthorized:true,sandboxRoot:clean.tmp,runStage:clean.execute});
   for(let i=1;i<=28;i++)assert.deepEqual(
    fs.readFileSync(path.join(f.root,"data","part-"+i+".txt")),
    fs.readFileSync(path.join(clean.root,"data","part-"+i+".txt")));
@@ -60,12 +60,12 @@ test("stage 27 interruption reuses 26 verified stages; byte exact final parity",
 test("corrupt stage output forces earliest invalid stage and entire suffix",async()=>{
  const f=make();
  try{
-  await runSandboxRecoveryDAG({stages:f.stages,binding:f.binding,storeRoot:f.store,sandboxAuthorized:true,runStage:f.execute});
+  await runSandboxRecoveryDAG({stages:f.stages,binding:f.binding,storeRoot:f.store,sandboxAuthorized:true,sandboxRoot:f.tmp,runStage:f.execute});
   const previous=f.load();
   fs.writeFileSync(path.join(f.root,"data","part-12.txt"),"TAMPER");
   const calls=[];
   const result=await runSandboxRecoveryDAG({
-   stages:f.stages,binding:f.binding,storeRoot:f.store,previousCheckpoints:previous,sandboxAuthorized:true,
+   stages:f.stages,binding:f.binding,storeRoot:f.store,previousCheckpoints:previous,sandboxAuthorized:true,sandboxRoot:f.tmp,
    runStage:async(s)=>{calls.push(s.id);return f.execute(s);}
   });
   assert.equal(result.reusedStages,11);
@@ -78,11 +78,11 @@ test("corrupt stage output forces earliest invalid stage and entire suffix",asyn
 test("source code binding drift denies all reuse",async()=>{
  const f=make();
  try{
-  await runSandboxRecoveryDAG({stages:f.stages,binding:f.binding,storeRoot:f.store,sandboxAuthorized:true,runStage:f.execute});
+  await runSandboxRecoveryDAG({stages:f.stages,binding:f.binding,storeRoot:f.store,sandboxAuthorized:true,sandboxRoot:f.tmp,runStage:f.execute});
   const prior=f.load(),calls=[];
   const result=await runSandboxRecoveryDAG({
     stages:f.stages,binding:{...f.binding,producerCommit:"c".repeat(40)},storeRoot:f.store,
-    previousCheckpoints:prior,sandboxAuthorized:true,
+    previousCheckpoints:prior,sandboxAuthorized:true,sandboxRoot:f.tmp,
     runStage:async(s)=>{calls.push(s.id);return f.execute(s);}
   });
   assert.equal(result.reusedStages,0);assert.equal(calls.length,28);
@@ -91,23 +91,23 @@ test("source code binding drift denies all reuse",async()=>{
 test("volatile stage forces refresh, and all descendants rerun",async()=>{
  const f=make();
  try{
-  await runSandboxRecoveryDAG({stages:f.stages,binding:f.binding,storeRoot:f.store,sandboxAuthorized:true,runStage:f.execute});
+  await runSandboxRecoveryDAG({stages:f.stages,binding:f.binding,storeRoot:f.store,sandboxAuthorized:true,sandboxRoot:f.tmp,runStage:f.execute});
   const previous=f.load();const stages=f.stages.map((s,i)=>i===4?{...s,reuseClass:"external"}:s);
-  const result=await runSandboxRecoveryDAG({stages,binding:f.binding,storeRoot:f.store,previousCheckpoints:previous,sandboxAuthorized:true,runStage:f.execute});
+  const result=await runSandboxRecoveryDAG({stages,binding:f.binding,storeRoot:f.store,previousCheckpoints:previous,sandboxAuthorized:true,sandboxRoot:f.tmp,runStage:f.execute});
   assert.equal(result.reusedStages,4);assert.equal(result.resumedFrom,"stage-05");
  }finally{cleanup(f);}
 });
 test("damaged archive is never accepted from valid-looking manifest",async()=>{
  const f=make();
  try{
-  await runSandboxRecoveryDAG({stages:f.stages,binding:f.binding,storeRoot:f.store,sandboxAuthorized:true,runStage:f.execute});
+  await runSandboxRecoveryDAG({stages:f.stages,binding:f.binding,storeRoot:f.store,sandboxAuthorized:true,sandboxRoot:f.tmp,runStage:f.execute});
   const prior=f.load(),stage="stage-07",sha=prior[stage].evidenceSha256;
   const artifact=path.join(f.store,f.binding.dayKey,stage,sha,"outputs","data","part-7.txt");
   fs.writeFileSync(artifact,"UNTRUSTED");
   const calls=[];
   // Existing corrupt archive with identical content-addressed ID must fail
   // closed on attempted replacement rather than silently repairing provenance.
-  await assert.rejects(runSandboxRecoveryDAG({stages:f.stages,binding:f.binding,storeRoot:f.store,previousCheckpoints:prior,sandboxAuthorized:true,
+  await assert.rejects(runSandboxRecoveryDAG({stages:f.stages,binding:f.binding,storeRoot:f.store,previousCheckpoints:prior,sandboxAuthorized:true,sandboxRoot:f.tmp,
     runStage:async(s)=>{calls.push(s.id);return f.execute(s);}
   }),/resume_archive_existing_mismatch/);
   assert.equal(calls[0],"stage-07");
@@ -116,5 +116,11 @@ test("damaged archive is never accepted from valid-looking manifest",async()=>{
 test("sandbox execution requires explicit opt-in",async()=>{
  const f=make();
  try{await assert.rejects(runSandboxRecoveryDAG({stages:f.stages,binding:f.binding,storeRoot:f.store,runStage:f.execute}),/sandbox_execution_not_authorized/);}
+ finally{cleanup(f);}
+});
+
+test("production paths cannot be passed through sandbox boundary",async()=>{
+ const f=make();
+ try{await assert.rejects(runSandboxRecoveryDAG({stages:f.stages,binding:f.binding,storeRoot:path.dirname(f.tmp),sandboxRoot:f.tmp,sandboxAuthorized:true,runStage:f.execute}),/sandbox_path_outside_boundary/);}
  finally{cleanup(f);}
 });
