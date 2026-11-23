@@ -224,7 +224,8 @@ function validateTerminalAgainstCurrent(previous, currentTruth) {
       previous.brier != null &&
       Number.isFinite(previous.brier.adjusted) &&
       Number.isFinite(previous.brier.baseline) &&
-      previous.hitRate != null,
+      previous.hitRate != null &&
+      previous.pendingReason == null,
       `previous_settled_integrity_invalid:${previous.canonicalFixtureId}`
     );
   }
@@ -271,6 +272,9 @@ export function recoverLegacyPendingTerminal(previous, prediction, currentTruth,
   if (!enabled) return null;
   const pinned = LEGACY_PENDING_TERMINAL_RECOVERY;
   if (previous?.canonicalFixtureId !== pinned.canonicalFixtureId) return null;
+  // A previously finalized FT must pass the ordinary immutable-terminal gate.
+  // The one-off recovery is only for the historical null-truth shape.
+  if (previous.truth !== null) return null;
   assert(previous.state === "SETTLED" &&
     previous.truth === null && previous.brier === null && previous.hitRate === null &&
     previous.pendingReason === pinned.pendingReason && previous.planCPick === false &&

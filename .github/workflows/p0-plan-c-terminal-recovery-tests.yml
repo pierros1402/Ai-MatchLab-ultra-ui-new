@@ -5,6 +5,7 @@ on:
     paths:
       - "engine-v1/jobs/settle-plan-c-shadow.js"
       - "engine-v1/jobs/settle-plan-c-shadow.test.js"
+      - "engine-v1/jobs/fixtures/plan-c-legacy-settlement-20261119.json"
       - "tools/git-push-rebase-retry.sh"
       - ".github/workflows/daily-deploy-snapshot.yml"
       - ".github/workflows/plan-c-shadow-daily.yml"
@@ -49,7 +50,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ORIGINAL="data/plan-c-shadow/settlement/latest.json"
+          ORIGINAL="engine-v1/jobs/fixtures/plan-c-legacy-settlement-20261119.json"
           PREDICTIONS="data/plan-c-shadow/frozen/i2b-20260825"
           TEST_ROOT="$RUNNER_TEMP/plan-c-p0-replay"
           mkdir -p "$TEST_ROOT"
@@ -57,7 +58,7 @@ jobs:
           node --input-type=module <<'NODE'
           import fs from "node:fs";
           import crypto from "node:crypto";
-          const file="data/plan-c-shadow/settlement/latest.json";
+          const file="engine-v1/jobs/fixtures/plan-c-legacy-settlement-20261119.json";
           const bytes=fs.readFileSync(file);
           const gitBlob=crypto.createHash("sha1").update("blob "+bytes.length+"\0").update(bytes).digest("hex");
           if(gitBlob!=="93b90e013fcd1b3c8bef36aaa51a0087d277e0ed")
@@ -79,7 +80,7 @@ jobs:
           import fs from "node:fs";
           import crypto from "node:crypto";
           const root=process.env.TEST_ROOT;
-          const before=JSON.parse(fs.readFileSync("data/plan-c-shadow/settlement/latest.json","utf8"));
+          const before=JSON.parse(fs.readFileSync("engine-v1/jobs/fixtures/plan-c-legacy-settlement-20261119.json","utf8"));
           const after=JSON.parse(fs.readFileSync(root+"/latest.json","utf8"));
           const audit=JSON.parse(fs.readFileSync(root+"/audit.json","utf8"));
           const id="cid_bra1_cruzeiro_palmeiras_20261119";
@@ -94,10 +95,28 @@ jobs:
             throw Error("real_plan_c_recovery_invalid");
           const beforeById=new Map(before.records.map(r=>[r.canonicalFixtureId,r]));
           const afterById=new Map(after.records.map(r=>[r.canonicalFixtureId,r]));
-          if(beforeById.size!==61 || afterById.size!==61 ||
-             [...beforeById.keys()].some(key=>!afterById.has(key)))
+          // The original corruption artifact has 61 frozen rows. The current
+          // forward-only prediction index adds exactly three December fixtures.
+          const addedIds=[
+            "cid_eng1_astonvilla_crystalpalace_20261205",
+            "cid_esp1_athletic_realmadrid_20261206",
+            "cid_esp1_villarreal_realsociedad_20261205"
+          ];
+          const index=JSON.parse(fs.readFileSync(
+            "data/plan-c-shadow/frozen/i2b-20260825/PREDICTION_INDEX.json","utf8"));
+          const indexedById=new Map(index.predictions.map(p=>[p.canonicalFixtureId,p]));
+          const extras=after.records.filter(r=>!beforeById.has(r.canonicalFixtureId));
+          if(beforeById.size!==61 || afterById.size!==64 ||
+             indexedById.size!==64 || index.predictions.length!==64 ||
+             [...beforeById.keys()].some(key=>!afterById.has(key)) ||
+             extras.length!==3 ||
+             addedIds.some(key=>!extras.some(row=>row.canonicalFixtureId===key)) ||
+             extras.some(row=>row.state!=="PENDING" || row.truth!==null ||
+               row.brier!==null || row.hitRate!==null ||
+               row.pendingReason!=="CANONICAL_STATUS_PRE" ||
+               row.prediction?.signature!==indexedById.get(row.canonicalFixtureId)?.predictionSignature))
             throw Error("real_plan_c_recovery_fixture_set_changed");
-          const changes=after.records.filter(r=>
+          const changes=after.records.filter(r=>beforeById.has(r.canonicalFixtureId) &&
             JSON.stringify(r)!==JSON.stringify(beforeById.get(r.canonicalFixtureId)));
           const newSettlements=[];
           for(const row of changes){
@@ -115,10 +134,10 @@ jobs:
           if(changes.filter(r=>r.canonicalFixtureId===id).length!==1 ||
              changes.length!==newSettlements.length+1)
             throw Error("real_plan_c_recovery_target_missing_or_duplicated");
-          if(after.records.length!==before.records.length ||
-             after.accounting.total!==before.records.length ||
+          if(after.records.length!==before.records.length+addedIds.length ||
+             after.accounting.total!==before.records.length+addedIds.length ||
              after.accounting.settled!==before.accounting.settled+newSettlements.length ||
-             after.accounting.pending!==before.accounting.pending-newSettlements.length ||
+             after.accounting.pending!==before.accounting.pending-newSettlements.length+addedIds.length ||
              after.brierSummary.n!==after.accounting.settled ||
              !after.accounting.balanced ||
              after.accounting.total!==after.accounting.settled+after.accounting.pending+after.accounting.voidExcluded)
