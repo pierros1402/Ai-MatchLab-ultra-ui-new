@@ -18,7 +18,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
+      - name: Fetch only exact historical source commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin 5133d9ff8623dd015c6578d89e34b7a5da0b12a0
+          test "$(git rev-parse 5133d9ff8623dd015c6578d89e34b7a5da0b12a0^{commit})" = "5133d9ff8623dd015c6578d89e34b7a5da0b12a0"
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
