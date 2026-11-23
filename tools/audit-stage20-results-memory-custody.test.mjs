@@ -4,61 +4,64 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import crypto from "node:crypto";
-import {inspectResultsMemoryWriter,summarizeResultsMemoryRows}
+import {inspectStandingsMemoryWriter,summarizeStandingsMemoryRows}
   from "./audit-stage20-results-memory-custody.mjs";
 const sha=s=>crypto.createHash("sha256").update(s).digest("hex");
-test("results-memory source establishes append retention and downstream team FORM",()=>{
-  const source=fs.readFileSync("engine-v1/storage/results-memory-db.js","utf8");
-  const r=inspectResultsMemoryWriter(source);
-  assert.equal(r.historyAccumulation,"per-league-append-with-retention");
-  assert.equal(r.valueFormInput,true);
-  assert.equal(r.stage20OmissionAuthorized,false);
-  assert.equal(r.liveFeedRebuildEquivalenceProven,false);
+test("real standings source is legacy research evidence, never automatic model truth",()=>{
+  const source=fs.readFileSync("engine-v1/storage/standings-memory-db.js","utf8");
+  const r=inspectStandingsMemoryWriter(source);
+  assert.equal(r.role,"legacy-research-evidence-with-attempts");
+  assert.equal(r.trustedStandingsGateRequired,true);
+  assert.equal(r.productionModelTruthFromLegacyMemory,false);
+  assert.equal(r.omissionAuthorized,false);
 });
-test("source drift cannot silently approve rebuilding instead of baseline retention",()=>{
-  const source=fs.readFileSync("engine-v1/storage/results-memory-db.js","utf8");
-  assert.throws(()=>inspectResultsMemoryWriter(source.replace("export function recordMatchResult(","export function renamedResult(")),
-    /results_memory_source_contract_mismatch/);
+test("missing trusted standings boundary fails source provenance",()=>{
+  const source=fs.readFileSync("engine-v1/storage/standings-memory-db.js","utf8");
+  assert.throws(()=>inspectStandingsMemoryWriter(source.replace("readTrustedStandingsState(","renamedTrustedStandings(")),
+    /standings_memory_source_contract_mismatch/);
 });
-test("source-bound league result payload counts teams and accumulated rows",()=>{
-  const root=fs.mkdtempSync(path.join(os.tmpdir(),"aiml-form-memory-"));
+test("synthetic standings evidence is counted without releasing legacy model-truth gate",()=>{
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),"aiml-standings-evidence-"));
   try{
-    const name="data/league-memory/results/eng.1.json";
-    const data=JSON.stringify({slug:"eng.1",teams:{Arsenal:[
-      {matchId:"cid_a",canonicalId:"cid_a",date:"2026-11-20",opp:"Chelsea",gf:2,ga:1}
-    ],Chelsea:[{matchId:"fs_1",date:"2026-11-20",opp:"Arsenal",gf:1,ga:2}]}});
+    const name="data/league-memory/standings/eng.1.json";
+    const content=JSON.stringify({slug:"eng.1",
+      attempts:[{status:"accepted",confidence:0.9}],
+      accepted:{season:"2026",confidence:0.9,rows:[{teamName:"Example",points:12}]}});
     fs.mkdirSync(path.dirname(path.join(root,name)),{recursive:true});
-    fs.writeFileSync(path.join(root,name),data);
-    const report=summarizeResultsMemoryRows([{path:name,bytes:Buffer.byteLength(data),sha256:sha(data)}],root);
-    assert.deepEqual([report.files,report.validPayloads,report.teamKeys,report.resultRows],[1,1,2,2]);
-    assert.equal(report.missingCanonicalIdRows,1);
-    assert.equal(report.resultIdentityTruthIndependentlyVerified,false);
-    assert.equal(report.omissionAuthorized,false);
+    fs.writeFileSync(path.join(root,name),content);
+    const r=summarizeStandingsMemoryRows([{
+      path:name,bytes:Buffer.byteLength(content),sha256:sha(content)
+    }],root);
+    assert.deepEqual([r.files,r.validPayloads,r.acceptedSnapshots,r.attemptRecords,r.acceptedRows],[1,1,1,1,1]);
+    assert.equal(r.modelTruthGateBypassed,false);
+    assert.equal(r.productionStandingsTruthIndependentlyVerified,false);
+    assert.equal(r.omissionAuthorized,false);
   }finally{fs.rmSync(root,{recursive:true,force:true});}
 });
-test("tampered results-memory bytes fail closed",()=>{
-  const root=fs.mkdtempSync(path.join(os.tmpdir(),"aiml-form-byte-"));
+test("unbound source byte mutation fails closed",()=>{
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),"aiml-standings-integrity-"));
   try{
-    const p="data/league-memory/results/foo.json";
-    fs.mkdirSync(path.dirname(path.join(root,p)),{recursive:true});
-    fs.writeFileSync(path.join(root,p),'{"teams":{}}');
-    assert.throws(()=>summarizeResultsMemoryRows([
-      {path:p,bytes:12,sha256:"a".repeat(64)}
-    ],root),/results_memory_historical_bytes_mismatch/);
+    const name="data/league-memory/standings/a.json";
+    fs.mkdirSync(path.dirname(path.join(root,name)),{recursive:true});
+    fs.writeFileSync(path.join(root,name),'{"attempts":[]}');
+    assert.throws(()=>summarizeStandingsMemoryRows([{
+      path:name,bytes:15,sha256:"0".repeat(64)
+    }],root),/standings_memory_historical_bytes_mismatch/);
   }finally{fs.rmSync(root,{recursive:true,force:true});}
 });
-test("traversal and duplicate results paths refused",()=>{
-  const root="/tmp";
-  for(const p of ["data/league-memory/results/../secrets.json",
-    "data/league-memory/results\\bad.json"])
-    assert.throws(()=>summarizeResultsMemoryRows([{path:p}],root),/results_memory_path_invalid/);
-  const scratch=fs.mkdtempSync(path.join(os.tmpdir(),"aiml-results-dupe-"));
+test("unsafe standings paths and duplicate files are denied",()=>{
+  for(const name of [
+    "data/league-memory/standings/../foo.json",
+    "data/league-memory/standings\\foo.json"
+  ])assert.throws(()=>summarizeStandingsMemoryRows([{path:name}],"/tmp"),
+    /standings_memory_path_invalid/);
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),"aiml-standings-dupe-"));
   try{
-    const name="data/league-memory/results/foo.json";
-    const bytes='{"teams":{}}';
-    fs.mkdirSync(path.dirname(path.join(scratch,name)),{recursive:true});
-    fs.writeFileSync(path.join(scratch,name),bytes);
-    const same={path:name,bytes:Buffer.byteLength(bytes),sha256:sha(bytes)};
-    assert.throws(()=>summarizeResultsMemoryRows([same,same],scratch),/results_memory_path_invalid/);
-  }finally{fs.rmSync(scratch,{recursive:true,force:true});}
+    const name="data/league-memory/standings/a.json",content='{"attempts":[]}';
+    fs.mkdirSync(path.dirname(path.join(root,name)),{recursive:true});
+    fs.writeFileSync(path.join(root,name),content);
+    const record={path:name,bytes:Buffer.byteLength(content),sha256:sha(content)};
+    assert.throws(()=>summarizeStandingsMemoryRows([record,record],root),
+      /standings_memory_path_invalid/);
+  }finally{fs.rmSync(root,{recursive:true,force:true});}
 });
