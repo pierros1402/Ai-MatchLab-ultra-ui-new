@@ -15,6 +15,7 @@ function fixture(fn) {
     fs.mkdirSync(path.join(root,"data/odds-memory"),{recursive:true});
     fs.writeFileSync(path.join(root,".gitignore"),"data/odds-memory/\n");
     fs.writeFileSync(path.join(root,"data/odds-memory/a.json"),"{\"v\":1}\n");
+    fs.writeFileSync(path.join(root,"data/odds-memory/stable.json"),"{\"stable\":true}\n");
     git(root,"add",".gitignore");git(root,"commit","-qm","source");
     fn(root);
   }finally{fs.rmSync(root,{recursive:true,force:true});}
