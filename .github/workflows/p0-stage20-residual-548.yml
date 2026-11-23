@@ -1,0 +1,75 @@
+name: P0 Stage20 residual 548 source-bound exclusion triage (isolated)
+on:
+  pull_request:
+    paths:
+      - "tools/audit-stage20-residual-548.mjs"
+      - "tools/audit-stage20-residual-548.test.mjs"
+      - ".github/workflows/p0-stage20-residual-548.yml"
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            tools/audit-stage20-residual-548.mjs
+            tools/audit-stage20-residual-548.test.mjs
+            tools/audit-daily954-stage20-history.mjs
+            engine-v1/core/daily-resume-stage20-admission.mjs
+            engine-v1/core/daily-resume-stage20-journal-admission.mjs
+            engine-v1/core/season-closure-contract.js
+            .github/workflows/p0-stage20-residual-548.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Syntax and non-authorization classification regressions
+        run: |
+          node --check tools/audit-stage20-residual-548.mjs
+          node --check tools/audit-stage20-residual-548.test.mjs
+          node --test --test-reporter=tap tools/audit-stage20-residual-548.test.mjs
+      - uses: actions/download-artifact@v4
+        with:
+          name: history-recovery-45137286904-1
+          run-id: 45137286904
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/stage20-residual-original
+      - name: Exact original 9083-file proof and all 548 denied rows classified
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/audit-stage20-residual-548.mjs "$RUNNER_TEMP/stage20-residual-original" \
+            > "$RUNNER_TEMP/stage20-residual-summary.jsonl"
+          cat "$RUNNER_TEMP/stage20-residual-summary.jsonl"
+          node --input-type=module - "$RUNNER_TEMP/stage20-residual-summary.jsonl" <<'NODE'
+          import fs from "node:fs";
+          import assert from "node:assert/strict";
+          const raw=fs.readFileSync(process.argv[2],"utf8").trim();
+          assert.ok(raw.startsWith("STAGE20_RESIDUAL_TRIAGE="));
+          const r=JSON.parse(raw.slice(raw.indexOf("=")+1));
+          assert.equal(r.originalFiles,9083);
+          assert.equal(r.admitted,8535);
+          assert.equal(r.denied,548);
+          assert.equal(r.unclassified,0);
+          const familyCount=Object.values(r.families).reduce((n,x)=>n+x.files,0);
+          assert.equal(familyCount,548);
+          const memo=r.families;
+          assert.equal(memo["data/research-cache"].files,349);
+          assert.equal(memo["data/league-memory"].files,99);
+          assert.equal(memo["data/odds-memory"].files,50);
+          assert.equal(memo["data/value-data-acquisition"].files,19);
+          assert.equal(memo["data/canonical-registry"].files,16);
+          assert.equal(r.excludedFilesApprovedForOmission,0);
+          assert.equal(r.sourceLineageComplete,false);
+          assert.equal(r.omissionAuthorized,false);
+          assert.equal(r.checkpointCompletenessProven,false);
+          assert.equal(r.resumeAuthorized,false);
+          assert.equal(r.productionWrites,0);
+          NODE
+      - name: No data write, resume or deploy action
+        run: |
+          git diff --exit-code HEAD -- data/ .github/workflows/daily-deploy-snapshot.yml
+          echo "RESIDUAL_548_ALL_UNAPPROVED_NO_OMISSION_NO_PUBLISH"
