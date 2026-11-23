@@ -1,0 +1,33 @@
+name: P0 Daily dependency-aware advisory DAG (isolated)
+on:
+  pull_request:
+    paths:
+      - "engine-v1/core/daily-resume-dependency-aware-advisory.mjs"
+      - "engine-v1/core/daily-resume-dependency-aware-advisory.test.mjs"
+      - ".github/workflows/p0-daily-dependency-advisory.yml"
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1/core/daily-resume-contract.mjs
+            engine-v1/core/daily-resume-dependency-aware-advisory.mjs
+            engine-v1/core/daily-resume-dependency-aware-advisory.test.mjs
+            .github/workflows/p0-daily-dependency-advisory.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Source syntax and fail-closed policy
+        run: |
+          node --check engine-v1/core/daily-resume-dependency-aware-advisory.mjs
+          node --check engine-v1/core/daily-resume-dependency-aware-advisory.test.mjs
+          node --test --test-reporter=tap engine-v1/core/daily-resume-dependency-aware-advisory.test.mjs
+      - name: No production resume or publication
+        run: |
+          git diff --exit-code HEAD -- data/ .github/workflows/daily-deploy-snapshot.yml
+          echo "DAG_ADVISORY_ONLY_ALL_PUBLICATION_GATES_MANDATORY"
