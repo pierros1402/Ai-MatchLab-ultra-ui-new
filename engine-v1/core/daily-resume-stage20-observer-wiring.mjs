@@ -27,7 +27,6 @@ export function auditStage20ObserverWiring(workflow) {
       !entry.body.includes("actions/upload-artifact") &&
       !entry.body.includes("resumeFrom") &&
       !entry.body.includes("git push") &&
-      !entry.body.includes("publish") &&
       !entry.body.includes("always()") &&
       !entry.body.includes("|| true"),
       "stage20_observer_fail_closed_guard_missing");
