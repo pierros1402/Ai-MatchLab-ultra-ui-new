@@ -1,0 +1,206 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "ned.2",
+  "homeTeam": "Jong PSV",
+  "awayTeam": "Jong FC Utrecht",
+  "homeWinScore": 0.363,
+  "drawScore": 0.179,
+  "awayWinScore": 0.458,
+  "over15Score": 0.726,
+  "over25Score": 0.6,
+  "over35Score": 0.566,
+  "bttsScore": 0.559,
+  "confidence": 0.853,
+  "signals": [
+    "away_edge",
+    "over25_support",
+    "priors_applied",
+    "close_strength_gap",
+    "home_rest_3",
+    "away_rest_3"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.25,
+      "awayOverallFormWeight": 0.25,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.677,
+    "expectedAwayGoals": 1.466,
+    "expectedTotalGoals": 3.143,
+    "homeStrength": 0.324,
+    "awayStrength": 0.287,
+    "homeEdge": 0.12,
+    "awayPenalty": 0.249,
+    "recency": {
+      "homeOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 190,
+        "daysSinceLastMatch": 3,
+        "spanDays": 32,
+        "maxInternalGap": 14,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.825
+      },
+      "awayOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 190,
+        "daysSinceLastMatch": 3,
+        "spanDays": 32,
+        "maxInternalGap": 13,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.825
+      },
+      "homeSide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 190,
+        "daysSinceLastMatch": 21,
+        "spanDays": 14,
+        "maxInternalGap": 14,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.155,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.349
+      },
+      "awaySide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 190,
+        "daysSinceLastMatch": 16,
+        "spanDays": 14,
+        "maxInternalGap": 14,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.33,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.411
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 190,
+      "awayPriorSample": 190,
+      "leaguePriorSample": 1900,
+      "matchupPriorSample": 10
+    },
+    "resolution": {
+      "homeInput": "Jong PSV",
+      "awayInput": "Jong FC Utrecht",
+      "homeResolvedKey": "Jong PSV",
+      "awayResolvedKey": "Jong FC Utrecht",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Jong PSV::Jong FC Utrecht",
+      "matchupResolveScore": 0,
+      "homePriorKey": "ned.2::Jong PSV",
+      "awayPriorKey": "ned.2::Jong FC Utrecht",
+      "matchupPriorKey": "ned.2|Jong FC Utrecht|Jong PSV"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Jong PSV",
+      "awayTeamKey": "Jong FC Utrecht",
+      "leagueKey": "ned.2",
+      "matchupKey": "Jong PSV::Jong FC Utrecht"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": false,
+    "contextDelta": 0,
+    "contextReasons": [],
+    "aiContext": {
+      "available": true,
+      "importance": "unknown",
+      "stakes": [],
+      "pressure": []
+    }
+  },
+  "contextAdjusted": false,
+  "contextReasons": [],
+  "contextDelta": 0,
+  "band": {
+    "over15": "MEDIUM",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0.05,
+      "awayPenalty": 0.05,
+      "reasons": [
+        "home_rest_3",
+        "away_rest_3"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "ned.2",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 3,
+    "awayRestDays": 3,
+    "homeMatchesLast7": 1,
+    "awayMatchesLast7": 1,
+    "homeMatchesLast14": 1,
+    "awayMatchesLast14": 1,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
