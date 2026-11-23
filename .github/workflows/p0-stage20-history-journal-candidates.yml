@@ -1,0 +1,64 @@
+name: P0 Stage20 source-owned history journal fingerprint candidate audit
+on:
+  pull_request:
+    paths:
+      - "tools/audit-stage20-history-journal-candidates.mjs"
+      - "tools/audit-stage20-history-journal-candidates.test.mjs"
+      - ".github/workflows/p0-stage20-history-journal-candidates.yml"
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            tools/audit-stage20-history-journal-candidates.mjs
+            tools/audit-stage20-history-journal-candidates.test.mjs
+            tools/audit-daily954-stage20-history.mjs
+            engine-v1/core/season-closure-contract.js
+            engine-v1/core/daily-resume-stage20-admission.mjs
+            .github/workflows/p0-stage20-history-journal-candidates.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Source syntax and fingerprint negative tests
+        run: |
+          node --check tools/audit-stage20-history-journal-candidates.mjs
+          node --check tools/audit-stage20-history-journal-candidates.test.mjs
+          node --test --test-reporter=tap tools/audit-stage20-history-journal-candidates.test.mjs
+      - uses: actions/download-artifact@v4
+        with:
+          name: history-recovery-45137286904-1
+          run-id: 45137286904
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/stage20-history-journal-candidates
+      - name: Classify all 996 historical journal files after original archive SHA proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/audit-stage20-history-journal-candidates.mjs \
+            "$RUNNER_TEMP/stage20-history-journal-candidates" \
+            > "$RUNNER_TEMP/history-journal-classification.jsonl"
+          cat "$RUNNER_TEMP/history-journal-classification.jsonl"
+          node --input-type=module - "$RUNNER_TEMP/history-journal-classification.jsonl" <<'NODE'
+          import fs from "node:fs";
+          import assert from "node:assert/strict";
+          const raw=fs.readFileSync(process.argv[2],"utf8").trim();
+          assert.ok(raw.startsWith("STAGE20_HISTORY_JOURNAL_CANDIDATES="));
+          const r=JSON.parse(raw.slice(raw.indexOf("=")+1));
+          assert.equal(r.sourceFiles,9083);
+          assert.equal(r.sourceBytes,428113899);
+          assert.equal(r.journalFiles,996);
+          assert.equal(Object.values(r.counts).reduce((a,b)=>a+b,0),996);
+          assert.equal(r.journalPolicyApproval,false);
+          assert.equal(r.resumeAuthorized,false);
+          assert.equal(r.productionWrites,0);
+          NODE
+      - name: No production capture or journal mutation
+        run: |
+          git diff --exit-code HEAD -- data/ .github/workflows/daily-deploy-snapshot.yml
+          echo "HISTORY_JOURNAL_CANDIDATE_ONLY_NO_CAPTURE_NO_PUBLISH"
