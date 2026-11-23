@@ -17,11 +17,20 @@ export function inspectStage20Worktree(repoRoot, dayKey) {
     ...zeroList(git(repoRoot, "diff", "--no-renames", "--name-only", "-z", "HEAD", "--")),
     ...zeroList(git(repoRoot, "ls-files", "--others", "--exclude-standard", "-z", "--"))
   ];
+  // --exclude-standard hides ignored data from the ordinary delta. An archive
+  // that omits these files is incomplete even when all visible paths pass.
+  // Fail closed instead of silently advertising a reusable stage checkpoint.
+  const ignoredDataFiles = zeroList(git(repoRoot,
+    "ls-files", "--others", "--ignored", "--exclude-standard", "-z", "--", "data/"));
   const admission = evaluateStage20CapturePaths({ dayKey, paths });
   const head = git(repoRoot, "rev-parse", "HEAD").toString("utf8").trim();
   if (!/^[a-f0-9]{40}$/.test(head)) throw Error("stage20_source_head_invalid");
-  return { ...admission, baseCommit: head,
-    readOnly: true, resumeAuthorized: false, publicationAuthorized: false };
+  return { ...admission,
+    ok: admission.ok && ignoredDataFiles.length === 0,
+    reason: ignoredDataFiles.length ? "stage20_ignored_outputs_unaccounted" : admission.reason,
+    ignoredDataFileCount: ignoredDataFiles.length,
+    baseCommit: head, readOnly: true,
+    resumeAuthorized: false, publicationAuthorized: false };
 }
 export function captureStage20Worktree(repoRoot, dayKey, archiveRoot) {
   const inspected = inspectStage20Worktree(repoRoot, dayKey);
