@@ -1,0 +1,67 @@
+name: P0 Stage20 historical research cache TTL holds (read-only)
+on:
+  pull_request:
+    paths:
+      - "tools/audit-stage20-research-cache-freshness.mjs"
+      - "tools/audit-stage20-research-cache-freshness.test.mjs"
+      - ".github/workflows/p0-stage20-research-cache-freshness.yml"
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            tools/audit-stage20-research-cache-freshness.mjs
+            tools/audit-stage20-research-cache-freshness.test.mjs
+            tools/audit-stage20-research-cache-writer-envelopes.mjs
+            tools/audit-daily954-stage20-history.mjs
+            engine-v1/core/daily-resume-stage20-admission.mjs
+            engine-v1/core/daily-resume-stage20-journal-admission.mjs
+            engine-v1/core/season-closure-contract.js
+            .github/workflows/p0-stage20-research-cache-freshness.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Source-owned TTL and future-cache negative controls
+        run: |
+          node --check tools/audit-stage20-research-cache-freshness.mjs
+          node --check tools/audit-stage20-research-cache-freshness.test.mjs
+          node --test --test-reporter=tap tools/audit-stage20-research-cache-freshness.test.mjs
+      - uses: actions/download-artifact@v4
+        with:
+          name: history-recovery-45137286904-1
+          run-id: 45137286904
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/cache-freshness-original
+      - name: Verify exact archive and 349 TTL states at pinned reference instant
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/audit-stage20-research-cache-freshness.mjs "$RUNNER_TEMP/cache-freshness-original" \
+            > "$RUNNER_TEMP/cache-freshness-report.jsonl"
+          cat "$RUNNER_TEMP/cache-freshness-report.jsonl"
+          node --input-type=module - "$RUNNER_TEMP/cache-freshness-report.jsonl" <<'NODE'
+          import assert from "node:assert/strict";
+          import fs from "node:fs";
+          const raw=fs.readFileSync(process.argv[2],"utf8").trim();
+          assert.ok(raw.startsWith("STAGE20_RESEARCH_CACHE_FRESHNESS="));
+          const x=JSON.parse(raw.slice(raw.indexOf("=")+1));
+          assert.equal(x.files,349);
+          assert.equal(x.counts.expired_cache,349);
+          assert.equal(x.counts.reusable,0);
+          assert.equal(x.counts.future_dated_cache,0);
+          assert.equal(x.externalProviderEquivalenceProven,false);
+          assert.equal(x.crossRunReuseAuthorized,false);
+          assert.equal(x.stageSkipAuthorized,false);
+          assert.equal(x.publicationAuthorized,false);
+          assert.equal(x.productionWrites,0);
+          NODE
+      - name: No production change or provider replay
+        run: |
+          git diff --exit-code HEAD -- data/ .github/workflows/daily-deploy-snapshot.yml
+          echo "CACHE_TTL_HOLD_NO_EXTERNAL_REPLAY_NO_STAGE_SKIP_NO_PUBLICATION"
