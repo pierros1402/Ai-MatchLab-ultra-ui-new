@@ -63,7 +63,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -n "EXPECTED_${{ steps.upload.outputs.artifact-digest }}"
+          test -n "${{ needs.produce.outputs.digest }}"
           node tools/test-stage20-prepost-crossrunner.mjs consume \
             "$RUNNER_TEMP/aiml-stage20-prepost-downloaded"
           git diff --exit-code HEAD -- .github/workflows/daily-deploy-snapshot.yml data/
