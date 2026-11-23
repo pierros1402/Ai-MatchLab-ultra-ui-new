@@ -1,0 +1,203 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "esp.2",
+  "homeTeam": "Burgos",
+  "awayTeam": "Albacete",
+  "homeWinScore": 0.341,
+  "drawScore": 0.158,
+  "awayWinScore": 0.501,
+  "over15Score": 0.653,
+  "over25Score": 0.545,
+  "over35Score": 0.495,
+  "bttsScore": 0.482,
+  "confidence": 0.897,
+  "signals": [
+    "away_edge",
+    "priors_applied",
+    "close_strength_gap",
+    "home_next_0"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.276,
+      "awayOverallFormWeight": 0.3,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.136,
+    "expectedAwayGoals": 1.35,
+    "expectedTotalGoals": 2.485,
+    "homeStrength": 0.368,
+    "awayStrength": 0.443,
+    "homeEdge": 0.273,
+    "awayPenalty": 0.327,
+    "recency": {
+      "homeOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 210,
+        "daysSinceLastMatch": 9,
+        "spanDays": 18,
+        "maxInternalGap": 11,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.65,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.705
+      },
+      "awayOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 170,
+        "daysSinceLastMatch": 10,
+        "spanDays": 18,
+        "maxInternalGap": 6,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.6,
+        "continuityScore": 1,
+        "formContinuityWeight": 0.86
+      },
+      "homeSide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 210,
+        "daysSinceLastMatch": 15,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.365,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.415
+      },
+      "awaySide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 170,
+        "daysSinceLastMatch": 10,
+        "spanDays": 5,
+        "maxInternalGap": 5,
+        "gapSeverity": "normal",
+        "freshnessScore": 0.6,
+        "continuityScore": 1,
+        "formContinuityWeight": 0.74
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 210,
+      "awayPriorSample": 170,
+      "leaguePriorSample": 2333,
+      "matchupPriorSample": 8
+    },
+    "resolution": {
+      "homeInput": "Burgos",
+      "awayInput": "Albacete",
+      "homeResolvedKey": "Burgos",
+      "awayResolvedKey": "Albacete",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Burgos::Albacete",
+      "matchupResolveScore": 0,
+      "homePriorKey": "esp.2::Burgos",
+      "awayPriorKey": "esp.2::Albacete",
+      "matchupPriorKey": "esp.2|Albacete|Burgos"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Burgos",
+      "awayTeamKey": "Albacete",
+      "leagueKey": "esp.2",
+      "matchupKey": "Burgos::Albacete"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": false,
+    "contextDelta": 0,
+    "contextReasons": [],
+    "aiContext": {
+      "available": true,
+      "importance": "unknown",
+      "stakes": [],
+      "pressure": []
+    }
+  },
+  "contextAdjusted": false,
+  "contextReasons": [],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0.04,
+      "awayPenalty": 0,
+      "reasons": [
+        "home_next_0"
+      ]
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "esp.2",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 9,
+    "awayRestDays": 10,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 1,
+    "awayMatchesLast14": 2,
+    "homeNextMatchInDays": 0,
+    "awayNextMatchInDays": null
+  }
+}
