@@ -14,6 +14,12 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1/jobs/run-daily-cycle.js
+            engine-v1/jobs/audit-daily-cycle-boundaries.mjs
+            engine-v1/jobs/audit-daily-cycle-boundaries.test.mjs
+            .github/workflows/p0-daily-cycle-boundary-audit.yml
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
