@@ -92,7 +92,7 @@ export function auditHistoricalResultsMemory(root,sourceRoot){
     const k=segments.length===3?"(root-file)":segments[2]+"/";
     topology[k]=(topology[k]||0)+1;
   }
-  console.log("STAGE20_LEAGUE_TOPOLOGY="+JSON.stringify({total:allLeague.length,groups:topology}));
+  console.error("STAGE20_LEAGUE_TOPOLOGY="+JSON.stringify({total:allLeague.length,groups:topology}));
   const report=summarizeResultsMemoryRows(rows,root);
   check(report.files===98 && report.invalidPaths===0 && report.invalidShape===0 &&
     report.validPayloads===98,"results_memory_historical_shape_incomplete:"+JSON.stringify({files:report.files,validPayloads:report.validPayloads,invalidPaths:report.invalidPaths,invalidShape:report.invalidShape}));
