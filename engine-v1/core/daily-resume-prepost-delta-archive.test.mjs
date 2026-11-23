@@ -17,6 +17,7 @@ function fixture(fn) {
     fs.mkdirSync(path.join(repo,"data/value"),{recursive:true});
     fs.writeFileSync(path.join(repo,".gitignore"),"data/value/ignored.json\n");
     fs.writeFileSync(path.join(repo,"data/value/original.json"),"{\"old\":true}\n");
+    fs.writeFileSync(path.join(repo,"data/value/stable.json"),"{\"unchanged\":true}\n");
     fs.writeFileSync(path.join(repo,"data/value/ignored.json"),"{\"ignored\":1}\n");
     git(repo,"add",".gitignore","data/value/original.json");
     git(repo,"commit","-qm","initial");
@@ -70,4 +71,39 @@ test("duplicate archive destination refused rather than overwritten",()=>fixture
 test("tampered inventory blocks archive admission",()=>fixture(f=>{
   const corrupt=structuredClone(f.after);corrupt.files[0].sha256="f".repeat(64);
   assert.throws(()=>capturePrepostDeltaToIsolatedArchive(f.repo,f.archive,f.before,corrupt),/stage20_prepost_inventory_not_verified/);
+}));
+
+test("whole post-data tree is re-attested before archive finalization",()=>fixture(f=>{
+  const x=capturePrepostDeltaToIsolatedArchive(f.repo,f.archive,f.before,f.after);
+  assert.equal(x.postCaptureTreeReattested,true);
+  assert.equal(x.writerQuiescenceAttested,false);
+}));
+test("ignored or tracked UNMODIFIED file drift during archive denies completion",()=>fixture(f=>{
+  assert.throws(()=>capturePrepostDeltaToIsolatedArchive(
+    f.repo,f.archive,f.before,f.after,{
+      beforeFinalScan:()=>fs.writeFileSync(
+        path.join(f.repo,"data/value/stable.json"),"{\"changedDuringCapture\":true}\n")
+    }
+  ),/stage20_prepost_final_tree_drift/);
+  assert.equal(fs.existsSync(f.archive),false);
+}));
+test("out-of-delta new file during archive denies completion",()=>fixture(f=>{
+  assert.throws(()=>capturePrepostDeltaToIsolatedArchive(
+    f.repo,f.archive,f.before,f.after,{
+      beforeFinalScan:()=>fs.writeFileSync(
+        path.join(f.repo,"data/value/unrecorded.json"),"{}\n")
+    }
+  ),/stage20_prepost_final_tree_drift/);
+  assert.equal(fs.existsSync(f.archive),false);
+}));
+test("commit source drift during final archive check denies completion",()=>fixture(f=>{
+  assert.throws(()=>capturePrepostDeltaToIsolatedArchive(
+    f.repo,f.archive,f.before,f.after,{
+      beforeFinalScan:()=>{
+        fs.writeFileSync(path.join(f.repo,"SOURCE.txt"),"new\n");
+        git(f.repo,"add","SOURCE.txt");git(f.repo,"commit","-qm","drift source");
+      }
+    }
+  ),/stage20_prepost_final_tree_drift/);
+  assert.equal(fs.existsSync(f.archive),false);
 }));
