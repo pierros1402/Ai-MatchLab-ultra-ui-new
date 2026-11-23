@@ -1,0 +1,128 @@
+name: P0 Daily 954 recovered Value refresh rehearsal (isolated)
+
+on:
+  pull_request:
+    paths:
+      - "tools/rehearse-daily954-value-refresh.mjs"
+      - ".github/workflows/p0-daily954-value-refresh-sandbox.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Fetch only exact historical source commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin 5133d9ff8623dd015c6578d89e34b7a5da0b12a0
+          test "$(git rev-parse 5133d9ff8623dd015c6578d89e34b7a5da0b12a0^{commit})" = "5133d9ff8623dd015c6578d89e34b7a5da0b12a0"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Verify exact sandbox restore source syntax
+        run: node --check tools/replay-daily954-plan-c-recovery-evidence.mjs
+      - name: Download original failing Daily recovery artifact, not rerun Daily
+        uses: actions/download-artifact@v4
+        with:
+          name: history-recovery-45137286904-1
+          run-id: 45137286904
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/daily954-recovery-evidence
+      - name: Materialize historical source checkpoint in isolated worktree
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$(mktemp -d)"
+          echo "RESCUE_ROOT=$ROOT" >> "$GITHUB_ENV"
+          git worktree add --detach "$ROOT/historical" 5133d9ff8623dd015c6578d89e34b7a5da0b12a0
+          node tools/replay-daily954-plan-c-recovery-evidence.mjs \
+            "$RUNNER_TEMP/daily954-recovery-evidence" "$ROOT/historical"
+          # Carry only the merged, regression-tested Plan C settlement hotfix
+          # into historical source. Never modify current checkout or main.
+          cp engine-v1/jobs/settle-plan-c-shadow.js \
+            "$ROOT/historical/engine-v1/jobs/settle-plan-c-shadow.js"
+      - name: Replay Plan C settlement and shadow build, no Daily cycle
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RESCUE_ROOT/historical"
+          # The production settlement is append-only. Seed the isolated
+          # output with the real prior record, or terminal source hashes
+          # would be recomputed and the correct immutable guard would fail.
+          cp data/plan-c-shadow/settlement/latest.json "$RESCUE_ROOT/settlement.json"
+          node engine-v1/jobs/settle-plan-c-shadow.js 2026-11-23 \
+            --prediction-root data/plan-c-shadow/frozen/i2b-20260825 \
+            --output "$RESCUE_ROOT/settlement.json" \
+            --audit "$RESCUE_ROOT/settlement-audit.json" \
+            --repair-legacy-pending-terminal
+          node engine-v1/jobs/build-plan-c-shadow-day.js 2026-11-23 \
+            --prediction-root data/plan-c-shadow/frozen/i2b-20260825 \
+            --settlement-report "$RESCUE_ROOT/settlement.json"
+          node --input-type=module - "$RESCUE_ROOT" <<'NODE'
+          import fs from "node:fs";
+          import path from "node:path";
+          import assert from "node:assert/strict";
+          const root = process.argv[2];
+          const result = JSON.parse(fs.readFileSync(path.join(root,"settlement.json"),"utf8"));
+          const audit = JSON.parse(fs.readFileSync(path.join(root,"settlement-audit.json"),"utf8"));
+          assert.equal(result.accounting.total, 64);
+          assert.equal(result.accounting.balanced, true);
+          assert.ok(Array.isArray(audit.explicitLegacyPendingTerminalRecovery));
+          assert.ok(fs.statSync("data/plan-c-shadow/2026-11-23.json").size > 0);
+          console.log("DAILY954_PLAN_C_SANDBOX_PASS="+JSON.stringify({
+            accounting: result.accounting,
+            legacyRecoveryCount: audit.explicitLegacyPendingTerminalRecovery.length,
+            output: "isolated-only",
+            published: false
+          }));
+          NODE
+      - name: Install historical dependencies for isolated Value refresh
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --prefix "$RESCUE_ROOT/historical" --no-audit --no-fund
+          npm ci --prefix "$RESCUE_ROOT/historical/engine-v1" --no-audit --no-fund
+      - name: Rebuild Value A2 B B2 and comparison only from original recovered pre-kickoff assessments
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/rehearse-daily954-value-refresh.mjs "$RESCUE_ROOT/historical"
+      # Observe the next real release gate with the recovered post-27 scratch
+      # worktree. This is diagnostic only: no artifacts are promoted or published.
+      - name: Diagnose remaining prepublish blockers without publishing
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RESCUE_ROOT/historical"
+          node --input-type=module <<'NODE'
+          import { verifyDailyPublishContract } from "./engine-v1/jobs/verify-daily-publish-contract.js";
+          const result = verifyDailyPublishContract("2026-11-23", { requireLatest: false });
+          const blocked = Array.isArray(result.blocked) ? result.blocked : [];
+          console.log("DAILY954_DOWNSTREAM_PREPUBLISH_DIAGNOSTIC=" + JSON.stringify({
+            dayKey: "2026-11-23",
+            mode: result.mode,
+            ok: result.ok,
+            fixtureCount: result.fixtureCount,
+            detailFileCount: result.detailFileCount,
+            blockedCount: blocked.length,
+            blocked: blocked.map(b => b.code || b.type || "(unknown)"),
+            missingArtifacts: Object.entries(result.requiredArtifacts || {})
+              .filter(([,v]) => !v.exists || v.parseError)
+              .map(([name,v]) => ({ name, exists: v.exists, parseError: v.parseError })),
+            publicationApproved: false
+          }));
+          if (result.mode !== "prepublish") throw Error("unexpected_prepublication_mode");
+          NODE
+      - name: Verify original production checkout has no mutations
+        run: |
+          git diff --exit-code HEAD -- .github/workflows/daily-deploy-snapshot.yml data/
+          echo "NO_PRODUCTION_DAILY_NO_GIT_PUSH_NO_PUBLISH"
