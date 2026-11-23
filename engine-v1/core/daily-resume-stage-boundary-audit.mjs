@@ -63,6 +63,55 @@ export function auditRealCyclePairs(cycleText) {
   });
 }
 
+
+/**
+ * Inventory every literal Daily log boundary, including conditional branches.
+ * This is static source evidence, not a runtime completion journal or resume grant.
+ * A done-only marker is retained as a diagnostic, never a resumable stage.
+ */
+export function auditCompleteCycleMarkerInventory(cycleText) {
+  invariant(typeof cycleText === "string", "resume_cycle_source_missing");
+  const marker = /\[daily-cycle\] ([A-Za-z][A-Za-z0-9-]*):(start|done)\b/g;
+  const byId = new Map();
+  for (const match of cycleText.matchAll(marker)) {
+    const id = match[1];
+    const entry = byId.get(id) || { id, startOffsets: [], doneOffsets: [] };
+    entry[match[2] === "start" ? "startOffsets" : "doneOffsets"].push(match.index);
+    byId.set(id, entry);
+  }
+  invariant(byId.size > 0, "resume_complete_inventory_empty");
+  const paired = [];
+  const doneOnly = [];
+  for (const entry of byId.values()) {
+    const { id, startOffsets, doneOffsets } = entry;
+    invariant(startOffsets.length <= 1 && doneOffsets.length <= 1,
+      "resume_complete_inventory_duplicate:" + id);
+    invariant(doneOffsets.length === 1, "resume_complete_inventory_missing_done:" + id);
+    if (startOffsets.length === 0) {
+      doneOnly.push({ id, doneOffset: doneOffsets[0], resumeAllowed: false });
+      continue;
+    }
+    invariant(startOffsets[0] < doneOffsets[0],
+      "resume_complete_inventory_pair_order_changed:" + id);
+    paired.push({ id, startOffset: startOffsets[0], doneOffset: doneOffsets[0],
+      resumeAllowed: false, persistedManifest: false });
+  }
+  paired.sort((a, b) => a.startOffset - b.startOffset);
+  doneOnly.sort((a, b) => a.doneOffset - b.doneOffset);
+  return {
+    schema: "ai-matchlab.daily-complete-cycle-marker-inventory.v1",
+    cycleSha256: sha256(cycleText),
+    literalMarkerCount: [...cycleText.matchAll(marker)].length,
+    pairedCount: paired.length,
+    doneOnlyCount: doneOnly.length,
+    pairs: paired,
+    doneOnly,
+    staticSourceOnly: true,
+    crossRunResumeAuthorized: false,
+    publicationAuthorized: false
+  };
+}
+
 function invariant(ok, reason) { if (!ok) throw new Error(reason); }
 function sha256(s) { return crypto.createHash("sha256").update(s).digest("hex"); }
 function stepLocations(workflowText) {
@@ -98,6 +147,9 @@ export function auditDailyResumeStageBoundaries(workflowText, cycleText) {
     previous = at;
   }
   const realCyclePairs = auditRealCyclePairs(cycleText);
+  const completeCycleInventory = auditCompleteCycleMarkerInventory(cycleText);
+  invariant(realCyclePairs.every(pair => completeCycleInventory.pairs.some(full => full.id === pair.id)),
+    "resume_selected_pair_missing_from_complete_inventory");
   // The expensive cycle still contains stateful provider, value, previous-day
   // settlement and history writes. No inferred cut point is safe for resume.
   return {
@@ -107,6 +159,7 @@ export function auditDailyResumeStageBoundaries(workflowText, cycleText) {
     sourceBound: true,
     stages,
     realCyclePairs,
+    completeCycleInventory,
     monolithicCycleSplitApproved: false,
     crossRunResumeAuthorized: false,
     publicationAuthorized: false
