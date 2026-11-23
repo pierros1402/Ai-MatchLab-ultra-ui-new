@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 
 import {
   canRemoveEspnWrongDayCanonicalRow,
+  isConfirmedDelayedFinal,
+  mergeConfirmedDelayedFinal,
   normalizeSourceRows,
   parseLiveStatusRefreshCliArgs,
   resolveApprovedFlashscoreFinalScoreRevision,
@@ -605,4 +607,27 @@ test("live status CLI keeps legacy status-refresh behavior by default", () => {
     appendNewFixtures: false,
     includeAllOpenStates: false
   });
+});
+
+test("delayed scoreboard finals require matching event, teams, day, league and scores", () => {
+  const event = espnEvent();
+  const occurrence = resolveEspnExactEventOccurrence({header: {
+    id: event.id, competitions: event.competitions
+  }}, "nor.1", "2026-07-23");
+  const row = { ...occurrence.incoming, status: "LIVE", rawStatus: "STATUS_DELAYED" };
+  row.statusType = null;
+  const merged = mergeConfirmedDelayedFinal(row, occurrence);
+  assert.equal(merged.status, "FT");
+  assert.equal(merged.rawStatus, occurrence.incoming.rawStatus);
+  assert.equal(merged.scoreHome, 4);
+  const postponed = { ...row, status: "POSTPONED" };
+  assert.deepEqual(mergeConfirmedDelayedFinal(postponed, occurrence), postponed);
+  assert.equal(isConfirmedDelayedFinal(row, occurrence), true);
+  for (const changes of [
+    { sourceMatchId: "different" }, { homeTeam: row.awayTeam },
+    { dayKey: "2026-07-24" }, { leagueSlug: "nor.2" }
+  ]) assert.equal(isConfirmedDelayedFinal({ ...row, ...changes }, occurrence), false);
+  for (const changes of [{ scoreHome: null }, { scoreAway: -1 }, { status: "LIVE", rawStatus: "STATUS_DELAYED", statusType: "STATUS_DELAYED" }]) {
+    assert.equal(isConfirmedDelayedFinal(row, { ...occurrence, incoming: { ...occurrence.incoming, ...changes } }), false);
+  }
 });
