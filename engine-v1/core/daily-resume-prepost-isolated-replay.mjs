@@ -53,6 +53,11 @@ export function replayPrepostDeltaToIsolatedClone({
     "stage20_replay_binding_mismatch");
   check(git(sourceRepoRoot,"rev-parse","HEAD")===before.sourceCommit,
     "stage20_replay_source_commit_mismatch");
+  // Reject unlisted / ignored extras and changed baseline bytes before any clone
+  // or payload write. Checking listed files alone would silently omit extras.
+  const sourceInventory=inventoryDataTree(sourceRepoRoot,before.dayKey);
+  check(sourceInventory.manifestSha256===before.manifestSha256,
+    "stage20_replay_source_baseline_inventory_mismatch");
   const verified=verifyPrepostDeltaArchive(archiveRoot,before,after);
   check(verified.ok,"stage20_replay_archive_invalid:"+verified.reason);
   const dest=fs.mkdtempSync(path.join(parent,"aiml-stage20-replay-"));
