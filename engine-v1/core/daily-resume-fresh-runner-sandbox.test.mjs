@@ -145,3 +145,87 @@ test("late restore failure rolls back previously materialized output files", asy
     assert.equal(fs.readFileSync(blocker,"utf8"),"block-parent-directory");
   } finally {f.clean();}
 });
+
+test("opt-in sandbox branch-aware resume preserves independent checkpoint after upstream invalidation",async()=>{
+  const f=fixture();
+  try {
+    const stages=[
+      {id:"stage-a",dependsOn:[],inputs:["data/seed-a.txt"],outputs:["data/out-a.txt"],reuseClass:"frozen"},
+      {id:"stage-b",dependsOn:["stage-a"],inputs:["data/out-a.txt"],outputs:["data/out-b.txt"],reuseClass:"frozen"},
+      {id:"stage-c",dependsOn:[],inputs:["data/seed-c.txt"],outputs:["data/out-c.txt"],reuseClass:"frozen"},
+      {id:"stage-d",dependsOn:["stage-b","stage-c"],inputs:["data/out-b.txt","data/out-c.txt"],
+        outputs:["data/out-d.txt"],reuseClass:"frozen"}
+    ];
+    const initialize=(name,a)=>{
+      const runner=f.makeRunner(name);
+      fs.writeFileSync(path.join(runner.root,"data/seed-a.txt"),a);
+      fs.writeFileSync(path.join(runner.root,"data/seed-c.txt"),"unchanged-c");
+      runner.execute=async stage=>{
+        const inputs=stage.inputs.map(input=>fs.readFileSync(path.join(runner.root,input),"utf8")).join("|");
+        fs.writeFileSync(path.join(runner.root,stage.outputs[0]),inputs+"/"+stage.id);
+        return {ok:true};
+      };
+      return runner;
+    };
+    const first=initialize("first-branches","original-a");
+    await f.run(first,{},first.execute,{stages,branchAware:true});
+    const prior=Object.fromEntries(stages.map(stage=>{
+      const folder=path.join(f.storeRoot,first.binding.dayKey,stage.id);
+      const name=fs.readdirSync(folder).find(x=>/^[a-f0-9]{64}$/.test(x));
+      return [stage.id,JSON.parse(fs.readFileSync(path.join(folder,name,"manifest.json"),"utf8"))];
+    }));
+    const next=initialize("next-branches","changed-a");
+    const result=await f.run(next,prior,next.execute,{stages,branchAware:true});
+    assert.equal(result.branchAwareEvaluation,true);
+    assert.deepEqual(result.decisions.map(item=>[item.stageId,item.decision]),[
+      ["stage-a","EXECUTED"],["stage-b","EXECUTED"],
+      ["stage-c","RESTORED_VERIFIED"],["stage-d","EXECUTED"]
+    ]);
+    assert.equal(result.restoredStages,1);
+    assert.equal(result.executedStages,3);
+    assert.equal(result.productionResumeAuthorized,false);
+    assert.equal(result.publicationAuthorized,false);
+    const baseline=initialize("uninterrupted-branches","changed-a");
+    await f.run(baseline,{},baseline.execute,{stages,branchAware:true});
+    assert.deepEqual(fs.readFileSync(path.join(next.root,"data/out-d.txt")),
+      fs.readFileSync(path.join(baseline.root,"data/out-d.txt")));
+    const conservative=initialize("conservative-branches","changed-a");
+    const old=await f.run(conservative,prior,conservative.execute,{stages});
+    assert.equal(old.branchAwareEvaluation,false);
+    assert.equal(old.executedStages,4);
+    assert.equal(old.restoredStages,0);
+  }finally{f.clean();}
+});
+test("branch-aware sandbox never restores external or mandatory stages",async()=>{
+  const f=fixture();
+  try{
+    const stages=[
+      {id:"frozen-source",dependsOn:[],inputs:["data/seed.txt"],
+        outputs:["data/frozen.txt"],reuseClass:"frozen"},
+      {id:"live-data",dependsOn:[],inputs:["data/seed.txt"],
+        outputs:["data/live.txt"],reuseClass:"external"},
+      {id:"prepublish-gate",dependsOn:["frozen-source","live-data"],
+        inputs:["data/frozen.txt","data/live.txt"],outputs:["data/gated.txt"],reuseClass:"frozen"}
+    ];
+    const create=name=>{
+      const runner=f.makeRunner(name);
+      runner.execute=async stage=>{
+        fs.writeFileSync(path.join(runner.root,stage.outputs[0]),stage.id+" output");
+        return {ok:true};
+      };
+      return runner;
+    };
+    const first=create("volatile-first");
+    await f.run(first,{},first.execute,{stages,branchAware:true});
+    const prior=Object.fromEntries(stages.map(stage=>{
+      const p=path.join(f.storeRoot,first.binding.dayKey,stage.id);
+      const id=fs.readdirSync(p).find(n=>/^[a-f0-9]{64}$/.test(n));
+      return [stage.id,JSON.parse(fs.readFileSync(path.join(p,id,"manifest.json"),"utf8"))];
+    }));
+    const next=create("volatile-next");
+    const result=await f.run(next,prior,next.execute,{stages,branchAware:true});
+    assert.deepEqual(result.decisions.map(d=>d.decision),
+      ["RESTORED_VERIFIED","EXECUTED","EXECUTED"]);
+    assert.equal(result.productionResumeAuthorized,false);
+  }finally{f.clean();}
+});
