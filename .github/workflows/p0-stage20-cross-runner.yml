@@ -12,26 +12,27 @@ jobs:
     timeout-minutes: 30
     outputs:
       source: ${{ steps.source.outputs.sha }}
+      artifact: ${{ steps.source.outputs.artifact }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
-          sparse-checkout: |
-            engine-v1
-            data/value
-            data/deploy-snapshots/2026-11-24
+          # Replay clones the local checkout; all HEAD blobs must be present.
+          fetch-depth: 1
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
       - id: source
-        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "artifact=stage20-rehearsal-${{ github.run_id }}-${{ github.run_attempt }}" >> "$GITHUB_OUTPUT"
       - run: |
           node --test engine-v1/core/daily-resume-prepost-isolated-replay.test.mjs engine-v1/core/daily-resume-stage20-integrated-e2e.test.mjs
           node engine-v1/jobs/rehearse-stage20-cross-runner.mjs capture "$GITHUB_WORKSPACE" "$RUNNER_TEMP/stage20-bundle" "$(git rev-parse HEAD)"
       - uses: actions/upload-artifact@v4
         with:
-          name: stage20-rehearsal-${{ github.run_id }}-${{ github.run_attempt }}
+          name: ${{ steps.source.outputs.artifact }}
           path: ${{ runner.temp }}/stage20-bundle
           retention-days: 2
           if-no-files-found: error
@@ -44,10 +45,8 @@ jobs:
         with:
           ref: ${{ needs.capture.outputs.source }}
           persist-credentials: false
-          sparse-checkout: |
-            engine-v1
-            data/value
-            data/deploy-snapshots/2026-11-24
+          # Replay clones the local checkout; all HEAD blobs must be present.
+          fetch-depth: 1
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
