@@ -1,0 +1,59 @@
+name: P0 Stage20 actual immutable Intraday committed delta audit
+on:
+  pull_request:
+    paths:
+      - "engine-v1/core/daily-resume-stage20-committed-delta-audit.mjs"
+      - "engine-v1/core/daily-resume-stage20-committed-delta-audit.test.mjs"
+      - ".github/workflows/p0-stage20-real-commit-delta-audit.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 25
+          filter: blob:none
+          sparse-checkout: |
+            engine-v1/core/daily-resume-stage20-committed-delta-audit.mjs
+            engine-v1/core/daily-resume-stage20-committed-delta-audit.test.mjs
+            engine-v1/core/daily-resume-stage20-admission.mjs
+            engine-v1/core/daily-resume-stage20-journal-admission.mjs
+            .github/workflows/p0-stage20-real-commit-delta-audit.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Source syntax and actual Git-object tests
+        run: |
+          node --check engine-v1/core/daily-resume-stage20-committed-delta-audit.mjs
+          node --test --test-reporter=tap engine-v1/core/daily-resume-stage20-committed-delta-audit.test.mjs
+      - name: Verify both exact pinned Git objects exist in the bounded history
+        run: |
+          git cat-file -e 5b67a7c48546927144fdcbfd96b4eaee0de935c2^{commit}
+          git cat-file -e f082c7c3b813678223775578297d3c90f2c13e07^{commit}
+      - name: Audit exact real Intraday committed data delta, not live runner
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from "node:assert/strict";
+          import {auditStage20CommittedDelta} from "./engine-v1/core/daily-resume-stage20-committed-delta-audit.mjs";
+          const r=auditStage20CommittedDelta({
+            repoRoot:process.cwd(),
+            baseCommit:"5b67a7c48546927144fdcbfd96b4eaee0de935c2",
+            targetCommit:"f082c7c3b813678223775578297d3c90f2c13e07",
+            dayKey:"2026-11-24"
+          });
+          assert.equal(r.accepted,true);
+          assert.equal(r.changedDataPaths,11);
+          assert.equal(r.policyAdmitted,4);
+          assert.equal(r.policyDenied,7);
+          assert.equal(r.completeStage20Payload,false);
+          assert.equal(r.resumeAuthorized,false);
+          console.log("STAGE20_REAL_INTRADAY_COMMITTED_DELTA="+JSON.stringify(r));
+          NODE
+      - name: Source and production remain unchanged
+        run: |
+          test -z "$(git status --porcelain)"
+          echo "GIT_COMMIT_DELTA_ONLY__IGNORED_UNTRACKED_UNKNOWN__NO_RESUME"
