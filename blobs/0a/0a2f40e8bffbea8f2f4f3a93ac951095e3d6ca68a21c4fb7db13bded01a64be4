@@ -1,0 +1,228 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "uefa.champions",
+  "homeTeam": "Galatasaray",
+  "awayTeam": "Aston Villa",
+  "homeWinScore": 0.3,
+  "drawScore": 0.13,
+  "awayWinScore": 0.57,
+  "over15Score": 0.713,
+  "over25Score": 0.619,
+  "over35Score": 0.569,
+  "bttsScore": 0.512,
+  "confidence": 0.793,
+  "signals": [
+    "away_edge",
+    "home_form_decay",
+    "away_form_decay",
+    "form_influence_reduced",
+    "mutual_attack_profile",
+    "priors_applied",
+    "close_strength_gap"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": null,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.12,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.641,
+    "expectedAwayGoals": 1.73,
+    "expectedTotalGoals": 3.371,
+    "homeStrength": 0.235,
+    "awayStrength": 0.267,
+    "homeEdge": 0.197,
+    "awayPenalty": 0.102,
+    "recency": {
+      "homeOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 18,
+        "daysSinceLastMatch": 17,
+        "spanDays": 16,
+        "maxInternalGap": 5,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.295,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.631
+      },
+      "awayOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 12,
+        "daysSinceLastMatch": 16,
+        "spanDays": 15,
+        "maxInternalGap": 4,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.33,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.643
+      },
+      "homeSide": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 18,
+        "daysSinceLastMatch": 17,
+        "spanDays": 28,
+        "maxInternalGap": 12,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.295,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.526
+      },
+      "awaySide": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 12,
+        "daysSinceLastMatch": 16,
+        "spanDays": 50,
+        "maxInternalGap": 28,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.33,
+        "continuityScore": 0.1,
+        "formContinuityWeight": 0.451
+      }
+    },
+    "matchupSample": 0,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 18,
+      "awayPriorSample": 12,
+      "leaguePriorSample": 744,
+      "matchupPriorSample": 0
+    },
+    "resolution": {
+      "homeInput": "Galatasaray",
+      "awayInput": "Aston Villa",
+      "homeResolvedKey": "Galatasaray",
+      "awayResolvedKey": "Aston Villa",
+      "homeResolveScore": 0.82,
+      "awayResolveScore": 0.82,
+      "matchupResolvedKey": "Galatasaray::Aston Villa",
+      "matchupResolveScore": 0,
+      "homePriorKey": "uefa.champions::Galatasaray",
+      "awayPriorKey": "uefa.champions::Aston Villa",
+      "matchupPriorKey": null
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Galatasaray",
+      "awayTeamKey": "Aston Villa",
+      "leagueKey": "uefa.champions",
+      "matchupKey": "Galatasaray::Aston Villa"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "form_away_stronger",
+        "impact": 0.08,
+        "note": "Away team has significantly stronger form"
+      },
+      {
+        "code": "ai_away_form_signal",
+        "impact": 0.05,
+        "note": "AI confirmed strong away form edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    }
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "form_away_stronger",
+      "impact": 0.08,
+      "note": "Away team has significantly stronger form"
+    },
+    {
+      "code": "ai_away_form_signal",
+      "impact": 0.05,
+      "note": "AI confirmed strong away form edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "MEDIUM",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "uefa.champions",
+    "competitionType": "continental",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 17,
+    "awayRestDays": 16,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
