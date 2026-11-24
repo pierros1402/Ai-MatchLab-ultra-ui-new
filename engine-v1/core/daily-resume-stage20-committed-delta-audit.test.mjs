@@ -74,5 +74,16 @@ test("non-data-only commit has no admissible Stage20 data delta",()=>fixture(f=>
   const next=git(f.root,"rev-parse","HEAD");
   const out=audit({...f,repoRoot:f.root,baseCommit:f.targetCommit,targetCommit:next});
   assert.equal(out.accepted,false);
-  assert.equal(out.reason,"stage20_committed_delta_empty_or_malformed");
+  assert.equal(out.reason,"stage20_committed_delta_nondata_source_changed");
+}));
+
+test("mixed code+data changes cannot be classified as source-equivalent committed delta",()=>fixture(f=>{
+  f.write("engine-v1/core/producer.js","source changed");
+  f.write("data/value/new.json","data changed again");
+  git(f.root,"add","-A");git(f.root,"commit","-qm","mixed code and data");
+  const target=git(f.root,"rev-parse","HEAD");
+  const out=audit({...f,repoRoot:f.root,targetCommit:target});
+  assert.equal(out.accepted,false);
+  assert.equal(out.reason,"stage20_committed_delta_nondata_source_changed");
+  assert.equal(out.resumeAuthorized,false);
 }));
