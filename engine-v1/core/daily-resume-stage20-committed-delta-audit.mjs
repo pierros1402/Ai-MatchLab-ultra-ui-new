@@ -19,6 +19,11 @@ export function auditStage20CommittedDelta({repoRoot,baseCommit,targetCommit,day
     baseCommit===targetCommit)return deny("stage20_committed_delta_binding_invalid");
   try{
     git(repoRoot,"merge-base","--is-ancestor",baseCommit,targetCommit);
+    // Classifying only data/ would conceal producer code/workflow drift.
+    // A source-changing range is not a same-code Stage20 data delta.
+    const nonData=git(repoRoot,"diff","--no-renames","--name-only","-z",
+      baseCommit,targetCommit,"--",".",":(exclude)data");
+    if(nonData.length!==0)return deny("stage20_committed_delta_nondata_source_changed");
     const result=git(repoRoot,"diff","--no-renames","--name-status","-z",
       baseCommit,targetCommit,"--","data/").toString("utf8").split("\0");
     if(result.at(-1)==="")result.pop();
