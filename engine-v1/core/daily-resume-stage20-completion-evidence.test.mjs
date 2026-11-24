@@ -65,6 +65,10 @@ test("wrong source commit/day/attempt denies",()=>{
     assert.equal(admit(a).evidenceQualified,false);
   }
 });
+test("claimed transport bytes must equal the exact post-tree changed writes",()=>{
+  const a=make();a.transport.deltaWriteBytes=4;
+  assert.equal(admit(a).reason,"stage20_completion_transport_write_bytes_unbound");
+});
 test("unrecorded output paths or transport byte count rejects binding",()=>{
   for(const patch of [{deltaPaths:1},{physicalDataFiles:3},
     {physicalDataBytes:10},{ignoredDataFiles:1},{unaccountedDataFiles:1},
