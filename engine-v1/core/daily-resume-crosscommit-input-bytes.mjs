@@ -56,6 +56,15 @@ export function inspectStage20CrossCommitInputBytes({
     if(compatibility.accepted!==true)return deny("stage20_input_source_untrusted:"+compatibility.reason);
     let total=0;
     for(const row of rows){
+      // Provenance is anchored to the *producer commit*, not a caller-supplied
+      // digest of whatever bytes happen to exist in the consumer worktree.
+      // Non-Git/ignored/untracked inputs need a separate immutable artifact
+      // contract and are denied by this narrow committed-input proof.
+      const pinned=execFileSync("git",["show",producerCommit+":"+row.path],{
+        cwd:repoRoot,encoding:"buffer",maxBuffer:64*1024*1024
+      });
+      if(pinned.length!==row.bytes || sha(pinned)!==row.sha256)
+        return deny("stage20_input_producer_blob_mismatch:"+sha(Buffer.from(row.path)).slice(0,12));
       const actual=bytesAt(repoRoot,row.path);
       total+=actual.length;
       if(total>2*1024*1024*1024)return deny("stage20_input_total_oversize");
