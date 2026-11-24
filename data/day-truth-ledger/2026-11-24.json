@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-24",
-  "generatedAt": "2026-11-24T16:15:20.811Z",
+  "generatedAt": "2026-11-24T18:36:52.217Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "b5fe5e8842ed7ffc273dfcc42484bc37a2900f28a4c89a0868512d2ee00e5ed8",
+  "ledgerState": "INCOMPLETE",
+  "truthFingerprint": "bbdd90e454185c8490cf525e969e6430e7e20517f54a9656a3e00c0f4c1c237b",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -16,11 +16,11 @@
     "downstreamProjections": "non_authoritative_observations"
   },
   "summary": {
-    "canonicalRows": 103,
-    "playedTerminal": 31,
-    "nonPlayedTerminal": 5,
-    "scheduled": 66,
-    "live": 1,
+    "canonicalRows": 104,
+    "playedTerminal": 39,
+    "nonPlayedTerminal": 6,
+    "scheduled": 53,
+    "live": 6,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
@@ -28,16 +28,16 @@
     "verifiedFinalArtifacts": 31,
     "acceptedVerifiedFinalArtifacts": 31,
     "convergedPlayedFinal": 31,
-    "convergedNonPlayedTerminal": 5,
-    "pendingVerifiedFinal": 0,
-    "openRows": 67,
+    "convergedNonPlayedTerminal": 6,
+    "pendingVerifiedFinal": 8,
+    "openRows": 59,
     "unresolvedRows": 0,
     "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 31,
     "scoredSettlementEligible": 31,
-    "voidSettlementEligible": 5
+    "voidSettlementEligible": 6
   },
   "fixtures": [
     {
@@ -46,14 +46,14 @@
       "homeTeam": "Al Nassr",
       "awayTeam": "Al Sadd",
       "kickoffUtc": "2026-11-24T18:15Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -67,7 +67,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -389,14 +389,14 @@
       "homeTeam": "Shabab Al-Ahli",
       "awayTeam": "Al Qadsiah",
       "kickoffUtc": "2026-11-24T16:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 1,
+        "scoreAway": 5
       },
       "verifiedFinal": {
         "present": false,
@@ -409,9 +409,9 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "PENDING_VERIFIED_FINAL",
+        "reason": "played_terminal_requires_verified_final",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
@@ -487,14 +487,14 @@
       "homeTeam": "Al-Seeb Club",
       "awayTeam": "Al-Shorta SC",
       "kickoffUtc": "2026-11-24T16:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "PRE",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 2,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -507,9 +507,9 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "PENDING_VERIFIED_FINAL",
+        "reason": "played_terminal_requires_verified_final",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
@@ -1075,14 +1075,14 @@
       "homeTeam": "Fratria",
       "awayTeam": "Yantra Gabrovo",
       "kickoffUtc": "2026-11-24T16:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1095,9 +1095,9 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "PENDING_VERIFIED_FINAL",
+        "reason": "played_terminal_requires_verified_final",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
@@ -1177,7 +1177,7 @@
       "operationalState": "PLAYED_TERMINAL",
       "canonical": {
         "status": "FT",
-        "statusType": null,
+        "statusType": "STATUS_FINAL",
         "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 2
@@ -1320,14 +1320,14 @@
       "homeTeam": "Smouha",
       "awayTeam": "National Bank Egypt",
       "kickoffUtc": "2026-11-24T15:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -1340,9 +1340,9 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "PENDING_VERIFIED_FINAL",
+        "reason": "played_terminal_requires_verified_final",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
@@ -1369,14 +1369,14 @@
       "homeTeam": "ZED",
       "awayTeam": "Abu Qir Semad",
       "kickoffUtc": "2026-11-24T15:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -1389,9 +1389,9 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "PENDING_VERIFIED_FINAL",
+        "reason": "played_terminal_requires_verified_final",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
@@ -2540,6 +2540,55 @@
       }
     },
     {
+      "canonicalId": "cid_engtrophy_fleetwood_leedsu21_20261124",
+      "leagueSlug": "eng.trophy",
+      "homeTeam": "Fleetwood",
+      "awayTeam": "Leeds U21",
+      "kickoffUtc": "2026-11-24T19:00:00.000Z",
+      "baseState": "PRE_KICKOFF_NON_PLAYED",
+      "operationalState": "NON_PLAYED_TERMINAL",
+      "canonical": {
+        "status": "STATUS_POSTPONED",
+        "statusType": "STATUS_POSTPONED",
+        "rawStatus": "STATUS_POSTPONED",
+        "scoreHome": null,
+        "scoreAway": null
+      },
+      "verifiedFinal": {
+        "present": false,
+        "accepted": false,
+        "reason": "verified_final_missing",
+        "verdict": null,
+        "dayKey": null,
+        "scoreHome": null,
+        "scoreAway": null,
+        "scoreParity": null
+      },
+      "decision": {
+        "status": "CONVERGED_NON_PLAYED_TERMINAL",
+        "reason": "explicit_nonplayed_terminal",
+        "operationallyClosed": true,
+        "historyEligible": false,
+        "scoredSettlementEligible": false,
+        "voidSettlementEligible": true,
+        "repairAuthorized": false
+      },
+      "downstream": {
+        "history": {
+          "observed": false,
+          "present": null
+        },
+        "settlement": {
+          "observed": false,
+          "state": null
+        },
+        "publication": {
+          "observed": true,
+          "present": true
+        }
+      }
+    },
+    {
       "canonicalId": "cid_engtrophy_oxfordunited_tottenhamhotspuru21_20261124",
       "leagueSlug": "eng.trophy",
       "homeTeam": "Oxford United",
@@ -2692,14 +2741,14 @@
       "homeTeam": "Gagra",
       "awayTeam": "Dinamo Tbilisi",
       "kickoffUtc": "2026-11-24T15:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -2712,9 +2761,9 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "PENDING_VERIFIED_FINAL",
+        "reason": "played_terminal_requires_verified_final",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
@@ -2741,12 +2790,12 @@
       "homeTeam": "NorthEast United FC",
       "awayTeam": "Sporting Club Delhi",
       "kickoffUtc": "2026-11-24T14:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
-        "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 1
       },
@@ -2761,9 +2810,9 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
-        "operationallyClosed": false,
+        "status": "PENDING_VERIFIED_FINAL",
+        "reason": "played_terminal_requires_verified_final",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
@@ -2794,7 +2843,7 @@
       "operationalState": "PLAYED_TERMINAL",
       "canonical": {
         "status": "FT",
-        "statusType": null,
+        "statusType": "STATUS_FINAL",
         "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 2,
         "scoreAway": 2
@@ -2843,7 +2892,7 @@
       "operationalState": "PLAYED_TERMINAL",
       "canonical": {
         "status": "FT",
-        "statusType": null,
+        "statusType": "STATUS_FINAL",
         "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 2,
         "scoreAway": 1
@@ -2986,14 +3035,14 @@
       "homeTeam": "Juve Stabia",
       "awayTeam": "Catanzaro",
       "kickoffUtc": "2026-11-24T18:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -3007,7 +3056,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -3329,14 +3378,14 @@
       "homeTeam": "Hajer",
       "awayTeam": "Al Taee",
       "kickoffUtc": "2026-11-24T14:30:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -3349,9 +3398,9 @@
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
+        "status": "PENDING_VERIFIED_FINAL",
+        "reason": "played_terminal_requires_verified_final",
+        "operationallyClosed": true,
         "historyEligible": false,
         "scoredSettlementEligible": false,
         "voidSettlementEligible": false,
@@ -3476,14 +3525,14 @@
       "homeTeam": "Durban City",
       "awayTeam": "Polokwane City FC",
       "kickoffUtc": "2026-11-24T17:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -3497,7 +3546,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -3525,14 +3574,14 @@
       "homeTeam": "Orlando Pirates",
       "awayTeam": "Golden Arrows",
       "kickoffUtc": "2026-11-24T17:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_HALFTIME",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -3546,7 +3595,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4407,14 +4456,14 @@
       "homeTeam": "Bodo/Glimt",
       "awayTeam": "LASK Linz",
       "kickoffUtc": "2026-11-24T17:45Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -4428,7 +4477,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4554,14 +4603,14 @@
       "homeTeam": "Galatasaray",
       "awayTeam": "Aston Villa",
       "kickoffUtc": "2026-11-24T17:45Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -4575,7 +4624,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4999,7 +5048,7 @@
       "operationalState": "PLAYED_TERMINAL",
       "canonical": {
         "status": "FT",
-        "statusType": null,
+        "statusType": "STATUS_FINAL",
         "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 3,
         "scoreAway": 2
@@ -5092,22 +5141,31 @@
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
     "conflictFixtureIds": [],
-    "pendingVerifiedFinalFixtureIds": []
+    "pendingVerifiedFinalFixtureIds": [
+      "cid_afcchampions_shababalahli_alqadsiah_20261124",
+      "cid_afccup_alseeb_alshorta_20261124",
+      "cid_bul2_fratria_yantragabrovo_20261124",
+      "cid_egy1_smouha_nationalbankegypt_20261124",
+      "cid_egy1_zed_abuqirsemad_20261124",
+      "cid_geo1_gagra_dinamotbilisi_20261124",
+      "cid_ind1_northeastunited_sportingdelhi_20261124",
+      "cid_ksa2_hajer_altaee_20261124"
+    ]
   },
   "downstream": {
     "historyObserved": false,
-    "settlementObserved": false,
+    "settlementObserved": true,
     "publicationObserved": true,
     "systemHealthObserved": true,
     "systemHealth": {
       "schema": "ai-matchlab.system-health-alerts.v1",
       "dayKey": "2026-11-24",
-      "generatedAt": "2026-11-24T16:15:20.277Z",
+      "generatedAt": "2026-11-24T18:36:51.778Z",
       "severity": "warning",
       "issueCounts": {
         "error": 0,
         "warning": 8,
-        "info": 11
+        "info": 12
       },
       "alert": false,
       "alertCounts": {
@@ -5115,13 +5173,44 @@
         "warning": 0,
         "info": 0
       },
-      "activeIssueCount": 19,
+      "activeIssueCount": 20,
       "actionableIssueCount": 8,
-      "newIssueCount": 0,
+      "newIssueCount": 1,
       "newActionableIssueCount": 0,
-      "resolvedIssueCount": 1,
+      "resolvedIssueCount": 0,
       "persistentIssueCount": 19,
       "activeIssues": [
+        {
+          "severity": "info",
+          "source": "manifest",
+          "type": "frozen_value_age_preserved",
+          "message": "Frozen Value artifact predates canonical updates and satisfies the frozen release contract.",
+          "details": {
+            "fixtures": 104,
+            "valuePicks": 3,
+            "valueSource": "canonical_fixtures",
+            "latestCanonicalUpdatedAt": "2026-11-24T18:18:41.719Z",
+            "valueArtifactAt": "2026-11-24T17:52:42.314Z",
+            "valueFreshAgainstCanonical": false,
+            "mode": "frozen_snapshot",
+            "frozenIdentityBound": true,
+            "frozenReleaseSafe": true,
+            "frozenPickCount": 3,
+            "orphanPickCount": 0,
+            "orphanPickIds": [],
+            "missingMatchIdPickCount": 0,
+            "missingMatchIdPickIndexes": [],
+            "dayBound": true,
+            "canonicalSourceBound": true,
+            "recoveryContractBound": false,
+            "recoveryPublishedUniverseBound": false,
+            "recoveryUniverseEvidenceSource": null,
+            "recoveryUniverseEvidenceCount": null,
+            "recoveryUniverseEvidenceHash": null,
+            "recoveryUniverseEvidencePlans": [],
+            "ok": true
+          }
+        },
         {
           "severity": "info",
           "source": "freshness-report",
@@ -5151,19 +5240,21 @@
               "currentAthensDay": "2026-11-24",
               "fixtureCount": 104,
               "frozenHash": "1631b01474ed0e90eb917ffb50dea4b398c267908b16cae3d18d34b8bf78e09a",
-              "currentHash": "a097f66501f89289c35a18ec090b6068ca5f62eae4d4e9eb36795aa5ecb8d9ec",
+              "currentHash": "55079c450ef8653a4f4040294ea24efb34abcd2702501255954449d84a55deaf",
               "strictFrozenParity": true,
               "membershipParity": false,
               "descriptorDrift": null,
               "publicationMembershipPreserved": true,
-              "authorizedShrink": true,
+              "authorizedShrink": false,
               "removedFixtureIds": [
                 "cid_engtrophy_fleetwoodtown_leedsunitedu21_20261124"
               ],
               "deferredCurrentFixtureIds": [],
-              "publishedOutsideFrozenFixtureIds": [],
+              "publishedOutsideFrozenFixtureIds": [
+                "cid_engtrophy_fleetwood_leedsu21_20261124"
+              ],
               "resolvedFrozenAliasMappings": [],
-              "removalEvidenceSource": "persisted_authoritative_prune_ledger"
+              "removalEvidenceSource": "full_current_universe_exact_membership"
             },
             "skipped": "artifact_missing_or_no_timestamp"
           }
@@ -5184,19 +5275,21 @@
               "currentAthensDay": "2026-11-24",
               "fixtureCount": 104,
               "frozenHash": "1631b01474ed0e90eb917ffb50dea4b398c267908b16cae3d18d34b8bf78e09a",
-              "currentHash": "a097f66501f89289c35a18ec090b6068ca5f62eae4d4e9eb36795aa5ecb8d9ec",
+              "currentHash": "55079c450ef8653a4f4040294ea24efb34abcd2702501255954449d84a55deaf",
               "strictFrozenParity": true,
               "membershipParity": false,
               "descriptorDrift": null,
               "publicationMembershipPreserved": true,
-              "authorizedShrink": true,
+              "authorizedShrink": false,
               "removedFixtureIds": [
                 "cid_engtrophy_fleetwoodtown_leedsunitedu21_20261124"
               ],
               "deferredCurrentFixtureIds": [],
-              "publishedOutsideFrozenFixtureIds": [],
+              "publishedOutsideFrozenFixtureIds": [
+                "cid_engtrophy_fleetwood_leedsu21_20261124"
+              ],
               "resolvedFrozenAliasMappings": [],
-              "removalEvidenceSource": "persisted_authoritative_prune_ledger"
+              "removalEvidenceSource": "full_current_universe_exact_membership"
             },
             "skipped": "artifact_missing_or_no_timestamp"
           }
@@ -5208,7 +5301,7 @@
           "message": "Global historical coverage has unresolved gaps or an unverified provider baseline.",
           "details": {
             "dayKey": "2026-11-24",
-            "gaps": 2422,
+            "gaps": 2424,
             "readErrors": 0,
             "expectedProviderBaseline": "NOT_VERIFIED",
             "artifact": "data/history-coverage/2026-11-24/after.json"
@@ -5308,7 +5401,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 24310,
+            "count": 24316,
             "informational": true
           }
         },
@@ -5376,10 +5469,10 @@
               "slv.1"
             ],
             "summary": {
-              "evidenceSlugCount": 20,
+              "evidenceSlugCount": 18,
               "admittedCount": 5,
               "pendingCount": 0,
-              "rejectedCount": 20,
+              "rejectedCount": 18,
               "alreadyDeclaredCount": 0
             }
           }
@@ -5398,14 +5491,12 @@
               "eng.w.1",
               "eng.w.fa",
               "eng.w.league_cup",
-              "esp.copa_de_la_reina",
               "esp.w.1",
               "fifa.world.u17",
               "fra.w.1",
               "ned.w.1",
               "nor.1.promotion.relegation",
               "swe.1.promotion.relegation",
-              "uefa.wchampions",
               "usa.ncaa.m.1",
               "usa.ncaa.w.1",
               "usa.nwsl",
@@ -5413,10 +5504,10 @@
               "usa.w.usl.1"
             ],
             "summary": {
-              "evidenceSlugCount": 20,
+              "evidenceSlugCount": 18,
               "admittedCount": 5,
               "pendingCount": 0,
-              "rejectedCount": 20,
+              "rejectedCount": 18,
               "alreadyDeclaredCount": 0
             }
           }
@@ -5460,7 +5551,7 @@
           "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
           "details": {
             "dayKey": "2026-11-24",
-            "count": 40,
+            "count": 41,
             "competitions": [
               {
                 "providerCompetitionId": "ptHQbUeo",
@@ -5515,9 +5606,10 @@
                 "providerCountry": "Bangladesh",
                 "providerName": "Federation Cup",
                 "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
+                "targetDayFixtureCount": 3,
                 "targetDaySourceIds": [
                   "OICcaaek",
+                  "OjIjLtI8",
                   "dpQ4cwQ1"
                 ]
               },
@@ -5829,6 +5921,18 @@
                   "juLXjHFi",
                   "t6yykzT6",
                   "tSxhvvWo"
+                ]
+              },
+              {
+                "providerCompetitionId": "8IKhJoog",
+                "providerPath": "/football/mauritania/ligue-1/",
+                "providerCountry": "Mauritania",
+                "providerName": "Ligue 1",
+                "reasonCode": "unmapped_provider_competition",
+                "targetDayFixtureCount": 2,
+                "targetDaySourceIds": [
+                  "hICAzUMF",
+                  "ph92xjh3"
                 ]
               },
               {
@@ -6106,7 +6210,7 @@
           "message": "Global historical coverage has unresolved gaps or an unverified provider baseline.",
           "details": {
             "dayKey": "2026-11-24",
-            "gaps": 2422,
+            "gaps": 2424,
             "readErrors": 0,
             "expectedProviderBaseline": "NOT_VERIFIED",
             "artifact": "data/history-coverage/2026-11-24/after.json"
@@ -6231,7 +6335,7 @@
           "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
           "details": {
             "dayKey": "2026-11-24",
-            "count": 40,
+            "count": 41,
             "competitions": [
               {
                 "providerCompetitionId": "ptHQbUeo",
@@ -6286,9 +6390,10 @@
                 "providerCountry": "Bangladesh",
                 "providerName": "Federation Cup",
                 "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
+                "targetDayFixtureCount": 3,
                 "targetDaySourceIds": [
                   "OICcaaek",
+                  "OjIjLtI8",
                   "dpQ4cwQ1"
                 ]
               },
@@ -6600,6 +6705,18 @@
                   "juLXjHFi",
                   "t6yykzT6",
                   "tSxhvvWo"
+                ]
+              },
+              {
+                "providerCompetitionId": "8IKhJoog",
+                "providerPath": "/football/mauritania/ligue-1/",
+                "providerCountry": "Mauritania",
+                "providerName": "Ligue 1",
+                "reasonCode": "unmapped_provider_competition",
+                "targetDayFixtureCount": 2,
+                "targetDaySourceIds": [
+                  "hICAzUMF",
+                  "ph92xjh3"
                 ]
               },
               {
@@ -6767,9 +6884,7 @@
           }
         }
       ],
-      "newIssues": [],
-      "newActionableIssues": [],
-      "resolvedIssues": [
+      "newIssues": [
         {
           "severity": "info",
           "source": "manifest",
@@ -6779,8 +6894,8 @@
             "fixtures": 104,
             "valuePicks": 3,
             "valueSource": "canonical_fixtures",
-            "latestCanonicalUpdatedAt": "2026-11-24T14:54:08.268Z",
-            "valueArtifactAt": "2026-11-24T03:28:33.142Z",
+            "latestCanonicalUpdatedAt": "2026-11-24T18:18:41.719Z",
+            "valueArtifactAt": "2026-11-24T17:52:42.314Z",
             "valueFreshAgainstCanonical": false,
             "mode": "frozen_snapshot",
             "frozenIdentityBound": true,
@@ -6802,6 +6917,8 @@
           }
         }
       ],
+      "newActionableIssues": [],
+      "resolvedIssues": [],
       "persistentIssues": [
         {
           "severity": "info",
@@ -6832,19 +6949,21 @@
               "currentAthensDay": "2026-11-24",
               "fixtureCount": 104,
               "frozenHash": "1631b01474ed0e90eb917ffb50dea4b398c267908b16cae3d18d34b8bf78e09a",
-              "currentHash": "a097f66501f89289c35a18ec090b6068ca5f62eae4d4e9eb36795aa5ecb8d9ec",
+              "currentHash": "55079c450ef8653a4f4040294ea24efb34abcd2702501255954449d84a55deaf",
               "strictFrozenParity": true,
               "membershipParity": false,
               "descriptorDrift": null,
               "publicationMembershipPreserved": true,
-              "authorizedShrink": true,
+              "authorizedShrink": false,
               "removedFixtureIds": [
                 "cid_engtrophy_fleetwoodtown_leedsunitedu21_20261124"
               ],
               "deferredCurrentFixtureIds": [],
-              "publishedOutsideFrozenFixtureIds": [],
+              "publishedOutsideFrozenFixtureIds": [
+                "cid_engtrophy_fleetwood_leedsu21_20261124"
+              ],
               "resolvedFrozenAliasMappings": [],
-              "removalEvidenceSource": "persisted_authoritative_prune_ledger"
+              "removalEvidenceSource": "full_current_universe_exact_membership"
             },
             "skipped": "artifact_missing_or_no_timestamp"
           }
@@ -6865,19 +6984,21 @@
               "currentAthensDay": "2026-11-24",
               "fixtureCount": 104,
               "frozenHash": "1631b01474ed0e90eb917ffb50dea4b398c267908b16cae3d18d34b8bf78e09a",
-              "currentHash": "a097f66501f89289c35a18ec090b6068ca5f62eae4d4e9eb36795aa5ecb8d9ec",
+              "currentHash": "55079c450ef8653a4f4040294ea24efb34abcd2702501255954449d84a55deaf",
               "strictFrozenParity": true,
               "membershipParity": false,
               "descriptorDrift": null,
               "publicationMembershipPreserved": true,
-              "authorizedShrink": true,
+              "authorizedShrink": false,
               "removedFixtureIds": [
                 "cid_engtrophy_fleetwoodtown_leedsunitedu21_20261124"
               ],
               "deferredCurrentFixtureIds": [],
-              "publishedOutsideFrozenFixtureIds": [],
+              "publishedOutsideFrozenFixtureIds": [
+                "cid_engtrophy_fleetwood_leedsu21_20261124"
+              ],
               "resolvedFrozenAliasMappings": [],
-              "removalEvidenceSource": "persisted_authoritative_prune_ledger"
+              "removalEvidenceSource": "full_current_universe_exact_membership"
             },
             "skipped": "artifact_missing_or_no_timestamp"
           }
@@ -6889,7 +7010,7 @@
           "message": "Global historical coverage has unresolved gaps or an unverified provider baseline.",
           "details": {
             "dayKey": "2026-11-24",
-            "gaps": 2422,
+            "gaps": 2424,
             "readErrors": 0,
             "expectedProviderBaseline": "NOT_VERIFIED",
             "artifact": "data/history-coverage/2026-11-24/after.json"
@@ -6989,7 +7110,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 24310,
+            "count": 24316,
             "informational": true
           }
         },
@@ -7057,10 +7178,10 @@
               "slv.1"
             ],
             "summary": {
-              "evidenceSlugCount": 20,
+              "evidenceSlugCount": 18,
               "admittedCount": 5,
               "pendingCount": 0,
-              "rejectedCount": 20,
+              "rejectedCount": 18,
               "alreadyDeclaredCount": 0
             }
           }
@@ -7079,14 +7200,12 @@
               "eng.w.1",
               "eng.w.fa",
               "eng.w.league_cup",
-              "esp.copa_de_la_reina",
               "esp.w.1",
               "fifa.world.u17",
               "fra.w.1",
               "ned.w.1",
               "nor.1.promotion.relegation",
               "swe.1.promotion.relegation",
-              "uefa.wchampions",
               "usa.ncaa.m.1",
               "usa.ncaa.w.1",
               "usa.nwsl",
@@ -7094,10 +7213,10 @@
               "usa.w.usl.1"
             ],
             "summary": {
-              "evidenceSlugCount": 20,
+              "evidenceSlugCount": 18,
               "admittedCount": 5,
               "pendingCount": 0,
-              "rejectedCount": 20,
+              "rejectedCount": 18,
               "alreadyDeclaredCount": 0
             }
           }
@@ -7141,7 +7260,7 @@
           "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
           "details": {
             "dayKey": "2026-11-24",
-            "count": 40,
+            "count": 41,
             "competitions": [
               {
                 "providerCompetitionId": "ptHQbUeo",
@@ -7196,9 +7315,10 @@
                 "providerCountry": "Bangladesh",
                 "providerName": "Federation Cup",
                 "reasonCode": "unmapped_provider_competition",
-                "targetDayFixtureCount": 2,
+                "targetDayFixtureCount": 3,
                 "targetDaySourceIds": [
                   "OICcaaek",
+                  "OjIjLtI8",
                   "dpQ4cwQ1"
                 ]
               },
@@ -7510,6 +7630,18 @@
                   "juLXjHFi",
                   "t6yykzT6",
                   "tSxhvvWo"
+                ]
+              },
+              {
+                "providerCompetitionId": "8IKhJoog",
+                "providerPath": "/football/mauritania/ligue-1/",
+                "providerCountry": "Mauritania",
+                "providerName": "Ligue 1",
+                "reasonCode": "unmapped_provider_competition",
+                "targetDayFixtureCount": 2,
+                "targetDaySourceIds": [
+                  "hICAzUMF",
+                  "ph92xjh3"
                 ]
               },
               {
@@ -7781,8 +7913,8 @@
       ]
     },
     "convergence": {
-      "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "b5fe5e8842ed7ffc273dfcc42484bc37a2900f28a4c89a0868512d2ee00e5ed8",
+      "overallState": "INCOMPLETE",
+      "truthFingerprint": "bbdd90e454185c8490cf525e969e6430e7e20517f54a9656a3e00c0f4c1c237b",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -7829,13 +7961,13 @@
         "structuralIssues": []
       },
       "settlement": {
-        "state": "NOT_OBSERVED",
-        "observed": false,
+        "state": "PRESENT_UNRESOLVED",
+        "observed": true,
         "bundlePath": "data/football-truth/_diagnostics/value-settlement-daily-cycle/2026-11-24.four-plan-settlement-bundle.json",
         "aggregateSummaryPath": "data/football-truth/_settlement-summaries/2026-11-24.value-settlement-summary.json",
-        "totalRows": 0,
+        "totalRows": 6,
         "settledRows": 0,
-        "unresolvedRows": 0,
+        "unresolvedRows": 6,
         "winRows": 0,
         "lossRows": 0,
         "voidRows": 0,
@@ -7849,8 +7981,8 @@
         "state": "PRESENT_CONVERGED",
         "observed": true,
         "sourcePath": "data/deploy-snapshots/2026-11-24/fixtures.json",
-        "canonicalRows": 103,
-        "publishedRows": 103,
+        "canonicalRows": 104,
+        "publishedRows": 104,
         "missingCanonicalFixtureIds": [],
         "extraPublishedFixtureIds": [],
         "duplicatePublishedFixtureIds": []
@@ -7861,7 +7993,7 @@
         "sourcePath": "data/system-health/2026-11-24.json",
         "severity": "warning",
         "alert": false,
-        "activeIssueCount": 19,
+        "activeIssueCount": 20,
         "actionableIssueCount": 8
       },
       "authority": {

@@ -1,12 +1,12 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-11-24",
-  "generatedAt": "2026-11-24T16:15:20.277Z",
+  "generatedAt": "2026-11-24T18:36:51.778Z",
   "severity": "warning",
   "issueCounts": {
     "error": 0,
     "warning": 8,
-    "info": 11
+    "info": 12
   },
   "alert": false,
   "alertCounts": {
@@ -14,13 +14,44 @@
     "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 19,
+  "activeIssueCount": 20,
   "actionableIssueCount": 8,
-  "newIssueCount": 0,
+  "newIssueCount": 1,
   "newActionableIssueCount": 0,
-  "resolvedIssueCount": 1,
+  "resolvedIssueCount": 0,
   "persistentIssueCount": 19,
   "activeIssues": [
+    {
+      "severity": "info",
+      "source": "manifest",
+      "type": "frozen_value_age_preserved",
+      "message": "Frozen Value artifact predates canonical updates and satisfies the frozen release contract.",
+      "details": {
+        "fixtures": 104,
+        "valuePicks": 3,
+        "valueSource": "canonical_fixtures",
+        "latestCanonicalUpdatedAt": "2026-11-24T18:18:41.719Z",
+        "valueArtifactAt": "2026-11-24T17:52:42.314Z",
+        "valueFreshAgainstCanonical": false,
+        "mode": "frozen_snapshot",
+        "frozenIdentityBound": true,
+        "frozenReleaseSafe": true,
+        "frozenPickCount": 3,
+        "orphanPickCount": 0,
+        "orphanPickIds": [],
+        "missingMatchIdPickCount": 0,
+        "missingMatchIdPickIndexes": [],
+        "dayBound": true,
+        "canonicalSourceBound": true,
+        "recoveryContractBound": false,
+        "recoveryPublishedUniverseBound": false,
+        "recoveryUniverseEvidenceSource": null,
+        "recoveryUniverseEvidenceCount": null,
+        "recoveryUniverseEvidenceHash": null,
+        "recoveryUniverseEvidencePlans": [],
+        "ok": true
+      }
+    },
     {
       "severity": "info",
       "source": "freshness-report",
@@ -50,19 +81,21 @@
           "currentAthensDay": "2026-11-24",
           "fixtureCount": 104,
           "frozenHash": "1631b01474ed0e90eb917ffb50dea4b398c267908b16cae3d18d34b8bf78e09a",
-          "currentHash": "a097f66501f89289c35a18ec090b6068ca5f62eae4d4e9eb36795aa5ecb8d9ec",
+          "currentHash": "55079c450ef8653a4f4040294ea24efb34abcd2702501255954449d84a55deaf",
           "strictFrozenParity": true,
           "membershipParity": false,
           "descriptorDrift": null,
           "publicationMembershipPreserved": true,
-          "authorizedShrink": true,
+          "authorizedShrink": false,
           "removedFixtureIds": [
             "cid_engtrophy_fleetwoodtown_leedsunitedu21_20261124"
           ],
           "deferredCurrentFixtureIds": [],
-          "publishedOutsideFrozenFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [
+            "cid_engtrophy_fleetwood_leedsu21_20261124"
+          ],
           "resolvedFrozenAliasMappings": [],
-          "removalEvidenceSource": "persisted_authoritative_prune_ledger"
+          "removalEvidenceSource": "full_current_universe_exact_membership"
         },
         "skipped": "artifact_missing_or_no_timestamp"
       }
@@ -83,19 +116,21 @@
           "currentAthensDay": "2026-11-24",
           "fixtureCount": 104,
           "frozenHash": "1631b01474ed0e90eb917ffb50dea4b398c267908b16cae3d18d34b8bf78e09a",
-          "currentHash": "a097f66501f89289c35a18ec090b6068ca5f62eae4d4e9eb36795aa5ecb8d9ec",
+          "currentHash": "55079c450ef8653a4f4040294ea24efb34abcd2702501255954449d84a55deaf",
           "strictFrozenParity": true,
           "membershipParity": false,
           "descriptorDrift": null,
           "publicationMembershipPreserved": true,
-          "authorizedShrink": true,
+          "authorizedShrink": false,
           "removedFixtureIds": [
             "cid_engtrophy_fleetwoodtown_leedsunitedu21_20261124"
           ],
           "deferredCurrentFixtureIds": [],
-          "publishedOutsideFrozenFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [
+            "cid_engtrophy_fleetwood_leedsu21_20261124"
+          ],
           "resolvedFrozenAliasMappings": [],
-          "removalEvidenceSource": "persisted_authoritative_prune_ledger"
+          "removalEvidenceSource": "full_current_universe_exact_membership"
         },
         "skipped": "artifact_missing_or_no_timestamp"
       }
@@ -107,7 +142,7 @@
       "message": "Global historical coverage has unresolved gaps or an unverified provider baseline.",
       "details": {
         "dayKey": "2026-11-24",
-        "gaps": 2422,
+        "gaps": 2424,
         "readErrors": 0,
         "expectedProviderBaseline": "NOT_VERIFIED",
         "artifact": "data/history-coverage/2026-11-24/after.json"
@@ -207,7 +242,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 24310,
+        "count": 24316,
         "informational": true
       }
     },
@@ -275,10 +310,10 @@
           "slv.1"
         ],
         "summary": {
-          "evidenceSlugCount": 20,
+          "evidenceSlugCount": 18,
           "admittedCount": 5,
           "pendingCount": 0,
-          "rejectedCount": 20,
+          "rejectedCount": 18,
           "alreadyDeclaredCount": 0
         }
       }
@@ -297,14 +332,12 @@
           "eng.w.1",
           "eng.w.fa",
           "eng.w.league_cup",
-          "esp.copa_de_la_reina",
           "esp.w.1",
           "fifa.world.u17",
           "fra.w.1",
           "ned.w.1",
           "nor.1.promotion.relegation",
           "swe.1.promotion.relegation",
-          "uefa.wchampions",
           "usa.ncaa.m.1",
           "usa.ncaa.w.1",
           "usa.nwsl",
@@ -312,10 +345,10 @@
           "usa.w.usl.1"
         ],
         "summary": {
-          "evidenceSlugCount": 20,
+          "evidenceSlugCount": 18,
           "admittedCount": 5,
           "pendingCount": 0,
-          "rejectedCount": 20,
+          "rejectedCount": 18,
           "alreadyDeclaredCount": 0
         }
       }
@@ -359,7 +392,7 @@
       "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
       "details": {
         "dayKey": "2026-11-24",
-        "count": 40,
+        "count": 41,
         "competitions": [
           {
             "providerCompetitionId": "ptHQbUeo",
@@ -414,9 +447,10 @@
             "providerCountry": "Bangladesh",
             "providerName": "Federation Cup",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
+            "targetDayFixtureCount": 3,
             "targetDaySourceIds": [
               "OICcaaek",
+              "OjIjLtI8",
               "dpQ4cwQ1"
             ]
           },
@@ -728,6 +762,18 @@
               "juLXjHFi",
               "t6yykzT6",
               "tSxhvvWo"
+            ]
+          },
+          {
+            "providerCompetitionId": "8IKhJoog",
+            "providerPath": "/football/mauritania/ligue-1/",
+            "providerCountry": "Mauritania",
+            "providerName": "Ligue 1",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "hICAzUMF",
+              "ph92xjh3"
             ]
           },
           {
@@ -1005,7 +1051,7 @@
       "message": "Global historical coverage has unresolved gaps or an unverified provider baseline.",
       "details": {
         "dayKey": "2026-11-24",
-        "gaps": 2422,
+        "gaps": 2424,
         "readErrors": 0,
         "expectedProviderBaseline": "NOT_VERIFIED",
         "artifact": "data/history-coverage/2026-11-24/after.json"
@@ -1130,7 +1176,7 @@
       "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
       "details": {
         "dayKey": "2026-11-24",
-        "count": 40,
+        "count": 41,
         "competitions": [
           {
             "providerCompetitionId": "ptHQbUeo",
@@ -1185,9 +1231,10 @@
             "providerCountry": "Bangladesh",
             "providerName": "Federation Cup",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
+            "targetDayFixtureCount": 3,
             "targetDaySourceIds": [
               "OICcaaek",
+              "OjIjLtI8",
               "dpQ4cwQ1"
             ]
           },
@@ -1499,6 +1546,18 @@
               "juLXjHFi",
               "t6yykzT6",
               "tSxhvvWo"
+            ]
+          },
+          {
+            "providerCompetitionId": "8IKhJoog",
+            "providerPath": "/football/mauritania/ligue-1/",
+            "providerCountry": "Mauritania",
+            "providerName": "Ligue 1",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "hICAzUMF",
+              "ph92xjh3"
             ]
           },
           {
@@ -1666,9 +1725,7 @@
       }
     }
   ],
-  "newIssues": [],
-  "newActionableIssues": [],
-  "resolvedIssues": [
+  "newIssues": [
     {
       "severity": "info",
       "source": "manifest",
@@ -1678,8 +1735,8 @@
         "fixtures": 104,
         "valuePicks": 3,
         "valueSource": "canonical_fixtures",
-        "latestCanonicalUpdatedAt": "2026-11-24T14:54:08.268Z",
-        "valueArtifactAt": "2026-11-24T03:28:33.142Z",
+        "latestCanonicalUpdatedAt": "2026-11-24T18:18:41.719Z",
+        "valueArtifactAt": "2026-11-24T17:52:42.314Z",
         "valueFreshAgainstCanonical": false,
         "mode": "frozen_snapshot",
         "frozenIdentityBound": true,
@@ -1701,6 +1758,8 @@
       }
     }
   ],
+  "newActionableIssues": [],
+  "resolvedIssues": [],
   "persistentIssues": [
     {
       "severity": "info",
@@ -1731,19 +1790,21 @@
           "currentAthensDay": "2026-11-24",
           "fixtureCount": 104,
           "frozenHash": "1631b01474ed0e90eb917ffb50dea4b398c267908b16cae3d18d34b8bf78e09a",
-          "currentHash": "a097f66501f89289c35a18ec090b6068ca5f62eae4d4e9eb36795aa5ecb8d9ec",
+          "currentHash": "55079c450ef8653a4f4040294ea24efb34abcd2702501255954449d84a55deaf",
           "strictFrozenParity": true,
           "membershipParity": false,
           "descriptorDrift": null,
           "publicationMembershipPreserved": true,
-          "authorizedShrink": true,
+          "authorizedShrink": false,
           "removedFixtureIds": [
             "cid_engtrophy_fleetwoodtown_leedsunitedu21_20261124"
           ],
           "deferredCurrentFixtureIds": [],
-          "publishedOutsideFrozenFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [
+            "cid_engtrophy_fleetwood_leedsu21_20261124"
+          ],
           "resolvedFrozenAliasMappings": [],
-          "removalEvidenceSource": "persisted_authoritative_prune_ledger"
+          "removalEvidenceSource": "full_current_universe_exact_membership"
         },
         "skipped": "artifact_missing_or_no_timestamp"
       }
@@ -1764,19 +1825,21 @@
           "currentAthensDay": "2026-11-24",
           "fixtureCount": 104,
           "frozenHash": "1631b01474ed0e90eb917ffb50dea4b398c267908b16cae3d18d34b8bf78e09a",
-          "currentHash": "a097f66501f89289c35a18ec090b6068ca5f62eae4d4e9eb36795aa5ecb8d9ec",
+          "currentHash": "55079c450ef8653a4f4040294ea24efb34abcd2702501255954449d84a55deaf",
           "strictFrozenParity": true,
           "membershipParity": false,
           "descriptorDrift": null,
           "publicationMembershipPreserved": true,
-          "authorizedShrink": true,
+          "authorizedShrink": false,
           "removedFixtureIds": [
             "cid_engtrophy_fleetwoodtown_leedsunitedu21_20261124"
           ],
           "deferredCurrentFixtureIds": [],
-          "publishedOutsideFrozenFixtureIds": [],
+          "publishedOutsideFrozenFixtureIds": [
+            "cid_engtrophy_fleetwood_leedsu21_20261124"
+          ],
           "resolvedFrozenAliasMappings": [],
-          "removalEvidenceSource": "persisted_authoritative_prune_ledger"
+          "removalEvidenceSource": "full_current_universe_exact_membership"
         },
         "skipped": "artifact_missing_or_no_timestamp"
       }
@@ -1788,7 +1851,7 @@
       "message": "Global historical coverage has unresolved gaps or an unverified provider baseline.",
       "details": {
         "dayKey": "2026-11-24",
-        "gaps": 2422,
+        "gaps": 2424,
         "readErrors": 0,
         "expectedProviderBaseline": "NOT_VERIFIED",
         "artifact": "data/history-coverage/2026-11-24/after.json"
@@ -1888,7 +1951,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 24310,
+        "count": 24316,
         "informational": true
       }
     },
@@ -1956,10 +2019,10 @@
           "slv.1"
         ],
         "summary": {
-          "evidenceSlugCount": 20,
+          "evidenceSlugCount": 18,
           "admittedCount": 5,
           "pendingCount": 0,
-          "rejectedCount": 20,
+          "rejectedCount": 18,
           "alreadyDeclaredCount": 0
         }
       }
@@ -1978,14 +2041,12 @@
           "eng.w.1",
           "eng.w.fa",
           "eng.w.league_cup",
-          "esp.copa_de_la_reina",
           "esp.w.1",
           "fifa.world.u17",
           "fra.w.1",
           "ned.w.1",
           "nor.1.promotion.relegation",
           "swe.1.promotion.relegation",
-          "uefa.wchampions",
           "usa.ncaa.m.1",
           "usa.ncaa.w.1",
           "usa.nwsl",
@@ -1993,10 +2054,10 @@
           "usa.w.usl.1"
         ],
         "summary": {
-          "evidenceSlugCount": 20,
+          "evidenceSlugCount": 18,
           "admittedCount": 5,
           "pendingCount": 0,
-          "rejectedCount": 20,
+          "rejectedCount": 18,
           "alreadyDeclaredCount": 0
         }
       }
@@ -2040,7 +2101,7 @@
       "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
       "details": {
         "dayKey": "2026-11-24",
-        "count": 40,
+        "count": 41,
         "competitions": [
           {
             "providerCompetitionId": "ptHQbUeo",
@@ -2095,9 +2156,10 @@
             "providerCountry": "Bangladesh",
             "providerName": "Federation Cup",
             "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
+            "targetDayFixtureCount": 3,
             "targetDaySourceIds": [
               "OICcaaek",
+              "OjIjLtI8",
               "dpQ4cwQ1"
             ]
           },
@@ -2409,6 +2471,18 @@
               "juLXjHFi",
               "t6yykzT6",
               "tSxhvvWo"
+            ]
+          },
+          {
+            "providerCompetitionId": "8IKhJoog",
+            "providerPath": "/football/mauritania/ligue-1/",
+            "providerCountry": "Mauritania",
+            "providerName": "Ligue 1",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "hICAzUMF",
+              "ph92xjh3"
             ]
           },
           {
