@@ -59,7 +59,7 @@ test("unknown or forged source marker fails closed",()=>fixture(f=>{
 test("mutation of original Daily source blocks previously captured journal",()=>fixture(f=>{
   f.save([f.event("provider-competition-discovery","start")]);
   fs.appendFileSync(f.src,"\n// changed producer bytes\n");
-  assert.throws(()=>audit(f),/stage20_journal_cli_audit_denied:stage20_journal_source_sha_mismatch/);
+  assert.throws(()=>audit(f),/stage20_journal_cli_audit_denied:stage20_journal_event_binding_invalid/);
 }));
 test("symlinked journal cannot be read",()=>fixture(f=>{
   const outside=path.join(f.root,"outside.jsonl");
