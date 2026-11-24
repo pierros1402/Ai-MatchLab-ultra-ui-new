@@ -46,6 +46,14 @@ function allowed(p, prefixes, dayKey) {
 }
 function zeroList(bytes) { return bytes.toString("utf8").split("\0").filter(Boolean); }
 function state(root, prefixes, dayKey) {
+  // A direct Stage20 data-family capture must not silently omit ignored files.
+  // The wrapper performs its own admission, but the raw writer must also
+  // fail closed if bypassed. Never print ignored file names.
+  if(prefixes.some(prefix=>prefix.startsWith("data/"))) {
+    const ignored=zeroList(git(root,"ls-files","--others","--ignored",
+      "--exclude-standard","-z","--","data/"));
+    check(ignored.length===0,"resume_delta_ignored_data_unaccounted");
+  }
   const tracked = zeroList(git(root, "diff", "--no-renames", "--name-status", "-z", "HEAD", "--"));
   const mutations = new Map();
   for (let i = 0; i < tracked.length; i += 2) {
