@@ -8,7 +8,8 @@ import {STAGE20_REPLAY_PARITY_SCHEMA} from "./daily-resume-stage20-replay-parity
 const hash=o=>crypto.createHash("sha256").update(JSON.stringify(o)).digest("hex");
 const commit="a".repeat(40),dayKey="2026-11-24";
 const makeInventory=(rows)=>{
-  const files=rows.map(([path,bytes,value])=>({path,bytes,sha256:hash(value)}));
+  const files=rows.map(([path,bytes,value])=>({path,bytes,sha256:hash(value)}))
+    .sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);
   const body={schema:COMPLETE_DATA_INVENTORY_SCHEMA,dayKey,sourceCommit:commit,
     root:"data/",fileCount:files.length,totalBytes:files.reduce((s,x)=>s+x.bytes,0),
     files,includesIgnored:true,includesUntracked:true,includesTracked:true,
@@ -88,4 +89,30 @@ test("parity mismatch or unverified sandbox denies",()=>{
 test("missing evidence and malformed run id deny",()=>{
   assert.equal(admit({}).evidenceQualified,false);
   assert.equal(admit({...make(),runId:"0"}).evidenceQualified,false);
+});
+
+test("unapproved research cache output rejects otherwise well-shaped completion receipt",()=>{
+  const a=make();
+  a.postInventory=makeInventory([
+    ["data/value/a.json",2,"b"],
+    ["data/research-cache/unknown.json",3,"c"]
+  ]);
+  assert.equal(admit(a).reason,"stage20_completion_delta_path_policy_denied");
+});
+test("secrets and noncanonical detail paths cannot enter completion receipt",()=>{
+  for(const p of ["data/value/secret.json",
+    "data/details/2026-11-24/noncanonical.json",
+    "data/value/unknown.exe"]){
+    const a=make();
+    a.postInventory=makeInventory([
+      ["data/value/a.json",2,"b"],
+      [p,3,"c"]
+    ]);
+    assert.equal(admit(a).reason,"stage20_completion_delta_path_policy_denied");
+  }
+});
+test("empty physical delta is not a captured Stage20 checkpoint",()=>{
+  const a=make();
+  a.postInventory=pre;
+  assert.equal(admit(a).reason,"stage20_completion_delta_path_policy_denied");
 });
