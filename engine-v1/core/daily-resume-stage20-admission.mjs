@@ -29,7 +29,7 @@ const FAMILIES = Object.freeze([
 ]);
 const EXT = /\.(json|jsonl|ndjson|csv)$/i;
 const SECRET = /(^|[._/-])(secret|credential|password|token|private[-_]?key|\.env)([._/-]|$)/i;
-const KEY = /^(\\d{4})-(\\d{2})-(\\d{2})$/;
+const KEY = /^(\d{4})-(\d{2})-(\d{2})$/;
 function validDayKey(value) {
   const match = typeof value === "string" ? KEY.exec(value) : null;
   if (!match) return false;
