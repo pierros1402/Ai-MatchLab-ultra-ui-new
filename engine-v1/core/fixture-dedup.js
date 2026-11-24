@@ -425,6 +425,24 @@ export function dedupeLeagueDayFixtures(rows, { slug, identityResolver = null } 
     }
 
     normalized.matchId = canonicalId;
+    // Reviewed exact occurrence: the 23 Nov committed prebuild bound both
+    // ESPN 401906325 and Flashscore fR49Kr8C to this fixture (dd6966bd).
+    // The later Flashscore-only acquisition lost the reverse canonical alias.
+    // Restore lineage, not fixture membership or frozen predictions.
+    const oldId = "cid_engtrophy_fleetwoodtown_leedsunitedu21_20261124";
+    if (
+      leagueSlug === "eng.trophy" &&
+      canonicalId === "cid_engtrophy_fleetwood_leedsu21_20261124" &&
+      row.dayKey === "2026-11-24" &&
+      Date.parse(row.kickoffUtc) === Date.parse("2026-11-24T19:00:00Z") &&
+      providerIdentityMap(row).flashscore === "fR49Kr8C" &&
+      !out.some(other => other !== row &&
+        canonicalIdentityAliases(other).has(oldId))
+    ) {
+      normalized.canonicalAliases = [...new Set([
+        ...canonicalIdentityAliases(row), oldId
+      ])].filter(id => id !== canonicalId).sort();
+    }
     return normalized;
   });
 

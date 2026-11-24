@@ -30,3 +30,28 @@ test('a finalized contradictory club identity still vetoes the Celta rename',()=
   const identityResolver={resolveTeamReference:({alias})=>({ok:true,globalClubId:alias.includes('Fortuna')?'conflicting':'reserve-club'})};
   assert.equal(sameTeamName('esp.2','RC Celta Fortuna','Celta Vigo B',{identityResolver}),false);
 });
+
+test('reviewed Fleetwood provider rollover preserves frozen canonical lineage only for exact occurrence',()=>{
+  const oldId='cid_engtrophy_fleetwoodtown_leedsunitedu21_20261124';
+  const row={canonicalId:'cid_engtrophy_fleetwood_leedsu21_20261124',source:'flashscore',sourceId:'fR49Kr8C',providerIds:{flashscore:'fR49Kr8C'},homeTeam:'Fleetwood',awayTeam:'Leeds U21',leagueSlug:'eng.trophy',dayKey:'2026-11-24',kickoffUtc:'2026-11-24T19:00:00Z',status:'STATUS_POSTPONED'};
+  row.matchId=row.canonicalId;
+  const before=JSON.stringify(row);
+  const result=dedupeLeagueDayFixtures([row],{slug:'eng.trophy'}).rows[0];
+  assert.deepEqual(result.canonicalAliases,[oldId]);
+  assert.equal(result.canonicalId,row.canonicalId);
+  assert.equal(result.status,row.status);
+  assert.equal(JSON.stringify(row),before);
+  assert.deepEqual(dedupeLeagueDayFixtures([result],{slug:'eng.trophy'}).rows,[result]);
+  for(const change of [
+    {sourceId:'different',providerIds:{flashscore:'different'}},
+    {kickoffUtc:'2026-11-24T20:00:00Z'},
+    {leagueSlug:'eng.2'}
+  ]){
+    const candidate={...row,...change};
+    assert.equal(dedupeLeagueDayFixtures([candidate],{slug:candidate.leagueSlug}).rows[0].canonicalAliases,undefined);
+  }
+  const collision={...row,canonicalId:oldId,matchId:oldId,sourceId:'other',providerIds:{flashscore:'other'}};
+  const collided=dedupeLeagueDayFixtures([row,collision],{slug:'eng.trophy'}).rows;
+  assert.equal(collided.length,2);
+  assert.equal(collided.find(x=>x.canonicalId===row.canonicalId).canonicalAliases,undefined);
+});
