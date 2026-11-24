@@ -185,3 +185,28 @@ test("archived manifests cannot inject newly denied Stage20 paths even with reco
   fs.writeFileSync(manifestPath,JSON.stringify(doc));
   assert.equal(inspectDailyWorktreeDelta(f.archive,options).ok,false);
 },false));
+
+test("direct data archive denies ignored physical output even when all visible delta paths are allowed",()=>use(f=>{
+  fs.writeFileSync(path.join(f.repo,".gitignore"),"data/value/ignored.json\n");
+  const dir=path.join(f.repo,"data/value");
+  fs.mkdirSync(dir,{recursive:true});
+  fs.writeFileSync(path.join(dir,"visible.json"),"{}");
+  fs.writeFileSync(path.join(dir,"ignored.json"),"{}");
+  const options={...f.options,allowedPrefixes:["data/value/"]};
+  assert.throws(()=>captureDailyWorktreeDelta(f.repo,f.archive,options),
+    /resume_delta_ignored_data_unaccounted/);
+  assert.equal(fs.existsSync(f.archive),false);
+},false));
+test("ignored outputs are rejected even when the ignored path is outside the approved family",()=>use(f=>{
+  fs.writeFileSync(path.join(f.repo,".gitignore"),"data/research-cache/\n");
+  const excluded=path.join(f.repo,"data/research-cache");
+  fs.mkdirSync(excluded,{recursive:true});
+  fs.writeFileSync(path.join(excluded,"hidden.json"),"{}");
+  const allowedDir=path.join(f.repo,"data/value");
+  fs.mkdirSync(allowedDir,{recursive:true});
+  fs.writeFileSync(path.join(allowedDir,"visible.json"),"{}");
+  assert.throws(()=>captureDailyWorktreeDelta(f.repo,f.archive,{
+    ...f.options,allowedPrefixes:["data/value/"]}),
+    /resume_delta_ignored_data_unaccounted/);
+  assert.equal(fs.existsSync(f.archive),false);
+},false));
