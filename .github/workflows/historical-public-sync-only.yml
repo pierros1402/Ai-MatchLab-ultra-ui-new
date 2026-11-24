@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
-      group: ai-matchlab-data-writer
+      group: ${{ github.event_name == 'pull_request' && format('historical-public-sync-pr-{0}', github.event.pull_request.number) || 'ai-matchlab-data-writer' }}
       queue: max
       cancel-in-progress: false
     steps:
