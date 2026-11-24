@@ -1,0 +1,27 @@
+name: P0 Stage20 observed delta binding
+on:
+  pull_request:
+    paths:
+      - 'engine-v1/jobs/bind-observed-stage20-delta.mjs'
+      - 'engine-v1/jobs/observe-stage20-data-inventory.mjs'
+      - 'engine-v1/core/daily-resume-*.mjs'
+      - '.github/workflows/p0-stage20-observed-delta-binding.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            engine-v1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: |
+          node --check engine-v1/jobs/bind-observed-stage20-delta.mjs
+          node --test engine-v1/core/daily-resume-observed-delta-binding.test.mjs engine-v1/core/daily-resume-stage20-integrated-e2e.test.mjs engine-v1/core/daily-resume-prepost-isolated-replay.test.mjs
+          git diff --exit-code HEAD
