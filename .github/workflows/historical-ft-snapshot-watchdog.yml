@@ -1,0 +1,69 @@
+name: Historical verified FT snapshot watchdog
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/historical-ft-snapshot-watchdog.yml'
+      - 'tools/check-historical-ft-snapshot-drift.mjs'
+      - 'tools/check-historical-ft-snapshot-drift.test.mjs'
+  workflow_dispatch:
+  schedule:
+    # Watch the most recent two Athens calendar days without rebuilding the full Daily.
+    # Intraday already has the exclusive data-writer admission and release parity gates.
+    - cron: "17 */2 * * *"
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: ai-matchlab-historical-ft-watchdog
+  # Supersede obsolete PR checks; retain non-cancelling production monitoring.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  inspect-and-dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout immutable starting point
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout: |
+            tools
+            data/final-results
+            data/deploy-snapshots
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Verify watchdog regression controls
+        run: node --test tools/check-historical-ft-snapshot-drift.test.mjs
+
+      - name: Compare verified prior FT with published snapshots
+        id: inspect
+        shell: bash
+        run: |
+          set -euo pipefail
+          TODAY="$(TZ=Europe/Athens date +%F)"
+          node tools/check-historical-ft-snapshot-drift.mjs "$TODAY" >> "$GITHUB_OUTPUT"
+
+      - name: Request existing guarded intraday reconciliation
+        if: github.event_name != 'pull_request' && steps.inspect.outputs.target_day != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_DAY: ${{ steps.inspect.outputs.target_day }}
+        run: |
+          set -euo pipefail
+          case "$TARGET_DAY" in
+            ????-??-??) ;;
+            *) echo "Invalid target day" >&2; exit 1 ;;
+          esac
+          echo "Requesting guarded intraday verified-FT reconciliation for $TARGET_DAY"
+          gh api -X POST "repos/$GITHUB_REPOSITORY/actions/workflows/intraday-deploy-snapshot-refresh.yml/dispatches" \
+            -f ref=main -f "inputs[dayKey]=$TARGET_DAY"
