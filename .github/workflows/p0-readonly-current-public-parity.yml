@@ -1,0 +1,35 @@
+name: P0 read-only current public snapshot parity
+on:
+  pull_request:
+    paths:
+      - "tools/audit-readonly-public-snapshot-parity.mjs"
+      - "tools/audit-readonly-public-snapshot-parity.test.mjs"
+      - ".github/workflows/p0-readonly-current-public-parity.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            tools/audit-readonly-public-snapshot-parity.mjs
+            tools/audit-readonly-public-snapshot-parity.test.mjs
+            data/deploy-snapshots/2026-11-24/manifest.json
+            .github/workflows/p0-readonly-current-public-parity.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Pure no-sync parity regression
+        run: |
+          node --check tools/audit-readonly-public-snapshot-parity.mjs
+          node --test --test-reporter=tap tools/audit-readonly-public-snapshot-parity.test.mjs
+      - name: Read actual public manifest without mutation or synchronization
+        run: node tools/audit-readonly-public-snapshot-parity.mjs 2026-11-24
+      - name: Assert source unchanged
+        run: |
+          test -z "$(git status --porcelain)"
+          echo "READONLY_PUBLIC_PARITY_ONLY__NO_SYNC_NO_PUBLISH_NO_RESUME"
