@@ -1,0 +1,68 @@
+name: Historical FT public closure verification
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/historical-ft-public-closure.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/historical-ft-public-closure.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-matchlab-historical-ft-public-closure
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Read only checkout for published evidence
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout: |
+            tools
+            data/final-results
+            data/deploy-snapshots
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Run historical FT and public parity regression tests
+        run: node --test tools/check-historical-ft-snapshot-drift.test.mjs tools/check-historical-public-snapshot-parity.test.mjs
+
+      - name: Verify GitHub historical FT release consistency
+        shell: bash
+        run: |
+          set -euo pipefail
+          DAY="$(TZ=Europe/Athens date +%F)"
+          OUTPUT="$(node tools/check-historical-ft-snapshot-drift.mjs "$DAY")"
+          printf "%s\n" "$OUTPUT"
+          if ! grep -qx 'target_day=' <<< "$OUTPUT"; then
+            echo "HISTORICAL_GITHUB_FT_CLOSURE=FAILED" >&2
+            exit 1
+          fi
+          echo "HISTORICAL_GITHUB_FT_CLOSURE=PASS"
+
+      - name: Verify actual historical public release hashes
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          DAY="$(TZ=Europe/Athens date +%F)"
+          OUTPUT="$(node tools/check-historical-public-snapshot-parity.mjs "$DAY")"
+          printf "%s\n" "$OUTPUT"
+          if ! grep -qx 'target_day=' <<< "$OUTPUT"; then
+            echo "HISTORICAL_PUBLIC_PARITY_CLOSURE=FAILED" >&2
+            exit 1
+          fi
+          echo "HISTORICAL_PUBLIC_PARITY_CLOSURE=PASS"
