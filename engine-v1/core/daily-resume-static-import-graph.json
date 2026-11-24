@@ -409,6 +409,13 @@
       ]
     },
     {
+      "path": "engine-v1/core/matchday-ledger.js",
+      "blob": "4724c6083ba1c8d9e326653f1de59043e4408aa5",
+      "edges": [
+        "engine-v1/core/normalize.js"
+      ]
+    },
+    {
       "path": "engine-v1/core/non-played-state.js",
       "blob": "56e0eea6afcb9491e3030e104ffb00bd20a13bcc",
       "edges": []
@@ -911,6 +918,107 @@
       ]
     },
     {
+      "path": "engine-v1/jobs/build-team-news-research-review-day.js",
+      "blob": "a2707ca3e8d55be8f2f0e64ebf3d9bc54df56bf6",
+      "edges": [
+        "engine-v1/core/production-evidence-identity-overlay.js"
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/build-team-news-research-tasks-day.js",
+      "blob": "7bcefcfd5ef5136c721d5b844db32c8421001df1",
+      "edges": [
+        "engine-v1/core/production-evidence-identity-overlay.js",
+        "engine-v1/storage/data-root.js",
+        "engine-v1/storage/json-db.js",
+        "engine-v1/storage/team-news-db.js"
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/build-team-news-source-coverage-report-day.js",
+      "blob": "4447de888e0444c8ba840b74e0872b12ab72f76a",
+      "edges": []
+    },
+    {
+      "path": "engine-v1/jobs/build-team-news-source-enrichment-tasks-day.js",
+      "blob": "af2b0d92002c2951841d0706d4fd3e7196127025",
+      "edges": [
+        "engine-v1/storage/data-root.js"
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/build-team-news-workset-day.js",
+      "blob": "3d2ef435f77b26e5bdf6abc82e0967fb832b15c5",
+      "edges": [
+        "engine-v1/storage/data-root.js",
+        "engine-v1/storage/team-news-db.js"
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/build-value-coverage-report-day.js",
+      "blob": "04e92bf67fc0fe079f244973d9f75dc72495d02f",
+      "edges": [
+        "engine-v1/core/build-match-intelligence.js",
+        "engine-v1/core/daykey.js",
+        "engine-v1/core/prospective-value-form-view.js",
+        "engine-v1/core/season.js",
+        "engine-v1/core/value-context-modifiers.js",
+        "engine-v1/core/value-engine-v1.js",
+        "engine-v1/core/value-fixture-universe.js",
+        "engine-v1/storage/data-root.js"
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/derive-value-from-odds.js",
+      "blob": "11cc6fdebc2a3a2b005d78374898780e332544cd",
+      "edges": [
+        "engine-v1/core/daykey.js",
+        "engine-v1/core/opponent-strength-adjusted-form.js",
+        "engine-v1/core/opponent-strength-profile-loader.js",
+        "engine-v1/core/plan-b-canonical-membership.js",
+        "engine-v1/core/plan-b-evaluation-accounting.js",
+        "engine-v1/core/value-fixture-universe.js",
+        "engine-v1/source-discovery/disabled-leagues.js",
+        "engine-v1/storage/data-root.js",
+        "engine-v1/storage/history-preservation.js",
+        "engine-v1/storage/odds-memory-db.js",
+        "engine-v1/storage/value-decision-evidence.js",
+        "engine-v1/value/frozen-plan-b-observation.js"
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/discover-active-leagues.js",
+      "blob": "e5e8af7917e43d5a5b775fa1bfcaa1c47e7bb23d",
+      "edges": [
+        "engine-v1/adapters/espn.js",
+        "engine-v1/config.js",
+        "engine-v1/core/daykey.js",
+        "engine-v1/core/normalize.js",
+        "engine-v1/core/season.js",
+        "engine-v1/source-discovery/league-awareness-service.js",
+        "engine-v1/storage/data-root.js",
+        "engine-v1/storage/league-memory-db.js"
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/discover-provider-competitions-day.js",
+      "blob": "3670663758f13b90a9a3c3bbaf5505ac52eafef9",
+      "edges": [
+        "engine-v1/core/daykey.js",
+        "engine-v1/core/flashscore-competition-identity.js",
+        "engine-v1/odds/flashscore-fixtures-source.js",
+        "engine-v1/storage/data-root.js"
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/discover-window.js",
+      "blob": "9741cd37c7750899a8dea84ce399f6ff77984c1e",
+      "edges": [
+        "engine-v1/core/daykey.js",
+        "engine-v1/jobs/ingest-day.js"
+      ]
+    },
+    {
       "path": "engine-v1/jobs/export-deploy-snapshot-day.js",
       "blob": "111f2d2201872ad729fc8f23efacc4be0a786b96",
       "edges": [
@@ -924,6 +1032,51 @@
         "engine-v1/storage/data-root.js",
         "engine-v1/value/plan-a-publication-authority.js",
         "engine-v1/value/plan-c-shadow-export.js"
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/export-fixtures-snapshot-day.js",
+      "blob": "290b31685acd04d522bb0db5dd79642b5ffc0fee",
+      "edges": [
+        "engine-v1/core/canonical-id.js",
+        "engine-v1/core/daykey.js",
+        "engine-v1/core/flashscore-competition-identity.js",
+        "engine-v1/odds/flashscore-fixtures-source.js",
+        "engine-v1/odds/flashscore-match-round-source.js",
+        "engine-v1/storage/canonical-match-registry.js",
+        "engine-v1/storage/data-root.js"
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/fetch-multi-bookmaker-odds.js",
+      "blob": "107d969093778cec8e78420398f22840e932d939",
+      "edges": [
+        "engine-v1/core/daykey.js",
+        "engine-v1/jobs/build-assessment-day.js",
+        "engine-v1/jobs/fetch-oddsapiio-odds.js",
+        "engine-v1/odds/multi-odds-merge.js",
+        "engine-v1/storage/data-root.js",
+        "engine-v1/storage/history-preservation.js"
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/fetch-oddsapiio-odds.js",
+      "blob": "0108cf8e1ef3ef0ec089f527333cd8797f41cfb9",
+      "edges": [
+        "engine-v1/core/daykey.js",
+        "engine-v1/odds/multi-odds-merge.js",
+        "engine-v1/storage/data-root.js",
+        "engine-v1/storage/history-preservation.js"
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/finalize-day.js",
+      "blob": "c14c08e8288adb6db569c8da16b5097b71fa7e83",
+      "edges": [
+        "engine-v1/core/non-played-state.js",
+        "engine-v1/jobs/append-finalized-day-to-history.js",
+        "engine-v1/storage/json-db.js",
+        "engine-v1/storage/observations-db.js"
       ]
     },
     {
@@ -1005,22 +1158,13 @@
     }
   ],
   "frontier": [
-    "engine-v1/core/matchday-ledger.js",
-    "engine-v1/jobs/build-team-news-research-review-day.js",
-    "engine-v1/jobs/build-team-news-research-tasks-day.js",
-    "engine-v1/jobs/build-team-news-source-coverage-report-day.js",
-    "engine-v1/jobs/build-team-news-source-enrichment-tasks-day.js",
-    "engine-v1/jobs/build-team-news-workset-day.js",
-    "engine-v1/jobs/build-value-coverage-report-day.js",
-    "engine-v1/jobs/derive-value-from-odds.js",
-    "engine-v1/jobs/discover-active-leagues.js",
-    "engine-v1/jobs/discover-provider-competitions-day.js",
-    "engine-v1/jobs/discover-window.js",
-    "engine-v1/jobs/export-fixtures-snapshot-day.js",
-    "engine-v1/jobs/fetch-multi-bookmaker-odds.js",
-    "engine-v1/jobs/fetch-oddsapiio-odds.js",
-    "engine-v1/jobs/finalize-day.js",
+    "engine-v1/adapters/espn.js",
+    "engine-v1/core/flashscore-competition-identity.js",
+    "engine-v1/core/plan-b-canonical-membership.js",
+    "engine-v1/core/plan-b-evaluation-accounting.js",
+    "engine-v1/jobs/build-assessment-day.js",
     "engine-v1/jobs/import-player-usage-manual-results-day.js",
+    "engine-v1/jobs/ingest-day.js",
     "engine-v1/jobs/monitor-active-leagues.js",
     "engine-v1/jobs/normalize-team-news-source-coverage-report-day.js",
     "engine-v1/jobs/promote-authoritative-terminal-overlays-day.js",
@@ -1038,12 +1182,16 @@
     "engine-v1/jobs/sync-canonical-fixtures-to-json-db-day.js",
     "engine-v1/jobs/validate-player-usage-manual-results-day.js",
     "engine-v1/jobs/validate-team-news-seeds-day.js",
+    "engine-v1/odds/flashscore-fixtures-source.js",
     "engine-v1/odds/flashscore-league-map.js",
+    "engine-v1/odds/flashscore-match-round-source.js",
+    "engine-v1/odds/multi-odds-merge.js",
     "engine-v1/odds/transfermarkt-absences-source.js",
     "engine-v1/source-discovery/disabled-leagues.js",
     "engine-v1/source-discovery/league-awareness-service.js",
     "engine-v1/source-discovery/season-calendar.js",
     "engine-v1/source-discovery/standings-contract-validator.js",
+    "engine-v1/storage/canonical-match-registry.js",
     "engine-v1/storage/data-root.js",
     "engine-v1/storage/evidence-bound-history-store.js",
     "engine-v1/storage/h2h-memory-db.js",
@@ -1051,6 +1199,8 @@
     "engine-v1/storage/json-db.js",
     "engine-v1/storage/league-memory-db.js",
     "engine-v1/storage/lineups-memory-db.js",
+    "engine-v1/storage/observations-db.js",
+    "engine-v1/storage/odds-memory-db.js",
     "engine-v1/storage/officiating-db.js",
     "engine-v1/storage/player-usage-db.js",
     "engine-v1/storage/referee-profiles-db.js",
@@ -1062,6 +1212,7 @@
     "engine-v1/storage/trusted-standings-db.js",
     "engine-v1/storage/value-decision-evidence.js",
     "engine-v1/system-health/active-competition-completeness-policy.js",
+    "engine-v1/value/frozen-plan-b-observation.js",
     "engine-v1/value/plan-a-observation.js",
     "engine-v1/value/plan-a-publication-authority.js",
     "engine-v1/value/plan-c-shadow-export.js",
