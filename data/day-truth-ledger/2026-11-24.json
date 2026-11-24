@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-24",
-  "generatedAt": "2026-11-24T10:11:13.106Z",
+  "generatedAt": "2026-11-24T11:18:15.554Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "34e4e435d934c38b1c18fae80e70ae7fe0f4ca7cac09b4de98b8b2534c19e0c9",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "1ac0ab40e78b10f73a760798c03865fe67052ac6574fd6c188a127ac84948062",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -19,20 +19,20 @@
     "canonicalRows": 104,
     "playedTerminal": 9,
     "nonPlayedTerminal": 5,
-    "scheduled": 90,
-    "live": 0,
+    "scheduled": 87,
+    "live": 3,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 9,
-    "acceptedVerifiedFinalArtifacts": 9,
+    "verifiedFinalArtifacts": 10,
+    "acceptedVerifiedFinalArtifacts": 10,
     "convergedPlayedFinal": 9,
     "convergedNonPlayedTerminal": 5,
     "pendingVerifiedFinal": 0,
-    "openRows": 90,
+    "openRows": 89,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 9,
@@ -144,14 +144,14 @@
       "homeTeam": "Daejeon Hana Citizen FC",
       "awayTeam": "Beijing Guoan",
       "kickoffUtc": "2026-11-24T10:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 3,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -165,7 +165,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -193,14 +193,14 @@
       "homeTeam": "Kyoto Sanga",
       "awayTeam": "Pohang Steelers",
       "kickoffUtc": "2026-11-24T10:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -214,7 +214,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -2839,14 +2839,14 @@
       "homeTeam": "Samaleswari SC",
       "awayTeam": "Bengaluru United FC",
       "kickoffUtc": "2026-11-24T10:30Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -2860,7 +2860,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4956,18 +4956,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-24",
+        "scoreHome": 2,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -5140,7 +5140,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_ukr2_ahrobiznesvolochysk_chernihiv_20261124"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -5151,12 +5153,12 @@
     "systemHealth": {
       "schema": "ai-matchlab.system-health-alerts.v1",
       "dayKey": "2026-11-24",
-      "generatedAt": "2026-11-24T10:11:12.703Z",
+      "generatedAt": "2026-11-24T11:18:15.013Z",
       "severity": "warning",
       "issueCounts": {
         "error": 0,
         "warning": 8,
-        "info": 12
+        "info": 11
       },
       "alert": false,
       "alertCounts": {
@@ -5164,44 +5166,13 @@
         "warning": 0,
         "info": 0
       },
-      "activeIssueCount": 20,
+      "activeIssueCount": 19,
       "actionableIssueCount": 8,
-      "newIssueCount": 1,
+      "newIssueCount": 0,
       "newActionableIssueCount": 0,
-      "resolvedIssueCount": 0,
+      "resolvedIssueCount": 1,
       "persistentIssueCount": 19,
       "activeIssues": [
-        {
-          "severity": "info",
-          "source": "manifest",
-          "type": "frozen_value_age_preserved",
-          "message": "Frozen Value artifact predates canonical updates and satisfies the frozen release contract.",
-          "details": {
-            "fixtures": 104,
-            "valuePicks": 3,
-            "valueSource": "canonical_fixtures",
-            "latestCanonicalUpdatedAt": "2026-11-24T09:49:49.803Z",
-            "valueArtifactAt": "2026-11-24T03:28:33.142Z",
-            "valueFreshAgainstCanonical": false,
-            "mode": "frozen_snapshot",
-            "frozenIdentityBound": true,
-            "frozenReleaseSafe": true,
-            "frozenPickCount": 3,
-            "orphanPickCount": 0,
-            "orphanPickIds": [],
-            "missingMatchIdPickCount": 0,
-            "missingMatchIdPickIndexes": [],
-            "dayBound": true,
-            "canonicalSourceBound": true,
-            "recoveryContractBound": false,
-            "recoveryPublishedUniverseBound": false,
-            "recoveryUniverseEvidenceSource": null,
-            "recoveryUniverseEvidenceCount": null,
-            "recoveryUniverseEvidenceHash": null,
-            "recoveryUniverseEvidencePlans": [],
-            "ok": true
-          }
-        },
         {
           "severity": "info",
           "source": "freshness-report",
@@ -5384,7 +5355,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 24268,
+            "count": 24272,
             "informational": true
           }
         },
@@ -6843,7 +6814,9 @@
           }
         }
       ],
-      "newIssues": [
+      "newIssues": [],
+      "newActionableIssues": [],
+      "resolvedIssues": [
         {
           "severity": "info",
           "source": "manifest",
@@ -6853,7 +6826,7 @@
             "fixtures": 104,
             "valuePicks": 3,
             "valueSource": "canonical_fixtures",
-            "latestCanonicalUpdatedAt": "2026-11-24T09:08:35.024Z",
+            "latestCanonicalUpdatedAt": "2026-11-24T09:49:49.803Z",
             "valueArtifactAt": "2026-11-24T03:28:33.142Z",
             "valueFreshAgainstCanonical": false,
             "mode": "frozen_snapshot",
@@ -6876,8 +6849,6 @@
           }
         }
       ],
-      "newActionableIssues": [],
-      "resolvedIssues": [],
       "persistentIssues": [
         {
           "severity": "info",
@@ -7061,7 +7032,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 24268,
+            "count": 24272,
             "informational": true
           }
         },
@@ -7854,7 +7825,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "34e4e435d934c38b1c18fae80e70ae7fe0f4ca7cac09b4de98b8b2534c19e0c9",
+      "truthFingerprint": "1ac0ab40e78b10f73a760798c03865fe67052ac6574fd6c188a127ac84948062",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -7911,7 +7882,7 @@
         "sourcePath": "data/system-health/2026-11-24.json",
         "severity": "warning",
         "alert": false,
-        "activeIssueCount": 20,
+        "activeIssueCount": 19,
         "actionableIssueCount": 8
       },
       "authority": {
@@ -7931,7 +7902,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-11-24",
-      "fileCount": 9,
+      "fileCount": 10,
       "authority": "scored_final_evidence"
     },
     "downstream": {
