@@ -1,6 +1,11 @@
 name: Historical verified FT snapshot watchdog
 
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/historical-ft-snapshot-watchdog.yml'
+      - 'tools/check-historical-ft-snapshot-drift.mjs'
+      - 'tools/check-historical-ft-snapshot-drift.test.mjs'
   workflow_dispatch:
   schedule:
     # Watch the most recent two Athens calendar days without rebuilding the full Daily.
@@ -42,7 +47,7 @@ jobs:
           node tools/check-historical-ft-snapshot-drift.mjs "$TODAY" >> "$GITHUB_OUTPUT"
 
       - name: Request existing guarded intraday reconciliation
-        if: steps.inspect.outputs.target_day != ''
+        if: github.event_name != 'pull_request' && steps.inspect.outputs.target_day != ''
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
