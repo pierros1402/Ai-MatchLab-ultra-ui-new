@@ -1,0 +1,34 @@
+name: P0 Stage20 full-tree replay parity (isolated)
+on:
+  pull_request:
+    paths:
+      - "engine-v1/core/daily-resume-stage20-replay-parity.mjs"
+      - "engine-v1/core/daily-resume-stage20-replay-parity.test.mjs"
+      - ".github/workflows/p0-stage20-full-tree-replay-parity.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1/core
+            engine-v1/jobs/capture-stage20-worktree.mjs
+            .github/workflows
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Verify syntax
+        run: |
+          node --check engine-v1/core/daily-resume-stage20-replay-parity.mjs
+          node --check engine-v1/core/daily-resume-stage20-replay-parity.test.mjs
+      - name: Prove complete data tree parity in disposable Git clone and denial cases
+        run: node --test --test-reporter=tap engine-v1/core/daily-resume-stage20-replay-parity.test.mjs
+      - name: Confirm production Daily, data and publication gates unchanged
+        run: |
+          git diff --exit-code HEAD -- .github/workflows/daily-deploy-snapshot.yml data/
+          echo "FULL_TREE_REPLAY_EVIDENCE_ONLY_NO_PRODUCTION_RESUME_NO_PUBLICATION"
