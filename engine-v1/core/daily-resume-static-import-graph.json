@@ -43,6 +43,15 @@
       "edges": []
     },
     {
+      "path": "engine-v1/ai-match-intelligence/execute-remote-task-queue.js",
+      "blob": "51e820aca6bf9473ba49f3835dd7e6d1c9bbfea4",
+      "edges": [
+        "engine-v1/ai-match-intelligence/remote-provider-registry.js",
+        "engine-v1/ai-match-intelligence/remote-providers/referee-profile-provider.js",
+        "engine-v1/ai-match-intelligence/remote-providers/team-news-provider.js"
+      ]
+    },
+    {
       "path": "engine-v1/ai-match-intelligence/execute-research-tasks.js",
       "blob": "5d83e7ad61e2dd93c8e08c157f441d404852d9d5",
       "edges": []
@@ -83,6 +92,13 @@
       "path": "engine-v1/ai-match-intelligence/player-usage/starter-intelligence.js",
       "blob": "59aae0348b97db3f2cc651ff01fc05be6ef10c24",
       "edges": []
+    },
+    {
+      "path": "engine-v1/ai-match-intelligence/research-cache.js",
+      "blob": "af25594346eee63252d9e42e74776f516a3b7f4f",
+      "edges": [
+        "engine-v1/storage/data-root.js"
+      ]
     },
     {
       "path": "engine-v1/config.js",
@@ -147,6 +163,13 @@
       "edges": [
         "engine-v1/core/daykey.js",
         "engine-v1/core/normalize.js"
+      ]
+    },
+    {
+      "path": "engine-v1/core/canonical-status-monotonicity.js",
+      "blob": "15440b4f4e5ea989101afd12ee3857ce7e62cfaa",
+      "edges": [
+        "engine-v1/core/non-played-state.js"
       ]
     },
     {
@@ -278,9 +301,43 @@
       "edges": []
     },
     {
+      "path": "engine-v1/core/lineup-context.js",
+      "blob": "7f07ffe66748886e29c98d6985699a45ed891344",
+      "edges": []
+    },
+    {
+      "path": "engine-v1/core/match-profile-context.js",
+      "blob": "62da82b4aaf048eef8890d706a053546ef4bb366",
+      "edges": [
+        "engine-v1/core/history-layer.js",
+        "engine-v1/storage/data-root.js",
+        "engine-v1/storage/player-usage-db.js",
+        "engine-v1/storage/trusted-standings-db.js"
+      ]
+    },
+    {
+      "path": "engine-v1/core/matchday-axis.js",
+      "blob": "951376bc9fabf30e975f63fb5e2cfb75dd91b22c",
+      "edges": [
+        "engine-v1/storage/standings-memory-db.js",
+        "workers/_shared/leagues-coverage.js"
+      ]
+    },
+    {
       "path": "engine-v1/core/non-played-state.js",
       "blob": "56e0eea6afcb9491e3030e104ffb00bd20a13bcc",
       "edges": []
+    },
+    {
+      "path": "engine-v1/core/normalize.js",
+      "blob": "0b28eaa7ca3cd9daf67a04553aef60504ff23831",
+      "edges": [
+        "engine-v1/config.js",
+        "engine-v1/core/canonical-id.js",
+        "engine-v1/core/daykey.js",
+        "engine-v1/core/non-played-state.js",
+        "engine-v1/core/status-map.js"
+      ]
     },
     {
       "path": "engine-v1/core/opponent-strength-adjusted-form.js",
@@ -295,6 +352,35 @@
         "engine-v1/core/opponent-strength-adjusted-form.js",
         "engine-v1/storage/results-memory-db.js",
         "engine-v1/storage/standings-memory-db.js"
+      ]
+    },
+    {
+      "path": "engine-v1/core/production-evidence-identity-overlay.js",
+      "blob": "d2e4129294b0b0707ea4867022637091201d9e98",
+      "edges": [
+        "engine-v1/core/production-identity-resolver-runtime.js",
+        "engine-v1/core/production-team-identity-disambiguation.js"
+      ]
+    },
+    {
+      "path": "engine-v1/core/production-identity-resolver-runtime.js",
+      "blob": "843628f7c46ce6f2544b592d804a59de21ead55d",
+      "edges": [
+        "engine-v1/core/production-identity-extension-composite.js",
+        "engine-v1/core/production-identity-extension.js",
+        "engine-v1/core/production-identity-resolver.js",
+        "engine-v1/core/reviewed-team-alias-bindings.js",
+        "engine-v1/storage/data-root.js"
+      ]
+    },
+    {
+      "path": "engine-v1/core/prospective-value-form-view.js",
+      "blob": "bba7143d140ca55cc71c8bfb05813a86a94cc295",
+      "edges": [
+        "engine-v1/core/committed-final-form.js",
+        "engine-v1/core/history-competition-provenance.js",
+        "engine-v1/core/prematch-verified-final-form.js",
+        "engine-v1/core/season.js"
       ]
     },
     {
@@ -439,20 +525,21 @@
     }
   ],
   "frontier": [
-    "engine-v1/ai-match-intelligence/execute-remote-task-queue.js",
-    "engine-v1/ai-match-intelligence/research-cache.js",
-    "engine-v1/core/canonical-status-monotonicity.js",
-    "engine-v1/core/lineup-context.js",
-    "engine-v1/core/match-profile-context.js",
-    "engine-v1/core/matchday-axis.js",
-    "engine-v1/core/normalize.js",
-    "engine-v1/core/production-evidence-identity-overlay.js",
-    "engine-v1/core/production-identity-resolver-runtime.js",
-    "engine-v1/core/prospective-value-form-view.js",
+    "engine-v1/ai-match-intelligence/remote-provider-registry.js",
+    "engine-v1/ai-match-intelligence/remote-providers/referee-profile-provider.js",
+    "engine-v1/ai-match-intelligence/remote-providers/team-news-provider.js",
+    "engine-v1/core/committed-final-form.js",
+    "engine-v1/core/prematch-verified-final-form.js",
+    "engine-v1/core/production-identity-extension-composite.js",
+    "engine-v1/core/production-identity-extension.js",
+    "engine-v1/core/production-identity-resolver.js",
+    "engine-v1/core/production-team-identity-disambiguation.js",
     "engine-v1/core/referee-context.js",
+    "engine-v1/core/reviewed-team-alias-bindings.js",
     "engine-v1/core/season-model.js",
     "engine-v1/core/season.js",
     "engine-v1/core/standings-foundation.js",
+    "engine-v1/core/status-map.js",
     "engine-v1/core/team-identity.js",
     "engine-v1/core/team-news-context.js",
     "engine-v1/core/travel-context.js",
