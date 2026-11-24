@@ -1,0 +1,31 @@
+name: P0 Stage20 complete capture-to-replay chain (isolated)
+on:
+  pull_request:
+    paths:
+      - "engine-v1/core/daily-resume-stage20-integrated-e2e.test.mjs"
+      - ".github/workflows/p0-stage20-integrated-chain-e2e.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full-chain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1/core
+            engine-v1/jobs/capture-stage20-worktree.mjs
+            .github/workflows/p0-stage20-integrated-chain-e2e.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Verify complete integration test syntax and execute real Git isolated chain
+        run: |
+          node --check engine-v1/core/daily-resume-stage20-integrated-e2e.test.mjs
+          node --test --test-reporter=tap engine-v1/core/daily-resume-stage20-integrated-e2e.test.mjs
+      - name: Verify production remains untouched
+        run: |
+          git diff --exit-code HEAD -- .github/workflows/daily-deploy-snapshot.yml data/
+          echo "ISOLATED_COMPLETE_STAGE20_CHAIN_EVIDENCE_ONLY_NO_RESUME_NO_PUBLISH"
