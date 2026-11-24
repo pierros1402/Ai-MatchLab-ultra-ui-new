@@ -52,7 +52,7 @@ jobs:
           node-version: '24'
       - uses: actions/download-artifact@v4
         with:
-          name: stage20-rehearsal-${{ github.run_id }}-${{ github.run_attempt }}
+          name: ${{ needs.capture.outputs.artifact }}
           path: ${{ runner.temp }}/stage20-bundle
       - run: |
           node engine-v1/jobs/rehearse-stage20-cross-runner.mjs restore "$GITHUB_WORKSPACE" "$RUNNER_TEMP/stage20-bundle" "$(git rev-parse HEAD)"
