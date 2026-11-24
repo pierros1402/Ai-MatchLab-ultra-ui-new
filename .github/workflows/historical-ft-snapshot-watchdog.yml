@@ -82,12 +82,21 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TARGET_DAY: ${{ steps.inspect.outputs.target_day || steps.public.outputs.target_day }}
+          FT_DRIFT_DAY: ${{ steps.inspect.outputs.target_day }}
         run: |
           set -euo pipefail
           case "$TARGET_DAY" in
             ????-??-??) ;;
             *) echo "Invalid target day" >&2; exit 1 ;;
           esac
-          echo "Requesting guarded intraday verified-FT reconciliation for $TARGET_DAY"
-          gh api -X POST "repos/$GITHUB_REPOSITORY/actions/workflows/intraday-deploy-snapshot-refresh.yml/dispatches" \
+          # Verified score/status drift requires recomposition; pure public
+          # mirror drift must not rerun expensive Value/foundation stages.
+          if [ -n "$FT_DRIFT_DAY" ]; then
+            WORKFLOW="intraday-deploy-snapshot-refresh.yml"
+            echo "Verified FT drift: requesting guarded intraday for $TARGET_DAY"
+          else
+            WORKFLOW="historical-public-sync-only.yml"
+            echo "Public mirror drift: requesting sync-only for $TARGET_DAY"
+          fi
+          gh api -X POST "repos/$GITHUB_REPOSITORY/actions/workflows/$WORKFLOW/dispatches" \
             -f ref=main -f "inputs[dayKey]=$TARGET_DAY"
