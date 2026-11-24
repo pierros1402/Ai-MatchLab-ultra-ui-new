@@ -8,7 +8,8 @@ import {STAGE20_REPLAY_PARITY_SCHEMA} from "./daily-resume-stage20-replay-parity
 const hash=o=>crypto.createHash("sha256").update(JSON.stringify(o)).digest("hex");
 const commit="a".repeat(40),dayKey="2026-11-24";
 const makeInventory=(rows)=>{
-  const files=rows.map(([path,bytes,value])=>({path,bytes,sha256:hash(value)}));
+  const files=rows.map(([path,bytes,value])=>({path,bytes,sha256:hash(value)}))
+    .sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);
   const body={schema:COMPLETE_DATA_INVENTORY_SCHEMA,dayKey,sourceCommit:commit,
     root:"data/",fileCount:files.length,totalBytes:files.reduce((s,x)=>s+x.bytes,0),
     files,includesIgnored:true,includesUntracked:true,includesTracked:true,
