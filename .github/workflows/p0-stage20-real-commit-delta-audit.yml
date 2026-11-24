@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 25
           filter: blob:none
           sparse-checkout: |
             engine-v1/core/daily-resume-stage20-committed-delta-audit.mjs
@@ -30,6 +30,10 @@ jobs:
         run: |
           node --check engine-v1/core/daily-resume-stage20-committed-delta-audit.mjs
           node --test --test-reporter=tap engine-v1/core/daily-resume-stage20-committed-delta-audit.test.mjs
+      - name: Verify both exact pinned Git objects exist in the bounded history
+        run: |
+          git cat-file -e 5b67a7c48546927144fdcbfd96b4eaee0de935c2^{commit}
+          git cat-file -e f082c7c3b813678223775578297d3c90f2c13e07^{commit}
       - name: Audit exact real Intraday committed data delta, not live runner
         run: |
           node --input-type=module <<'NODE'
