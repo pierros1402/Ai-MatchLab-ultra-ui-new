@@ -25,7 +25,7 @@ function fixture(fn){
   const save=(rows,trailingNewline=true)=>
     fs.writeFileSync(journal,rows.map(x=>JSON.stringify(x)).join("\n")+
       (trailingNewline?"\n":""));
-  try{fn({root,repoRoot,runnerTemp,journal,event,save,sourceSha256,src})}
+  try{fn({root,repoRoot,runnerTemp,dayKey:DAY,journal,event,save,sourceSha256,src})}
   finally{fs.rmSync(root,{recursive:true,force:true})}
 }
 test("real Daily source partial journal is auditable but nonresumable",()=>fixture(f=>{
