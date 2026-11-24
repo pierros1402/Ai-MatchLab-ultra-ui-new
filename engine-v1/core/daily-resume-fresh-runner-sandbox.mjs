@@ -49,9 +49,10 @@ function restoreVerifiedOutputs(stage, binding, dependencies, storeRoot, evidenc
 }
 export async function runFreshRunnerSandboxDAG({
   stages, binding, previousCheckpoints = {}, storeRoot, sandboxRoot,
-  runStage, sandboxAuthorized = false
+  runStage, sandboxAuthorized = false, branchAware = false
 } = {}) {
   ensure(sandboxAuthorized === true, "sandbox_restore_not_authorized");
+  ensure(typeof branchAware === "boolean", "sandbox_branch_mode_invalid");
   ensure(typeof sandboxRoot === "string" && fs.existsSync(sandboxRoot), "sandbox_root_required");
   const root = fs.realpathSync(sandboxRoot);
   ensure(within(root, binding?.root) && within(root, storeRoot), "sandbox_path_outside_boundary");
@@ -72,7 +73,7 @@ export async function runFreshRunnerSandboxDAG({
     const volatile = stage.reuseClass !== "frozen" || MANDATORY.has(stage.id);
     let reason = "missing_checkpoint", accepted = false;
     const prior = previousCheckpoints[stage.id];
-    if (!rebuild && !volatile && prior) {
+    if ((!rebuild || branchAware) && !volatile && prior) {
       const archive = verifyArchive(stage, binding, deps, storeRoot, prior.evidenceSha256);
       if (archive.ok && JSON.stringify(archive.checkpoint) === JSON.stringify(prior)) {
         // The archive proves source, contract, current input bytes and archived output bytes.
@@ -87,9 +88,9 @@ export async function runFreshRunnerSandboxDAG({
       }
     }
     if (accepted) continue;
-    reason = rebuild ? "earlier_stage_rebuilt" :
+    reason = !branchAware && rebuild ? "earlier_stage_rebuilt" :
       volatile ? "volatile_or_mandatory_stage" : reason;
-    rebuild = true;
+    if (!branchAware) rebuild = true;
     const result = await runStage(stage, { binding, dependencies: deps, reason });
     ensure(result?.ok === true, "sandbox_stage_failed:" + stage.id);
     const saved = archiveStage(stage, binding, deps, storeRoot);
@@ -104,6 +105,7 @@ export async function runFreshRunnerSandboxDAG({
     decisions, resumedFrom: decisions.find(x => x.decision === "EXECUTED")?.stageId ?? null,
     restoredStages: decisions.filter(x => x.decision === "RESTORED_VERIFIED").length,
     executedStages: decisions.filter(x => x.decision === "EXECUTED").length,
-    sandboxOnly: true, productionResumeAuthorized: false, publicationAuthorized: false
+    sandboxOnly: true, branchAwareEvaluation: branchAware,
+    productionResumeAuthorized: false, publicationAuthorized: false
   };
 }
