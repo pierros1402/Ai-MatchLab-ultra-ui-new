@@ -58,8 +58,11 @@ jobs:
           const audit=auditHistorical954(dir);
           assert.equal(audit.files,9083);
           assert.equal(audit.bytes,428113899);
-          assert.equal(audit.admitted,7539);
-          assert.equal(audit.denied,1544);
+          // The typed 996-row history-journal admission is now part of the
+          // current policy; keep the immutable 9083-file source and exact
+          // admitted/denied partition pinned instead of accepting any totals.
+          assert.equal(audit.admitted,8535);
+          assert.equal(audit.denied,548);
           assert.equal(audit.familyCounts["data/details"].admitted,349);
           assert.equal(audit.familyCounts["data/details"].denied,0);
           const d=auditHistoricalDetailsCandidates(dir);
