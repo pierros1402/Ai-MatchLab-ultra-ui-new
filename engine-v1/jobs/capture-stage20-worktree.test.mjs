@@ -84,7 +84,7 @@ test("duplicate changed path is denied", () => {
 });
 test("invalid date rejected", () => {
   for (const dayKey of ["today", "2026-02-30", "2026-11-31", "2026-13-01", "0099-02-29", "2025-02-29"]) {
-    assert.equal(evaluateStage20CapturePaths({dayKey,paths:["data/value/a.json"]}).ok,false),dayKey);
+    assert.equal(evaluateStage20CapturePaths({dayKey,paths:["data/value/a.json"]}).ok,false,dayKey);
   }
 });
 test("real leap day and regular day retain Stage20 admission", () => {
