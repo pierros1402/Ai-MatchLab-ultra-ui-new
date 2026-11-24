@@ -1,0 +1,36 @@
+name: P0 Stage20 DAG output ownership and fresh-runner contract
+on:
+  pull_request:
+    paths:
+      - "engine-v1/core/daily-resume-stage-dag-ownership.mjs"
+      - "engine-v1/core/daily-resume-stage-dag-ownership.test.mjs"
+      - "engine-v1/core/daily-resume-fresh-runner-sandbox.mjs"
+      - ".github/workflows/p0-stage20-dag-output-ownership.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1/core
+            .github/workflows/p0-stage20-dag-output-ownership.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Validate strict DAG input-output ownership and source syntax
+        run: |
+          node --check engine-v1/core/daily-resume-stage-dag-ownership.mjs
+          node --check engine-v1/core/daily-resume-fresh-runner-sandbox.mjs
+          node --test --test-reporter=tap \
+            engine-v1/core/daily-resume-stage-dag-ownership.test.mjs \
+            engine-v1/core/daily-resume-fresh-runner-sandbox.test.mjs \
+            engine-v1/core/daily-resume-contract.test.mjs
+      - name: No production mutation
+        run: |
+          git diff --exit-code HEAD -- .github/workflows/daily-deploy-snapshot.yml data/
+          echo "DAG_OWNERSHIP_ONLY__SANDBOX_RESUME_ONLY__PRODUCTION_OFF"
