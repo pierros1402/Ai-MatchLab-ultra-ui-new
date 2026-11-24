@@ -83,7 +83,16 @@ test("duplicate changed path is denied", () => {
     paths:["data/value/day.json","data/value/day.json"]}).ok,false);
 });
 test("invalid date rejected", () => {
-  assert.equal(evaluateStage20CapturePaths({dayKey:"today",paths:["data/value/a.json"]}).ok,false);
+  for (const dayKey of ["today", "2026-02-30", "2026-11-31", "2026-13-01", "0099-02-29", "2025-02-29", "2100-02-29"]) {
+    assert.equal(evaluateStage20CapturePaths({dayKey,paths:["data/value/a.json"]}).ok,false,dayKey);
+  }
+});
+test("real leap day and regular day retain Stage20 admission", () => {
+  for (const dayKey of ["2000-02-29", "2024-02-29", "2026-11-24"]) {
+    const result=evaluateStage20CapturePaths({dayKey,paths:["data/value/a.json"]});
+    assert.equal(result.ok,true,dayKey);
+    assert.deepEqual(result.approved,["data/value/a.json"]);
+  }
 });
 test("empty stage delta cannot be reused", () => {
   assert.equal(evaluateStage20CapturePaths({dayKey:"2026-11-23",paths:[]}).ok,false);

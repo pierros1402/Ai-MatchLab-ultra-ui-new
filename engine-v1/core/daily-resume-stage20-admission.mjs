@@ -29,7 +29,18 @@ const FAMILIES = Object.freeze([
 ]);
 const EXT = /\.(json|jsonl|ndjson|csv)$/i;
 const SECRET = /(^|[._/-])(secret|credential|password|token|private[-_]?key|\.env)([._/-]|$)/i;
-const KEY = /^\d{4}-\d{2}-\d{2}$/;
+const KEY = /^(\d{4})-(\d{2})-(\d{2})$/;
+function validDayKey(value) {
+  const match = typeof value === "string" ? KEY.exec(value) : null;
+  if (!match) return false;
+  const year = Number(match[1]), month = Number(match[2]), day = Number(match[3]);
+  // Avoid JavaScript Date.UTC's special handling of years 00..99.
+  const date = new Date(0);
+  date.setUTCFullYear(year, month - 1, day);
+  date.setUTCHours(0, 0, 0, 0);
+  return date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+}
 // Source-owned Details-only narrow exception: canonical fixture ID and its
 // YYYYMMDD suffix MUST match the actual day directory. Unknown/legacy paths
 // remain denied. This is a path authorization, not a publication gate.
@@ -54,7 +65,7 @@ const forbidden = (p) => typeof p !== "string" || !p.startsWith("data/") ||
 export const STAGE20_POLICY_SCHEMA = "ai-matchlab.daily-stage20-capture-admission.v1";
 export const STAGE20_APPROVED_FAMILIES = FAMILIES;
 export function evaluateStage20CapturePaths({ dayKey, paths, root = "data/" }) {
-  if (!KEY.test(dayKey || "") || root !== "data/" || !Array.isArray(paths) ||
+  if (!validDayKey(dayKey) || root !== "data/" || !Array.isArray(paths) ||
       !paths.length || paths.length > 10000) {
     return { ok: false, reason: "stage20_capture_inventory_invalid", approved: [], rejected: [] };
   }
