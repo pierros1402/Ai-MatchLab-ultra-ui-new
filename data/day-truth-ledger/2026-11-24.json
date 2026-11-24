@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-24",
-  "generatedAt": "2026-11-24T12:42:32.993Z",
+  "generatedAt": "2026-11-24T13:40:09.933Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "f9d8c160e6dfc2252ade1ade4d3c32bc9382fc7eb6d996314b53b2b2e5844b53",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "c950058c24d99a68d5fdb7b50c223fdd1cdde65b8b0047fd8e35ca02a93d15ff",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,9 +17,9 @@
   },
   "summary": {
     "canonicalRows": 104,
-    "playedTerminal": 13,
+    "playedTerminal": 14,
     "nonPlayedTerminal": 5,
-    "scheduled": 82,
+    "scheduled": 81,
     "live": 4,
     "interrupted": 0,
     "delayed": 0,
@@ -27,16 +27,16 @@
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 14,
     "acceptedVerifiedFinalArtifacts": 14,
-    "convergedPlayedFinal": 13,
+    "convergedPlayedFinal": 14,
     "convergedNonPlayedTerminal": 5,
     "pendingVerifiedFinal": 0,
     "openRows": 85,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 13,
-    "scoredSettlementEligible": 13,
+    "historyEligible": 14,
+    "scoredSettlementEligible": 14,
     "voidSettlementEligible": 5
   },
   "fixtures": [
@@ -98,10 +98,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "LIVE",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_IN_PROGRESS",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_HALFTIME",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -294,11 +294,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_HALFTIME",
         "scoreHome": 0,
-        "scoreAway": 0
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -441,11 +441,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
-        "scoreAway": 0
+        "rawStatus": "STATUS_HALFTIME",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -2839,12 +2839,12 @@
       "homeTeam": "Samaleswari SC",
       "awayTeam": "Bengaluru United FC",
       "kickoffUtc": "2026-11-24T10:30Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 2,
         "scoreAway": 2
       },
@@ -2859,11 +2859,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -2888,14 +2888,14 @@
       "homeTeam": "Sreenidi Deccan FC",
       "awayTeam": "Chanmari FC",
       "kickoffUtc": "2026-11-24T13:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -2909,7 +2909,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -5140,9 +5140,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_ind2_samaleswari_bengaluruunited_20261124"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -5153,7 +5151,7 @@
     "systemHealth": {
       "schema": "ai-matchlab.system-health-alerts.v1",
       "dayKey": "2026-11-24",
-      "generatedAt": "2026-11-24T12:42:32.386Z",
+      "generatedAt": "2026-11-24T13:40:09.511Z",
       "severity": "warning",
       "issueCounts": {
         "error": 0,
@@ -5355,7 +5353,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 24284,
+            "count": 24298,
             "informational": true
           }
         },
@@ -6826,7 +6824,7 @@
             "fixtures": 104,
             "valuePicks": 3,
             "valueSource": "canonical_fixtures",
-            "latestCanonicalUpdatedAt": "2026-11-24T11:33:00.952Z",
+            "latestCanonicalUpdatedAt": "2026-11-24T12:22:46.548Z",
             "valueArtifactAt": "2026-11-24T03:28:33.142Z",
             "valueFreshAgainstCanonical": false,
             "mode": "frozen_snapshot",
@@ -7032,7 +7030,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 24284,
+            "count": 24298,
             "informational": true
           }
         },
@@ -7825,13 +7823,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "f9d8c160e6dfc2252ade1ade4d3c32bc9382fc7eb6d996314b53b2b2e5844b53",
+      "truthFingerprint": "c950058c24d99a68d5fdb7b50c223fdd1cdde65b8b0047fd8e35ca02a93d15ff",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 13,
+        "expectedEligibleRows": 14,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_afcchampions_daejeonhanacitizen_beijingguoan_20261124",
@@ -7843,6 +7841,7 @@
           "cid_bra1_santos_gremio_20261124",
           "cid_col2_bocajuniors_quindio_20261124",
           "cid_crc1_alajuelense_cartagines_20261124",
+          "cid_ind2_samaleswari_bengaluruunited_20261124",
           "cid_par1_nacionalasuncion_cerroporteno_20261124",
           "cid_ukr2_ahrobiznesvolochysk_chernihiv_20261124",
           "cid_uru1_albion_danubio_20261124",

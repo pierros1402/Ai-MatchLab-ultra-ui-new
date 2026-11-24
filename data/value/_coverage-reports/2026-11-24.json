@@ -2,8 +2,8 @@
   "ok": true,
   "dayKey": "2026-11-24",
   "season": "2026-2027",
-  "generatedAt": "2026-11-24T12:42:28.227Z",
-  "startedAt": "2026-11-24T12:40:24.198Z",
+  "generatedAt": "2026-11-24T13:40:03.343Z",
+  "startedAt": "2026-11-24T13:36:32.625Z",
   "source": {
     "inputSource": "canonical_fixtures",
     "canonicalMatches": 104,
@@ -21,18 +21,18 @@
     "totalRows": 99,
     "detailsFound": 99,
     "intelligenceOk": 99,
-    "valueReturned": 64,
-    "valueNull": 35,
+    "valueReturned": 63,
+    "valueNull": 36,
     "valueFailed": 0,
-    "minimumRecentSampleNull": 35
+    "minimumRecentSampleNull": 36
   },
   "breakdown": {
     "nullByReason": {
-      "minimum_recent_sample": 35
+      "minimum_recent_sample": 36
     },
     "nullByClass": {
       "low_recent_sample_prior_backed": 25,
-      "low_recent_sample": 7,
+      "low_recent_sample": 8,
       "missing_team_history_and_prior": 3
     },
     "nullByLeague": {
@@ -46,6 +46,7 @@
       "rsa.1": 2,
       "afc.champions": 1,
       "crc.1": 1,
+      "ind.2": 1,
       "par.1": 1,
       "ukr.2": 1,
       "uru.1": 1
@@ -59,7 +60,6 @@
       "bra.1": 4,
       "ksa.2": 4,
       "eng.3": 2,
-      "ind.2": 2,
       "sco.1": 2,
       "uga.1": 2,
       "arm.2": 1,
@@ -68,6 +68,7 @@
       "eng.2": 1,
       "geo.1": 1,
       "ind.1": 1,
+      "ind.2": 1,
       "mne.1": 1,
       "sco.challenge": 1,
       "usa.1": 1,
@@ -164,7 +165,7 @@
       "leagueSlug": "afc.champions",
       "homeTeam": "Cong An Ha Noi",
       "awayTeam": "Vissel Kobe",
-      "status": "LIVE",
+      "status": "HALF_TIME",
       "kickoffUtc": "2026-11-24T12:15Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -446,7 +447,7 @@
       "leagueSlug": "afc.champions",
       "homeTeam": "Ratchaburi FC",
       "awayTeam": "Johor Darul Ta'zim",
-      "status": "FIRST_HALF",
+      "status": "HALF_TIME",
       "kickoffUtc": "2026-11-24T12:15Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -691,7 +692,7 @@
       "leagueSlug": "afc.champions",
       "homeTeam": "Shanghai Port FC",
       "awayTeam": "Buriram United",
-      "status": "FIRST_HALF",
+      "status": "HALF_TIME",
       "kickoffUtc": "2026-11-24T12:15Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -3343,7 +3344,7 @@
       "leagueSlug": "ind.2",
       "homeTeam": "Samaleswari SC",
       "awayTeam": "Bengaluru United FC",
-      "status": "SECOND_HALF",
+      "status": "FT",
       "kickoffUtc": "2026-11-24T10:30Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -3417,74 +3418,42 @@
       "leagueSlug": "ind.2",
       "homeTeam": "Sreenidi Deccan FC",
       "awayTeam": "Chanmari FC",
-      "status": "PRE",
+      "status": "FIRST_HALF",
       "kickoffUtc": "2026-11-24T13:00Z",
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.622,
-        "homeWinScore": 0.312,
-        "drawScore": 0.114,
-        "awayWinScore": 0.574,
-        "over15Score": 0.725,
-        "over25Score": 0.63,
-        "bttsScore": 0.699,
-        "signals": [
-          "away_edge",
-          "over25_support",
-          "btts_support",
-          "close_strength_gap",
-          "away_rest_4"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "AWAY",
-            "score": 0.574,
-            "gap": 0.26199999999999996,
-            "drawScore": 0.114,
-            "reasons": [
-              "best_below_0.68"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": true,
-            "pick": "Over 1.5",
-            "score": 0.725,
-            "reasons": []
-          },
-          "Over / Under 2.5": {
-            "eligible": false,
-            "pick": "Over 2.5",
-            "score": 0.63,
-            "expectedTotalGoals": 2.917,
-            "reasons": [
-              "score_below_0.65"
-            ]
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.567,
-            "reasons": [
-              "score_below_0.74",
-              "missing_strong_goal_support"
-            ]
-          },
-          "BTTS": {
-            "eligible": true,
-            "pick": "BTTS YES",
-            "score": 0.699,
-            "reasons": []
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": 35,
+        "formWindow": 5,
+        "homeTeam": "Sreenidi Deccan FC",
+        "awayTeam": "Chanmari FC",
+        "leagueSlug": "ind.2",
+        "fixtureDate": "2026-11-24T13:00:00.000Z",
+        "homeResolvedKey": "Sreenidi Deccan FC",
+        "awayResolvedKey": "Chanmari FC",
+        "homeRawSample": 4,
+        "awayRawSample": 2,
+        "homeBlendedSample": 4,
+        "awayBlendedSample": 2,
+        "homeSideRawSample": 0,
+        "awaySideRawSample": 2,
+        "homeSideBlendedSample": 0,
+        "awaySideBlendedSample": 2,
+        "homePriorSample": null,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_ita2_benevento_empoli_20261124",
@@ -4314,15 +4283,18 @@
       "nullClass": null,
       "minimumSample": null,
       "valuePreview": {
-        "confidence": 0.903,
-        "homeWinScore": 0.267,
+        "confidence": 0.851,
+        "homeWinScore": 0.245,
         "drawScore": 0.132,
-        "awayWinScore": 0.602,
-        "over15Score": 0.606,
-        "over25Score": 0.472,
-        "bttsScore": 0.426,
+        "awayWinScore": 0.624,
+        "over15Score": 0.563,
+        "over25Score": 0.43700000000000006,
+        "bttsScore": 0.409,
         "signals": [
           "away_edge",
+          "home_form_decay",
+          "away_form_decay",
+          "form_influence_reduced",
           "priors_applied",
           "close_strength_gap"
         ],
@@ -4330,17 +4302,18 @@
           "1X2": {
             "eligible": false,
             "pick": "AWAY",
-            "score": 0.602,
-            "gap": 0.33499999999999996,
+            "score": 0.624,
+            "gap": 0.379,
             "drawScore": 0.132,
             "reasons": [
-              "best_below_0.68"
+              "best_below_0.68",
+              "side_negative_form"
             ]
           },
           "Over / Under 1.5": {
             "eligible": false,
             "pick": "Over 1.5",
-            "score": 0.606,
+            "score": 0.563,
             "reasons": [
               "score_below_0.70"
             ]
@@ -4348,8 +4321,8 @@
           "Over / Under 2.5": {
             "eligible": false,
             "pick": "Over 2.5",
-            "score": 0.472,
-            "expectedTotalGoals": 2.347,
+            "score": 0.43700000000000006,
+            "expectedTotalGoals": 2.319,
             "reasons": [
               "score_below_0.65",
               "expected_goals_below_2.75",
@@ -4359,7 +4332,7 @@
           "Over / Under 3.5": {
             "eligible": false,
             "pick": "Over 3.5",
-            "score": 0.453,
+            "score": 0.421,
             "reasons": [
               "score_below_0.74",
               "missing_strong_goal_support"
@@ -4368,7 +4341,7 @@
           "BTTS": {
             "eligible": false,
             "pick": "BTTS YES",
-            "score": 0.426,
+            "score": 0.409,
             "reasons": [
               "score_below_0.68",
               "missing_btts_support"
@@ -5044,15 +5017,19 @@
       "nullClass": null,
       "minimumSample": null,
       "valuePreview": {
-        "confidence": 0.869,
-        "homeWinScore": 0.364,
+        "confidence": 0.781,
+        "homeWinScore": 0.248,
         "drawScore": 0.18,
-        "awayWinScore": 0.456,
-        "over15Score": 0.561,
-        "over25Score": 0.467,
-        "bttsScore": 0.388,
+        "awayWinScore": 0.572,
+        "over15Score": 0.499,
+        "over25Score": 0.42,
+        "bttsScore": 0.35,
         "signals": [
           "away_edge",
+          "btts_no_lean",
+          "home_form_decay",
+          "away_form_decay",
+          "form_influence_reduced",
           "priors_applied",
           "close_strength_gap"
         ],
@@ -5060,18 +5037,18 @@
           "1X2": {
             "eligible": false,
             "pick": "AWAY",
-            "score": 0.456,
-            "gap": 0.09200000000000003,
+            "score": 0.572,
+            "gap": 0.32399999999999995,
             "drawScore": 0.18,
             "reasons": [
               "best_below_0.68",
-              "gap_below_0.10"
+              "side_negative_form"
             ]
           },
           "Over / Under 1.5": {
             "eligible": false,
             "pick": "Over 1.5",
-            "score": 0.561,
+            "score": 0.499,
             "reasons": [
               "score_below_0.70"
             ]
@@ -5079,8 +5056,8 @@
           "Over / Under 2.5": {
             "eligible": false,
             "pick": "Over 2.5",
-            "score": 0.467,
-            "expectedTotalGoals": 1.973,
+            "score": 0.42,
+            "expectedTotalGoals": 1.888,
             "reasons": [
               "score_below_0.65",
               "expected_goals_below_2.75",
@@ -5090,7 +5067,7 @@
           "Over / Under 3.5": {
             "eligible": false,
             "pick": "Over 3.5",
-            "score": 0.414,
+            "score": 0.37,
             "reasons": [
               "score_below_0.74",
               "missing_strong_goal_support"
@@ -5099,10 +5076,11 @@
           "BTTS": {
             "eligible": false,
             "pick": "BTTS YES",
-            "score": 0.388,
+            "score": 0.35,
             "reasons": [
               "score_below_0.68",
-              "missing_btts_support"
+              "missing_btts_support",
+              "btts_blocker"
             ]
           }
         }
@@ -5124,15 +5102,17 @@
       "nullClass": null,
       "minimumSample": null,
       "valuePreview": {
-        "confidence": 0.899,
-        "homeWinScore": 0.424,
+        "confidence": 0.85,
+        "homeWinScore": 0.34,
         "drawScore": 0.13,
-        "awayWinScore": 0.446,
-        "over15Score": 0.656,
-        "over25Score": 0.535,
-        "bttsScore": 0.442,
+        "awayWinScore": 0.53,
+        "over15Score": 0.633,
+        "over25Score": 0.516,
+        "bttsScore": 0.419,
         "signals": [
-          "home_edge",
+          "away_edge",
+          "home_form_decay",
+          "form_influence_reduced",
           "priors_applied",
           "close_strength_gap"
         ],
@@ -5140,18 +5120,17 @@
           "1X2": {
             "eligible": false,
             "pick": "AWAY",
-            "score": 0.446,
-            "gap": 0.02200000000000002,
+            "score": 0.53,
+            "gap": 0.19,
             "drawScore": 0.13,
             "reasons": [
-              "best_below_0.68",
-              "gap_below_0.10"
+              "best_below_0.68"
             ]
           },
           "Over / Under 1.5": {
             "eligible": false,
             "pick": "Over 1.5",
-            "score": 0.656,
+            "score": 0.633,
             "reasons": [
               "score_below_0.70"
             ]
@@ -5159,8 +5138,8 @@
           "Over / Under 2.5": {
             "eligible": false,
             "pick": "Over 2.5",
-            "score": 0.535,
-            "expectedTotalGoals": 2.327,
+            "score": 0.516,
+            "expectedTotalGoals": 2.362,
             "reasons": [
               "score_below_0.65",
               "expected_goals_below_2.75",
@@ -5170,7 +5149,7 @@
           "Over / Under 3.5": {
             "eligible": false,
             "pick": "Over 3.5",
-            "score": 0.485,
+            "score": 0.469,
             "reasons": [
               "score_below_0.74",
               "missing_strong_goal_support"
@@ -5179,7 +5158,7 @@
           "BTTS": {
             "eligible": false,
             "pick": "BTTS YES",
-            "score": 0.442,
+            "score": 0.419,
             "reasons": [
               "score_below_0.68",
               "missing_btts_support"
@@ -5204,34 +5183,39 @@
       "nullClass": null,
       "minimumSample": null,
       "valuePreview": {
-        "confidence": 0.92,
-        "homeWinScore": 0.448,
+        "confidence": 0.858,
+        "homeWinScore": 0.401,
         "drawScore": 0.147,
-        "awayWinScore": 0.405,
-        "over15Score": 0.569,
-        "over25Score": 0.44099999999999995,
-        "bttsScore": 0.404,
+        "awayWinScore": 0.452,
+        "over15Score": 0.525,
+        "over25Score": 0.406,
+        "bttsScore": 0.37,
         "signals": [
           "away_edge",
+          "btts_no_lean",
+          "home_form_decay",
+          "away_form_decay",
+          "form_influence_reduced",
           "priors_applied",
           "close_strength_gap"
         ],
         "marketDiagnostics": {
           "1X2": {
             "eligible": false,
-            "pick": "HOME",
-            "score": 0.448,
-            "gap": 0.04299999999999998,
+            "pick": "AWAY",
+            "score": 0.452,
+            "gap": 0.05099999999999999,
             "drawScore": 0.147,
             "reasons": [
               "best_below_0.68",
-              "gap_below_0.10"
+              "gap_below_0.10",
+              "side_negative_form"
             ]
           },
           "Over / Under 1.5": {
             "eligible": false,
             "pick": "Over 1.5",
-            "score": 0.569,
+            "score": 0.525,
             "reasons": [
               "score_below_0.70"
             ]
@@ -5239,7 +5223,7 @@
           "Over / Under 2.5": {
             "eligible": false,
             "pick": "Over 2.5",
-            "score": 0.44099999999999995,
+            "score": 0.406,
             "expectedTotalGoals": 2.007,
             "reasons": [
               "score_below_0.65",
@@ -5250,7 +5234,7 @@
           "Over / Under 3.5": {
             "eligible": false,
             "pick": "Over 3.5",
-            "score": 0.42,
+            "score": 0.388,
             "reasons": [
               "score_below_0.74",
               "missing_strong_goal_support"
@@ -5259,10 +5243,11 @@
           "BTTS": {
             "eligible": false,
             "pick": "BTTS YES",
-            "score": 0.404,
+            "score": 0.37,
             "reasons": [
               "score_below_0.68",
-              "missing_btts_support"
+              "missing_btts_support",
+              "btts_blocker"
             ]
           }
         }
@@ -5284,15 +5269,15 @@
       "nullClass": null,
       "minimumSample": null,
       "valuePreview": {
-        "confidence": 0.855,
-        "homeWinScore": 0.418,
+        "confidence": 0.82,
+        "homeWinScore": 0.429,
         "drawScore": 0.178,
-        "awayWinScore": 0.404,
-        "over15Score": 0.652,
-        "over25Score": 0.503,
-        "bttsScore": 0.442,
+        "awayWinScore": 0.393,
+        "over15Score": 0.618,
+        "over25Score": 0.476,
+        "bttsScore": 0.408,
         "signals": [
-          "home_edge",
+          "home_edge_strong",
           "priors_applied",
           "close_strength_gap",
           "home_rest_1",
@@ -5302,8 +5287,8 @@
           "1X2": {
             "eligible": false,
             "pick": "HOME",
-            "score": 0.418,
-            "gap": 0.013999999999999957,
+            "score": 0.429,
+            "gap": 0.035999999999999976,
             "drawScore": 0.178,
             "reasons": [
               "best_below_0.68",
@@ -5313,7 +5298,7 @@
           "Over / Under 1.5": {
             "eligible": false,
             "pick": "Over 1.5",
-            "score": 0.652,
+            "score": 0.618,
             "reasons": [
               "score_below_0.70"
             ]
@@ -5321,8 +5306,8 @@
           "Over / Under 2.5": {
             "eligible": false,
             "pick": "Over 2.5",
-            "score": 0.503,
-            "expectedTotalGoals": 2.235,
+            "score": 0.476,
+            "expectedTotalGoals": 2.195,
             "reasons": [
               "score_below_0.65",
               "expected_goals_below_2.75",
@@ -5332,7 +5317,7 @@
           "Over / Under 3.5": {
             "eligible": false,
             "pick": "Over 3.5",
-            "score": 0.485,
+            "score": 0.459,
             "reasons": [
               "score_below_0.74",
               "missing_strong_goal_support"
@@ -5341,7 +5326,7 @@
           "BTTS": {
             "eligible": false,
             "pick": "BTTS YES",
-            "score": 0.442,
+            "score": 0.408,
             "reasons": [
               "score_below_0.68",
               "missing_btts_support"
@@ -5366,33 +5351,37 @@
       "nullClass": null,
       "minimumSample": null,
       "valuePreview": {
-        "confidence": 0.891,
-        "homeWinScore": 0.345,
+        "confidence": 0.846,
+        "homeWinScore": 0.45,
         "drawScore": 0.124,
-        "awayWinScore": 0.532,
-        "over15Score": 0.599,
-        "over25Score": 0.494,
-        "bttsScore": 0.384,
+        "awayWinScore": 0.427,
+        "over15Score": 0.558,
+        "over25Score": 0.461,
+        "bttsScore": 0.36,
         "signals": [
-          "away_edge",
+          "home_edge",
+          "btts_no_lean",
+          "away_form_decay",
+          "form_influence_reduced",
           "priors_applied",
           "close_strength_gap"
         ],
         "marketDiagnostics": {
           "1X2": {
             "eligible": false,
-            "pick": "AWAY",
-            "score": 0.532,
-            "gap": 0.18700000000000006,
+            "pick": "HOME",
+            "score": 0.45,
+            "gap": 0.02300000000000002,
             "drawScore": 0.124,
             "reasons": [
-              "best_below_0.68"
+              "best_below_0.68",
+              "gap_below_0.10"
             ]
           },
           "Over / Under 1.5": {
             "eligible": false,
             "pick": "Over 1.5",
-            "score": 0.599,
+            "score": 0.558,
             "reasons": [
               "score_below_0.70"
             ]
@@ -5400,8 +5389,8 @@
           "Over / Under 2.5": {
             "eligible": false,
             "pick": "Over 2.5",
-            "score": 0.494,
-            "expectedTotalGoals": 2.133,
+            "score": 0.461,
+            "expectedTotalGoals": 2.097,
             "reasons": [
               "score_below_0.65",
               "expected_goals_below_2.75",
@@ -5411,7 +5400,7 @@
           "Over / Under 3.5": {
             "eligible": false,
             "pick": "Over 3.5",
-            "score": 0.443,
+            "score": 0.413,
             "reasons": [
               "score_below_0.74",
               "missing_strong_goal_support"
@@ -5420,10 +5409,11 @@
           "BTTS": {
             "eligible": false,
             "pick": "BTTS YES",
-            "score": 0.384,
+            "score": 0.36,
             "reasons": [
               "score_below_0.68",
-              "missing_btts_support"
+              "missing_btts_support",
+              "btts_blocker"
             ]
           }
         }
@@ -5445,15 +5435,19 @@
       "nullClass": null,
       "minimumSample": null,
       "valuePreview": {
-        "confidence": 0.92,
-        "homeWinScore": 0.354,
+        "confidence": 0.852,
+        "homeWinScore": 0.356,
         "drawScore": 0.16,
-        "awayWinScore": 0.487,
-        "over15Score": 0.544,
-        "over25Score": 0.42600000000000005,
-        "bttsScore": 0.391,
+        "awayWinScore": 0.485,
+        "over15Score": 0.505,
+        "over25Score": 0.394,
+        "bttsScore": 0.365,
         "signals": [
           "away_edge",
+          "btts_no_lean",
+          "home_form_decay",
+          "away_form_decay",
+          "form_influence_reduced",
           "priors_applied",
           "close_strength_gap"
         ],
@@ -5461,17 +5455,18 @@
           "1X2": {
             "eligible": false,
             "pick": "AWAY",
-            "score": 0.487,
-            "gap": 0.133,
+            "score": 0.485,
+            "gap": 0.129,
             "drawScore": 0.16,
             "reasons": [
-              "best_below_0.68"
+              "best_below_0.68",
+              "side_negative_form"
             ]
           },
           "Over / Under 1.5": {
             "eligible": false,
             "pick": "Over 1.5",
-            "score": 0.544,
+            "score": 0.505,
             "reasons": [
               "score_below_0.70"
             ]
@@ -5479,8 +5474,8 @@
           "Over / Under 2.5": {
             "eligible": false,
             "pick": "Over 2.5",
-            "score": 0.42600000000000005,
-            "expectedTotalGoals": 1.911,
+            "score": 0.394,
+            "expectedTotalGoals": 1.928,
             "reasons": [
               "score_below_0.65",
               "expected_goals_below_2.75",
@@ -5490,7 +5485,7 @@
           "Over / Under 3.5": {
             "eligible": false,
             "pick": "Over 3.5",
-            "score": 0.403,
+            "score": 0.374,
             "reasons": [
               "score_below_0.74",
               "missing_strong_goal_support"
@@ -5499,10 +5494,11 @@
           "BTTS": {
             "eligible": false,
             "pick": "BTTS YES",
-            "score": 0.391,
+            "score": 0.365,
             "reasons": [
               "score_below_0.68",
-              "missing_btts_support"
+              "missing_btts_support",
+              "btts_blocker"
             ]
           }
         }
