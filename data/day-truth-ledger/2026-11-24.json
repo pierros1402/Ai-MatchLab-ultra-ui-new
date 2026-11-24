@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-24",
-  "generatedAt": "2026-11-24T11:18:15.554Z",
+  "generatedAt": "2026-11-24T11:58:19.872Z",
   "role": "derived_control_plane",
-  "ledgerState": "CONFLICT",
-  "truthFingerprint": "1ac0ab40e78b10f73a760798c03865fe67052ac6574fd6c188a127ac84948062",
+  "ledgerState": "OPEN",
+  "truthFingerprint": "c61e48037711878221bbbec468c94abe30e23c4f2069ef3ae795c3af1dfc38d1",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,9 +17,9 @@
   },
   "summary": {
     "canonicalRows": 104,
-    "playedTerminal": 9,
+    "playedTerminal": 10,
     "nonPlayedTerminal": 5,
-    "scheduled": 87,
+    "scheduled": 86,
     "live": 3,
     "interrupted": 0,
     "delayed": 0,
@@ -27,16 +27,16 @@
     "operationalUnresolved": 0,
     "verifiedFinalArtifacts": 10,
     "acceptedVerifiedFinalArtifacts": 10,
-    "convergedPlayedFinal": 9,
+    "convergedPlayedFinal": 10,
     "convergedNonPlayedTerminal": 5,
     "pendingVerifiedFinal": 0,
     "openRows": 89,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 0,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 9,
-    "scoredSettlementEligible": 9,
+    "historyEligible": 10,
+    "scoredSettlementEligible": 10,
     "voidSettlementEligible": 5
   },
   "fixtures": [
@@ -147,11 +147,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "LIVE",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_IN_PROGRESS",
         "scoreHome": 3,
-        "scoreAway": 1
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": false,
@@ -196,10 +196,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -2842,10 +2842,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_HALFTIME",
+        "scoreHome": 2,
         "scoreAway": 1
       },
       "verifiedFinal": {
@@ -4946,14 +4946,14 @@
       "homeTeam": "Ahrobiznes Volochysk",
       "awayTeam": "FC Chernihiv",
       "kickoffUtc": "2026-11-24T09:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": true,
@@ -4963,14 +4963,14 @@
         "dayKey": "2026-11-24",
         "scoreHome": 2,
         "scoreAway": 1,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -5140,9 +5140,7 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [
-      "cid_ukr2_ahrobiznesvolochysk_chernihiv_20261124"
-    ],
+    "conflictFixtureIds": [],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -5153,7 +5151,7 @@
     "systemHealth": {
       "schema": "ai-matchlab.system-health-alerts.v1",
       "dayKey": "2026-11-24",
-      "generatedAt": "2026-11-24T11:18:15.013Z",
+      "generatedAt": "2026-11-24T11:58:19.354Z",
       "severity": "warning",
       "issueCounts": {
         "error": 0,
@@ -5355,7 +5353,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 24272,
+            "count": 24274,
             "informational": true
           }
         },
@@ -6826,7 +6824,7 @@
             "fixtures": 104,
             "valuePicks": 3,
             "valueSource": "canonical_fixtures",
-            "latestCanonicalUpdatedAt": "2026-11-24T09:49:49.803Z",
+            "latestCanonicalUpdatedAt": "2026-11-24T10:49:18.313Z",
             "valueArtifactAt": "2026-11-24T03:28:33.142Z",
             "valueFreshAgainstCanonical": false,
             "mode": "frozen_snapshot",
@@ -7032,7 +7030,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 24272,
+            "count": 24274,
             "informational": true
           }
         },
@@ -7825,13 +7823,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "1ac0ab40e78b10f73a760798c03865fe67052ac6574fd6c188a127ac84948062",
+      "truthFingerprint": "c61e48037711878221bbbec468c94abe30e23c4f2069ef3ae795c3af1dfc38d1",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 9,
+        "expectedEligibleRows": 10,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_afcchampions_newcastlejets_kashiwareysol_20261124",
@@ -7841,6 +7839,7 @@
           "cid_col2_bocajuniors_quindio_20261124",
           "cid_crc1_alajuelense_cartagines_20261124",
           "cid_par1_nacionalasuncion_cerroporteno_20261124",
+          "cid_ukr2_ahrobiznesvolochysk_chernihiv_20261124",
           "cid_uru1_albion_danubio_20261124",
           "cid_usa1_stlouiscity_lafc_20261124"
         ],
