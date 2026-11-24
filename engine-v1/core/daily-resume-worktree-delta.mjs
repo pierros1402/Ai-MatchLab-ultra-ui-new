@@ -30,15 +30,15 @@ function normalFile(root, p) {
   return node;
 }
 function allowed(p, prefixes, dayKey) {
-  if(p.startsWith("data/") &&
-    !evaluateStage20CapturePaths({dayKey,paths:[p]}).ok)
-    check(false,"resume_delta_stage20_path_policy_denied");
   // Keep byte-capture and byte-replay admission as strict as the Stage20
   // path inspector. A family prefix alone must never admit arbitrary Details.
   if (p.startsWith("data/details/"))
     check(isApprovedStage20DetailsPath(p), "resume_delta_unapproved_details_path");
   if (p.startsWith(STAGE20_JOURNAL_PREFIX))
     check(isApprovedStage20JournalPath(p),"resume_delta_unapproved_journal_path");
+  if(p.startsWith("data/") &&
+    !evaluateStage20CapturePaths({dayKey,paths:[p]}).ok)
+    check(false,"resume_delta_stage20_path_policy_denied");
   check(Array.isArray(prefixes) && prefixes.length > 0 && new Set(prefixes).size === prefixes.length,
     "resume_delta_allowlist_invalid");
   for (const prefix of prefixes) check(prefix.endsWith("/") && relative(prefix.slice(0, -1)), "resume_delta_allowlist_invalid");
