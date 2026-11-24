@@ -15,7 +15,13 @@ function assertBounded(document) {
   const snippet = document.slice(stages[1], stages[3]);
   assert.match(snippet, /vars\.AIML_DAILY_STAGE20_CAPTURE_ENABLED == '1'/);
   assert.match(snippet, /continue-on-error: true/);
-  assert.match(snippet, /capture-stage20-worktree\.mjs capture "\$DAY_KEY" "\$ARCHIVE_ROOT"/);
+  const captureStep = document.slice(stages[1], stages[2]);
+  const guard = captureStep.split("\n").find(line => line.trim().startsWith("if:"));
+  assert.ok(guard, "capture guard missing");
+  for (const clause of ["env.SKIP_BUILD != 'true'", "vars.AIML_DAILY_STAGE20_CAPTURE_ENABLED == '1'", "vars.AIML_DAILY_STAGE20_PREPOST_INVENTORY_ENABLED == '1'", "steps.daily_cycle.outcome == 'success'", "steps.shadow_stage20_pre.outcome == 'success'", "steps.shadow_stage20_post.outcome == 'success'"]) assert.ok(guard.includes(clause), clause);
+  assert.ok(!guard.includes("||"), "capture guard must be conjunctive");
+  assert.match(captureStep, /bind-observed-stage20-delta\.mjs "\$DAY_KEY"/);
+  assert.match(snippet, /aiml-stage20-bound-delta\//);
   assert.match(snippet, /steps\.shadow_capture_stage20\.outcome == 'success'/);
   assert.match(snippet, /retention-days: 2/);
   assert.match(snippet, /if-no-files-found: error/);
@@ -41,4 +47,19 @@ test("missing successful capture guard on upload is rejected", () => {
 test("shadow lane must not bypass publication", () => {
   assert.throws(() => assertBounded(yml.replace("retention-days: 2", "retention-days: 2\n          git push origin main")),
     /not match/);
+});
+
+test("missing actual cycle or observation success guard is rejected", () => {
+  for (const id of ["daily_cycle","shadow_stage20_pre","shadow_stage20_post"]) {
+    const start=yml.indexOf(capture), end=yml.indexOf(upload);
+    const changed=yml.slice(0,start)+yml.slice(start,end).replace(" && steps."+id+".outcome == 'success'","")+yml.slice(end);
+    assert.notEqual(changed,yml);
+    assert.throws(()=>assertBounded(changed), new RegExp(id));
+  }
+});
+test("capture without pre/post opt-in is rejected", () => {
+  const start=yml.indexOf(capture), end=yml.indexOf(upload);
+  const changed=yml.slice(0,start)+yml.slice(start,end).replace(" && vars.AIML_DAILY_STAGE20_PREPOST_INVENTORY_ENABLED == '1'","")+yml.slice(end);
+  assert.notEqual(changed,yml);
+  assert.throws(()=>assertBounded(changed), /AIML_DAILY_STAGE20_PREPOST_INVENTORY_ENABLED/);
 });
