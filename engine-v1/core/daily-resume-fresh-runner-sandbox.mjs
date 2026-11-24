@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { validateGraph } from "./daily-resume-contract.mjs";
+import {validateStage20DAGOutputOwnership} from "./daily-resume-stage-dag-ownership.mjs";
 import { archiveStage, stageArchive, verifyArchive } from "./daily-resume-artifact-store.mjs";
 
 const CLASSES = new Set(["frozen", "derived", "external", "mutable", "gate"]);
@@ -59,6 +60,7 @@ export async function runFreshRunnerSandboxDAG({
     ensure(fs.existsSync(p) && fs.statSync(p).isDirectory(), "sandbox_directory_required");
   }
   validateGraph(stages);
+  validateStage20DAGOutputOwnership(stages);
   ensure(stages.every(x => CLASSES.has(x.reuseClass)), "stage_reuse_class_invalid");
   ensure(typeof runStage === "function" &&
     previousCheckpoints && typeof previousCheckpoints === "object" &&
