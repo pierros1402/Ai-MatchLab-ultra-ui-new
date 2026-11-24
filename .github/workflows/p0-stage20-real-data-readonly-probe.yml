@@ -1,0 +1,59 @@
+name: P0 Stage20 real repository data inventory (read-only)
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/p0-stage20-real-data-readonly-probe.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout source and committed complete data tree
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            data
+            engine-v1/core
+            .github/workflows/p0-stage20-real-data-readonly-probe.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Verify core scanner syntax
+        run: |
+          node --check engine-v1/core/daily-resume-complete-data-inventory.mjs
+          node --check engine-v1/core/daily-resume-stable-data-scan.mjs
+      - name: Measure real committed data tree with two byte-exact scans
+        shell: bash
+        run: |
+          set -euo pipefail
+          DAY_KEY="$(TZ=Europe/Athens date +%F)"
+          DAY_KEY="$DAY_KEY" node --input-type=module <<'NODE'
+          import {inventoryStableDataTree} from "./engine-v1/core/daily-resume-stable-data-scan.mjs";
+          const started=process.hrtime.bigint();
+          const {inventory,stability}=inventoryStableDataTree(process.cwd(),process.env.DAY_KEY);
+          const durationMs=Number((process.hrtime.bigint()-started)/1000000n);
+          if(!stability.ok || stability.consecutivePasses!==2 ||
+            stability.writerQuiescenceAttested!==false ||
+            inventory.resumeAuthorized!==false ||
+            inventory.publicationAuthorized!==false)throw Error("stage20_readonly_probe_invariant");
+          console.log("STAGE20_REAL_COMMITTED_DATA_READONLY="+JSON.stringify({
+            dayKey:inventory.dayKey,sourceCommit:inventory.sourceCommit,
+            fileCount:inventory.fileCount,totalBytes:inventory.totalBytes,
+            inventorySha256:inventory.manifestSha256,
+            stableReadPasses:stability.consecutivePasses,durationMs,
+            ignoredIncluded:true,untrackedIncluded:true,trackedIncluded:true,
+            gitCheckoutOnly:true,liveRunnerGeneratedDataAudited:false,
+            writerQuiescenceAttested:false,stageCaptureAuthorized:false,
+            resumeAuthorized:false,publicationAuthorized:false
+          }));
+          NODE
+      - name: Prove repository has no writes
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          echo "STAGE20_READONLY_REAL_DATA_PASS_NO_REPO_WRITES_NO_CAPTURE_NO_RESUME"
