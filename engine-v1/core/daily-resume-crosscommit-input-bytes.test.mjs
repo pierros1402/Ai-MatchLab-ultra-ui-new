@@ -38,6 +38,7 @@ test("data-only successor preserves exact declared frozen bytes, never authorize
   assert.equal(a.accepted,true);
   assert.equal(a.exactDeclaredInputCount,1);
   assert.equal(a.inputBytesVerified,true);
+  assert.equal(a.producerGitBlobVerified,true);
   assert.equal(a.completeInputUniverseVerified,false);
   assert.equal(a.resumeAuthorized,false);
 }));
@@ -71,9 +72,32 @@ test("symlink input fails closed and never follows it",()=>fixture(x=>{
   fs.symlinkSync(path.join(x.root,"data/other.json"),path.join(x.root,"data/frozen.json"));
   assert.match(check(x.options).reason,/stage20_input_read_or_git_failure/);
 }));
+test("forged manifest matching consumer bytes cannot impersonate producer Git blob",()=>fixture(x=>{
+  const later='{"frozen":9}\\n';
+  fs.writeFileSync(path.join(x.root,"data/frozen.json"),later);
+  git(x.root,"add",".");git(x.root,"commit","-qm","modified committed frozen input");
+  const consumerCommit=git(x.root,"rev-parse","HEAD");
+  const bytes=fs.readFileSync(path.join(x.root,"data/frozen.json"));
+  const producerInputs=[{path:"data/frozen.json",bytes:bytes.length,
+    sha256:sha(bytes),provenance:"immutable_or_bound_derived"}];
+  const result=check({...x.options,consumerCommit,producerInputs});
+  assert.equal(result.accepted,false);
+  assert.match(result.reason,/stage20_input_producer_blob_mismatch/);
+}));
+test("untracked producer input is denied without independent archive provenance",()=>fixture(x=>{
+  const extra=path.join(x.root,"data/untracked.json");
+  fs.writeFileSync(extra,'{"local":true}\\n');
+  const bytes=fs.readFileSync(extra);
+  const result=check({...x.options,requiredInputPaths:["data/untracked.json"],
+    producerInputs:[{path:"data/untracked.json",bytes:bytes.length,
+      sha256:sha(bytes),provenance:"immutable_or_bound_derived"}]});
+  assert.equal(result.accepted,false);
+  assert.equal(result.reason,"stage20_input_read_or_git_failure");
+  assert.equal(result.resumeAuthorized,false);
+}));
 test("tampered producer digest is rejected without rewriting input",()=>fixture(x=>{
   const original=fs.readFileSync(path.join(x.root,"data/frozen.json"));
   const manifest=[{...x.options.producerInputs[0],sha256:"f".repeat(64)}];
-  assert.match(check({...x.options,producerInputs:manifest}).reason,/stage20_input_bytes_changed/);
+  assert.match(check({...x.options,producerInputs:manifest}).reason,/stage20_input_producer_blob_mismatch/);
   assert.deepEqual(fs.readFileSync(path.join(x.root,"data/frozen.json")),original);
 }));
