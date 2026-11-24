@@ -50,7 +50,7 @@ jobs:
           // Aggregate categories only: no file paths, source values or contents.
           const rejectedFamilies=Object.fromEntries(
             Object.entries(a.familyCounts).filter(([,v])=>v.denied>0)
-              .map(([family,v])=>[family,{denied:v.denied,bytes:v.bytes}])
+              .map(([family,v])=>[family,{denied:v.denied,familyTotalBytes:v.bytes}])
           );
           console.log("STAGE20_HISTORICAL_DENIAL_AGGREGATES="+JSON.stringify({
             sourceRunId:HISTORICAL_954.runId,
