@@ -1,0 +1,106 @@
+{
+  "schema": "ai-matchlab.daily-producer-census.v1",
+  "sourceCommit": "d6aa27f3a39269687737e570ce6580dd38e91bf9",
+  "sources": [
+    {
+      "path": "engine-v1/jobs/run-daily-cycle.js",
+      "blob": "8f539391cc7ad81d45f6f2b69450e4d7bbc608a8"
+    },
+    {
+      "path": "engine-v1/jobs/build-details-day.js",
+      "blob": "62737b121f362b38fd1449df19d16caacf928d38"
+    },
+    {
+      "path": "engine-v1/jobs/export-deploy-snapshot-day.js",
+      "blob": "111f2d2201872ad729fc8f23efacc4be0a786b96"
+    },
+    {
+      "path": "engine-v1/jobs/build-standings-day.js",
+      "blob": "915d8b30989e75de6bc4999699a4ee584ea9555c"
+    },
+    {
+      "path": "engine-v1/jobs/build-model-priors.js",
+      "blob": "f5154a3065948d3a46a1ebf3ec13060b53b2fb82"
+    },
+    {
+      "path": "engine-v1/core/build-value-day.js",
+      "blob": "e127f22a3985d0861c5f68357928474800aeb7ee"
+    },
+    {
+      "path": "engine-v1/value/daily-plan-a-checkpoint.js",
+      "blob": "15f3c1a549b77daf6c858d55fee14ae17d60cb3c"
+    }
+  ],
+  "calls": [
+    {
+      "producer": "buildStandingsDay",
+      "line": 782,
+      "sourceLine": "const standingsBuild = await buildStandingsDay("
+    },
+    {
+      "producer": "buildDetailsDay",
+      "line": 961,
+      "sourceLine": "const detailsBuild = await buildDetailsDay(dayKey, {"
+    },
+    {
+      "producer": "buildDetailsDay",
+      "line": 1159,
+      "sourceLine": "playerUsageDetailsRefresh = await buildDetailsDay(dayKey, {"
+    },
+    {
+      "producer": "buildValueDay",
+      "line": 1403,
+      "sourceLine": "valueBuild = await buildValueDay(dayKey, { rebuild: true });"
+    },
+    {
+      "producer": "checkpointDailyPlanA",
+      "line": 1407,
+      "sourceLine": "checkpointDailyPlanA(dayKey, valueBuild);"
+    },
+    {
+      "producer": "buildDetailsDay",
+      "line": 1638,
+      "sourceLine": "finalDetailsSync = await buildDetailsDay(dayKey, {"
+    },
+    {
+      "producer": "exportDeploySnapshotDay",
+      "line": 1672,
+      "sourceLine": "deploySnapshot = await Promise.resolve(exportDeploySnapshotDay(dayKey));"
+    },
+    {
+      "producer": "buildValueDay",
+      "line": 1856,
+      "sourceLine": "finalizeValueBuild = await buildValueDay(finalizeDayKey, { rebuild: false });"
+    },
+    {
+      "producer": "buildDetailsDay",
+      "line": 1884,
+      "sourceLine": "const finalizedDetailRebuild = await buildDetailsDay(finalizeDayKey, {"
+    },
+    {
+      "producer": "exportDeploySnapshotDay",
+      "line": 1907,
+      "sourceLine": "finalizedDeploySnapshot = await Promise.resolve(exportDeploySnapshotDay(finalizeDayKey, {"
+    },
+    {
+      "producer": "exportDeploySnapshotDay",
+      "line": 2135,
+      "sourceLine": "await Promise.resolve(exportDeploySnapshotDay(day, {"
+    },
+    {
+      "producer": "buildStandingsDay",
+      "line": 2305,
+      "sourceLine": "const finalStandingsBuild = await buildStandingsDay("
+    },
+    {
+      "producer": "buildModelPriors",
+      "line": 2342,
+      "sourceLine": "const modelPriorsRebuild = await buildModelPriors({"
+    }
+  ],
+  "coverage": "selected_direct_calls_only",
+  "transitiveClosureVerified": false,
+  "artifactOwnershipVerified": false,
+  "resumeAuthorized": false,
+  "publicationAuthorized": false
+}
