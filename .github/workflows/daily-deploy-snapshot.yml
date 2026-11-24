@@ -454,21 +454,20 @@ jobs:
       # error must not turn an otherwise valid Daily into a failed publish.
       - name: Shadow capture verified stage-20 worktree delta (opt-in only)
         id: shadow_capture_stage20
-        if: env.SKIP_BUILD != 'true' && vars.AIML_DAILY_STAGE20_CAPTURE_ENABLED == '1'
+        if: env.SKIP_BUILD != 'true' && vars.AIML_DAILY_STAGE20_CAPTURE_ENABLED == '1' && vars.AIML_DAILY_STAGE20_PREPOST_INVENTORY_ENABLED == '1' && steps.daily_cycle.outcome == 'success' && steps.shadow_stage20_pre.outcome == 'success' && steps.shadow_stage20_post.outcome == 'success'
         continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
-          ARCHIVE_ROOT="$RUNNER_TEMP/aiml-stage20-capture"
-          node engine-v1/jobs/capture-stage20-worktree.mjs capture "$DAY_KEY" "$ARCHIVE_ROOT"
+          node engine-v1/jobs/bind-observed-stage20-delta.mjs "$DAY_KEY"
 
       - name: Preserve successful stage-20 delta as short-lived GitHub artifact
         if: env.SKIP_BUILD != 'true' && vars.AIML_DAILY_STAGE20_CAPTURE_ENABLED == '1' && steps.shadow_capture_stage20.outcome == 'success'
         continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
-          name: aiml-stage20-shadow-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/aiml-stage20-capture/
+          name: aiml-stage20-bound-shadow-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/aiml-stage20-bound-delta/
           if-no-files-found: error
           include-hidden-files: false
           retention-days: 2
