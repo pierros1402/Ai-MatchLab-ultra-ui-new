@@ -13,6 +13,11 @@ on:
       - 'tools/check-historical-ft-snapshot-drift.test.mjs'
       - 'tools/check-historical-public-snapshot-parity.mjs'
       - 'tools/check-historical-public-snapshot-parity.test.mjs'
+  workflow_run:
+    workflows:
+      - "Historical FT public closure verification"
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
   schedule:
     # Watch the most recent two Athens calendar days without rebuilding the full Daily.
@@ -30,6 +35,9 @@ concurrency:
 
 jobs:
   inspect-and-dispatch:
+    # A successful closure check does not require a new writer. Failed
+    # read-only closure checks enter the existing guarded repair lane.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'failure'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
