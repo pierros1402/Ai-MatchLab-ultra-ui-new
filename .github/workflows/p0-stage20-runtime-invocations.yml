@@ -1,0 +1,24 @@
+name: P0 Stage20 runtime invocation contract
+on:
+  pull_request:
+    paths:
+      - 'engine-v1/**'
+      - '.github/workflows/p0-stage20-runtime-invocations.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: |
+          node --test engine-v1/core/daily-resume-runtime-invocations.test.mjs
+          git diff --exit-code HEAD
