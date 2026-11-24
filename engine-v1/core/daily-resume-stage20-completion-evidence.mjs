@@ -36,6 +36,12 @@ export function evaluateStage20CompletionEvidence({
   let delta;
   try { delta=compareDataInventories(preInventory,postInventory); }
   catch {return deny("stage20_completion_inventory_delta_invalid");}
+  const finalFiles=new Map(postInventory.files.map(item=>[item.path,item]));
+  const exactWriteBytes=delta.changes.reduce((total,entry)=>
+    total+(entry.action==="delete"?0:(finalFiles.get(entry.path)?.bytes??NaN)),0);
+  if(!Number.isSafeInteger(exactWriteBytes) ||
+    transport?.deltaWriteBytes!==exactWriteBytes)
+    return deny("stage20_completion_transport_write_bytes_unbound");
   if(transport?.schema!==STAGE20_TRANSPORT_BUDGET_SCHEMA ||
     transport.budgetEligible!==true || transport.producerCommit!==producerCommit ||
     transport.physicalDataFiles!==postInventory.fileCount ||
