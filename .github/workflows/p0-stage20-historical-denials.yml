@@ -1,0 +1,70 @@
+name: P0 Stage20 historical excluded-output aggregate classification
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/p0-stage20-historical-denials.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            tools/audit-daily954-stage20-history.mjs
+            engine-v1/core/daily-resume-stage20-admission.mjs
+            engine-v1/core/daily-resume-stage20-journal-admission.mjs
+            .github/workflows/p0-stage20-historical-denials.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Check immutable audit syntax
+        run: node --check tools/audit-daily954-stage20-history.mjs
+      - uses: actions/download-artifact@v4
+        with:
+          name: history-recovery-45137286904-1
+          run-id: 45137286904
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/stage20-historical-denied-input
+      - name: Verify all archive bytes and emit safe aggregate exclusions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import assert from "node:assert/strict";
+          import {auditHistorical954,HISTORICAL_954} from "./tools/audit-daily954-stage20-history.mjs";
+          const root=process.env.RUNNER_TEMP+"/stage20-historical-denied-input";
+          const a=auditHistorical954(root);
+          assert.equal(a.files,HISTORICAL_954.count);
+          assert.equal(a.bytes,HISTORICAL_954.bytes);
+          assert.equal(a.admitted,8535);
+          assert.equal(a.denied,548);
+          assert.equal(a.admitted+a.denied,a.files);
+          assert.equal(a.ignoredFilesAudited,false);
+          assert.equal(a.completeStage20CaptureProven,false);
+          assert.equal(a.publicationApproved,false);
+          // Aggregate categories only: no file paths, source values or contents.
+          const rejectedFamilies=Object.fromEntries(
+            Object.entries(a.familyCounts).filter(([,v])=>v.denied>0)
+              .map(([family,v])=>[family,{denied:v.denied,familyTotalBytes:v.bytes}])
+          );
+          console.log("STAGE20_HISTORICAL_DENIAL_AGGREGATES="+JSON.stringify({
+            sourceRunId:HISTORICAL_954.runId,
+            sourceCommit:HISTORICAL_954.sourceCommit,
+            historicalArchiveManifestSha256:HISTORICAL_954.manifestSha256,
+            files:a.files,bytes:a.bytes,admitted:a.admitted,denied:a.denied,
+            rejectedFamilies,denyReasons:a.denyReasons,
+            datePathIndicators:a.datePathIndicators,
+            sensitiveFieldIndicators:a.deniedContentSummary.suspiciousFieldCandidates,
+            ignoredFilesAudited:false,completeStage20CaptureProven:false,
+            resumeAuthorized:false,publicationAuthorized:false
+          }));
+          NODE
+      - name: Confirm no source or production modifications
+        run: |
+          git diff --exit-code HEAD -- data/ .github/workflows/daily-deploy-snapshot.yml
+          echo "HISTORICAL_AGGREGATE_ONLY_NO_DATA_WRITES_NO_CAPTURE_NO_RESUME"
