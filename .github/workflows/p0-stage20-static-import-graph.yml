@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'engine-v1/**'
+      - 'workers/_shared/leagues-coverage.js'
+      - 'workers/_shared/leagues-registry.js'
       - '.github/workflows/p0-stage20-static-import-graph.yml'
   workflow_dispatch:
 permissions:
@@ -16,6 +18,7 @@ jobs:
         with:
           sparse-checkout: |
             engine-v1
+            workers/_shared
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
