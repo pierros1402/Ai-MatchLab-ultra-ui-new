@@ -9,7 +9,7 @@ export const STAGE20_INPUT_BYTES_SCHEMA="ai-matchlab.stage20-crosscommit-input-b
 const SHA=/^[a-f0-9]{40}$/, HASH=/^[a-f0-9]{64}$/;
 const sha=buf=>crypto.createHash("sha256").update(buf).digest("hex");
 const deny=reason=>({schema:STAGE20_INPUT_BYTES_SCHEMA,accepted:false,reason,
-  inputBytesVerified:false,completeInputUniverseVerified:false,
+  inputBytesVerified:false,producerGitBlobVerified:false,completeInputUniverseVerified:false,
   sourceCodeDependencyVerified:false,stageCompleteVerified:false,
   resumeAuthorized:false,publicationAuthorized:false});
 function safe(p){
@@ -56,6 +56,15 @@ export function inspectStage20CrossCommitInputBytes({
     if(compatibility.accepted!==true)return deny("stage20_input_source_untrusted:"+compatibility.reason);
     let total=0;
     for(const row of rows){
+      // Provenance is anchored to the *producer commit*, not a caller-supplied
+      // digest of whatever bytes happen to exist in the consumer worktree.
+      // Non-Git/ignored/untracked inputs need a separate immutable artifact
+      // contract and are denied by this narrow committed-input proof.
+      const pinned=execFileSync("git",["show",producerCommit+":"+row.path],{
+        cwd:repoRoot,encoding:"buffer",maxBuffer:64*1024*1024
+      });
+      if(pinned.length!==row.bytes || sha(pinned)!==row.sha256)
+        return deny("stage20_input_producer_blob_mismatch:"+sha(Buffer.from(row.path)).slice(0,12));
       const actual=bytesAt(repoRoot,row.path);
       total+=actual.length;
       if(total>2*1024*1024*1024)return deny("stage20_input_total_oversize");
@@ -65,10 +74,10 @@ export function inspectStage20CrossCommitInputBytes({
     return {schema:STAGE20_INPUT_BYTES_SCHEMA,accepted:true,reason:null,
       dayKey,stageId,producerCommit,consumerCommit,
       exactDeclaredInputCount:rows.length,totalInputBytes:total,
-      inputBytesVerified:true,
+      inputBytesVerified:true,producerGitBlobVerified:true,
       // A caller-supplied declared list is not proof that ALL source reads
       // (including provider/time-based inputs and transitive reads) were named.
       completeInputUniverseVerified:false,sourceCodeDependencyVerified:false,
       stageCompleteVerified:false,resumeAuthorized:false,publicationAuthorized:false};
-  }catch(e){return deny("stage20_input_read_or_git_failure:"+String(e.message||e).slice(0,100));}
+  }catch{return deny("stage20_input_read_or_git_failure");}
 }
