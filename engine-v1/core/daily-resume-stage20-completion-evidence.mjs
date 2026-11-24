@@ -4,6 +4,7 @@
 import {verifyDataInventory,compareDataInventories} from "./daily-resume-complete-data-inventory.mjs";
 import {STAGE20_REPLAY_PARITY_SCHEMA} from "./daily-resume-stage20-replay-parity.mjs";
 import {STAGE20_TRANSPORT_BUDGET_SCHEMA} from "./daily-resume-stage20-transport-budget.mjs";
+import {evaluateStage20CapturePaths} from "./daily-resume-stage20-admission.mjs";
 export const STAGE20_COMPLETION_EVIDENCE_SCHEMA =
   "ai-matchlab.daily-stage20-completion-evidence-admission.v1";
 const SHA40=/^[a-f0-9]{40}$/, SHA256=/^[a-f0-9]{64}$/;
@@ -36,6 +37,14 @@ export function evaluateStage20CompletionEvidence({
   let delta;
   try { delta=compareDataInventories(preInventory,postInventory); }
   catch {return deny("stage20_completion_inventory_delta_invalid");}
+  // Require a non-empty authorized captured delta. A checksum-matching
+  // synthetic receipt cannot bypass the source-owned path policy, even when
+  // its aggregate path/byte counts agree with both full-tree inventories.
+  const pathAdmission=evaluateStage20CapturePaths({
+    dayKey,paths:delta.changes.map(item=>item.path)
+  });
+  if(pathAdmission.ok!==true)
+    return deny("stage20_completion_delta_path_policy_denied");
   const finalFiles=new Map(postInventory.files.map(item=>[item.path,item]));
   const exactWriteBytes=delta.changes.reduce((total,entry)=>
     total+(entry.action==="delete"?0:(finalFiles.get(entry.path)?.bytes??NaN)),0);
