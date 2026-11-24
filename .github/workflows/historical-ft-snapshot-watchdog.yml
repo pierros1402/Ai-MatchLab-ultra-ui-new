@@ -6,6 +6,8 @@ on:
       - '.github/workflows/historical-ft-snapshot-watchdog.yml'
       - 'tools/check-historical-ft-snapshot-drift.mjs'
       - 'tools/check-historical-ft-snapshot-drift.test.mjs'
+      - 'tools/check-historical-public-snapshot-parity.mjs'
+      - 'tools/check-historical-public-snapshot-parity.test.mjs'
   workflow_dispatch:
   schedule:
     # Watch the most recent two Athens calendar days without rebuilding the full Daily.
@@ -42,7 +44,7 @@ jobs:
           node-version: "24"
 
       - name: Verify watchdog regression controls
-        run: node --test tools/check-historical-ft-snapshot-drift.test.mjs
+        run: node --test tools/check-historical-ft-snapshot-drift.test.mjs tools/check-historical-public-snapshot-parity.test.mjs
 
       - name: Compare verified prior FT with published snapshots
         id: inspect
@@ -52,12 +54,21 @@ jobs:
           TODAY="$(TZ=Europe/Athens date +%F)"
           node tools/check-historical-ft-snapshot-drift.mjs "$TODAY" >> "$GITHUB_OUTPUT"
 
+      - name: Compare prior-day public mirror with immutable manifests
+        if: github.event_name != 'pull_request' && steps.inspect.outputs.target_day == ''
+        id: public
+        shell: bash
+        run: |
+          set -euo pipefail
+          TODAY="$(TZ=Europe/Athens date +%F)"
+          node tools/check-historical-public-snapshot-parity.mjs "$TODAY" >> "$GITHUB_OUTPUT"
+
       - name: Request existing guarded intraday reconciliation
-        if: github.event_name != 'pull_request' && steps.inspect.outputs.target_day != ''
+        if: github.event_name != 'pull_request' && (steps.inspect.outputs.target_day != '' || steps.public.outputs.target_day != '')
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          TARGET_DAY: ${{ steps.inspect.outputs.target_day }}
+          TARGET_DAY: ${{ steps.inspect.outputs.target_day || steps.public.outputs.target_day }}
         run: |
           set -euo pipefail
           case "$TARGET_DAY" in
