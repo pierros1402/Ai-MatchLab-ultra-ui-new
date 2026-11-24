@@ -1,0 +1,37 @@
+name: P0 Stage20 direct archive policy firewall regression
+on:
+  pull_request:
+    paths:
+      - "engine-v1/core/daily-resume-worktree-delta.mjs"
+      - "engine-v1/core/daily-resume-worktree-delta.test.mjs"
+      - ".github/workflows/p0-stage20-direct-archive-policy.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1/core
+            engine-v1/jobs/capture-stage20-worktree.mjs
+            .github/workflows/p0-stage20-direct-archive-policy.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Direct archive, Stage20 replay and full-chain regression
+        run: |
+          node --check engine-v1/core/daily-resume-worktree-delta.mjs
+          node --check engine-v1/core/daily-resume-worktree-delta.test.mjs
+          node --test --test-reporter=tap \
+            engine-v1/core/daily-resume-worktree-delta.test.mjs \
+            engine-v1/core/daily-resume-stage20-replay-parity.test.mjs \
+            engine-v1/core/daily-resume-stage20-integrated-e2e.test.mjs \
+            engine-v1/core/daily-resume-stage20-journal-admission.test.mjs
+      - name: No writer activation or repository data changes
+        run: |
+          git diff --exit-code HEAD -- data/ .github/workflows/daily-deploy-snapshot.yml
+          echo "STAGE20_DIRECT_ARCHIVE_POLICY_ONLY__RESUME_OFF__PRODUCTION_UNCHANGED"

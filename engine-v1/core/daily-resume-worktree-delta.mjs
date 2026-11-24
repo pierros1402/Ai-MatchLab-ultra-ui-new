@@ -3,7 +3,7 @@ import path from "node:path";
 import os from "node:os";
 import crypto from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { isApprovedStage20DetailsPath } from "./daily-resume-stage20-admission.mjs";
+import { isApprovedStage20DetailsPath, evaluateStage20CapturePaths } from "./daily-resume-stage20-admission.mjs";
 import {isApprovedStage20JournalPath,inspectStage20JournalRecord,STAGE20_JOURNAL_PREFIX} from "./daily-resume-stage20-journal-admission.mjs";
 
 export const DELTA_SCHEMA = "ai-matchlab.daily-resume-worktree-delta.v1";
@@ -29,32 +29,35 @@ function normalFile(root, p) {
   check(fs.statSync(node).isFile(), "resume_delta_nonfile_forbidden");
   return node;
 }
-function allowed(p, prefixes) {
+function allowed(p, prefixes, dayKey) {
   // Keep byte-capture and byte-replay admission as strict as the Stage20
   // path inspector. A family prefix alone must never admit arbitrary Details.
   if (p.startsWith("data/details/"))
     check(isApprovedStage20DetailsPath(p), "resume_delta_unapproved_details_path");
   if (p.startsWith(STAGE20_JOURNAL_PREFIX))
     check(isApprovedStage20JournalPath(p),"resume_delta_unapproved_journal_path");
+  if(p.startsWith("data/") &&
+    !evaluateStage20CapturePaths({dayKey,paths:[p]}).ok)
+    check(false,"resume_delta_stage20_path_policy_denied");
   check(Array.isArray(prefixes) && prefixes.length > 0 && new Set(prefixes).size === prefixes.length,
     "resume_delta_allowlist_invalid");
   for (const prefix of prefixes) check(prefix.endsWith("/") && relative(prefix.slice(0, -1)), "resume_delta_allowlist_invalid");
   check(prefixes.some(prefix => p.startsWith(prefix)), "resume_delta_unapproved_path:" + p);
 }
 function zeroList(bytes) { return bytes.toString("utf8").split("\0").filter(Boolean); }
-function state(root, prefixes) {
+function state(root, prefixes, dayKey) {
   const tracked = zeroList(git(root, "diff", "--no-renames", "--name-status", "-z", "HEAD", "--"));
   const mutations = new Map();
   for (let i = 0; i < tracked.length; i += 2) {
     const status = tracked[i];
     const name = relative(tracked[i + 1]);
-    allowed(name, prefixes);
+    allowed(name, prefixes, dayKey);
     check(["M", "A", "D"].includes(status), "resume_delta_unsupported_git_status:" + status);
     check(!mutations.has(name), "resume_delta_duplicate_path");
     mutations.set(name, status === "D" ? "DELETE" : "WRITE");
   }
   for (const name of zeroList(git(root, "ls-files", "--others", "--exclude-standard", "-z", "--"))) {
-    relative(name); allowed(name, prefixes);
+    relative(name); allowed(name, prefixes, dayKey);
     check(!mutations.has(name), "resume_delta_duplicate_path");
     mutations.set(name, "WRITE");
   }
@@ -99,7 +102,7 @@ function verifyArchive(archiveRoot, expected) {
     evidenceSha256 === digest(Buffer.from(JSON.stringify(body))), "resume_delta_evidence_invalid");
   let total = 0; const seen = new Set();
   for (const e of document.entries) {
-    relative(e.path); allowed(e.path, expected.allowedPrefixes);
+    relative(e.path); allowed(e.path, expected.allowedPrefixes, expected.dayKey);
     check(!seen.has(e.path) && (e.op === "DELETE" || e.op === "WRITE"), "resume_delta_manifest_invalid");
     seen.add(e.path);
     if (e.op === "WRITE") {
@@ -137,7 +140,7 @@ export function captureDailyWorktreeDelta(repoRoot, archiveRoot, options) {
   binding(options);
   check(gitHead(repoRoot) === options.baseCommit, "resume_delta_base_mismatch");
   check(!fs.existsSync(archiveRoot), "resume_delta_archive_exists");
-  const entries = state(repoRoot, options.allowedPrefixes);
+  const entries = state(repoRoot, options.allowedPrefixes, options.dayKey);
   const body = envelope(options, entries);
   const manifest = { ...body, evidenceSha256: digest(Buffer.from(JSON.stringify(body))) };
   const parent = path.dirname(archiveRoot);
@@ -190,7 +193,7 @@ export function replayDailyWorktreeDeltaToIsolatedClone(sourceRepoRoot, archiveR
         fs.writeFileSync(target, bytes);
       }
     }
-    check(JSON.stringify(state(destination, options.allowedPrefixes)) === JSON.stringify(doc.entries),
+    check(JSON.stringify(state(destination, options.allowedPrefixes, options.dayKey)) === JSON.stringify(doc.entries),
       "resume_delta_replay_not_exact");
     return { stagingClone: destination, checkpointSha256: doc.evidenceSha256 };
   } catch (error) { fs.rmSync(destination, { recursive: true, force: true }); throw error; }

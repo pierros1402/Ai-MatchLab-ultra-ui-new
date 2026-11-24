@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import crypto from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
@@ -135,4 +136,52 @@ test("delta writer rejects malicious Details path even when prefix itself is all
     ...f.options,allowedPrefixes:["data/details/"]
   }),/resume_delta_unapproved_details_path/);
   assert.equal(fs.existsSync(f.archive),false);
+},false));
+
+test("direct archive writer denies unapproved Stage20 data families even with caller-supplied prefixes",()=>use(f=>{
+  const input="data/research-cache/2026-11-23.json";
+  fs.mkdirSync(path.join(f.repo,"data/research-cache"),{recursive:true});
+  fs.writeFileSync(path.join(f.repo,input),"{}");
+  const opt={...f.options,allowedPrefixes:["data/research-cache/"]};
+  assert.throws(()=>captureDailyWorktreeDelta(f.repo,f.archive,opt),
+    /resume_delta_stage20_path_policy_denied/);
+  assert.equal(fs.existsSync(f.archive),false);
+},false));
+test("direct archive writer rejects secret-like and unsupported extensions inside approved family",()=>use(f=>{
+  const dir=path.join(f.repo,"data/value");
+  fs.mkdirSync(dir,{recursive:true});
+  for(const name of ["secret.json","item.exe"]){
+    const p=path.join(dir,name);
+    fs.writeFileSync(p,"{}");
+    assert.throws(()=>captureDailyWorktreeDelta(f.repo,f.archive,{
+      ...f.options,allowedPrefixes:["data/value/"]}),
+      /resume_delta_stage20_path_policy_denied/);
+    assert.equal(fs.existsSync(f.archive),false);
+    fs.unlinkSync(p);
+  }
+},false));
+test("direct archive allows valid approved Stage20 data with full policy check",()=>use(f=>{
+  const dir=path.join(f.repo,"data/value");
+  fs.mkdirSync(dir,{recursive:true});
+  fs.writeFileSync(path.join(dir,"2026-11-23.json"),"{}");
+  const options={...f.options,allowedPrefixes:["data/value/"]};
+  const result=captureDailyWorktreeDelta(f.repo,f.archive,options);
+  assert.equal(result.writes,1);
+  assert.equal(inspectDailyWorktreeDelta(f.archive,options).ok,true);
+},false));
+test("archived manifests cannot inject newly denied Stage20 paths even with recomputed evidence hash",()=>use(f=>{
+  const dir=path.join(f.repo,"data/value");
+  fs.mkdirSync(dir,{recursive:true});
+  fs.writeFileSync(path.join(dir,"2026-11-23.json"),"{}");
+  const options={...f.options,allowedPrefixes:["data/value/"]};
+  captureDailyWorktreeDelta(f.repo,f.archive,options);
+  const manifestPath=path.join(f.archive,"manifest.json");
+  const doc=JSON.parse(fs.readFileSync(manifestPath,"utf8"));
+  doc.entries[0].path="data/value/secret.json";
+  const {evidenceSha256,...body}=doc;
+  // Exact envelope digest follows the writer's canonical JSON serialization.
+  doc.evidenceSha256=crypto.createHash("sha256")
+    .update(Buffer.from(JSON.stringify(body))).digest("hex");
+  fs.writeFileSync(manifestPath,JSON.stringify(doc));
+  assert.equal(inspectDailyWorktreeDelta(f.archive,options).ok,false);
 },false));
