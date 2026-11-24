@@ -1,0 +1,53 @@
+name: P0 Stage20 current committed scope census (read-only)
+on:
+  pull_request:
+    paths:
+      - "engine-v1/core/daily-resume-stage20-committed-scope-audit.mjs"
+      - "engine-v1/core/daily-resume-stage20-committed-scope-audit.test.mjs"
+      - ".github/workflows/p0-stage20-current-committed-scope.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  census:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            data
+            engine-v1/core/daily-resume-stage20-committed-scope-audit.mjs
+            engine-v1/core/daily-resume-stage20-committed-scope-audit.test.mjs
+            engine-v1/core/daily-resume-stage20-admission.mjs
+            engine-v1/core/daily-resume-stage20-journal-admission.mjs
+            .github/workflows/p0-stage20-current-committed-scope.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Source syntax and negative regression
+        run: |
+          node --check engine-v1/core/daily-resume-stage20-committed-scope-audit.mjs
+          node --test --test-reporter=tap engine-v1/core/daily-resume-stage20-committed-scope-audit.test.mjs
+      - name: Audit current actual Git-tracked Stage20 policy scope without accessing payload contents
+        shell: bash
+        run: |
+          set -euo pipefail
+          DAY_KEY=2026-11-24 node --input-type=module <<'NODE'
+          import assert from "node:assert/strict";
+          import {auditStage20CommittedScopeFromGit} from "./engine-v1/core/daily-resume-stage20-committed-scope-audit.mjs";
+          const r=auditStage20CommittedScopeFromGit(process.cwd(),process.env.DAY_KEY);
+          assert.equal(r.admitted+r.denied,r.trackedPathCount);
+          assert.ok(r.trackedPathCount>100000);
+          assert.equal(r.gitTrackedOnly,true);
+          assert.equal(r.ignoredRuntimeFilesInspected,false);
+          assert.equal(r.untrackedRuntimeFilesInspected,false);
+          assert.equal(r.completeCheckpointProven,false);
+          assert.equal(r.resumeAuthorized,false);
+          assert.equal(r.publicationAuthorized,false);
+          console.log("STAGE20_CURRENT_TRACKED_SCOPE="+JSON.stringify(r));
+          NODE
+      - name: No publication or repository mutation
+        run: |
+          test -z "$(git status --porcelain)"
+          echo "CURRENT_TRACKED_SCOPE_READONLY__IGNORED_UNTRACKED_UNKNOWN__RESUME_OFF"
