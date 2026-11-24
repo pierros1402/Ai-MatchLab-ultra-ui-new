@@ -1,0 +1,33 @@
+name: P0 Stage20 transport budget admission (isolated)
+on:
+  pull_request:
+    paths:
+      - "engine-v1/core/daily-resume-stage20-transport-budget.mjs"
+      - "engine-v1/core/daily-resume-stage20-transport-budget.test.mjs"
+      - ".github/workflows/p0-stage20-transport-budget-tests.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1/core/daily-resume-stage20-transport-budget.mjs
+            engine-v1/core/daily-resume-stage20-transport-budget.test.mjs
+            .github/workflows/p0-stage20-transport-budget-tests.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Syntax and isolated transport budget boundary tests
+        run: |
+          node --check engine-v1/core/daily-resume-stage20-transport-budget.mjs
+          node --check engine-v1/core/daily-resume-stage20-transport-budget.test.mjs
+          node --test --test-reporter=tap engine-v1/core/daily-resume-stage20-transport-budget.test.mjs
+      - name: No production rollout
+        run: |
+          git diff --exit-code HEAD -- .github/workflows/daily-deploy-snapshot.yml data/
+          echo "BUDGET_ONLY_NO_CAPTURE_NO_RESUME_NO_PUBLISH"
