@@ -31,7 +31,7 @@ test("unaccounted physical data denies reuse",()=>{
 });
 test("untrusted metrics or commit are denied",()=>{
   for(const patch of [{physicalDataFiles:-1},{physicalDataBytes:NaN},
-    {deltaPaths:145429},{producerCommit:"bad"},{deltaWriteBytes:Infinity},
+    {producerCommit:"bad"},{deltaWriteBytes:Infinity},
     {physicalDataFiles:0},{deltaPaths:0}])
     assert.equal(inspect({...base,...patch}).reason,"stage20_transport_evidence_invalid");
 });
@@ -41,4 +41,24 @@ test("large exact-boundary delta returns only eligibility evidence",()=>{
   assert.equal(r.sourceContentVerified,false);
   assert.equal(r.stageCompleteVerified,false);
   assert.equal(r.writerQuiescenceAttested,false);
+});
+
+test("valid physical tombstones can outnumber surviving post-tree files",()=>{
+  const r=inspect({...base,physicalDataFiles:2,physicalDataBytes:5,
+    deltaPaths:10,deltaWriteBytes:3});
+  assert.equal(r.budgetEligible,true);
+  assert.equal(r.deltaPaths,10);
+  assert.equal(r.completeCheckpointProven,false);
+  assert.equal(r.resumeAuthorized,false);
+});
+test("tombstone-heavy delta still enforces the 10000 path transport cap",()=>{
+  const r=inspect({...base,physicalDataFiles:2,physicalDataBytes:5,
+    deltaPaths:10001,deltaWriteBytes:3});
+  assert.equal(r.budgetEligible,false);
+  assert.equal(r.reason,"stage20_transport_path_budget_exceeded");
+});
+test("impossible byte count remains denied even with many deletion tombstones",()=>{
+  const r=inspect({...base,physicalDataFiles:2,physicalDataBytes:5,
+    deltaPaths:10,deltaWriteBytes:6});
+  assert.equal(r.reason,"stage20_transport_evidence_invalid");
 });
