@@ -1,55 +1,94 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-11-24",
-  "generatedAt": "2026-11-24T18:36:51.778Z",
-  "severity": "warning",
+  "generatedAt": "2026-11-24T19:33:17.807Z",
+  "severity": "error",
   "issueCounts": {
-    "error": 0,
-    "warning": 8,
-    "info": 12
+    "error": 2,
+    "warning": 12,
+    "info": 11
   },
-  "alert": false,
+  "alert": true,
   "alertCounts": {
-    "error": 0,
-    "warning": 0,
+    "error": 2,
+    "warning": 5,
     "info": 0
   },
-  "activeIssueCount": 20,
-  "actionableIssueCount": 8,
-  "newIssueCount": 1,
-  "newActionableIssueCount": 0,
-  "resolvedIssueCount": 0,
-  "persistentIssueCount": 19,
+  "activeIssueCount": 25,
+  "actionableIssueCount": 14,
+  "newIssueCount": 7,
+  "newActionableIssueCount": 7,
+  "resolvedIssueCount": 2,
+  "persistentIssueCount": 18,
   "activeIssues": [
     {
-      "severity": "info",
-      "source": "manifest",
-      "type": "frozen_value_age_preserved",
-      "message": "Frozen Value artifact predates canonical updates and satisfies the frozen release contract.",
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
       "details": {
-        "fixtures": 104,
-        "valuePicks": 3,
-        "valueSource": "canonical_fixtures",
-        "latestCanonicalUpdatedAt": "2026-11-24T18:18:41.719Z",
-        "valueArtifactAt": "2026-11-24T17:52:42.314Z",
-        "valueFreshAgainstCanonical": false,
-        "mode": "frozen_snapshot",
-        "frozenIdentityBound": true,
-        "frozenReleaseSafe": true,
-        "frozenPickCount": 3,
-        "orphanPickCount": 0,
-        "orphanPickIds": [],
-        "missingMatchIdPickCount": 0,
-        "missingMatchIdPickIndexes": [],
-        "dayBound": true,
-        "canonicalSourceBound": true,
-        "recoveryContractBound": false,
-        "recoveryPublishedUniverseBound": false,
-        "recoveryUniverseEvidenceSource": null,
-        "recoveryUniverseEvidenceCount": null,
-        "recoveryUniverseEvidenceHash": null,
-        "recoveryUniverseEvidencePlans": [],
-        "ok": true
+        "reasons": [
+          "plan_a2_stale_against_canonical",
+          "plan_a2_audit_stale_against_canonical",
+          "plan_b_audit_stale_against_canonical",
+          "plan_b2_audit_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2",
+        "artifact": "value-plans/2026-11-24/plan-a2.json",
+        "at": 1795494117380,
+        "staleReason": "plan_a2_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -53780000
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2_audit",
+        "artifact": "value-plans/2026-11-24/plan-a2-audit.json",
+        "at": "2026-11-24T04:21:57.382Z",
+        "staleReason": "plan_a2_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -53779998
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b_audit",
+        "artifact": "value-plans/2026-11-24/plan-b-audit.json",
+        "at": "2026-11-24T04:14:57.680Z",
+        "staleReason": "plan_b_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -54199700
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b2_audit",
+        "artifact": "value-plans/2026-11-24/plan-b2-audit.json",
+        "at": "2026-11-24T04:25:50.667Z",
+        "staleReason": "plan_b2_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -53546713
       }
     },
     {
@@ -75,28 +114,7 @@
         "artifact": "value-plans/2026-11-24/plan-b.json",
         "at": null,
         "staleReason": "plan_b_stale_against_canonical",
-        "preservation": {
-          "reason": "frozen_value_observation_cohort_identity_preserved",
-          "requestedDay": "2026-11-24",
-          "currentAthensDay": "2026-11-24",
-          "fixtureCount": 104,
-          "frozenHash": "1631b01474ed0e90eb917ffb50dea4b398c267908b16cae3d18d34b8bf78e09a",
-          "currentHash": "55079c450ef8653a4f4040294ea24efb34abcd2702501255954449d84a55deaf",
-          "strictFrozenParity": true,
-          "membershipParity": false,
-          "descriptorDrift": null,
-          "publicationMembershipPreserved": true,
-          "authorizedShrink": false,
-          "removedFixtureIds": [
-            "cid_engtrophy_fleetwoodtown_leedsunitedu21_20261124"
-          ],
-          "deferredCurrentFixtureIds": [],
-          "publishedOutsideFrozenFixtureIds": [
-            "cid_engtrophy_fleetwood_leedsu21_20261124"
-          ],
-          "resolvedFrozenAliasMappings": [],
-          "removalEvidenceSource": "full_current_universe_exact_membership"
-        },
+        "preservation": null,
         "skipped": "artifact_missing_or_no_timestamp"
       }
     },
@@ -110,28 +128,7 @@
         "artifact": "value-plans/2026-11-24/plan-b2.json",
         "at": null,
         "staleReason": "plan_b2_stale_against_canonical",
-        "preservation": {
-          "reason": "frozen_value_observation_cohort_identity_preserved",
-          "requestedDay": "2026-11-24",
-          "currentAthensDay": "2026-11-24",
-          "fixtureCount": 104,
-          "frozenHash": "1631b01474ed0e90eb917ffb50dea4b398c267908b16cae3d18d34b8bf78e09a",
-          "currentHash": "55079c450ef8653a4f4040294ea24efb34abcd2702501255954449d84a55deaf",
-          "strictFrozenParity": true,
-          "membershipParity": false,
-          "descriptorDrift": null,
-          "publicationMembershipPreserved": true,
-          "authorizedShrink": false,
-          "removedFixtureIds": [
-            "cid_engtrophy_fleetwoodtown_leedsunitedu21_20261124"
-          ],
-          "deferredCurrentFixtureIds": [],
-          "publishedOutsideFrozenFixtureIds": [
-            "cid_engtrophy_fleetwood_leedsu21_20261124"
-          ],
-          "resolvedFrozenAliasMappings": [],
-          "removalEvidenceSource": "full_current_universe_exact_membership"
-        },
+        "preservation": null,
         "skipped": "artifact_missing_or_no_timestamp"
       }
     },
@@ -242,7 +239,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 24316,
+        "count": 24320,
         "informational": true
       }
     },
@@ -271,6 +268,15 @@
       }
     },
     {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -286,14 +292,13 @@
       }
     },
     {
-      "severity": "warning",
+      "severity": "error",
       "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -1046,6 +1051,76 @@
   "actionableIssues": [
     {
       "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "plan_a2_stale_against_canonical",
+          "plan_a2_audit_stale_against_canonical",
+          "plan_b_audit_stale_against_canonical",
+          "plan_b2_audit_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2",
+        "artifact": "value-plans/2026-11-24/plan-a2.json",
+        "at": 1795494117380,
+        "staleReason": "plan_a2_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -53780000
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2_audit",
+        "artifact": "value-plans/2026-11-24/plan-a2-audit.json",
+        "at": "2026-11-24T04:21:57.382Z",
+        "staleReason": "plan_a2_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -53779998
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b_audit",
+        "artifact": "value-plans/2026-11-24/plan-b-audit.json",
+        "at": "2026-11-24T04:14:57.680Z",
+        "staleReason": "plan_b_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -54199700
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b2_audit",
+        "artifact": "value-plans/2026-11-24/plan-b2-audit.json",
+        "at": "2026-11-24T04:25:50.667Z",
+        "staleReason": "plan_b2_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -53546713
+      }
+    },
+    {
+      "severity": "warning",
       "source": "history-coverage",
       "type": "global_history_coverage_unresolved",
       "message": "Global historical coverage has unresolved gaps or an unverified provider baseline.",
@@ -1144,6 +1219,15 @@
       }
     },
     {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -1159,14 +1243,13 @@
       }
     },
     {
-      "severity": "warning",
+      "severity": "error",
       "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -1727,6 +1810,188 @@
   ],
   "newIssues": [
     {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "plan_a2_stale_against_canonical",
+          "plan_a2_audit_stale_against_canonical",
+          "plan_b_audit_stale_against_canonical",
+          "plan_b2_audit_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2",
+        "artifact": "value-plans/2026-11-24/plan-a2.json",
+        "at": 1795494117380,
+        "staleReason": "plan_a2_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -53780000
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2_audit",
+        "artifact": "value-plans/2026-11-24/plan-a2-audit.json",
+        "at": "2026-11-24T04:21:57.382Z",
+        "staleReason": "plan_a2_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -53779998
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b_audit",
+        "artifact": "value-plans/2026-11-24/plan-b-audit.json",
+        "at": "2026-11-24T04:14:57.680Z",
+        "staleReason": "plan_b_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -54199700
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b2_audit",
+        "artifact": "value-plans/2026-11-24/plan-b2-audit.json",
+        "at": "2026-11-24T04:25:50.667Z",
+        "staleReason": "plan_b2_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -53546713
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "plan_a2_stale_against_canonical",
+          "plan_a2_audit_stale_against_canonical",
+          "plan_b_audit_stale_against_canonical",
+          "plan_b2_audit_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2",
+        "artifact": "value-plans/2026-11-24/plan-a2.json",
+        "at": 1795494117380,
+        "staleReason": "plan_a2_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -53780000
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2_audit",
+        "artifact": "value-plans/2026-11-24/plan-a2-audit.json",
+        "at": "2026-11-24T04:21:57.382Z",
+        "staleReason": "plan_a2_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -53779998
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b_audit",
+        "artifact": "value-plans/2026-11-24/plan-b-audit.json",
+        "at": "2026-11-24T04:14:57.680Z",
+        "staleReason": "plan_b_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -54199700
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b2_audit",
+        "artifact": "value-plans/2026-11-24/plan-b2-audit.json",
+        "at": "2026-11-24T04:25:50.667Z",
+        "staleReason": "plan_b2_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -53546713
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
       "severity": "info",
       "source": "manifest",
       "type": "frozen_value_age_preserved",
@@ -1756,10 +2021,19 @@
         "recoveryUniverseEvidencePlans": [],
         "ok": true
       }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
+      }
     }
   ],
-  "newActionableIssues": [],
-  "resolvedIssues": [],
   "persistentIssues": [
     {
       "severity": "info",
@@ -1784,28 +2058,7 @@
         "artifact": "value-plans/2026-11-24/plan-b.json",
         "at": null,
         "staleReason": "plan_b_stale_against_canonical",
-        "preservation": {
-          "reason": "frozen_value_observation_cohort_identity_preserved",
-          "requestedDay": "2026-11-24",
-          "currentAthensDay": "2026-11-24",
-          "fixtureCount": 104,
-          "frozenHash": "1631b01474ed0e90eb917ffb50dea4b398c267908b16cae3d18d34b8bf78e09a",
-          "currentHash": "55079c450ef8653a4f4040294ea24efb34abcd2702501255954449d84a55deaf",
-          "strictFrozenParity": true,
-          "membershipParity": false,
-          "descriptorDrift": null,
-          "publicationMembershipPreserved": true,
-          "authorizedShrink": false,
-          "removedFixtureIds": [
-            "cid_engtrophy_fleetwoodtown_leedsunitedu21_20261124"
-          ],
-          "deferredCurrentFixtureIds": [],
-          "publishedOutsideFrozenFixtureIds": [
-            "cid_engtrophy_fleetwood_leedsu21_20261124"
-          ],
-          "resolvedFrozenAliasMappings": [],
-          "removalEvidenceSource": "full_current_universe_exact_membership"
-        },
+        "preservation": null,
         "skipped": "artifact_missing_or_no_timestamp"
       }
     },
@@ -1819,28 +2072,7 @@
         "artifact": "value-plans/2026-11-24/plan-b2.json",
         "at": null,
         "staleReason": "plan_b2_stale_against_canonical",
-        "preservation": {
-          "reason": "frozen_value_observation_cohort_identity_preserved",
-          "requestedDay": "2026-11-24",
-          "currentAthensDay": "2026-11-24",
-          "fixtureCount": 104,
-          "frozenHash": "1631b01474ed0e90eb917ffb50dea4b398c267908b16cae3d18d34b8bf78e09a",
-          "currentHash": "55079c450ef8653a4f4040294ea24efb34abcd2702501255954449d84a55deaf",
-          "strictFrozenParity": true,
-          "membershipParity": false,
-          "descriptorDrift": null,
-          "publicationMembershipPreserved": true,
-          "authorizedShrink": false,
-          "removedFixtureIds": [
-            "cid_engtrophy_fleetwoodtown_leedsunitedu21_20261124"
-          ],
-          "deferredCurrentFixtureIds": [],
-          "publishedOutsideFrozenFixtureIds": [
-            "cid_engtrophy_fleetwood_leedsu21_20261124"
-          ],
-          "resolvedFrozenAliasMappings": [],
-          "removalEvidenceSource": "full_current_universe_exact_membership"
-        },
+        "preservation": null,
         "skipped": "artifact_missing_or_no_timestamp"
       }
     },
@@ -1951,7 +2183,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 24316,
+        "count": 24320,
         "informational": true
       }
     },
@@ -1992,17 +2224,6 @@
         ],
         "raw": "acquisition_skipped_slugs:esp.w.1,fifa.world.u17,usa.w.usl.1",
         "contextOnly": false
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
-      "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
       }
     },
     {
