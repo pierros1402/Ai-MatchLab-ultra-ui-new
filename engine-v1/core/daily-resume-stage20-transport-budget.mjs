@@ -17,7 +17,10 @@ export function inspectStage20TransportBudget({
   if(![physicalDataFiles,physicalDataBytes,deltaPaths,deltaWriteBytes,
     ignoredDataFiles,unaccountedDataFiles].every(valid) ||
     !/^[a-f0-9]{40}$/.test(producerCommit||"") ||
-    physicalDataFiles===0 || deltaPaths>physicalDataFiles ||
+    physicalDataFiles===0 ||
+    // deltaPaths includes tombstones absent from the POST physical tree.
+    // Do not compare it with post-count: real deletions can exceed survivors.
+    // The completion verifier independently recomputes the exact pre/post diff.
     deltaPaths===0 || deltaWriteBytes>physicalDataBytes ||
     ignoredDataFiles>physicalDataFiles || unaccountedDataFiles>physicalDataFiles)
     return deny("stage20_transport_evidence_invalid");
