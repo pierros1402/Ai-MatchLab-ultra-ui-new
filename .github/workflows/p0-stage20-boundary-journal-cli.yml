@@ -1,0 +1,36 @@
+name: P0 Stage20 boundary journal read-only CLI (isolated)
+on:
+  pull_request:
+    paths:
+      - "engine-v1/jobs/audit-stage20-runtime-boundary-journal.mjs"
+      - "engine-v1/jobs/audit-stage20-runtime-boundary-journal.test.mjs"
+      - ".github/workflows/p0-stage20-boundary-journal-cli.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1/core
+            engine-v1/jobs/audit-stage20-runtime-boundary-journal.mjs
+            engine-v1/jobs/audit-stage20-runtime-boundary-journal.test.mjs
+            engine-v1/jobs/observe-daily-runtime-boundaries.mjs
+            engine-v1/jobs/run-daily-cycle.js
+            .github/workflows/p0-stage20-boundary-journal-cli.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Run real Daily source journal CLI negative/positive tests
+        run: |
+          node --check engine-v1/jobs/audit-stage20-runtime-boundary-journal.mjs
+          node --check engine-v1/jobs/audit-stage20-runtime-boundary-journal.test.mjs
+          node --test --test-reporter=tap engine-v1/jobs/audit-stage20-runtime-boundary-journal.test.mjs
+      - name: Default production Daily remains off
+        run: |
+          git diff --exit-code HEAD -- .github/workflows/daily-deploy-snapshot.yml data/
+          echo "JOURNAL_CLI_READONLY__NOT_WIRED__RESUME_OFF"
