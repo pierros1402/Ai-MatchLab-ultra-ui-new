@@ -18,7 +18,8 @@ permissions:
 
 concurrency:
   group: ai-matchlab-historical-ft-watchdog
-  cancel-in-progress: false
+  # Supersede obsolete PR checks; retain non-cancelling production monitoring.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   inspect-and-dispatch:
