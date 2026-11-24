@@ -1,6 +1,11 @@
 name: Historical verified FT snapshot watchdog
 
 on:
+  # Exercise the real read-only public parity check immediately after rollout.
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/historical-ft-snapshot-watchdog.yml'
   pull_request:
     paths:
       - '.github/workflows/historical-ft-snapshot-watchdog.yml'
