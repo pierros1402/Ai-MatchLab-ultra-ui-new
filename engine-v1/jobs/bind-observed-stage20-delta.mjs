@@ -37,3 +37,17 @@ export function bindObservedStage20Delta(root, tempRoot, dayKey) {
       completeBaseTreeIncluded:false,writerQuiescenceAttested:false,resumeAuthorized:false,publicationAuthorized:false};
   } catch(e) {fs.rmSync(target,{recursive:true,force:true});throw e;}
 }
+
+ // CLI emits only aggregate evidence; full inventories remain runner-local.
+import {pathToFileURL} from 'node:url';
+if(process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href===import.meta.url){
+  try {
+    assert.equal(process.argv.length,3);
+    assert.ok(process.env.RUNNER_TEMP);
+    const result=bindObservedStage20Delta(process.cwd(),process.env.RUNNER_TEMP,process.argv[2]);
+    console.log('STAGE20_BOUND_DELTA='+JSON.stringify(result));
+  } catch {
+    console.error('STAGE20_BOUND_DELTA_DENIED');
+    process.exitCode=1;
+  }
+}

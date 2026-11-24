@@ -6,6 +6,7 @@ on:
       - 'engine-v1/jobs/observe-stage20-data-inventory.mjs'
       - 'engine-v1/core/daily-resume-*.mjs'
       - '.github/workflows/p0-stage20-observed-delta-binding.yml'
+      - '.github/workflows/daily-deploy-snapshot.yml'
 permissions:
   contents: read
 jobs:
@@ -18,10 +19,11 @@ jobs:
           persist-credentials: false
           sparse-checkout: |
             engine-v1
+            .github/workflows
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
       - run: |
           node --check engine-v1/jobs/bind-observed-stage20-delta.mjs
-          node --test engine-v1/core/daily-resume-observed-delta-binding.test.mjs engine-v1/core/daily-resume-stage20-integrated-e2e.test.mjs engine-v1/core/daily-resume-prepost-isolated-replay.test.mjs
+          node --test engine-v1/core/daily-resume-shadow-bound-integration.test.mjs engine-v1/core/daily-resume-observed-delta-binding.test.mjs engine-v1/core/daily-resume-stage20-integrated-e2e.test.mjs engine-v1/core/daily-resume-prepost-isolated-replay.test.mjs
           git diff --exit-code HEAD
