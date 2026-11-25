@@ -36,7 +36,7 @@ function explicitScopeReason({
       .toLowerCase();
 
   const scopeText =
-    `${safePath.replace(/[-_/]+/gu, " ")} ${safeName}`;
+    `${safePath} ${safeName}`.replace(/[-_/]+/gu, " ");
 
   if (
     safePath.includes(
@@ -49,7 +49,7 @@ function explicitScopeReason({
   }
 
   if (
-    /\b(?:u(?:1[4-9]|2[0-3])|under\s*(?:1[4-9]|2[0-3])|youth|primavera)\b/u
+    /\b(?:u\s*(?:1[4-9]|2[0-3])|under\s*(?:1[4-9]|2[0-3])|youth|junior|juniors|primavera)\b/u
       .test(scopeText)
   ) {
     return "out_of_scope_youth_competition";
