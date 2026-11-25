@@ -34,7 +34,8 @@ jobs:
                 const file=slug+'-'+start+'.json';
                 fs.writeFileSync('espn-history/'+file,raw);
                 const events=exact&&Array.isArray(d.events)?d.events:[];
-                const finals=events.filter(e=>e.status?.type?.completed===true&&e.status?.type?.name==='STATUS_FINAL'&&e.competitions?.[0]?.competitors?.length===2&&e.competitions[0].competitors.every(c=>/^[1-9][0-9]*$/.test(c.team?.id)&&/^\d+$/.test(c.score)));
+                const finals=events.filter(e=>(e.status?.type?.name??e.competitions?.[0]?.status?.type?.name)==='STATUS_FINAL'&&e.competitions?.[0]?.competitors?.length===2&&e.competitions[0].competitors.every(c=>/^[1-9][0-9]*$/.test(c.team?.id)&&/^\d+$/.test(c.score)));
+                console.log(JSON.stringify({slug,start,observations:events.map(e=>({id:e.id,status:e.status?.type,competitionStatus:e.competitions?.[0]?.status?.type,competitors:e.competitions?.[0]?.competitors?.map(c=>({side:c.homeAway,id:c.team?.id,score:c.score}))}))}));
                 const nahda=finals.filter(e=>e.competitions[0].competitors.some(c=>c.team.id==='21994')).map(e=>e.id);
                 report.push({slug,start,end,url,file,sha256:crypto.createHash('sha256').update(raw).digest('hex'),exact,events:events.length,finals:finals.length,possiblyTruncated:events.length>=100,nahda});
               }catch(e){report.push({slug,start,end,url,error:String(e)});}
