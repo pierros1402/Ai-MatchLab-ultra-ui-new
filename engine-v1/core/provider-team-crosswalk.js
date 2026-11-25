@@ -1,3 +1,7 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import path from 'node:path';
+
 // Exact, reviewed provider crosswalk. No name inference or identity allocation.
 export function buildProviderTeamCrosswalk({ entries, resolveApprovedClub }) {
   if (!Array.isArray(entries) || typeof resolveApprovedClub !== 'function') throw new Error('invalid_crosswalk_contract');
@@ -24,4 +28,15 @@ export function buildProviderTeamCrosswalk({ entries, resolveApprovedClub }) {
       return {ok:true,status:'RESOLVED_REVIEWED_PROVIDER_TEAM',...row,productionMutationAuthorized:false};
     }
   });
+}
+
+ // Explicit digest is supplied by the reviewed release, never by the ledger itself.
+export function loadPinnedProviderTeamCrosswalk({root, relativePath, expectedSha256, resolveApprovedClub}) {
+  if (relativePath !== 'data/identity-decisions/production-provider-team-crosswalk.v1.json' ||
+      !/^[a-f0-9]{64}$/.test(expectedSha256 || '')) throw Error('provider_crosswalk_pin_required');
+  const bytes = fs.readFileSync(path.join(root, relativePath));
+  if (crypto.createHash('sha256').update(bytes).digest('hex') !== expectedSha256) throw Error('provider_crosswalk_hash_mismatch');
+  const doc = JSON.parse(bytes.toString('utf8'));
+  if (doc.schema !== 'ai-matchlab.production-provider-team-crosswalk.v1') throw Error('provider_crosswalk_schema_invalid');
+  return buildProviderTeamCrosswalk({entries:doc.entries,resolveApprovedClub});
 }
