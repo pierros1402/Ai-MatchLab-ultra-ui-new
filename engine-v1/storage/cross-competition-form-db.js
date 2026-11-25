@@ -189,7 +189,8 @@ function computeRates(rows, window) {
 export function createCrossCompetitionFormResolver({
   coverageRows = LEAGUES_COVERAGE,
   resultDocuments = null,
-  canonicalResolver = globalCanonicalTeamName
+  canonicalResolver = globalCanonicalTeamName,
+  scopedIdentityResolver = null
 } = {}) {
 
   const coverage =
@@ -250,7 +251,11 @@ export function createCrossCompetitionFormResolver({
         );
       }
 
+      const scoped = typeof scopedIdentityResolver === "function"
+        ? scopedIdentityResolver({ alias: teamName, leagueSlug: slug }) : null;
+      const scopedGlobalClubId = scoped?.leagueSlug === slug ? clean(scoped.globalClubId) : "";
       byIdentity.get(identityKey).push({
+        scopedGlobalClubId,
         slug,
         country: meta.country,
         region: meta.region,
@@ -365,7 +370,9 @@ export function createCrossCompetitionFormResolver({
       if (expected) {
         const bound = selected.filter(source => {
           const ids = new Set(source.rows.flatMap(perspectiveGlobalClubIds));
-          return ids.size === 1 && ids.has(expected);
+          return ids.size <= 1 && (!ids.size || ids.has(expected)) &&
+            (ids.has(expected) || source.scopedGlobalClubId === expected) &&
+            (!source.scopedGlobalClubId || source.scopedGlobalClubId === expected);
         });
         if (!bound.length) return zeroRates("expected_global_club_id_unverified", { identityKey });
         selected = bound;
@@ -422,7 +429,10 @@ export function createCrossCompetitionFormResolver({
       );
     }
 
-    if (expected && (explicitGlobalIds.size !== 1 || !explicitGlobalIds.has(expected))) {
+    if (expected && selected.some(source => source.scopedGlobalClubId && source.scopedGlobalClubId !== expected)) {
+      return zeroRates("scoped_identity_conflict", { identityKey });
+    }
+    if (expected && !explicitGlobalIds.has(expected) && !selected.some(source => source.scopedGlobalClubId === expected)) {
       return zeroRates("expected_global_club_id_unverified", { identityKey });
     }
 
@@ -434,7 +444,8 @@ export function createCrossCompetitionFormResolver({
 
         // Explicit binding requires row-level evidence; a single known ID
         // does not certify all historical rows in a display-name bucket.
-        if (expected && !perspectiveGlobalClubIds(row).includes(expected)) continue;
+        if (expected && !perspectiveGlobalClubIds(row).includes(expected) &&
+            !(source.scopedGlobalClubId === expected && perspectiveGlobalClubIds(row).length === 0)) continue;
         const rowMs =
           Date.parse(
             String(row?.date || "")
@@ -554,10 +565,11 @@ export function createCrossCompetitionFormResolver({
           ? sourceCountries[0]
           : null,
       sourceSlugs,
+      scopedIdentityEvidence: expected ? selected.filter(source => source.scopedGlobalClubId === expected).map(source => ({leagueSlug:source.slug, teamName:source.teamName, globalClubId:expected})) : [],
       globalClubId:
-        explicitGlobalIds.size === 1
+        expected || (explicitGlobalIds.size === 1
           ? [...explicitGlobalIds][0]
-          : null
+          : null)
     };
   };
 }
