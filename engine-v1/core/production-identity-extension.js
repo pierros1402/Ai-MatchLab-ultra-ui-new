@@ -690,6 +690,26 @@ export function buildExtendedProductionIdentityResolver({
     };
   }
 
+  // Strict scope lookup for historical evidence only. Never promote a
+  // global alias into a league that has not been explicitly reviewed.
+  function resolveScopedExtensionAlias({ alias, leagueSlug } = {}) {
+    const slug = clean(leagueSlug);
+    const key = normalizeGenesisAlias(clean(alias));
+    if (!slug || !key) return null;
+    const genesis = teamByAlias.get(key);
+    const reviewed = reviewedByAlias.get(slug + "\0" + key);
+    const binding = reviewed || (genesis?.leagueSlugs.includes(slug) ? genesis : null);
+    if (!binding) return null;
+    const base = baseResolver.resolveTeamReference({ alias, leagueSlug: slug });
+    if (base?.ok && base.globalClubId !== binding.globalClubId) return null;
+    return Object.freeze({
+      globalClubId: binding.globalClubId,
+      leagueSlug: slug,
+      ledgerTeamIdentityKey: binding.ledgerTeamIdentityKey,
+      source: reviewed ? "reviewed_scoped_alias" : "extension_genesis_scope"
+    });
+  }
+
   function resolveFixtureId(repositoryFixtureId) {
     const id = clean(repositoryFixtureId);
     const base = baseResolver.resolveFixtureId(id);
@@ -826,6 +846,7 @@ export function buildExtendedProductionIdentityResolver({
       counts: Object.freeze(validation.counts),
     }),
     resolveTeamReference,
+    resolveScopedExtensionAlias,
     resolveFixtureId,
     resolveFixtureMembership,
     buildFixtureIdentityOverlay,
