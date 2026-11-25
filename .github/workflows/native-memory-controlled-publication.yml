@@ -1,0 +1,87 @@
+name: Controlled native memory publication
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Explicitly authorize creation of recovery branch'
+        required: true
+        type: boolean
+        default: false
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: native-memory-publication
+  cancel-in-progress: false
+jobs:
+  simulate:
+    if: inputs.publish == true && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+      - run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import {buildSourceBoundHistoryTeamIdentities} from './engine-v1/core/source-bound-history-team-identities.js';
+          import {recordMatchResult,readResults} from './engine-v1/storage/results-memory-db.js';
+          for(const slug of ['smr.1','aus.1']){
+            const dir='data/history-archive/'+slug,target='data/league-memory/results/'+slug+'.json';
+            if(fs.existsSync(target))throw Error('EXISTING_MEMORY_REQUIRES_RECONCILIATION');
+            const rows=fs.readdirSync(dir).filter(f=>f.endsWith('.json')).flatMap(f=>JSON.parse(fs.readFileSync(dir+'/'+f)).matches);
+            const resolver=buildSourceBoundHistoryTeamIdentities([],rows);
+            const eligible=rows.filter(r=>! /\b(?:academy|u[ -]?\d{2}|youth)\b/i.test(r.homeTeam+' '+r.awayTeam)&&['home','away'].every(s=>{const d=resolver.resolveTeam(slug,r[s+'Team']);return d.ok&&d.providerTeamId===r[s+'ProviderTeamId'];}));
+            if(!eligible.length)throw Error('NO_ELIGIBLE_ROWS');
+            for(const r of eligible.sort((a,b)=>Date.parse(a.kickoff)-Date.parse(b.kickoff))){
+              if(!Number.isInteger(r.scoreHome)||!Number.isInteger(r.scoreAway)||r.scoreHome<0||r.scoreAway<0||!Number.isFinite(Date.parse(r.kickoff)))throw Error('INVALID_SCORE_OR_DATE');
+              recordMatchResult(slug,{...r,matchId:r.id,sourceMatchId:r.id,kickoffUtc:r.kickoff});
+            }
+            const payload=readResults(slug),pairs=new Map();
+            for(const [team,entries] of Object.entries(payload.teams))for(const e of entries){if(!pairs.has(e.matchId))pairs.set(e.matchId,[]);pairs.get(e.matchId).push({team,...e});}
+            for(const [id,p] of pairs){if(p.length!==2||p[0].team!==p[1].opp||p[1].team!==p[0].opp||p[0].ha===p[1].ha||p[0].gf!==p[1].ga||p[0].ga!==p[1].gf)throw Error('PAIR_INTEGRITY:'+id);}
+            const cutoff=Date.now()-1825*86400000;
+            const excluded=eligible.filter(r=>!pairs.has(r.id)).map(r=>({id:r.id,kickoff:r.kickoff,home:r.homeTeam,away:r.awayTeam,reason:Date.parse(r.kickoff)<cutoff?'AGE_RETENTION':'UNEXPLAINED'}));
+            const expected=new Map(eligible.map(r=>[r.id,r]));
+            for(const [id,p] of pairs){
+              const r=expected.get(id),h=p.find(x=>x.ha==='H'),a=p.find(x=>x.ha==='A');
+              if(!r||h.gf!==r.scoreHome||a.gf!==r.scoreAway||h.date!==r.kickoff||a.date!==r.kickoff)throw Error('SOURCE_FACT_DRIFT:'+id);
+            }
+            fs.mkdirSync('sandbox-memory',{recursive:true});
+            fs.writeFileSync('sandbox-memory/'+slug+'.retention.json',JSON.stringify({slug,excluded},null,2));
+            console.log(JSON.stringify({slug,eligible:eligible.length,retained:pairs.size,excluded,teams:Object.keys(payload.teams).length}));
+            if(excluded.some(r=>r.reason==='UNEXPLAINED'))throw Error('UNEXPLAINED_RETENTION');
+            fs.mkdirSync('sandbox-memory',{recursive:true});fs.copyFileSync(target,'sandbox-memory/'+slug+'.json');fs.unlinkSync(target);
+          }
+          JS
+      - run: git diff --exit-code -- data && test -z "$(git ls-files --others --exclude-standard data)"
+      - name: Create scoped recovery branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+          for slug in smr.1 aus.1; do
+            target="data/league-memory/results/$slug.json"
+            test ! -e "$target"
+            cp "sandbox-memory/$slug.json" "$target"
+            git add -- "$target"
+          done
+          test "$(git diff --cached --name-only | wc -l)" -eq 2
+          git diff --cached --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          branch="recovery/native-memory-${GITHUB_RUN_ID}"
+          git switch -c "$branch"
+          git commit -m "Recover verified native league result memory"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" --title "Recover San Marino and Australia result memory" --body "Controlled recovery through production writer; exact two new memory files. Review CI and retention evidence before merge."
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sandbox-memory
+          path: sandbox-memory/
