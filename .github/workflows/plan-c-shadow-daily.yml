@@ -29,6 +29,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
+          # A queued scheduled run may carry an older event SHA. Read the
+          # current writer branch only after the concurrency slot is acquired.
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
           filter: blob:none
 
@@ -49,6 +52,17 @@ jobs:
             exit 1
           fi
           echo "DAY_KEY=$DAY_KEY" >> "$GITHUB_ENV"
+
+      - name: Bind generation to current writer branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          BRANCH="${GITHUB_REF_NAME:-main}"
+          git fetch --no-tags origin "$BRANCH"
+          git merge --ff-only "refs/remotes/origin/$BRANCH"
+          test "$(git rev-parse HEAD)" = "$(git rev-parse "refs/remotes/origin/$BRANCH")"
+          echo "PLAN_C_GENERATION_BASE=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Refresh official ClubElo shadow source
         shell: bash
@@ -94,7 +108,7 @@ jobs:
           fi
           if ! git diff --cached --quiet; then
             git commit -m "Refresh Plan C shadow export for ${DAY_KEY}"
-            git push origin "HEAD:${GITHUB_REF_NAME:-main}"
+            PUSH_RETRY_PLAN_C_AUDIT_ONLY=1 PUSH_RETRY_REMOTE_WINS_UNTRACKED_REGEX="" bash tools/git-push-rebase-retry.sh
           fi
           echo "PUBLISHED_REF=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
@@ -115,7 +129,7 @@ jobs:
           node engine-v1/jobs/guard-staged-data-boundary.js --label=plan-c-settlement-sync-ack --dayKey="${DAY_KEY}" --allow="^data/plan-c-shadow/_audit/settlement-sync-pending\.json$"
           if ! git diff --cached --quiet; then
             git commit -m "Acknowledge verified Plan C settlement publication"
-            git push origin "HEAD:${GITHUB_REF_NAME:-main}"
+            PUSH_RETRY_PLAN_C_AUDIT_ONLY=1 PUSH_RETRY_REMOTE_WINS_UNTRACKED_REGEX="" bash tools/git-push-rebase-retry.sh
           fi
 
       - name: Preserve shadow history independently of publication

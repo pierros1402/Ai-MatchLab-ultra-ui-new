@@ -56,9 +56,37 @@ jobs:
         run: |
           set -euo pipefail
           ORIGINAL="engine-v1/jobs/fixtures/plan-c-legacy-settlement-20261119.json"
-          PREDICTIONS="data/plan-c-shadow/frozen/i2b-20260825"
           TEST_ROOT="$RUNNER_TEMP/plan-c-p0-replay"
           mkdir -p "$TEST_ROOT"
+          # Historical replay must not depend on the moving production index.
+          # Pin both the signed prediction bundle and its canonical truth.
+          REPLAY_REF="451bc3c839993d6e6d81f516ea327a63f58e7323"
+          git fetch --no-tags --depth=1 origin "$REPLAY_REF"
+          test "$(git rev-parse FETCH_HEAD)" = "$REPLAY_REF"
+          git archive "$REPLAY_REF" data/plan-c-shadow/frozen/i2b-20260825 | tar -x -C "$TEST_ROOT"
+          PREDICTIONS="$TEST_ROOT/data/plan-c-shadow/frozen/i2b-20260825"
+          export PREDICTIONS
+          mapfile -t REPLAY_DAYS < <(node --input-type=module -e '
+            import fs from "node:fs";
+            const root=process.env.PREDICTIONS;
+            const index=JSON.parse(fs.readFileSync(root+"/PREDICTION_INDEX.json","utf8"));
+            const days=new Set();
+            for(const entry of index.predictions){
+              const p=JSON.parse(fs.readFileSync(root+"/"+entry.relativePath,"utf8"));
+              if(/^\d{4}-\d{2}-\d{2}$/.test(p.day))days.add(p.day);
+              const date=new Date(p.kickoffUtc);
+              days.add(date.toISOString().slice(0,10));
+              days.add(date.toLocaleDateString("en-CA",{timeZone:"Europe/Athens"}));
+            }
+            for(const day of [...days].sort())console.log(day);
+          ')
+          test "${#REPLAY_DAYS[@]}" -gt 0
+          mkdir -p "$TEST_ROOT/data/canonical-fixtures"
+          for day in "${REPLAY_DAYS[@]}"; do
+            if git cat-file -e "$REPLAY_REF:data/canonical-fixtures/$day"; then
+              git archive "$REPLAY_REF" "data/canonical-fixtures/$day" | tar -x -C "$TEST_ROOT"
+            fi
+          done
           cp "$ORIGINAL" "$TEST_ROOT/latest.json"
           node --input-type=module <<'NODE'
           import fs from "node:fs";
@@ -78,6 +106,7 @@ jobs:
           NODE
           node engine-v1/jobs/settle-plan-c-shadow.js 2026-11-22 \
             --prediction-root "$PREDICTIONS" \
+            --truth-root "$TEST_ROOT/data/canonical-fixtures" \
             --output "$TEST_ROOT/latest.json" \
             --audit "$TEST_ROOT/audit.json" \
             --repair-legacy-pending-terminal
@@ -101,24 +130,25 @@ jobs:
           const beforeById=new Map(before.records.map(r=>[r.canonicalFixtureId,r]));
           const afterById=new Map(after.records.map(r=>[r.canonicalFixtureId,r]));
           // The original corruption artifact has 61 frozen rows. The current
-          // forward-only prediction index adds exactly three December fixtures.
+          // pinned forward-only prediction index adds four December fixtures.
           const addedIds=[
             "cid_eng1_astonvilla_crystalpalace_20261205",
             "cid_esp1_athletic_realmadrid_20261206",
-            "cid_esp1_villarreal_realsociedad_20261205"
+            "cid_esp1_villarreal_realsociedad_20261205",
+            "cid_esp1_rayovallecano_athletic_20261209"
           ];
           const index=JSON.parse(fs.readFileSync(
-            "data/plan-c-shadow/frozen/i2b-20260825/PREDICTION_INDEX.json","utf8"));
+            process.env.PREDICTIONS+"/PREDICTION_INDEX.json","utf8"));
           const indexedById=new Map(index.predictions.map(p=>[p.canonicalFixtureId,p]));
           const extras=after.records.filter(r=>!beforeById.has(r.canonicalFixtureId));
-          if(beforeById.size!==61 || afterById.size!==64 ||
-             indexedById.size!==64 || index.predictions.length!==64 ||
+          if(beforeById.size!==61 || afterById.size!==65 ||
+             indexedById.size!==65 || index.predictions.length!==65 ||
              [...beforeById.keys()].some(key=>!afterById.has(key)) ||
-             extras.length!==3 ||
+             extras.length!==4 ||
              addedIds.some(key=>!extras.some(row=>row.canonicalFixtureId===key)) ||
              extras.some(row=>row.state!=="PENDING" || row.truth!==null ||
                row.brier!==null || row.hitRate!==null ||
-               row.pendingReason!=="CANONICAL_STATUS_PRE" ||
+               row.pendingReason!==(row.canonicalFixtureId==="cid_esp1_rayovallecano_athletic_20261209" ? "CANONICAL_STATUS_SPECIAL" : "CANONICAL_STATUS_PRE") ||
                row.prediction?.signature!==indexedById.get(row.canonicalFixtureId)?.predictionSignature))
             throw Error("real_plan_c_recovery_fixture_set_changed");
           const changes=after.records.filter(r=>beforeById.has(r.canonicalFixtureId) &&
