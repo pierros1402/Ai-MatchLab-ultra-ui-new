@@ -2,8 +2,8 @@
   "ok": true,
   "dayKey": "2026-11-25",
   "season": "2026-2027",
-  "generatedAt": "2026-11-25T15:23:50.831Z",
-  "startedAt": "2026-11-25T15:22:00.071Z",
+  "generatedAt": "2026-11-25T16:04:27.406Z",
+  "startedAt": "2026-11-25T16:01:22.204Z",
   "source": {
     "inputSource": "canonical_fixtures",
     "canonicalMatches": 82,
@@ -21,22 +21,22 @@
     "totalRows": 81,
     "detailsFound": 81,
     "intelligenceOk": 81,
-    "valueReturned": 63,
-    "valueNull": 18,
+    "valueReturned": 62,
+    "valueNull": 19,
     "valueFailed": 0,
-    "minimumRecentSampleNull": 18
+    "minimumRecentSampleNull": 19
   },
   "breakdown": {
     "nullByReason": {
-      "minimum_recent_sample": 18
+      "minimum_recent_sample": 19
     },
     "nullByClass": {
       "low_recent_sample_prior_backed": 12,
-      "low_recent_sample": 5,
+      "low_recent_sample": 6,
       "missing_team_history_and_prior": 1
     },
     "nullByLeague": {
-      "afc.cup": 5,
+      "afc.cup": 6,
       "eng.2": 4,
       "egy.1": 3,
       "arm.2": 1,
@@ -51,11 +51,11 @@
       "uefa.champions": 9,
       "jpn.1": 7,
       "ita.2": 4,
-      "afc.cup": 3,
       "eng.5": 3,
       "mex.1": 3,
       "uga.1": 3,
       "afc.champions": 2,
+      "afc.cup": 2,
       "col.1": 2,
       "geo.1": 2,
       "ind.2": 2,
@@ -248,17 +248,17 @@
       "nullClass": null,
       "minimumSample": null,
       "valuePreview": {
-        "confidence": 0.788,
-        "homeWinScore": 0.129,
-        "drawScore": 0.098,
-        "awayWinScore": 0.773,
-        "over15Score": 0.755,
-        "over25Score": 0.682,
-        "bttsScore": 0.601,
+        "confidence": 0.681,
+        "homeWinScore": 0.145,
+        "drawScore": 0.128,
+        "awayWinScore": 0.727,
+        "over15Score": 0.657,
+        "over25Score": 0.563,
+        "bttsScore": 0.462,
         "signals": [
           "away_edge",
-          "over25_support",
           "home_form_decay",
+          "away_form_decay",
           "form_influence_reduced",
           "priors_applied",
           "cup_intensity",
@@ -266,32 +266,37 @@
         ],
         "marketDiagnostics": {
           "1X2": {
-            "eligible": true,
+            "eligible": false,
             "pick": "AWAY",
-            "score": 0.773,
-            "gap": 0.644,
-            "drawScore": 0.098,
-            "reasons": []
+            "score": 0.727,
+            "gap": 0.582,
+            "drawScore": 0.128,
+            "reasons": [
+              "side_negative_form"
+            ]
           },
           "Over / Under 1.5": {
             "eligible": false,
             "pick": "Over 1.5",
-            "score": 0.755,
+            "score": 0.657,
             "reasons": [
-              "suppressed_by_over25"
+              "score_below_0.70"
             ]
           },
           "Over / Under 2.5": {
-            "eligible": true,
+            "eligible": false,
             "pick": "Over 2.5",
-            "score": 0.682,
-            "expectedTotalGoals": 4.1,
-            "reasons": []
+            "score": 0.563,
+            "expectedTotalGoals": 3.4,
+            "reasons": [
+              "score_below_0.65",
+              "missing_goal_support"
+            ]
           },
           "Over / Under 3.5": {
             "eligible": false,
             "pick": "Over 3.5",
-            "score": 0.651,
+            "score": 0.515,
             "reasons": [
               "score_below_0.74",
               "missing_strong_goal_support"
@@ -300,7 +305,7 @@
           "BTTS": {
             "eligible": false,
             "pick": "BTTS YES",
-            "score": 0.601,
+            "score": 0.462,
             "reasons": [
               "score_below_0.68",
               "missing_btts_support"
@@ -338,9 +343,9 @@
         "awayRawSample": 2,
         "homeBlendedSample": 5,
         "awayBlendedSample": 2,
-        "homeSideRawSample": 4,
+        "homeSideRawSample": 3,
         "awaySideRawSample": 1,
-        "homeSideBlendedSample": 4,
+        "homeSideBlendedSample": 3,
         "awaySideBlendedSample": 1,
         "homePriorSample": null,
         "awayPriorSample": null,
@@ -445,78 +450,37 @@
       "detailsFound": true,
       "intelligenceOk": true,
       "intelligenceError": null,
-      "valueReturned": true,
+      "valueReturned": false,
       "valueError": null,
-      "nullReason": null,
-      "nullClass": null,
-      "minimumSample": null,
-      "valuePreview": {
-        "confidence": 0.645,
-        "homeWinScore": 0.279,
-        "drawScore": 0.128,
-        "awayWinScore": 0.593,
-        "over15Score": 0.668,
-        "over25Score": 0.586,
-        "bttsScore": 0.562,
-        "signals": [
-          "away_edge",
-          "home_form_decay",
-          "away_form_decay",
-          "form_influence_reduced",
-          "priors_applied",
-          "cup_intensity",
-          "close_strength_gap"
-        ],
-        "marketDiagnostics": {
-          "1X2": {
-            "eligible": false,
-            "pick": "AWAY",
-            "score": 0.593,
-            "gap": 0.31399999999999995,
-            "drawScore": 0.128,
-            "reasons": [
-              "best_below_0.68",
-              "side_negative_form"
-            ]
-          },
-          "Over / Under 1.5": {
-            "eligible": false,
-            "pick": "Over 1.5",
-            "score": 0.668,
-            "reasons": [
-              "score_below_0.70"
-            ]
-          },
-          "Over / Under 2.5": {
-            "eligible": false,
-            "pick": "Over 2.5",
-            "score": 0.586,
-            "expectedTotalGoals": 3.222,
-            "reasons": [
-              "score_below_0.65",
-              "missing_goal_support"
-            ]
-          },
-          "Over / Under 3.5": {
-            "eligible": false,
-            "pick": "Over 3.5",
-            "score": 0.525,
-            "reasons": [
-              "score_below_0.74",
-              "missing_strong_goal_support"
-            ]
-          },
-          "BTTS": {
-            "eligible": false,
-            "pick": "BTTS YES",
-            "score": 0.562,
-            "reasons": [
-              "score_below_0.68",
-              "missing_btts_support"
-            ]
-          }
-        }
-      }
+      "nullReason": "minimum_recent_sample",
+      "nullClass": "low_recent_sample",
+      "minimumSample": {
+        "minRequiredRecentMatches": 3,
+        "sampleBasis": "current_season_raw",
+        "formMaxAgeDays": null,
+        "formWindow": 5,
+        "homeTeam": "Kuwait SC",
+        "awayTeam": "Al Wahda FC",
+        "leagueSlug": "afc.cup",
+        "fixtureDate": "2026-11-25T16:00:00.000Z",
+        "homeResolvedKey": "Kuwait SC",
+        "awayResolvedKey": "Al-Wahda FC",
+        "homeRawSample": 4,
+        "awayRawSample": 1,
+        "homeBlendedSample": 7,
+        "awayBlendedSample": 1,
+        "homeSideRawSample": 2,
+        "awaySideRawSample": 0,
+        "homeSideBlendedSample": 5,
+        "awaySideBlendedSample": 0,
+        "homePriorSample": 5,
+        "awayPriorSample": null,
+        "homeRecentSelected": null,
+        "awayRecentSelected": null,
+        "homeSideSelected": null,
+        "awaySideSelected": null
+      },
+      "valuePreview": null
     },
     {
       "matchId": "cid_afccup_melbournevictory_thecongviettel_20261125",
@@ -565,7 +529,7 @@
       "leagueSlug": "afc.cup",
       "homeTeam": "FC Nasaf",
       "awayTeam": "Al-Khaldiya SC",
-      "status": "SECOND_HALF",
+      "status": "FT",
       "kickoffUtc": "2026-11-25T13:45Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -4390,7 +4354,7 @@
       "leagueSlug": "mne.2",
       "homeTeam": "Iskra",
       "awayTeam": "Kom Podgorica",
-      "status": "STATUS_SCHEDULED",
+      "status": "FT",
       "kickoffUtc": "2026-11-25T12:00:00.000Z",
       "detailsFound": true,
       "intelligenceOk": true,
@@ -5866,7 +5830,7 @@
       "leagueSlug": "zim.1",
       "homeTeam": "Herentals",
       "awayTeam": "ZPC Kariba",
-      "status": "STATUS_SCHEDULED",
+      "status": "FT",
       "kickoffUtc": "2026-11-25T12:00:00.000Z",
       "detailsFound": true,
       "intelligenceOk": true,
