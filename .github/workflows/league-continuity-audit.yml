@@ -1,0 +1,38 @@
+name: League continuity audit
+on:
+  schedule:
+    - cron: '30 9 * * *'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/league-continuity-audit.yml'
+permissions:
+  contents: read
+concurrency:
+  group: league-continuity-audit
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+      - run: |
+          node engine-v1/jobs/audit-all-league-history.js > league-history-inventory.json
+          node engine-v1/jobs/audit-history-standings-reconciliation.js > league-standings-inventory.json
+          node engine-v1/jobs/build-league-integrity-queue.js > league-integrity-queue.json
+      - run: git diff --exit-code -- data
+        if: always()
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: league-continuity-audit
+          path: |
+            league-history-inventory.json
+            league-standings-inventory.json
+            league-integrity-queue.json
+          retention-days: 30
