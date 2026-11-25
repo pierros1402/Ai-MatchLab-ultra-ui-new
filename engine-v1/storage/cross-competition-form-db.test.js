@@ -463,6 +463,6 @@ test("reviewed domestic scope can supply historical form only for an explicitly 
   assert.equal(JSON.stringify(saudi),original);
   assert.equal(resolve("afc.cup","Al Taawoun").ok,false);
   assert.equal(resolve("afc.cup","Al Taawoun",6,{...options,expectedGlobalClubId:"wrong"}).ok,false);
-  assert.equal(make(saudi,()=>({leagueSlug:"uae.2",globalClubId:id}))("afc.cup","Al Taawoun",6,options).ok,false);
+  assert.equal(make(saudi,({leagueSlug})=>leagueSlug==="ksa.1"?{leagueSlug:"uae.2",globalClubId:id}:null)("afc.cup","Al Taawoun",6,options).ok,false);
   assert.equal(make([{...saudi[0],homeGlobalClubId:"conflict"},...saudi.slice(1)])("afc.cup","Al Taawoun",6,options).ok,false);
 });
