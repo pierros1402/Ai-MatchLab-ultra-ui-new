@@ -264,3 +264,18 @@ test("existing-production promotion label requires both sides in base identity",
     x => x.code === "EXISTING_IDENTITY_PROMOTION_BASIS_NOT_PROVEN"
   ));
 });
+
+test("scoped extension evidence never promotes a homonym outside its reviewed league", () => {
+  const resolver = buildExtendedProductionIdentityResolver({
+    baseResolver: loadBaseResolver(), ledger: loadLedger()
+  });
+  const saudi = resolver.resolveScopedExtensionAlias({alias:"Al Taawoun",leagueSlug:"ksa.1"});
+  assert.equal(saudi?.globalClubId,"gcid_db8625041509f9462e8659ee");
+  assert.equal(saudi?.leagueSlug,"ksa.1");
+  assert.equal(resolver.resolveScopedExtensionAlias({alias:"Al Taawon",leagueSlug:"ksa.1"})?.globalClubId,saudi.globalClubId);
+  for (const leagueSlug of ["uae.2","afc.cup","",undefined]) {
+    assert.equal(resolver.resolveScopedExtensionAlias({alias:"Al Taawoun",leagueSlug}),null);
+  }
+  assert.equal(resolver.resolveScopedExtensionAlias({alias:"Al Taawounx",leagueSlug:"ksa.1"}),null);
+  assert.equal(Object.isFrozen(saudi),true);
+});
