@@ -1,0 +1,46 @@
+name: Native memory sandbox
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/native-memory-sandbox.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+      - run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import {buildSourceBoundHistoryTeamIdentities} from './engine-v1/core/source-bound-history-team-identities.js';
+          import {recordMatchResult,readResults} from './engine-v1/storage/results-memory-db.js';
+          for(const slug of ['smr.1','aus.1']){
+            const dir='data/history-archive/'+slug,target='data/league-memory/results/'+slug+'.json';
+            if(fs.existsSync(target))throw Error('EXISTING_MEMORY_REQUIRES_RECONCILIATION');
+            const rows=fs.readdirSync(dir).filter(f=>f.endsWith('.json')).flatMap(f=>JSON.parse(fs.readFileSync(dir+'/'+f)).matches);
+            const resolver=buildSourceBoundHistoryTeamIdentities([],rows);
+            const eligible=rows.filter(r=>! /\b(?:academy|u[ -]?\d{2}|youth)\b/i.test(r.homeTeam+' '+r.awayTeam)&&['home','away'].every(s=>{const d=resolver.resolveTeam(slug,r[s+'Team']);return d.ok&&d.providerTeamId===r[s+'ProviderTeamId'];}));
+            if(!eligible.length)throw Error('NO_ELIGIBLE_ROWS');
+            for(const r of eligible.sort((a,b)=>Date.parse(a.kickoff)-Date.parse(b.kickoff))){
+              if(!Number.isInteger(r.scoreHome)||!Number.isInteger(r.scoreAway)||r.scoreHome<0||r.scoreAway<0||!Number.isFinite(Date.parse(r.kickoff)))throw Error('INVALID_SCORE_OR_DATE');
+              recordMatchResult(slug,{...r,matchId:r.id,sourceMatchId:r.id,kickoffUtc:r.kickoff});
+            }
+            const payload=readResults(slug),pairs=new Map();
+            for(const [team,entries] of Object.entries(payload.teams))for(const e of entries){if(!pairs.has(e.matchId))pairs.set(e.matchId,[]);pairs.get(e.matchId).push({team,...e});}
+            for(const [id,p] of pairs){if(p.length!==2||p[0].team!==p[1].opp||p[1].team!==p[0].opp||p[0].ha===p[1].ha||p[0].gf!==p[1].ga||p[0].ga!==p[1].gf)throw Error('PAIR_INTEGRITY:'+id);}
+            console.log(JSON.stringify({slug,eligible:eligible.length,retained:pairs.size,excluded:eligible.length-pairs.size,teams:Object.keys(payload.teams).length}));
+            fs.mkdirSync('sandbox-memory',{recursive:true});fs.copyFileSync(target,'sandbox-memory/'+slug+'.json');fs.unlinkSync(target);
+          }
+          JS
+      - run: git diff --exit-code -- data && test -z "$(git ls-files --others --exclude-standard data)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sandbox-memory
+          path: sandbox-memory/
