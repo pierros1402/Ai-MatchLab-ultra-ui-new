@@ -13,6 +13,12 @@
  */
 
 import fs from "fs";
+import { loadPinnedProviderTeamCrosswalk } from "../core/provider-team-crosswalk.js";
+import { getProjectRoot } from "../storage/data-root.js";
+export function productionProviderCrosswalk() {
+  const resolver = getProductionIdentityResolver();
+  return loadPinnedProviderTeamCrosswalk({root:getProjectRoot(),relativePath:"data/identity-decisions/production-provider-team-crosswalk.v1.json",expectedSha256:"a72eb6ca4621a9e7e486eae0512727fd1765aa014c568442ffd28631f3efa87c",resolveApprovedClub:globalClubId=>resolver.resolveTeamReference({globalClubId})});
+}
 import { getProductionIdentityResolver } from "../core/production-identity-resolver-runtime.js";
 
 import { canonicalizeFixtureDisplayNames } from "../core/day-fixture-universe.js";
@@ -182,6 +188,8 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
     options.crossFormFn || null;
 
   let defaultCrossFormFn = null;
+  let providerCrosswalk = options.providerCrosswalk;
+  if (providerCrosswalk === undefined && !injectedCrossFormFn && fixtures.some(f=>f?.providerTeamIds?.espn)) providerCrosswalk = productionProviderCrosswalk();
 
   const resolveCrossForm = (
     fixtureSlug,
@@ -338,7 +346,7 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
               leagueSlug,
               home,
               MIN_FALLBACK_FORM_SAMPLE,
-              crossFormIdentityOptions(fixture, "home", kickoffMs, options.providerCrosswalk)
+              crossFormIdentityOptions(fixture, "home", kickoffMs, providerCrosswalk)
             )
           : null;
 
@@ -348,7 +356,7 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
               leagueSlug,
               away,
               MIN_FALLBACK_FORM_SAMPLE,
-              crossFormIdentityOptions(fixture, "away", kickoffMs, options.providerCrosswalk)
+              crossFormIdentityOptions(fixture, "away", kickoffMs, providerCrosswalk)
             )
           : null;
 
