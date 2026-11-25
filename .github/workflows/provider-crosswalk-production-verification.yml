@@ -1,0 +1,30 @@
+name: Production provider crosswalk verification
+on:
+  pull_request:
+    paths:
+      - 'engine-v1/jobs/canonical-assessment-supplement.js'
+      - '.github/workflows/provider-crosswalk-production-verification.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {productionProviderCrosswalk,crossFormIdentityOptions} from './engine-v1/jobs/canonical-assessment-supplement.js';
+          const c=productionProviderCrosswalk();
+          const result=c.resolve({provider:'espn',teamId:'18459'});
+          assert.equal(result.ok,true);
+          assert.equal(result.globalClubId,'gcid_db8625041509f9462e8659ee');
+          assert.equal(c.resolve({provider:'espn',teamId:'21994'}).ok,false);
+          assert.equal(c.resolve({provider:'espn',teamId:'18459',conflicted:true}).ok,false);
+          console.log(JSON.stringify(result));
+          JS
+      - run: node --test engine-v1/core/provider-team-crosswalk.test.js engine-v1/core/provider-team-crosswalk-loader.test.js engine-v1/jobs/assessment-provider-crosswalk-boundary.test.js
