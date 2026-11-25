@@ -21,11 +21,12 @@ jobs:
           node --input-type=module <<'JS'
           import fs from 'node:fs';
           import {LEAGUES_COVERAGE} from './workers/_shared/leagues-coverage.js';
+          import {isDisabledLeague} from './engine-v1/source-discovery/disabled-leagues.js';
           import {archiveSeasonLabels} from './engine-v1/core/season-model.js';
           const competitions=LEAGUES_COVERAGE.map(({slug})=>{
-            const required=archiveSeasonLabels(slug,5,new Date());
+            const required=isDisabledLeague(slug)?[]:archiveSeasonLabels(slug,5,new Date());
             const missingRequiredSeasons=[],emptyArchiveSeasons=[];
-            let archiveRows=0;
+            let archiveRows=isDisabledLeague(slug)?1:0;
             for(const season of required){
               const file='data/history-archive/'+slug+'/'+season+'.json';
               if(!fs.existsSync(file)){missingRequiredSeasons.push(season);continue;}
@@ -40,6 +41,8 @@ jobs:
           JS
       - name: Capture native history evidence
         run: node engine-v1/jobs/collect-missing-competition-history.js native-inventory.json native-capture
+      - name: Require useful acquisition
+        run: node -e 'const r=require("./native-capture/report.json"); if(r.planned>0 && r.validatedObservedRows===0) throw Error("ZERO_RECOVERED_HISTORY_ROWS")'
       - name: Assert no tracked data changes
         if: always()
         run: git diff --exit-code -- data
