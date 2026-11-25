@@ -1,0 +1,45 @@
+name: Archive memory projection
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/archive-memory-projection.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  project:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          fs.mkdirSync('memory-proposals',{recursive:true});
+          for(const slug of ['smr.1','aus.1']){
+            const dir='data/history-archive/'+slug,teams={},ids=new Set(),sources=[];
+            if(fs.existsSync('data/league-memory/results/'+slug+'.json'))throw Error('EXISTING_MEMORY_REQUIRES_MERGE');
+            for(const file of fs.readdirSync(dir).filter(f=>f.endsWith('.json')).sort()){
+              const raw=fs.readFileSync(dir+'/'+file);
+              sources.push({file,sha256:crypto.createHash('sha256').update(raw).digest('hex')});
+              for(const r of JSON.parse(raw).matches){
+                if(r.leagueSlug!==slug||r.season!==file.slice(0,-5)||r.status!=='FT'||r.scoreBasis!=='EXPLICIT_NATIVE_REGULAR_PLAYED_FINAL'||r.providerStatus?.statusCode!=='3'||r.providerStatus?.statusDetailCode!=='3'||r.id!==r.providerIds?.flashscore||!r.id||ids.has(r.id)||!r.homeProviderTeamId||!r.awayProviderTeamId||r.homeProviderTeamId===r.awayProviderTeamId||!r.homeTeam||!r.awayTeam||!Number.isInteger(r.scoreHome)||r.scoreHome<0||!Number.isInteger(r.scoreAway)||r.scoreAway<0||!Number.isFinite(Date.parse(r.kickoff))||Date.parse(r.kickoff)>=Date.now()||!/^[a-f0-9]{64}$/.test(r.sourceEvidence?.sha256))throw Error('INVALID_ARCHIVE_FACT:'+r.id);
+                ids.add(r.id);
+                for(const [id,name,oppId,opp,gf,ga,ha] of [[r.homeProviderTeamId,r.homeTeam,r.awayProviderTeamId,r.awayTeam,r.scoreHome,r.scoreAway,'H'],[r.awayProviderTeamId,r.awayTeam,r.homeProviderTeamId,r.homeTeam,r.scoreAway,r.scoreHome,'A']]){
+                  const t=teams[id]??={names:[],rows:[]};
+                  if(!t.names.includes(name))t.names.push(name);
+                  t.rows.push({matchId:r.id,date:r.kickoff,opp,opponentProviderTeamId:oppId,gf,ga,ha,sourceEvidence:r.sourceEvidence});
+                }
+              }
+            }
+            const sides=Object.values(teams).reduce((n,t)=>n+t.rows.length,0);
+            if(sides!==ids.size*2||!ids.size)throw Error('PAIR_CONSERVATION_FAILED');
+            fs.writeFileSync('memory-proposals/'+slug+'.json',JSON.stringify({schema:'archive-memory-proposal.v1',slug,provider:'flashscore',sources,teams,matchCount:ids.size,sideCount:sides,productionWrites:0,identityReviewRequired:true},null,2));
+            console.log(JSON.stringify({slug,matches:ids.size,sides,teams:Object.keys(teams).length,productionWrites:0}));
+          }
+          JS
+      - run: git diff --exit-code -- data
+      - uses: actions/upload-artifact@v4
+        with:
+          name: memory-proposals
+          path: memory-proposals/
