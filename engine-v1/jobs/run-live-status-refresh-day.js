@@ -439,6 +439,7 @@ export function normalizeSourceRows(
       source: normalized.source || "espn_direct_league_status",
       sourceId: normalized.sourceId || normalized.sourceMatchId || normalized.matchId,
       sourceMatchId: normalized.sourceMatchId || normalized.sourceId || normalized.matchId,
+      ...(normalized.providerTeamIds?.espn ? { providerTeamIds: { espn: { ...normalized.providerTeamIds.espn } } } : {}),
       providerLeagueSlug: normalizeText(providerSlug) || null,
       leagueSlug: canonicalSlug,
       leagueName: leagueName(canonicalSlug),
@@ -684,14 +685,33 @@ export function mergeStatusRow(
   previous,
   incoming
 ) {
-  return mergeMonotonicStatusObservation(
-    previous,
-    incoming
-  );
+  const merged = mergeMonotonicStatusObservation(previous, incoming);
+  if (previous?.providerTeamIdentityConflict === true) {
+    delete merged.providerTeamIds;
+    merged.providerTeamIdentityConflict = true;
+    return merged;
+  }
+  const ids = incoming?.providerTeamIds?.espn;
+  if (!ids || !stableFixtureId(previous) || stableFixtureId(previous) !== stableFixtureId(incoming) ||
+      previous.dayKey !== incoming.dayKey || previous.leagueSlug !== incoming.leagueSlug ||
+      !teamPairMatches(previous.homeTeam, previous.awayTeam, incoming.homeTeam, incoming.awayTeam) ||
+      !Number.isFinite(Date.parse(previous.kickoffUtc)) ||
+      Date.parse(previous.kickoffUtc) !== Date.parse(incoming.kickoffUtc)) return merged;
+  if (!/^[1-9][0-9]*$/.test(ids.home) || !/^[1-9][0-9]*$/.test(ids.away) || ids.home === ids.away) return merged;
+  const old = previous.providerTeamIds?.espn;
+  if (incoming.providerTeamIdentityConflict === true || (old && (old.home !== ids.home || old.away !== ids.away))) {
+    delete merged.providerTeamIds;
+    merged.providerTeamIdentityConflict = true;
+  } else {
+    merged.providerTeamIds = { ...previous.providerTeamIds, espn: { ...ids } };
+  }
+  return merged;
 }
 
 function rowStatusSignature(row) {
   return JSON.stringify({
+    providerTeamIds: row?.providerTeamIds ?? null,
+    providerTeamIdentityConflict: row?.providerTeamIdentityConflict === true,
     status: row?.status ?? null,
     statusType: row?.statusType ?? null,
     rawStatus: row?.rawStatus ?? null,
