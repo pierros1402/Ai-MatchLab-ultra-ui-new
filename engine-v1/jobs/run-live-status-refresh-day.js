@@ -692,11 +692,17 @@ export function mergeStatusRow(
     return merged;
   }
   const ids = incoming?.providerTeamIds?.espn;
-  if (!ids || !stableFixtureId(previous) || stableFixtureId(previous) !== stableFixtureId(incoming) ||
+  if ((!ids && incoming?.providerTeamIdentityConflict !== true) || !stableFixtureId(previous) || stableFixtureId(previous) !== stableFixtureId(incoming) ||
       previous.dayKey !== incoming.dayKey || previous.leagueSlug !== incoming.leagueSlug ||
-      !teamPairMatches(previous.homeTeam, previous.awayTeam, incoming.homeTeam, incoming.awayTeam) ||
+      normalizeText(previous.homeTeam) !== normalizeText(incoming.homeTeam) ||
+      normalizeText(previous.awayTeam) !== normalizeText(incoming.awayTeam) ||
       !Number.isFinite(Date.parse(previous.kickoffUtc)) ||
       Date.parse(previous.kickoffUtc) !== Date.parse(incoming.kickoffUtc)) return merged;
+  if (incoming.providerTeamIdentityConflict === true) {
+    delete merged.providerTeamIds;
+    merged.providerTeamIdentityConflict = true;
+    return merged;
+  }
   if (!/^[1-9][0-9]*$/.test(ids.home) || !/^[1-9][0-9]*$/.test(ids.away) || ids.home === ids.away) return merged;
   const old = previous.providerTeamIds?.espn;
   if (incoming.providerTeamIdentityConflict === true || (old && (old.home !== ids.home || old.away !== ids.away))) {
@@ -708,7 +714,7 @@ export function mergeStatusRow(
   return merged;
 }
 
-function rowStatusSignature(row) {
+export function rowStatusSignature(row) {
   return JSON.stringify({
     providerTeamIds: row?.providerTeamIds ?? null,
     providerTeamIdentityConflict: row?.providerTeamIdentityConflict === true,
