@@ -13,6 +13,7 @@
  */
 
 import fs from "fs";
+import { getProductionIdentityResolver } from "../core/production-identity-resolver-runtime.js";
 
 import { canonicalizeFixtureDisplayNames } from "../core/day-fixture-universe.js";
 import { resolveDataPath } from "../storage/data-root.js";
@@ -196,8 +197,18 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
     }
 
     if (!defaultCrossFormFn) {
+      // Use only the explicitly reviewed domestic scope. A missing fixture
+      // identity must never be inferred from this historical lookup.
+      let scopedIdentityResolver = null;
+      try {
+        const identityResolver = getProductionIdentityResolver();
+        scopedIdentityResolver = reference =>
+          identityResolver.resolveScopedExtensionAlias(reference);
+      } catch (error) {
+        console.warn("[canonical assessment] scoped identity evidence unavailable:", error?.message);
+      }
       defaultCrossFormFn =
-        createCrossCompetitionFormResolver();
+        createCrossCompetitionFormResolver({ scopedIdentityResolver });
     }
 
     return defaultCrossFormFn(
