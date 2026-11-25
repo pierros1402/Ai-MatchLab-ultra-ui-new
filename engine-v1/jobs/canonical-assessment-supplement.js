@@ -95,6 +95,18 @@ function kickoffTimestamp(fixture) {
 
 const MIN_FALLBACK_FORM_SAMPLE = 6;
 
+// Preserve explicit side identity only; never infer an ID from a team name.
+function crossFormIdentityOptions(fixture, side, beforeMs) {
+  const ids = [...new Set([
+    fixture?.[side+"GlobalClubId"],
+    fixture?.[side+"TeamGlobalClubId"],
+    fixture?.productionIdentityBinding?.[side+"GlobalClubId"],
+    fixture?.teams?.[side]?.globalClubId
+  ].map(v=>String(v??"").trim()).filter(Boolean))];
+  return { beforeMs, expectedGlobalClubId: ids.length===1 ? ids[0] : null, identityConflict: ids.length>1 };
+}
+
+
 function uniqueEvidenceNames(slug, teamName, resolveAliases) {
   const out = [];
   const seen = new Set();
@@ -165,6 +177,7 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
     window,
     resolveOptions
   ) => {
+    if (resolveOptions?.identityConflict) return { ok:false, sample:0, reason:"fixture_global_club_id_conflict" };
     if (injectedCrossFormFn) {
       return injectedCrossFormFn(
         fixtureSlug,
@@ -303,7 +316,7 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
               leagueSlug,
               home,
               MIN_FALLBACK_FORM_SAMPLE,
-              { beforeMs: kickoffMs }
+              crossFormIdentityOptions(fixture, "home", kickoffMs)
             )
           : null;
 
@@ -313,7 +326,7 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
               leagueSlug,
               away,
               MIN_FALLBACK_FORM_SAMPLE,
-              { beforeMs: kickoffMs }
+              crossFormIdentityOptions(fixture, "away", kickoffMs)
             )
           : null;
 

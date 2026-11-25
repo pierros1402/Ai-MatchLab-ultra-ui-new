@@ -396,3 +396,43 @@ test("regional club form excludes other confederation names but keeps domestic c
   });
   assert.equal(conflicting("uefa.champions","Liverpool",6).reason,"global_club_id_conflict");
 });
+
+test("explicit identity selects the correct regional homonym with row-level evidence only", () => {
+  const id = "gcid_test_saudi";
+  const bind = (row, value) => ({...row, [row.ha === "H" ? "homeGlobalClubId" : "awayGlobalClubId"]:value});
+  const coverageRows = [
+    {slug:"ksa.1",type:"league",country:"saudi_arabia",region:"asia"},
+    {slug:"uae.2",type:"league",country:"uae",region:"asia"},
+    {slug:"afc.cup",type:"continental",country:"afc",region:"asia"},
+    {slug:"ksa.cup",type:"cup",country:"saudi_arabia"}
+  ];
+  const cutoff = Date.parse("2026-08-21T00:00:00Z");
+  const options = {expectedGlobalClubId:id,beforeMs:cutoff};
+  const make = (saudi, uae = rows("uae").map(row=>bind(row,"gcid_test_uae"))) =>
+    createCrossCompetitionFormResolver({coverageRows,canonicalResolver:noAliases,resultDocuments:[
+      {slug:"ksa.1",doc:{teams:{"Al Taawoun":saudi}}},
+      {slug:"uae.2",doc:{teams:{"Al Taawoun":uae}}}
+    ]});
+  const verified = rows("ksa").map(row=>bind(row,id));
+  const resolve = make(verified);
+  const result = resolve("afc.cup","Al Taawoun",6,options);
+  assert.equal(result.ok,true);
+  assert.equal(result.sample,6);
+  assert.equal(result.globalClubId,id);
+  assert.equal(result.sourceCountry,"saudi_arabia");
+  assert.deepEqual(result.sourceSlugs,["ksa.1"]);
+  assert.equal(resolve("afc.cup","Al Taawoun",6,{beforeMs:cutoff}).ok,false);
+  assert.equal(resolve("afc.cup","Al Taawoun",6,{...options,expectedGlobalClubId:"gcid_missing"}).ok,false);
+  assert.equal(make(rows("unbound"))("afc.cup","Al Taawoun",6,options).ok,false);
+  assert.equal(make([...verified.slice(0,5),rows("unbound")[5]])("afc.cup","Al Taawoun",6,options).sample,5);
+  const conflict = {...verified[0],productionIdentityBinding:{homeGlobalClubId:"gcid_conflict"}};
+  assert.equal(make([conflict,...verified.slice(1)])("afc.cup","Al Taawoun",6,options).ok,false);
+  assert.equal(make([conflict,...verified.slice(1)])("ksa.cup","Al Taawoun",6,options).reason,"global_club_id_conflict");
+  const futureConflict = {...conflict,date:"2026-08-22T00:00:00Z",matchId:"future"};
+  assert.deepEqual(make([...verified,futureConflict])("afc.cup","Al Taawoun",6,options),result);
+  const atCutoff = {...verified[0],date:new Date(cutoff).toISOString()};
+  assert.equal(make([atCutoff,...verified.slice(1)])("afc.cup","Al Taawoun",6,options).sample,5);
+  assert.equal(make(rows("past"),[...rows("uae"),{...verified[0],date:"2026-08-22T00:00:00Z"}])("afc.cup","Al Taawoun",6,options).ok,false);
+  const nestedOnly = rows("nested").map(row=>({...row,productionIdentityBinding:{[row.ha==="H"?"homeGlobalClubId":"awayGlobalClubId"]:id}}));
+  assert.equal(make(nestedOnly)("afc.cup","Al Taawoun",6,options).sample,6);
+});

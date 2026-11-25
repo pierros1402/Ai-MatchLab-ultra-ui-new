@@ -1,0 +1,19 @@
+name: Cross-form identity regression
+on:
+  pull_request:
+    paths:
+      - 'engine-v1/storage/cross-competition-form-db*'
+      - 'engine-v1/jobs/canonical-assessment-supplement*'
+      - '.github/workflows/cross-form-identity-regression.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts
+      - run: node --test engine-v1/storage/cross-competition-form-db.test.js engine-v1/jobs/canonical-assessment-supplement.test.js

@@ -85,25 +85,15 @@ export function isCrossCompetitionFormFixtureScopeSupported(
   );
 }
 
-function perspectiveGlobalClubId(row) {
-  const binding =
-    row?.productionIdentityBinding || {};
-
-  if (row?.ha === "H") {
-    return clean(
-      row?.homeGlobalClubId ||
-      binding?.homeGlobalClubId
-    ) || null;
-  }
-
-  if (row?.ha === "A") {
-    return clean(
-      row?.awayGlobalClubId ||
-      binding?.awayGlobalClubId
-    ) || null;
-  }
-
-  return null;
+// All explicit signals must agree. A conflicting nested binding is not
+// silently hidden by a top-level ID.
+function perspectiveGlobalClubIds(row) {
+  const side = row?.ha === "H" ? "home" : row?.ha === "A" ? "away" : null;
+  if (!side) return [];
+  return [...new Set([
+    row?.[side+"GlobalClubId"],
+    row?.productionIdentityBinding?.[side+"GlobalClubId"]
+  ].map(clean).filter(Boolean))];
 }
 
 function readResultDocuments() {
@@ -275,7 +265,8 @@ export function createCrossCompetitionFormResolver({
     teamName,
     window = 6,
     {
-      beforeMs = null
+      beforeMs = null,
+      expectedGlobalClubId = null
     } = {}
   ) {
 
@@ -307,8 +298,16 @@ export function createCrossCompetitionFormResolver({
       );
     }
 
+    // Identity evidence must obey the same as-of boundary as form rates.
     const allCandidates =
-      byIdentity.get(identityKey) || [];
+      (byIdentity.get(identityKey) || []).map(source => ({
+        ...source,
+        rows: source.rows.filter(row => {
+          if (!Number.isFinite(beforeMs)) return true;
+          const ms = Date.parse(String(row?.date || ""));
+          return Number.isFinite(ms) && ms < beforeMs;
+        })
+      })).filter(source => source.rows.length);
 
     if (!allCandidates.length) {
       return zeroRates(
@@ -317,6 +316,7 @@ export function createCrossCompetitionFormResolver({
       );
     }
 
+    const expected = clean(expectedGlobalClubId);
     let selected =
       allCandidates;
 
@@ -359,6 +359,17 @@ export function createCrossCompetitionFormResolver({
           }
         }
       }
+      // An explicit fixture-side ID may resolve a same-region homonym,
+      // but only when the candidate source contains that exact ID and
+      // contains no contradictory ID. Unbound sources cannot win.
+      if (expected) {
+        const bound = selected.filter(source => {
+          const ids = new Set(source.rows.flatMap(perspectiveGlobalClubIds));
+          return ids.size === 1 && ids.has(expected);
+        });
+        if (!bound.length) return zeroRates("expected_global_club_id_unverified", { identityKey });
+        selected = bound;
+      }
       const countries =
         [
           ...new Set(
@@ -390,13 +401,8 @@ export function createCrossCompetitionFormResolver({
 
     for (const source of selected) {
       for (const row of source.rows) {
-        const globalClubId =
-          perspectiveGlobalClubId(row);
-
-        if (globalClubId) {
-          explicitGlobalIds.add(
-            globalClubId
-          );
+        for (const globalClubId of perspectiveGlobalClubIds(row)) {
+          explicitGlobalIds.add(globalClubId);
         }
       }
     }
@@ -416,12 +422,19 @@ export function createCrossCompetitionFormResolver({
       );
     }
 
+    if (expected && (explicitGlobalIds.size !== 1 || !explicitGlobalIds.has(expected))) {
+      return zeroRates("expected_global_club_id_unverified", { identityKey });
+    }
+
     const byMatch =
       new Map();
 
     for (const source of selected) {
       for (const row of source.rows) {
 
+        // Explicit binding requires row-level evidence; a single known ID
+        // does not certify all historical rows in a display-name bucket.
+        if (expected && !perspectiveGlobalClubIds(row).includes(expected)) continue;
         const rowMs =
           Date.parse(
             String(row?.date || "")
@@ -530,7 +543,7 @@ export function createCrossCompetitionFormResolver({
       source:
         "cross_competition_form",
       reason:
-        "safe_country_bound_cross_competition_form",
+        expected ? "explicit_global_id_bound_cross_competition_form" : "safe_country_bound_cross_competition_form",
       identityKey,
       identityMode:
         globalCanonicalTeamName(teamName)
