@@ -1,5 +1,8 @@
 name: Controlled native memory publication
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/native-memory-controlled-publication.yml'
   workflow_dispatch:
     inputs:
       publish:
@@ -15,7 +18,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   simulate:
-    if: inputs.publish == true && github.ref == 'refs/heads/main'
+    if: github.event_name == 'pull_request' || (inputs.publish == true && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -59,11 +62,12 @@ jobs:
           JS
       - run: git diff --exit-code -- data && test -z "$(git ls-files --others --exclude-standard data)"
       - name: Create scoped recovery branch
+        if: github.event_name == 'workflow_dispatch' && inputs.publish == true && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          git fetch origin main
+          git fetch origin main:refs/remotes/origin/main
           test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
           for slug in smr.1 aus.1; do
             target="data/league-memory/results/$slug.json"
