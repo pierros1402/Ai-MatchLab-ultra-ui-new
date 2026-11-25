@@ -1,0 +1,63 @@
+name: Actual cross form recovery
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/actual-cross-form-recovery.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          import {productionProviderCrosswalk,crossFormIdentityOptions} from './engine-v1/jobs/canonical-assessment-supplement.js';
+          import {createCrossCompetitionFormResolver} from './engine-v1/storage/cross-competition-form-db.js';
+          import {getProductionIdentityResolver} from './engine-v1/core/production-identity-resolver-runtime.js';
+          const f=JSON.parse(fs.readFileSync('data/canonical-fixtures/2026-11-25/afc.cup.json')).fixtures.find(x=>x.providerIds?.espn==='401912746');
+          assert.ok(f);
+          const r=await fetch('https://site.api.espn.com/apis/site/v2/sports/soccer/afc.cup/scoreboard?dates=20261125',{signal:AbortSignal.timeout(20000),redirect:'error'});
+          assert.equal(r.status,200);
+          const d=await r.json();
+          assert.ok(d.leagues.some(l=>l.slug==='afc.cup'));
+          const e=d.events.find(x=>x.id===f.providerIds.espn);
+          assert.equal(Date.parse(e.date),Date.parse(f.kickoffUtc));
+          const ids={};
+          for(const side of ['home','away']){
+            const c=e.competitions[0].competitors.find(x=>x.homeAway===side);
+            assert.equal(c.team.displayName,f[side+'Team']);
+            ids[side]=c.team.id;
+            assert.match(ids[side],/^[1-9][0-9]*$/);
+          }
+          assert.notEqual(ids.home,ids.away);
+          assert.notEqual(f.providerTeamIdentityConflict,true);
+          if(f.providerTeamIds?.espn) assert.deepEqual(f.providerTeamIds.espn,ids);
+          const enriched={...f,providerTeamIds:{espn:ids}};
+          const c=productionProviderCrosswalk();
+          const resolver=getProductionIdentityResolver();
+          const form=createCrossCompetitionFormResolver({scopedIdentityResolver:ref=>resolver.resolveScopedExtensionAlias(ref)});
+          const results={};
+          for(const side of ['home','away']){
+            const options=crossFormIdentityOptions(enriched,side,Date.parse(f.kickoffUtc),c);
+            results[side]={options,form:form(f.leagueSlug,f[side+'Team'],6,options)};
+          }
+          console.log(JSON.stringify(results));
+          fs.writeFileSync('actual-cross-form-report.json',JSON.stringify(results,null,2));
+          assert.equal(results.home.options.expectedGlobalClubId,'gcid_db8625041509f9462e8659ee');
+          assert.equal(results.home.form.sample,6);
+          assert.equal(results.home.form.sourceCountry,'ksa');
+          JS
+      - run: git diff --exit-code -- data
+        if: always()
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: actual-cross-form-report
+          path: actual-cross-form-report.json
