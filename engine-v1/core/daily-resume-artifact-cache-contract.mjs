@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { invocationContract } from './daily-resume-runtime-invocations.mjs';
 const freeze = x => Object.freeze(x);
 export const sourcePins=freeze({
- 'engine-v1/jobs/build-details-day.js':'62737b121f362b38fd1449df19d16caacf928d38',
+ 'engine-v1/jobs/build-details-day.js':'81419c0605fa168c1931e5110d7aa8b87a5354f4',
  'engine-v1/core/build-value-day.js':'e127f22a3985d0861c5f68357928474800aeb7ee',
  'engine-v1/value/daily-plan-a-checkpoint.js':'15f3c1a549b77daf6c858d55fee14ae17d60cb3c',
  'engine-v1/value/plan-a-observation.js':'4cfc5acb44da0bc29809a6d0e2ee156efddfaef9',
