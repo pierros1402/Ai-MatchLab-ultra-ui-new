@@ -263,6 +263,7 @@ export function createCrossCompetitionFormResolver({
       byIdentity.get(identityKey).push({
         slug,
         country: meta.country,
+        region: meta.region,
         teamName,
         rows
       });
@@ -341,10 +342,27 @@ export function createCrossCompetitionFormResolver({
       }
     }
     else {
+      // Regional coverage is an exclusion boundary, not proof of club identity.
+      // Apply only to declared regional club competitions; FIFA/world and
+      // national-team competitions retain the existing ambiguity policy.
+      const regionalClubCompetitions = new Set([
+        "uefa.champions", "ucl.q", "uefa.europa", "uel.q",
+        "uefa.europa.conf", "uecl.q", "uefa.super_cup",
+        "afc.champions", "afc.cup", "caf.champions", "caf.confed"
+      ]);
+      if (regionalClubCompetitions.has(fixtureSlug) && fixtureMeta.region) {
+        // Unknown regional metadata cannot safely break an identity tie.
+        if (allCandidates.every(item => Boolean(item.region))) {
+          selected = allCandidates.filter(item => item.region === fixtureMeta.region);
+          if (!selected.length) {
+            return zeroRates("no_same_region_source", { identityKey, fixtureRegion: fixtureMeta.region });
+          }
+        }
+      }
       const countries =
         [
           ...new Set(
-            allCandidates
+            selected
               .map(item => item.country)
               .filter(Boolean)
           )
@@ -361,7 +379,7 @@ export function createCrossCompetitionFormResolver({
       }
 
       selected =
-        allCandidates.filter(
+        selected.filter(
           item =>
             item.country === countries[0]
         );

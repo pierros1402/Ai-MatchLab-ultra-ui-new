@@ -355,3 +355,44 @@ test(
     );
   }
 );
+
+test("regional club form excludes other confederation names but keeps domestic collisions fail closed", () => {
+  const coverageRows = [
+    {slug:"eng.1",type:"league",country:"england",region:"europe"},
+    {slug:"uru.1",type:"league",country:"uruguay",region:"americas"},
+    {slug:"ksa.1",type:"league",country:"saudi_arabia",region:"asia"},
+    {slug:"uae.2",type:"league",country:"uae",region:"asia"},
+    {slug:"uefa.champions",type:"continental",country:"uefa",region:"europe"},
+    {slug:"afc.cup",type:"continental",country:"afc",region:"asia"},
+    {slug:"fifa.club_world",type:"continental",country:"fifa",region:"world"}
+  ];
+  const resultDocuments = [
+    {slug:"eng.1",doc:{teams:{Liverpool:rows("eng-liverpool")}}},
+    {slug:"uru.1",doc:{teams:{Liverpool:rows("uru-liverpool"),"Only Uruguay":rows("only-uru")}}},
+    {slug:"ksa.1",doc:{teams:{"Al Taawoun":rows("ksa-taawoun")}}},
+    {slug:"uae.2",doc:{teams:{"AL Taawoun":rows("uae-taawoun")}}}
+  ];
+  const resolve = createCrossCompetitionFormResolver({coverageRows,resultDocuments,canonicalResolver:noAliases});
+  const liverpool = resolve("uefa.champions","Liverpool",6);
+  assert.equal(liverpool.ok,true);
+  assert.equal(liverpool.sample,6);
+  assert.equal(liverpool.sourceCountry,"england");
+  assert.deepEqual(liverpool.sourceSlugs,["eng.1"]);
+  assert.equal(resolve("afc.cup","Al Taawoun",6).reason,"cross_country_identity_ambiguous");
+  assert.equal(resolve("fifa.club_world","Liverpool",6).reason,"cross_country_identity_ambiguous");
+  assert.equal(resolve("uefa.champions","Only Uruguay",6).reason,"no_same_region_source");
+  const unknown = createCrossCompetitionFormResolver({
+    coverageRows:coverageRows.map(row=>row.slug==="uru.1"?{...row,region:null}:row),
+    resultDocuments,canonicalResolver:noAliases
+  });
+  assert.equal(unknown("uefa.champions","Liverpool",6).reason,"cross_country_identity_ambiguous");
+  const conflicting = createCrossCompetitionFormResolver({
+    coverageRows,canonicalResolver:noAliases,
+    resultDocuments:resultDocuments.map(doc=>doc.slug!=="eng.1"?doc:{
+      slug:doc.slug,doc:{teams:{Liverpool:rows("conflict").map((row,i)=>({
+        ...row,[row.ha==="H"?"homeGlobalClubId":"awayGlobalClubId"]:i===0?"gcid_one":"gcid_two"
+      }))}}
+    })
+  });
+  assert.equal(conflicting("uefa.champions","Liverpool",6).reason,"global_club_id_conflict");
+});
