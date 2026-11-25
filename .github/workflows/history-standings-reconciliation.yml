@@ -1,0 +1,22 @@
+name: History standings reconciliation
+on:
+  pull_request:
+    paths:
+      - 'engine-v1/jobs/audit-history-standings-reconciliation*'
+      - '.github/workflows/history-standings-reconciliation.yml'
+  workflow_dispatch:
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test engine-v1/jobs/audit-history-standings-reconciliation.test.js
+      - run: node engine-v1/jobs/audit-history-standings-reconciliation.js > reconciliation.json
+      - run: node -e 'const d=require("./reconciliation.json"); console.log(d.totals); for(const r of d.rows) console.log(r.slug,r.status,r.memoryStatus,r.archiveFiles.length,r.standingsReasons.join(","),r.teams.filter(t=>!t.exactMemoryKey||t.candidateResults<6).map(t=>t.name).join(";"))'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reconciliation
+          path: reconciliation.json
