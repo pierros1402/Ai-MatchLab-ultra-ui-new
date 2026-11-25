@@ -160,7 +160,7 @@ function inferPhaseFromContext({ leagueSlug, competitionType, dayKey }) {
   return "regular";
 }
 
-function normalizeEvent(ev, requestedLeague, targetDay) {
+export function normalizeEvent(ev, requestedLeague, targetDay) {
   const id = String(ev?.id || "").trim();
   if (!id) return null;
 
@@ -196,8 +196,9 @@ function normalizeEvent(ev, requestedLeague, targetDay) {
     LEAGUE_NAME_MAP[leagueSlug] ||
     requestedLeague;
 
-  const scoreHome = safeNum(home?.score, 0);
-  const scoreAway = safeNum(away?.score, 0);
+  if (!/^\d+$/.test(String(home?.score ?? '')) || !/^\d+$/.test(String(away?.score ?? ''))) return null;
+  const scoreHome = Number(home.score);
+  const scoreAway = Number(away.score);
 
   const minute = normalizeMinute(
     ev?.status?.displayClock,
@@ -387,6 +388,10 @@ function emptyDayBucket(dayKey) {
   };
 }
 
+export function preservedDayBucket(dayKey, existingDay) {
+  return { ...emptyDayBucket(dayKey), rows: [...(existingDay?.rows || [])] };
+}
+
 async function loadExistingProgress(start, end, totalDays) {
   let history = {
     ok: true,
@@ -479,8 +484,8 @@ async function rebuildCurrentSeason() {
 
     console.log(`[history rebuild] day ${dayKey}`);
 
-    const dayBucket = emptyDayBucket(dayKey);
-    const daySeen = new Set();
+    const dayBucket = preservedDayBucket(dayKey, existingDay);
+    const daySeen = new Set(dayBucket.rows.map(row => String(row.id)));
 
     report.byDay[dayKey] = {
       rawEvents: 0,
@@ -570,7 +575,7 @@ async function rebuildCurrentSeason() {
   };
 }
 
-rebuildCurrentSeason()
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) rebuildCurrentSeason()
   .then(result => {
     console.log(JSON.stringify(result, null, 2));
   })

@@ -1,0 +1,18 @@
+name: History rebuild preservation
+on:
+  pull_request:
+    paths:
+      - 'engine-v1/jobs/rebuild-current-season-history*'
+      - '.github/workflows/history-rebuild-preservation.yml'
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test engine-v1/jobs/rebuild-current-season-history.test.js
+      - run: git diff --exit-code -- data
