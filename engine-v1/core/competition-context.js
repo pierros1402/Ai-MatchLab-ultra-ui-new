@@ -1,4 +1,5 @@
 import fs from "fs";
+import { getLeagueCoverage } from "../../workers/_shared/leagues-coverage.js";
 import { resolveDataPath } from "../storage/data-root.js";
 import {
   listTrustedStandingsSlugs,
@@ -432,6 +433,7 @@ function buildCrossLeagueContext(match) {
     status: "ready",
     data: {
       type: "cross_league",
+      competitionType: classifyCompetitionType(match),
       phase: "cross_league",
       positions: {
         home: h.position,
@@ -458,7 +460,18 @@ function buildCrossLeagueContext(match) {
   };
 }
 
+// Competition identity is independent of standings availability or context mode.
+export function classifyCompetitionType(match) {
+  const slug = String(match?.leagueSlug || "").trim().toLowerCase();
+  const type = getLeagueCoverage(slug)?.type;
+  if (type === "league") return "league";
+  if (type === "cup") return "domestic_cup";
+  if (type === "continental" || type === "national") return "international_cup";
+  return "unknown";
+}
+
 export function buildCompetitionContext(match) {
+  const competitionType = classifyCompetitionType(match);
   const standingsFile = resolveDataPath("standings", `${match?.leagueSlug}.json`);
   const standings = readTrustedStandingsArtifact(match?.leagueSlug);
 
@@ -490,7 +503,7 @@ export function buildCompetitionContext(match) {
       ok: true,
       status: "fallback",
       data: {
-        type: "league",
+        type: competitionType,
         phase: "unknown",
         positions: null,
         stakes: [],
@@ -537,7 +550,7 @@ export function buildCompetitionContext(match) {
       ok: true,
       status: "fallback",
       data: {
-        type: "league",
+        type: competitionType,
         phase: "unknown",
         positions: null,
         stakes: [],
@@ -699,7 +712,7 @@ export function buildCompetitionContext(match) {
     key: "competition_context",
     status: "ready",
     data: {
-      type: "league",
+      type: competitionType,
       phase: competitionPhase,
       seasonPhase,
       phaseSummary: meta.phaseSummary || null,
