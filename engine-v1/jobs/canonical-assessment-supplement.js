@@ -97,14 +97,25 @@ function kickoffTimestamp(fixture) {
 const MIN_FALLBACK_FORM_SAMPLE = 6;
 
 // Preserve explicit side identity only; never infer an ID from a team name.
-function crossFormIdentityOptions(fixture, side, beforeMs) {
+export function crossFormIdentityOptions(fixture, side, beforeMs, providerCrosswalk = null) {
   const ids = [...new Set([
     fixture?.[side+"GlobalClubId"],
     fixture?.[side+"TeamGlobalClubId"],
     fixture?.productionIdentityBinding?.[side+"GlobalClubId"],
     fixture?.teams?.[side]?.globalClubId
   ].map(v=>String(v??"").trim()).filter(Boolean))];
-  return { beforeMs, expectedGlobalClubId: ids.length===1 ? ids[0] : null, identityConflict: ids.length>1 };
+  let identityConflict = ids.length > 1 || fixture?.providerTeamIdentityConflict === true;
+  const providerId = fixture?.providerTeamIds?.espn?.[side];
+  if (!identityConflict && providerCrosswalk && providerId != null) {
+    const resolved = providerCrosswalk.resolve({
+      provider: "espn", teamId: String(providerId),
+      ...(ids.length === 1 ? { expectedGlobalClubId: ids[0] } : {})
+    });
+    if (resolved.ok) ids.push(resolved.globalClubId);
+    else if (resolved.status !== "UNMAPPED_PROVIDER_TEAM") identityConflict = true;
+  }
+  const uniqueIds = [...new Set(ids)];
+  return { beforeMs, expectedGlobalClubId: !identityConflict && uniqueIds.length===1 ? uniqueIds[0] : null, identityConflict };
 }
 
 
@@ -327,7 +338,7 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
               leagueSlug,
               home,
               MIN_FALLBACK_FORM_SAMPLE,
-              crossFormIdentityOptions(fixture, "home", kickoffMs)
+              crossFormIdentityOptions(fixture, "home", kickoffMs, options.providerCrosswalk)
             )
           : null;
 
@@ -337,7 +348,7 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
               leagueSlug,
               away,
               MIN_FALLBACK_FORM_SAMPLE,
-              crossFormIdentityOptions(fixture, "away", kickoffMs)
+              crossFormIdentityOptions(fixture, "away", kickoffMs, options.providerCrosswalk)
             )
           : null;
 
