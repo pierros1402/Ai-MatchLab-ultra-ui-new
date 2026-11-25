@@ -1,0 +1,21 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {normalizeSourceRows,mergeStatusRow,rowStatusSignature} from './run-live-status-refresh-day.js';
+test('live provider evidence persists without changing terminal truth',()=>{
+ const event={id:'123456',date:'2026-11-25T18:00Z',competitions:[{competitors:[{homeAway:'home',team:{id:'101',displayName:'Home'}},{homeAway:'away',team:{id:'202',displayName:'Away'}}],status:{type:{name:'STATUS_SCHEDULED'}}}]};
+ const incoming=[...normalizeSourceRows([event],'ksa.1','2026-11-25').values()][0];
+ assert.deepEqual(incoming.providerTeamIds,{espn:{home:'101',away:'202'}});
+ const {providerTeamIds,...base}=incoming;
+ const previous={...base,status:'FT',rawStatus:'STATUS_FINAL',statusType:'STATUS_FINAL',scoreHome:2,scoreAway:1};
+ const merged=mergeStatusRow(previous,incoming);
+ assert.deepEqual(merged.providerTeamIds,providerTeamIds);
+ assert.equal(merged.status,'FT'); assert.equal(merged.scoreHome,2);
+ assert.notEqual(rowStatusSignature(previous),rowStatusSignature(merged));
+ for(const bad of [{...incoming,homeTeam:'Away',awayTeam:'Home'},{...incoming,sourceMatchId:'999'},{...incoming,kickoffUtc:'2026-11-25T19:00Z'}]) assert.equal(mergeStatusRow(previous,bad).providerTeamIds,undefined);
+ const conflict=mergeStatusRow(merged,{...incoming,providerTeamIds:{espn:{home:'303',away:'202'}}});
+ assert.equal(conflict.providerTeamIdentityConflict,true);
+ assert.equal(conflict.providerTeamIds,undefined);
+ assert.equal(mergeStatusRow(conflict,incoming).providerTeamIds,undefined);
+ assert.equal(mergeStatusRow(merged,{...base,providerTeamIdentityConflict:true}).providerTeamIdentityConflict,true);
+ assert.deepEqual(mergeStatusRow(merged,base).providerTeamIds,providerTeamIds);
+});
