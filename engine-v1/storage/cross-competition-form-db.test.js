@@ -436,3 +436,33 @@ test("explicit identity selects the correct regional homonym with row-level evid
   const nestedOnly = rows("nested").map(row=>({...row,productionIdentityBinding:{[row.ha==="H"?"homeGlobalClubId":"awayGlobalClubId"]:id}}));
   assert.equal(make(nestedOnly)("afc.cup","Al Taawoun",6,options).sample,6);
 });
+
+test("reviewed domestic scope can supply historical form only for an explicitly bound fixture side", () => {
+  const id = "gcid_test_saudi";
+  const coverageRows = [
+    {slug:"ksa.1",type:"league",country:"saudi_arabia",region:"asia"},
+    {slug:"uae.2",type:"league",country:"uae",region:"asia"},
+    {slug:"afc.cup",type:"continental",country:"afc",region:"asia"}
+  ];
+  const scopedIdentityResolver = ({alias,leagueSlug}) =>
+    alias==="Al Taawoun" && leagueSlug==="ksa.1" ? {leagueSlug,globalClubId:id} : null;
+  const make = (saudi, scope=scopedIdentityResolver) => createCrossCompetitionFormResolver({
+    coverageRows, canonicalResolver:noAliases, scopedIdentityResolver:scope,
+    resultDocuments:[{slug:"ksa.1",doc:{teams:{"Al Taawoun":saudi}}},
+      {slug:"uae.2",doc:{teams:{"Al Taawoun":rows("uae")}}}]
+  });
+  const saudi=rows("ksa");
+  const original=JSON.stringify(saudi);
+  const options={expectedGlobalClubId:id,beforeMs:Date.parse("2026-08-21T00:00:00Z")};
+  const resolve=make(saudi);
+  const result=resolve("afc.cup","Al Taawoun",6,options);
+  assert.equal(result.sample,6);
+  assert.equal(result.sourceCountry,"saudi_arabia");
+  assert.equal(result.globalClubId,id);
+  assert.deepEqual(result.scopedIdentityEvidence,[{leagueSlug:"ksa.1",teamName:"Al Taawoun",globalClubId:id}]);
+  assert.equal(JSON.stringify(saudi),original);
+  assert.equal(resolve("afc.cup","Al Taawoun").ok,false);
+  assert.equal(resolve("afc.cup","Al Taawoun",6,{...options,expectedGlobalClubId:"wrong"}).ok,false);
+  assert.equal(make(saudi,({leagueSlug})=>leagueSlug==="ksa.1"?{leagueSlug:"uae.2",globalClubId:id}:null)("afc.cup","Al Taawoun",6,options).ok,false);
+  assert.equal(make([{...saudi[0],homeGlobalClubId:"conflict"},...saudi.slice(1)])("afc.cup","Al Taawoun",6,options).ok,false);
+});
