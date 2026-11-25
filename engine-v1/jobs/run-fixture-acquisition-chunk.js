@@ -962,7 +962,8 @@ export function serializeFixture(normalized, adapterId, fetchedDayKey) {
 
     homeTeam: normalized.homeTeam,
     awayTeam: normalized.awayTeam,
-    ...(providerName === "espn" && providerId && normalized.providerTeamIds?.espn
+    ...(normalized.providerTeamIdentityConflict === true ? { providerTeamIdentityConflict: true } : {}),
+    ...(normalized.providerTeamIdentityConflict !== true && providerName === "espn" && providerId && normalized.providerTeamIds?.espn
       ? { providerTeamIds: { espn: { ...normalized.providerTeamIds.espn } } }
       : {}),
 

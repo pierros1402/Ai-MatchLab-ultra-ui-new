@@ -206,3 +206,9 @@ test("ESPN native team evidence survives serialization and missing refresh, but 
   event.competitions[0].competitors[1].team.id = "101";
   assert.equal(normalizeFixture(event,"ksa.1").providerTeamIds,undefined);
 });
+
+test("serialization cannot resurrect quarantined provider team IDs", () => {
+  const row=serializeFixture({canonicalId:"cid_test",matchId:"123",source:"espn",sourceId:"123",leagueSlug:"ksa.1",homeTeam:"Home",awayTeam:"Away",providerTeamIdentityConflict:true,providerTeamIds:{espn:{home:"101",away:"202"}}},"espn","2026-11-25");
+  assert.equal(row.providerTeamIdentityConflict,true);
+  assert.equal(row.providerTeamIds,undefined);
+});
