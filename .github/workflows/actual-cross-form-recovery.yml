@@ -52,7 +52,10 @@ jobs:
           fs.writeFileSync('actual-cross-form-report.json',JSON.stringify(results,null,2));
           assert.equal(results.home.options.expectedGlobalClubId,'gcid_db8625041509f9462e8659ee');
           assert.equal(results.home.form.sample,6);
-          assert.equal(results.home.form.sourceCountry,'ksa');
+          assert.equal(results.home.form.sourceCountry,'saudi_arabia');
+          assert.deepEqual(results.home.form.sourceSlugs,['ksa.1']);
+          assert.equal(results.home.form.globalClubId,results.home.options.expectedGlobalClubId);
+          assert.equal(results.home.form.ok,true);
           JS
       - run: git diff --exit-code -- data
         if: always()
