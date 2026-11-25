@@ -1,0 +1,353 @@
+{
+  "ok": true,
+  "date": "2026-11-25",
+  "source": "canonical_fixtures",
+  "planId": "plan-a",
+  "outputMode": "plan-a-observation",
+  "count": 1,
+  "picks": [
+    {
+      "matchId": "cid_eng5_borehamwood_aldershottown_20261125",
+      "leagueSlug": "eng.5",
+      "homeTeam": "Boreham Wood",
+      "awayTeam": "Aldershot Town",
+      "kickoff": "2026-11-25T19:00Z",
+      "market": "Over / Under 2.5",
+      "marketName": "Over / Under 2.5",
+      "pick": "Over 2.5",
+      "score": 0.77,
+      "band": "HIGH",
+      "confidence": 0.863,
+      "rawConfidence": 0.908,
+      "readiness": 0.786,
+      "signals": [
+        "home_edge_strong",
+        "over25_support",
+        "priors_applied",
+        "close_strength_gap",
+        "home_rest_4",
+        "match_profile_applied"
+      ],
+      "meta": {
+        "model": "value-engine-v1",
+        "mode": "statistical_plus_context",
+        "formWindow": 5,
+        "formRules": {
+          "sameSeasonOnly": true,
+          "maxAgeDays": 35,
+          "fullStrengthDays": 7,
+          "decayStartDays": 8,
+          "heavyDecayDays": 14,
+          "breakdownDays": 21,
+          "gapModerateDays": 14,
+          "gapHeavyDays": 21,
+          "gapStaleDays": 35,
+          "gapPolicy": "form_weight_reduced_not_rejected"
+        },
+        "baseWeights": {
+          "form": 0.5,
+          "homeAway": 0.2,
+          "goals": 0.2,
+          "matchup": 0.1
+        },
+        "effectiveWeights": {
+          "homeOverallFormWeight": 0.5,
+          "awayOverallFormWeight": 0.234,
+          "homeSideFormWeight": 0.12,
+          "awaySideFormWeight": 0.12
+        },
+        "expectedHomeGoals": 1.69,
+        "expectedAwayGoals": 1.371,
+        "expectedTotalGoals": 3.061,
+        "homeStrength": 0.513,
+        "awayStrength": 0.26,
+        "homeEdge": 0.231,
+        "awayPenalty": 0.387,
+        "recency": {
+          "homeOverall": {
+            "sample": 8,
+            "rawSample": 5,
+            "priorSample": 187,
+            "daysSinceLastMatch": 4,
+            "spanDays": 20,
+            "maxInternalGap": 7,
+            "gapSeverity": "normal",
+            "freshnessScore": 1,
+            "continuityScore": 1,
+            "formContinuityWeight": 1
+          },
+          "awayOverall": {
+            "sample": 8,
+            "rawSample": 5,
+            "priorSample": 228,
+            "daysSinceLastMatch": 11,
+            "spanDays": 21,
+            "maxInternalGap": 7,
+            "gapSeverity": "normal",
+            "freshnessScore": 0.55,
+            "continuityScore": 0.85,
+            "formContinuityWeight": 0.79
+          },
+          "homeSide": {
+            "sample": 7,
+            "rawSample": 4,
+            "priorSample": 187,
+            "daysSinceLastMatch": 18,
+            "spanDays": 14,
+            "maxInternalGap": 7,
+            "gapSeverity": "moderate",
+            "freshnessScore": 0.26,
+            "continuityScore": 0.65,
+            "formContinuityWeight": 0.559
+          },
+          "awaySide": {
+            "sample": 6,
+            "rawSample": 3,
+            "priorSample": 228,
+            "daysSinceLastMatch": 11,
+            "spanDays": 16,
+            "maxInternalGap": 9,
+            "gapSeverity": "normal",
+            "freshnessScore": 0.55,
+            "continuityScore": 0.85,
+            "formContinuityWeight": 0.67
+          }
+        },
+        "matchupSample": 3,
+        "priorsUsed": true,
+        "priors": {
+          "used": true,
+          "homePriorSample": 187,
+          "awayPriorSample": 228,
+          "leaguePriorSample": 2737,
+          "matchupPriorSample": 8
+        },
+        "resolution": {
+          "homeInput": "Boreham Wood",
+          "awayInput": "Aldershot Town",
+          "homeResolvedKey": "Boreham Wood",
+          "awayResolvedKey": "Aldershot Town",
+          "homeResolveScore": 1,
+          "awayResolveScore": 1,
+          "matchupResolvedKey": "Boreham Wood::Aldershot Town",
+          "matchupResolveScore": 0,
+          "homePriorKey": "eng.5::Boreham Wood",
+          "awayPriorKey": "eng.5::Aldershot Town",
+          "matchupPriorKey": "eng.5|Aldershot Town|Boreham Wood"
+        },
+        "sourceKeys": {
+          "homeTeamKey": "Boreham Wood",
+          "awayTeamKey": "Aldershot Town",
+          "leagueKey": "eng.5",
+          "matchupKey": "Boreham Wood::Aldershot Town"
+        },
+        "contextModifiers": {
+          "applied": true,
+          "version": "value-context-modifiers-v1.0"
+        },
+        "contextAdjusted": true,
+        "contextDelta": 0,
+        "contextReasons": [
+          {
+            "code": "form_home_stronger",
+            "impact": 0.08,
+            "note": "Home team has significantly stronger form"
+          },
+          {
+            "code": "h2h_home_edge",
+            "impact": 0.025,
+            "note": "Recent H2H leans home"
+          },
+          {
+            "code": "h2h_overlean",
+            "impact": 0.03,
+            "note": "Recent H2H goals profile is open"
+          },
+          {
+            "code": "ai_h2h_over_signal",
+            "impact": 0.07,
+            "note": "AI detected open H2H pattern"
+          },
+          {
+            "code": "ai_h2h_home_edge",
+            "impact": 0.06,
+            "note": "AI detected home H2H edge"
+          },
+          {
+            "code": "ai_home_form_signal",
+            "impact": 0.05,
+            "note": "AI confirmed strong home form edge"
+          }
+        ],
+        "aiContext": {
+          "available": true,
+          "importance": "low",
+          "stakes": [],
+          "pressure": [
+            "low_confidence_table"
+          ]
+        },
+        "matchProfileApplied": true,
+        "matchProfileConfidence": 0.67,
+        "matchProfileReasons": [
+          {
+            "code": "match_profile_home_form_edge",
+            "impact": 0.022000000000000002,
+            "note": "MatchProfile last5 points: home 10, away 7"
+          },
+          {
+            "code": "match_profile_h2h_home_edge",
+            "impact": 0.011000000000000001,
+            "note": "MatchProfile H2H trend leans home"
+          },
+          {
+            "code": "match_profile_h2h_overlean",
+            "impact": 0.022000000000000002,
+            "note": "MatchProfile H2H goal pattern leans over"
+          }
+        ],
+        "valuePolicy": {
+          "version": "statistical-value-policy-v2.3",
+          "oddsIndependent": true,
+          "type": "statistical_value",
+          "formGapHandling": "reduced_weight_not_rejected"
+        },
+        "readiness": 0.786,
+        "adjustedConfidence": 0.863,
+        "outcomeScores": {
+          "homeWinScore": 0.7030000000000001,
+          "drawScore": 0.111,
+          "awayWinScore": 0.254,
+          "bestSide": "HOME",
+          "sideGap": 0.44900000000000007,
+          "drawGapToBestSide": 0.5920000000000001
+        },
+        "policyReason": "over25_strict_high"
+      },
+      "context": {
+        "season": "2026-2027",
+        "leagueSlug": "eng.5",
+        "competitionType": "league",
+        "phase": "regular",
+        "leagueTrust": "medium",
+        "leagueTier": 2,
+        "homeRestDays": 4,
+        "awayRestDays": 11,
+        "homeMatchesLast7": 1,
+        "awayMatchesLast7": 0,
+        "homeMatchesLast14": 2,
+        "awayMatchesLast14": 1,
+        "homeNextMatchInDays": null,
+        "awayNextMatchInDays": null
+      }
+    }
+  ],
+  "fixtureUniverse": {
+    "schema": "ai-matchlab.value-fixture-universe.v1",
+    "source": "canonical_fixtures",
+    "count": 82,
+    "hash": "327c12547af23386410a961814a2be4456cb288033aa14a1a98db039d4010090",
+    "canonicalIds": [
+      "cid_afcchampions_gambaosaka_port_20261125",
+      "cid_afcchampions_kashimaantlers_jeonbukhyundaimotors_20261125",
+      "cid_afccup_alfaisaly_alrayyan_20261125",
+      "cid_afccup_aljazira_golgoharsirjan_20261125",
+      "cid_afccup_almuharraq_arkadag_20261125",
+      "cid_afccup_altaawoun_alnahda_20261125",
+      "cid_afccup_kuwait_alwahda_20261125",
+      "cid_afccup_melbournevictory_thecongviettel_20261125",
+      "cid_afccup_nasaf_alkhaldiya_20261125",
+      "cid_afccup_persibbandung_seoul_20261125",
+      "cid_arm2_araratarmenia2_noah2_20261125",
+      "cid_arm2_mika_olympiayerevan_20261125",
+      "cid_bul2_ludogoretsii_etar_20261125",
+      "cid_col1_americacali_deportivocali_20261125",
+      "cid_col1_millonarios_atleticobucaramanga_20261125",
+      "cid_egy1_elgaish_modernsport_20261125",
+      "cid_egy1_enppi_ceramicacleopatra_20261125",
+      "cid_egy1_ghazlelmahallah_petrojet_20261125",
+      "cid_eng2_boltonwanderers_westbromwichalbion_20261125",
+      "cid_eng2_burnley_birminghamcity_20261125",
+      "cid_eng2_stokecity_millwall_20261125",
+      "cid_eng2_watford_blackburnrovers_20261125",
+      "cid_eng5_borehamwood_aldershottown_20261125",
+      "cid_eng5_harrogatetown_kidderminsterharriers_20261125",
+      "cid_eng5_hartlepoolunited_solihullmoors_20261125",
+      "cid_engtrophy_fleetwoodtown_leedsunitedu21_20261125",
+      "cid_geo1_rustavi_meshakhtetkibuli_20261125",
+      "cid_geo1_samgurali_torpedokutaisi_20261125",
+      "cid_ind2_mohammedan_rajasthanunited_20261125",
+      "cid_ind2_shillonglajong_nagalandunited_20261125",
+      "cid_ita2_cremonese_usavellino_20261125",
+      "cid_ita2_mantova_arezzo_20261125",
+      "cid_ita2_padova_sampdoria_20261125",
+      "cid_ita2_pisa_modena_20261125",
+      "cid_jpn1_avispafukuoka_yokohamafmarinos_20261125",
+      "cid_jpn1_fagianookayama_shimizuspulse_20261125",
+      "cid_jpn1_jefunitedichiharachiba_nagoyagrampus_20261125",
+      "cid_jpn1_mitohollyhock_tokyoverdy1969_20261125",
+      "cid_jpn1_tokyo_sanfreccehiroshima_20261125",
+      "cid_jpn1_urawareddiamonds_cerezoosaka_20261125",
+      "cid_jpn1_vvarennagasaki_kawasakifrontale_20261125",
+      "cid_jpn2_hokkaidoconsadolesapporo_fujiedamyfc_20261125",
+      "cid_jpn2_imabari_tegevajaromiyazaki_20261125",
+      "cid_jpn2_iwaki_toyama_20261125",
+      "cid_jpn2_montedioyamagata_iwata_20261125",
+      "cid_jpn2_omiyaardija_tokushima_20261125",
+      "cid_jpn2_sagantosu_oitatrinita_20261125",
+      "cid_jpn2_shonanbellmare_kofu_20261125",
+      "cid_jpn2_tochigicity_blaublitz_20261125",
+      "cid_jpn2_vanraure_albirexniigata_20261125",
+      "cid_jpn2_yokohama_vegaltasendai_20261125",
+      "cid_kos2_2korriku_kflepencikacanik_20261125",
+      "cid_kos2_istogu_suhareka_20261125",
+      "cid_ksa2_alanwar_aljandal_20261125",
+      "cid_ksa2_albukiryah_alwehda_20261125",
+      "cid_ksa2_alula_aladalah_20261125",
+      "cid_mex1_leon_cruzazul_20261125",
+      "cid_mex1_monterrey_america_20261125",
+      "cid_mex1_pachuca_guadalajarachivas_20261125",
+      "cid_mex1_toluca_atlas_20261125",
+      "cid_mne1_bokelj_petrovac_20261125",
+      "cid_mne2_iskra_kompodgorica_20261125",
+      "cid_rus2_kamaz_yenisey_20261125",
+      "cid_rus2_neftekhimik_rvolgograd_20261125",
+      "cid_srb1_radnickinis_zeleznicarpancevo_20261125",
+      "cid_uefachampions_atleticomadrid_viking_20261125",
+      "cid_uefachampions_brugge_liverpool_20261125",
+      "cid_uefachampions_internazionale_vfbstuttgart_20261125",
+      "cid_uefachampions_lille_bayernmunich_20261125",
+      "cid_uefachampions_parissaintgermain_asroma_20261125",
+      "cid_uefachampions_sabah_barcelona_20261125",
+      "cid_uefachampions_shakhtardonetsk_fenerbahce_20261125",
+      "cid_uefachampions_slaviaprague_villarreal_20261125",
+      "cid_uefachampions_sportingcp_manchesterunited_20261125",
+      "cid_uga1_maroons_villa_20261125",
+      "cid_uga1_nec_kataka_20261125",
+      "cid_uga1_ntugasaze_police_20261125",
+      "cid_ukr1_kryvbas_kharkiv_20261125",
+      "cid_uru2_colon_atenas_20261125",
+      "cid_usa1_sanjoseearthquakes_houstondynamo_20261125",
+      "cid_zim1_agama_highlanders_20261125",
+      "cid_zim1_herentals_zpckariba_20261125"
+    ]
+  },
+  "schema": "ai-matchlab.value-plan-a-observation.v1",
+  "immutable": true,
+  "trialStartDate": "2026-07-05",
+  "frozenAt": "2026-11-25T02:35:08.004Z",
+  "observationSignature": "86e6b1b960c076769a3e8062ae1a58b6502964f3cfae31230878d4850b673537",
+  "sourceContract": {
+    "observationInputArtifact": "data/value/2026-11-25.json",
+    "observationImmutable": true,
+    "deploySnapshotUsedAsFinalTruth": false,
+    "trialStartDate": "2026-07-05"
+  },
+  "provenance": {
+    "kind": "daily_cycle_first_value_output",
+    "sourcePath": "data/value/2026-11-25.json",
+    "note": "Freeze the first successful production output before downstream enrichment and midnight rollover."
+  },
+  "publicationAuthority": "frozen_plan_a_observation",
+  "updatedAt": "2026-11-25T22:10:19.114Z"
+}
