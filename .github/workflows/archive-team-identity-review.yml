@@ -1,0 +1,40 @@
+name: Archive team identity review
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/archive-team-identity-review.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+      - run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import {getProductionIdentityResolver} from './engine-v1/core/production-identity-resolver-runtime.js';
+          const resolver=getProductionIdentityResolver(),report=[];
+          for(const slug of ['smr.1','aus.1']){
+            const dir='data/history-archive/'+slug,teams=new Map();
+            for(const file of fs.readdirSync(dir).filter(f=>f.endsWith('.json')))for(const r of JSON.parse(fs.readFileSync(dir+'/'+file)).matches){
+              for(const [id,name] of [[r.homeProviderTeamId,r.homeTeam],[r.awayProviderTeamId,r.awayTeam]]){
+                if(!teams.has(id))teams.set(id,new Set());teams.get(id).add(name);
+              }
+            }
+            const rows=[...teams].map(([id,names])=>({id,names:[...names].map(alias=>({alias,decision:resolver.resolveTeamReference({leagueSlug:slug,alias})}))}));
+            report.push({slug,rows,productionWrites:0});
+          }
+          fs.writeFileSync('archive-team-review.json',JSON.stringify(report,null,2));
+          console.log(JSON.stringify(report));
+          JS
+      - run: git diff --exit-code -- data
+      - uses: actions/upload-artifact@v4
+        with:
+          name: archive-team-review
+          path: archive-team-review.json
