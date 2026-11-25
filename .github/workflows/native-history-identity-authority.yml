@@ -1,0 +1,43 @@
+name: Native history identity authority
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/native-history-identity-authority.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+      - run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import {buildSourceBoundHistoryTeamIdentities} from './engine-v1/core/source-bound-history-team-identities.js';
+          const report=[];
+          for(const slug of ['smr.1','aus.1']){
+            const dir='data/history-archive/'+slug;
+            const rows=fs.readdirSync(dir).filter(f=>f.endsWith('.json')).flatMap(f=>JSON.parse(fs.readFileSync(dir+'/'+f)).matches);
+            const resolver=buildSourceBoundHistoryTeamIdentities([],rows);
+            const held=[],accepted=[];
+            for(const r of rows){
+              const decisions=['home','away'].map(side=>resolver.resolveTeam(slug,r[side+'Team']));
+              const exact=decisions.every((d,i)=>d.ok&&d.providerTeamId===r[['home','away'][i]+'ProviderTeamId']);
+              const youth=/\b(?:academy|u[ -]?\d{2}|youth)\b/i.test(r.homeTeam+' '+r.awayTeam);
+              (exact&&!youth?accepted:held).push({id:r.id,decisions,youth});
+            }
+            report.push({slug,accepted,held,ambiguousAliases:resolver.ambiguousAliases,productionWrites:0});
+            console.log(JSON.stringify({slug,accepted:accepted.length,held:held.length,ambiguous:resolver.ambiguousAliases.length}));
+          }
+          fs.writeFileSync('native-identity-review.json',JSON.stringify(report,null,2));
+          JS
+      - run: git diff --exit-code -- data
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-identity-review
+          path: native-identity-review.json
