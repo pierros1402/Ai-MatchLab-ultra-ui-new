@@ -282,6 +282,17 @@ function absorbRow(winner, loser) {
 
   merged = mergeDuplicateCanonicalStatus(merged, winner, loser);
 
+  // Native team evidence is provider-scoped and must survive dedupe only
+  // when both ordered sides agree. A conflict is sticky.
+  const left = winner?.providerTeamIds?.espn;
+  const right = loser?.providerTeamIds?.espn;
+  if (winner?.providerTeamIdentityConflict || loser?.providerTeamIdentityConflict ||
+      (left && right && (left.home !== right.home || left.away !== right.away))) {
+    delete merged.providerTeamIds;
+    merged.providerTeamIdentityConflict = true;
+  }
+
+
   // Provider IDs are durable lineage, not winner-only display fields. Preserve
   // every known provider→event binding on the surviving canonical fixture so a
   // later clean workflow checkout can still recover the cross-provider match
