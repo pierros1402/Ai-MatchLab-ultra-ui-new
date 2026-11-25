@@ -31,3 +31,20 @@ test("final Daily opt-in is scoped to snapshot push",()=>{
  assert.match(script,/PLAN_C_AUDIT_ONLY_REBASE_REVALIDATED=true/);
  for(const gate of ["run-snapshot-invariant-check.js","verify-details-value-mirror-day.js","check-publication-ft.mjs","verify-daily-publish-contract.js"])assert.ok(script.includes(gate),gate);
 });
+
+
+test("Plan C scheduled writer checks out the current branch and binds before production",()=>{
+ const workflow=fs.readFileSync(".github/workflows/plan-c-shadow-daily.yml","utf8");
+ assert.match(workflow,/ref: \$\{\{ github\.ref_name \}\}/);
+ assert.match(workflow,/group: ai-matchlab-data-writer/);
+ const bind=workflow.indexOf("name: Bind generation to current writer branch");
+ assert.ok(bind>=0&&bind<workflow.indexOf("name: Refresh official ClubElo shadow source"));
+ assert.match(workflow,/test -z "\$\(git status --porcelain\)"/);
+ assert.match(workflow,/git fetch --no-tags origin "\$BRANCH"/);
+ assert.match(workflow,/git merge --ff-only "refs\/remotes\/origin\/\$BRANCH"/);
+ assert.match(workflow,/test "\$\(git rev-parse HEAD\)" = "\$\(git rev-parse "refs\/remotes\/origin\/\$BRANCH"\)"/);
+ assert.equal((workflow.match(/PUSH_RETRY_PLAN_C_AUDIT_ONLY=1 PUSH_RETRY_REMOTE_WINS_UNTRACKED_REGEX="" bash tools\/git-push-rebase-retry.sh/g)||[]).length,2);
+ assert.doesNotMatch(workflow,/git push origin|git reset --hard|git push --force/);
+ assert.ok(workflow.indexOf("--stage=plan-c-produced")<workflow.indexOf("PUSH_RETRY_PLAN_C_AUDIT_ONLY=1"));
+ assert.match(workflow,/if: \$\{\{ always\(\) && env\.DAY_KEY != '' \}\}/);
+});
