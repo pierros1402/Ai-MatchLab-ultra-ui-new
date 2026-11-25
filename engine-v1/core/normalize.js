@@ -180,6 +180,12 @@ export function normalizeFixture(event, slug) {
 
     homeTeam,
     awayTeam,
+    // Provider-native identifiers are evidence, never canonical club IDs.
+    ...(/^[0-9]+$/.test(String(home?.team?.id ?? "")) &&
+        /^[0-9]+$/.test(String(away?.team?.id ?? "")) &&
+        String(home.team.id) !== String(away.team.id)
+      ? { providerTeamIds: { espn: { home: String(home.team.id), away: String(away.team.id) } } }
+      : {}),
 
     scoreHome,
     scoreAway,
