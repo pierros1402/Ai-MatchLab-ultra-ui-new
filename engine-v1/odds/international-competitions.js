@@ -73,6 +73,10 @@ export function nationsLeagueRoutingDecision(competition, country, leaguePath = 
 export function resolveInternational(competition, country, leaguePath = null) {
   const text = `${country || ""} ${competition || ""}`.trim();
   if (!text) return null;
+  // Reject explicit non-senior competition evidence before broad name rules.
+  // Check both label and path; never infer senior identity from "World Cup".
+  const scope = `${text} ${leaguePath || ""}`.replace(/[-_/]+/g, " ");
+  if (/\b(?:u\s*(?:1[4-9]|2[0-3])|under\s*(?:1[4-9]|2[0-3])|youth|junior|juniors|primavera|reserves?|development|women|women's|womens|female|girls)\b/i.test(scope)) return null;
   const routing = nationsLeagueRoutingDecision(competition, country, leaguePath);
   if (routing.kind === "hold") return null;
   if (routing.kind === "resolved") return {
