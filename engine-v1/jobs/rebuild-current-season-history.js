@@ -196,8 +196,9 @@ function normalizeEvent(ev, requestedLeague, targetDay) {
     LEAGUE_NAME_MAP[leagueSlug] ||
     requestedLeague;
 
-  const scoreHome = safeNum(home?.score, 0);
-  const scoreAway = safeNum(away?.score, 0);
+  if (!/^\d+$/.test(String(home?.score ?? '')) || !/^\d+$/.test(String(away?.score ?? ''))) return null;
+  const scoreHome = Number(home.score);
+  const scoreAway = Number(away.score);
 
   const minute = normalizeMinute(
     ev?.status?.displayClock,
@@ -479,8 +480,8 @@ async function rebuildCurrentSeason() {
 
     console.log(`[history rebuild] day ${dayKey}`);
 
-    const dayBucket = emptyDayBucket(dayKey);
-    const daySeen = new Set();
+    const dayBucket = { ...emptyDayBucket(dayKey), rows: [...(existingDay?.rows || [])] };
+    const daySeen = new Set(dayBucket.rows.map(row => String(row.id)));
 
     report.byDay[dayKey] = {
       rawEvents: 0,
