@@ -1,0 +1,19 @@
+name: Live provider identity regression
+on:
+  pull_request:
+    paths:
+      - 'engine-v1/jobs/run-live-status-refresh-day.js'
+      - 'engine-v1/jobs/live-provider-identity-propagation.test.js'
+      - '.github/workflows/live-provider-identity-regression.yml'
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node --test engine-v1/jobs/live-provider-identity-propagation.test.js engine-v1/jobs/run-live-status-refresh-day.test.js
