@@ -1,0 +1,52 @@
+name: Native history recovery capture
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/native-history-recovery-capture.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Build exact competition inventory
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import {LEAGUES_COVERAGE} from './workers/_shared/leagues-coverage.js';
+          import {archiveSeasonLabels} from './engine-v1/core/season-model.js';
+          const competitions=LEAGUES_COVERAGE.map(({slug})=>{
+            const required=archiveSeasonLabels(slug,5,new Date());
+            const missingRequiredSeasons=[],emptyArchiveSeasons=[];
+            let archiveRows=0;
+            for(const season of required){
+              const file='data/history-archive/'+slug+'/'+season+'.json';
+              if(!fs.existsSync(file)){missingRequiredSeasons.push(season);continue;}
+              const d=JSON.parse(fs.readFileSync(file,'utf8'));
+              if(!Array.isArray(d.matches))throw Error('INVALID_ARCHIVE:'+file);
+              archiveRows+=d.matches.length;
+              if(!d.matches.length)emptyArchiveSeasons.push(season);
+            }
+            return {slug,missingRequiredSeasons,emptyArchiveSeasons,archiveRows};
+          });
+          fs.writeFileSync('native-inventory.json',JSON.stringify({competitions}));
+          JS
+      - name: Capture native history evidence
+        run: node engine-v1/jobs/collect-missing-competition-history.js native-inventory.json native-capture
+      - name: Assert no tracked data changes
+        if: always()
+        run: git diff --exit-code -- data
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-history-evidence
+          path: |
+            native-inventory.json
+            native-capture/
