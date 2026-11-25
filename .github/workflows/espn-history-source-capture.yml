@@ -1,0 +1,54 @@
+name: ESPN history source capture
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/espn-history-source-capture.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          fs.mkdirSync('espn-history',{recursive:true});
+          const report=[];
+          for(const slug of ['ind.2','aus.1','can.2','smr.1','smr.2','gib.2','lie.1','lie.2','afc.cup']){
+            for(let month=1;month<=11;month++){
+              const start='2026'+String(month).padStart(2,'0')+'01';
+              const end='2026'+String(month).padStart(2,'0')+String(month===11?25:new Date(Date.UTC(2026,month,0)).getUTCDate());
+              const url='https://site.api.espn.com/apis/site/v2/sports/soccer/'+slug+'/scoreboard?dates='+start+'-'+end+'&limit=1000';
+              try{
+                const r=await fetch(url,{signal:AbortSignal.timeout(12000),redirect:'error'});
+                if(!r.ok) throw Error('HTTP_'+r.status);
+                const raw=Buffer.from(await r.arrayBuffer());
+                const d=JSON.parse(raw);
+                const exact=d.leagues?.some(l=>l.slug===slug)===true;
+                const file=slug+'-'+start+'.json';
+                fs.writeFileSync('espn-history/'+file,raw);
+                const events=exact&&Array.isArray(d.events)?d.events:[];
+                const finals=events.filter(e=>e.status?.type?.completed===true&&e.status?.type?.name==='STATUS_FINAL'&&e.competitions?.[0]?.competitors?.length===2&&e.competitions[0].competitors.every(c=>/^[1-9][0-9]*$/.test(c.team?.id)&&/^\d+$/.test(c.score)));
+                const nahda=finals.filter(e=>e.competitions[0].competitors.some(c=>c.team.id==='21994')).map(e=>e.id);
+                report.push({slug,start,end,url,file,sha256:crypto.createHash('sha256').update(raw).digest('hex'),exact,events:events.length,finals:finals.length,possiblyTruncated:events.length>=1000,nahda});
+              }catch(e){report.push({slug,start,end,url,error:String(e)});}
+            }
+          }
+          fs.writeFileSync('espn-history/report.json',JSON.stringify({productionWrites:0,fullCoverageCertified:false,report},null,2));
+          console.log(JSON.stringify(report));
+          if(!report.some(x=>x.exact&&x.finals>0))throw Error('NO_EXACT_FINAL_CANDIDATES');
+          JS
+      - run: git diff --exit-code -- data
+        if: always()
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: espn-history-source-capture
+          path: espn-history/
