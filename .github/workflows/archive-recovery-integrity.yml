@@ -1,0 +1,47 @@
+name: Archive recovery integrity
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/archive-recovery-integrity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const report=[];
+          for(const slug of ['smr.1','aus.1']){
+            const dir='data/history-archive/'+slug, ids=new Map(),teams=new Map(),facts=new Map(),rejected=[];
+            let latest='';
+            for(const file of fs.readdirSync(dir).filter(f=>f.endsWith('.json'))){
+              for(const r of JSON.parse(fs.readFileSync(dir+'/'+file)).matches){
+                const valid=r.leagueSlug===slug&&r.season===file.slice(0,-5)&&r.status==='FT'&&r.scoreBasis==='EXPLICIT_NATIVE_REGULAR_PLAYED_FINAL'&&r.providerStatus?.statusCode==='3'&&r.providerStatus?.statusDetailCode==='3'&&r.id===r.providerIds?.flashscore&&/^[a-zA-Z0-9]{8}$/.test(r.id)&&/^[a-zA-Z0-9]{8}$/.test(r.homeProviderTeamId)&&/^[a-zA-Z0-9]{8}$/.test(r.awayProviderTeamId)&&r.homeProviderTeamId!==r.awayProviderTeamId&&Number.isInteger(r.scoreHome)&&r.scoreHome>=0&&Number.isInteger(r.scoreAway)&&r.scoreAway>=0&&Number.isFinite(Date.parse(r.kickoff))&&Date.parse(r.kickoff)<Date.now()&&/^[a-f0-9]{64}$/.test(r.sourceEvidence?.sha256);
+                if(!valid){rejected.push({id:r.id,reason:'INVALID_FACT'});continue;}
+                const fact=JSON.stringify([r.kickoff,r.homeProviderTeamId,r.awayProviderTeamId,r.scoreHome,r.scoreAway]);
+                if(ids.has(r.id)){rejected.push({id:r.id,reason:ids.get(r.id)===fact?'DUPLICATE_ID':'CONFLICT_ID'});continue;}
+                if(facts.has(fact)){rejected.push({id:r.id,reason:'DUPLICATE_FACT'});continue;}
+                ids.set(r.id,fact);facts.set(fact,r.id);
+                for(const [id,name] of [[r.homeProviderTeamId,r.homeTeam],[r.awayProviderTeamId,r.awayTeam]]){
+                  if(!teams.has(id))teams.set(id,new Set());teams.get(id).add(name);
+                }
+                if(r.kickoff>latest)latest=r.kickoff;
+              }
+            }
+            report.push({slug,accepted:ids.size,rejected,latest,teams:[...teams].map(([id,names])=>({id,names:[...names]})),productionWrites:0});
+          }
+          fs.writeFileSync('archive-integrity.json',JSON.stringify(report,null,2));
+          console.log(JSON.stringify(report.map(({teams,...r})=>({...r,teamCount:teams.length}))));
+          if(report.some(r=>r.rejected.length||!r.accepted))throw Error('ARCHIVE_REVIEW_REQUIRED');
+          JS
+      - run: git diff --exit-code -- data
+        if: always()
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: archive-integrity
+          path: archive-integrity.json
