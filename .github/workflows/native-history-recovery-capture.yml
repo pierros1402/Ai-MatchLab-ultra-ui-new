@@ -1,0 +1,80 @@
+name: Native history recovery capture
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/native-history-recovery-capture.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Build exact competition inventory
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import {LEAGUES_COVERAGE} from './workers/_shared/leagues-coverage.js';
+          import {isDisabledLeague} from './engine-v1/source-discovery/disabled-leagues.js';
+          import {archiveSeasonLabels} from './engine-v1/core/season-model.js';
+          const competitions=LEAGUES_COVERAGE.map(({slug})=>{
+            const required=isDisabledLeague(slug)?[]:archiveSeasonLabels(slug,5,new Date());
+            const missingRequiredSeasons=[],emptyArchiveSeasons=[];
+            let archiveRows=isDisabledLeague(slug)?1:0;
+            for(const season of required){
+              const file='data/history-archive/'+slug+'/'+season+'.json';
+              if(!fs.existsSync(file)){missingRequiredSeasons.push(season);continue;}
+              const d=JSON.parse(fs.readFileSync(file,'utf8'));
+              if(!Array.isArray(d.matches))throw Error('INVALID_ARCHIVE:'+file);
+              archiveRows+=d.matches.length;
+              if(!d.matches.length)emptyArchiveSeasons.push(season);
+            }
+            return {slug,missingRequiredSeasons,emptyArchiveSeasons,archiveRows};
+          });
+          fs.writeFileSync('native-inventory.json',JSON.stringify({competitions}));
+          JS
+      - name: Capture native history evidence
+        run: node engine-v1/jobs/collect-missing-competition-history.js native-inventory.json native-capture
+      - name: Independent ESPN evidence for active missing history and AFC identity
+        if: always()
+        run: |
+          mkdir -p espn-evidence
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          const targets=[['ind.2','20261125'],['ksa.1','20260815'],['afc.cup','20261125']];
+          const report=[];
+          for(const [slug,day] of targets){
+            const url='https://site.api.espn.com/apis/site/v2/sports/soccer/'+slug+'/scoreboard?dates='+day;
+            try{
+              const r=await fetch(url,{signal:AbortSignal.timeout(20000),redirect:'error'});
+              const bytes=Buffer.from(await r.arrayBuffer());
+              const sha256=crypto.createHash('sha256').update(bytes).digest('hex');
+              fs.writeFileSync('espn-evidence/'+slug+'-'+day+'.json',bytes);
+              const d=JSON.parse(bytes);
+              const events=(d.events||[]).map(e=>({id:e.id,date:e.date,competitors:e.competitions?.[0]?.competitors?.map(c=>({side:c.homeAway,id:c.team?.id,name:c.team?.displayName,score:c.score})),status:e.status?.type?.name}));
+              report.push({slug,day,url,httpStatus:r.status,sha256,leagues:d.leagues?.map(l=>({id:l.id,slug:l.slug,name:l.name})),events});
+            }catch(e){report.push({slug,day,url,error:e.message});}
+          }
+          fs.writeFileSync('espn-evidence/report.json',JSON.stringify(report,null,2));
+          console.log(JSON.stringify(report));
+          JS
+      - name: Require useful acquisition
+        run: node -e 'const r=require("./native-capture/report.json"); if(r.planned>0 && r.validatedObservedRows===0) throw Error("ZERO_RECOVERED_HISTORY_ROWS")'
+      - name: Assert no tracked data changes
+        if: always()
+        run: git diff --exit-code -- data
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-history-evidence
+          path: |
+            native-inventory.json
+            native-capture/
+            espn-evidence/
