@@ -1,0 +1,52 @@
+name: ESPN identity evidence
+on:
+  pull_request:
+    paths:
+      - 'data/identity-decisions/production-provider-team-crosswalk.v1.json'
+      - '.github/workflows/espn-identity-evidence.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          import crypto from 'node:crypto';
+          const doc=JSON.parse(fs.readFileSync('data/identity-decisions/production-provider-team-crosswalk.v1.json'));
+          assert.equal(doc.entries.length,1);
+          const e=doc.entries[0];
+          const canonical=JSON.parse(fs.readFileSync('data/canonical-fixtures/2026-08-15/ksa.1.json'));
+          const rows=Array.isArray(canonical)?canonical:canonical.fixtures;
+          const f=rows.find(x=>(x.matchId||x.id)===e.evidence.domestic.canonicalId);
+          assert.ok(f,'Canonical fixture required');
+          assert.equal(f.homeGlobalClubId,e.globalClubId);
+          assert.equal(String(f.providerIds.espn),e.evidence.domestic.matchId);
+          fs.mkdirSync('espn-verification',{recursive:true});
+          for(const [slug,day,matchId] of [['ksa.1','20260815','401900404'],['afc.cup','20261125','401912746']]){
+            const url='https://site.api.espn.com/apis/site/v2/sports/soccer/'+slug+'/scoreboard?dates='+day;
+            const r=await fetch(url,{redirect:'error',signal:AbortSignal.timeout(20000)});
+            assert.equal(r.status,200);
+            const bytes=Buffer.from(await r.arrayBuffer());
+            fs.writeFileSync('espn-verification/'+slug+'.json',bytes);
+            const d=JSON.parse(bytes);
+            assert.ok(d.leagues.some(l=>l.slug===slug));
+            const event=d.events.find(x=>x.id===matchId);
+            assert.ok(event);
+            const home=event.competitions[0].competitors.find(x=>x.homeAway==='home');
+            assert.equal(home.team.id,e.teamId);
+            assert.equal(home.team.displayName,'Al Taawoun');
+            console.log(JSON.stringify({slug,matchId,teamId:home.team.id,sha256:crypto.createHash('sha256').update(bytes).digest('hex')}));
+          }
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: espn-identity-verification
+          path: espn-verification/
