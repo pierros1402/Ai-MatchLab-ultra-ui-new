@@ -1,0 +1,41 @@
+name: Archive memory recovery candidates
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/archive-memory-recovery-candidates.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import {LEAGUES_COVERAGE} from './workers/_shared/leagues-coverage.js';
+          import {isDisabledLeague} from './engine-v1/source-discovery/disabled-leagues.js';
+          const report=[];
+          for(const l of LEAGUES_COVERAGE.filter(l=>l.type==='league'&&!isDisabledLeague(l.slug))){
+            const slug=l.slug,dir='data/history-archive/'+slug,mem='data/league-memory/results/'+slug+'.json';
+            if(fs.existsSync(mem))continue;
+            const files=fs.existsSync(dir)?fs.readdirSync(dir).filter(f=>f.endsWith('.json')):[];
+            const seasons=files.map(file=>{
+              const d=JSON.parse(fs.readFileSync(dir+'/'+file,'utf8'));
+              const rows=Array.isArray(d.matches)?d.matches:[];
+              return {file,rows:rows.length,keys:rows.length?Object.keys(rows[0]):[],sample:rows.slice(0,1)};
+            });
+            report.push({slug,seasons,total:seasons.reduce((n,s)=>n+s.rows,0)});
+          }
+          fs.writeFileSync('archive-candidates.json',JSON.stringify({productionWrites:0,report},null,2));
+          console.log(JSON.stringify(report));
+          JS
+      - run: git diff --exit-code -- data
+      - uses: actions/upload-artifact@v4
+        with:
+          name: archive-memory-candidates
+          path: archive-candidates.json
