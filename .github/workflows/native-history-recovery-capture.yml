@@ -41,6 +41,30 @@ jobs:
           JS
       - name: Capture native history evidence
         run: node engine-v1/jobs/collect-missing-competition-history.js native-inventory.json native-capture
+      - name: Independent ESPN evidence for active missing history and AFC identity
+        if: always()
+        run: |
+          mkdir -p espn-evidence
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          const targets=[['ind.2','20261125'],['ksa.1','20260815'],['afc.cup','20261125']];
+          const report=[];
+          for(const [slug,day] of targets){
+            const url='https://site.api.espn.com/apis/site/v2/sports/soccer/'+slug+'/scoreboard?dates='+day;
+            try{
+              const r=await fetch(url,{signal:AbortSignal.timeout(20000),redirect:'error'});
+              const bytes=Buffer.from(await r.arrayBuffer());
+              const sha256=crypto.createHash('sha256').update(bytes).digest('hex');
+              fs.writeFileSync('espn-evidence/'+slug+'-'+day+'.json',bytes);
+              const d=JSON.parse(bytes);
+              const events=(d.events||[]).map(e=>({id:e.id,date:e.date,competitors:e.competitions?.[0]?.competitors?.map(c=>({side:c.homeAway,id:c.team?.id,name:c.team?.displayName,score:c.score})),status:e.status?.type?.name}));
+              report.push({slug,day,url,httpStatus:r.status,sha256,leagues:d.leagues?.map(l=>({id:l.id,slug:l.slug,name:l.name})),events});
+            }catch(e){report.push({slug,day,url,error:e.message});}
+          }
+          fs.writeFileSync('espn-evidence/report.json',JSON.stringify(report,null,2));
+          console.log(JSON.stringify(report));
+          JS
       - name: Require useful acquisition
         run: node -e 'const r=require("./native-capture/report.json"); if(r.planned>0 && r.validatedObservedRows===0) throw Error("ZERO_RECOVERED_HISTORY_ROWS")'
       - name: Assert no tracked data changes
@@ -53,3 +77,4 @@ jobs:
           path: |
             native-inventory.json
             native-capture/
+            espn-evidence/
