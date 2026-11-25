@@ -682,6 +682,15 @@ function mergeCanonicalFixturesBase(existing, incoming) {
     if (!next) return previous;
 
     const merged = { ...previous, ...next };
+    // Conflicting native identity evidence must not silently replace a prior ID.
+    const oldIds = previous.providerTeamIds?.espn;
+    const newIds = next.providerTeamIds?.espn;
+    if (previous.providerTeamIdentityConflict || next.providerTeamIdentityConflict ||
+        (oldIds && newIds && (oldIds.home !== newIds.home || oldIds.away !== newIds.away))) {
+      delete merged.providerTeamIds;
+      merged.providerTeamIdentityConflict = true;
+    }
+
 
     for (const key of [
       "scoreHome",
@@ -953,6 +962,9 @@ export function serializeFixture(normalized, adapterId, fetchedDayKey) {
 
     homeTeam: normalized.homeTeam,
     awayTeam: normalized.awayTeam,
+    ...(providerName === "espn" && providerId && normalized.providerTeamIds?.espn
+      ? { providerTeamIds: { espn: { ...normalized.providerTeamIds.espn } } }
+      : {}),
 
     scoreHome: normalized.scoreHome,
     scoreAway: normalized.scoreAway,

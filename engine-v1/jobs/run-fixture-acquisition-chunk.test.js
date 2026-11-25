@@ -185,3 +185,24 @@ test(
     );
   }
 );
+
+test("ESPN native team evidence survives serialization and missing refresh, but conflicting evidence is quarantined", async () => {
+  const {normalizeFixture} = await import("../core/normalize.js");
+  const event = {id:"123456",date:"2026-11-25T18:00Z",competitions:[{competitors:[
+    {homeAway:"home",team:{id:"101",displayName:"Home"}},
+    {homeAway:"away",team:{id:"202",displayName:"Away"}}
+  ],status:{type:{name:"STATUS_SCHEDULED"}}}]};
+  const normalized = normalizeFixture(event,"ksa.1");
+  assert.deepEqual(normalized.providerTeamIds,{espn:{home:"101",away:"202"}});
+  const serialized = serializeFixture({...normalized,dayKey:null},"espn","2026-11-25");
+  assert.deepEqual(serialized.providerTeamIds,normalized.providerTeamIds);
+  const {providerTeamIds,...missing} = serialized;
+  assert.deepEqual(mergeCanonicalFixtures([serialized],[missing])[0].providerTeamIds,providerTeamIds);
+  const conflict = {...serialized,providerTeamIds:{espn:{home:"303",away:"202"}}};
+  const [quarantined] = mergeCanonicalFixtures([serialized],[conflict]);
+  assert.equal(quarantined.providerTeamIdentityConflict,true);
+  assert.equal(quarantined.providerTeamIds,undefined);
+  assert.equal(mergeCanonicalFixtures([quarantined],[serialized])[0].providerTeamIds,undefined);
+  event.competitions[0].competitors[1].team.id = "101";
+  assert.equal(normalizeFixture(event,"ksa.1").providerTeamIds,undefined);
+});
