@@ -7,7 +7,9 @@ export function buildIntegrityQueue(report,profiles=PRIMARY_COMPETITION_SOURCES)
  for(const row of report.rows){
   const add=(kind,detail)=>tasks.push({slug:row.slug,kind,detail});
   if(row.status==="ROSTER_AUTHORITY_HOLD")add(profiles[row.slug]?"VERIFY_PRIMARY_AUTHORITY":"REVIEW_PRIMARY_SOURCE_ADAPTER",row.standingsReasons);
-  if(row.memoryStatus==="MISSING")add(row.archiveFiles.length?"RECONCILE_ARCHIVE_TO_MEMORY":"DISCOVER_VERIFIED_HISTORY",row.archiveFiles);
+  if(["MISSING","EMPTY"].includes(row.memoryStatus))add(row.archiveFiles.length?"RECONCILE_ARCHIVE_TO_MEMORY":"DISCOVER_VERIFIED_HISTORY",row.archiveFiles);
+  if(row.memoryStatus==="INVALID")add("REVIEW_INVALID_MEMORY",[]);
+  if(row.memoryStatus==="REVIEW")add("REVIEW_MEMORY_QUALITY",[]);
   if(row.status==="IDENTITY_OR_MEMORY_GAP")add("REVIEW_SCOPED_IDENTITY",row.teams.filter(t=>!t.exactMemoryKey).map(t=>t.name));
   if(row.teams.some(t=>t.exactMemoryKey&&t.candidateResults<6))add("REVIEW_RECENT_SAMPLE",row.teams.filter(t=>t.exactMemoryKey&&t.candidateResults<6).map(t=>t.name));
   if(row.status==="ACTIVE_MEMORY_SAMPLE_PRESENT")add("VERIFY_EXTERNAL_COMPLETENESS",[]);
