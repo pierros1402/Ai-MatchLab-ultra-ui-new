@@ -1,0 +1,54 @@
+name: ESPN history source capture
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/espn-history-source-capture.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          fs.mkdirSync('espn-history',{recursive:true});
+          const report=[];
+          for(const [slug,days] of [['ind.2',['20261125','20261124']],['ksa.1',['20260815']],['afc.cup',['20261125','20261104','20261021','20260930']]]){
+            for(const start of days){
+              const end=start;
+              const url='https://site.api.espn.com/apis/site/v2/sports/soccer/'+slug+'/scoreboard?dates='+start;
+              try{
+                const r=await fetch(url,{signal:AbortSignal.timeout(12000),redirect:'error'});
+                if(!r.ok) throw Error('HTTP_'+r.status);
+                const raw=Buffer.from(await r.arrayBuffer());
+                const d=JSON.parse(raw);
+                const exact=d.leagues?.some(l=>l.slug===slug)===true;
+                const file=slug+'-'+start+'.json';
+                fs.writeFileSync('espn-history/'+file,raw);
+                const events=exact&&Array.isArray(d.events)?d.events:[];
+                const finals=events.filter(e=>['STATUS_FULL_TIME','STATUS_FINAL'].includes(e.status?.type?.name)&&e.status?.type?.completed===true&&e.status?.type?.state==='post'&&e.competitions?.[0]?.status?.type?.name===e.status.type.name&&e.competitions[0].status.type.completed===true&&new Set(e.competitions[0].competitors?.map(c=>c.homeAway)).size===2&&e.competitions[0].competitors?.some(c=>c.homeAway==='home')&&e.competitions[0].competitors?.some(c=>c.homeAway==='away')&&new Set(e.competitions[0].competitors?.map(c=>c.team?.id)).size===2&&e.competitions?.[0]?.competitors?.length===2&&e.competitions[0].competitors.every(c=>/^[1-9][0-9]*$/.test(c.team?.id)&&/^\d+$/.test(c.score)));
+                console.log(JSON.stringify({slug,start,observations:events.map(e=>({id:e.id,status:e.status?.type,competitionStatus:e.competitions?.[0]?.status?.type,competitors:e.competitions?.[0]?.competitors?.map(c=>({side:c.homeAway,id:c.team?.id,score:c.score}))}))}));
+                const nahda=finals.filter(e=>e.competitions[0].competitors.some(c=>c.team.id==='21994')).map(e=>e.id);
+                report.push({slug,start,end,url,file,sha256:crypto.createHash('sha256').update(raw).digest('hex'),exact,events:events.length,finals:finals.length,possiblyTruncated:events.length>=100,nahda});
+              }catch(e){report.push({slug,start,end,url,error:String(e)});}
+            }
+          }
+          fs.writeFileSync('espn-history/report.json',JSON.stringify({productionWrites:0,fullCoverageCertified:false,report},null,2));
+          console.log(JSON.stringify(report));
+          if(!report.some(x=>x.slug==='ind.2'&&x.start==='20261125'&&x.exact&&x.finals>=2))throw Error('NO_EXACT_FINAL_CANDIDATES');
+          JS
+      - run: git diff --exit-code -- data
+        if: always()
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: espn-history-source-capture
+          path: espn-history/
