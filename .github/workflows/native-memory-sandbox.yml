@@ -35,12 +35,23 @@ jobs:
             const payload=readResults(slug),pairs=new Map();
             for(const [team,entries] of Object.entries(payload.teams))for(const e of entries){if(!pairs.has(e.matchId))pairs.set(e.matchId,[]);pairs.get(e.matchId).push({team,...e});}
             for(const [id,p] of pairs){if(p.length!==2||p[0].team!==p[1].opp||p[1].team!==p[0].opp||p[0].ha===p[1].ha||p[0].gf!==p[1].ga||p[0].ga!==p[1].gf)throw Error('PAIR_INTEGRITY:'+id);}
-            console.log(JSON.stringify({slug,eligible:eligible.length,retained:pairs.size,excluded:eligible.length-pairs.size,teams:Object.keys(payload.teams).length}));
+            const cutoff=Date.now()-1825*86400000;
+            const excluded=eligible.filter(r=>!pairs.has(r.id)).map(r=>({id:r.id,kickoff:r.kickoff,home:r.homeTeam,away:r.awayTeam,reason:Date.parse(r.kickoff)<cutoff?'AGE_RETENTION':'UNEXPLAINED'}));
+            const expected=new Map(eligible.map(r=>[r.id,r]));
+            for(const [id,p] of pairs){
+              const r=expected.get(id),h=p.find(x=>x.ha==='H'),a=p.find(x=>x.ha==='A');
+              if(!r||h.gf!==r.scoreHome||a.gf!==r.scoreAway||h.date!==r.kickoff||a.date!==r.kickoff)throw Error('SOURCE_FACT_DRIFT:'+id);
+            }
+            fs.mkdirSync('sandbox-memory',{recursive:true});
+            fs.writeFileSync('sandbox-memory/'+slug+'.retention.json',JSON.stringify({slug,excluded},null,2));
+            console.log(JSON.stringify({slug,eligible:eligible.length,retained:pairs.size,excluded,teams:Object.keys(payload.teams).length}));
+            if(excluded.some(r=>r.reason==='UNEXPLAINED'))throw Error('UNEXPLAINED_RETENTION');
             fs.mkdirSync('sandbox-memory',{recursive:true});fs.copyFileSync(target,'sandbox-memory/'+slug+'.json');fs.unlinkSync(target);
           }
           JS
       - run: git diff --exit-code -- data && test -z "$(git ls-files --others --exclude-standard data)"
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: sandbox-memory
           path: sandbox-memory/
