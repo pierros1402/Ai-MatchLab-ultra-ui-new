@@ -298,8 +298,16 @@ export function createCrossCompetitionFormResolver({
       );
     }
 
+    // Identity evidence must obey the same as-of boundary as form rates.
     const allCandidates =
-      byIdentity.get(identityKey) || [];
+      (byIdentity.get(identityKey) || []).map(source => ({
+        ...source,
+        rows: source.rows.filter(row => {
+          if (!Number.isFinite(beforeMs)) return true;
+          const ms = Date.parse(String(row?.date || ""));
+          return Number.isFinite(ms) && ms < beforeMs;
+        })
+      })).filter(source => source.rows.length);
 
     if (!allCandidates.length) {
       return zeroRates(
