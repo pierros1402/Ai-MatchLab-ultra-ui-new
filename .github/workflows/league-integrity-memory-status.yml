@@ -1,0 +1,22 @@
+name: League integrity memory regression
+on:
+  pull_request:
+    paths:
+      - 'engine-v1/jobs/build-league-integrity-queue.js'
+      - 'engine-v1/jobs/league-integrity-memory-status.test.js'
+      - '.github/workflows/league-integrity-memory-status.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+      - run: node --test engine-v1/jobs/build-league-integrity-queue.test.js engine-v1/jobs/league-integrity-memory-status.test.js
+      - run: node engine-v1/jobs/build-league-integrity-queue.js > queue.json
+      - run: node -e "console.log(JSON.parse(require('fs').readFileSync('queue.json')).totals)"
+      - run: git diff --exit-code -- data
