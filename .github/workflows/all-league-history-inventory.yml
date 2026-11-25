@@ -1,0 +1,23 @@
+name: All league history inventory
+on:
+  pull_request:
+    paths:
+      - 'engine-v1/jobs/audit-all-league-history*'
+      - '.github/workflows/all-league-history-inventory.yml'
+  workflow_dispatch:
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check engine-v1/jobs/audit-all-league-history.js
+      - run: node --test engine-v1/jobs/audit-all-league-history.test.js
+      - run: node engine-v1/jobs/audit-all-league-history.js > history-inventory.json
+      - run: node -e 'console.log(require("./history-inventory.json").totals)'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: history-inventory
+          path: history-inventory.json
