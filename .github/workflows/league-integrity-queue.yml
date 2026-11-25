@@ -1,0 +1,22 @@
+name: League integrity queue
+on:
+  pull_request:
+    paths:
+      - 'engine-v1/jobs/build-league-integrity-queue*'
+      - '.github/workflows/league-integrity-queue.yml'
+  workflow_dispatch:
+jobs:
+  queue:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test engine-v1/jobs/build-league-integrity-queue.test.js
+      - run: node engine-v1/jobs/build-league-integrity-queue.js > queue.json
+      - run: node -e 'const q=require("./queue.json"); console.log(q.totals); for(const t of q.tasks) console.log(t.slug,t.kind)'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: league-integrity-queue
+          path: queue.json
