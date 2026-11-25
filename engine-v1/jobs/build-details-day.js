@@ -5,6 +5,7 @@ import { getFixturesByDay, getFixtureById } from "../storage/json-db.js";
 import { athensDayFromKickoff } from "../core/daykey.js";
 import { ensureDir, resolveDataPath } from "../storage/data-root.js";
 import { buildAiDetailsBlock } from "../ai-match-intelligence/build-ai-details-block.js";
+import { classifyCompetitionType } from "../core/competition-context.js";
 import { buildRefereeContext } from "../core/referee-context.js";
 import { readPlayerUsageRecord } from "../storage/player-usage-db.js";
 import { teamPlayerUsage } from "../storage/lineups-memory-db.js";
@@ -63,42 +64,6 @@ function readJsonSafe(filePath, fallback = null) {
 function writeJson(filePath, data) {
   ensureDir(path.dirname(filePath));
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
-}
-
-function classifyCompetitionType(match) {
-  const slug = String(match?.leagueSlug || "").toLowerCase();
-
-  // -----------------------------
-  // INTERNATIONAL CLUB COMPETITIONS
-  // -----------------------------
-  if (
-    slug.includes("champions") ||
-    slug.includes("europa") ||
-    slug.includes("conference") ||
-    slug.includes("libertadores") ||
-    slug.includes("sudamericana") ||
-    slug.includes("afc.champions")
-  ) {
-    return "international_cup";
-  }
-
-  // -----------------------------
-  // DOMESTIC CUPS
-  // -----------------------------
-  if (
-    slug.includes(".cup") ||
-    slug.includes("fa") ||
-    slug.includes("super_cup") ||
-    slug.includes("league_cup") ||
-    slug.includes("trophy")
-  ) {
-    return "domestic_cup";
-  }
-
-  // -----------------------------
-  // LEAGUE
-  // -----------------------------
-  return "league";
 }
 
 function isLiveLike(status) {
@@ -1671,7 +1636,7 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
     context: {
       status: competitionContext?.status || "empty",
       confidence: competitionContext?.confidence ?? 0,
-      competitionType: competitionContext?.data?.type || classifyCompetitionType(match),
+      competitionType: classifyCompetitionType(match),
       importance: competitionContext?.data?.importance || "unknown",
       positions: competitionContext?.data?.positions || null,
       stakes: competitionContext?.data?.stakes || null,
