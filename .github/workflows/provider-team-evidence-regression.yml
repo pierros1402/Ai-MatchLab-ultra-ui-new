@@ -1,0 +1,20 @@
+name: Provider team evidence regression
+on:
+  pull_request:
+    paths:
+      - 'engine-v1/core/normalize.js'
+      - 'engine-v1/core/fixture-dedup*'
+      - 'engine-v1/jobs/run-fixture-acquisition-chunk*'
+      - '.github/workflows/provider-team-evidence-regression.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+      - run: node --test engine-v1/jobs/run-fixture-acquisition-chunk.test.js engine-v1/core/fixture-dedup-production-identity.test.js engine-v1/storage/cross-competition-form-db.test.js engine-v1/jobs/canonical-assessment-supplement.test.js
