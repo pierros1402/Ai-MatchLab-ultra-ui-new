@@ -14,7 +14,7 @@ export function verifyGraph(graph,read){
   const nodes=new Map();
   for(const n of graph.nodes){
     assert.match(n.path,/^[A-Za-z0-9._/-]+$/);
-    assert(n.path.startsWith("engine-v1/") || ["workers/_shared/leagues-coverage.js","workers/_shared/leagues-registry.js"].includes(n.path),"unapproved external source "+n.path);
+    assert(n.path.startsWith("engine-v1/") || ["workers/_shared/leagues-coverage.js","workers/_shared/leagues-registry.js","workers/_shared/nonexistent-domestic-leagues.js"].includes(n.path),"unapproved external source "+n.path);
     assert(!n.path.split("/").some(s=>!s||s==="."||s===".."));
     assert(!nodes.has(n.path),"duplicate node "+n.path);
     nodes.set(n.path,n);
