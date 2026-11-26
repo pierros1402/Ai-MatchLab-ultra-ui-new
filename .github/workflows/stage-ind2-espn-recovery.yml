@@ -1,0 +1,62 @@
+name: Stage pinned ESPN ind.2 recovery candidate
+on:
+  push:
+    branches:
+      - recovery/ind2-espn-verified-import-20261126
+    paths:
+      - '.github/workflows/stage-ind2-espn-recovery.yml'
+      - 'engine-v1/jobs/verify-ind2-espn-import.py'
+  pull_request:
+    paths:
+      - 'data/league-memory/results/ind.2.json'
+      - 'data/source-bound-history/ind.2/**'
+      - 'engine-v1/jobs/verify-ind2-espn-import.py'
+      - '.github/workflows/stage-ind2-espn-recovery.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download immutable original artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api repos/pierros1402/Ai-MatchLab-ultra-ui-new/actions/artifacts/15103214115/zip > "$RUNNER_TEMP/ind2.zip"
+      - name: Validate source evidence
+        run: python3 engine-v1/jobs/verify-ind2-espn-import.py "$RUNNER_TEMP/ind2.zip"
+      - name: Validate production candidate if present
+        run: |
+          if test -e data/league-memory/results/ind.2.json; then
+            python3 engine-v1/jobs/verify-ind2-espn-import.py "$RUNNER_TEMP/ind2.zip" --verify-production
+          else
+            test "$GITHUB_EVENT_NAME" = push
+          fi
+  stage:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/recovery/ind2-espn-verified-import-20261126'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Stage original evidence bytes on recovery branch only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api repos/pierros1402/Ai-MatchLab-ultra-ui-new/actions/artifacts/15103214115/zip > "$RUNNER_TEMP/ind2.zip"
+          python3 engine-v1/jobs/verify-ind2-espn-import.py "$RUNNER_TEMP/ind2.zip" --stage
+          git add -- data/league-memory/results/ind.2.json data/source-bound-history/ind.2/
+          test "$(git diff --cached --name-only | wc -l)" = 4
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Stage exact verified ESPN ind.2 evidence and Results Memory'
+          git push origin HEAD:refs/heads/recovery/ind2-espn-verified-import-20261126

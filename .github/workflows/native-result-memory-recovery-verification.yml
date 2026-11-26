@@ -4,6 +4,8 @@ on:
     paths:
       - 'data/league-memory/results/**'
       - '.github/workflows/native-result-memory-recovery-verification.yml'
+      - 'engine-v1/jobs/verify-ind2-espn-import.py'
+      - 'data/source-bound-history/ind.2/**'
 permissions:
   contents: read
 jobs:
@@ -36,6 +38,10 @@ jobs:
           const targets=changes.filter(x=>/^A\tdata\/league-memory\/results\/[^/]+\.json$/.test(x));
           for(const line of targets){
             const path=line.split('\t')[1],slug=path.split('/').pop().slice(0,-5),dir='data/history-archive/'+slug;
+            if(slug==='ind.2'){
+              execFileSync('python3',['engine-v1/jobs/verify-ind2-espn-import.py','data/source-bound-history/ind.2/evidence.zip','--verify-production'],{stdio:'inherit'});
+              continue;
+            }
             const rows=fs.readdirSync(dir).filter(f=>f.endsWith('.json')).flatMap(f=>JSON.parse(fs.readFileSync(dir+'/'+f)).matches);
             const resolver=buildSourceBoundHistoryTeamIdentities([],rows);
             const eligible=rows.filter(r=>! /\b(?:academy|u[ -]?\d{2}|youth)\b/i.test(r.homeTeam+' '+r.awayTeam)&&['home','away'].every(s=>{const d=resolver.resolveTeam(slug,r[s+'Team']);return d.ok&&d.providerTeamId===r[s+'ProviderTeamId'];}));
