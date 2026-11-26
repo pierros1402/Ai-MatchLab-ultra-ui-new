@@ -20,7 +20,7 @@ const reviewedAliases = {
   },
 };
 
-export async function auditCanonicalCensus(census, { readBucket, teamIdentity }) {
+export async function auditCanonicalCensus(census, { readBucket, teamIdentity, retainedFixture = () => null }) {
   const buckets = new Map();
   const rows = [];
   for (const match of census.matches) {
@@ -51,7 +51,14 @@ export async function auditCanonicalCensus(census, { readBucket, teamIdentity })
       row.canonicalId = candidates[0].canonicalId;
       row.status = byId.length ? 'OFFICIAL_ID_MATCH' : 'KICKOFF_AND_TEAM_MATCH';
     } else if (candidates.length) {
-      row.status = 'IDENTITY_HOLD';
+      const retained = candidates.map(fixture => retainedFixture(fixture.canonicalId));
+      if (!byId.length && retained[0] && retained.every(id => id === retained[0]) &&
+          candidates.some(fixture => fixture.canonicalId === retained[0])) {
+        row.canonicalId = retained[0];
+        row.status = 'VERIFIED_FIXTURE_LINEAGE';
+      } else {
+        row.status = 'IDENTITY_HOLD';
+      }
       row.canonicalCandidates = candidates.map(({ canonicalId, kickoffUtc, source }) =>
         ({ canonicalId, kickoffUtc, source }));
     } else if (byTeams.length) {
@@ -99,7 +106,13 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   };
   const slugs = ['esp.1', 'esp.2'];
   const results = await Promise.allSettled(slugs.map(async slug => auditCanonicalCensus(
-    await captureLaLigaSeason(slug, startYear, { asOf }), { readBucket: readCanonicalBucket, teamIdentity })));
+    await captureLaLigaSeason(slug, startYear, { asOf }), {
+      readBucket: readCanonicalBucket, teamIdentity,
+      retainedFixture: id => {
+        const result = resolver.resolveFixtureId(id);
+        return result.ok ? result.resolvedFixtureId : null;
+      },
+    })));
   console.log(JSON.stringify({
     schema: 'ai-matchlab.laliga-canonical-audit.v1',
     sourceCommit: process.env.GITHUB_SHA ?? null,
