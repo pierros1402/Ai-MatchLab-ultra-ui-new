@@ -9,6 +9,17 @@ import { sameTeamName } from '../core/fixture-dedup.js';
 const dayFormat = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Athens' });
 const normalize = name => String(name ?? '').normalize('NFC').trim().toLowerCase();
 
+// LaLiga team IDs identify the squad across editions. Scope the known
+// third-party spellings to their competition and keep reserve teams distinct.
+const reviewedAliases = {
+  'esp.1': { 49: ['R. Racing Club', 'Racing Santander'] },
+  'esp.2': {
+    39: ['Real Sporting', 'Sporting Gijón', 'Sporting Gijon'],
+    481: ['Celta Fortuna', 'RC Celta Fortuna', 'Celta Vigo B', 'Celta B'],
+    482: ['R. Sociedad B', 'Real Sociedad B', 'Real Sociedad II', 'Sanse'],
+  },
+};
+
 export async function auditCanonicalCensus(census, { readBucket, teamIdentity }) {
   const buckets = new Map();
   const rows = [];
@@ -27,16 +38,26 @@ export async function auditCanonicalCensus(census, { readBucket, teamIdentity })
       if (!normalize(source.name) || !normalize(canonical)) return false;
       const a = teamIdentity(census.slug, source.name);
       const b = teamIdentity(census.slug, canonical);
-      return a && b ? a === b : sameTeamName(census.slug, source.name, canonical);
+      if (a && b) return a === b;
+      const aliases = reviewedAliases[census.slug]?.[source.id]?.map(normalize);
+      if (aliases?.includes(normalize(source.name)) && aliases.includes(normalize(canonical))) return true;
+      return sameTeamName(census.slug, source.name, canonical);
     };
-    const byFixture = bucket.filter(fixture => Date.parse(fixture.kickoffUtc) === kickoff &&
+    const byTeams = bucket.filter(fixture =>
       sameTeam(match.home, fixture.homeTeam) && sameTeam(match.away, fixture.awayTeam));
+    const byFixture = byTeams.filter(fixture => Date.parse(fixture.kickoffUtc) === kickoff);
     const candidates = byId.length ? byId : byFixture;
     if (candidates.length === 1 && (!byId.length || byFixture.includes(candidates[0]))) {
       row.canonicalId = candidates[0].canonicalId;
       row.status = byId.length ? 'OFFICIAL_ID_MATCH' : 'KICKOFF_AND_TEAM_MATCH';
     } else if (candidates.length) {
       row.status = 'IDENTITY_HOLD';
+      row.canonicalCandidates = candidates.map(({ canonicalId, kickoffUtc, source }) =>
+        ({ canonicalId, kickoffUtc, source }));
+    } else if (byTeams.length) {
+      row.status = 'KICKOFF_DISAGREEMENT';
+      row.canonicalCandidates = byTeams.map(({ canonicalId, kickoffUtc, source }) =>
+        ({ canonicalId, kickoffUtc, source }));
     } else {
       row.status = 'UNMATCHED_CANDIDATE';
     }
