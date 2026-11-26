@@ -76,6 +76,9 @@ export function teamTokens(name) {
   // and women's/youth teams cannot enter the same identity class.
   // https://rccelta.es/club/actualidad/el-filial-celeste-se-denominara-desde-la-proxima-temporada-celta-fortuna-como-homenaje-a-los-origenes-del-club/
   if (/^(?:rc\s+)?celta\s+fortuna$/iu.test(text.trim())) expanded = 'Celta Vigo B';
+  // LaLiga squad 482 is the reserve side recorded as Real Sociedad II
+  // by ESPN and Real Sociedad B by Flashscore in the same fixtures.
+  if (/^real\s+sociedad\s+ii$/iu.test(text.trim())) expanded = 'Real Sociedad B';
   const base = expanded
     .normalize("NFD").replace(/[̀-ͯ]/g, "")
     .toLowerCase()

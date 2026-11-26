@@ -35,3 +35,10 @@ test('uses the LaLiga team ID for reviewed spellings and exposes kickoff drift',
   assert.equal(result.rows[0].status, 'KICKOFF_DISAGREEMENT');
   assert.equal(result.rows[0].canonicalCandidates[0].canonicalId, 'canonical');
 });
+
+test('matches the two reviewed Real Sociedad reserve spellings without matching the senior side', async () => {
+  const { sameSquadMarkers, teamNamesMatch } = await import('../core/team-identity.js');
+  assert.equal(teamNamesMatch('Real Sociedad II', 'Real Sociedad B'), true);
+  assert.equal(sameSquadMarkers('Real Sociedad II', 'Real Sociedad'), false);
+  assert.equal(sameSquadMarkers('Barcelona II', 'Barcelona B'), false);
+});
