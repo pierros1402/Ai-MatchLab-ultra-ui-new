@@ -1,0 +1,52 @@
+name: Remaining league source availability audit
+on:
+  push:
+    branches: [recovery/remaining-league-source-probe-20261126]
+    paths: ['.github/workflows/remaining-league-source-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1
+            .github/workflows
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Capture repository competition declarations and ESPN evidence
+        run: |
+          mkdir -p "$RUNNER_TEMP/league-audit"
+          git grep -n -E 'can\.2|gib\.2|lie\.1|lie\.2|smr\.2' -- engine-v1 > "$RUNNER_TEMP/league-audit/repository-declarations.txt" || test "$?" = 1
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          const dir=process.env.RUNNER_TEMP+'/league-audit',results=[];
+          for(const slug of ['can.2','gib.2','lie.1','lie.2','smr.2']){
+            for(const [label,suffix] of [['teams','teams'],['scoreboard','scoreboard?dates=20260530-20261125&limit=1000'],['standings','standings']]){
+              const url='https://site.api.espn.com/apis/site/v2/sports/soccer/'+slug+'/'+suffix;
+              try{
+                const r=await fetch(url,{redirect:'error',signal:AbortSignal.timeout(20000)});
+                const raw=Buffer.from(await r.arrayBuffer());
+                fs.writeFileSync(dir+'/'+slug+'-'+label+'.json',raw);
+                let d;try{d=JSON.parse(raw)}catch{}
+                const leagues=(d?.leagues??d?.sports?.flatMap(s=>s.leagues??[])??[]).map(l=>({id:l.id,slug:l.slug,name:l.name,abbreviation:l.abbreviation,teams:l.teams?.length}));
+                const row={slug,label,url,status:r.status,sha256:crypto.createHash('sha256').update(raw).digest('hex'),leagues,eventCount:Array.isArray(d?.events)?d.events.length:null,regularFinalCount:Array.isArray(d?.events)?d.events.filter(e=>e.status?.type?.name==='STATUS_FULL_TIME'&&e.status.type.completed===true&&e.competitions?.[0]?.status?.type?.name==='STATUS_FULL_TIME'&&e.competitions[0].status.type.completed===true).length:null};
+                results.push(row);console.log(JSON.stringify(row));
+              }catch(e){results.push({slug,label,url,error:String(e)});}
+              await new Promise(r=>setTimeout(r,400));
+            }
+          }
+          fs.writeFileSync(dir+'/report.json',JSON.stringify({productionWrites:0,fullCoverageCertified:false,results},null,2));
+          JS
+          git diff --exit-code
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: remaining-league-source-evidence
+          path: ${{ runner.temp }}/league-audit/

@@ -7,7 +7,7 @@ const a="engine-v1/a.js",b="engine-v1/b.js";
 const files=new Map([[a,Buffer.from('import "./b.js";')],[b,Buffer.from('export const x=1;')]]);
 const fixture=()=>({schema:"ai-matchlab.daily-static-import-graph.v1",sourceCommit:"a".repeat(40),coverage:"lexical_relative_imports_only",sourceClosureVerified:false,artifactOwnershipVerified:false,resumeAuthorized:false,publicationAuthorized:false,frontier:[],unresolved:[],roots:[a],nodes:[{path:a,blob:blob(files.get(a)),edges:[b]},{path:b,blob:blob(files.get(b)),edges:[]}]});
 const verify=g=>verifyGraph(g,p=>files.get(p));
-test("real repository graph closes and binds all source bytes",()=>{const r=verifyRepositoryGraph();assert.equal(r.nodes,251);assert.equal(r.edges,795);assert.equal(r.resumeAuthorized,false);assert.equal(r.publicationAuthorized,false);});
+test("real repository graph closes and binds all source bytes",()=>{const r=verifyRepositoryGraph();assert.equal(r.nodes,252);assert.equal(r.edges,797);assert.equal(r.resumeAuthorized,false);assert.equal(r.publicationAuthorized,false);});
 test("fixture accepted",()=>assert.equal(verify(fixture()).nodes,2));
 for(const [name,change] of [
 ["missing node",g=>g.nodes.pop()],

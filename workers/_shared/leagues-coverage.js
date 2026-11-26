@@ -1,3 +1,4 @@
+import { isNonexistentDomesticLeague } from "./nonexistent-domestic-leagues.js";
 // ============================================================
 // LEAGUES COVERAGE REGISTRY
 // ============================================================
@@ -450,7 +451,7 @@ const CLEAN_LEAGUES_COVERAGE = LEAGUES_COVERAGE.filter(
   x => x && typeof x === "object" && x.slug
 );
 
-export const LEAGUE_SEEDS = CLEAN_LEAGUES_COVERAGE.map(x => x.slug);
+export const LEAGUE_SEEDS = CLEAN_LEAGUES_COVERAGE.filter(x => !isNonexistentDomesticLeague(x.slug)).map(x => x.slug);
 
 // League-ONLY seeds (type === "league"): the correct denominator for league
 // coverage/readiness reports. LEAGUE_SEEDS above is the full competition
@@ -460,7 +461,7 @@ export const LEAGUE_SEEDS = CLEAN_LEAGUES_COVERAGE.map(x => x.slug);
 // this list (and isLeagueCompetition) whenever the question is "how many
 // LEAGUES are covered", never the raw LEAGUE_SEEDS.
 export const LEAGUE_ONLY_SEEDS = CLEAN_LEAGUES_COVERAGE
-  .filter(x => x.type === "league")
+  .filter(x => x.type === "league" && !isNonexistentDomesticLeague(x.slug))
   .map(x => x.slug);
 
 export const LEAGUES_BY_SLUG = Object.fromEntries(
@@ -491,7 +492,7 @@ export function isContinentalCompetition(slug) {
 
 export function isLeagueCompetition(slug) {
   const type = LEAGUES_BY_SLUG[slug]?.type || "";
-  return type === "league";
+  return type === "league" && !isNonexistentDomesticLeague(slug);
 }
 
 // Is this slug present in the registry at all (any type)? Use for "do we know
