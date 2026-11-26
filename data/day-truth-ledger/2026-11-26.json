@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-26",
-  "generatedAt": "2026-11-26T10:38:40.210Z",
+  "generatedAt": "2026-11-26T11:35:58.028Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "a81d83a46c10ee547ebeb21454bd28def29a07c366c7f5736aab53bb40e5bc00",
+  "truthFingerprint": "04de14f88896f81c7add6405936ed44559a0ff436b657fd42c76d2e77c158fc4",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 87,
-    "playedTerminal": 10,
+    "playedTerminal": 11,
     "nonPlayedTerminal": 0,
-    "scheduled": 74,
+    "scheduled": 73,
     "live": 3,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 11,
-    "acceptedVerifiedFinalArtifacts": 11,
-    "convergedPlayedFinal": 10,
+    "verifiedFinalArtifacts": 13,
+    "acceptedVerifiedFinalArtifacts": 13,
+    "convergedPlayedFinal": 11,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 76,
+    "openRows": 74,
     "unresolvedRows": 0,
-    "conflictRows": 1,
+    "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 10,
-    "scoredSettlementEligible": 10,
+    "historyEligible": 11,
+    "scoredSettlementEligible": 11,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -98,10 +98,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
         "scoreAway": 1
       },
       "verifiedFinal": {
@@ -147,10 +147,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -294,11 +294,11 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
-        "scoreAway": 1
+        "rawStatus": "STATUS_HALFTIME",
+        "scoreHome": 1,
+        "scoreAway": 3
       },
       "verifiedFinal": {
         "present": false,
@@ -1232,18 +1232,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-26",
+        "scoreHome": 1,
+        "scoreAway": 3,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1281,18 +1281,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-26",
+        "scoreHome": 1,
+        "scoreAway": 1,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1516,14 +1516,14 @@
       "homeTeam": "Borneo",
       "awayTeam": "Persita",
       "kickoffUtc": "2026-11-26T08:30:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 2,
+        "scoreAway": 3
       },
       "verifiedFinal": {
         "present": true,
@@ -1533,14 +1533,14 @@
         "dayKey": "2026-11-26",
         "scoreHome": 2,
         "scoreAway": 3,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4308,7 +4308,8 @@
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
     "conflictFixtureIds": [
-      "cid_idn1_borneo_persita_20261126"
+      "cid_geo2_dusheti_meranimartvili_20261126",
+      "cid_geo2_garejisagarejo_samtredia_20261126"
     ],
     "pendingVerifiedFinalFixtureIds": []
   },
@@ -4320,7 +4321,7 @@
     "systemHealth": {
       "schema": "ai-matchlab.system-health-alerts.v1",
       "dayKey": "2026-11-26",
-      "generatedAt": "2026-11-26T10:38:39.774Z",
+      "generatedAt": "2026-11-26T11:35:57.606Z",
       "severity": "warning",
       "issueCounts": {
         "error": 0,
@@ -4512,7 +4513,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 24608,
+            "count": 24628,
             "informational": true
           }
         },
@@ -5905,7 +5906,7 @@
             "fixtures": 87,
             "valuePicks": 0,
             "valueSource": "canonical_fixtures",
-            "latestCanonicalUpdatedAt": "2026-11-26T05:35:05.418Z",
+            "latestCanonicalUpdatedAt": "2026-11-26T10:18:26.756Z",
             "valueArtifactAt": "2026-11-26T03:17:15.488Z",
             "valueFreshAgainstCanonical": false,
             "mode": "frozen_snapshot",
@@ -6101,7 +6102,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 24608,
+            "count": 24628,
             "informational": true
           }
         },
@@ -6852,13 +6853,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "a81d83a46c10ee547ebeb21454bd28def29a07c366c7f5736aab53bb40e5bc00",
+      "truthFingerprint": "04de14f88896f81c7add6405936ed44559a0ff436b657fd42c76d2e77c158fc4",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 10,
+        "expectedEligibleRows": 11,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg1_bocajuniors_independienterivadavia_20261126",
@@ -6867,6 +6868,7 @@
           "cid_col1_independientesantafe_oncecaldas_20261126",
           "cid_ecu1_barcelona_independientedelvalle_20261126",
           "cid_gua1_municipal_aurora_20261126",
+          "cid_idn1_borneo_persita_20261126",
           "cid_mex1_monterrey_america_20261126",
           "cid_mex1_toluca_atlas_20261126",
           "cid_slv1_internacionalsantatecla_aguila_20261126",
@@ -6930,7 +6932,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-11-26",
-      "fileCount": 11,
+      "fileCount": 13,
       "authority": "scored_final_evidence"
     },
     "downstream": {
