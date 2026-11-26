@@ -2,7 +2,6 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
-import { normalizeGenesisAlias } from "./production-identity-retention-decisions.js";
 import {
   buildExtendedProductionIdentityResolver,
   deriveExtensionBindingDecisionId,
@@ -11,6 +10,7 @@ import {
   deriveExtensionSourceIdentityHash,
   deriveExtensionTeamIdentityKey,
   validateProductionIdentityExtension,
+  sameReviewedFixtureTeam,
 } from "./production-identity-extension.js";
 import { discoverIdentityRecoveryCandidates } from "./identity-extension-recovery.js";
 import { validateIndependentFixtureConfirmation } from "./independent-fixture-confirmer.js";
@@ -124,11 +124,8 @@ function currentSideStable(currentResolver, candidate, side, leagueSlug) {
 
 function literalSideStable(candidate, side) {
   const sources = sortedSources(candidate);
-  return Boolean(
-    normalizeGenesisAlias(sourceTeam(sources[0], side)) &&
-    normalizeGenesisAlias(sourceTeam(sources[0], side)) ===
-      normalizeGenesisAlias(sourceTeam(sources[1], side))
-  );
+  return sameReviewedFixtureTeam(candidate.leagueSlug,
+    sourceTeam(sources[0], side), sourceTeam(sources[1], side));
 }
 
 function promotionBasis(
