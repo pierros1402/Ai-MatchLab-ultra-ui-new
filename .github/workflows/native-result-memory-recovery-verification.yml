@@ -1,0 +1,58 @@
+name: Native result memory recovery verification
+on:
+  pull_request:
+    paths:
+      - 'data/league-memory/results/**'
+      - '.github/workflows/native-result-memory-recovery-verification.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify new native archive memory
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin "$BASE"
+          git cat-file -e "$BASE^{commit}"
+          git cat-file -e "$HEAD^{commit}"
+          test "$(git rev-parse HEAD)" = "$HEAD"
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import {execFileSync} from 'node:child_process';
+          import {buildSourceBoundHistoryTeamIdentities} from './engine-v1/core/source-bound-history-team-identities.js';
+          const changes=execFileSync('git',['diff','--name-status',process.env.BASE,process.env.HEAD],{encoding:'utf8'}).trim().split('\n');
+          const targets=changes.filter(x=>/^A\tdata\/league-memory\/results\/[^/]+\.json$/.test(x));
+          for(const line of targets){
+            const path=line.split('\t')[1],slug=path.split('/').pop().slice(0,-5),dir='data/history-archive/'+slug;
+            const rows=fs.readdirSync(dir).filter(f=>f.endsWith('.json')).flatMap(f=>JSON.parse(fs.readFileSync(dir+'/'+f)).matches);
+            const resolver=buildSourceBoundHistoryTeamIdentities([],rows);
+            const eligible=rows.filter(r=>! /\b(?:academy|u[ -]?\d{2}|youth)\b/i.test(r.homeTeam+' '+r.awayTeam)&&['home','away'].every(s=>{const d=resolver.resolveTeam(slug,r[s+'Team']);return d.ok&&d.providerTeamId===r[s+'ProviderTeamId'];}));
+            const source=new Map(eligible.map(r=>[r.id,r]));
+            if(source.size!==eligible.length)throw Error('DUPLICATE_SOURCE');
+            const payload=JSON.parse(fs.readFileSync(path)),pairs=new Map();
+            if(payload.slug!==slug)throw Error('SLUG_MISMATCH');
+            for(const [team,entries] of Object.entries(payload.teams))for(const e of entries){if(!pairs.has(e.matchId))pairs.set(e.matchId,[]);pairs.get(e.matchId).push({team,...e});}
+            if(!pairs.size)throw Error('EMPTY_MEMORY');
+            for(const [id,p] of pairs){
+              const r=source.get(id),h=p.find(x=>x.ha==='H'),a=p.find(x=>x.ha==='A');
+              if(!r||p.length!==2||!h||!a||h.team!==a.opp||a.team!==h.opp||h.gf!==r.scoreHome||a.gf!==r.scoreAway||h.ga!==r.scoreAway||a.ga!==r.scoreHome||h.date!==r.kickoff||a.date!==r.kickoff)throw Error('FACT_OR_PAIR_DRIFT:'+id);
+              if(!resolver.resolveTeam(slug,h.team).ok||resolver.resolveTeam(slug,h.team).providerTeamId!==r.homeProviderTeamId||!resolver.resolveTeam(slug,a.team).ok||resolver.resolveTeam(slug,a.team).providerTeamId!==r.awayProviderTeamId)throw Error('IDENTITY_DRIFT:'+id);
+            }
+            const missing=eligible.filter(r=>!pairs.has(r.id)&&Date.parse(r.kickoff)>=Date.now()-1825*86400000);
+            if(missing.length)throw Error('UNEXPLAINED_MISSING:'+missing.length);
+            console.log(JSON.stringify({slug,eligible:eligible.length,retained:pairs.size,unexplainedMissing:0}));
+          }
+          if(!targets.length)console.log('No new memory files; existing-file reconciliation is outside this gate');
+          JS
