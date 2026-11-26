@@ -9,10 +9,11 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 2
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -25,7 +26,7 @@ jobs:
           import fs from 'node:fs';
           import {execFileSync} from 'node:child_process';
           import {buildSourceBoundHistoryTeamIdentities} from './engine-v1/core/source-bound-history-team-identities.js';
-          const changes=execFileSync('git',['diff','--name-status',process.env.BASE+'...'+process.env.HEAD],{encoding:'utf8'}).trim().split('\n');
+          const changes=execFileSync('git',['diff','--name-status',process.env.BASE,process.env.HEAD],{encoding:'utf8'}).trim().split('\n');
           const targets=changes.filter(x=>/^A\tdata\/league-memory\/results\/[^/]+\.json$/.test(x));
           for(const line of targets){
             const path=line.split('\t')[1],slug=path.split('/').pop().slice(0,-5),dir='data/history-archive/'+slug;
