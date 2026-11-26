@@ -380,26 +380,25 @@ export function dedupeLeagueDayFixtures(rows, { slug, identityResolver = null } 
     for (const row of dayRows) {
       const rowFamily = sourceFamily(row);
 
-      let mergedInto = -1;
+      const exactMatches = [];
+      const inferredMatches = [];
+      const rowIds = providerIdentityMap(row);
       for (let i = 0; i < kept.length; i++) {
         const other = kept[i];
-        if (sourceFamily(other) === rowFamily) continue;
-        if (!kickoffCompatible(row, other)) continue;
-        if (!sameTeamName(
-          leagueSlug,
-          row?.homeTeam,
-          other?.homeTeam,
-          { identityResolver }
-        )) continue;
-        if (!sameTeamName(
-          leagueSlug,
-          row?.awayTeam,
-          other?.awayTeam,
-          { identityResolver }
-        )) continue;
-        mergedInto = i;
-        break;
+        const otherIds = providerIdentityMap(other);
+        const sharedProviders = Object.keys(rowIds).filter(provider => otherIds[provider]);
+        if (sharedProviders.some(provider => rowIds[provider] !== otherIds[provider])) continue;
+        const sharedEvent = sharedProviders.length > 0;
+        if (!sharedEvent && (sourceFamily(other) === rowFamily || !kickoffCompatible(row, other))) continue;
+        if (!sameTeamName(leagueSlug, row?.homeTeam, other?.homeTeam, { identityResolver })) continue;
+        if (!sameTeamName(leagueSlug, row?.awayTeam, other?.awayTeam, { identityResolver })) continue;
+        (sharedEvent ? exactMatches : inferredMatches).push(i);
       }
+
+      // A source event ID survives a same-day kickoff correction. Names and
+      // time alone must never decide between multiple possible counterparts.
+      const matches = exactMatches.length ? exactMatches : inferredMatches;
+      const mergedInto = matches.length === 1 ? matches[0] : -1;
 
       if (mergedInto === -1) {
         kept.push(row);
