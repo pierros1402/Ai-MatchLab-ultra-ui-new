@@ -2,13 +2,16 @@
   "dayKey": "2026-11-21",
   "leagueSlug": "zim.1",
   "leagueName": "Zim 1",
-  "updatedAt": "2026-11-21T17:11:39.359Z",
+  "updatedAt": "2026-11-26T01:37:54.392Z",
   "count": 8,
   "sourceMeta": {
     "acquisitionProvider": "flashscore",
     "requestedLeagueSlug": "zim.1",
     "requestedDayKey": "2026-12-05",
-    "mergedAt": "2026-11-21T17:11:39.359Z"
+    "mergedAt": "2026-11-21T17:11:39.359Z",
+    "crossDayVerifiedFinalSupersessionAt": "2026-11-26T01:37:54.392Z",
+    "crossDayVerifiedFinalSupersessionRows": 1,
+    "crossDayVerifiedFinalSupersessionPolicy": "cross-day-provider-verified-final-v1"
   },
   "fixtures": [
     {
@@ -89,12 +92,78 @@
       "scoreAway": null,
       "penalties": null,
       "decidedBy": null,
-      "status": "STATUS_SCHEDULED",
-      "rawStatus": "STATUS_SCHEDULED",
+      "status": "STATUS_POSTPONED",
+      "rawStatus": "STATUS_POSTPONED",
       "minute": null,
       "venue": null,
       "firstSeenAt": "2026-11-18T23:57:11.533Z",
-      "lastSeenAt": "2026-11-21T02:28:04.955Z"
+      "lastSeenAt": "2026-11-21T02:28:04.955Z",
+      "statusType": "STATUS_POSTPONED",
+      "statusCorrection": {
+        "schema": "ai-matchlab.cross-day-verified-final-supersession.v1",
+        "correctedAt": "2026-11-26T01:37:54.392Z",
+        "decisionId": "cross-day-verified-final-hdVT4iE7-cid_zim1_herentals_zpckariba_20261121-v1",
+        "policyVersion": "cross-day-provider-verified-final-v1",
+        "correctedFrom": {
+          "status": "STATUS_SCHEDULED",
+          "statusType": null,
+          "rawStatus": "STATUS_SCHEDULED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "correctedTo": {
+          "status": "STATUS_POSTPONED",
+          "statusType": "STATUS_POSTPONED",
+          "rawStatus": "STATUS_POSTPONED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "reason": "verified_cross_day_provider_reschedule",
+        "decisionBasis": "exact_provider_identity_cross_day_supersession_with_verified_final",
+        "providerEvidence": {
+          "provider": "flashscore",
+          "providerMatchId": "hdVT4iE7",
+          "supersededCanonicalId": "cid_zim1_herentals_zpckariba_20261121",
+          "supersededDayKey": "2026-11-21",
+          "supersededKickoffUtc": "2026-11-21T12:00:00.000Z",
+          "evidenceCanonicalId": "cid_zim1_herentals_zpckariba_20261125",
+          "evidenceDayKey": "2026-11-25",
+          "evidenceKickoffUtc": "2026-11-25T12:00:00.000Z",
+          "evidenceHomeTeam": "Herentals",
+          "evidenceAwayTeam": "ZPC Kariba",
+          "verifiedFinalArtifact": "data/final-results/2026-11-25/cid_zim1_herentals_zpckariba_20261125.json",
+          "verifiedFinalVerdict": "verified_final_result",
+          "verifiedFinalTruth": true,
+          "verifiedFinalScoreHome": 0,
+          "verifiedFinalScoreAway": 2
+        },
+        "guarantees": {
+          "flashscoreProviderOnly": true,
+          "exactProviderIdentity": true,
+          "sameLeague": true,
+          "exactNormalizedOrderedTeamPair": true,
+          "uniqueLatestObservation": true,
+          "strictlyNewerKickoff": true,
+          "minimumKickoffShiftRequired": true,
+          "strictlyNewerObservation": true,
+          "nonOverlappingObservationWindows": true,
+          "oldKickoffPastGraceRequired": true,
+          "oldOccurrenceScorelessScheduledOnly": true,
+          "playedFinalNeverSuperseded": true,
+          "existingExplicitNonPlayedNeverSuperseded": true,
+          "exactVerifiedFinalArtifact": true,
+          "exactVerifiedFinalFlashscoreProviderIdentity": true,
+          "verifiedFinalScoreParity": true,
+          "verifiedFinalTeamPairParity": true,
+          "oldOccurrenceHasNoActiveFinalResult": true,
+          "oldOccurrenceAbsentFromHistory": true,
+          "oldOccurrenceHasNoOfficialValuePick": true,
+          "oldOccurrenceScoreRemainsNull": true,
+          "scoreNeverCopiedBackward": true
+        }
+      }
     },
     {
       "canonicalId": "cid_zim1_hunters_dynamos_20261121",
