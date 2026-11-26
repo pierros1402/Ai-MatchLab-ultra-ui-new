@@ -20,6 +20,16 @@ const reviewedAliases = {
   },
 };
 
+function describeCandidate(fixture, officialFinalScore) {
+  const { canonicalId, kickoffUtc, source, status } = fixture;
+  const scores = [fixture.scoreHome, fixture.scoreAway];
+  const canonicalFinalScore = status === 'FT' &&
+    scores.every(score => Number.isInteger(score) && score >= 0) ? scores : null;
+  return { canonicalId, kickoffUtc, source, canonicalFinalScore,
+    finalScoreAgreement: officialFinalScore && canonicalFinalScore
+      ? officialFinalScore.every((score, i) => score === canonicalFinalScore[i]) : null };
+}
+
 export async function auditCanonicalCensus(census, { readBucket, teamIdentity, retainedFixture = () => null }) {
   const buckets = new Map();
   const rows = [];
@@ -59,12 +69,10 @@ export async function auditCanonicalCensus(census, { readBucket, teamIdentity, r
       } else {
         row.status = 'IDENTITY_HOLD';
       }
-      row.canonicalCandidates = candidates.map(({ canonicalId, kickoffUtc, source }) =>
-        ({ canonicalId, kickoffUtc, source }));
+      row.canonicalCandidates = candidates.map(fixture => describeCandidate(fixture, match.officialFinalScore));
     } else if (byTeams.length) {
       row.status = 'KICKOFF_DISAGREEMENT';
-      row.canonicalCandidates = byTeams.map(({ canonicalId, kickoffUtc, source }) =>
-        ({ canonicalId, kickoffUtc, source }));
+      row.canonicalCandidates = byTeams.map(fixture => describeCandidate(fixture, match.officialFinalScore));
     } else {
       row.status = 'UNMATCHED_CANDIDATE';
     }

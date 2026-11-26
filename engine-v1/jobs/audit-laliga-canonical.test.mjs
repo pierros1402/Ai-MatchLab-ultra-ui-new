@@ -42,3 +42,10 @@ test('matches the two reviewed Real Sociedad reserve spellings without matching 
   assert.equal(sameSquadMarkers('Real Sociedad II', 'Real Sociedad'), false);
   assert.equal(sameSquadMarkers('Barcelona II', 'Barcelona B'), false);
 });
+
+test('reports score agreement separately from kickoff disagreement', async () => {
+  const result = await audit([{ ...fixture, kickoffUtc: '2026-08-15T22:00:00Z',
+    status: 'FT', scoreHome: 2, scoreAway: 0 }], [{ ...match, officialFinalScore: [2, 0] }]);
+  assert.equal(result.rows[0].status, 'KICKOFF_DISAGREEMENT');
+  assert.equal(result.rows[0].canonicalCandidates[0].finalScoreAgreement, true);
+});
