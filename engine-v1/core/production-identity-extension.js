@@ -49,6 +49,16 @@ function normalizedLeagueSlugs(binding) {
     .sort();
 }
 
+export function sameReviewedFixtureTeam(leagueSlug, left, right) {
+  const a = normalizeGenesisAlias(left);
+  const b = normalizeGenesisAlias(right);
+  if (!a || !b) return false;
+  // Official LaLiga squad 38 (CE Sabadell) bridges both provider spellings
+  // in official fixtures 102696 and 102770. This applies only to esp.2.
+  return a === b || (leagueSlug === 'esp.2' &&
+    [a, b].every(name => name === 'sabadell' || name === 'cd sabadell'));
+}
+
 export function deriveExtensionTeamIdentityKey(binding) {
   const seed = canonicalJson({
     namespace: "ai-matchlab.identity-extension-team.v1",
@@ -381,11 +391,9 @@ export function validateProductionIdentityExtension({
 
     const [leftSource, rightSource] = sourceFixtures;
     const literalHomeStable = leftSource && rightSource &&
-      normalizeGenesisAlias(leftSource.homeTeam) ===
-        normalizeGenesisAlias(rightSource.homeTeam);
+      sameReviewedFixtureTeam(decision.leagueSlug, leftSource.homeTeam, rightSource.homeTeam);
     const literalAwayStable = leftSource && rightSource &&
-      normalizeGenesisAlias(leftSource.awayTeam) ===
-        normalizeGenesisAlias(rightSource.awayTeam);
+      sameReviewedFixtureTeam(decision.leagueSlug, leftSource.awayTeam, rightSource.awayTeam);
     const leftBaseHome = leftSource
       ? baseTeamResolution(
           baseResolver,
