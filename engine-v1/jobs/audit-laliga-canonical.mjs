@@ -9,7 +9,28 @@ import { sameTeamName } from '../core/fixture-dedup.js';
 const dayFormat = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Athens' });
 const normalize = name => String(name ?? '').normalize('NFC').trim().toLowerCase();
 
-export async function auditCanonicalCensus(census, { readBucket, teamIdentity }) {
+// LaLiga team IDs identify the squad across editions. Scope the known
+// third-party spellings to their competition and keep reserve teams distinct.
+const reviewedAliases = {
+  'esp.1': { 49: ['R. Racing Club', 'Racing Santander'] },
+  'esp.2': {
+    39: ['Real Sporting', 'Sporting Gijón', 'Sporting Gijon'],
+    481: ['Celta Fortuna', 'RC Celta Fortuna', 'Celta Vigo B', 'Celta B'],
+    482: ['R. Sociedad B', 'Real Sociedad B', 'Real Sociedad II', 'Sanse'],
+  },
+};
+
+function describeCandidate(fixture, officialFinalScore) {
+  const { canonicalId, kickoffUtc, source, status } = fixture;
+  const scores = [fixture.scoreHome, fixture.scoreAway];
+  const canonicalFinalScore = status === 'FT' &&
+    scores.every(score => Number.isInteger(score) && score >= 0) ? scores : null;
+  return { canonicalId, kickoffUtc, source, canonicalFinalScore,
+    finalScoreAgreement: officialFinalScore && canonicalFinalScore
+      ? officialFinalScore.every((score, i) => score === canonicalFinalScore[i]) : null };
+}
+
+export async function auditCanonicalCensus(census, { readBucket, teamIdentity, retainedFixture = () => null }) {
   const buckets = new Map();
   const rows = [];
   for (const match of census.matches) {
@@ -27,16 +48,31 @@ export async function auditCanonicalCensus(census, { readBucket, teamIdentity })
       if (!normalize(source.name) || !normalize(canonical)) return false;
       const a = teamIdentity(census.slug, source.name);
       const b = teamIdentity(census.slug, canonical);
-      return a && b ? a === b : sameTeamName(census.slug, source.name, canonical);
+      if (a && b) return a === b;
+      const aliases = reviewedAliases[census.slug]?.[source.id]?.map(normalize);
+      if (aliases?.includes(normalize(source.name)) && aliases.includes(normalize(canonical))) return true;
+      return sameTeamName(census.slug, source.name, canonical);
     };
-    const byFixture = bucket.filter(fixture => Date.parse(fixture.kickoffUtc) === kickoff &&
+    const byTeams = bucket.filter(fixture =>
       sameTeam(match.home, fixture.homeTeam) && sameTeam(match.away, fixture.awayTeam));
+    const byFixture = byTeams.filter(fixture => Date.parse(fixture.kickoffUtc) === kickoff);
     const candidates = byId.length ? byId : byFixture;
     if (candidates.length === 1 && (!byId.length || byFixture.includes(candidates[0]))) {
       row.canonicalId = candidates[0].canonicalId;
       row.status = byId.length ? 'OFFICIAL_ID_MATCH' : 'KICKOFF_AND_TEAM_MATCH';
     } else if (candidates.length) {
-      row.status = 'IDENTITY_HOLD';
+      const retained = candidates.map(fixture => retainedFixture(fixture.canonicalId));
+      if (!byId.length && retained[0] && retained.every(id => id === retained[0]) &&
+          candidates.some(fixture => fixture.canonicalId === retained[0])) {
+        row.canonicalId = retained[0];
+        row.status = 'VERIFIED_FIXTURE_LINEAGE';
+      } else {
+        row.status = 'IDENTITY_HOLD';
+      }
+      row.canonicalCandidates = candidates.map(fixture => describeCandidate(fixture, match.officialFinalScore));
+    } else if (byTeams.length) {
+      row.status = 'KICKOFF_DISAGREEMENT';
+      row.canonicalCandidates = byTeams.map(fixture => describeCandidate(fixture, match.officialFinalScore));
     } else {
       row.status = 'UNMATCHED_CANDIDATE';
     }
@@ -78,7 +114,13 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   };
   const slugs = ['esp.1', 'esp.2'];
   const results = await Promise.allSettled(slugs.map(async slug => auditCanonicalCensus(
-    await captureLaLigaSeason(slug, startYear, { asOf }), { readBucket: readCanonicalBucket, teamIdentity })));
+    await captureLaLigaSeason(slug, startYear, { asOf }), {
+      readBucket: readCanonicalBucket, teamIdentity,
+      retainedFixture: id => {
+        const result = resolver.resolveFixtureId(id);
+        return result.ok ? result.resolvedFixtureId : null;
+      },
+    })));
   console.log(JSON.stringify({
     schema: 'ai-matchlab.laliga-canonical-audit.v1',
     sourceCommit: process.env.GITHUB_SHA ?? null,

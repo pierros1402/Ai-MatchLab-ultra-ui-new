@@ -26,3 +26,26 @@ test('holds conflicting and repeated links', async () => {
   const report = await audit([fixture], [match, { ...match, officialId: '12' }]);
   assert.deepEqual(report.counts, { IDENTITY_HOLD: 2 });
 });
+
+test('uses the LaLiga team ID for reviewed spellings and exposes kickoff drift', async () => {
+  const racing = { ...match, home: { id: 49, name: 'R. Racing Club' } };
+  const canonical = { ...fixture, homeTeam: 'Racing Santander' };
+  assert.equal((await audit([canonical], [racing])).rows[0].status, 'KICKOFF_AND_TEAM_MATCH');
+  const result = await audit([{ ...canonical, kickoffUtc: '2026-08-15T22:00:00Z' }], [racing]);
+  assert.equal(result.rows[0].status, 'KICKOFF_DISAGREEMENT');
+  assert.equal(result.rows[0].canonicalCandidates[0].canonicalId, 'canonical');
+});
+
+test('matches the two reviewed Real Sociedad reserve spellings without matching the senior side', async () => {
+  const { sameSquadMarkers, teamNamesMatch } = await import('../core/team-identity.js');
+  assert.equal(teamNamesMatch('Real Sociedad II', 'Real Sociedad B'), true);
+  assert.equal(sameSquadMarkers('Real Sociedad II', 'Real Sociedad'), false);
+  assert.equal(sameSquadMarkers('Barcelona II', 'Barcelona B'), false);
+});
+
+test('reports score agreement separately from kickoff disagreement', async () => {
+  const result = await audit([{ ...fixture, kickoffUtc: '2026-08-15T22:00:00Z',
+    status: 'FT', scoreHome: 2, scoreAway: 0 }], [{ ...match, officialFinalScore: [2, 0] }]);
+  assert.equal(result.rows[0].status, 'KICKOFF_DISAGREEMENT');
+  assert.equal(result.rows[0].canonicalCandidates[0].finalScoreAgreement, true);
+});

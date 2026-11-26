@@ -53,6 +53,9 @@ export async function captureLaLigaSeason(slug, startYear, { fetchPage = fetch, 
         home: { id: match.home_team.id, name: match.home_team.nickname },
         away: { id: match.away_team.id, name: match.away_team.nickname },
         reportedStatus: match.status,
+        officialFinalScore: match.status === 'FullTime' &&
+          [match.home_score, match.away_score].every(score => Number.isInteger(score) && score >= 0)
+          ? [match.home_score, match.away_score] : null,
         sourceUrl: pages.at(-1).url,
       });
     }
