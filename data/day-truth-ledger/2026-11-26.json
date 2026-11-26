@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-26",
-  "generatedAt": "2026-11-26T09:53:40.655Z",
+  "generatedAt": "2026-11-26T10:38:40.210Z",
   "role": "derived_control_plane",
-  "ledgerState": "OPEN",
-  "truthFingerprint": "60a8a63d763b30bc201a72866ef34ac6717a7a3bb5e78e118531ea370aa7e36b",
+  "ledgerState": "CONFLICT",
+  "truthFingerprint": "a81d83a46c10ee547ebeb21454bd28def29a07c366c7f5736aab53bb40e5bc00",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -19,20 +19,20 @@
     "canonicalRows": 87,
     "playedTerminal": 10,
     "nonPlayedTerminal": 0,
-    "scheduled": 77,
-    "live": 0,
+    "scheduled": 74,
+    "live": 3,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 10,
-    "acceptedVerifiedFinalArtifacts": 10,
+    "verifiedFinalArtifacts": 11,
+    "acceptedVerifiedFinalArtifacts": 11,
     "convergedPlayedFinal": 10,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 77,
+    "openRows": 76,
     "unresolvedRows": 0,
-    "conflictRows": 0,
+    "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
     "historyEligible": 10,
@@ -95,14 +95,14 @@
       "homeTeam": "Gangwon FC",
       "awayTeam": "Kitchee SC",
       "kickoffUtc": "2026-11-26T10:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -116,7 +116,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -144,14 +144,14 @@
       "homeTeam": "Kuching City",
       "awayTeam": "Phnom Penh Crown FC",
       "kickoffUtc": "2026-11-26T10:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": false,
@@ -165,7 +165,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -291,14 +291,14 @@
       "homeTeam": "Tampines Rovers FC",
       "awayTeam": "Shanghai Shenhua FC",
       "kickoffUtc": "2026-11-26T10:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "UNKNOWN",
+      "operationalState": "LIVE",
       "canonical": {
-        "status": "PRE",
+        "status": "FIRST_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "rawStatus": "STATUS_FIRST_HALF",
+        "scoreHome": 0,
+        "scoreAway": 1
       },
       "verifiedFinal": {
         "present": false,
@@ -312,7 +312,7 @@
       },
       "decision": {
         "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "reason": "canonical_live",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1526,18 +1526,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-26",
+        "scoreHome": 2,
+        "scoreAway": 3,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -4307,7 +4307,9 @@
   "anomalies": {
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
-    "conflictFixtureIds": [],
+    "conflictFixtureIds": [
+      "cid_idn1_borneo_persita_20261126"
+    ],
     "pendingVerifiedFinalFixtureIds": []
   },
   "downstream": {
@@ -4318,7 +4320,7 @@
     "systemHealth": {
       "schema": "ai-matchlab.system-health-alerts.v1",
       "dayKey": "2026-11-26",
-      "generatedAt": "2026-11-26T09:53:40.178Z",
+      "generatedAt": "2026-11-26T10:38:39.774Z",
       "severity": "warning",
       "issueCounts": {
         "error": 0,
@@ -4510,7 +4512,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 24582,
+            "count": 24608,
             "informational": true
           }
         },
@@ -6099,7 +6101,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 24582,
+            "count": 24608,
             "informational": true
           }
         },
@@ -6850,7 +6852,7 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "60a8a63d763b30bc201a72866ef34ac6717a7a3bb5e78e118531ea370aa7e36b",
+      "truthFingerprint": "a81d83a46c10ee547ebeb21454bd28def29a07c366c7f5736aab53bb40e5bc00",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
@@ -6928,7 +6930,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-11-26",
-      "fileCount": 10,
+      "fileCount": 11,
       "authority": "scored_final_evidence"
     },
     "downstream": {
