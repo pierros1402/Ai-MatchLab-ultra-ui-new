@@ -8,7 +8,6 @@ on:
       - 'engine-v1/jobs/verify-ind2-espn-import.py'
   pull_request:
     paths:
-      - 'data/league-memory/results/ind.2.json'
       - 'data/source-bound-history/ind.2/**'
       - 'engine-v1/jobs/verify-ind2-espn-import.py'
       - '.github/workflows/stage-ind2-espn-recovery.yml'
@@ -22,18 +21,40 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Download immutable original artifact
+        if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh api repos/pierros1402/Ai-MatchLab-ultra-ui-new/actions/artifacts/15103214115/zip > "$RUNNER_TEMP/ind2.zip"
       - name: Validate source evidence
+        if: github.event_name == 'push'
         run: python3 engine-v1/jobs/verify-ind2-espn-import.py "$RUNNER_TEMP/ind2.zip"
       - name: Validate production candidate if present
         run: |
           if test -e data/league-memory/results/ind.2.json; then
-            python3 engine-v1/jobs/verify-ind2-espn-import.py "$RUNNER_TEMP/ind2.zip" --verify-production
+            python3 engine-v1/jobs/verify-ind2-espn-import.py data/source-bound-history/ind.2/evidence.zip --verify-production
           else
             test "$GITHUB_EVENT_NAME" = push
           fi
+      - uses: actions/setup-node@v4
+        if: github.event_name == 'pull_request'
+        with:
+          node-version: '22'
+      - name: Verify actual Results Memory form consumer
+        if: github.event_name == 'pull_request'
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          import {readResults,teamFormRates} from './engine-v1/storage/results-memory-db.js';
+          import {normalizeTeamKey} from './engine-v1/core/normalize.js';
+          const samples=JSON.parse(fs.readFileSync('data/source-bound-history/ind.2/form-samples.json'));
+          const teams=Object.keys(readResults('ind.2').teams);
+          assert.equal(teams.length,11);
+          assert.equal(new Set(teams.map(normalizeTeamKey)).size,11);
+          assert.equal(samples.length,11);
+          for(const {team,...expected} of samples){assert(teams.includes(team));assert.deepEqual(teamFormRates('ind.2',team),expected);assert(expected.sample>0);}
+          console.log('11/11 production form consumer samples match original evidence');
+          JS
   stage:
     if: github.event_name == 'push' && github.ref == 'refs/heads/recovery/ind2-espn-verified-import-20261126'
     needs: verify

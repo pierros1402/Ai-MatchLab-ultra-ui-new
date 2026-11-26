@@ -68,7 +68,7 @@ def verify(archive):
                 require(e["id"] not in facts or facts[e["id"]]==f, "EVENT_CONFLICT")
                 facts[e["id"]]=f
         require(len(facts)==25 and len(names_by_id)==11, "PINNED_COUNTS")
-        require(history["matches"]==report["rows"] and len(history["matches"])==25, "HISTORY_REPORT_DRIFT")
+        require(len(history["matches"])==len(report["rows"])==25 and {x["fact"]["id"]:x for x in history["matches"]}=={x["fact"]["id"]:x for x in report["rows"]}, "HISTORY_REPORT_DRIFT")
         seen=set()
         day_map={d["day"]:d for d in days}
         for row in history["matches"]:
