@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-26",
-  "generatedAt": "2026-11-26T13:16:11.653Z",
+  "generatedAt": "2026-11-26T14:05:34.861Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "8fd3eefe7b6876245bbdcfc16a2eb5d382bb4f2ab0fb619dff10592a78eeb229",
+  "truthFingerprint": "ef56ec211b1e9005058204b662c9a3f880dbc46db0310c22265db416b7399f64",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 87,
-    "playedTerminal": 21,
+    "playedTerminal": 22,
     "nonPlayedTerminal": 0,
-    "scheduled": 63,
+    "scheduled": 62,
     "live": 3,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 22,
-    "acceptedVerifiedFinalArtifacts": 22,
-    "convergedPlayedFinal": 21,
+    "verifiedFinalArtifacts": 23,
+    "acceptedVerifiedFinalArtifacts": 23,
+    "convergedPlayedFinal": 22,
     "convergedNonPlayedTerminal": 0,
     "pendingVerifiedFinal": 0,
-    "openRows": 65,
+    "openRows": 64,
     "unresolvedRows": 0,
     "conflictRows": 1,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 21,
-    "scoredSettlementEligible": 21,
+    "historyEligible": 22,
+    "scoredSettlementEligible": 22,
     "voidSettlementEligible": 0
   },
   "fixtures": [
@@ -49,9 +49,9 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
+        "rawStatus": "STATUS_SECOND_HALF",
         "scoreHome": 0,
         "scoreAway": 1
       },
@@ -196,10 +196,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
         "scoreAway": 0
       },
       "verifiedFinal": {
@@ -245,10 +245,10 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "FIRST_HALF",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_FIRST_HALF",
-        "scoreHome": 0,
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
         "scoreAway": 3
       },
       "verifiedFinal": {
@@ -497,18 +497,18 @@
         "scoreAway": null
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-26",
+        "scoreHome": 2,
+        "scoreAway": 0,
         "scoreParity": null
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -1418,14 +1418,14 @@
       "homeTeam": "Telavi",
       "awayTeam": "Gori",
       "kickoffUtc": "2026-11-26T11:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": true,
@@ -1435,14 +1435,14 @@
         "dayKey": "2026-11-26",
         "scoreHome": 1,
         "scoreAway": 2,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -4308,7 +4308,7 @@
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
     "conflictFixtureIds": [
-      "cid_geo2_telavi_gori_20261126"
+      "cid_arm2_olympiayerevan_mika_20261126"
     ],
     "pendingVerifiedFinalFixtureIds": []
   },
@@ -4320,7 +4320,7 @@
     "systemHealth": {
       "schema": "ai-matchlab.system-health-alerts.v1",
       "dayKey": "2026-11-26",
-      "generatedAt": "2026-11-26T13:16:11.285Z",
+      "generatedAt": "2026-11-26T14:05:34.403Z",
       "severity": "warning",
       "issueCounts": {
         "error": 0,
@@ -4512,7 +4512,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 24794,
+            "count": 24824,
             "informational": true
           }
         },
@@ -5905,8 +5905,8 @@
             "fixtures": 87,
             "valuePicks": 0,
             "valueSource": "canonical_fixtures",
-            "latestCanonicalUpdatedAt": "2026-11-26T11:04:08.201Z",
-            "valueArtifactAt": "2026-11-26T03:17:15.488Z",
+            "latestCanonicalUpdatedAt": "2026-11-26T12:53:26.616Z",
+            "valueArtifactAt": "2026-11-26T12:17:37.602Z",
             "valueFreshAgainstCanonical": false,
             "mode": "frozen_snapshot",
             "frozenIdentityBound": true,
@@ -6101,7 +6101,7 @@
           "details": {
             "component": "historySemantic",
             "reason": "age_expired_results_rows_present",
-            "count": 24698,
+            "count": 24824,
             "informational": true
           }
         },
@@ -6852,13 +6852,13 @@
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "8fd3eefe7b6876245bbdcfc16a2eb5d382bb4f2ab0fb619dff10592a78eeb229",
+      "truthFingerprint": "ef56ec211b1e9005058204b662c9a3f880dbc46db0310c22265db416b7399f64",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 21,
+        "expectedEligibleRows": 22,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_afccup_gangwon_kitchee_20261126",
@@ -6876,6 +6876,7 @@
           "cid_geo2_dusheti_meranimartvili_20261126",
           "cid_geo2_garejisagarejo_samtredia_20261126",
           "cid_geo2_odishi1919_shturmi_20261126",
+          "cid_geo2_telavi_gori_20261126",
           "cid_gua1_municipal_aurora_20261126",
           "cid_idn1_borneo_persita_20261126",
           "cid_mex1_monterrey_america_20261126",
@@ -6941,7 +6942,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-11-26",
-      "fileCount": 22,
+      "fileCount": 23,
       "authority": "scored_final_evidence"
     },
     "downstream": {
