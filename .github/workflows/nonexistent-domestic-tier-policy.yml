@@ -1,0 +1,18 @@
+name: Nonexistent domestic tier policy verification
+on:
+  push:
+    branches: [recovery/remaining-league-source-probe-20261126]
+    paths: ['workers/_shared/nonexistent-domestic-leagues.js','engine-v1/tests/nonexistent-domestic-leagues.test.js']
+  pull_request:
+    paths: ['workers/_shared/nonexistent-domestic-leagues.js','engine-v1/source-discovery/disabled-leagues.js','workers/_shared/leagues-coverage.js','workers/_shared/leagues-registry.js']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test engine-v1/tests/nonexistent-domestic-leagues.test.js

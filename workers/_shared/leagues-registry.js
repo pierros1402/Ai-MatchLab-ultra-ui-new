@@ -1,11 +1,11 @@
-import { LEAGUES_COVERAGE } from "./leagues-coverage.js";
+import { LEAGUES_COVERAGE, LEAGUE_SEEDS as ACTIVE_SEEDS } from "./leagues-coverage.js";
 
 /* =========================================================
    CANONICAL LEAGUE SEEDS
    SINGLE SOURCE OF TRUTH = LEAGUES_COVERAGE
 ========================================================= */
 
-export const LEAGUE_SEEDS = LEAGUES_COVERAGE.map(x => x.slug);
+export const LEAGUE_SEEDS = ACTIVE_SEEDS;
 
 const EXPLICIT_NAME_MAP = {
   // ENGLAND
