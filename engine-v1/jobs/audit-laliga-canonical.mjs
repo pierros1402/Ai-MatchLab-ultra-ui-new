@@ -4,6 +4,7 @@ import { resolveDataPath } from '../storage/data-root.js';
 import { getProductionIdentityResolver } from '../core/production-identity-resolver-runtime.js';
 import { captureLaLigaSeason } from './capture-laliga-season-census.mjs';
 import { currentSeason } from '../core/season.js';
+import { sameTeamName } from '../core/fixture-dedup.js';
 
 const dayFormat = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Athens' });
 const normalize = name => String(name ?? '').normalize('NFC').trim().toLowerCase();
@@ -26,7 +27,7 @@ export async function auditCanonicalCensus(census, { readBucket, teamIdentity })
       if (!normalize(source.name) || !normalize(canonical)) return false;
       const a = teamIdentity(census.slug, source.name);
       const b = teamIdentity(census.slug, canonical);
-      return a && b ? a === b : normalize(source.name) === normalize(canonical);
+      return a && b ? a === b : sameTeamName(census.slug, source.name, canonical);
     };
     const byFixture = bucket.filter(fixture => Date.parse(fixture.kickoffUtc) === kickoff &&
       sameTeam(match.home, fixture.homeTeam) && sameTeam(match.away, fixture.awayTeam));
