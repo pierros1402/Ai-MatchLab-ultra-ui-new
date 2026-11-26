@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {observeStage20Pre,observeStage20Post,observeStage20FailedCycle} from '../jobs/observe-stage20-data-inventory.mjs';
-import {bindObservedStage20Delta} from '../jobs/bind-observed-stage20-delta.mjs';
+import {bindObservedStage20Delta,publicStage20DenialReason} from '../jobs/bind-observed-stage20-delta.mjs';
 const day='2026-11-24';
 function fixture(fn){
  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'aiml-bound-delta-')),root=path.join(tmp,'repo'),temp=path.join(tmp,'evidence');
@@ -35,3 +35,10 @@ test('tampered observed delta rejects',()=>fixture(x=>{post(x);const p=path.join
 test('late source drift rejects and leaves no archive',()=>fixture(x=>{post(x);fs.writeFileSync(x.value,'{"a":3}');assert.throws(()=>bind(x),/source_drift/);assert.ok(!fs.existsSync(target(x)));}));
 test('wrong date rejects',()=>fixture(x=>{post(x);assert.throws(()=>bindObservedStage20Delta(x.root,x.temp,'2026-11-23'));assert.ok(!fs.existsSync(target(x)));}));
 test('symlink evidence rejects',()=>fixture(x=>{post(x);const p=path.join(x.temp,'aiml-stage20-delta.json');fs.renameSync(p,p+'.real');fs.symlinkSync(p+'.real',p);assert.throws(()=>bind(x),/invalid_observation_file/);assert.ok(!fs.existsSync(target(x)));}));
+
+test('reports fixed denial categories without leaking paths or arbitrary messages',()=>{
+  assert.equal(publicStage20DenialReason(Error('stage20_prepost_delta_too_large')),'DELTA_BYTE_LIMIT');
+  assert.equal(publicStage20DenialReason(Error('stage20_prepost_paths_not_admitted')),'PATH_POLICY_DENIED');
+  assert.equal(publicStage20DenialReason(Error('stage20_prepost_final_tree_drift')),'POST_INVENTORY_TREE_CHANGED');
+  assert.equal(publicStage20DenialReason(Error('read failed at /private/data')),'UNKNOWN');
+});

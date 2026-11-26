@@ -38,6 +38,25 @@ export function bindObservedStage20Delta(root, tempRoot, dayKey) {
   } catch(e) {fs.rmSync(target,{recursive:true,force:true});throw e;}
 }
 
+const publicDenialReasons = new Map([
+  ['external_temp_required', 'INVALID_CAPTURE_ROOT'],
+  ['invalid_observation_file', 'INVALID_OBSERVATION'],
+  ['failed_cycle_evidence_conflict', 'FAILED_CYCLE_EVIDENCE'],
+  ['invalid_inventory', 'INVALID_INVENTORY'],
+  ['observed_delta_mismatch', 'OBSERVED_DELTA_MISMATCH'],
+  ['bound_delta_exists', 'ARCHIVE_ALREADY_EXISTS'],
+  ['stage20_prepost_paths_not_admitted', 'PATH_POLICY_DENIED'],
+  ['stage20_prepost_delta_count_invalid', 'DELTA_COUNT_OUTSIDE_LIMIT'],
+  ['stage20_prepost_delta_too_large', 'DELTA_BYTE_LIMIT'],
+  ['stage20_prepost_head_drift', 'SOURCE_COMMIT_CHANGED'],
+  ['stage20_prepost_source_drift', 'SOURCE_BYTES_CHANGED'],
+  ['stage20_prepost_final_tree_drift', 'POST_INVENTORY_TREE_CHANGED'],
+]);
+
+export function publicStage20DenialReason(error) {
+  return publicDenialReasons.get(error?.message) ?? 'UNKNOWN';
+}
+
  // CLI emits only aggregate evidence; full inventories remain runner-local.
 import {pathToFileURL} from 'node:url';
 if(process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href===import.meta.url){
@@ -46,8 +65,8 @@ if(process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href===import
     assert.ok(process.env.RUNNER_TEMP);
     const result=bindObservedStage20Delta(process.cwd(),process.env.RUNNER_TEMP,process.argv[2]);
     console.log('STAGE20_BOUND_DELTA='+JSON.stringify(result));
-  } catch {
-    console.error('STAGE20_BOUND_DELTA_DENIED');
+  } catch (error) {
+    console.error('STAGE20_BOUND_DELTA_DENIED reason=' + publicStage20DenialReason(error));
     process.exitCode=1;
   }
 }
