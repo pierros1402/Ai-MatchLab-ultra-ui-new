@@ -13,7 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 1
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -22,6 +23,11 @@ jobs:
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin "$BASE"
+          git cat-file -e "$BASE^{commit}"
+          git cat-file -e "$HEAD^{commit}"
+          test "$(git rev-parse HEAD)" = "$HEAD"
           node --input-type=module <<'JS'
           import fs from 'node:fs';
           import {execFileSync} from 'node:child_process';
