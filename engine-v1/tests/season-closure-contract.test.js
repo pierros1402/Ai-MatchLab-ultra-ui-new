@@ -225,3 +225,30 @@ test("internal processing rights never authorize public promotion by themselves"
     artifacts, requiredPaths: Object.keys(artifacts), local: artifacts, github: artifacts, publicReadback: artifacts
   }).verdict, "HOLD");
 });
+
+test("batch CLI reports a missing canonical event alongside another season", async t => {
+  const fs = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { spawnSync } = await import("node:child_process");
+  const { fileURLToPath } = await import("node:url");
+  const dir = await fs.mkdtemp(join(tmpdir(), "matchlab-season-batch-"));
+  t.after(() => fs.rm(dir, { recursive: true, force: true }));
+  const first = dataset();
+  const registry = approvedRegistry(first);
+  first.canonical = first.canonical.filter(event => event.officialId !== "test-835");
+  const second = dataset();
+  second.contract.competitionId = "other-competition";
+  const inputPath = join(dir, "input.json");
+  const registryPath = join(dir, "registry.json");
+  await fs.writeFile(inputPath, JSON.stringify([first, second]));
+  await fs.writeFile(registryPath, JSON.stringify(registry));
+  const cli = fileURLToPath(new URL("../jobs/audit-season-closure.js", import.meta.url));
+  const result = spawnSync(process.execPath, [cli, "--batch", inputPath, registryPath, fingerprint(registry)],
+    { encoding: "utf8" });
+  assert.equal(result.status, 2, result.stderr);
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.seasons.length, 2);
+  assert.deepEqual(report.seasons[0].missingCanonicalCandidates.map(issue => issue.id), ["test-835"]);
+  assert.ok(report.seasons[1].issues.some(issue => issue.code === "OFFICIAL_SCOPE_OR_SEASON_UNVERIFIED"));
+});
