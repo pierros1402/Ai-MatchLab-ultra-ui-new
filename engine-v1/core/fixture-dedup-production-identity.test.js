@@ -139,3 +139,14 @@ test("production identity matching still preserves squad separation", () => {
     false
   );
 });
+
+test('shared provider event identity survives a kickoff correction across sources', () => {
+  const slug = 'esp.2';
+  const first = { ...row({ slug, names: ['Celta Vigo B', 'Sabadell'], source: 'flashscore', index: 1 }), kickoffUtc: '2026-08-08T12:00:00Z' };
+  const second = { ...row({ slug, names: ['Celta Fortuna', 'Sabadell'], source: 'espn', index: 2 }),
+    providerIds: { flashscore: first.sourceId }, kickoffUtc: '2026-08-08T20:30:00Z' };
+  assert.equal(dedupeLeagueDayFixtures([first, second], { slug }).rows.length, 1);
+  assert.equal(dedupeLeagueDayFixtures([first, { ...second, providerIds: {} }], { slug }).rows.length, 2);
+  const conflicting = { ...second, kickoffUtc: first.kickoffUtc, providerIds: { flashscore: 'other-event' } };
+  assert.equal(dedupeLeagueDayFixtures([first, conflicting], { slug }).rows.length, 2);
+});
