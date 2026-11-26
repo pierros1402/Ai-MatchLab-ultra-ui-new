@@ -164,3 +164,17 @@ test('dry-run audit retains outstanding rebuilds and never calls a writer',async
     assert.deepEqual(JSON.parse(fs.readFileSync(path.join(dir,'pending-rebuilds.json'),'utf8')),pending);
   }finally{fs.rmSync(root,{recursive:true,force:true});}
 });
+
+test('daily batch gives current-season gaps priority and keeps one older slot',()=>{
+  const days=['2026-05-08','2026-05-09','2026-08-01','2026-08-02','2026-08-03'];
+  const report={dayKey:'2026-11-26',gaps:days.map(dayKey=>({
+    dayKey,id:`cid_${dayKey}`,reason:COVERAGE_GAP.acquiredNotStored,
+  }))};
+  const first=selectHistoryCoverageRepairs(report,{}, {nowMs:100,maxTasks:3});
+  assert.deepEqual(first.selected.map(task=>task.dayKey),['2026-08-01','2026-08-02','2026-05-08']);
+  const ledger=Object.fromEntries(first.selected.map(task=>[task.dayKey,{
+    ...task,attempts:1,nextAttemptMs:200,
+  }]));
+  const next=selectHistoryCoverageRepairs(report,ledger,{nowMs:101,maxTasks:3});
+  assert.deepEqual(next.selected.map(task=>task.dayKey),['2026-08-03','2026-05-09']);
+});

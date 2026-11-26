@@ -342,9 +342,13 @@ function sameHistoryFact(a, b) {
   return fingerprint(facts(a)) === fingerprint(facts(b));
 }
 
-export async function persistVerifiedHistoryBuild(build, { journalRoot, historyPath }) {
+export async function persistVerifiedHistoryBuild(build, { journalRoot, historyPath, recoveryMatchIds = null }) {
   const recovery = await journalHistoryBuild(journalRoot, build);
-  if (!build.ok) return { ...build, recovery };
+  const additiveRecovery = recoveryMatchIds !== null;
+  const scopedErrors = build.errors ?? [];
+  const canRecover = additiveRecovery && build.reason === "history_truth_parity_failed" &&
+    scopedErrors.length > 0 && scopedErrors.every(error => error.matchId);
+  if (!build.ok && !canRecover) return { ...build, recovery };
   const result = await withArtifactLock(historyPath + ".lock", async () => {
     const raw = await readOptional(historyPath);
     let existing;
@@ -364,22 +368,41 @@ export async function persistVerifiedHistoryBuild(build, { journalRoot, historyP
     const proposed = new Map(build.rows.map(row => [row.id, row]));
     const priorRows = previous?.rows ?? [];
     if (proposed.size !== build.rows.length ||
-        existing.days.some(day => day.dayKey !== build.dayKey && day.rows.some(row => proposed.has(row.id))) ||
-        new Set(priorRows.map(row => row.id)).size !== priorRows.length ||
-        priorRows.some(row => !proposed.has(row.id) || !sameHistoryFact(row, proposed.get(row.id)))) {
+        new Set(priorRows.map(row => row.id)).size !== priorRows.length) {
       return { ok: false, reason: "history_review_required" };
     }
-    if (priorRows.length === proposed.size) return { ok: true, unchanged: true, rowsWritten: 0 };
 
-    const stored = new Map(priorRows.map(row => [row.id, row]));
+    let rows;
+    if (additiveRecovery) {
+      const requested = new Set(recoveryMatchIds);
+      const blocked = new Set(scopedErrors.map(error => error.matchId));
+      const identityResolver = getProductionIdentityResolver();
+      const occupied = new Set(existing.days.flatMap(day => day.rows.map(row => row.id)));
+      rows = [...priorRows];
+      for (const row of build.rows) {
+        if (!requested.has(row.id) || blocked.has(row.id) || occupied.has(row.id)) continue;
+        const overlappingPair = rows.some(old => old.leagueSlug === row.leagueSlug &&
+          verifiedHistoryTeamNameMatches(row.leagueSlug, old.homeTeam, row.homeTeam, identityResolver) &&
+          verifiedHistoryTeamNameMatches(row.leagueSlug, old.awayTeam, row.awayTeam, identityResolver));
+        if (!overlappingPair) rows.push(row);
+      }
+      rows.sort((a, b) => a.kickoff_ms - b.kickoff_ms || a.id.localeCompare(b.id));
+    } else {
+      if (existing.days.some(day => day.dayKey !== build.dayKey && day.rows.some(row => proposed.has(row.id))) ||
+          priorRows.some(row => !proposed.has(row.id) || !sameHistoryFact(row, proposed.get(row.id)))) {
+        return { ok: false, reason: "history_review_required" };
+      }
+      const stored = new Map(priorRows.map(row => [row.id, row]));
+      rows = build.rows.map(row => stored.get(row.id) ?? row);
+    }
+    if (priorRows.length === rows.length) return { ok: build.ok, unchanged: true, rowsWritten: 0 };
     const days = [...existing.days];
-    const rows = build.rows.map(row => stored.get(row.id) ?? row);
     const payload = { ...previous, dayKey: build.dayKey, matchCount: rows.length, rows, updatedAt: Date.now() };
     if (index === -1) days.push(payload);
     else days[index] = payload;
     days.sort((a, b) => a.dayKey.localeCompare(b.dayKey));
     await atomicArtifact(historyPath, JSON.stringify({ ...existing, days }, null, 2) + "\n");
-    return { ok: true, rowsWritten: rows.length - priorRows.length, atomicWrite: true };
+    return { ok: true, rowsWritten: rows.length - priorRows.length, atomicWrite: true, ...(canRecover ? { partialRecovery: true } : {}) };
   });
   if (!result.ok) {
     const hold = await journalHistoryBuild(journalRoot, { ...build, ...result });
@@ -388,9 +411,10 @@ export async function persistVerifiedHistoryBuild(build, { journalRoot, historyP
   return { ...build, ...result, historyPath, recovery };
 }
 
-export async function appendFinalizedDayToHistory(dayKey) {
+export async function appendFinalizedDayToHistory(dayKey, { recoveryMatchIds = null } = {}) {
   const build = buildHistoryDayFromTruth(dayKey);
   return persistVerifiedHistoryBuild(build, {
+    recoveryMatchIds,
     journalRoot: resolveDataPath("history-recovery-journal"),
     historyPath: resolveDataPath("history", build.season + ".json")
   });
