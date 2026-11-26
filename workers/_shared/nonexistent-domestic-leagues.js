@@ -8,3 +8,13 @@ export const NONEXISTENT_DOMESTIC_LEAGUES = Object.freeze({
 export function isNonexistentDomesticLeague(slug) {
   return Object.hasOwn(NONEXISTENT_DOMESTIC_LEAGUES, String(slug || "").toLowerCase());
 }
+
+ // Separate scope exclusions: do not claim these competitions never existed.
+export const OUT_OF_SCOPE_DOMESTIC_LEAGUES = Object.freeze({
+  "can.2": "UNVERIFIED_SECOND_TIER_IDENTITY",
+  "gib.2": "RESERVE_COMPETITION_SCOPE"
+});
+export function isExcludedDomesticLeague(slug) {
+  return isNonexistentDomesticLeague(slug) ||
+    Object.hasOwn(OUT_OF_SCOPE_DOMESTIC_LEAGUES, String(slug || "").toLowerCase());
+}

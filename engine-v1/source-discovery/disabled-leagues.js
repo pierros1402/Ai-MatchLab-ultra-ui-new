@@ -9,7 +9,7 @@
  * Disabled by COUNTRY code (slug prefix before the dot), so all divisions go too.
  */
 
-import { isNonexistentDomesticLeague } from "../../workers/_shared/nonexistent-domestic-leagues.js";
+import { isExcludedDomesticLeague } from "../../workers/_shared/nonexistent-domestic-leagues.js";
 
 const DISABLED_COUNTRIES = new Set([
   // Caribbean
@@ -27,7 +27,7 @@ const DISABLED_COUNTRIES = new Set([
 
 export function isDisabledLeague(slug) {
   const country = String(slug || "").split(".")[0].toLowerCase();
-  return isNonexistentDomesticLeague(slug) || DISABLED_COUNTRIES.has(country);
+  return isExcludedDomesticLeague(slug) || DISABLED_COUNTRIES.has(country);
 }
 
 export { DISABLED_COUNTRIES };
