@@ -1,0 +1,271 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "ecu.1",
+  "homeTeam": "Barcelona SC",
+  "awayTeam": "Independiente del Valle",
+  "homeWinScore": 0.183,
+  "drawScore": 0.117,
+  "awayWinScore": 0.701,
+  "over15Score": 0.65,
+  "over25Score": 0.512,
+  "over35Score": 0.492,
+  "bttsScore": 0.473,
+  "confidence": 0.854,
+  "signals": [
+    "away_edge",
+    "home_form_decay",
+    "form_influence_reduced",
+    "priors_applied",
+    "ai_context_medium_importance",
+    "close_strength_gap"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.425,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.226,
+    "expectedAwayGoals": 1.389,
+    "expectedTotalGoals": 2.616,
+    "homeStrength": 0.251,
+    "awayStrength": 0.617,
+    "homeEdge": 0.275,
+    "awayPenalty": 0.132,
+    "recency": {
+      "homeOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 149,
+        "daysSinceLastMatch": 17,
+        "spanDays": 14,
+        "maxInternalGap": 8,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.295,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.511
+      },
+      "awayOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 153,
+        "daysSinceLastMatch": 5,
+        "spanDays": 18,
+        "maxInternalGap": 11,
+        "gapSeverity": "normal",
+        "freshnessScore": 1,
+        "continuityScore": 0.85,
+        "formContinuityWeight": 0.827
+      },
+      "homeSide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 149,
+        "daysSinceLastMatch": 17,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.295,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.391
+      },
+      "awaySide": {
+        "sample": 4,
+        "rawSample": 1,
+        "priorSample": 153,
+        "daysSinceLastMatch": 17,
+        "spanDays": 0,
+        "maxInternalGap": 0,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.295,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.391
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 149,
+      "awayPriorSample": 153,
+      "leaguePriorSample": 1170,
+      "matchupPriorSample": 10
+    },
+    "resolution": {
+      "homeInput": "Barcelona SC",
+      "awayInput": "Independiente del Valle",
+      "homeResolvedKey": "Barcelona SC",
+      "awayResolvedKey": "Independiente del Valle",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Barcelona SC::Ind. del Valle",
+      "matchupResolveScore": 0.787,
+      "homePriorKey": "ecu.1::Barcelona SC",
+      "awayPriorKey": "ecu.1::Independiente del Valle",
+      "matchupPriorKey": "ecu.1|Barcelona SC|Independiente del Valle"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Barcelona SC",
+      "awayTeamKey": "Independiente del Valle",
+      "leagueKey": "ecu.1",
+      "matchupKey": "Barcelona SC::Ind. del Valle"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "form_away_stronger",
+        "impact": 0.08,
+        "note": "Away team has significantly stronger form"
+      },
+      {
+        "code": "home_motivation_boost",
+        "impact": 0.03,
+        "note": "Home stake: promotion"
+      },
+      {
+        "code": "h2h_away_edge",
+        "impact": 0.025,
+        "note": "Recent H2H leans away"
+      },
+      {
+        "code": "h2h_underlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is tight"
+      },
+      {
+        "code": "ai_h2h_away_edge",
+        "impact": 0.06,
+        "note": "AI detected away H2H edge"
+      },
+      {
+        "code": "ai_away_form_signal",
+        "impact": 0.05,
+        "note": "AI confirmed strong away form edge"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "medium",
+      "stakes": {
+        "home": "promotion",
+        "away": "neutral",
+        "tags": [
+          "promotion"
+        ]
+      },
+      "pressure": []
+    }
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "form_away_stronger",
+      "impact": 0.08,
+      "note": "Away team has significantly stronger form"
+    },
+    {
+      "code": "home_motivation_boost",
+      "impact": 0.03,
+      "note": "Home stake: promotion"
+    },
+    {
+      "code": "h2h_away_edge",
+      "impact": 0.025,
+      "note": "Recent H2H leans away"
+    },
+    {
+      "code": "h2h_underlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is tight"
+    },
+    {
+      "code": "ai_h2h_away_edge",
+      "impact": 0.06,
+      "note": "AI detected away H2H edge"
+    },
+    {
+      "code": "ai_away_form_signal",
+      "impact": 0.05,
+      "note": "AI confirmed strong away form edge"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "ecu.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 17,
+    "awayRestDays": 5,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 1,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 1,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
