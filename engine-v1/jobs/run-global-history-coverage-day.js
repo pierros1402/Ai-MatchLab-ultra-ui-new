@@ -26,16 +26,23 @@ export function selectHistoryCoverageRepairs(report,ledger,{nowMs,maxTasks=7}={}
     if(!groups.has(gap.dayKey))groups.set(gap.dayKey,[]);
     groups.get(gap.dayKey).push(gap.id);
   }
-  const selected=[],held=[];
+  const activeSeason=currentSeason(new Date(`${report.dayKey}T12:00Z`));
+  const current=[],older=[],held=[];
   for(const [dayKey,ids] of [...groups].sort(([a],[b])=>a.localeCompare(b))){
     const fingerprint=digest([...new Set(ids)].sort()),previous=ledger[dayKey];
     const unchanged=previous?.fingerprint===fingerprint;
     const priorStorageFailure=previous?.ok===false && /^(EPERM|EACCES|EROFS|ENOSPC):/.test(previous.reason||'');
-    const task={dayKey,fingerprint,attempts:unchanged&&!priorStorageFailure?previous.attempts:0};
+    const task={dayKey,fingerprint,matchIds:[...new Set(ids)].sort(),attempts:unchanged&&!priorStorageFailure?previous.attempts:0};
     if(unchanged&&!priorStorageFailure&&(previous.attempts>=3||previous.nextAttemptMs>nowMs))held.push({...task,reason:'RETRY_BOUND_OR_COOLDOWN'});
-    else if(selected.length>=maxTasks)held.push({...task,reason:'BATCH_BUDGET'});
-    else selected.push(task);
+    else if(currentSeason(new Date(`${dayKey}T12:00Z`))===activeSeason)current.push(task);
+    else older.push(task);
   }
+
+  // Keep current-season repairs moving while reserving capacity for older dates.
+  const currentBudget=older.length && maxTasks>1 ? maxTasks-1 : maxTasks;
+  const prioritized=[...current.slice(0,currentBudget),...older,...current.slice(currentBudget)];
+  const selected=prioritized.slice(0,maxTasks);
+  held.push(...prioritized.slice(maxTasks).map(task=>({...task,reason:'BATCH_BUDGET'})));
   return {selected,held};
 }
 
@@ -85,7 +92,7 @@ async function runLockedCoverageDay(dayKey,{root,recover,nowMs,maxTasks,dependen
     pending[season]={dayKey,reason:'HISTORY_APPEND_REQUIRES_INDEX_REBUILD'};
     save(rebuildFile,pending);
     let result;
-    try{result=await (dependencies.append||appendFinalizedDayToHistory)(task.dayKey);}
+    try{result=await (dependencies.append||appendFinalizedDayToHistory)(task.dayKey,{recoveryMatchIds:task.matchIds});}
     catch(error){result={ok:false,reason:error.message};}
     const attemptsCount=task.attempts+1;
     ledger[task.dayKey]={fingerprint:task.fingerprint,attempts:attemptsCount,ok:result.ok===true,

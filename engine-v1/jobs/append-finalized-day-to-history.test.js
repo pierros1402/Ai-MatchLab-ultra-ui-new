@@ -165,3 +165,31 @@ test('squad markers veto history aliases before any global identity match',()=>{
   assert.equal(result.ok,false);assert.ok(result.errors.some(e=>e.reason==='canonical_verified_final_team_mismatch'));
  }
 });
+
+test('batch recovery imports only requested verified IDs and keeps conflicted rows out', async t => {
+  const fs = await import('node:fs/promises');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const { persistVerifiedHistoryBuild } = await import('./append-finalized-day-to-history.js');
+  const root = await fs.mkdtemp(join(tmpdir(), 'matchlab-history-batch-'));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const historyPath = join(root, 'history.json');
+  const input = {
+    dayKey: '2026-08-08', season: '2026-2027', ok: false, reason: 'history_truth_parity_failed',
+    rows: [
+      { id: 'new', leagueSlug: 'test.1', homeTeam: 'Home', awayTeam: 'Away', kickoff_ms: 1 },
+      { id: 'blocked', leagueSlug: 'test.1', homeTeam: 'C', awayTeam: 'D', kickoff_ms: 2 },
+      { id: 'outside-plan', leagueSlug: 'test.1', homeTeam: 'E', awayTeam: 'F', kickoff_ms: 3 },
+      { id: 'alternate-id', leagueSlug: 'test.1', homeTeam: 'Home', awayTeam: 'Away', kickoff_ms: 4 },
+    ],
+    errors: [{ matchId: 'blocked', reason: 'verified_final_identity_duplicate' }],
+  };
+  const options = { historyPath, journalRoot: join(root, 'journal') };
+  assert.equal((await persistVerifiedHistoryBuild(input, options)).ok, false);
+  options.recoveryMatchIds = ['new', 'blocked', 'alternate-id'];
+  assert.equal((await persistVerifiedHistoryBuild(input, options)).rowsWritten, 1);
+  const history = await fs.readFile(historyPath, 'utf8');
+  assert.deepEqual(JSON.parse(history).days[0].rows.map(row => row.id), ['new']);
+  assert.equal((await persistVerifiedHistoryBuild(input, options)).rowsWritten, 0);
+  assert.equal(await fs.readFile(historyPath, 'utf8'), history);
+});
