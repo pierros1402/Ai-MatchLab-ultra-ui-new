@@ -1,0 +1,56 @@
+name: India exact history candidates
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/india-exact-history-candidates.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          const dir='india-evidence';fs.mkdirSync(dir,{recursive:true});
+          const rows=new Map(),errors=[],days=[];
+          for(let i=0;i<180;i++){
+            const day=new Date(Date.UTC(2026,10,25-i)).toISOString().slice(0,10);
+            const url='https://site.api.espn.com/apis/site/v2/sports/soccer/ind.2/scoreboard?dates='+day.replaceAll('-','');
+            try{
+              const res=await fetch(url,{redirect:'error',signal:AbortSignal.timeout(12000)});
+              if(!res.ok)throw Error('HTTP_'+res.status);
+              const raw=Buffer.from(await res.arrayBuffer()),d=JSON.parse(raw),sha256=crypto.createHash('sha256').update(raw).digest('hex');
+              if(!d.leagues?.some(l=>l.slug==='ind.2'&&String(l.id)==='18505'))throw Error('LEAGUE_AUTHORITY_MISMATCH');
+              fs.writeFileSync(dir+'/'+day+'.json',raw);
+              days.push({day,sha256,url,eventCount:d.events?.length??0});
+              for(const e of d.events??[]){
+                const c=e.competitions?.[0],h=c?.competitors?.find(x=>x.homeAway==='home'),a=c?.competitors?.find(x=>x.homeAway==='away');
+                if(e.status?.type?.name!=='STATUS_FULL_TIME'||e.status.type.completed!==true||e.status.type.state!=='post'||c?.status?.type?.name!=='STATUS_FULL_TIME'||c.status.type.completed!==true)continue;
+                if(c.competitors.length!==2||!h||!a||!h.team?.displayName||!a.team?.displayName||! /^[1-9][0-9]*$/.test(h.team.id)||! /^[1-9][0-9]*$/.test(a.team.id)||h.team.id===a.team.id||! /^\d+$/.test(h.score)||! /^\d+$/.test(a.score)||! /^[1-9][0-9]*$/.test(e.id)||!Number.isFinite(Date.parse(e.date))||Date.parse(e.date)>=Date.now())throw Error('INVALID_FINAL:'+e.id);
+                const fact={id:e.id,kickoff:e.date,home:h.team.displayName,away:a.team.displayName,homeId:h.team.id,awayId:a.team.id,gf:Number(h.score),ga:Number(a.score)};
+                const old=rows.get(e.id);if(old&&JSON.stringify(old.fact)!==JSON.stringify(fact))throw Error('CONFLICT:'+e.id);
+                if(!old)rows.set(e.id,{fact,evidence:{day,url,sha256}});
+              }
+            }catch(e){errors.push({day,error:String(e)});if(/CONFLICT|INVALID_FINAL|HTTP_(400|403|429)/.test(String(e)))break;}
+            await new Promise(r=>setTimeout(r,300));
+          }
+          const report={productionWrites:0,fullCoverageCertified:false,days,errors,rows:[...rows.values()]};
+          fs.writeFileSync(dir+'/report.json',JSON.stringify(report,null,2));
+          console.log(JSON.stringify({days:days.length,errors,finals:rows.size,teams:new Set([...rows.values()].flatMap(x=>[x.fact.homeId,x.fact.awayId])).size}));
+          if(errors.some(x=>/CONFLICT|INVALID_FINAL/.test(x.error))||!rows.has('401930686')||!rows.has('401930685'))throw Error('CAPTURE_GATE_FAILED');
+          JS
+      - run: git diff --exit-code -- data
+        if: always()
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: india-evidence
+          path: india-evidence/
