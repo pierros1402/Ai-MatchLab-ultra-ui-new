@@ -1,0 +1,35 @@
+name: LaLiga canonical acquisition audit
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/laliga-canonical-audit.yml'
+      - 'engine-v1/jobs/*laliga*'
+  schedule:
+    - cron: '17 4 * * 1'
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            engine-v1
+            workers/_shared
+            data/canonical-fixtures
+            data/identity-decisions
+            data/team-aliases
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --test engine-v1/jobs/*laliga*.test.mjs
+      - run: node engine-v1/jobs/audit-laliga-canonical.mjs > "$RUNNER_TEMP/laliga-canonical-audit.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: laliga-canonical-audit
+          path: ${{ runner.temp }}/laliga-canonical-audit.json
+          if-no-files-found: error
