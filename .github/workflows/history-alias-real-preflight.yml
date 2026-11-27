@@ -21,6 +21,10 @@ jobs:
         run: node engine-v1/jobs/repair-current-history-identity-alias-duplicates.js --report "$RUNNER_TEMP/history-alias-plan.json"
       - name: Verify no tracked changes
         run: git diff --exit-code
+      - name: Trace Israeli fixture across authoritative inputs
+        run: |
+          git grep -l -i -E 'sofa_16034043|cid_isr2_.*kfarsaba.*petah' -- data/history data/league-memory/results data/canonical-fixtures/2026-05-15 data/final-results/2026-05-15 > "$RUNNER_TEMP/israel-source-paths.txt" || test "$?" = 1
+          cat "$RUNNER_TEMP/israel-source-paths.txt"
       - name: Simulate repair and verify fixed point
         run: |
           node --input-type=module <<'JS'
@@ -41,5 +45,7 @@ jobs:
         if: always()
         with:
           name: history-alias-preflight
-          path: ${{ runner.temp }}/history-alias-plan.json
+          path: |
+            ${{ runner.temp }}/history-alias-plan.json
+            ${{ runner.temp }}/israel-source-paths.txt
           if-no-files-found: warn
