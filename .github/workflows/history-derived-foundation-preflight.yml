@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/history-derived-foundation-preflight.yml'
+      - '.github/workflows/intraday-deploy-snapshot-refresh.yml'
       - 'engine-v1/jobs/ensure-derived-publication-foundations.js'
       - 'engine-v1/jobs/ensure-derived-publication-foundations.test.js'
       - 'engine-v1/jobs/build-current-season-indexes.js'
@@ -49,6 +50,39 @@ jobs:
               assert.match(line.slice(3),/^data\/(history-index|h2h|h2h-foundation|model-priors)\//);
             }
           '
+      - name: Verify Intraday integration ordering and staged boundary
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const source=fs.readFileSync('.github/workflows/intraday-deploy-snapshot-refresh.yml','utf8');
+          const start=source.indexOf('      - name: Verify and persist derived history foundations before Details recovery');
+          const end=source.indexOf('      - name: Repair derived details after verified history preparation');
+          const gate=source.indexOf('      - name: Refresh and enforce intraday foundation health');
+          assert.ok(start>=0 && start<end && end<gate);
+          const step=source.slice(start,end);
+          assert.ok(step.includes('ensure-derived-publication-foundations.js'));
+          assert.ok(step.includes('guard-staged-data-boundary.js'));
+          assert.ok(step.includes('git push origin HEAD:main'));
+          assert.ok(!step.includes('git-push-rebase-retry'));
+          JS
+          git add -A -- data/history-index data/h2h data/h2h-foundation data/model-priors
+          node engine-v1/jobs/guard-staged-data-boundary.js --label=intraday-derived-foundation-checkpoint --dayKey="$TARGET_DAY" --allow='^data/(history-index|h2h|h2h-foundation|model-priors)/[^\s]+\.json
+        run: |
+          git diff --name-only
+          git diff --binary --no-ext-diff -- data/history-index data/h2h data/h2h-foundation data/model-priors > "$RUNNER_TEMP/derived-foundation.patch"
+      - name: Build Details against repaired foundations
+        run: |
+          node engine-v1/jobs/build-details-day.js "$TARGET_DAY" --rebuild
+          git diff --exit-code -- data/history data/canonical-fixtures data/final-results data/league-memory/results data/value-plans data/value-comparison
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: derived-foundation-preflight
+          path: ${{ runner.temp }}/derived-foundation.patch
+          if-no-files-found: warn
+ --allow-data-deletions
+          git restore --staged -- data/history-index data/h2h data/h2h-foundation data/model-priors
       - name: Capture derived-only recovery candidate
         run: |
           git diff --name-only
