@@ -1,0 +1,63 @@
+name: Complete History derived foundation preflight
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/history-derived-foundation-preflight.yml'
+      - 'engine-v1/jobs/build-current-season-indexes.js'
+      - 'engine-v1/jobs/rebuild-indexes-for-season.js'
+      - 'engine-v1/jobs/rebuild-h2h-foundation-from-current-history.js'
+      - 'engine-v1/jobs/repair-current-history-identity-alias-duplicates.js'
+  workflow_dispatch:
+    inputs:
+      day:
+        description: Operational day (YYYY-MM-DD)
+        required: true
+permissions:
+  contents: read
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      TARGET_DAY: ${{ inputs.day || '2026-11-27' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: npm ci --prefix engine-v1
+      - name: Rebuild stale index and H2H using existing production producers
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {ensureHistoryIndexFoundationForDay,resolveSeasonFromDay} from './engine-v1/jobs/rebuild-indexes-for-season.js';
+          import {validateHistoryIndexFoundationSync,validateH2HFoundationSync} from './engine-v1/core/derived-history-foundation.js';
+          import {rebuildH2HFoundationFromCurrentHistory} from './engine-v1/jobs/rebuild-h2h-foundation-from-current-history.js';
+          const day=process.env.TARGET_DAY,season=resolveSeasonFromDay(day);
+          assert.notEqual(season,'unknown-season');
+          const index=await ensureHistoryIndexFoundationForDay(day);
+          assert.equal(index.ok,true,JSON.stringify(index));
+          if(!validateH2HFoundationSync().ok) rebuildH2HFoundationFromCurrentHistory();
+          assert.equal(validateHistoryIndexFoundationSync(season).ok,true);
+          assert.equal(validateH2HFoundationSync().ok,true);
+          const again=await ensureHistoryIndexFoundationForDay(day);
+          assert.equal(again.ok,true);
+          assert.equal(again.rebuilt,false);
+          console.log(JSON.stringify({day,season,indexRebuilt:index.rebuilt,h2hReady:true,indexFixedPoint:true}));
+          JS
+          git diff --exit-code -- data/history data/canonical-fixtures data/final-results data/league-memory/results data/value-plans data/value-comparison
+      - name: Capture derived-only recovery candidate
+        run: |
+          git diff --name-only
+          git diff --binary --no-ext-diff -- data/history-index data/h2h data/h2h-foundation > "$RUNNER_TEMP/derived-foundation.patch"
+      - name: Build Details against repaired foundations
+        run: |
+          node engine-v1/jobs/build-details-day.js "$TARGET_DAY" --rebuild
+          git diff --exit-code -- data/history data/canonical-fixtures data/final-results data/league-memory/results data/value-plans data/value-comparison
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: derived-foundation-preflight
+          path: ${{ runner.temp }}/derived-foundation.patch
+          if-no-files-found: warn
