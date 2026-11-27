@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {resolveDataPath} from '../storage/data-root.js';
+import {canonicalTeamName} from '../storage/team-aliases-db.js';
 import {buildSourceBoundHistoryEventIdentities} from '../core/source-bound-history-event-identities.js';
 const read=f=>JSON.parse(fs.readFileSync(f,'utf8'));
 const hash=b=>createHash('sha256').update(b).digest('hex');
@@ -59,7 +60,7 @@ for(const row of rows){
   const score=(v,n)=>v!==null&&v!==undefined&&v!==''&&Number.isInteger(Number(v))&&Number(v)===Number(n);
   const day=row.dayKey||String(row.kickoff||row.kickoffUtc||'').slice(0,10);
   const sameKickoff=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(value)&&Number.isFinite(Date.parse(value))&&Date.parse(value)===(Number(row.kickoff_ms)||Date.parse(row.kickoff||row.kickoffUtc));
-  const equalTeam=(a,b)=>a===b||normTeam(a)===normTeam(b);
+  const equalTeam=(a,b)=>{const x=normTeam(a),y=normTeam(b);if(!x||!y)return false;if(x===y)return true;const ca=canonicalTeamName(row.leagueSlug,a),cb=canonicalTeamName(row.leagueSlug,b);return Boolean(ca&&cb&&normTeam(ca)&&normTeam(ca)===normTeam(cb));};
   const exact=(hit,ha,team,opp,gf,ga)=>hit.league===row.leagueSlug&&equalTeam(hit.team,team)&&equalTeam(hit.row.opp,opp)&&sameKickoff(hit.row.date)&&hit.row.ha===ha&&score(hit.row.gf,gf)&&score(hit.row.ga,ga);
   for(const hit of sourceMemory){
    const h=hit.row.ha==='H',a=hit.row.ha==='A';
