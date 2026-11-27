@@ -114,7 +114,11 @@ function bucketLeagueMatches(slug, resultsPayload, seasonsSet) {
       // from two sources collapses to one row.
       if (!bySeason.has(season)) bySeason.set(season, new Map());
       const key = matchDedupKey(dayKey, teamName, e.opp);
-      if (!bySeason.get(season).has(key)) bySeason.get(season).set(key, row);
+      const existing = bySeason.get(season).get(key);
+      if (existing && (existing.scoreHome !== row.scoreHome || existing.scoreAway !== row.scoreAway)) {
+        throw new Error(`history_archive_result_conflict:${slug}:${season}:${existing.id}:${row.id}`);
+      }
+      if (!existing) bySeason.get(season).set(key, row);
     }
   }
 
