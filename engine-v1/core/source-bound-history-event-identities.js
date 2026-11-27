@@ -20,7 +20,7 @@ export function buildSourceBoundHistoryEventIdentities(entries){
  const byEvent=new Map();
  for(const [id,fact] of facts){const key=eventKey(fact.row);const list=byEvent.get(key)||[];list.push(id);byEvent.set(key,list);}
  return {count:facts.size,findAliasCandidates:row=>{
-  if(!row?.id||!row.leagueSlug||!Number.isFinite(ts(row))||!row.homeTeam||!row.awayTeam||row.status!=='FT')return {ok:false,reason:'INVALID_HISTORY_FACT'};
+  if(!row?.id||!row.leagueSlug||!Number.isFinite(ts(row))||!row.homeTeam||!row.awayTeam||!['FT','STATUS_FULL_TIME'].includes(row.status))return {ok:false,reason:'INVALID_HISTORY_FACT'};
   const ids=byEvent.get(eventKey(row))||[];
   if(ids.length!==1)return {ok:false,reason:ids.length?'AMBIGUOUS_EVENT':'NO_EVENT',candidateIds:ids};
   const id=ids[0],fact=facts.get(id);
