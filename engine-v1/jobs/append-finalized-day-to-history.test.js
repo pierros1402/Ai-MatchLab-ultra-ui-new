@@ -205,3 +205,34 @@ test("overlapping canonical identities are held regardless of score or provider"
     assert.deepEqual(result.errors.filter(e=>e.reason==="history_semantic_identity_overlap").map(e=>e.matchId).sort(), ["cid_other","cid_test_home_away_20260808"]);
   }
 });
+
+test("adjacent-day overlap blocks normal and additive admission without rewriting prior truth", async t => {
+  const fs = await import("node:fs/promises");
+  const {tmpdir} = await import("node:os");
+  const {join} = await import("node:path");
+  const {persistVerifiedHistoryBuild} = await import("./append-finalized-day-to-history.js");
+  const root = await fs.mkdtemp(join(tmpdir(), "matchlab-history-cross-day-"));
+  t.after(() => fs.rm(root, {recursive:true, force:true}));
+  const historyPath = join(root, "history.json");
+  const old = {id:"old-provider", dayKey:"2026-08-08", leagueSlug:"test.1", homeTeam:"Home", awayTeam:"Away", kickoff_ms:Date.parse("2026-08-08T20:30:00Z"), scoreHome:2, scoreAway:1, status:"FT"};
+  const original = JSON.stringify({season:"2026-2027",days:[{dayKey:old.dayKey,rows:[old]}]});
+  await fs.writeFile(historyPath, original);
+  const next = {...old,id:"new-canonical",dayKey:"2026-08-09",kickoff_ms:Date.parse("2026-08-08T21:30:00Z")};
+  const options = {historyPath,journalRoot:join(root,"journal")};
+  for (const scoreHome of [2,3]) {
+    const build = {ok:true,season:"2026-2027",dayKey:next.dayKey,rows:[{...next,scoreHome}],errors:[]};
+    const normal = await persistVerifiedHistoryBuild(build,options);
+    assert.equal(normal.ok,false);
+    assert.equal(normal.reason,"history_review_required");
+    assert.equal(normal.errors[0].reason,"history_cross_day_identity_overlap");
+    assert.equal(await fs.readFile(historyPath,"utf8"),original);
+    const recovery = await persistVerifiedHistoryBuild(build,{...options,recoveryMatchIds:[next.id]});
+    assert.equal(recovery.rowsWritten,0);
+    assert.equal(await fs.readFile(historyPath,"utf8"),original);
+  }
+  const later = {...next,kickoff_ms:Date.parse("2026-08-09T18:00:00Z")};
+  const accepted = await persistVerifiedHistoryBuild({ok:true,season:"2026-2027",dayKey:next.dayKey,rows:[later],errors:[]},options);
+  assert.equal(accepted.ok,true);
+  assert.equal(accepted.rowsWritten,1);
+  assert.deepEqual(JSON.parse(await fs.readFile(historyPath,"utf8")).days[0].rows,[old]);
+});
