@@ -76,7 +76,7 @@ function matchDedupKey(dayKey, home, away) {
 }
 
 // Reconstruct season→matches[] for one league from its results ledger.
-function bucketLeagueMatches(slug, resultsPayload, seasonsSet) {
+export function bucketLeagueMatches(slug, resultsPayload, seasonsSet) {
   const teams = resultsPayload?.teams || {};
   const bySeason = new Map(); // season → Map<matchId, row>
 
