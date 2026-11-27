@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -90,17 +91,15 @@ function chooseRetainedId(groupRows, sourceById, resultMemoryIds, overlay) {
     throw new Error(`current_history_duplicate_multiple_retained_lineage:${retained.map(x => x.id).join(",")}`);
   }
 
+  const canonicalIds = enriched.filter(x => x.repositoryCanonicalId);
+  if (canonicalIds.length > 1)
+    throw new Error("current_history_multiple_canonical_ids_require_authority");
+  if (canonicalIds.length === 1) {
+    return { keepId: canonicalIds[0].id, reason: "repository_canonical_id_over_provider_id", enriched };
+  }
   const inResults = enriched.filter(x => x.inResultsMemory);
   if (inResults.length === 1) {
     return { keepId: inResults[0].id, reason: "clean_results_memory_retained_id", enriched };
-  }
-  if (inResults.length > 1) {
-    throw new Error(`current_history_duplicate_multiple_results_retained_ids:${inResults.map(x => x.id).join(",")}`);
-  }
-
-  const canonicalIds = enriched.filter(x => x.repositoryCanonicalId);
-  if (canonicalIds.length === 1) {
-    return { keepId: canonicalIds[0].id, reason: "repository_canonical_id_over_provider_id", enriched };
   }
 
   throw new Error(`current_history_duplicate_retention_ambiguous:${enriched.map(x => x.id).join(",")}`);
@@ -111,11 +110,12 @@ export function buildCurrentHistoryIdentityAliasRepairPlan({
   resultsRoot = resolveDataPath("league-memory", "results"),
   overlay = createProductionEvidenceIdentityOverlay(),
 } = {}) {
-  const documents = HISTORY_FILES.map(name => ({
-    name,
-    filePath: path.join(historyRoot, name),
-    payload: readJson(path.join(historyRoot, name)),
-  }));
+  const documents = HISTORY_FILES.map(name => {
+    const filePath = path.join(historyRoot, name);
+    const bytes = fs.readFileSync(filePath);
+    return {name, filePath, payload: JSON.parse(bytes.toString("utf8")),
+      sourceSha256: createHash("sha256").update(bytes).digest("hex")};
+  });
   const sourceById = new Map();
   const transformed = [];
 
@@ -209,27 +209,28 @@ export function applyCurrentHistoryIdentityAliasRepair({
   const removalSet = new Set(plan.removals);
   let removed = 0;
   const written = [];
-
+  const prepared = [];
   for (const doc of plan.documents) {
-    const current = readJson(doc.filePath);
-    const backupPath = path.join(backupDir, doc.name);
-    fs.copyFileSync(doc.filePath, backupPath);
-    const output = clone(current);
+    const bytes = fs.readFileSync(doc.filePath);
+    if (createHash("sha256").update(bytes).digest("hex") !== doc.sourceSha256)
+      throw new Error(`current_history_repair_source_drift:${doc.name}`);
+    const output = JSON.parse(bytes.toString("utf8"));
     for (const day of output.days || []) {
       const before = (day.rows || []).length;
       day.rows = (day.rows || []).filter(row => !removalSet.has(clean(row?.id || row?.matchId)));
       const delta = before - day.rows.length;
-      if (delta) {
-        removed += delta;
-        day.matchCount = day.rows.length;
-      }
+      if (delta) { removed += delta; day.matchCount = day.rows.length; }
     }
-    atomicWriteJson(doc.filePath, output);
-    written.push({ filePath: doc.filePath, backupPath });
+    prepared.push({ doc, bytes, output });
   }
-
-  if (removed !== plan.rowsToRemove) {
+  if (removed !== plan.rowsToRemove)
     throw new Error(`current_history_identity_alias_write_count_mismatch:${removed}:${plan.rowsToRemove}`);
+  for (const {doc, bytes} of prepared) {
+    fs.writeFileSync(path.join(backupDir, doc.name), bytes, {flag:"wx"});
+  }
+  for (const {doc, output} of prepared) {
+    atomicWriteJson(doc.filePath, output);
+    written.push({filePath:doc.filePath, backupPath:path.join(backupDir,doc.name)});
   }
 
   return {

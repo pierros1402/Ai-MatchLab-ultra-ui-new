@@ -127,3 +127,20 @@ test("CLI entry detection is Windows-safe and uses fileURLToPath", () => {
   assert.match(source, /fileURLToPath\(import\.meta\.url\)/u);
   assert.doesNotMatch(source, /new URL\(import\.meta\.url\)\.pathname/u);
 });
+
+test("canonical priority and preflight reject source drift before any history write",()=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),"aiml-repair-preflight-"));
+ try {
+ const history=path.join(root,"history"),results=path.join(root,"results");
+ const row={id:"cid_example",kickoff:"2026-07-01T18:00:00Z",dayKey:"2026-07-01",leagueSlug:"test.1",homeTeam:"Alpha",awayTeam:"Beta",scoreHome:1,scoreAway:0,status:"FT"};
+ writeHistory(history,[row,{...row,id:"sofa_example"}]);
+ writeResults(results,["sofa_example"]);
+ const plan=buildCurrentHistoryIdentityAliasRepairPlan({historyRoot:history,resultsRoot:results,overlay:overlayStub()});
+ assert.equal(plan.groups[0].keepId,"cid_example");
+ const first=path.join(history,"2025-2026.json"),second=path.join(history,"2026-2027.json");
+ const before=fs.readFileSync(first);
+ fs.appendFileSync(second,"\n");
+ assert.throws(()=>applyCurrentHistoryIdentityAliasRepair({plan,backupDir:path.join(root,"backup")}),/source_drift/);
+ assert.deepEqual(fs.readFileSync(first),before);
+ } finally {fs.rmSync(root,{recursive:true,force:true});}
+});
