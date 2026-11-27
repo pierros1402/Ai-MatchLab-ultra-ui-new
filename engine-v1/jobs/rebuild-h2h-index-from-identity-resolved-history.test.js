@@ -242,3 +242,31 @@ test("different fixture IDs for the same canonical source truth fail closed", ()
     /p0c_h2h_semantic_duplicate_source_truth:provider-dup:cid_dup/,
   );
 });
+
+test("semantic duplicate evidence remains fail-closed and source-bound", () => {
+  const rows = [
+    { id: "provider-dup", kickoff: "2026-07-01T18:00:00Z", leagueSlug: "test.1", homeTeam: "Alpha FC", awayTeam: "Beta FC", scoreHome: 2, scoreAway: 1 },
+    { id: "cid_dup", kickoff: "2026-07-01T18:05:00Z", leagueSlug: "test.1", homeTeam: "Alpha FC", awayTeam: "Beta FC", scoreHome: 2, scoreAway: 1 },
+  ];
+  let error;
+  try {
+    buildH2HArtifactsFromHistory({
+      overlay: overlayStub(),
+      historyDocuments: [{ rows }],
+    });
+  } catch (caught) {
+    error = caught;
+  }
+  assert.ok(error, "duplicate source events must still fail closed");
+  assert.equal(error.code, "P0C_H2H_SEMANTIC_DUPLICATE_SOURCE_TRUTH");
+  assert.equal(error.message, "p0c_h2h_semantic_duplicate_source_truth:provider-dup:cid_dup");
+  assert.equal(error.details.schema, "ai-matchlab.p0c-h2h-semantic-duplicate-evidence.v1");
+  assert.equal(error.details.previous.matchId, "provider-dup");
+  assert.equal(error.details.incoming.matchId, "cid_dup");
+  assert.equal(error.details.kickoffDeltaMs, 300000);
+  assert.equal(error.details.previous.scoreHome, 2);
+  assert.equal(error.details.incoming.scoreAway, 1);
+  assert.equal(error.details.identityApproval, false);
+  assert.equal(error.details.sourceHistoryRewriteAuthorized, false);
+  assert.equal(error.details.canonicalResultRewriteAuthorized, false);
+});
