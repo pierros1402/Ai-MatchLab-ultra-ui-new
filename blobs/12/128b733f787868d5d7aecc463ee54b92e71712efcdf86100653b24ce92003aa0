@@ -1,0 +1,205 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "svn.1",
+  "homeTeam": "Bravo",
+  "awayTeam": "Aluminij",
+  "homeWinScore": 0.384,
+  "drawScore": 0.155,
+  "awayWinScore": 0.462,
+  "over15Score": 0.624,
+  "over25Score": 0.522,
+  "over35Score": 0.477,
+  "bttsScore": 0.458,
+  "confidence": 0.854,
+  "signals": [
+    "away_edge",
+    "home_form_decay",
+    "form_influence_reduced",
+    "priors_applied",
+    "close_strength_gap",
+    "away_rest_4"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.25,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.465,
+    "expectedAwayGoals": 1.132,
+    "expectedTotalGoals": 2.597,
+    "homeStrength": 0.182,
+    "awayStrength": 0.279,
+    "homeEdge": 0.188,
+    "awayPenalty": 0.454,
+    "recency": {
+      "homeOverall": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 178,
+        "daysSinceLastMatch": 20,
+        "spanDays": 9,
+        "maxInternalGap": 5,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.19,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.474
+      },
+      "awayOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 108,
+        "daysSinceLastMatch": 4,
+        "spanDays": 26,
+        "maxInternalGap": 15,
+        "gapSeverity": "moderate",
+        "freshnessScore": 1,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.765
+      },
+      "homeSide": {
+        "sample": 5,
+        "rawSample": 2,
+        "priorSample": 178,
+        "daysSinceLastMatch": 20,
+        "spanDays": 5,
+        "maxInternalGap": 5,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.19,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.414
+      },
+      "awaySide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 108,
+        "daysSinceLastMatch": 4,
+        "spanDays": 26,
+        "maxInternalGap": 15,
+        "gapSeverity": "moderate",
+        "freshnessScore": 1,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.705
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 178,
+      "awayPriorSample": 108,
+      "leaguePriorSample": 890,
+      "matchupPriorSample": 10
+    },
+    "resolution": {
+      "homeInput": "Bravo",
+      "awayInput": "Aluminij",
+      "homeResolvedKey": "Bravo",
+      "awayResolvedKey": "Aluminij",
+      "homeResolveScore": 1,
+      "awayResolveScore": 1,
+      "matchupResolvedKey": "Aluminij::Bravo",
+      "matchupResolveScore": 0.93,
+      "homePriorKey": "svn.1::NK Bravo",
+      "awayPriorKey": "svn.1::NK Aluminij Kidričevo",
+      "matchupPriorKey": "svn.1|NK Aluminij Kidričevo|NK Bravo"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Bravo",
+      "awayTeamKey": "Aluminij",
+      "leagueKey": "svn.1",
+      "matchupKey": "Aluminij::Bravo"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": false,
+    "contextDelta": 0,
+    "contextReasons": [],
+    "aiContext": {
+      "available": true,
+      "importance": "unknown",
+      "stakes": [],
+      "pressure": []
+    }
+  },
+  "contextAdjusted": false,
+  "contextReasons": [],
+  "contextDelta": 0,
+  "band": {
+    "over15": "LOW",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0,
+      "awayPenalty": 0.025,
+      "reasons": [
+        "away_rest_4"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "svn.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 20,
+    "awayRestDays": 4,
+    "homeMatchesLast7": 0,
+    "awayMatchesLast7": 1,
+    "homeMatchesLast14": 0,
+    "awayMatchesLast14": 1,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  }
+}
