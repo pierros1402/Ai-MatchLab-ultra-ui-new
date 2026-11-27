@@ -127,3 +127,29 @@ test("CLI entry detection is Windows-safe and uses fileURLToPath", () => {
   assert.match(source, /fileURLToPath\(import\.meta\.url\)/u);
   assert.doesNotMatch(source, /new URL\(import\.meta\.url\)\.pathname/u);
 });
+
+
+test("alias repair rejects source drift and invalid removal counts before any history write", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-history-preflight-"));
+  try {
+    const history = path.join(root, "history");
+    const results = path.join(root, "results");
+    const base = { kickoff: "2026-07-01T18:00:00Z", dayKey: "2026-07-01", leagueSlug: "test.1", homeTeam: "Alpha", awayTeam: "Beta", scoreHome: 1, scoreAway: 0, status: "FT" };
+    writeHistory(history, [{ ...base, id: "provider_1" }, { ...base, id: "cid_keep" }]);
+    writeResults(results, ["provider_1"]);
+    const plan = buildCurrentHistoryIdentityAliasRepairPlan({ historyRoot: history, resultsRoot: results, overlay: overlayStub() });
+    const first = path.join(history, "2025-2026.json");
+    const second = path.join(history, "2026-2027.json");
+    const original = fs.readFileSync(first);
+    const backupDir = path.join(root, "backup");
+    assert.throws(() => applyCurrentHistoryIdentityAliasRepair({ plan: { ...plan, rowsToRemove: 2 }, backupDir }), /removal_plan_count_invalid/);
+    assert.deepEqual(fs.readFileSync(first), original);
+    assert.equal(fs.existsSync(backupDir), false);
+    fs.appendFileSync(second, "\n");
+    assert.throws(() => applyCurrentHistoryIdentityAliasRepair({ plan, backupDir }), /source_drift/);
+    assert.deepEqual(fs.readFileSync(first), original);
+    assert.equal(fs.existsSync(backupDir), false);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
