@@ -177,6 +177,12 @@ test("unmanaged canonical duplicate requires exact canonical evidence despite pr
     assert.equal(plan.groups[0].keepId, "cid_unmanaged");
     assert.equal(plan.groups[0].reason, "verified_canonical_fixture_membership");
     assert.deepEqual(plan.removals, ["provider_1"]);
+    canonical.scoreAway = 2;
+    assert.throws(() => applyCurrentHistoryIdentityAliasRepair({ plan, backupDir: path.join(root, "backup") }), /canonical_source_drift/);
+    canonical.scoreAway = 0;
+    fs.appendFileSync(path.join(results, "test.1.json"), "\n");
+    assert.throws(() => applyCurrentHistoryIdentityAliasRepair({ plan, backupDir: path.join(root, "backup") }), /results_memory_source_drift/);
+    assert.equal(fs.existsSync(path.join(root, "backup")), false);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
