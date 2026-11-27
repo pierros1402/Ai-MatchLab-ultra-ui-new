@@ -999,6 +999,30 @@ jobs:
           # cumulative build, so refresh the rollup in the same bounded step.
           node ./engine-v1/jobs/build-value-comparison-cumulative.js --write
 
+      - name: Verify and persist derived history foundations before Details recovery
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Never publish a foundation against a different source tree.
+          # The shared writer lock is held for this entire job.
+          test "$GITHUB_REF_NAME" = main
+          git diff --cached --quiet
+          DERIVED_ROOTS=(data/history-index data/h2h data/h2h-foundation data/model-priors)
+          git diff --quiet -- "${DERIVED_ROOTS[@]}"
+          test -z "$(git ls-files --others --exclude-standard -- "${DERIVED_ROOTS[@]}")"
+          node engine-v1/jobs/ensure-derived-publication-foundations.js "$DAY_KEY"
+          git add -A -- "${DERIVED_ROOTS[@]}"
+          node engine-v1/jobs/guard-staged-data-boundary.js --label=intraday-derived-foundation-checkpoint --dayKey="$DAY_KEY" --allow='^data/(history-index|h2h|h2h-foundation|model-priors)/[^\s]+\.json$' --allow-data-deletions
+          if git diff --cached --quiet; then
+            echo "Derived foundations already current."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Refresh verified derived foundations for ${DAY_KEY}"
+            git push origin HEAD:main
+          fi
+
       - name: Repair derived details after verified history preparation
         if: env.SKIP_BUILD != 'true'
         shell: bash
