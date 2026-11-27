@@ -1,0 +1,43 @@
+name: History H2H application
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/history-h2h-application.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.event.pull_request.head.ref == 'recovery/history-h2h-apply-20261127' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: npm ci --prefix engine-v1
+      - name: Apply only reviewed retained lineage
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {buildCurrentHistoryIdentityAliasRepairPlan as build,applyCurrentHistoryIdentityAliasRepair as apply} from './engine-v1/jobs/repair-current-history-identity-alias-duplicates.js';
+          const p=build();
+          assert.equal(p.ok,true);
+          assert.equal(p.rowsToRemove,12);
+          assert.ok(p.groups.every(g=>g.reason==='production_fixture_retained_lineage'));
+          const r=apply({plan:p,backupDir:process.env.RUNNER_TEMP+'/history-backup'});
+          assert.equal(r.removed,12);
+          assert.equal(build().rowsToRemove,0);
+          JS
+          node engine-v1/jobs/rebuild-h2h-foundation-from-current-history.js
+          git diff --exit-code -- data/canonical-fixtures data/final-results data/league-memory/results
+          git add -A -- data/history data/h2h data/h2h-foundation
+          git diff --cached --check
+          git diff --exit-code
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Apply reviewed history lineage and rebuild H2H foundation'
+          git push origin HEAD:refs/heads/recovery/history-h2h-apply-20261127
