@@ -37,3 +37,5 @@ import './daily-resume-invocation-coverage-advisory.test.mjs';
 
 // Exercise the planner composition in the existing source-bound CI.
 import './daily-resume-dependency-aware-advisory.test.mjs';
+
+import './daily-resume-invocation-receipt-candidate.test.mjs';
