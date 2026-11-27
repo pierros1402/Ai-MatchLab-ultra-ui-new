@@ -35,7 +35,7 @@ for(const name of fs.readdirSync(memoryRoot).filter(n=>n.endsWith('.json')).sort
   for(const row of list){const id=row.matchId||row.id;if(!id)continue;const hits=memoryById.get(id)||[];hits.push({league:name.slice(0,-5),team,row});memoryById.set(id,hits);}
  }
 }
-const classifications={},memoryProofCounts={},unmatchedByStatus={};
+const classifications={},memoryProofCounts={},unmatchedByStatus={},memoryFieldFailures={},memoryFailureExamples={};
 for(const row of rows){
  const result=resolver.findAliasCandidates(row);
  const reason=result.ok?(result.requiresIndependentIdentityApproval?'ALIAS_CANDIDATE':'EXACT_ID'):result.reason;
@@ -57,6 +57,14 @@ for(const row of rows){
   const score=(v,n)=>v!==null&&v!==undefined&&v!==''&&Number.isInteger(Number(v))&&Number(v)===Number(n);
   const day=row.dayKey||String(row.kickoff||row.kickoffUtc||'').slice(0,10);
   const exact=(hit,ha,team,opp,gf,ga)=>hit.league===row.leagueSlug&&hit.team===team&&hit.row.opp===opp&&hit.row.date===day&&hit.row.ha===ha&&score(hit.row.gf,gf)&&score(hit.row.ga,ga);
+  for(const hit of sourceMemory){
+   const h=hit.row.ha==='H',a=hit.row.ha==='A';
+   const checks={league:hit.league===row.leagueSlug,date:hit.row.date===day,orientation:h||a,team:hit.team===(h?row.homeTeam:row.awayTeam),opponent:hit.row.opp===(h?row.awayTeam:row.homeTeam),gf:score(hit.row.gf,h?row.scoreHome:row.scoreAway),ga:score(hit.row.ga,h?row.scoreAway:row.scoreHome)};
+   for(const [key,ok] of Object.entries(checks))if(!ok){
+    memoryFieldFailures[key]=(memoryFieldFailures[key]||0)+1;
+    if(!memoryFailureExamples[key])memoryFailureExamples[key]={history:row,memory:hit,expectedDay:day};
+   }
+  }
   const home=sourceMemory.filter(h=>exact(h,'H',row.homeTeam,row.awayTeam,row.scoreHome,row.scoreAway));
   const away=sourceMemory.filter(h=>exact(h,'A',row.awayTeam,row.homeTeam,row.scoreAway,row.scoreHome));
   const memoryProof=sourceMemory.length===0?'NO_MEMORY':sourceMemory.length===2&&home.length===1&&away.length===1?'EXACT_RECIPROCAL_MEMORY':'MEMORY_REVIEW_REQUIRED';
@@ -64,6 +72,6 @@ for(const row of rows){
   candidates.push({row,result,sourceMemory,targetMemory,targetHistory,classification,memoryProof,identityApproval:false});
  }else if(reason==='AMBIGUOUS_EVENT'||reason==='SCORE_CONFLICT')candidates.push({row,result});
 }
-const report={schema:'aiml.history-event-alias-audit.v1',historyRows:rows.length,verifiedEventCount:resolver.count,counts,invalidReasons,classifications,memoryProofCounts,unmatchedByStatus,candidates,writeAuthorized:false};
+const report={schema:'aiml.history-event-alias-audit.v1',historyRows:rows.length,verifiedEventCount:resolver.count,counts,invalidReasons,classifications,memoryProofCounts,unmatchedByStatus,memoryFieldFailures,memoryFailureExamples,candidates,writeAuthorized:false};
 if(process.argv[2])fs.writeFileSync(process.argv[2],JSON.stringify(report,null,2)+'\n',{flag:'wx'});
 console.log(JSON.stringify({...report,candidates:undefined}));
