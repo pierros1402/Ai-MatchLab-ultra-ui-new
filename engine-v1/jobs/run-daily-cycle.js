@@ -75,9 +75,11 @@ import { resolveDataPath } from "../storage/data-root.js";
 import { rebuildH2HFoundationFromCurrentHistory } from "./rebuild-h2h-foundation-from-current-history.js";
 import {
   validateH2HFoundationSync,
+  validateHistoryIndexFoundationSync,
   validateModelPriorsFoundationSync
 } from "../core/derived-history-foundation.js";
 import { auditStandingsFoundation } from "./audit-standings-foundation.js";
+import { buildCurrentSeasonIndexes } from "./build-current-season-indexes.js";
 import { buildModelPriors } from "./build-model-priors.js";
 
 export function ensureH2HFoundationBeforeDetails({
@@ -1400,6 +1402,19 @@ export async function runDailyCycle(options = {}) {
     readinessOk: fixtureAcquisitionReadinessSummary.ok
   });
 
+  const valueFoundationSeason = resolveSeasonFromDay(dayKey);
+  if (!validateHistoryIndexFoundationSync(valueFoundationSeason).ok) {
+    const rebuilt = await buildCurrentSeasonIndexes({ season: valueFoundationSeason, dayKey });
+    if (rebuilt?.ok !== true || !validateHistoryIndexFoundationSync(valueFoundationSeason).ok) {
+      throw new Error("value_history_index_foundation_not_ready");
+    }
+  }
+  if (!validateModelPriorsFoundationSync(valueFoundationSeason).ok) {
+    const rebuilt = await buildModelPriors({ targetSeason: valueFoundationSeason });
+    if (rebuilt?.ok !== true || !validateModelPriorsFoundationSync(valueFoundationSeason).ok) {
+      throw new Error("value_model_priors_foundation_not_ready");
+    }
+  }
   valueBuild = await buildValueDay(dayKey, { rebuild: true });
 
   // Preserve the first production observation before the remaining cycle can

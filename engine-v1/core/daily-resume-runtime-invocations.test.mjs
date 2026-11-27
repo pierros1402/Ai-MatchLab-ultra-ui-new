@@ -4,12 +4,12 @@ import {readFileSync} from 'node:fs';
 import {invocationContract,verifyInvocationSource,invocationKey} from './daily-resume-runtime-invocations.mjs';
 const source=readFileSync(new URL('../jobs/run-daily-cycle.js',import.meta.url),'utf8');
 const census=JSON.parse(readFileSync(new URL('./daily-resume-real-producer-census.json',import.meta.url),'utf8'));
-test('all 13 source-bound calls, no runtime authority',()=>{
+test('all 14 source-bound calls, no runtime authority',()=>{
  const result=verifyInvocationSource(source,census);
- assert.equal(result.invocationCount,13);
+ assert.equal(result.invocationCount,14);
  assert.equal(result.sourceBound,true);
  for(const field of ['runtimeObserved','artifactOwnershipVerified','resumeAuthorized','publicationAuthorized']) assert.equal(result[field],false);
- assert.equal(new Set(invocationContract.map(x=>x.id)).size,13);
+ assert.equal(new Set(invocationContract.map(x=>x.id)).size,14);
 });
 test('source mutation fails closed',()=>assert.throws(()=>verifyInvocationSource(source+'\n',census),/source_blob_mismatch/));
 test('missing and reordered census rejected',()=>{
