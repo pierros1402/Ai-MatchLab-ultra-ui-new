@@ -10,3 +10,15 @@ test('native event proof requires the existing canonical/final validator and exa
  assert.equal(buildSourceBoundHistoryEventIdentities([{...entry,final:{...final,scoreHome:9}}]).count,0);
  assert.equal(buildSourceBoundHistoryEventIdentities([{...entry,sourceSha256:'bad'}]).count,0);
 });
+
+test('alias discovery is read-only and requires independent approval for different IDs',()=>{
+ const resolver=buildSourceBoundHistoryEventIdentities([entry]);
+ const alias={...row,id:'sofa_123',status:'FT'};
+ const result=resolver.findAliasCandidates(alias);
+ assert.equal(result.ok,true);assert.equal(result.canonicalId,'cid_test');assert.equal(result.requiresIndependentIdentityApproval,true);
+ assert.equal(resolver.resolveEvent(alias).ok,false);
+ for(const patch of [{scoreHome:9},{scoreAway:null},{status:'NS'},{homeTeam:'Other'},{kickoff:'2026-09-01T19:00Z'},{leagueSlug:'eng.2'},{homeTeam:'Away',awayTeam:'Home'}])assert.equal(resolver.findAliasCandidates({...alias,...patch}).ok,false);
+ const other={...entry,canonical:{...canonical,canonicalId:'cid_other'},final:{...final,matchId:'cid_other'}};
+ assert.equal(buildSourceBoundHistoryEventIdentities([entry,other]).findAliasCandidates(alias).reason,'AMBIGUOUS_EVENT');
+ assert.equal(buildSourceBoundHistoryEventIdentities([entry,entry]).resolveEvent(row).ok,false);
+});
