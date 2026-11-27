@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'engine-v1/jobs/audit-source-bound-history-event-aliases.js'
+      - 'engine-v1/jobs/classify-history-alias-review-queue.js'
+      - 'engine-v1/jobs/classify-history-alias-review-queue.test.js'
       - 'engine-v1/core/source-bound-history-event-identities.js'
       - 'engine-v1/core/source-bound-history-event-identities.test.js'
       - '.github/workflows/history-event-alias-audit.yml'
@@ -22,9 +24,14 @@ jobs:
       - run: npm ci --prefix engine-v1
       - run: node --check engine-v1/jobs/audit-source-bound-history-event-aliases.js
       - run: node engine-v1/jobs/audit-source-bound-history-event-aliases.js "$RUNNER_TEMP/history-event-alias-audit.json"
+      - run: node --test engine-v1/jobs/classify-history-alias-review-queue.test.js
+      - run: node engine-v1/jobs/classify-history-alias-review-queue.js "$RUNNER_TEMP/history-event-alias-audit.json" "$RUNNER_TEMP/history-alias-review-queue.json"
       - run: git diff --exit-code
+      - run: test -z "$(git status --porcelain=v1 --untracked-files=all)"
       - uses: actions/upload-artifact@v4
         with:
           name: history-event-alias-audit
-          path: ${{ runner.temp }}/history-event-alias-audit.json
+          path: |
+            ${{ runner.temp }}/history-event-alias-audit.json
+            ${{ runner.temp }}/history-alias-review-queue.json
           if-no-files-found: error
