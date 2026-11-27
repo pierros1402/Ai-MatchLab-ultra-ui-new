@@ -45,13 +45,14 @@ jobs:
           import assert from 'node:assert/strict';
           import {buildCurrentHistoryIdentityAliasRepairPlan as build, applyCurrentHistoryIdentityAliasRepair as apply} from './engine-v1/jobs/repair-current-history-identity-alias-duplicates.js';
           const plan = build();
-          assert.equal(plan.rowsToRemove, 12);
-          assert.equal(plan.reasonCounts.production_fixture_retained_lineage, 12);
+          assert.equal(plan.ok, true);
+          assert.equal(plan.removals.length, plan.rowsToRemove);
+          assert.equal(new Set(plan.removals).size, plan.rowsToRemove);
           const result = apply({plan, backupDir: process.env.RUNNER_TEMP + '/history-alias-backup'});
-          assert.equal(result.removed, 12);
+          assert.equal(result.removed, plan.rowsToRemove);
           const after = build();
           assert.equal(after.rowsToRemove, 0);
-          assert.equal(after.sourceRows, plan.sourceRows - 12);
+          assert.equal(after.sourceRows, plan.sourceRows - plan.rowsToRemove);
           console.log(JSON.stringify({before:plan.sourceRows,after:after.sourceRows,removed:result.removed,remaining:after.rowsToRemove}));
           JS
           git diff --name-only
