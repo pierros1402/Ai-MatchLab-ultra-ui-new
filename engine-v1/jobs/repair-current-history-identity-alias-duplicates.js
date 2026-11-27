@@ -95,17 +95,19 @@ function chooseRetainedId(groupRows, sourceById, resultMemoryIds, overlay) {
     throw new Error(`current_history_duplicate_multiple_retained_lineage:${retained.map(x => x.id).join(",")}`);
   }
 
+  // A repository-shaped ID is not itself proof of canonical membership.
+  // Never discard it in favor of a provider memory ID without reviewed lineage.
+  const canonicalIds = enriched.filter(x => x.repositoryCanonicalId);
+  if (canonicalIds.length) {
+    throw new Error(`current_history_duplicate_canonical_membership_required:${canonicalIds.map(x => x.id).join(",")}`);
+  }
+
   const inResults = enriched.filter(x => x.inResultsMemory);
   if (inResults.length === 1) {
     return { keepId: inResults[0].id, reason: "clean_results_memory_retained_id", enriched };
   }
   if (inResults.length > 1) {
     throw new Error(`current_history_duplicate_multiple_results_retained_ids:${inResults.map(x => x.id).join(",")}`);
-  }
-
-  const canonicalIds = enriched.filter(x => x.repositoryCanonicalId);
-  if (canonicalIds.length === 1) {
-    return { keepId: canonicalIds[0].id, reason: "repository_canonical_id_over_provider_id", enriched };
   }
 
   throw new Error(`current_history_duplicate_retention_ambiguous:${enriched.map(x => x.id).join(",")}`);
