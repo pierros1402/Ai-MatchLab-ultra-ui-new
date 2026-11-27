@@ -1,0 +1,29 @@
+name: History alias real data preflight
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/history-alias-real-preflight.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: npm ci --prefix engine-v1
+      - name: Read-only repair plan
+        run: node engine-v1/jobs/repair-current-history-identity-alias-duplicates.js --report "$RUNNER_TEMP/history-alias-plan.json"
+      - name: Verify no tracked changes
+        run: git diff --exit-code
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: history-alias-preflight
+          path: ${{ runner.temp }}/history-alias-plan.json
+          if-no-files-found: warn
