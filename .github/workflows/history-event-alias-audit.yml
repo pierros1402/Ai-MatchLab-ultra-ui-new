@@ -1,0 +1,28 @@
+name: History event alias real audit
+on:
+  pull_request:
+    paths:
+      - 'engine-v1/jobs/audit-source-bound-history-event-aliases.js'
+      - '.github/workflows/history-event-alias-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: npm ci --prefix engine-v1
+      - run: node --check engine-v1/jobs/audit-source-bound-history-event-aliases.js
+      - run: node engine-v1/jobs/audit-source-bound-history-event-aliases.js "$RUNNER_TEMP/history-event-alias-audit.json"
+      - run: git diff --exit-code
+      - uses: actions/upload-artifact@v4
+        with:
+          name: history-event-alias-audit
+          path: ${{ runner.temp }}/history-event-alias-audit.json
+          if-no-files-found: error
