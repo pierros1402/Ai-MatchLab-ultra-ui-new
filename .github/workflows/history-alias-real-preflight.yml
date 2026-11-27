@@ -21,6 +21,22 @@ jobs:
         run: node engine-v1/jobs/repair-current-history-identity-alias-duplicates.js --report "$RUNNER_TEMP/history-alias-plan.json"
       - name: Verify no tracked changes
         run: git diff --exit-code
+      - name: Simulate repair and verify fixed point
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {buildCurrentHistoryIdentityAliasRepairPlan as build, applyCurrentHistoryIdentityAliasRepair as apply} from './engine-v1/jobs/repair-current-history-identity-alias-duplicates.js';
+          const plan = build();
+          assert.equal(plan.rowsToRemove, 12);
+          assert.equal(plan.reasonCounts.production_fixture_retained_lineage, 12);
+          const result = apply({plan, backupDir: process.env.RUNNER_TEMP + '/history-alias-backup'});
+          assert.equal(result.removed, 12);
+          const after = build();
+          assert.equal(after.rowsToRemove, 0);
+          assert.equal(after.sourceRows, plan.sourceRows - 12);
+          console.log(JSON.stringify({before:plan.sourceRows,after:after.sourceRows,removed:result.removed,remaining:after.rowsToRemove}));
+          JS
+          git diff --name-only
       - uses: actions/upload-artifact@v4
         if: always()
         with:
