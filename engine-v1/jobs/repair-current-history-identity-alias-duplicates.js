@@ -210,6 +210,7 @@ export function buildCurrentHistoryIdentityAliasRepairPlan({
       removeIds,
       reason: selection.reason,
       candidates: selection.enriched,
+      sourceEvidence: group.rows.map(row => ({ id: clean(row.id), row: clone(sourceById.get(clean(row.id)).row) })),
     });
     removals.push(...removeIds);
   }
@@ -250,6 +251,7 @@ export function applyCurrentHistoryIdentityAliasRepair({
     throw new Error("current_history_identity_alias_backup_dir_required");
   }
   const removalSet = new Set(plan.removals);
+  const retainedEvidence = new Map(plan.groups.map(group => [group.keepId, group.sourceEvidence]));
   let removed = 0;
   const written = [];
   const pending = [];
@@ -265,6 +267,15 @@ export function applyCurrentHistoryIdentityAliasRepair({
     for (const day of output.days || []) {
       const before = (day.rows || []).length;
       day.rows = (day.rows || []).filter(row => !removalSet.has(clean(row?.id || row?.matchId)));
+      for (const row of day.rows) {
+        const evidence = retainedEvidence.get(clean(row.id || row.matchId));
+        if (evidence) {
+          const prior = row.historyIdentityAliasEvidence || [];
+          if (!Array.isArray(prior)) throw new Error("current_history_alias_provenance_invalid");
+          const merged = new Map([...prior, ...evidence].map(item => [JSON.stringify(item), item]));
+          row.historyIdentityAliasEvidence = [...merged.values()];
+        }
+      }
       const delta = before - day.rows.length;
       if (delta) {
         removed += delta;
@@ -283,10 +294,23 @@ export function applyCurrentHistoryIdentityAliasRepair({
   }
   fs.mkdirSync(backupDir, { recursive: true });
   for (const item of pending) fs.writeFileSync(item.backupPath, item.raw, { flag: "wx" });
-  for (const item of pending) {
-    if (hashBytes(fs.readFileSync(item.doc.filePath)) !== item.doc.sha256) throw new Error(`current_history_identity_alias_source_drift:${item.doc.name}`);
-    atomicWriteJson(item.doc.filePath, item.output);
-    written.push({ filePath: item.doc.filePath, backupPath: item.backupPath });
+  const applied = [];
+  try {
+    for (const item of pending) {
+      if (hashBytes(fs.readFileSync(item.doc.filePath)) !== item.doc.sha256) throw new Error(`current_history_identity_alias_source_drift:${item.doc.name}`);
+      atomicWriteJson(item.doc.filePath, item.output);
+      applied.push(item);
+      written.push({ filePath: item.doc.filePath, backupPath: item.backupPath });
+    }
+  } catch (error) {
+    for (const item of applied.reverse()) {
+      const expected = hashBytes(Buffer.from(`${JSON.stringify(item.output, null, 2)}\n`, "utf8"));
+      if (hashBytes(fs.readFileSync(item.doc.filePath)) !== expected) throw new Error(`current_history_alias_rollback_conflict:${item.doc.name}`, { cause: error });
+      const temp = `${item.doc.filePath}.rollback-${process.pid}`;
+      fs.writeFileSync(temp, item.raw, { flag: "wx" });
+      fs.renameSync(temp, item.doc.filePath);
+    }
+    throw error;
   }
 
   return {
