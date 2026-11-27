@@ -25,6 +25,20 @@ jobs:
         run: |
           git grep -l -i -E 'sofa_16034043|cid_isr2_.*kfarsaba.*petah' -- data/history data/league-memory/results data/canonical-fixtures/2026-05-15 data/final-results/2026-05-15 > "$RUNNER_TEMP/israel-source-paths.txt" || test "$?" = 1
           cat "$RUNNER_TEMP/israel-source-paths.txt"
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const ids = new Set(['sofa_16034043','cid_isr2_hapoelkfarsaba_maccabipetahtikva_20260515']);
+          const paths = fs.readFileSync(process.env.RUNNER_TEMP+'/israel-source-paths.txt','utf8').trim().split('\n').filter(Boolean);
+          const hits = [];
+          function walk(value, file, location) {
+            if (!value || typeof value !== 'object') return;
+            if (!Array.isArray(value) && ['id','matchId','canonicalId','fixtureId'].some(k=>ids.has(String(value[k])))) hits.push({file,location,row:value});
+            for (const [k,v] of Object.entries(value)) if(v && typeof v === 'object') walk(v,file,location+'/'+k);
+          }
+          for(const file of paths) walk(JSON.parse(fs.readFileSync(file,'utf8')),file,'');
+          fs.writeFileSync(process.env.RUNNER_TEMP+'/israel-source-rows.json',JSON.stringify(hits,null,2));
+          console.log(JSON.stringify(hits));
+          JS
       - name: Simulate repair and verify fixed point
         run: |
           node --input-type=module <<'JS'
@@ -48,4 +62,5 @@ jobs:
           path: |
             ${{ runner.temp }}/history-alias-plan.json
             ${{ runner.temp }}/israel-source-paths.txt
+            ${{ runner.temp }}/israel-source-rows.json
           if-no-files-found: warn
