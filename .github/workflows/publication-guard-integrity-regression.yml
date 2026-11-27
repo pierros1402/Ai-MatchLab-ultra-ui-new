@@ -1,0 +1,33 @@
+name: Publication guard integrity regression
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/current-day-publication-guard.yml'
+      - '.github/workflows/publication-watchdog.yml'
+      - '.github/workflows/publication-guard-integrity-regression.yml'
+      - 'engine-v1/jobs/sync-deploy-snapshot-release.test.js'
+      - 'engine-v1/jobs/sync-deploy-snapshot-from-github.js'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  release-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: Run existing production release validator regressions
+        run: node --test engine-v1/jobs/sync-deploy-snapshot-release.test.js
+      - name: Verify both recovery controllers use the production validator
+        run: |
+          node --input-type=module -e '
+            import fs from "node:fs";
+            import assert from "node:assert/strict";
+            for(const name of ["current-day-publication-guard","publication-watchdog"]){
+              const src=fs.readFileSync(".github/workflows/"+name+".yml","utf8");
+              assert.ok(src.includes("await validateStagedRelease("),name);
+              assert.ok(src.includes("sync-deploy-snapshot-from-github.js"),name);
+            }
+          '

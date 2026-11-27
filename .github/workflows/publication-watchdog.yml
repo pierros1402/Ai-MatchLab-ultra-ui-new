@@ -112,6 +112,7 @@ jobs:
                 DAY_KEY="${TARGET_DAY}" node --input-type=module -e '
                   import fs from "node:fs";
                   import { validateDeploySnapshotManifest } from "./engine-v1/core/deploy-snapshot-release-contract.js";
+                  import { validateStagedRelease } from "./engine-v1/jobs/sync-deploy-snapshot-from-github.js";
                   const day=process.env.DAY_KEY;
                   const latest=JSON.parse(fs.readFileSync("data/deploy-snapshots/latest.json","utf8"));
                   const manifest=JSON.parse(fs.readFileSync(`data/deploy-snapshots/${day}/manifest.json`,"utf8"));
@@ -129,6 +130,7 @@ jobs:
                     }));
                     process.exit(3);
                   }
+                  await validateStagedRelease(`data/deploy-snapshots/${day}`,manifest);
                   process.stdout.write(String(manifest.hash));
                 '
               )"
