@@ -38,6 +38,10 @@ function atomicWriteJson(filePath, value) {
   fs.renameSync(tempPath, filePath);
 }
 
+function jsonDirectoryManifest(dir) {
+  return fs.readdirSync(dir).filter(name => name.endsWith(".json")).sort().map(name => ({ name, sha256: hashBytes(fs.readFileSync(path.join(dir, name))) }));
+}
+
 function listResultMemoryIds(resultsDir) {
   const ids = new Set();
   for (const name of fs.readdirSync(resultsDir).filter(name => name.endsWith(".json")).sort()) {
@@ -191,13 +195,22 @@ export function buildCurrentHistoryIdentityAliasRepairPlan({
     throw new Error("current_history_identity_alias_duplicate_examples_incomplete");
   }
 
+  const resultsManifest = jsonDirectoryManifest(resultsRoot);
   const resultMemoryIds = listResultMemoryIds(resultsRoot);
+  const canonicalEvidence = new Map();
+  const boundCanonicalRows = day => {
+    if (!canonicalEvidence.has(day)) {
+      const rows = canonicalRowsForDay(day);
+      canonicalEvidence.set(day, { rows: clone(rows), sha256: hashBytes(JSON.stringify(rows)) });
+    }
+    return clone(canonicalEvidence.get(day).rows);
+  };
   const removals = [];
   const groups = [];
   const reasonCounts = {};
 
   for (const group of audit.semantic.examples.semanticDuplicates) {
-    const selection = chooseRetainedId(group.rows, sourceById, resultMemoryIds, overlay, canonicalRowsForDay);
+    const selection = chooseRetainedId(group.rows, sourceById, resultMemoryIds, overlay, boundCanonicalRows);
     const removeIds = group.rows.map(row => clean(row.id)).filter(id => id !== selection.keepId);
     if (removeIds.length !== group.rows.length - 1) {
       throw new Error(`current_history_identity_alias_removal_count_invalid:${selection.keepId}`);
@@ -225,6 +238,9 @@ export function buildCurrentHistoryIdentityAliasRepairPlan({
     ok: true,
     historyRoot,
     resultsRoot,
+    resultsManifest,
+    canonicalEvidence,
+    canonicalRowsForDay,
     sourceRows: transformed.length,
     duplicateGroups: audit.semantic.duplicateGroups,
     rowsToRemove: removals.length,
@@ -291,6 +307,10 @@ export function applyCurrentHistoryIdentityAliasRepair({
 
   for (const doc of plan.documents) {
     if (hashBytes(fs.readFileSync(doc.filePath)) !== doc.sha256) throw new Error(`current_history_identity_alias_source_drift:${doc.name}`);
+  }
+  if (JSON.stringify(jsonDirectoryManifest(plan.resultsRoot)) !== JSON.stringify(plan.resultsManifest)) throw new Error("current_history_results_memory_source_drift");
+  for (const [day, evidence] of plan.canonicalEvidence) {
+    if (hashBytes(JSON.stringify(plan.canonicalRowsForDay(day))) !== evidence.sha256) throw new Error(`current_history_canonical_source_drift:${day}`);
   }
   fs.mkdirSync(backupDir, { recursive: true });
   for (const item of pending) fs.writeFileSync(item.backupPath, item.raw, { flag: "wx" });
