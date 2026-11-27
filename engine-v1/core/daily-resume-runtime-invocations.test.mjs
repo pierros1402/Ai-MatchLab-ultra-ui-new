@@ -41,3 +41,5 @@ import './daily-resume-dependency-aware-advisory.test.mjs';
 import './daily-resume-invocation-receipt-candidate.test.mjs';
 
 import './daily-resume-invocation-manifest-byte-audit.test.mjs';
+
+import './daily-resume-runtime-witness-attestation.test.mjs';
