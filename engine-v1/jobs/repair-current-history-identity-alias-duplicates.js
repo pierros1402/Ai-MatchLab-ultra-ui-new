@@ -197,11 +197,15 @@ export function buildCurrentHistoryIdentityAliasRepairPlan({
 
   const resultsManifest = jsonDirectoryManifest(resultsRoot);
   const resultMemoryIds = listResultMemoryIds(resultsRoot);
+  if (JSON.stringify(jsonDirectoryManifest(resultsRoot)) !== JSON.stringify(resultsManifest)) throw new Error("current_history_results_memory_source_drift");
   const canonicalEvidence = new Map();
   const boundCanonicalRows = day => {
     if (!canonicalEvidence.has(day)) {
+      const dir = resolveDataPath("canonical-fixtures", day);
+      const manifest = canonicalRowsForDay === readCanonicalRowsForDay && fs.existsSync(dir) ? jsonDirectoryManifest(dir) : null;
       const rows = canonicalRowsForDay(day);
-      canonicalEvidence.set(day, { rows: clone(rows), sha256: hashBytes(JSON.stringify(rows)) });
+      if (manifest && JSON.stringify(jsonDirectoryManifest(dir)) !== JSON.stringify(manifest)) throw new Error(`current_history_canonical_source_drift:${day}`);
+      canonicalEvidence.set(day, { rows: clone(rows), sha256: hashBytes(JSON.stringify(rows)), manifest, dir });
     }
     return clone(canonicalEvidence.get(day).rows);
   };
@@ -310,6 +314,7 @@ export function applyCurrentHistoryIdentityAliasRepair({
   }
   if (JSON.stringify(jsonDirectoryManifest(plan.resultsRoot)) !== JSON.stringify(plan.resultsManifest)) throw new Error("current_history_results_memory_source_drift");
   for (const [day, evidence] of plan.canonicalEvidence) {
+    if (evidence.manifest && JSON.stringify(jsonDirectoryManifest(evidence.dir)) !== JSON.stringify(evidence.manifest)) throw new Error(`current_history_canonical_source_drift:${day}`);
     if (hashBytes(JSON.stringify(plan.canonicalRowsForDay(day))) !== evidence.sha256) throw new Error(`current_history_canonical_source_drift:${day}`);
   }
   fs.mkdirSync(backupDir, { recursive: true });
