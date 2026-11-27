@@ -62,3 +62,18 @@ test("bounded detail recovery verifies results, preserves frozen bytes, and roll
     }
   }
 });
+
+test('missing publication inputs stop recovery before details audit or writes', async () => {
+  const day = '2099-01-02';
+  const root = resolveDataPath('deploy-snapshots', day);
+  assert.equal(fs.existsSync(root), false);
+  for (const apply of [false, true]) {
+    const result = await recoverValueDataDay(day, { apply, dependencies: {
+      audit() { assert.fail('must preflight before loading details'); },
+    } });
+    assert.equal(result.reason, 'PUBLICATION_INPUTS_MISSING');
+    assert.deepEqual(result.missingFiles, ['manifest.json', 'fixtures.json']);
+    assert.equal(result.mutation, false);
+    assert.equal(fs.existsSync(root), false);
+  }
+});
