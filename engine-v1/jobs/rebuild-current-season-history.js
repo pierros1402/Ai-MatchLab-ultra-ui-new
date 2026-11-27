@@ -12,6 +12,7 @@ import {
 
 import { LEAGUE_NAME_MAP } from "../../workers/_shared/leagues-registry.js";
 import { currentSeason } from "../core/season.js";
+import { auditHistoryRows } from "./audit-history-semantic-integrity.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -525,6 +526,17 @@ async function rebuildCurrentSeason() {
           continue;
         }
 
+        const candidates = dayBucket.rows.filter(old => old.leagueSlug === row.leagueSlug &&
+          Math.abs(Number(old.kickoff_ms ?? Date.parse(old.kickoff)) - row.kickoff_ms) <= 21600000);
+        const audit = auditHistoryRows([...candidates, row]);
+        const before = auditHistoryRows(candidates);
+        if (["duplicateGroups", "duplicateExtraRecords", "scoreConflictGroups", "flippedOrientationGroups", "crossOperationalDayGroups"]
+          .some(key => audit.semantic[key] > before.semantic[key])) {
+          report.failures.push({ dayKey, slug, matchId: row.id, reason: "history_semantic_admission_hold" });
+          report.ok = false;
+          continue;
+        }
+
         daySeen.add(row.id);
         globalSeen.add(row.id);
         dayBucket.rows.push(row);
@@ -561,7 +573,7 @@ async function rebuildCurrentSeason() {
   await flushProgress(history, report);
 
   return {
-    ok: true,
+    ok: report.ok !== false,
     outFile: OUT_FILE,
     reportFile: REPORT_FILE,
     season: SEASON,
