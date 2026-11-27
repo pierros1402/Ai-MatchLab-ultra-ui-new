@@ -56,10 +56,11 @@ for(const row of rows){
   classifications[classification]=(classifications[classification]||0)+1;
   const score=(v,n)=>v!==null&&v!==undefined&&v!==''&&Number.isInteger(Number(v))&&Number(v)===Number(n);
   const day=row.dayKey||String(row.kickoff||row.kickoffUtc||'').slice(0,10);
-  const exact=(hit,ha,team,opp,gf,ga)=>hit.league===row.leagueSlug&&hit.team===team&&hit.row.opp===opp&&hit.row.date===day&&hit.row.ha===ha&&score(hit.row.gf,gf)&&score(hit.row.ga,ga);
+  const sameKickoff=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(value)&&Number.isFinite(Date.parse(value))&&Date.parse(value)===(Number(row.kickoff_ms)||Date.parse(row.kickoff||row.kickoffUtc));
+  const exact=(hit,ha,team,opp,gf,ga)=>hit.league===row.leagueSlug&&hit.team===team&&hit.row.opp===opp&&sameKickoff(hit.row.date)&&hit.row.ha===ha&&score(hit.row.gf,gf)&&score(hit.row.ga,ga);
   for(const hit of sourceMemory){
    const h=hit.row.ha==='H',a=hit.row.ha==='A';
-   const checks={league:hit.league===row.leagueSlug,date:hit.row.date===day,orientation:h||a,team:hit.team===(h?row.homeTeam:row.awayTeam),opponent:hit.row.opp===(h?row.awayTeam:row.homeTeam),gf:score(hit.row.gf,h?row.scoreHome:row.scoreAway),ga:score(hit.row.ga,h?row.scoreAway:row.scoreHome)};
+   const checks={league:hit.league===row.leagueSlug,date:sameKickoff(hit.row.date),orientation:h||a,team:hit.team===(h?row.homeTeam:row.awayTeam),opponent:hit.row.opp===(h?row.awayTeam:row.homeTeam),gf:score(hit.row.gf,h?row.scoreHome:row.scoreAway),ga:score(hit.row.ga,h?row.scoreAway:row.scoreHome)};
    for(const [key,ok] of Object.entries(checks))if(!ok){
     memoryFieldFailures[key]=(memoryFieldFailures[key]||0)+1;
     if(!memoryFailureExamples[key])memoryFailureExamples[key]={history:row,memory:hit,expectedDay:day};
