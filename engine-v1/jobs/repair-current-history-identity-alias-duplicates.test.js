@@ -59,6 +59,12 @@ test("production retained lineage wins deterministic identity-alias duplicate re
     assert.equal(applied.removed, 1);
     const after = JSON.parse(fs.readFileSync(path.join(history, "2025-2026.json"), "utf8"));
     assert.deepEqual(after.days[0].rows.map(x => x.id), ["cid_keep"]);
+    const retained = after.days[0].rows[0];
+    assert.deepEqual(retained.historyIdentityAliasEvidence.map(x => x.id).sort(), ["cid_keep", "provider_1"]);
+    assert.equal(retained.scoreHome, 1);
+    assert.equal(retained.scoreAway, 0);
+    assert.equal(retained.status, "FT");
+    assert.equal(retained.historyIdentityAliasEvidence.find(x => x.id === "provider_1").row.scoreHome, 1);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
