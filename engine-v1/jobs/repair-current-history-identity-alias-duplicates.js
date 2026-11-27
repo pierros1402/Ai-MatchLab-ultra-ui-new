@@ -69,7 +69,18 @@ function canonicalizedHistoryView(row, overlay) {
   };
 }
 
-function chooseRetainedId(groupRows, sourceById, resultMemoryIds, overlay) {
+function readCanonicalRowsForDay(day) {
+  if (!/^\d{4}-\d{2}-\d{2}$/u.test(day)) throw new Error("current_history_canonical_day_invalid");
+  const dir = resolveDataPath("canonical-fixtures", day);
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir).filter(name => name.endsWith(".json")).sort().flatMap(name => {
+    const payload = readJson(path.join(dir, name));
+    if (!Array.isArray(payload.fixtures)) throw new Error("current_history_canonical_partition_invalid");
+    return payload.fixtures.map(row => ({ ...row, leagueSlug: row.leagueSlug || path.basename(name, ".json") }));
+  });
+}
+
+function chooseRetainedId(groupRows, sourceById, resultMemoryIds, overlay, canonicalRowsForDay) {
   const enriched = groupRows.map(example => {
     const id = clean(example?.id);
     const source = sourceById.get(id);
@@ -98,6 +109,29 @@ function chooseRetainedId(groupRows, sourceById, resultMemoryIds, overlay) {
   // A repository-shaped ID is not itself proof of canonical membership.
   // Never discard it in favor of a provider memory ID without reviewed lineage.
   const canonicalIds = enriched.filter(x => x.repositoryCanonicalId);
+  if (canonicalIds.length === 1) {
+    const candidate = canonicalIds[0];
+    const source = sourceById.get(candidate.id).row;
+    const day = clean(source.dayKey);
+    const matches = canonicalRowsForDay(day).filter(row =>
+      clean(row.canonicalId) === candidate.id &&
+      clean(row.leagueSlug) === clean(source.leagueSlug) &&
+      Number.isFinite(Date.parse(source.kickoff)) &&
+      Date.parse(row.kickoffUtc || row.kickoff) === Date.parse(source.kickoff) &&
+      row.scoreHome != null && row.scoreAway != null &&
+      Number(row.scoreHome) === Number(source.scoreHome) &&
+      Number(row.scoreAway) === Number(source.scoreAway) &&
+      clean(row.status).toUpperCase() === "FT" &&
+      clean(source.status).toUpperCase() === "FT"
+    );
+    if (matches.length === 1) {
+      const expected = canonicalizedHistoryView(source, overlay);
+      const actual = canonicalizedHistoryView({ ...matches[0], id: candidate.id, matchId: candidate.id }, overlay);
+      if (expected.homeTeam === actual.homeTeam && expected.awayTeam === actual.awayTeam) {
+        return { keepId: candidate.id, reason: "verified_canonical_fixture_membership", enriched };
+      }
+    }
+  }
   if (canonicalIds.length) {
     throw new Error(`current_history_duplicate_canonical_membership_required:${canonicalIds.map(x => x.id).join(",")}`);
   }
@@ -117,6 +151,7 @@ export function buildCurrentHistoryIdentityAliasRepairPlan({
   historyRoot = resolveDataPath("history"),
   resultsRoot = resolveDataPath("league-memory", "results"),
   overlay = createProductionEvidenceIdentityOverlay(),
+  canonicalRowsForDay = readCanonicalRowsForDay,
 } = {}) {
   const documents = HISTORY_FILES.map(name => ({
     name,
@@ -162,7 +197,7 @@ export function buildCurrentHistoryIdentityAliasRepairPlan({
   const reasonCounts = {};
 
   for (const group of audit.semantic.examples.semanticDuplicates) {
-    const selection = chooseRetainedId(group.rows, sourceById, resultMemoryIds, overlay);
+    const selection = chooseRetainedId(group.rows, sourceById, resultMemoryIds, overlay, canonicalRowsForDay);
     const removeIds = group.rows.map(row => clean(row.id)).filter(id => id !== selection.keepId);
     if (removeIds.length !== group.rows.length - 1) {
       throw new Error(`current_history_identity_alias_removal_count_invalid:${selection.keepId}`);
