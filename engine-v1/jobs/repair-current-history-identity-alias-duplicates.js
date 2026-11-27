@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -115,6 +116,7 @@ export function buildCurrentHistoryIdentityAliasRepairPlan({
     name,
     filePath: path.join(historyRoot, name),
     payload: readJson(path.join(historyRoot, name)),
+    sourceSha256: createHash("sha256").update(fs.readFileSync(path.join(historyRoot, name))).digest("hex"),
   }));
   const sourceById = new Map();
   const transformed = [];
@@ -209,27 +211,28 @@ export function applyCurrentHistoryIdentityAliasRepair({
   const removalSet = new Set(plan.removals);
   let removed = 0;
   const written = [];
-
+  const prepared = [];
   for (const doc of plan.documents) {
-    const current = readJson(doc.filePath);
-    const backupPath = path.join(backupDir, doc.name);
-    fs.copyFileSync(doc.filePath, backupPath);
-    const output = clone(current);
+    const bytes = fs.readFileSync(doc.filePath);
+    if (createHash("sha256").update(bytes).digest("hex") !== doc.sourceSha256)
+      throw new Error(`current_history_repair_source_drift:${doc.name}`);
+    const output = JSON.parse(bytes.toString("utf8"));
     for (const day of output.days || []) {
       const before = (day.rows || []).length;
       day.rows = (day.rows || []).filter(row => !removalSet.has(clean(row?.id || row?.matchId)));
       const delta = before - day.rows.length;
-      if (delta) {
-        removed += delta;
-        day.matchCount = day.rows.length;
-      }
+      if (delta) { removed += delta; day.matchCount = day.rows.length; }
     }
-    atomicWriteJson(doc.filePath, output);
-    written.push({ filePath: doc.filePath, backupPath });
+    prepared.push({ doc, bytes, output });
   }
-
-  if (removed !== plan.rowsToRemove) {
+  if (removed !== plan.rowsToRemove)
     throw new Error(`current_history_identity_alias_write_count_mismatch:${removed}:${plan.rowsToRemove}`);
+  for (const {doc, bytes} of prepared) {
+    fs.writeFileSync(path.join(backupDir, doc.name), bytes, {flag:"wx"});
+  }
+  for (const {doc, output} of prepared) {
+    atomicWriteJson(doc.filePath, output);
+    written.push({filePath:doc.filePath, backupPath:path.join(backupDir,doc.name)});
   }
 
   return {
