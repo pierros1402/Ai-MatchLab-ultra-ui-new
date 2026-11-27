@@ -5,7 +5,7 @@ import {sourcePins,cacheHazards,artifactCandidates,verifyArtifactSources,assessR
 const sources=Object.fromEntries(Object.keys(sourcePins).map(p=>[p,readFileSync(new URL('../../'+p,import.meta.url),'utf8')]));
 test('eight exact producer and authority source pins',()=>{
  const r=verifyArtifactSources(sources);
- assert.equal(r.sourceCount,8);assert.equal(r.invocationCount,13);assert.equal(r.cacheHazardCount,4);
+ assert.equal(r.sourceCount,8);assert.equal(r.invocationCount,14);assert.equal(r.cacheHazardCount,4);
  for(const k of ['runtimeObserved','artifactOwnershipVerified','resumeAuthorized','publicationAuthorized'])assert.equal(r[k],false);
 });
 test('source corruption and missing source fail closed',()=>{

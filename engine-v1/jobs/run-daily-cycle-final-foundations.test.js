@@ -77,3 +77,15 @@ test(
     );
   }
 );
+
+test("Daily validates rebuilt Value foundations before scoring and freezing Plan A", () => {
+  const valueBuild = source.indexOf("valueBuild = await buildValueDay(dayKey");
+  const check = source.indexOf("const valueFoundationSeason = resolveSeasonFromDay(dayKey)");
+  assert.ok(check >= 0 && check < valueBuild);
+  const preflight = source.slice(check, valueBuild);
+  assert.match(preflight, /buildCurrentSeasonIndexes\(\{ season: valueFoundationSeason, dayKey \}\)/u);
+  assert.match(preflight, /buildModelPriors\(\{ targetSeason: valueFoundationSeason \}\)/u);
+  assert.match(preflight, /throw new Error\("value_history_index_foundation_not_ready"\)/u);
+  assert.match(preflight, /throw new Error\("value_model_priors_foundation_not_ready"\)/u);
+  assert.ok(source.indexOf("checkpointDailyPlanA(dayKey, valueBuild)") > valueBuild);
+});

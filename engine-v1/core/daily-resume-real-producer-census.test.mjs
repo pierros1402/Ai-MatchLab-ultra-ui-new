@@ -14,7 +14,7 @@ test("seven exact source blobs remain pinned",()=>{
 test("all selected literal direct call lines match reviewed census",()=>{
  const cycle=fs.readFileSync(new URL("engine-v1/jobs/run-daily-cycle.js",root),"utf8");
  const calls=cycle.split("\n").flatMap((line,i)=>producers.filter(n=>new RegExp("\\b"+n+"\\s*\\(").test(line)).map(n=>({producer:n,line:i+1,sourceLine:line.trim()})));
- assert.equal(calls.length,13);
+ assert.equal(calls.length,14);
  assert.deepEqual(calls,manifest.calls);
 });
 test("census cannot grant checkpoint authority",()=>{
