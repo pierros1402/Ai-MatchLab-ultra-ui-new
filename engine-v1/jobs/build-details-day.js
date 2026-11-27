@@ -1999,6 +1999,10 @@ export async function buildDetailsDay(dayKey, { rebuild = false } = {}) {
     };
   }
 
+  // Validate each season represented by this batch before building any detail.
+  // The cycle can rebuild upstream indexes between two calls in one process.
+  DETAILS_FOUNDATION_CACHE.clear();
+  for (const match of rows) detailsFoundationStamp(match);
   ensureDir(resolveDataPath("details", dayKey));
 
   const valuePicksByMatch = buildValuePicksByMatch(dayKey);
@@ -2067,6 +2071,10 @@ export async function ensureDetailsForFixtures(dayKey, fixtureRows = [], { rebui
     return { ok: true, dayKey, total: 0, built: 0, skipped: 0, files: [] };
   }
 
+  // Validate each season represented by this batch before building any detail.
+  // The cycle can rebuild upstream indexes between two calls in one process.
+  DETAILS_FOUNDATION_CACHE.clear();
+  for (const match of rows) detailsFoundationStamp(match);
   ensureDir(resolveDataPath("details", dayKey));
 
   const valuePicksByMatch = buildValuePicksByMatch(dayKey);
