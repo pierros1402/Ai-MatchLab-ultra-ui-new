@@ -261,9 +261,24 @@ export function buildH2HArtifactsFromHistory({
       candidate => sameSemanticSourceTruth(candidate, semanticSource),
     );
     if (semanticDuplicate) {
-      throw new Error(
+      // Preserve the fail-closed guard: source IDs cannot be merged merely
+      // because the teams, league, score and approximate kickoff agree.
+      // Attach deterministic evidence for independent source-identity review.
+      const error = new Error(
         `p0c_h2h_semantic_duplicate_source_truth:${semanticDuplicate.matchId}:${match.matchId}`,
       );
+      error.code = "P0C_H2H_SEMANTIC_DUPLICATE_SOURCE_TRUTH";
+      error.details = {
+        schema: "ai-matchlab.p0c-h2h-semantic-duplicate-evidence.v1",
+        pairKey: pair.key,
+        previous: { ...semanticDuplicate },
+        incoming: { ...semanticSource },
+        kickoffDeltaMs: Math.abs(semanticDuplicate.kickoffMs - semanticSource.kickoffMs),
+        identityApproval: false,
+        sourceHistoryRewriteAuthorized: false,
+        canonicalResultRewriteAuthorized: false,
+      };
+      throw error;
     }
 
     state.semanticRows.push(semanticSource);
