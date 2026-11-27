@@ -22,3 +22,9 @@ test('alias discovery is read-only and requires independent approval for differe
  assert.equal(buildSourceBoundHistoryEventIdentities([entry,other]).findAliasCandidates(alias).reason,'AMBIGUOUS_EVENT');
  assert.equal(buildSourceBoundHistoryEventIdentities([entry,entry]).resolveEvent(row).ok,false);
 });
+
+test('regular full-time provider status is accepted without admitting AET or PEN',()=>{
+ const resolver=buildSourceBoundHistoryEventIdentities([entry]);
+ assert.equal(resolver.findAliasCandidates({...row,status:'STATUS_FULL_TIME'}).ok,true);
+ for(const status of ['AET','PEN','STATUS_FINAL_AET','STATUS_FINAL_PEN','POSTPONED'])assert.equal(resolver.findAliasCandidates({...row,status}).ok,false);
+});
