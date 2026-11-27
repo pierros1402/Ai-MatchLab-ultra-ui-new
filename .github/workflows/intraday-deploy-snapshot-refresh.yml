@@ -999,6 +999,630 @@ jobs:
           # cumulative build, so refresh the rollup in the same bounded step.
           node ./engine-v1/jobs/build-value-comparison-cumulative.js --write
 
+      - name: Verify and persist derived history foundations before Details recovery
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Never publish a foundation against a different source tree.
+          # The shared writer lock is held for this entire job.
+          test "$GITHUB_REF_NAME" = main
+          git diff --cached --quiet
+          DERIVED_ROOTS=(data/history-index data/h2h data/h2h-foundation data/model-priors)
+          git diff --quiet -- "${DERIVED_ROOTS[@]}"
+          test -z "$(git ls-files --others --exclude-standard -- "${DERIVED_ROOTS[@]}")"
+          node engine-v1/jobs/ensure-derived-publication-foundations.js "$DAY_KEY"
+          git add -A -- "${DERIVED_ROOTS[@]}"
+          node engine-v1/jobs/guard-staged-data-boundary.js --label=intraday-derived-foundation-checkpoint --dayKey="$DAY_KEY" --allow='^data/(history-index|h2h|h2h-foundation|model-priors)/[^\s]+\.json
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: node engine-v1/jobs/recover-value-data-day.js "$DAY_KEY" --apply
+
+      - name: Refresh and enforce intraday foundation health
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY" --gate
+          node ./engine-v1/jobs/build-day-report.js --date="$DAY_KEY"
+
+      - name: Configure git author
+        if: env.SKIP_BUILD != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Capture and settle unified candidate in shadow
+        if: env.SKIP_BUILD != 'true'
+        continue-on-error: true
+        shell: bash
+        run: node engine-v1/jobs/capture-unified-shadow-day.js --date="$DAY_KEY"
+
+      - name: Publish the single unified plan for activated days
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          if [[ "$DAY_KEY" > "2026-10-17" ]]; then
+            ATHENS_TODAY="$(TZ=Europe/Athens date +%F)"
+            if [[ "$DAY_KEY" < "$ATHENS_TODAY" ]]; then
+              node engine-v1/jobs/build-unified-production-day.js "$DAY_KEY" --settle-only
+            else
+              node engine-v1/jobs/build-unified-production-day.js "$DAY_KEY"
+            fi
+            node engine-v1/jobs/build-value-plan-comparison-day.js --date="$DAY_KEY" --write
+            if [[ -d "data/value-unified/$DAY_KEY/" ]]; then
+              if [[ -d "data/value-unified/$DAY_KEY/observations/" ]]; then
+                find "data/value-unified/$DAY_KEY/observations/" -maxdepth 1 -type f -name "*.json" -exec git add -- {} +
+              fi
+              if [[ -f "data/value-unified/$DAY_KEY/public-plan.json" ]]; then git add "data/value-unified/$DAY_KEY/public-plan.json"; fi
+            fi
+            for FILE in "data/value-data-readiness/$DAY_KEY.json" "data/value/_coverage-reports/$DAY_KEY.json"; do
+              if [[ -f "$FILE" ]]; then git add "$FILE"; fi
+            done
+          fi
+
+      # Recheck derived freshness after the FINAL unified comparison writer.
+      # Report-only: the frozen Value recovery contract remains separately gated.
+      - name: Verify freshness after final unified publication
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date="$DAY_KEY"
+
+      - name: Stage allowed generated files only
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Intraday refresh may persist status/score updates only for canonical
+          # files that were already tracked for the selected day. New acquisition
+          # files, other days, coverage reports and ingest state remain excluded.
+          CANONICAL_STATUS_PATCH="${RUNNER_TEMP}/intraday-canonical-status-${DAY_KEY}.patch"
+
+          git diff --binary --diff-filter=M -- \
+            "data/canonical-fixtures/${DAY_KEY}/" \
+            > "$CANONICAL_STATUS_PATCH"
+
+          git restore -- data/canonical-fixtures data/coverage-reports data/ingest-state data/fixtures.json data/fixtures.json.bak 2>/dev/null || true
+          git clean -fd -- data/canonical-fixtures data/coverage-reports data/ingest-state 2>/dev/null || true
+
+          if [ -s "$CANONICAL_STATUS_PATCH" ]; then
+            git apply --whitespace=nowarn "$CANONICAL_STATUS_PATCH"
+          fi
+
+          CANONICAL_STATUS_FILES="$(git diff --name-only --diff-filter=M -- "data/canonical-fixtures/${DAY_KEY}/" || true)"
+
+          if [ -n "$CANONICAL_STATUS_FILES" ]; then
+            while IFS= read -r canonical_file; do
+              [ -n "$canonical_file" ] && git add -- "$canonical_file"
+            done <<< "$CANONICAL_STATUS_FILES"
+          fi
+
+          if [[ "${AIML_AB_RESEARCH_ENABLED:-0}" == "1" ]]; then
+            if ! node engine-v1/jobs/manage-autonomous-research-day.mjs "$DAY_KEY" --stage --include-observations; then
+              echo "AUTONOMOUS_RESEARCH_STAGE_HOLD=true"
+            fi
+          fi
+
+          test -e "data/deploy-snapshots/${DAY_KEY}/fixtures.json" && git add "data/deploy-snapshots/${DAY_KEY}/fixtures.json"
+          test -e "data/deploy-snapshots/${DAY_KEY}/manifest.json" && git add "data/deploy-snapshots/${DAY_KEY}/manifest.json"
+          test -e "data/deploy-snapshots/${DAY_KEY}/value.json" && git add "data/deploy-snapshots/${DAY_KEY}/value.json"
+          if [ -f "data/deploy-snapshots/${DAY_KEY}/value-audit.json" ]; then git add "data/deploy-snapshots/${DAY_KEY}/value-audit.json"; fi
+          if [ -f "data/value/${DAY_KEY}.json" ]; then git add "data/value/${DAY_KEY}.json"; fi
+          if [ -f "data/value/_audit/${DAY_KEY}.json" ]; then git add "data/value/_audit/${DAY_KEY}.json"; fi
+          if [ -d "data/value-plans/${DAY_KEY}" ]; then git add "data/value-plans/${DAY_KEY}/"; fi
+          node ./engine-v1/jobs/build-system-health-alerts-day.js --date="${DAY_KEY}"
+
+          # Observation-only controller shadow. It emits logs only and cannot
+          # authorize writes, commits, pushes, deploys, or repair execution.
+          SHADOW_REMOTE_HEAD="$(git ls-remote origin refs/heads/main 2>/dev/null | awk 'NR==1 {print $1}' || true)"
+          if ! node ./engine-v1/jobs/run-checkpoint-aware-targeted-repair-shadow-day.js             --context=intraday             --date="${DAY_KEY}"             --remote-head="${SHADOW_REMOTE_HEAD}"; then
+            echo "SHADOW_OBSERVATION_FAILED_NON_BLOCKING=true"
+          fi
+
+          # Derived control-plane snapshot of the final intraday truth and
+          # downstream convergence state. The fixed-path writer is semantically
+          # idempotent, so a 5-minute tick cannot commit timestamp-only churn.
+          node ./engine-v1/jobs/build-day-truth-ledger-day.js --date="${DAY_KEY}" --write
+
+          test -e "data/deploy-snapshots/${DAY_KEY}/invariant-report.json" && git add "data/deploy-snapshots/${DAY_KEY}/invariant-report.json"
+          # Freshness + build reports refreshed by run-intraday-snapshot-refresh.js
+          # so they describe THIS re-exported manifest, not the earlier daily one.
+          if [ -f "data/deploy-snapshots/${DAY_KEY}/freshness-report.json" ]; then git add "data/deploy-snapshots/${DAY_KEY}/freshness-report.json"; fi
+          if [ -f "data/deploy-snapshots/${DAY_KEY}/value-data-recovery.json" ]; then git add "data/deploy-snapshots/${DAY_KEY}/value-data-recovery.json"; fi
+          if [ -f "data/build-reports/${DAY_KEY}.json" ]; then git add "data/build-reports/${DAY_KEY}.json"; fi
+          if [ -f "data/foundation-integrity/${DAY_KEY}.json" ]; then git add "data/foundation-integrity/${DAY_KEY}.json"; fi
+          if [ -f "data/foundation-integrity/latest.json" ]; then git add "data/foundation-integrity/latest.json"; fi
+          if [ -f "data/system-health/${DAY_KEY}.json" ]; then git add "data/system-health/${DAY_KEY}.json"; fi
+          if [ -f "data/system-health/latest.json" ]; then git add "data/system-health/latest.json"; fi
+
+          if [ -f "data/day-truth-ledger/${DAY_KEY}.json" ]; then
+            git add "data/day-truth-ledger/${DAY_KEY}.json"
+          else
+            echo "ERROR: Day Truth Ledger artifact missing for ${DAY_KEY}"
+            exit 1
+          fi
+
+          test -d "data/deploy-snapshots/${DAY_KEY}/details" && git add "data/deploy-snapshots/${DAY_KEY}/details"
+          test -e "data/deploy-snapshots/latest.json" && git add "data/deploy-snapshots/latest.json"
+
+          test -d "data/final-results/${DAY_KEY}" && git add "data/final-results/${DAY_KEY}/"
+          test -f "data/final-result-conflicts/${DAY_KEY}.json" && git add "data/final-result-conflicts/${DAY_KEY}.json"
+          test -e "data/value-comparison/${DAY_KEY}.json" && git add "data/value-comparison/${DAY_KEY}.json"
+          test -e "data/value-comparison/cumulative.json" && git add "data/value-comparison/cumulative.json"
+
+          STAGED="$(git diff --cached --name-only || true)"
+          echo "Staged files:"
+          printf "%s\n" "$STAGED"
+
+          if [ -n "$STAGED" ]; then
+            node engine-v1/jobs/guard-staged-data-boundary.js \
+              --label=intraday-deploy-snapshot-refresh \
+              --dayKey="${DAY_KEY}" \
+              --allow="^(data/canonical-fixtures/${DAY_KEY}/[^/]+\.json$|data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/foundation-integrity/${DAY_KEY}\.json$|data/foundation-integrity/latest\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/day-truth-ledger/${DAY_KEY}\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-unified/${DAY_KEY}/(observations/[a-f0-9]{64}\.json|public-plan\.json)$|data/value-autonomous-research/${DAY_KEY}/(observations/[a-f0-9]{64}\.json|comparison\.json|release-candidate\.json)$|data/value-data-readiness/${DAY_KEY}\.json$|data/value/_coverage-reports/${DAY_KEY}\.json$|data/value-plans/${DAY_KEY}/|data/final-results/${DAY_KEY}/|data/final-result-conflicts/${DAY_KEY}\.json$|data/value-comparison/(${DAY_KEY}\.json|cumulative\.json)$)"
+
+            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/canonical-fixtures/|data/deploy-snapshots/|data/build-reports/|data/foundation-integrity/|data/system-health/|data/day-truth-ledger/|data/value/|data/value-unified/|data/value-data-readiness/|data/value-plans/|data/final-results/|data/final-result-conflicts/|data/value-comparison/)' || true)"
+            if [ -n "$BAD" ]; then
+              echo "ERROR: unexpected staged files:"
+              echo "$BAD"
+              exit 1
+            fi
+          fi
+
+      - name: Sync System Health GitHub issue
+        if: env.SKIP_BUILD != 'true'
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node ./engine-v1/jobs/sync-system-health-github-issue.js --date="$DAY_KEY"
+
+      - name: Report autonomous repair readiness
+        if: always() && env.SKIP_BUILD != 'true'
+        continue-on-error: true
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE' >> "$GITHUB_STEP_SUMMARY"
+          import { buildAutonomousRepairSystemHealthFacts } from "./engine-v1/core/autonomous-repair-system-health.js";
+          const facts = buildAutonomousRepairSystemHealthFacts();
+          const readiness = facts.readiness || {};
+          const authority = facts.authority || {};
+          console.log("### Autonomous repair readiness");
+          console.log("");
+          console.log(`- Mode: ${facts.mode}`);
+          console.log(`- Status: ${facts.status}`);
+          console.log(`- Code: ${facts.code}`);
+          console.log(`- Execution available: ${facts.executionAvailable === true}`);
+          console.log(`- Trusted public keys: ${Number(readiness.trustedKeyCount || 0)}`);
+          console.log(`- Production kernel enabled: ${readiness.productionKernelEnabled === true}`);
+          console.log(`- Workflow mutation authorized: ${authority.workflowMutationAuthorized === true}`);
+          console.log("");
+          console.log("Reporting only. This step grants no repair, replay, filesystem, or deployment authority.");
+          NODE
+
+      - name: Detect material intraday snapshot changes
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          node - <<'NODE'
+          const fs = require("fs");
+          const { execFileSync } = require("child_process");
+
+          const day = process.env.DAY_KEY;
+          const file = `data/deploy-snapshots/${day}/fixtures.json`;
+          const manifestFile = `data/deploy-snapshots/${day}/manifest.json`;
+
+          function readJsonFromHead(path) {
+            try {
+              return JSON.parse(execFileSync("git", ["show", `HEAD:${path}`], { encoding: "utf8" }));
+            } catch {
+              return null;
+            }
+          }
+
+          function readJsonFile(path) {
+            if (!fs.existsSync(path)) return null;
+            return JSON.parse(fs.readFileSync(path, "utf8"));
+          }
+
+          function rowsOf(payload) {
+            if (!payload) return [];
+            if (Array.isArray(payload)) return payload;
+            if (Array.isArray(payload.matches)) return payload.matches;
+            if (Array.isArray(payload.fixtures)) return payload.fixtures;
+            if (Array.isArray(payload.items)) return payload.items;
+            return [];
+          }
+
+          function idOf(row) {
+            return String(row?.matchId ?? row?.id ?? row?.fixtureId ?? "").trim();
+          }
+
+          function isPreLike(row) {
+            const statusText = [
+              row?.status,
+              row?.statusType,
+              row?.rawStatus,
+              row?.phase
+            ]
+              .map(value => String(value || "").toUpperCase())
+              .join(" ");
+
+            return /\b(PRE|SCHEDULED|STATUS_SCHEDULED|NOT_STARTED)\b/.test(statusText);
+          }
+
+          function materialScore(row, primaryField, fallbackField) {
+            const value = row?.[primaryField] ?? row?.[fallbackField] ?? null;
+
+            // Scheduled rows may be represented as either null-null or 0-0.
+            // Neither representation is a real score/status change.
+            if (value === null && isPreLike(row)) {
+              return 0;
+            }
+
+            const numeric = Number(value);
+            return Number.isFinite(numeric) ? numeric : value;
+          }
+
+          function material(row) {
+            return {
+              matchId: idOf(row),
+              status: row?.status ?? null,
+              statusType: row?.statusType ?? null,
+              rawStatus: row?.rawStatus ?? null,
+              phase: row?.phase ?? null,
+              minute: row?.minute ?? null,
+              scoreHome: materialScore(row, "scoreHome", "homeScore"),
+              scoreAway: materialScore(row, "scoreAway", "awayScore"),
+              live: row?.live ?? null,
+              isLive: row?.isLive ?? null,
+              staleLive: row?.staleLive ?? null,
+              kickoffUtc: row?.kickoffUtc ?? row?.date ?? row?.startTime ?? row?.startUtc ?? null
+            };
+          }
+
+          function normalize(payload) {
+            const map = new Map();
+            for (const row of rowsOf(payload)) {
+              const id = idOf(row);
+              if (id) map.set(id, material(row));
+            }
+            return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
+          }
+
+          const before = readJsonFromHead(file);
+          const after = readJsonFile(file);
+
+          const beforeNorm = normalize(before);
+          const afterNorm = normalize(after);
+          const materialChanged = JSON.stringify(beforeNorm) !== JSON.stringify(afterNorm);
+
+          function requiredManifestHashState(payload) {
+            const files =
+              payload?.files && typeof payload.files === "object"
+                ? payload.files
+                : {};
+
+            const hashes =
+              payload?.fileHashes && typeof payload.fileHashes === "object"
+                ? payload.fileHashes
+                : {};
+
+            const required = [
+              files.fixtures,
+              files.value,
+              files.valueAudit,
+              files.planCShadow,
+              files.planCShadowAudit
+            ]
+              .map(value => String(value || "").trim())
+              .filter(Boolean);
+
+            const uniqueRequired = [...new Set(required)].sort();
+
+            const missing = uniqueRequired.filter(fileName => {
+              const hash = String(hashes[fileName] || "").trim();
+              return !/^[a-f0-9]{64}$/iu.test(hash);
+            });
+
+            return {
+              required: uniqueRequired,
+              missing
+            };
+          }
+
+          const manifestBefore = readJsonFromHead(manifestFile);
+          const manifestAfter = readJsonFile(manifestFile);
+
+          const beforeHashState =
+            requiredManifestHashState(manifestBefore);
+
+          const afterHashState =
+            requiredManifestHashState(manifestAfter);
+
+          const requiredFileSetChanged =
+            JSON.stringify(beforeHashState.required) !==
+            JSON.stringify(afterHashState.required);
+
+          const manifestContractRepair =
+            afterHashState.required.length > 0 &&
+            afterHashState.missing.length === 0 &&
+            (
+              beforeHashState.missing.length > 0 ||
+              requiredFileSetChanged
+            );
+
+          console.log(JSON.stringify({
+            file,
+            beforeRows: beforeNorm.length,
+            afterRows: afterNorm.length,
+            materialChanged,
+            manifestContractRepair,
+            manifestRequiredFilesBefore: beforeHashState.required,
+            manifestMissingHashesBefore: beforeHashState.missing,
+            manifestRequiredFilesAfter: afterHashState.required,
+            manifestMissingHashesAfter: afterHashState.missing
+          }, null, 2));
+
+          const recovery = readJsonFile(`data/deploy-snapshots/${day}/value-data-recovery.json`);
+          const verifiedDataRepair = recovery?.apply === true && recovery?.mutation === true && recovery?.frozenValuesPreserved === true;
+          const recoveryBefore = readJsonFromHeadOrNull(`data/deploy-snapshots/${day}/value-data-recovery.json`);
+          function recoveryState(report) {
+            if (!report) return null;
+            return {
+              status: report.status, apply: report.apply, after: report.after,
+              remainingUpcomingAssessmentIds: report.remainingUpcomingAssessmentIds,
+              historicalMissingAssessmentIds: report.historicalMissingAssessmentIds,
+              ambiguousAssessmentIds: report.ambiguousAssessmentIds,
+              reason: report.reason, rolledBack: report.rolledBack
+            };
+          }
+          const recoveryStateChanged = JSON.stringify(recoveryState(recoveryBefore)) !== JSON.stringify(recoveryState(recovery));
+
+          if (!materialChanged && !manifestContractRepair && !verifiedDataRepair && !recoveryStateChanged) {
+            console.log("No material score/status/minute or manifest-contract repair change. Restoring staged deploy snapshot files to avoid timestamp-only commit.");
+            execFileSync("git", ["restore", "--staged", "--", "data/deploy-snapshots"], { stdio: "inherit" });
+            execFileSync("git", ["restore", "--", "data/deploy-snapshots"], { stdio: "inherit" });
+            // build-reports/<day>.json lives outside deploy-snapshots; its only
+            // change on an unchanged snapshot is a fresh generatedAt, so restore
+            // it too or the commit-needed check below trips on a timestamp-only diff.
+            // Guarded: a brand-new day may have no HEAD build-report to restore to.
+            try {
+              execFileSync("git", ["restore", "--staged", "--", `data/build-reports/${day}.json`], { stdio: "inherit" });
+              execFileSync("git", ["restore", "--", `data/build-reports/${day}.json`], { stdio: "inherit" });
+            } catch (e) {
+              console.log(`build-reports restore skipped: ${e.message}`);
+            }
+          }
+
+          const comparisonFile = `data/value-comparison/${day}.json`;
+
+          function readJsonFromHeadOrNull(path) {
+            try {
+              return JSON.parse(execFileSync("git", ["show", `HEAD:${path}`], { encoding: "utf8" }));
+            } catch {
+              return null;
+            }
+          }
+
+          function stripNonMaterialComparisonFields(value) {
+            if (!value || typeof value !== "object") return value;
+            const copy = JSON.parse(JSON.stringify(value));
+            delete copy.generatedAt;
+            return copy;
+          }
+
+          const comparisonBefore = readJsonFromHeadOrNull(comparisonFile);
+          const comparisonAfter = readJsonFile(comparisonFile);
+
+          if (comparisonBefore && comparisonAfter) {
+            const beforeMaterial = stripNonMaterialComparisonFields(comparisonBefore);
+            const afterMaterial = stripNonMaterialComparisonFields(comparisonAfter);
+            const comparisonMaterialChanged = JSON.stringify(beforeMaterial) !== JSON.stringify(afterMaterial);
+
+            console.log(JSON.stringify({
+              comparisonFile,
+              comparisonMaterialChanged
+            }, null, 2));
+
+            if (!comparisonMaterialChanged) {
+              console.log("Only value-comparison generatedAt changed. Restoring comparison file to avoid timestamp-only commit.");
+              execFileSync("git", ["restore", "--staged", "--", comparisonFile], { stdio: "inherit" });
+              execFileSync("git", ["restore", "--", comparisonFile], { stdio: "inherit" });
+            }
+          }
+
+          // Finalize freshness AFTER the material-change gate has restored
+          // nonmaterial snapshots and/or a timestamp-only comparison.
+          // Otherwise freshness can describe a transient, uncommitted candidate.
+          const finalFreshnessFile = `data/deploy-snapshots/${day}/freshness-report.json`;
+          execFileSync(process.execPath, [
+            './engine-v1/jobs/verify-artifact-freshness-day.js',
+            `--date=${day}`
+          ], { stdio: 'pipe' });
+
+          const previousFreshness = readJsonFromHeadOrNull(finalFreshnessFile);
+          const currentFreshness = readJsonFile(finalFreshnessFile);
+          if (!currentFreshness || typeof currentFreshness !== 'object') {
+            throw new Error('final_freshness_missing_after_reverification');
+          }
+          // Compare the semantic freshness verdict, not observational timestamps.
+          // Keep manifestGeneratedAt because a materially new manifest needs a
+          // newly bound freshness report even when the verdict is unchanged.
+          function freshnessSemanticState(report) {
+            if (!report || typeof report !== 'object') return null;
+            const normalizedItems = (rows) =>
+              (Array.isArray(rows) ? rows : []).map(row => ({
+                kind: row?.kind ?? null,
+                artifact: row?.artifact ?? null,
+                staleReason: row?.staleReason ?? null,
+                reason: row?.reason ?? null,
+                skipped: row?.skipped ?? null,
+                plan: row?.plan ?? null,
+                preservationReason: row?.preservation?.reason ?? null
+              })).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+            const plans = report.fourPlanContract || {};
+            return {
+              ok: report.ok === true,
+              manifestGeneratedAt: report.manifestGeneratedAt ?? null,
+              reasons: [...(Array.isArray(report.reasons) ? report.reasons : [])].sort(),
+              staleInputs: normalizedItems(report.staleInputs),
+              staleDerivedArtifacts: normalizedItems(report.staleDerivedArtifacts),
+              missingRequiredArtifacts: normalizedItems(report.missingRequiredArtifacts),
+              preservedHistoricalDerivedArtifacts: normalizedItems(report.preservedHistoricalDerivedArtifacts),
+              skippedInputs: normalizedItems(report.skippedInputs),
+              fourPlanContract: {
+                complete: plans.complete === true,
+                requiredPlans: [...(Array.isArray(plans.requiredPlans) ? plans.requiredPlans : [])].sort(),
+                presentPlans: [...(Array.isArray(plans.presentPlans) ? plans.presentPlans : [])].sort()
+              }
+            };
+          }
+
+          const freshnessMaterialChanged = JSON.stringify(
+            freshnessSemanticState(previousFreshness)
+          ) !== JSON.stringify(
+            freshnessSemanticState(currentFreshness)
+          );
+          if (freshnessMaterialChanged) {
+            execFileSync('git', ['add', '--', finalFreshnessFile], { stdio: 'inherit' });
+          } else if (previousFreshness) {
+            // Suppress timestamp-only churn, retain the previously published report.
+            execFileSync('git', ['restore', '--staged', '--', finalFreshnessFile], { stdio: 'inherit' });
+            execFileSync('git', ['restore', '--', finalFreshnessFile], { stdio: 'inherit' });
+          }
+
+          // Regenerate authoritative health against the FINAL freshness and
+          // comparison states, not an intermediate pre-restore candidate.
+          execFileSync(process.execPath, [
+            './engine-v1/jobs/build-system-health-alerts-day.js',
+            `--date=${day}`
+          ], { stdio: 'pipe' });
+          execFileSync('git', ['add', '--',
+            `data/system-health/${day}.json`,
+            'data/system-health/latest.json'
+          ], { stdio: 'inherit' });
+
+          let commitNeeded = materialChanged || manifestContractRepair || verifiedDataRepair || recoveryStateChanged;
+          if (!commitNeeded) {
+            try {
+              execFileSync("git", ["diff", "--cached", "--quiet"], { stdio: "ignore" });
+              commitNeeded = false;
+            } catch {
+              commitNeeded = true;
+            }
+          }
+
+          const stagedFiles = execFileSync(
+            "git",
+            ["diff", "--cached", "--name-only"],
+            { encoding: "utf8" }
+          )
+            .split(/\r?\n/)
+            .map(value => value.trim())
+            .filter(Boolean);
+
+          const canonicalStatusChanged =
+            stagedFiles.some(filePath =>
+              filePath.startsWith(
+                `data/canonical-fixtures/${day}/`
+              ) &&
+              filePath.endsWith(".json")
+            );
+
+          const unifiedPublicationChanged=stagedFiles.some(filePath=>filePath.startsWith(`data/value-unified/${day}/`));
+          const finalCommitNeeded =
+            commitNeeded || canonicalStatusChanged || unifiedPublicationChanged;
+
+          console.log(JSON.stringify({
+            materialChanged,
+            manifestContractRepair,
+            canonicalStatusChanged,
+            commitNeeded: finalCommitNeeded
+          }, null, 2));
+
+          fs.appendFileSync(
+            process.env.GITHUB_ENV,
+            `INTRADAY_COMMIT_NEEDED=${finalCommitNeeded ? "true" : "false"}\n`
+          );
+          NODE
+
+      - name: Commit and push snapshot changes
+        if: env.SKIP_BUILD != 'true' && env.INTRADAY_COMMIT_NEEDED == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if git diff --cached --quiet; then
+            echo "No intraday snapshot changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Intraday refresh deploy snapshot for ${DAY_KEY}"
+          bash tools/git-push-rebase-retry.sh
+          PUBLISHED_REF="$(git rev-parse HEAD)"
+          echo "PUBLISHED_REF=${PUBLISHED_REF}" >> "$GITHUB_ENV"
+          echo "INTRADAY_SNAPSHOT_PUSHED=true" >> "$GITHUB_ENV"
+
+      - name: Promote and verify public runtime snapshot
+        if: env.SKIP_BUILD != 'true' && env.INTRADAY_SNAPSHOT_PUSHED == 'true'
+        shell: bash
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          bash tools/sync-public-snapshot.sh "${DAY_KEY}" "${PUBLISHED_REF}"
+
+      - name: Surface pre-match acquisition failure without interrupting score publication
+        if: always() && steps.prematch-data-alarm.outcome == 'failure'
+        run: |
+          echo "ERROR: pre-match data acquisition failed; inspect preserved alarm evidence."
+          exit 1
+
+      - name: Surface unverified public truth checkpoint
+        if: always() && steps.public-truth-sync.outcome == 'failure'
+        run: |
+          echo "ERROR: public snapshot parity was not verified; retry only the publication checkpoint."
+          exit 1
+
+      - name: Automatic Render redeploy disabled by deploy-budget firewall
+        if: ${{ false }}
+        shell: bash
+        env:
+          RENDER_ENGINE_DEPLOY_HOOK_URL: ${{ secrets.RENDER_ENGINE_DEPLOY_HOOK_URL }}
+          RENDER_UI_DEPLOY_HOOK_URL: ${{ secrets.RENDER_UI_DEPLOY_HOOK_URL }}
+        run: |
+          set -euo pipefail
+
+          if [ -n "${RENDER_ENGINE_DEPLOY_HOOK_URL:-}" ]; then
+            echo "Triggering Render engine redeploy..."
+            curl -fsS -X POST "${RENDER_ENGINE_DEPLOY_HOOK_URL}"
+          else
+            echo "RENDER_ENGINE_DEPLOY_HOOK_URL is not configured; skipping engine redeploy trigger."
+          fi
+
+          if [ -n "${RENDER_UI_DEPLOY_HOOK_URL:-}" ]; then
+            echo "Triggering Render UI redeploy..."
+            curl -fsS -X POST "${RENDER_UI_DEPLOY_HOOK_URL}"
+          else
+            echo "RENDER_UI_DEPLOY_HOOK_URL is not configured; skipping UI redeploy trigger."
+          fi
+
+      - name: Preserve all produced history independently of publication
+        if: ${{ always() && env.DAY_KEY != '' && env.SKIP_BUILD != 'true' }}
+        uses: ./.github/actions/preserve-history
+ --allow-data-deletions
+          if git diff --cached --quiet; then
+            echo "Derived foundations already current."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Refresh verified derived foundations for ${DAY_KEY}"
+            git push origin HEAD:main
+          fi
+
       - name: Repair derived details after verified history preparation
         if: env.SKIP_BUILD != 'true'
         shell: bash
