@@ -138,3 +138,18 @@ test("runtime sync downloads declared Plan C shadow files as required core artif
   assert.ok(files.required.includes("plan-c-shadow.json"));
   assert.ok(files.required.includes("plan-c-shadow-audit.json"));
 });
+
+
+test("publication readiness rejects a valid manifest with absent or altered artifacts", async t => {
+  const root = await fs.promises.mkdtemp(path.join(os.tmpdir(), "aiml-guard-"));
+  t.after(() => fs.promises.rm(root, { recursive: true, force: true }));
+  const manifest = await makeRelease(root);
+  await validateStagedRelease(root, manifest);
+  const fixtures = path.join(root, "fixtures.json");
+  const original = await fs.promises.readFile(fixtures);
+  await fs.promises.unlink(fixtures);
+  await assert.rejects(validateStagedRelease(root, manifest), /staged_required_file_missing/);
+  await fs.promises.writeFile(fixtures, original);
+  await fs.promises.writeFile(path.join(root, "value.json"), JSON.stringify({ok:true,picks:[],altered:true}));
+  await assert.rejects(validateStagedRelease(root, manifest), /manifest_file_hash_mismatch/);
+});
