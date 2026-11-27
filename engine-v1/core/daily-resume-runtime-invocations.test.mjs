@@ -31,3 +31,6 @@ test('invalid scopes rejected',()=>{
  for(const day of ['2026-02-30','2026-13-01','../foo',null]) assert.throws(()=>invocationKey('details.initial',day));
  assert.throws(()=>invocationKey('unknown','2026-11-24'));
 });
+
+// Include focused coverage checks in the existing runtime invocation CI entrypoint.
+import './daily-resume-invocation-coverage-advisory.test.mjs';
