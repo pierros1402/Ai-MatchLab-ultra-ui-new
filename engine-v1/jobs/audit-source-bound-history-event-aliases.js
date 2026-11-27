@@ -36,7 +36,7 @@ for(const name of fs.readdirSync(memoryRoot).filter(n=>n.endsWith('.json')).sort
   for(const row of list){const id=row.matchId||row.id;if(!id)continue;const hits=memoryById.get(id)||[];hits.push({league:name.slice(0,-5),team,row});memoryById.set(id,hits);}
  }
 }
-const classifications={},memoryProofCounts={},unmatchedByStatus={},memoryFieldFailures={},memoryFailureExamples={};
+const classifications={},memoryProofCounts={},unmatchedByStatus={},memoryFieldFailures={},memoryFailureExamples={},providerBindingCounts={};
 // Diacritic and punctuation equivalence only; no fuzzy or cross-club alias promotion.
 const normTeam=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 for(const row of rows){
@@ -74,9 +74,12 @@ for(const row of rows){
   const away=sourceMemory.filter(h=>exact(h,'A',row.awayTeam,row.homeTeam,row.scoreAway,row.scoreHome));
   const memoryProof=sourceMemory.length===0?'NO_MEMORY':sourceMemory.length===2&&home.length===1&&away.length===1?'EXACT_RECIPROCAL_MEMORY':'MEMORY_REVIEW_REQUIRED';
   memoryProofCounts[memoryProof]=(memoryProofCounts[memoryProof]||0)+1;
-  candidates.push({row,result,sourceMemory,targetMemory,targetHistory,classification,memoryProof,identityApproval:false});
+  const providerBinding=resolver.resolveBoundProviderAlias(row);
+  const bindingStatus=providerBinding.ok&&providerBinding.providerBindingVerified===true?'VERIFIED_PROVIDER_BINDING':providerBinding.reason||'UNVERIFIED_PROVIDER_BINDING';
+  providerBindingCounts[bindingStatus]=(providerBindingCounts[bindingStatus]||0)+1;
+  candidates.push({row,result,sourceMemory,targetMemory,targetHistory,classification,memoryProof,providerBinding,bindingStatus,identityApproval:false});
  }else if(reason==='AMBIGUOUS_EVENT'||reason==='SCORE_CONFLICT')candidates.push({row,result});
 }
-const report={schema:'aiml.history-event-alias-audit.v1',historyRows:rows.length,verifiedEventCount:resolver.count,counts,invalidReasons,classifications,memoryProofCounts,unmatchedByStatus,memoryFieldFailures,memoryFailureExamples,candidates,writeAuthorized:false};
+const report={schema:'aiml.history-event-alias-audit.v1',historyRows:rows.length,verifiedEventCount:resolver.count,counts,invalidReasons,classifications,memoryProofCounts,providerBindingCounts,unmatchedByStatus,memoryFieldFailures,memoryFailureExamples,candidates,writeAuthorized:false};
 if(process.argv[2])fs.writeFileSync(process.argv[2],JSON.stringify(report,null,2)+'\n',{flag:'wx'});
 console.log(JSON.stringify({...report,candidates:undefined}));
