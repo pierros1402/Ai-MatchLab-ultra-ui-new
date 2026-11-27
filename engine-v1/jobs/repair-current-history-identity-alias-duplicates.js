@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -21,6 +22,10 @@ function clean(value) {
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
+}
+
+function hashBytes(raw) {
+  return createHash("sha256").update(raw).digest("hex");
 }
 
 function readJson(filePath) {
@@ -114,7 +119,10 @@ export function buildCurrentHistoryIdentityAliasRepairPlan({
   const documents = HISTORY_FILES.map(name => ({
     name,
     filePath: path.join(historyRoot, name),
-    payload: readJson(path.join(historyRoot, name)),
+    ...(() => {
+      const raw = fs.readFileSync(path.join(historyRoot, name));
+      return { payload: JSON.parse(raw.toString("utf8")), sha256: hashBytes(raw) };
+    })(),
   }));
   const sourceById = new Map();
   const transformed = [];
@@ -204,17 +212,19 @@ export function applyCurrentHistoryIdentityAliasRepair({
   if (!clean(backupDir)) {
     throw new Error("current_history_identity_alias_backup_dir_required");
   }
-  fs.mkdirSync(backupDir, { recursive: true });
-
   const removalSet = new Set(plan.removals);
   let removed = 0;
   const written = [];
+  const pending = [];
+  if (removalSet.size !== plan.removals.length || removalSet.size !== plan.rowsToRemove) {
+    throw new Error("current_history_identity_alias_removal_plan_count_invalid");
+  }
 
   for (const doc of plan.documents) {
-    const current = readJson(doc.filePath);
+    const raw = fs.readFileSync(doc.filePath);
+    if (hashBytes(raw) !== doc.sha256) throw new Error(`current_history_identity_alias_source_drift:${doc.name}`);
     const backupPath = path.join(backupDir, doc.name);
-    fs.copyFileSync(doc.filePath, backupPath);
-    const output = clone(current);
+    const output = JSON.parse(raw.toString("utf8"));
     for (const day of output.days || []) {
       const before = (day.rows || []).length;
       day.rows = (day.rows || []).filter(row => !removalSet.has(clean(row?.id || row?.matchId)));
@@ -224,12 +234,22 @@ export function applyCurrentHistoryIdentityAliasRepair({
         day.matchCount = day.rows.length;
       }
     }
-    atomicWriteJson(doc.filePath, output);
-    written.push({ filePath: doc.filePath, backupPath });
+    if (JSON.stringify(output) !== JSON.stringify(doc.payload)) pending.push({ doc, raw, output, backupPath });
   }
 
   if (removed !== plan.rowsToRemove) {
     throw new Error(`current_history_identity_alias_write_count_mismatch:${removed}:${plan.rowsToRemove}`);
+  }
+
+  for (const doc of plan.documents) {
+    if (hashBytes(fs.readFileSync(doc.filePath)) !== doc.sha256) throw new Error(`current_history_identity_alias_source_drift:${doc.name}`);
+  }
+  fs.mkdirSync(backupDir, { recursive: true });
+  for (const item of pending) fs.writeFileSync(item.backupPath, item.raw, { flag: "wx" });
+  for (const item of pending) {
+    if (hashBytes(fs.readFileSync(item.doc.filePath)) !== item.doc.sha256) throw new Error(`current_history_identity_alias_source_drift:${item.doc.name}`);
+    atomicWriteJson(item.doc.filePath, item.output);
+    written.push({ filePath: item.doc.filePath, backupPath: item.backupPath });
   }
 
   return {
