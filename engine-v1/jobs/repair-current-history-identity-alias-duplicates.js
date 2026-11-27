@@ -91,17 +91,15 @@ function chooseRetainedId(groupRows, sourceById, resultMemoryIds, overlay) {
     throw new Error(`current_history_duplicate_multiple_retained_lineage:${retained.map(x => x.id).join(",")}`);
   }
 
+  const canonicalIds = enriched.filter(x => x.repositoryCanonicalId);
+  if (canonicalIds.length > 1)
+    throw new Error("current_history_multiple_canonical_ids_require_authority");
+  if (canonicalIds.length === 1) {
+    return { keepId: canonicalIds[0].id, reason: "repository_canonical_id_over_provider_id", enriched };
+  }
   const inResults = enriched.filter(x => x.inResultsMemory);
   if (inResults.length === 1) {
     return { keepId: inResults[0].id, reason: "clean_results_memory_retained_id", enriched };
-  }
-  if (inResults.length > 1) {
-    throw new Error(`current_history_duplicate_multiple_results_retained_ids:${inResults.map(x => x.id).join(",")}`);
-  }
-
-  const canonicalIds = enriched.filter(x => x.repositoryCanonicalId);
-  if (canonicalIds.length === 1) {
-    return { keepId: canonicalIds[0].id, reason: "repository_canonical_id_over_provider_id", enriched };
   }
 
   throw new Error(`current_history_duplicate_retention_ambiguous:${enriched.map(x => x.id).join(",")}`);
@@ -112,12 +110,12 @@ export function buildCurrentHistoryIdentityAliasRepairPlan({
   resultsRoot = resolveDataPath("league-memory", "results"),
   overlay = createProductionEvidenceIdentityOverlay(),
 } = {}) {
-  const documents = HISTORY_FILES.map(name => ({
-    name,
-    filePath: path.join(historyRoot, name),
-    payload: readJson(path.join(historyRoot, name)),
-    sourceSha256: createHash("sha256").update(fs.readFileSync(path.join(historyRoot, name))).digest("hex"),
-  }));
+  const documents = HISTORY_FILES.map(name => {
+    const filePath = path.join(historyRoot, name);
+    const bytes = fs.readFileSync(filePath);
+    return {name, filePath, payload: JSON.parse(bytes.toString("utf8")),
+      sourceSha256: createHash("sha256").update(bytes).digest("hex")};
+  });
   const sourceById = new Map();
   const transformed = [];
 
