@@ -1,0 +1,22 @@
+name: History alias repair regression
+on:
+  pull_request:
+    paths:
+      - 'engine-v1/jobs/repair-current-history-identity-alias-duplicates*'
+      - '.github/workflows/history-alias-repair-regression.yml'
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: npm ci --prefix engine-v1
+      - run: node --check engine-v1/jobs/repair-current-history-identity-alias-duplicates.js
+      - run: node --test --test-reporter=tap engine-v1/jobs/repair-current-history-identity-alias-duplicates.test.js
+      - run: git diff --exit-code

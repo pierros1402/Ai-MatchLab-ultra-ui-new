@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -23,6 +24,10 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function hashBytes(raw) {
+  return createHash("sha256").update(raw).digest("hex");
+}
+
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
@@ -31,6 +36,10 @@ function atomicWriteJson(filePath, value) {
   const tempPath = `${filePath}.tmp-${process.pid}`;
   fs.writeFileSync(tempPath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
   fs.renameSync(tempPath, filePath);
+}
+
+function jsonDirectoryManifest(dir) {
+  return fs.readdirSync(dir).filter(name => name.endsWith(".json")).sort().map(name => ({ name, sha256: hashBytes(fs.readFileSync(path.join(dir, name))) }));
 }
 
 function listResultMemoryIds(resultsDir) {
@@ -64,7 +73,18 @@ function canonicalizedHistoryView(row, overlay) {
   };
 }
 
-function chooseRetainedId(groupRows, sourceById, resultMemoryIds, overlay) {
+function readCanonicalRowsForDay(day) {
+  if (!/^\d{4}-\d{2}-\d{2}$/u.test(day)) throw new Error("current_history_canonical_day_invalid");
+  const dir = resolveDataPath("canonical-fixtures", day);
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir).filter(name => name.endsWith(".json")).sort().flatMap(name => {
+    const payload = readJson(path.join(dir, name));
+    if (!Array.isArray(payload.fixtures)) throw new Error("current_history_canonical_partition_invalid");
+    return payload.fixtures.map(row => ({ ...row, leagueSlug: row.leagueSlug || path.basename(name, ".json") }));
+  });
+}
+
+function chooseRetainedId(groupRows, sourceById, resultMemoryIds, overlay, canonicalRowsForDay) {
   const enriched = groupRows.map(example => {
     const id = clean(example?.id);
     const source = sourceById.get(id);
@@ -90,17 +110,42 @@ function chooseRetainedId(groupRows, sourceById, resultMemoryIds, overlay) {
     throw new Error(`current_history_duplicate_multiple_retained_lineage:${retained.map(x => x.id).join(",")}`);
   }
 
+  // A repository-shaped ID is not itself proof of canonical membership.
+  // Never discard it in favor of a provider memory ID without reviewed lineage.
+  const canonicalIds = enriched.filter(x => x.repositoryCanonicalId);
+  if (canonicalIds.length === 1) {
+    const candidate = canonicalIds[0];
+    const source = sourceById.get(candidate.id).row;
+    const day = clean(source.dayKey);
+    const matches = canonicalRowsForDay(day).filter(row =>
+      clean(row.canonicalId) === candidate.id &&
+      clean(row.leagueSlug) === clean(source.leagueSlug) &&
+      Number.isFinite(Date.parse(source.kickoff)) &&
+      Date.parse(row.kickoffUtc || row.kickoff) === Date.parse(source.kickoff) &&
+      row.scoreHome != null && row.scoreAway != null &&
+      Number(row.scoreHome) === Number(source.scoreHome) &&
+      Number(row.scoreAway) === Number(source.scoreAway) &&
+      clean(row.status).toUpperCase() === "FT" &&
+      clean(source.status).toUpperCase() === "FT"
+    );
+    if (matches.length === 1) {
+      const expected = canonicalizedHistoryView(source, overlay);
+      const actual = canonicalizedHistoryView({ ...matches[0], id: candidate.id, matchId: candidate.id }, overlay);
+      if (expected.homeTeam === actual.homeTeam && expected.awayTeam === actual.awayTeam) {
+        return { keepId: candidate.id, reason: "verified_canonical_fixture_membership", enriched };
+      }
+    }
+  }
+  if (canonicalIds.length) {
+    throw new Error(`current_history_duplicate_canonical_membership_required:${canonicalIds.map(x => x.id).join(",")}`);
+  }
+
   const inResults = enriched.filter(x => x.inResultsMemory);
   if (inResults.length === 1) {
     return { keepId: inResults[0].id, reason: "clean_results_memory_retained_id", enriched };
   }
   if (inResults.length > 1) {
     throw new Error(`current_history_duplicate_multiple_results_retained_ids:${inResults.map(x => x.id).join(",")}`);
-  }
-
-  const canonicalIds = enriched.filter(x => x.repositoryCanonicalId);
-  if (canonicalIds.length === 1) {
-    return { keepId: canonicalIds[0].id, reason: "repository_canonical_id_over_provider_id", enriched };
   }
 
   throw new Error(`current_history_duplicate_retention_ambiguous:${enriched.map(x => x.id).join(",")}`);
@@ -110,11 +155,15 @@ export function buildCurrentHistoryIdentityAliasRepairPlan({
   historyRoot = resolveDataPath("history"),
   resultsRoot = resolveDataPath("league-memory", "results"),
   overlay = createProductionEvidenceIdentityOverlay(),
+  canonicalRowsForDay = readCanonicalRowsForDay,
 } = {}) {
   const documents = HISTORY_FILES.map(name => ({
     name,
     filePath: path.join(historyRoot, name),
-    payload: readJson(path.join(historyRoot, name)),
+    ...(() => {
+      const raw = fs.readFileSync(path.join(historyRoot, name));
+      return { payload: JSON.parse(raw.toString("utf8")), sha256: hashBytes(raw) };
+    })(),
   }));
   const sourceById = new Map();
   const transformed = [];
@@ -146,13 +195,26 @@ export function buildCurrentHistoryIdentityAliasRepairPlan({
     throw new Error("current_history_identity_alias_duplicate_examples_incomplete");
   }
 
+  const resultsManifest = jsonDirectoryManifest(resultsRoot);
   const resultMemoryIds = listResultMemoryIds(resultsRoot);
+  if (JSON.stringify(jsonDirectoryManifest(resultsRoot)) !== JSON.stringify(resultsManifest)) throw new Error("current_history_results_memory_source_drift");
+  const canonicalEvidence = new Map();
+  const boundCanonicalRows = day => {
+    if (!canonicalEvidence.has(day)) {
+      const dir = resolveDataPath("canonical-fixtures", day);
+      const manifest = canonicalRowsForDay === readCanonicalRowsForDay && fs.existsSync(dir) ? jsonDirectoryManifest(dir) : null;
+      const rows = canonicalRowsForDay(day);
+      if (manifest && JSON.stringify(jsonDirectoryManifest(dir)) !== JSON.stringify(manifest)) throw new Error(`current_history_canonical_source_drift:${day}`);
+      canonicalEvidence.set(day, { rows: clone(rows), sha256: hashBytes(JSON.stringify(rows)), manifest, dir });
+    }
+    return clone(canonicalEvidence.get(day).rows);
+  };
   const removals = [];
   const groups = [];
   const reasonCounts = {};
 
   for (const group of audit.semantic.examples.semanticDuplicates) {
-    const selection = chooseRetainedId(group.rows, sourceById, resultMemoryIds, overlay);
+    const selection = chooseRetainedId(group.rows, sourceById, resultMemoryIds, overlay, boundCanonicalRows);
     const removeIds = group.rows.map(row => clean(row.id)).filter(id => id !== selection.keepId);
     if (removeIds.length !== group.rows.length - 1) {
       throw new Error(`current_history_identity_alias_removal_count_invalid:${selection.keepId}`);
@@ -165,6 +227,7 @@ export function buildCurrentHistoryIdentityAliasRepairPlan({
       removeIds,
       reason: selection.reason,
       candidates: selection.enriched,
+      sourceEvidence: group.rows.map(row => ({ id: clean(row.id), row: clone(sourceById.get(clean(row.id)).row) })),
     });
     removals.push(...removeIds);
   }
@@ -179,6 +242,9 @@ export function buildCurrentHistoryIdentityAliasRepairPlan({
     ok: true,
     historyRoot,
     resultsRoot,
+    resultsManifest,
+    canonicalEvidence,
+    canonicalRowsForDay,
     sourceRows: transformed.length,
     duplicateGroups: audit.semantic.duplicateGroups,
     rowsToRemove: removals.length,
@@ -204,32 +270,72 @@ export function applyCurrentHistoryIdentityAliasRepair({
   if (!clean(backupDir)) {
     throw new Error("current_history_identity_alias_backup_dir_required");
   }
-  fs.mkdirSync(backupDir, { recursive: true });
-
   const removalSet = new Set(plan.removals);
+  const retainedEvidence = new Map(plan.groups.map(group => [group.keepId, group.sourceEvidence]));
   let removed = 0;
   const written = [];
+  const pending = [];
+  if (removalSet.size !== plan.removals.length || removalSet.size !== plan.rowsToRemove) {
+    throw new Error("current_history_identity_alias_removal_plan_count_invalid");
+  }
 
   for (const doc of plan.documents) {
-    const current = readJson(doc.filePath);
+    const raw = fs.readFileSync(doc.filePath);
+    if (hashBytes(raw) !== doc.sha256) throw new Error(`current_history_identity_alias_source_drift:${doc.name}`);
     const backupPath = path.join(backupDir, doc.name);
-    fs.copyFileSync(doc.filePath, backupPath);
-    const output = clone(current);
+    const output = JSON.parse(raw.toString("utf8"));
     for (const day of output.days || []) {
       const before = (day.rows || []).length;
       day.rows = (day.rows || []).filter(row => !removalSet.has(clean(row?.id || row?.matchId)));
+      for (const row of day.rows) {
+        const evidence = retainedEvidence.get(clean(row.id || row.matchId));
+        if (evidence) {
+          const prior = row.historyIdentityAliasEvidence || [];
+          if (!Array.isArray(prior)) throw new Error("current_history_alias_provenance_invalid");
+          const merged = new Map([...prior, ...evidence].map(item => [JSON.stringify(item), item]));
+          row.historyIdentityAliasEvidence = [...merged.values()];
+        }
+      }
       const delta = before - day.rows.length;
       if (delta) {
         removed += delta;
         day.matchCount = day.rows.length;
       }
     }
-    atomicWriteJson(doc.filePath, output);
-    written.push({ filePath: doc.filePath, backupPath });
+    if (JSON.stringify(output) !== JSON.stringify(doc.payload)) pending.push({ doc, raw, output, backupPath });
   }
 
   if (removed !== plan.rowsToRemove) {
     throw new Error(`current_history_identity_alias_write_count_mismatch:${removed}:${plan.rowsToRemove}`);
+  }
+
+  for (const doc of plan.documents) {
+    if (hashBytes(fs.readFileSync(doc.filePath)) !== doc.sha256) throw new Error(`current_history_identity_alias_source_drift:${doc.name}`);
+  }
+  if (JSON.stringify(jsonDirectoryManifest(plan.resultsRoot)) !== JSON.stringify(plan.resultsManifest)) throw new Error("current_history_results_memory_source_drift");
+  for (const [day, evidence] of plan.canonicalEvidence) {
+    if (evidence.manifest && JSON.stringify(jsonDirectoryManifest(evidence.dir)) !== JSON.stringify(evidence.manifest)) throw new Error(`current_history_canonical_source_drift:${day}`);
+    if (hashBytes(JSON.stringify(plan.canonicalRowsForDay(day))) !== evidence.sha256) throw new Error(`current_history_canonical_source_drift:${day}`);
+  }
+  fs.mkdirSync(backupDir, { recursive: true });
+  for (const item of pending) fs.writeFileSync(item.backupPath, item.raw, { flag: "wx" });
+  const applied = [];
+  try {
+    for (const item of pending) {
+      if (hashBytes(fs.readFileSync(item.doc.filePath)) !== item.doc.sha256) throw new Error(`current_history_identity_alias_source_drift:${item.doc.name}`);
+      atomicWriteJson(item.doc.filePath, item.output);
+      applied.push(item);
+      written.push({ filePath: item.doc.filePath, backupPath: item.backupPath });
+    }
+  } catch (error) {
+    for (const item of applied.reverse()) {
+      const expected = hashBytes(Buffer.from(`${JSON.stringify(item.output, null, 2)}\n`, "utf8"));
+      if (hashBytes(fs.readFileSync(item.doc.filePath)) !== expected) throw new Error(`current_history_alias_rollback_conflict:${item.doc.name}`, { cause: error });
+      const temp = `${item.doc.filePath}.rollback-${process.pid}`;
+      fs.writeFileSync(temp, item.raw, { flag: "wx" });
+      fs.renameSync(temp, item.doc.filePath);
+    }
+    throw error;
   }
 
   return {

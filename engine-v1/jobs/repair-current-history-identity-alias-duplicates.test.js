@@ -59,6 +59,12 @@ test("production retained lineage wins deterministic identity-alias duplicate re
     assert.equal(applied.removed, 1);
     const after = JSON.parse(fs.readFileSync(path.join(history, "2025-2026.json"), "utf8"));
     assert.deepEqual(after.days[0].rows.map(x => x.id), ["cid_keep"]);
+    const retained = after.days[0].rows[0];
+    assert.deepEqual(retained.historyIdentityAliasEvidence.map(x => x.id).sort(), ["cid_keep", "provider_1"]);
+    assert.equal(retained.scoreHome, 1);
+    assert.equal(retained.scoreAway, 0);
+    assert.equal(retained.status, "FT");
+    assert.equal(retained.historyIdentityAliasEvidence.find(x => x.id === "provider_1").row.scoreHome, 1);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -126,4 +132,86 @@ test("CLI entry detection is Windows-safe and uses fileURLToPath", () => {
   const source = fs.readFileSync(sourcePath, "utf8");
   assert.match(source, /fileURLToPath\(import\.meta\.url\)/u);
   assert.doesNotMatch(source, /new URL\(import\.meta\.url\)\.pathname/u);
+});
+
+
+test("alias repair rejects source drift and invalid removal counts before any history write", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-history-preflight-"));
+  try {
+    const history = path.join(root, "history");
+    const results = path.join(root, "results");
+    const base = { kickoff: "2026-07-01T18:00:00Z", dayKey: "2026-07-01", leagueSlug: "test.1", homeTeam: "Alpha", awayTeam: "Beta", scoreHome: 1, scoreAway: 0, status: "FT" };
+    writeHistory(history, [{ ...base, id: "provider_1" }, { ...base, id: "cid_keep" }]);
+    writeResults(results, ["provider_1"]);
+    const plan = buildCurrentHistoryIdentityAliasRepairPlan({ historyRoot: history, resultsRoot: results, overlay: overlayStub() });
+    const first = path.join(history, "2025-2026.json");
+    const second = path.join(history, "2026-2027.json");
+    const original = fs.readFileSync(first);
+    const backupDir = path.join(root, "backup");
+    assert.throws(() => applyCurrentHistoryIdentityAliasRepair({ plan: { ...plan, rowsToRemove: 2 }, backupDir }), /removal_plan_count_invalid/);
+    assert.deepEqual(fs.readFileSync(first), original);
+    assert.equal(fs.existsSync(backupDir), false);
+    fs.appendFileSync(second, "\n");
+    assert.throws(() => applyCurrentHistoryIdentityAliasRepair({ plan, backupDir }), /source_drift/);
+    assert.deepEqual(fs.readFileSync(first), original);
+    assert.equal(fs.existsSync(backupDir), false);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+
+test("unmanaged canonical duplicate requires exact canonical evidence despite provider memory preference", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-history-canonical-"));
+  try {
+    const history = path.join(root, "history");
+    const results = path.join(root, "results");
+    const base = { kickoff: "2026-07-01T18:00:00Z", dayKey: "2026-07-01", leagueSlug: "test.1", homeTeam: "Alpha", awayTeam: "Beta", scoreHome: 1, scoreAway: 0, status: "FT" };
+    writeHistory(history, [{ ...base, id: "provider_1" }, { ...base, id: "cid_unmanaged" }]);
+    writeResults(results, ["provider_1"]);
+    const options = { historyRoot: history, resultsRoot: results, overlay: overlayStub() };
+    assert.throws(() => buildCurrentHistoryIdentityAliasRepairPlan({ ...options, canonicalRowsForDay: () => [] }), /canonical_membership_required/);
+    const canonical = { ...base, canonicalId: "cid_unmanaged" };
+    assert.throws(() => buildCurrentHistoryIdentityAliasRepairPlan({ ...options, canonicalRowsForDay: () => [{ ...canonical, scoreAway: 2 }] }), /canonical_membership_required/);
+    const plan = buildCurrentHistoryIdentityAliasRepairPlan({ ...options, canonicalRowsForDay: () => [canonical] });
+    assert.equal(plan.groups[0].keepId, "cid_unmanaged");
+    assert.equal(plan.groups[0].reason, "verified_canonical_fixture_membership");
+    assert.deepEqual(plan.removals, ["provider_1"]);
+    canonical.scoreAway = 2;
+    assert.throws(() => applyCurrentHistoryIdentityAliasRepair({ plan, backupDir: path.join(root, "backup") }), /canonical_source_drift/);
+    canonical.scoreAway = 0;
+    fs.appendFileSync(path.join(results, "test.1.json"), "\n");
+    assert.throws(() => applyCurrentHistoryIdentityAliasRepair({ plan, backupDir: path.join(root, "backup") }), /results_memory_source_drift/);
+    assert.equal(fs.existsSync(path.join(root, "backup")), false);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+
+test("second history write failure restores first file byte for byte", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-history-rollback-"));
+  const rename = fs.renameSync;
+  try {
+    const history = path.join(root, "history");
+    const results = path.join(root, "results");
+    const base = { kickoff: "2026-07-01T18:00:00Z", dayKey: "2026-07-01", leagueSlug: "test.1", homeTeam: "Alpha", awayTeam: "Beta", scoreHome: 1, scoreAway: 0, status: "FT" };
+    writeHistory(history, [{ ...base, id: "provider_1" }]);
+    const first = path.join(history, "2025-2026.json");
+    const second = path.join(history, "2026-2027.json");
+    fs.writeFileSync(second, JSON.stringify({ season: "2026-2027", days: [{ dayKey: base.dayKey, matchCount: 1, rows: [{ ...base, id: "cid_keep" }] }] }));
+    writeResults(results, ["provider_1"]);
+    const plan = buildCurrentHistoryIdentityAliasRepairPlan({ historyRoot: history, resultsRoot: results, overlay: overlayStub() });
+    const originals = [first, second].map(file => fs.readFileSync(file));
+    fs.renameSync = (from, to) => {
+      if (to === second && String(from).includes(".tmp-")) throw new Error("injected_second_write_failure");
+      return rename(from, to);
+    };
+    assert.throws(() => applyCurrentHistoryIdentityAliasRepair({ plan, backupDir: path.join(root, "backup") }), /injected_second_write_failure/);
+    assert.deepEqual(fs.readFileSync(first), originals[0]);
+    assert.deepEqual(fs.readFileSync(second), originals[1]);
+  } finally {
+    fs.renameSync = rename;
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });
