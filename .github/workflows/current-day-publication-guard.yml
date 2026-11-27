@@ -70,6 +70,7 @@ jobs:
             DAY_KEY="${CALENDAR_DAY}" node --input-type=module -e '
               import fs from "node:fs";
               import { validateDeploySnapshotManifest } from "./engine-v1/core/deploy-snapshot-release-contract.js";
+              import { validateStagedRelease } from "./engine-v1/jobs/sync-deploy-snapshot-from-github.js";
               const day=process.env.DAY_KEY;
               const file=`data/deploy-snapshots/${day}/manifest.json`;
               const manifest=JSON.parse(fs.readFileSync(file,"utf8"));
@@ -78,6 +79,7 @@ jobs:
                 console.error(JSON.stringify({reason:"current_manifest_invalid",day,errors:check.errors}));
                 process.exit(2);
               }
+              await validateStagedRelease(`data/deploy-snapshots/${day}`,manifest);
               console.log(JSON.stringify({ok:true,day,hash:manifest.hash}));
             '
             CURRENT_RC=$?
