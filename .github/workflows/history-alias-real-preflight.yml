@@ -56,6 +56,21 @@ jobs:
           console.log(JSON.stringify({before:plan.sourceRows,after:after.sourceRows,removed:result.removed,remaining:after.rowsToRemove}));
           JS
           git diff --name-only
+      - name: Rebuild and validate History Index from repaired history
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {ensureHistoryIndexFoundationForDay} from './engine-v1/jobs/rebuild-indexes-for-season.js';
+          import {validateHistoryIndexFoundationSync} from './engine-v1/core/derived-history-foundation.js';
+          const day = new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Athens',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+          const result = await ensureHistoryIndexFoundationForDay(day);
+          assert.equal(result.ok,true,JSON.stringify(result));
+          assert.equal(validateHistoryIndexFoundationSync(result.season).ok,true);
+          const again = await ensureHistoryIndexFoundationForDay(day);
+          assert.equal(again.ok,true);
+          assert.equal(again.rebuilt,false);
+          console.log(JSON.stringify({day,season:result.season,historyIndexValidated:true,rebuilt:result.rebuilt,fixedPoint:true}));
+          JS
       - name: Rebuild H2H from repaired history in isolated checkout
         run: |
           node engine-v1/jobs/rebuild-h2h-foundation-from-current-history.js
@@ -68,7 +83,7 @@ jobs:
           JS
           git diff --exit-code -- data/canonical-fixtures data/final-results data/league-memory/results
           git diff --name-only > "$RUNNER_TEMP/history-h2h-changed-paths.txt"
-          git diff --binary --no-ext-diff -- data/history data/h2h data/h2h-foundation > "$RUNNER_TEMP/history-h2h-candidate.patch"
+          git diff --binary --no-ext-diff -- data/history data/history-index data/h2h data/h2h-foundation > "$RUNNER_TEMP/history-h2h-candidate.patch"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
