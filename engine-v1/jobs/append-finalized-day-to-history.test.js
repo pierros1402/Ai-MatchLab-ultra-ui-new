@@ -193,3 +193,15 @@ test('batch recovery imports only requested verified IDs and keeps conflicted ro
   assert.equal((await persistVerifiedHistoryBuild(input, options)).rowsWritten, 0);
   assert.equal(await fs.readFile(historyPath, 'utf8'), history);
 });
+
+test("overlapping canonical identities are held regardless of score or provider", () => {
+  for (const score of [2, 3]) {
+    const result = buildVerifiedHistoryDay({
+      dayKey: "2026-08-08",
+      canonicalRows: [canonical(), canonical({canonicalId:"cid_other", scoreHome:score, kickoffUtc:"2026-08-08T19:00:00Z"})],
+      finalResultRows: [finalResult(), finalResult({matchId:"cid_other", homeScore:score, finalScore:{homeScore:score,awayScore:1}})]
+    });
+    assert.equal(result.ok, false);
+    assert.deepEqual(result.errors.filter(e=>e.reason==="history_semantic_identity_overlap").map(e=>e.matchId).sort(), ["cid_other","cid_test_home_away_20260808"]);
+  }
+});

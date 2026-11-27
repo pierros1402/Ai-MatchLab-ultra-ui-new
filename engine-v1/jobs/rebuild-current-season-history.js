@@ -12,6 +12,7 @@ import {
 
 import { LEAGUE_NAME_MAP } from "../../workers/_shared/leagues-registry.js";
 import { currentSeason } from "../core/season.js";
+import { auditHistoryRows } from "./audit-history-semantic-integrity.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -460,6 +461,17 @@ async function loadExistingProgress(start, end, totalDays) {
   return { history, report };
 }
 
+export function historyAdmissionConflicts(row, existingRows) {
+  const candidates = existingRows.filter(old => old.leagueSlug === row.leagueSlug &&
+    Math.abs(Number(old.kickoff_ms ?? Date.parse(old.kickoff)) - row.kickoff_ms) <= 21600000);
+  return candidates.flatMap(old => {
+    const audit = auditHistoryRows([old, row]);
+    const reasons = ["duplicateGroups", "scoreConflictGroups", "flippedOrientationGroups", "crossOperationalDayGroups"]
+      .filter(key => audit.semantic[key] > 0);
+    return reasons.length ? [{ matchId: old.id, reasons }] : [];
+  });
+}
+
 async function rebuildCurrentSeason() {
   const start = SEASON_START;
   const end = todayAthens();
@@ -525,6 +537,15 @@ async function rebuildCurrentSeason() {
           continue;
         }
 
+        const adjacentRows = history.days.filter(bucket => bucket.dayKey !== dayKey &&
+          Math.abs(Date.parse(bucket.dayKey) - Date.parse(dayKey)) <= 86400000).flatMap(bucket => bucket.rows);
+        const conflicts = historyAdmissionConflicts(row, [...dayBucket.rows, ...adjacentRows]);
+        if (conflicts.length) {
+          report.failures.push({ dayKey, slug, matchId: row.id, reason: "history_semantic_admission_hold", conflicts });
+          report.ok = false;
+          continue;
+        }
+
         daySeen.add(row.id);
         globalSeen.add(row.id);
         dayBucket.rows.push(row);
@@ -561,7 +582,7 @@ async function rebuildCurrentSeason() {
   await flushProgress(history, report);
 
   return {
-    ok: true,
+    ok: report.ok !== false,
     outFile: OUT_FILE,
     reportFile: REPORT_FILE,
     season: SEASON,
@@ -578,6 +599,7 @@ async function rebuildCurrentSeason() {
 if (process.argv[1] && path.resolve(process.argv[1]) === __filename) rebuildCurrentSeason()
   .then(result => {
     console.log(JSON.stringify(result, null, 2));
+    if (!result.ok) process.exitCode = 1;
   })
   .catch(err => {
     console.error("[rebuild-current-season-history] failed");

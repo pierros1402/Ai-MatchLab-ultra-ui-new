@@ -281,6 +281,20 @@ export function buildVerifiedHistoryDay({
     }
   }
 
+  // Reject overlapping canonical events before they enter the history journal.
+  // Identity ambiguity is a review hold, never an automatic deletion.
+  for (let i = 0; i < rows.length; i++) {
+    for (let j = i + 1; j < rows.length; j++) {
+      const a = rows[i], b = rows[j];
+      if (a.leagueSlug !== b.leagueSlug || Math.abs(a.kickoff_ms - b.kickoff_ms) > 21600000) continue;
+      if (!verifiedHistoryTeamNameMatches(a.leagueSlug, a.homeTeam, b.homeTeam, identityResolver) ||
+          !verifiedHistoryTeamNameMatches(a.leagueSlug, a.awayTeam, b.awayTeam, identityResolver)) continue;
+      for (const [row, other] of [[a, b], [b, a]]) {
+        errors.push({ reason: "history_semantic_identity_overlap", matchId: row.id, otherMatchId: other.id });
+      }
+    }
+  }
+
   rows.sort((a, b) => {
     if (a.kickoff_ms !== b.kickoff_ms) return a.kickoff_ms - b.kickoff_ms;
     return a.id.localeCompare(b.id);
