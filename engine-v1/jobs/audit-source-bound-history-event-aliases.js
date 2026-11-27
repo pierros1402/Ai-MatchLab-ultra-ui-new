@@ -36,6 +36,8 @@ for(const name of fs.readdirSync(memoryRoot).filter(n=>n.endsWith('.json')).sort
  }
 }
 const classifications={},memoryProofCounts={},unmatchedByStatus={},memoryFieldFailures={},memoryFailureExamples={};
+// Diacritic and punctuation equivalence only; no fuzzy or cross-club alias promotion.
+const normTeam=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 for(const row of rows){
  const result=resolver.findAliasCandidates(row);
  const reason=result.ok?(result.requiresIndependentIdentityApproval?'ALIAS_CANDIDATE':'EXACT_ID'):result.reason;
@@ -57,10 +59,11 @@ for(const row of rows){
   const score=(v,n)=>v!==null&&v!==undefined&&v!==''&&Number.isInteger(Number(v))&&Number(v)===Number(n);
   const day=row.dayKey||String(row.kickoff||row.kickoffUtc||'').slice(0,10);
   const sameKickoff=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(value)&&Number.isFinite(Date.parse(value))&&Date.parse(value)===(Number(row.kickoff_ms)||Date.parse(row.kickoff||row.kickoffUtc));
-  const exact=(hit,ha,team,opp,gf,ga)=>hit.league===row.leagueSlug&&hit.team===team&&hit.row.opp===opp&&sameKickoff(hit.row.date)&&hit.row.ha===ha&&score(hit.row.gf,gf)&&score(hit.row.ga,ga);
+  const equalTeam=(a,b)=>a===b||normTeam(a)===normTeam(b);
+  const exact=(hit,ha,team,opp,gf,ga)=>hit.league===row.leagueSlug&&equalTeam(hit.team,team)&&equalTeam(hit.row.opp,opp)&&sameKickoff(hit.row.date)&&hit.row.ha===ha&&score(hit.row.gf,gf)&&score(hit.row.ga,ga);
   for(const hit of sourceMemory){
    const h=hit.row.ha==='H',a=hit.row.ha==='A';
-   const checks={league:hit.league===row.leagueSlug,date:sameKickoff(hit.row.date),orientation:h||a,team:hit.team===(h?row.homeTeam:row.awayTeam),opponent:hit.row.opp===(h?row.awayTeam:row.homeTeam),gf:score(hit.row.gf,h?row.scoreHome:row.scoreAway),ga:score(hit.row.ga,h?row.scoreAway:row.scoreHome)};
+   const checks={league:hit.league===row.leagueSlug,date:sameKickoff(hit.row.date),orientation:h||a,team:equalTeam(hit.team,h?row.homeTeam:row.awayTeam),opponent:equalTeam(hit.row.opp,h?row.awayTeam:row.homeTeam),gf:score(hit.row.gf,h?row.scoreHome:row.scoreAway),ga:score(hit.row.ga,h?row.scoreAway:row.scoreHome)};
    for(const [key,ok] of Object.entries(checks))if(!ok){
     memoryFieldFailures[key]=(memoryFieldFailures[key]||0)+1;
     if(!memoryFailureExamples[key])memoryFailureExamples[key]={history:row,memory:hit,expectedDay:day};
