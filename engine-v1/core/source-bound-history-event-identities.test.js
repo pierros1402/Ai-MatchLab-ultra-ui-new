@@ -28,3 +28,25 @@ test('regular full-time provider status is accepted without admitting AET or PEN
  assert.equal(resolver.findAliasCandidates({...row,status:'STATUS_FULL_TIME'}).ok,true);
  for(const status of ['AET','PEN','STATUS_FINAL_AET','STATUS_FINAL_PEN','POSTPONED'])assert.equal(resolver.findAliasCandidates({...row,status}).ok,false);
 });
+
+test('provider alias resolution requires explicit verified native binding, not semantic similarity',()=>{
+ const boundCanonical={...canonical,providerIds:{...canonical.providerIds,sofascore:'123'}};
+ const evidence={provider:'sofascore',providerMatchId:'123',finished:true,playedFinal:true,nonPlayedTerminal:false};
+ const boundEntry={...entry,canonical:boundCanonical,final:{...final,sources:[evidence]}};
+ const alias={...row,id:'sofa_123',status:'FT'};
+ const result=buildSourceBoundHistoryEventIdentities([boundEntry]).resolveBoundProviderAlias(alias);
+ assert.equal(result.ok,true);
+ assert.equal(result.canonicalId,'cid_test');
+ assert.equal(result.providerBindingVerified,true);
+ assert.equal(result.requiresIndependentIdentityApproval,false);
+ assert.equal(result.sourceHistoryRewriteAuthorized,false);
+ assert.equal(result.canonicalResultRewriteAuthorized,false);
+ for(const patch of [{id:'sofa_124'},{id:'unknown'},{scoreHome:9},{kickoff:'2026-09-01T18:01Z'},{status:'PEN'},{homeTeam:'Away',awayTeam:'Home'}])
+  assert.equal(buildSourceBoundHistoryEventIdentities([boundEntry]).resolveBoundProviderAlias({...alias,...patch}).ok,false);
+ assert.equal(buildSourceBoundHistoryEventIdentities([entry]).resolveBoundProviderAlias(alias).ok,false);
+ for(const patch of [{finished:false},{playedFinal:false},{nonPlayedTerminal:true},{providerMatchId:'124'}])
+  assert.equal(buildSourceBoundHistoryEventIdentities([{...boundEntry,final:{...final,sources:[{...evidence,...patch}]}}]).resolveBoundProviderAlias(alias).ok,false);
+ assert.equal(buildSourceBoundHistoryEventIdentities([{...boundEntry,final}]).resolveBoundProviderAlias(alias).reason,'PROVIDER_FINAL_EVIDENCE_REQUIRED');
+ const other={...boundEntry,canonical:{...boundCanonical,canonicalId:'cid_other',kickoffUtc:'2026-09-01T20:00Z'},final:{...boundEntry.final,matchId:'cid_other',kickoffUtc:'2026-09-01T20:00Z'}};
+ assert.equal(buildSourceBoundHistoryEventIdentities([boundEntry,other]).resolveBoundProviderAlias(alias).reason,'PROVIDER_ID_NOT_UNIQUELY_BOUND');
+});
