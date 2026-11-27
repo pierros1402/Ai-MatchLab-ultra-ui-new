@@ -386,15 +386,36 @@ export async function persistVerifiedHistoryBuild(build, { journalRoot, historyP
       return { ok: false, reason: "history_review_required" };
     }
 
+    // Check adjacent operational days before admitting new identities. Existing
+    // rows remain immutable; an overlap is a review hold, not an alias approval.
+    const identityResolver = getProductionIdentityResolver();
+    const dayMs = Date.parse(build.dayKey);
+    const adjacentRows = existing.days.filter(day => day.dayKey !== build.dayKey &&
+      Math.abs(Date.parse(day.dayKey) - dayMs) <= 86400000).flatMap(day => day.rows);
+    const overlaps = (old, row) => {
+      if (old.leagueSlug !== row.leagueSlug) return false;
+      const a = Number(old.kickoff_ms ?? Date.parse(old.kickoff || old.kickoffUtc));
+      const b = Number(row.kickoff_ms ?? Date.parse(row.kickoff || row.kickoffUtc));
+      if (Number.isFinite(a) && Number.isFinite(b) && Math.abs(a-b) > 21600000) return false;
+      return verifiedHistoryTeamNameMatches(row.leagueSlug, old.homeTeam, row.homeTeam, identityResolver) &&
+        verifiedHistoryTeamNameMatches(row.leagueSlug, old.awayTeam, row.awayTeam, identityResolver);
+    };
+    const crossDayConflicts = build.rows.filter(row => !priorRows.some(old => old.id === row.id))
+      .flatMap(row => adjacentRows.filter(old => overlaps(old, row)).map(old => ({
+        reason: "history_cross_day_identity_overlap", matchId: row.id, otherMatchId: old.id
+      })));
+    if (!additiveRecovery && crossDayConflicts.length) {
+      return { ok: false, reason: "history_review_required", errors: crossDayConflicts };
+    }
+    const crossDayBlocked = new Set(crossDayConflicts.map(error => error.matchId));
     let rows;
     if (additiveRecovery) {
       const requested = new Set(recoveryMatchIds);
       const blocked = new Set(scopedErrors.map(error => error.matchId));
-      const identityResolver = getProductionIdentityResolver();
       const occupied = new Set(existing.days.flatMap(day => day.rows.map(row => row.id)));
       rows = [...priorRows];
       for (const row of build.rows) {
-        if (!requested.has(row.id) || blocked.has(row.id) || occupied.has(row.id)) continue;
+        if (!requested.has(row.id) || blocked.has(row.id) || crossDayBlocked.has(row.id) || occupied.has(row.id)) continue;
         const overlappingPair = rows.some(old => old.leagueSlug === row.leagueSlug &&
           verifiedHistoryTeamNameMatches(row.leagueSlug, old.homeTeam, row.homeTeam, identityResolver) &&
           verifiedHistoryTeamNameMatches(row.leagueSlug, old.awayTeam, row.awayTeam, identityResolver));
