@@ -153,3 +153,25 @@ test("alias repair rejects source drift and invalid removal counts before any hi
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+
+test("unmanaged canonical duplicate requires exact canonical evidence despite provider memory preference", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-history-canonical-"));
+  try {
+    const history = path.join(root, "history");
+    const results = path.join(root, "results");
+    const base = { kickoff: "2026-07-01T18:00:00Z", dayKey: "2026-07-01", leagueSlug: "test.1", homeTeam: "Alpha", awayTeam: "Beta", scoreHome: 1, scoreAway: 0, status: "FT" };
+    writeHistory(history, [{ ...base, id: "provider_1" }, { ...base, id: "cid_unmanaged" }]);
+    writeResults(results, ["provider_1"]);
+    const options = { historyRoot: history, resultsRoot: results, overlay: overlayStub() };
+    assert.throws(() => buildCurrentHistoryIdentityAliasRepairPlan({ ...options, canonicalRowsForDay: () => [] }), /canonical_membership_required/);
+    const canonical = { ...base, canonicalId: "cid_unmanaged" };
+    assert.throws(() => buildCurrentHistoryIdentityAliasRepairPlan({ ...options, canonicalRowsForDay: () => [{ ...canonical, scoreAway: 2 }] }), /canonical_membership_required/);
+    const plan = buildCurrentHistoryIdentityAliasRepairPlan({ ...options, canonicalRowsForDay: () => [canonical] });
+    assert.equal(plan.groups[0].keepId, "cid_unmanaged");
+    assert.equal(plan.groups[0].reason, "verified_canonical_fixture_membership");
+    assert.deepEqual(plan.removals, ["provider_1"]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
