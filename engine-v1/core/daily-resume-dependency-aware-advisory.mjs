@@ -1,6 +1,7 @@
 // Advisory only: dependency-scoped reuse proposals with mandatory downstream
 // gates. Does NOT launch, skip or publish real Daily stages.
 import {validateGraph,verifyCheckpoint} from "./daily-resume-contract.mjs";
+import {auditInvocationCoverage} from "./daily-resume-invocation-coverage-advisory.mjs";
 export const DAG_ADVISORY_SCHEMA="ai-matchlab.daily-dependency-aware-advisory.v1";
 export const MANDATORY_RUN_IDS=Object.freeze([
   "daily-cycle","live-status-refresh","prepublish-gate","commit-snapshot","public-verify"
@@ -66,4 +67,34 @@ export function planDependencyAwareDailyRecovery(stages,binding,checkpoints={}) 
     productionResumeAuthorized:false,
     publicationAuthorized:false
   };
+}
+
+// Production-facing advisory composition. Never treats a caller-declared
+// inventory or a marker-only observation as independently verified coverage.
+// Existing generic checkpoint planner remains available for isolated callers.
+export function planInvocationBoundDailyRecovery({stages,binding,checkpoints={},invocations}={}) {
+  validateGraph(stages);
+  check(binding && typeof binding==="object","dag_advisory_inputs_invalid");
+  for(const stage of stages)policy(stage);
+  check(MANDATORY_RUN_IDS.every(id=>stages.some(s=>s.id===id)),
+    "dag_mandatory_stage_missing");
+  const coverage=auditInvocationCoverage(invocations);
+  // Current invocation contract has no trusted receipt or exhaustive scope
+  // proof. Even an exact declared match cannot unlock checkpoint reuse.
+  const reason=!coverage.accepted?"invocation_coverage_rejected":
+    !coverage.declaredInventoryMatched?"invocation_coverage_incomplete":
+    "invocation_coverage_not_independently_verified";
+  const plan=planDependencyAwareDailyRecovery(stages,binding,{});
+  return {...plan,
+    schema:"ai-matchlab.daily-invocation-bound-recovery-advisory.v1",
+    invocationCoverage:coverage,
+    coverageBlockReason:reason,
+    checkpointReuseBlocked:true,
+    suppliedCheckpointsIgnored:true,
+    decisions:plan.decisions.map(row=>({...row,decision:"RUN",
+      reason:row.reuseClass==="frozen"?reason:row.reason,evidenceSha256:null})),
+    verifiedFrozenStages:0,runStages:stages.length,
+    firstToRerun:stages[0].id,
+    actualStageSkipAuthorized:false,productionResumeAuthorized:false,
+    publicationAuthorized:false};
 }

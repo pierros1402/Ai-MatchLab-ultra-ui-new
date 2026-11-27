@@ -92,3 +92,43 @@ test("forward dependency and unsupported graph rejected",()=>fixture(f=>{
   assert.throws(()=>planDependencyAwareDailyRecovery(f.stages,f.binding,f.checkpoints),
     /resume_dependency_order_invalid/);
 }));
+
+import {planInvocationBoundDailyRecovery,MANDATORY_RUN_IDS} from "./daily-resume-dependency-aware-advisory.mjs";
+import {invocationContract} from "./daily-resume-runtime-invocations.mjs";
+const invocationSource=fs.readFileSync(new URL("../jobs/run-daily-cycle.js",import.meta.url),"utf8");
+const invocationCensus=JSON.parse(fs.readFileSync(new URL("./daily-resume-real-producer-census.json",import.meta.url),"utf8"));
+function invocationFixture(){
+ const expected=invocationContract.map(r=>({id:r.id,scope:r.scope.endsWith("FoundationSeason")?"2026":"2026-11-23",requirement:r.guard==="always"?"required":"conditional-unresolved"}));
+ return {source:invocationSource,census:invocationCensus,expected,observed:expected.map(({id,scope})=>({id,scope,status:"completed"}))};
+}
+function completeStages(stages){
+ return [...stages,...MANDATORY_RUN_IDS.filter(id=>!stages.some(s=>s.id===id)).map(id=>({id,dependsOn:[],inputs:["feed"],outputs:[id],reuseClass:"gate"}))];
+}
+test("invocation-bound planner blocks reuse even for a complete declared match",()=>fixture(f=>{
+ const r=planInvocationBoundDailyRecovery({...f,stages:completeStages(f.stages),invocations:invocationFixture()});
+ assert.equal(r.invocationCoverage.declaredInventoryMatched,true);
+ assert.equal(r.coverageBlockReason,"invocation_coverage_not_independently_verified");
+ assert.equal(r.verifiedFrozenStages,0);
+ assert.ok(r.decisions.every(s=>s.decision==="RUN"&&s.evidenceSha256===null));
+ assert.equal(r.actualStageSkipAuthorized,false);
+ assert.equal(r.productionResumeAuthorized,false);
+ assert.equal(r.publicationAuthorized,false);
+}));
+test("invocation-bound planner exposes missing observations",()=>fixture(f=>{
+ const invocations=invocationFixture();invocations.observed.pop();
+ const r=planInvocationBoundDailyRecovery({...f,stages:completeStages(f.stages),invocations});
+ assert.equal(r.coverageBlockReason,"invocation_coverage_incomplete");
+ assert.equal(r.invocationCoverage.missing.length,1);
+ assert.equal(r.verifiedFrozenStages,0);
+}));
+test("invocation-bound planner rejects source drift and absent inventory",()=>fixture(f=>{
+ for(const invocations of [undefined,{...invocationFixture(),source:invocationSource+"\n"}]){
+ const r=planInvocationBoundDailyRecovery({...f,stages:completeStages(f.stages),invocations});
+ assert.equal(r.coverageBlockReason,"invocation_coverage_rejected");
+ assert.equal(r.checkpointReuseBlocked,true);
+ assert.equal(r.verifiedFrozenStages,0);
+ }
+}));
+test("invocation-bound planner requires every mandatory publication stage",()=>fixture(f=>{
+ assert.throws(()=>planInvocationBoundDailyRecovery({...f,invocations:invocationFixture()}),/dag_mandatory_stage_missing/);
+}));

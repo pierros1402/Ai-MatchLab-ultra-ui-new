@@ -34,3 +34,6 @@ test('invalid scopes rejected',()=>{
 
 // Include focused coverage checks in the existing runtime invocation CI entrypoint.
 import './daily-resume-invocation-coverage-advisory.test.mjs';
+
+// Exercise the planner composition in the existing source-bound CI.
+import './daily-resume-dependency-aware-advisory.test.mjs';
