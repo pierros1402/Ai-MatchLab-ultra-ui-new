@@ -19,7 +19,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: ai-matchlab-data-writer
+  group: ${{ inputs.apply && 'ai-matchlab-data-writer' || format('value-recovery-diagnose-{0}', github.run_id) }}
   queue: max
   cancel-in-progress: false
 

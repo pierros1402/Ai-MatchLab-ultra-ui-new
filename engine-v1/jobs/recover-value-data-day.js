@@ -35,12 +35,18 @@ function unchanged(baseline, current) {
 
 export async function recoverValueDataDay(dayKey, { apply = false, maxFixtures = 500, nowMs = Date.now(), dependencies = {} } = {}) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dayKey)) throw new Error("invalid_day_key");
+  const snapshotRoot = resolveDataPath("deploy-snapshots", dayKey);
+  const requiredFiles = ["manifest.json", "fixtures.json"];
+  const missingFiles = requiredFiles.filter(file => !fs.existsSync(path.join(snapshotRoot, file)));
+  if (missingFiles.length) return {
+    schema: "ai-matchlab.value-data-recovery.v1", dayKey, apply,
+    status: "BLOCKED", reason: "PUBLICATION_INPUTS_MISSING", missingFiles, mutation: false,
+  };
+  const fixtures = read(path.join(snapshotRoot, "fixtures.json")).fixtures;
+  if (!Array.isArray(fixtures)) throw new Error("publication_fixtures_missing");
   const { auditDetailsFoundationDay } = await import("./audit-details-foundation-day.js");
   const auditSource = dependencies.audit || auditDetailsFoundationDay;
   const audit = key => auditSource(key, { includeAllIssues: true });
-  const snapshotRoot = resolveDataPath("deploy-snapshots", dayKey);
-  const fixtures = read(path.join(snapshotRoot, "fixtures.json")).fixtures;
-  if (!Array.isArray(fixtures)) throw new Error("publication_fixtures_missing");
   const before = audit(dayKey);
   const plan = planValueDataRecovery(before, fixtures, { maxFixtures });
   const readOdds = () => fs.existsSync(path.join(snapshotRoot, "odds.json")) ? read(path.join(snapshotRoot, "odds.json")).matches || [] : [];
@@ -112,7 +118,7 @@ export async function recoverValueDataDay(dayKey, { apply = false, maxFixtures =
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const result = await recoverValueDataDay(process.argv[2], { apply: process.argv.includes("--apply") });
-  if (result.apply) fs.writeFileSync(resolveDataPath("deploy-snapshots", result.dayKey, "value-data-recovery.json"), JSON.stringify(result, null, 2) + "\n");
+  if (result.apply && result.reason !== "PUBLICATION_INPUTS_MISSING") fs.writeFileSync(resolveDataPath("deploy-snapshots", result.dayKey, "value-data-recovery.json"), JSON.stringify(result, null, 2) + "\n");
   console.log(JSON.stringify(result, null, 2));
   if (result.status === "BLOCKED") process.exitCode = 2;
 }
