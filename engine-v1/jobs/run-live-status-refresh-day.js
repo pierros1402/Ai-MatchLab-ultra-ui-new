@@ -1,3 +1,4 @@
+import { retainCertifiedKickoff } from "../core/exact-provider-kickoff-evidence.js";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -799,7 +800,7 @@ export function mergeStatusRow(
   previous,
   incoming
 ) {
-  const merged = mergeMonotonicStatusObservation(previous, incoming);
+  const merged = retainCertifiedKickoff(previous, mergeMonotonicStatusObservation(previous, incoming));
   if (previous?.providerTeamIdentityConflict === true) {
     delete merged.providerTeamIds;
     merged.providerTeamIdentityConflict = true;

@@ -189,6 +189,10 @@ jobs:
       # failure must never discard provider-verified LIVE/FT changes collected
       # by this run (2026-08-07 regression: the runner saw truth, then Value
       # self-heal failed and the canonical status changes disappeared with it).
+      - name: Reconcile exact primary provider kickoff evidence
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/reconcile-exact-provider-kickoffs-day.js "$DAY_KEY" --write
+
       - name: Refresh authoritative intraday truth checkpoint
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/run-live-status-refresh-day.js "$DAY_KEY" --append-new-fixtures --include-all-open-states

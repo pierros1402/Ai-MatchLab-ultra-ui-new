@@ -215,6 +215,10 @@ jobs:
         # The compatibility job may prune coverage reports, never canonical days.
         run: node ./engine-v1/jobs/prune-canonical-fixture-store.js "$DAY_KEY" --days-back 3 --days-forward 30
 
+      - name: Reconcile exact primary provider kickoff evidence
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/reconcile-exact-provider-kickoffs-day.js "$DAY_KEY" --write
+
       - name: Commit canonical fixture acquisition store
         if: env.SKIP_BUILD != 'true'
         shell: bash
