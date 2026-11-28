@@ -94,6 +94,8 @@ export function buildProviderFixtureCoverage({
     const c = matches[0];
     if (!cid(c)) { add("canonical_fixture_id_missing", f, c, "canonical-fixtures"); continue; }
     if (fixtureDay(c) !== dayKey) add("wrong_day_fixture", f, c, "canonical-fixtures");
+    if (Date.parse(c.kickoffUtc) !== Date.parse(f.kickoffUtc))
+      add("kickoff_identity_conflict", f, c, "canonical-fixtures");
     if (slug(c) !== f.canonicalSlug) add("wrong_league_fixture", f, c, "canonical-fixtures");
     const teams = c.providerTeamIds?.[f.provider];
     // Names are descriptive evidence; never use them as identity bindings.
@@ -107,6 +109,8 @@ export function buildProviderFixtureCoverage({
     else if (pub.length > 1) add("duplicate_published_fixture", f, c, "deploy-snapshots");
     else {
       if (fixtureDay(pub[0]) !== dayKey) add("published_wrong_day_fixture", f, c, "deploy-snapshots");
+      if (Date.parse(pub[0].kickoffUtc) !== Date.parse(c.kickoffUtc))
+        add("published_kickoff_identity_conflict", f, c, "deploy-snapshots");
       if (slug(pub[0]) !== f.canonicalSlug) add("published_wrong_league_fixture", f, c, "deploy-snapshots");
       const explicit = providerId(pub[0], f.provider);
       if (explicit && explicit !== f.providerFixtureId) add("published_provider_identity_conflict", f, c, "deploy-snapshots");
@@ -139,7 +143,9 @@ export function buildProviderFixtureCoverage({
       ok: issues.length === 0, proven: issues.length === 0,
       summary: { observations: rows(discovery?.fixtures).length,
         eligible: rows(discovery?.fixtures).filter(f => f.dayKey === dayKey && f.eligibility === "eligible").length,
-        bound: bindings.length, issues: issues.length },
+        bound: bindings.length, issues: issues.length,
+        affectedFixtures: new Set(issues.map(i => i.providerFixtureId
+          ? i.provider + "|" + i.providerFixtureId : i.canonicalId || i.reasonCode)).size },
       bindings, issues };
   }
 }

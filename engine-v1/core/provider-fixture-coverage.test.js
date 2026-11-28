@@ -46,6 +46,13 @@ test("canonical wrong league is detected", () => {
   const value = input(); value.canonicalFixtures[0].leagueSlug = "esp.1";
   assert.ok(codes(value).includes("wrong_league_fixture"));
 });
+test("same-day kickoff disagreement is explicit and overlapping issues do not inflate affected fixtures", () => {
+  const value = input(); value.canonicalFixtures[0].kickoffUtc = "2026-11-28T16:00Z";
+  const report = buildProviderFixtureCoverage(value);
+  assert.ok(report.issues.some(i => i.reasonCode === "kickoff_identity_conflict"));
+  assert.ok(report.issues.some(i => i.reasonCode === "published_kickoff_identity_conflict"));
+  assert.equal(report.summary.affectedFixtures, 1);
+});
 test("home away reversal is detected from provider team IDs", () => {
   const value = input(); value.canonicalFixtures[0].providerTeamIds.flashscore = { home: "A", away: "H" };
   assert.ok(codes(value).includes("home_away_identity_conflict"));
