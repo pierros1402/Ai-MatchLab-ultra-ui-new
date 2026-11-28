@@ -750,6 +750,14 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
     previousSnapshot.publishedDetailIds.length === 0 &&
     previousSnapshot.publishedManifest === null;
 
+  if (bootstrapPublication) {
+    console.log("[intraday-snapshot-refresh] publication-universe:bootstrap", {
+      dayKey: safeDayKey,
+      currentFixtures: publicationLock.currentFixtureCount,
+      reason: "first_daily_publication_requires_full_detail_export"
+    });
+  }
+
   if (!publicationLock.ok && !bootstrapPublication) {
     throw new Error(
       `intraday_status_only_publication_universe_invalid:${safeDayKey}:${publicationLock.reason || "unknown"}` +
