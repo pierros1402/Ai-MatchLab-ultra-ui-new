@@ -212,3 +212,25 @@ test("serialization cannot resurrect quarantined provider team IDs", () => {
   assert.equal(row.providerTeamIdentityConflict,true);
   assert.equal(row.providerTeamIds,undefined);
 });
+
+test("Flashscore native team IDs survive normalization, serialization and refresh", async () => {
+  const { getFixtureAdapters } = await import("../adapters/registry.js");
+  const adapter = getFixtureAdapters().find(a => a.id === "flashscore");
+  const normalized = adapter.normalize({
+    matchId: "FS123456", home: "Home", away: "Away",
+    homeProviderTeamId: "FSHOME", awayProviderTeamId: "FSAWAY",
+    kickoffUtc: "2026-11-28T15:00Z", country: "England", leagueName: "Premier League",
+    leaguePath: "/football/england/premier-league/"
+  }, "eng.1");
+  assert.ok(normalized);
+  const serialized = serializeFixture({ ...normalized, dayKey: null }, "flashscore", "2026-11-28");
+  assert.deepEqual(serialized.providerTeamIds, { flashscore: { home: "FSHOME", away: "FSAWAY" } });
+  const { providerTeamIds, ...missing } = serialized;
+  assert.deepEqual(mergeCanonicalFixtures([serialized], [missing])[0].providerTeamIds, providerTeamIds);
+  const conflicting = { ...serialized, providerTeamIds: { flashscore: { home: "OTHER", away: "FSAWAY" } } };
+  const [quarantined] = mergeCanonicalFixtures([serialized], [conflicting]);
+  assert.equal(quarantined.providerTeamIdentityConflict, true);
+  assert.equal(quarantined.providerTeamIds, undefined);
+  assert.equal(mergeCanonicalFixtures([quarantined], [serialized])[0].providerTeamIds, undefined);
+});
+

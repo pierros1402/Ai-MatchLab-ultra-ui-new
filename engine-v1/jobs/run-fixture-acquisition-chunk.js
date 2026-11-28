@@ -683,10 +683,20 @@ function mergeCanonicalFixturesBase(existing, incoming) {
 
     const merged = { ...previous, ...next };
     // Conflicting native identity evidence must not silently replace a prior ID.
-    const oldIds = previous.providerTeamIds?.espn;
-    const newIds = next.providerTeamIds?.espn;
+    const providers = new Set([
+      ...Object.keys(previous.providerTeamIds || {}),
+      ...Object.keys(next.providerTeamIds || {})
+    ]);
+    const conflictingProviderTeamIds = [...providers].some(provider => {
+      const oldIds = previous.providerTeamIds?.[provider];
+      const newIds = next.providerTeamIds?.[provider];
+      return oldIds && newIds && (oldIds.home !== newIds.home || oldIds.away !== newIds.away);
+    });
+    if (providers.size) merged.providerTeamIds = {
+      ...previous.providerTeamIds, ...next.providerTeamIds
+    };
     if (previous.providerTeamIdentityConflict || next.providerTeamIdentityConflict ||
-        (oldIds && newIds && (oldIds.home !== newIds.home || oldIds.away !== newIds.away))) {
+        conflictingProviderTeamIds) {
       delete merged.providerTeamIds;
       merged.providerTeamIdentityConflict = true;
     }
@@ -963,8 +973,12 @@ export function serializeFixture(normalized, adapterId, fetchedDayKey) {
     homeTeam: normalized.homeTeam,
     awayTeam: normalized.awayTeam,
     ...(normalized.providerTeamIdentityConflict === true ? { providerTeamIdentityConflict: true } : {}),
-    ...(normalized.providerTeamIdentityConflict !== true && providerName === "espn" && providerId && normalized.providerTeamIds?.espn
-      ? { providerTeamIds: { espn: { ...normalized.providerTeamIds.espn } } }
+    ...(normalized.providerTeamIdentityConflict !== true &&
+      ["espn", "flashscore"].includes(providerName) && providerId &&
+      normalized.providerTeamIds?.[providerName]?.home &&
+      normalized.providerTeamIds?.[providerName]?.away &&
+      normalized.providerTeamIds[providerName].home !== normalized.providerTeamIds[providerName].away
+      ? { providerTeamIds: { [providerName]: { ...normalized.providerTeamIds[providerName] } } }
       : {}),
 
     scoreHome: normalized.scoreHome,
@@ -2059,3 +2073,4 @@ if (isCli) {
       process.exitCode = 1;
     });
 }
+
