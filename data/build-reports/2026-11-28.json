@@ -2,7 +2,7 @@
   "ok": false,
   "schema": "ai-matchlab.day-build-report.v1",
   "dayKey": "2026-11-28",
-  "generatedAt": "2026-11-28T18:28:14.274Z",
+  "generatedAt": "2026-11-28T18:50:02.858Z",
   "universe": {
     "expected": null,
     "canonical": 459,
@@ -670,6 +670,7 @@
       "canonical-fixtures/2026-11-28/svk.1.json",
       "canonical-fixtures/2026-11-28/svn.1.json",
       "canonical-fixtures/2026-11-28/swe.2.json",
+      "canonical-fixtures/2026-11-28/syr.1.json",
       "canonical-fixtures/2026-11-28/tun.1.json",
       "canonical-fixtures/2026-11-28/tun.2.json",
       "canonical-fixtures/2026-11-28/tur.1.json",
@@ -745,7 +746,7 @@
     }
   },
   "settlement": {
-    "generatedAt": "2026-11-28T18:24:40.156Z",
+    "generatedAt": "2026-11-28T18:45:20.783Z",
     "requiredPlans": [
       "A",
       "A2",
@@ -762,19 +763,19 @@
     "complete": true,
     "planA": {
       "picks": 8,
-      "settled": 5,
+      "settled": 6,
       "wins": 2,
-      "losses": 3,
+      "losses": 4,
       "voids": 2,
-      "unresolved": 1
+      "unresolved": 0
     },
     "planA2": {
       "picks": 8,
-      "settled": 5,
+      "settled": 6,
       "wins": 2,
-      "losses": 3,
+      "losses": 4,
       "voids": 2,
-      "unresolved": 1
+      "unresolved": 0
     },
     "planB": {
       "picks": 0,
@@ -795,7 +796,7 @@
   },
   "foundationIntegrity": {
     "schema": "ai-matchlab.foundation-integrity.v1",
-    "generatedAt": "2026-11-28T18:28:13.978Z",
+    "generatedAt": "2026-11-28T18:50:02.428Z",
     "season": "2026-2027",
     "modelReady": true,
     "publicationReady": false,
@@ -809,7 +810,7 @@
       {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 25934,
+        "count": 25936,
         "informational": true
       },
       {
@@ -828,16 +829,33 @@
   },
   "liveStatusCompleteness": {
     "schema": "ai-matchlab.live-status-completeness.v1",
-    "ok": true,
+    "ok": false,
     "policy": {
       "staleAfterHours": 4,
       "exactProviderIdOnly": true,
       "exactProviderLineageSupersession": true,
       "heuristicFinalPromotion": false
     },
-    "staleOpenCount": 0,
-    "staleOpenCanonicalIds": [],
-    "staleOpenFixtures": [],
+    "staleOpenCount": 1,
+    "staleOpenCanonicalIds": [
+      "cid_fracoupedefrance_asetoilematoury_fleury91_20261128"
+    ],
+    "staleOpenFixtures": [
+      {
+        "canonicalId": "cid_fracoupedefrance_asetoilematoury_fleury91_20261128",
+        "providerId": "401934501",
+        "source": "espn",
+        "leagueSlug": "fra.coupe_de_france",
+        "providerLeagueSlug": "fra.coupe_de_france",
+        "kickoffUtc": "2026-11-28T14:30Z",
+        "ageHours": 4.334,
+        "status": "PRE",
+        "rawStatus": "STATUS_SCHEDULED",
+        "statusType": null,
+        "operationalState": null,
+        "classification": "stale_open_exact_provider_id"
+      }
+    ],
     "supersededOpenCount": 1,
     "supersededOpenCanonicalIds": [
       "cid_fracoupedefrance_nueillaubiers_nantes_20261128"
@@ -850,7 +868,7 @@
         "leagueSlug": "fra.coupe_de_france",
         "providerLeagueSlug": null,
         "kickoffUtc": "2026-11-28T12:30Z",
-        "ageHours": 5.971,
+        "ageHours": 6.334,
         "status": "PRE",
         "rawStatus": "STATUS_SCHEDULED",
         "statusType": null,
@@ -863,7 +881,8 @@
   },
   "hardFailures": [
     "foundation_publication_not_ready",
-    "snapshot_stale"
+    "snapshot_stale",
+    "live_status_stale_open_exact_provider_ids:cid_fracoupedefrance_asetoilematoury_fleury91_20261128"
   ],
   "warnings": [
     "canonical_leagues_missing_from_published:mex.2,per.1",
