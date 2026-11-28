@@ -2,10 +2,10 @@
   "schema": "ai-matchlab.day-truth-ledger.v1",
   "ledgerVersion": "1.0.0",
   "dayKey": "2026-11-28",
-  "generatedAt": "2026-11-28T07:38:29.298Z",
+  "generatedAt": "2026-11-28T09:00:06.170Z",
   "role": "derived_control_plane",
   "ledgerState": "CONFLICT",
-  "truthFingerprint": "7e20f2cf0fb0ed51fed688a52c7c0e7f65d5464d6fe74bcd6afedb3566924115",
+  "truthFingerprint": "9f9b478aec1fdb18f969b6d0863c2b01710143ec63ff10039e7b47798a07bdd9",
   "authority": {
     "membership": "canonical_fixtures",
     "operationalState": "canonical_fixtures_via_unified_match_state_contract",
@@ -17,26 +17,26 @@
   },
   "summary": {
     "canonicalRows": 460,
-    "playedTerminal": 16,
+    "playedTerminal": 22,
     "nonPlayedTerminal": 5,
-    "scheduled": 435,
-    "live": 4,
+    "scheduled": 430,
+    "live": 3,
     "interrupted": 0,
     "delayed": 0,
     "operationalConflict": 0,
     "operationalUnresolved": 0,
-    "verifiedFinalArtifacts": 19,
-    "acceptedVerifiedFinalArtifacts": 19,
-    "convergedPlayedFinal": 16,
+    "verifiedFinalArtifacts": 24,
+    "acceptedVerifiedFinalArtifacts": 24,
+    "convergedPlayedFinal": 22,
     "convergedNonPlayedTerminal": 5,
     "pendingVerifiedFinal": 0,
-    "openRows": 436,
+    "openRows": 431,
     "unresolvedRows": 0,
-    "conflictRows": 3,
+    "conflictRows": 2,
     "orphanVerifiedFinals": 0,
     "duplicateVerifiedFinalFixtureIds": 0,
-    "historyEligible": 16,
-    "scoredSettlementEligible": 16,
+    "historyEligible": 22,
+    "scoredSettlementEligible": 22,
     "voidSettlementEligible": 5
   },
   "fixtures": [
@@ -12642,25 +12642,25 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 0,
-        "scoreAway": 0
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 1,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-28",
+        "scoreHome": 1,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -12688,62 +12688,13 @@
       "homeTeam": "Kashiwa Reysol",
       "awayTeam": "Sanfrecce Hiroshima",
       "kickoffUtc": "2026-11-28T07:00Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
-      "canonical": {
-        "status": "PRE",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
-      },
-      "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
-      },
-      "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
-        "voidSettlementEligible": false,
-        "repairAuthorized": false
-      },
-      "downstream": {
-        "history": {
-          "observed": false,
-          "present": null
-        },
-        "settlement": {
-          "observed": false,
-          "state": null
-        },
-        "publication": {
-          "observed": true,
-          "present": true
-        }
-      }
-    },
-    {
-      "canonicalId": "cid_jpn1_kyotosanga_cerezoosaka_20261128",
-      "leagueSlug": "jpn.1",
-      "homeTeam": "Kyoto Sanga",
-      "awayTeam": "Cerezo Osaka",
-      "kickoffUtc": "2026-11-28T05:00Z",
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "HALF_TIME",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
-        "scoreHome": 4,
+        "rawStatus": "STATUS_HALFTIME",
+        "scoreHome": 2,
         "scoreAway": 1
       },
       "verifiedFinal": {
@@ -12781,17 +12732,66 @@
       }
     },
     {
+      "canonicalId": "cid_jpn1_kyotosanga_cerezoosaka_20261128",
+      "leagueSlug": "jpn.1",
+      "homeTeam": "Kyoto Sanga",
+      "awayTeam": "Cerezo Osaka",
+      "kickoffUtc": "2026-11-28T05:00Z",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
+      "canonical": {
+        "status": "FT",
+        "statusType": null,
+        "rawStatus": "STATUS_FULL_TIME",
+        "scoreHome": 4,
+        "scoreAway": 1
+      },
+      "verifiedFinal": {
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-28",
+        "scoreHome": 4,
+        "scoreAway": 1,
+        "scoreParity": true
+      },
+      "decision": {
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
+        "voidSettlementEligible": false,
+        "repairAuthorized": false
+      },
+      "downstream": {
+        "history": {
+          "observed": false,
+          "present": null
+        },
+        "settlement": {
+          "observed": false,
+          "state": null
+        },
+        "publication": {
+          "observed": true,
+          "present": true
+        }
+      }
+    },
+    {
       "canonicalId": "cid_jpn1_shimizuspulse_urawareddiamonds_20261128",
       "leagueSlug": "jpn.1",
       "homeTeam": "Shimizu S-Pulse",
       "awayTeam": "Urawa Reds",
       "kickoffUtc": "2026-11-28T05:00Z",
-      "baseState": "UNKNOWN",
-      "operationalState": "LIVE",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "SECOND_HALF",
+        "status": "FT",
         "statusType": null,
-        "rawStatus": "STATUS_SECOND_HALF",
+        "rawStatus": "STATUS_FULL_TIME",
         "scoreHome": 1,
         "scoreAway": 0
       },
@@ -12806,11 +12806,11 @@
         "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -12838,25 +12838,25 @@
       "baseState": "UNKNOWN",
       "operationalState": "LIVE",
       "canonical": {
-        "status": "HALF_TIME",
+        "status": "SECOND_HALF",
         "statusType": null,
-        "rawStatus": "STATUS_HALFTIME",
-        "scoreHome": 1,
-        "scoreAway": 0
+        "rawStatus": "STATUS_SECOND_HALF",
+        "scoreHome": 2,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-28",
+        "scoreHome": 3,
+        "scoreAway": 1,
+        "scoreParity": false
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_live",
+        "status": "CONFLICT",
+        "reason": "verified_final_conflicts_with_open_canonical_state",
         "operationallyClosed": false,
         "historyEligible": false,
         "scoredSettlementEligible": false,
@@ -12884,31 +12884,31 @@
       "homeTeam": "Omiya Ardija",
       "awayTeam": "Imabari",
       "kickoffUtc": "2026-11-28T05:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 3,
+        "scoreAway": 2
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-28",
+        "scoreHome": 3,
+        "scoreAway": 2,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -12933,14 +12933,14 @@
       "homeTeam": "Anyang",
       "awayTeam": "Jeju SK",
       "kickoffUtc": "2026-11-28T05:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 0
       },
       "verifiedFinal": {
         "present": true,
@@ -12950,14 +12950,14 @@
         "dayKey": "2026-11-28",
         "scoreHome": 1,
         "scoreAway": 0,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -13080,31 +13080,31 @@
       "homeTeam": "Seoul",
       "awayTeam": "Daejeon",
       "kickoffUtc": "2026-11-28T05:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 4,
+        "scoreAway": 1
       },
       "verifiedFinal": {
-        "present": false,
-        "accepted": false,
-        "reason": "verified_final_missing",
-        "verdict": null,
-        "dayKey": null,
-        "scoreHome": null,
-        "scoreAway": null,
-        "scoreParity": null
+        "present": true,
+        "accepted": true,
+        "reason": "verified_final_result",
+        "verdict": "verified_final_result",
+        "dayKey": "2026-11-28",
+        "scoreHome": 4,
+        "scoreAway": 1,
+        "scoreParity": true
       },
       "decision": {
-        "status": "OPEN",
-        "reason": "canonical_scheduled",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -13178,14 +13178,14 @@
       "homeTeam": "Yongin",
       "awayTeam": "Paju Frontier",
       "kickoffUtc": "2026-11-28T05:00:00.000Z",
-      "baseState": "PRE_KICKOFF_SCHEDULED",
-      "operationalState": "SCHEDULED",
+      "baseState": "PLAYED_FINAL",
+      "operationalState": "PLAYED_TERMINAL",
       "canonical": {
-        "status": "STATUS_SCHEDULED",
-        "statusType": null,
-        "rawStatus": "STATUS_SCHEDULED",
-        "scoreHome": null,
-        "scoreAway": null
+        "status": "FT",
+        "statusType": "STATUS_FINAL",
+        "rawStatus": "STATUS_FINAL",
+        "scoreHome": 1,
+        "scoreAway": 2
       },
       "verifiedFinal": {
         "present": true,
@@ -13195,14 +13195,14 @@
         "dayKey": "2026-11-28",
         "scoreHome": 1,
         "scoreAway": 2,
-        "scoreParity": null
+        "scoreParity": true
       },
       "decision": {
-        "status": "CONFLICT",
-        "reason": "verified_final_conflicts_with_open_canonical_state",
-        "operationallyClosed": false,
-        "historyEligible": false,
-        "scoredSettlementEligible": false,
+        "status": "CONVERGED_PLAYED_FINAL",
+        "reason": "canonical_and_verified_final_converged",
+        "operationallyClosed": true,
+        "historyEligible": true,
+        "scoredSettlementEligible": true,
         "voidSettlementEligible": false,
         "repairAuthorized": false
       },
@@ -22585,9 +22585,8 @@
     "orphanVerifiedFinals": [],
     "duplicateVerifiedFinalFixtureIds": [],
     "conflictFixtureIds": [
-      "cid_jpn1_shimizuspulse_urawareddiamonds_20261128",
-      "cid_kor1_anyang_jejusk_20261128",
-      "cid_kor2_yongin_pajufrontier_20261128"
+      "cid_jpn1_kashimaantlers_fagianookayama_20261128",
+      "cid_jpn1_visselkobe_jefunitedichiharachiba_20261128"
     ],
     "pendingVerifiedFinalFixtureIds": []
   },
@@ -22599,57 +22598,26 @@
     "systemHealth": {
       "schema": "ai-matchlab.system-health-alerts.v1",
       "dayKey": "2026-11-28",
-      "generatedAt": "2026-11-28T07:38:28.814Z",
+      "generatedAt": "2026-11-28T09:00:05.660Z",
       "severity": "error",
       "issueCounts": {
-        "error": 4,
-        "warning": 5,
-        "info": 13
+        "error": 1,
+        "warning": 6,
+        "info": 12
       },
       "alert": true,
       "alertCounts": {
         "error": 0,
-        "warning": 4,
+        "warning": 1,
         "info": 0
       },
-      "activeIssueCount": 22,
-      "actionableIssueCount": 9,
-      "newIssueCount": 12,
-      "newActionableIssueCount": 4,
-      "resolvedIssueCount": 8,
-      "persistentIssueCount": 10,
+      "activeIssueCount": 19,
+      "actionableIssueCount": 7,
+      "newIssueCount": 1,
+      "newActionableIssueCount": 1,
+      "resolvedIssueCount": 4,
+      "persistentIssueCount": 18,
       "activeIssues": [
-        {
-          "severity": "info",
-          "source": "manifest",
-          "type": "frozen_value_age_preserved",
-          "message": "Frozen Value artifact predates canonical updates and satisfies the frozen release contract.",
-          "details": {
-            "fixtures": 460,
-            "valuePicks": 8,
-            "valueSource": "canonical_fixtures",
-            "latestCanonicalUpdatedAt": "2026-11-28T06:54:01.522Z",
-            "valueArtifactAt": "2026-11-28T04:55:24.300Z",
-            "valueFreshAgainstCanonical": false,
-            "mode": "frozen_snapshot",
-            "frozenIdentityBound": true,
-            "frozenReleaseSafe": true,
-            "frozenPickCount": 8,
-            "orphanPickCount": 0,
-            "orphanPickIds": [],
-            "missingMatchIdPickCount": 0,
-            "missingMatchIdPickIndexes": [],
-            "dayBound": true,
-            "canonicalSourceBound": true,
-            "recoveryContractBound": false,
-            "recoveryPublishedUniverseBound": false,
-            "recoveryUniverseEvidenceSource": null,
-            "recoveryUniverseEvidenceCount": null,
-            "recoveryUniverseEvidenceHash": null,
-            "recoveryUniverseEvidencePlans": [],
-            "ok": true
-          }
-        },
         {
           "severity": "info",
           "source": "freshness-report",
@@ -22969,24 +22937,6 @@
           }
         },
         {
-          "severity": "error",
-          "source": "build-report",
-          "type": "build_hard_failure",
-          "message": "snapshot_stale",
-          "details": {
-            "failure": "snapshot_stale"
-          }
-        },
-        {
-          "severity": "error",
-          "source": "build-report",
-          "type": "build_hard_failure",
-          "message": "value_plan_comparison_missing",
-          "details": {
-            "failure": "value_plan_comparison_missing"
-          }
-        },
-        {
           "severity": "warning",
           "source": "build-report",
           "type": "build_warning",
@@ -23015,13 +22965,14 @@
           }
         },
         {
-          "severity": "error",
+          "severity": "warning",
           "source": "build-report",
-          "type": "build_not_clean",
-          "message": "Build report is not clean.",
+          "type": "build_not_strict_clean",
+          "message": "Build report is clean but not strict-clean.",
           "details": {
-            "clean": false,
-            "cleanStrict": false
+            "clean": true,
+            "cleanStrict": false,
+            "contextOnlyWarnings": false
           }
         },
         {
@@ -23417,24 +23368,6 @@
           }
         },
         {
-          "severity": "error",
-          "source": "build-report",
-          "type": "build_hard_failure",
-          "message": "snapshot_stale",
-          "details": {
-            "failure": "snapshot_stale"
-          }
-        },
-        {
-          "severity": "error",
-          "source": "build-report",
-          "type": "build_hard_failure",
-          "message": "value_plan_comparison_missing",
-          "details": {
-            "failure": "value_plan_comparison_missing"
-          }
-        },
-        {
           "severity": "warning",
           "source": "build-report",
           "type": "build_warning",
@@ -23463,13 +23396,14 @@
           }
         },
         {
-          "severity": "error",
+          "severity": "warning",
           "source": "build-report",
-          "type": "build_not_clean",
-          "message": "Build report is not clean.",
+          "type": "build_not_strict_clean",
+          "message": "Build report is clean but not strict-clean.",
           "details": {
-            "clean": false,
-            "cleanStrict": false
+            "clean": true,
+            "cleanStrict": false,
+            "contextOnlyWarnings": false
           }
         },
         {
@@ -23484,6 +23418,32 @@
         }
       ],
       "newIssues": [
+        {
+          "severity": "warning",
+          "source": "build-report",
+          "type": "build_not_strict_clean",
+          "message": "Build report is clean but not strict-clean.",
+          "details": {
+            "clean": true,
+            "cleanStrict": false,
+            "contextOnlyWarnings": false
+          }
+        }
+      ],
+      "newActionableIssues": [
+        {
+          "severity": "warning",
+          "source": "build-report",
+          "type": "build_not_strict_clean",
+          "message": "Build report is clean but not strict-clean.",
+          "details": {
+            "clean": true,
+            "cleanStrict": false,
+            "contextOnlyWarnings": false
+          }
+        }
+      ],
+      "resolvedIssues": [
         {
           "severity": "info",
           "source": "manifest",
@@ -23515,6 +23475,36 @@
             "ok": true
           }
         },
+        {
+          "severity": "error",
+          "source": "build-report",
+          "type": "build_hard_failure",
+          "message": "snapshot_stale",
+          "details": {
+            "failure": "snapshot_stale"
+          }
+        },
+        {
+          "severity": "error",
+          "source": "build-report",
+          "type": "build_hard_failure",
+          "message": "value_plan_comparison_missing",
+          "details": {
+            "failure": "value_plan_comparison_missing"
+          }
+        },
+        {
+          "severity": "error",
+          "source": "build-report",
+          "type": "build_not_clean",
+          "message": "Build report is not clean.",
+          "details": {
+            "clean": false,
+            "cleanStrict": false
+          }
+        }
+      ],
+      "persistentIssues": [
         {
           "severity": "info",
           "source": "freshness-report",
@@ -23798,12 +23788,119 @@
           }
         },
         {
+          "severity": "info",
+          "source": "foundation-integrity",
+          "type": "age_expired_results_rows_present",
+          "message": "Foundation integrity informational condition.",
+          "details": {
+            "component": "historySemantic",
+            "reason": "age_expired_results_rows_present",
+            "count": 25852,
+            "informational": true
+          }
+        },
+        {
+          "severity": "info",
+          "source": "foundation-integrity",
+          "type": "history_semantic_warnings_present",
+          "message": "Foundation integrity informational condition.",
+          "details": {
+            "component": "historySemantic",
+            "reason": "history_semantic_warnings_present",
+            "count": 2,
+            "informational": true
+          }
+        },
+        {
+          "severity": "info",
+          "source": "foundation-integrity",
+          "type": "score_consistent_alias_mirror_conflicts_present",
+          "message": "Foundation integrity informational condition.",
+          "details": {
+            "component": "historySemantic",
+            "reason": "score_consistent_alias_mirror_conflicts_present",
+            "count": 47,
+            "informational": true
+          }
+        },
+        {
           "severity": "warning",
           "source": "build-report",
           "type": "build_warning",
           "message": "canonical_leagues_missing_from_published:mex.2,per.1",
           "details": {
             "raw": "canonical_leagues_missing_from_published:mex.2,per.1"
+          }
+        },
+        {
+          "severity": "warning",
+          "source": "build-report",
+          "type": "acquisition_skipped_slugs",
+          "message": "Acquisition skipped slugs during fixture acquisition.",
+          "details": {
+            "slugs": [
+              "concacaf.womens.championship",
+              "fifa.world.u17",
+              "fifa.wwcq.ply",
+              "swe.1.promotion.relegation",
+              "usa.ncaa.m.1",
+              "usa.ncaa.w.1",
+              "usa.w.usl.1"
+            ],
+            "raw": "acquisition_skipped_slugs:concacaf.womens.championship,fifa.world.u17,fifa.wwcq.ply,swe.1.promotion.relegation,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
+            "contextOnly": false
+          }
+        },
+        {
+          "severity": "info",
+          "source": "competition-admission",
+          "type": "competition_admission_active",
+          "message": "Persistent domestic competition admissions are active.",
+          "details": {
+            "admittedSlugs": [
+              "crc.1",
+              "gua.1",
+              "hon.1",
+              "par.1",
+              "slv.1"
+            ],
+            "summary": {
+              "evidenceSlugCount": 13,
+              "admittedCount": 5,
+              "pendingCount": 0,
+              "rejectedCount": 13,
+              "alreadyDeclaredCount": 0
+            }
+          }
+        },
+        {
+          "severity": "info",
+          "source": "competition-admission",
+          "type": "competition_admission_rejected",
+          "message": "Observed competition slugs were rejected by the fail-closed admission policy.",
+          "details": {
+            "rejectedSlugs": [
+              "bol.copa",
+              "chi.copa_chi",
+              "club.friendly",
+              "concacaf.womens.championship",
+              "esp.copa_de_la_reina",
+              "esp.w.1",
+              "fifa.friendly.w",
+              "fifa.world.u17",
+              "fifa.wwcq.ply",
+              "swe.1.promotion.relegation",
+              "usa.ncaa.m.1",
+              "usa.ncaa.w.1",
+              "usa.w.usl.1"
+            ],
+            "summary": {
+              "evidenceSlugCount": 13,
+              "admittedCount": 5,
+              "pendingCount": 0,
+              "rejectedCount": 13,
+              "alreadyDeclaredCount": 0
+            }
           }
         },
         {
@@ -23836,6 +23933,16 @@
             "picks": 8,
             "settled": 2,
             "unresolved": 5
+          }
+        },
+        {
+          "severity": "error",
+          "source": "active-competition-completeness",
+          "type": "active_competition_completeness_missing",
+          "message": "Independent target-day active competition coverage proof is missing.",
+          "details": {
+            "dayKey": "2026-11-28",
+            "artifact": "data/coverage-readiness/2026-11-28.json"
           }
         },
         {
@@ -23940,454 +24047,17 @@
             }
           }
         }
-      ],
-      "newActionableIssues": [
-        {
-          "severity": "warning",
-          "source": "value-input",
-          "type": "plan_b_assessment_coverage_incomplete",
-          "message": "Plan B ran with incomplete model-assessment coverage; its output is not proof of a fully evaluated zero-pick day.",
-          "details": {
-            "plan": "B",
-            "missing": 76,
-            "ambiguous": 0,
-            "canonicalFixtures": 460,
-            "joinedMatches": 384,
-            "orphanAssessmentRows": 0,
-            "missingCanonicalIds": [
-              "cid_arg2_gimnasiayesgrimajujuy_tbdaway_20261128",
-              "cid_aus1_centralcoastmariners_auckland_20261128",
-              "cid_bol1_abb_realtomayapo_20261128",
-              "cid_bol1_independientepetrolero_realoruro_20261128",
-              "cid_bra2_tbdhome_tbdaway_20261128",
-              "cid_cafchampions_esperancesportivetunis_wiliete_20261128",
-              "cid_cafchampions_pyramids_maghrebasfes_20261128",
-              "cid_cafchampions_pyramidsegy_maghrebfezmar_20261128",
-              "cid_cafchampions_rsbberkane_colombesportivdudjaetlobo_20261128",
-              "cid_cafchampions_youngafricans_mcalger_20261128",
-              "cid_cafconfed_asfar_durbancity_20261128",
-              "cid_cafconfed_farrabatmar_durbancityrsa_20261128",
-              "cid_cafconfed_rajacasablanca_askokara_20261128",
-              "cid_col1_millonarios_americacali_20261128",
-              "cid_crc1_herediano_escorpionesbelen_20261128",
-              "cid_est2_tallinn_tulevik_20261128",
-              "cid_fracoupedefrance_asetoilematoury_fleury91_20261128",
-              "cid_fracoupedefrance_avenirfootlozere_montpellier_20261128",
-              "cid_fracoupedefrance_bayonne_franciscain_20261128",
-              "cid_fracoupedefrance_biesheim_racingbesancon_20261128",
-              "cid_fracoupedefrance_bourgperonnas_thionville_20261128",
-              "cid_fracoupedefrance_bressuire_labaulelepouliguen_20261128",
-              "cid_fracoupedefrance_castanet_pau_20261128",
-              "cid_fracoupedefrance_chambly_avranches_20261128",
-              "cid_fracoupedefrance_epinal_amiens_20261128",
-              "cid_fracoupedefrance_furianiagliani_asnancylorraine_20261128",
-              "cid_fracoupedefrance_lannion_stadelaval_20261128",
-              "cid_fracoupedefrance_larochesuryon_chateaubriant_20261128",
-              "cid_fracoupedefrance_lepoire_sable_20261128",
-              "cid_fracoupedefrance_loonplage_racingfrance_20261128",
-              "cid_fracoupedefrance_massay_orleans_20261128",
-              "cid_fracoupedefrance_montluconfootball_clermontfoot_20261128",
-              "cid_fracoupedefrance_nueillaubiers_nantes_20261128",
-              "cid_fracoupedefrance_olympiquecharlevilleprixam_stadereims_20261128",
-              "cid_fracoupedefrance_pontarlier_sirocolesabymes_20261128",
-              "cid_fracoupedefrance_puissaliconmagalas_riviera_20261128",
-              "cid_fracoupedefrance_reipertswiller_sundhoffen_20261128",
-              "cid_fracoupedefrance_rennesta_rouen_20261128",
-              "cid_fracoupedefrance_rives82_versailles78_20261128",
-              "cid_fracoupedefrance_saintetienne_villefranche_20261128",
-              "cid_fracoupedefrance_saintpierremilizac_stadepontivy_20261128",
-              "cid_fracoupedefrance_saintpryvesainthilaire_selongey_20261128",
-              "cid_fracoupedefrance_sottevillais_quevillyrouen_20261128",
-              "cid_fracoupedefrance_stadesotteville_usquevilly_20261128",
-              "cid_fracoupedefrance_stouenlaumone_calais_20261128",
-              "cid_fracoupedefrance_tremblay_redstar93_20261128",
-              "cid_fracoupedefrance_unioncosnoise_sedan_20261128",
-              "cid_fracoupedefrance_usfeurs_annecy_20261128",
-              "cid_fracoupedefrance_vannesoc_concarneau_20261128",
-              "cid_fracoupedefrance_vermelles_esthaon_20261128",
-              "cid_gab1_missile_vautour_20261128",
-              "cid_gab1_mounana_mangasport_20261128",
-              "cid_nor2_bjarg_sogndal_20261128",
-              "cid_par1_sportivoluqueno_olimpia_20261128",
-              "cid_scotennents_annanathletic_greenockmorton_20261128",
-              "cid_scotennents_bonessunited_brechincity_20261128",
-              "cid_scotennents_clydebank_livingston_20261128",
-              "cid_scotennents_cumnock_arbroath_20261128",
-              "cid_scotennents_cumnockjuniors_arbroath_20261128",
-              "cid_scotennents_dumbarton_johnstoneburgh_20261128",
-              "cid_scotennents_eastkilbride_clyde_20261128",
-              "cid_scotennents_elgincity_partickthistle_20261128",
-              "cid_scotennents_invernesscaledonianthistle_coverangers_20261128",
-              "cid_scotennents_montrose_hamiltonacademical_20261128",
-              "cid_scotennents_musselburghathletic_airdrieonians_20261128",
-              "cid_scotennents_peterhead_edinburghcity_20261128",
-              "cid_scotennents_queenofthesouth_dunfermlineathletic_20261128",
-              "cid_scotennents_queenspark_spartans_20261128",
-              "cid_scotennents_renfrew_cumbernauldcolts_20261128",
-              "cid_scotennents_rosscounty_brorarangers_20261128",
-              "cid_scotennents_stenhousemuir_eastfife_20261128",
-              "cid_scotennents_stranraer_clachnacuddin_20261128",
-              "cid_scotennents_threaverovers_alloaathletic_20261128",
-              "cid_scotennents_troon_raithrovers_20261128",
-              "cid_swe2_norrby_lunds_20261128",
-              "cid_swe2_orebro_enkopingsk_20261128"
-            ]
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "value-input",
-          "type": "plan_b2_assessment_coverage_incomplete",
-          "message": "Plan B2 ran with incomplete model-assessment coverage; its output is not proof of a fully evaluated zero-pick day.",
-          "details": {
-            "plan": "B2",
-            "missing": 76,
-            "ambiguous": 0,
-            "canonicalFixtures": 460,
-            "joinedMatches": 384,
-            "orphanAssessmentRows": 0,
-            "missingCanonicalIds": [
-              "cid_arg2_gimnasiayesgrimajujuy_tbdaway_20261128",
-              "cid_aus1_centralcoastmariners_auckland_20261128",
-              "cid_bol1_abb_realtomayapo_20261128",
-              "cid_bol1_independientepetrolero_realoruro_20261128",
-              "cid_bra2_tbdhome_tbdaway_20261128",
-              "cid_cafchampions_esperancesportivetunis_wiliete_20261128",
-              "cid_cafchampions_pyramids_maghrebasfes_20261128",
-              "cid_cafchampions_pyramidsegy_maghrebfezmar_20261128",
-              "cid_cafchampions_rsbberkane_colombesportivdudjaetlobo_20261128",
-              "cid_cafchampions_youngafricans_mcalger_20261128",
-              "cid_cafconfed_asfar_durbancity_20261128",
-              "cid_cafconfed_farrabatmar_durbancityrsa_20261128",
-              "cid_cafconfed_rajacasablanca_askokara_20261128",
-              "cid_col1_millonarios_americacali_20261128",
-              "cid_crc1_herediano_escorpionesbelen_20261128",
-              "cid_est2_tallinn_tulevik_20261128",
-              "cid_fracoupedefrance_asetoilematoury_fleury91_20261128",
-              "cid_fracoupedefrance_avenirfootlozere_montpellier_20261128",
-              "cid_fracoupedefrance_bayonne_franciscain_20261128",
-              "cid_fracoupedefrance_biesheim_racingbesancon_20261128",
-              "cid_fracoupedefrance_bourgperonnas_thionville_20261128",
-              "cid_fracoupedefrance_bressuire_labaulelepouliguen_20261128",
-              "cid_fracoupedefrance_castanet_pau_20261128",
-              "cid_fracoupedefrance_chambly_avranches_20261128",
-              "cid_fracoupedefrance_epinal_amiens_20261128",
-              "cid_fracoupedefrance_furianiagliani_asnancylorraine_20261128",
-              "cid_fracoupedefrance_lannion_stadelaval_20261128",
-              "cid_fracoupedefrance_larochesuryon_chateaubriant_20261128",
-              "cid_fracoupedefrance_lepoire_sable_20261128",
-              "cid_fracoupedefrance_loonplage_racingfrance_20261128",
-              "cid_fracoupedefrance_massay_orleans_20261128",
-              "cid_fracoupedefrance_montluconfootball_clermontfoot_20261128",
-              "cid_fracoupedefrance_nueillaubiers_nantes_20261128",
-              "cid_fracoupedefrance_olympiquecharlevilleprixam_stadereims_20261128",
-              "cid_fracoupedefrance_pontarlier_sirocolesabymes_20261128",
-              "cid_fracoupedefrance_puissaliconmagalas_riviera_20261128",
-              "cid_fracoupedefrance_reipertswiller_sundhoffen_20261128",
-              "cid_fracoupedefrance_rennesta_rouen_20261128",
-              "cid_fracoupedefrance_rives82_versailles78_20261128",
-              "cid_fracoupedefrance_saintetienne_villefranche_20261128",
-              "cid_fracoupedefrance_saintpierremilizac_stadepontivy_20261128",
-              "cid_fracoupedefrance_saintpryvesainthilaire_selongey_20261128",
-              "cid_fracoupedefrance_sottevillais_quevillyrouen_20261128",
-              "cid_fracoupedefrance_stadesotteville_usquevilly_20261128",
-              "cid_fracoupedefrance_stouenlaumone_calais_20261128",
-              "cid_fracoupedefrance_tremblay_redstar93_20261128",
-              "cid_fracoupedefrance_unioncosnoise_sedan_20261128",
-              "cid_fracoupedefrance_usfeurs_annecy_20261128",
-              "cid_fracoupedefrance_vannesoc_concarneau_20261128",
-              "cid_fracoupedefrance_vermelles_esthaon_20261128",
-              "cid_gab1_missile_vautour_20261128",
-              "cid_gab1_mounana_mangasport_20261128",
-              "cid_nor2_bjarg_sogndal_20261128",
-              "cid_par1_sportivoluqueno_olimpia_20261128",
-              "cid_scotennents_annanathletic_greenockmorton_20261128",
-              "cid_scotennents_bonessunited_brechincity_20261128",
-              "cid_scotennents_clydebank_livingston_20261128",
-              "cid_scotennents_cumnock_arbroath_20261128",
-              "cid_scotennents_cumnockjuniors_arbroath_20261128",
-              "cid_scotennents_dumbarton_johnstoneburgh_20261128",
-              "cid_scotennents_eastkilbride_clyde_20261128",
-              "cid_scotennents_elgincity_partickthistle_20261128",
-              "cid_scotennents_invernesscaledonianthistle_coverangers_20261128",
-              "cid_scotennents_montrose_hamiltonacademical_20261128",
-              "cid_scotennents_musselburghathletic_airdrieonians_20261128",
-              "cid_scotennents_peterhead_edinburghcity_20261128",
-              "cid_scotennents_queenofthesouth_dunfermlineathletic_20261128",
-              "cid_scotennents_queenspark_spartans_20261128",
-              "cid_scotennents_renfrew_cumbernauldcolts_20261128",
-              "cid_scotennents_rosscounty_brorarangers_20261128",
-              "cid_scotennents_stenhousemuir_eastfife_20261128",
-              "cid_scotennents_stranraer_clachnacuddin_20261128",
-              "cid_scotennents_threaverovers_alloaathletic_20261128",
-              "cid_scotennents_troon_raithrovers_20261128",
-              "cid_swe2_norrby_lunds_20261128",
-              "cid_swe2_orebro_enkopingsk_20261128"
-            ]
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "value-input",
-          "type": "plan_b2_opponent_adjustment_unavailable",
-          "message": "Plan B2 lacks trusted opponent standings for 376 evaluated fixtures.",
-          "details": {
-            "plan": "B2",
-            "fixtures": 376
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "build-report",
-          "type": "build_warning",
-          "message": "canonical_leagues_missing_from_published:mex.2,per.1",
-          "details": {
-            "raw": "canonical_leagues_missing_from_published:mex.2,per.1"
-          }
-        }
-      ],
-      "resolvedIssues": [
-        {
-          "severity": "error",
-          "source": "manifest",
-          "type": "artifact_missing",
-          "message": "Snapshot manifest is missing.",
-          "details": {
-            "artifact": "data/deploy-snapshots/2026-11-28/manifest.json"
-          }
-        },
-        {
-          "severity": "error",
-          "source": "invariant-report",
-          "type": "artifact_missing",
-          "message": "Invariant report is missing.",
-          "details": {
-            "artifact": "data/deploy-snapshots/2026-11-28/invariant-report.json"
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "freshness-report",
-          "type": "artifact_missing",
-          "message": "Freshness report is missing.",
-          "details": {
-            "artifact": "data/deploy-snapshots/2026-11-28/freshness-report.json"
-          }
-        },
-        {
-          "severity": "error",
-          "source": "foundation-integrity",
-          "type": "foundation_publication_not_ready",
-          "message": "Publication foundation is not ready.",
-          "details": {
-            "blocked": [
-              {
-                "component": "details",
-                "reason": "details_foundation_not_ready"
-              }
-            ]
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "build-report",
-          "type": "build_warning",
-          "message": "canonical_leagues_missing_from_published:alb.1,alb.2,and.1,arg.2,arm.1,aus.1,aut.1,aut.2,aze.1,bel.1,bel.2,bih.1,blr.1,bol.1,bra.1,bra.2,bul.1,bul.2,caf.champions,caf.confed,chi.1,chi.2,col.1,col.2,conmebol.libertadores,crc.1,cro.1,cro.2,cyp.1,cyp.2,cze.1,cze.2,den.2,ecu.1,eng.1,eng.2,eng.3,eng.4,eng.5,esp.1,esp.2,est.1,est.2,fra.1,fra.coupe_de_france,gab.1,ger.1,ger.2,ger.3,gib.1,gre.1,gre.2,gua.1,hun.1,hun.2,idn.1,idn.2,ind.1,isr.1,ita.1,ita.2,jpn.1,jpn.2,kor.1,kor.2,kos.1,ksa.1,lux.1,mar.1,mar.2,mda.1,mex.2,mkd.1,mkd.2,mlt.1,mlt.2,mne.1,mwi.1,mys.1,ned.1,ned.2,nir.1,nir.2,nor.1,nor.2,par.1,per.1,pol.1,pol.2,por.1,por.2,qat.1,rou.1,rou.2,rsa.1,rsa.2,rus.1,sco.1,sco.tennents,slv.1,smr.1,srb.1,srb.2,sui.1,sui.2,svk.1,svn.1,swe.1,swe.2,syr.1,tun.1,tun.2,tur.1,tur.2,uae.1,uae.2,uga.1,ukr.1,ukr.2,uru.1,usa.1,wal.1,wal.2",
-          "details": {
-            "raw": "canonical_leagues_missing_from_published:alb.1,alb.2,and.1,arg.2,arm.1,aus.1,aut.1,aut.2,aze.1,bel.1,bel.2,bih.1,blr.1,bol.1,bra.1,bra.2,bul.1,bul.2,caf.champions,caf.confed,chi.1,chi.2,col.1,col.2,conmebol.libertadores,crc.1,cro.1,cro.2,cyp.1,cyp.2,cze.1,cze.2,den.2,ecu.1,eng.1,eng.2,eng.3,eng.4,eng.5,esp.1,esp.2,est.1,est.2,fra.1,fra.coupe_de_france,gab.1,ger.1,ger.2,ger.3,gib.1,gre.1,gre.2,gua.1,hun.1,hun.2,idn.1,idn.2,ind.1,isr.1,ita.1,ita.2,jpn.1,jpn.2,kor.1,kor.2,kos.1,ksa.1,lux.1,mar.1,mar.2,mda.1,mex.2,mkd.1,mkd.2,mlt.1,mlt.2,mne.1,mwi.1,mys.1,ned.1,ned.2,nir.1,nir.2,nor.1,nor.2,par.1,per.1,pol.1,pol.2,por.1,por.2,qat.1,rou.1,rou.2,rsa.1,rsa.2,rus.1,sco.1,sco.tennents,slv.1,smr.1,srb.1,srb.2,sui.1,sui.2,svk.1,svn.1,swe.1,swe.2,syr.1,tun.1,tun.2,tur.1,tur.2,uae.1,uae.2,uga.1,ukr.1,ukr.2,uru.1,usa.1,wal.1,wal.2"
-          }
-        },
-        {
-          "severity": "error",
-          "source": "value",
-          "type": "artifact_missing",
-          "message": "Production value artifact is missing.",
-          "details": {
-            "artifact": "data/deploy-snapshots/2026-11-28/value.json"
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "value-audit",
-          "type": "artifact_missing",
-          "message": "Production value audit artifact is missing.",
-          "details": {
-            "artifact": "data/deploy-snapshots/2026-11-28/value-audit.json"
-          }
-        },
-        {
-          "severity": "info",
-          "source": "value-comparison",
-          "type": "artifact_missing",
-          "message": "Four-plan Value comparison artifact is missing.",
-          "details": {
-            "artifact": "data/value-comparison/2026-11-28.json",
-            "requiredPlans": [
-              "A",
-              "A2",
-              "B",
-              "B2"
-            ]
-          }
-        }
-      ],
-      "persistentIssues": [
-        {
-          "severity": "info",
-          "source": "foundation-integrity",
-          "type": "age_expired_results_rows_present",
-          "message": "Foundation integrity informational condition.",
-          "details": {
-            "component": "historySemantic",
-            "reason": "age_expired_results_rows_present",
-            "count": 25852,
-            "informational": true
-          }
-        },
-        {
-          "severity": "info",
-          "source": "foundation-integrity",
-          "type": "history_semantic_warnings_present",
-          "message": "Foundation integrity informational condition.",
-          "details": {
-            "component": "historySemantic",
-            "reason": "history_semantic_warnings_present",
-            "count": 2,
-            "informational": true
-          }
-        },
-        {
-          "severity": "info",
-          "source": "foundation-integrity",
-          "type": "score_consistent_alias_mirror_conflicts_present",
-          "message": "Foundation integrity informational condition.",
-          "details": {
-            "component": "historySemantic",
-            "reason": "score_consistent_alias_mirror_conflicts_present",
-            "count": 47,
-            "informational": true
-          }
-        },
-        {
-          "severity": "error",
-          "source": "build-report",
-          "type": "build_hard_failure",
-          "message": "snapshot_stale",
-          "details": {
-            "failure": "snapshot_stale"
-          }
-        },
-        {
-          "severity": "error",
-          "source": "build-report",
-          "type": "build_hard_failure",
-          "message": "value_plan_comparison_missing",
-          "details": {
-            "failure": "value_plan_comparison_missing"
-          }
-        },
-        {
-          "severity": "warning",
-          "source": "build-report",
-          "type": "acquisition_skipped_slugs",
-          "message": "Acquisition skipped slugs during fixture acquisition.",
-          "details": {
-            "slugs": [
-              "concacaf.womens.championship",
-              "fifa.world.u17",
-              "fifa.wwcq.ply",
-              "swe.1.promotion.relegation",
-              "usa.ncaa.m.1",
-              "usa.ncaa.w.1",
-              "usa.w.usl.1"
-            ],
-            "raw": "acquisition_skipped_slugs:concacaf.womens.championship,fifa.world.u17,fifa.wwcq.ply,swe.1.promotion.relegation,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
-            "contextOnly": false
-          }
-        },
-        {
-          "severity": "error",
-          "source": "build-report",
-          "type": "build_not_clean",
-          "message": "Build report is not clean.",
-          "details": {
-            "clean": false,
-            "cleanStrict": false
-          }
-        },
-        {
-          "severity": "info",
-          "source": "competition-admission",
-          "type": "competition_admission_active",
-          "message": "Persistent domestic competition admissions are active.",
-          "details": {
-            "admittedSlugs": [
-              "crc.1",
-              "gua.1",
-              "hon.1",
-              "par.1",
-              "slv.1"
-            ],
-            "summary": {
-              "evidenceSlugCount": 13,
-              "admittedCount": 5,
-              "pendingCount": 0,
-              "rejectedCount": 13,
-              "alreadyDeclaredCount": 0
-            }
-          }
-        },
-        {
-          "severity": "info",
-          "source": "competition-admission",
-          "type": "competition_admission_rejected",
-          "message": "Observed competition slugs were rejected by the fail-closed admission policy.",
-          "details": {
-            "rejectedSlugs": [
-              "bol.copa",
-              "chi.copa_chi",
-              "club.friendly",
-              "concacaf.womens.championship",
-              "esp.copa_de_la_reina",
-              "esp.w.1",
-              "fifa.friendly.w",
-              "fifa.world.u17",
-              "fifa.wwcq.ply",
-              "swe.1.promotion.relegation",
-              "usa.ncaa.m.1",
-              "usa.ncaa.w.1",
-              "usa.w.usl.1"
-            ],
-            "summary": {
-              "evidenceSlugCount": 13,
-              "admittedCount": 5,
-              "pendingCount": 0,
-              "rejectedCount": 13,
-              "alreadyDeclaredCount": 0
-            }
-          }
-        },
-        {
-          "severity": "error",
-          "source": "active-competition-completeness",
-          "type": "active_competition_completeness_missing",
-          "message": "Independent target-day active competition coverage proof is missing.",
-          "details": {
-            "dayKey": "2026-11-28",
-            "artifact": "data/coverage-readiness/2026-11-28.json"
-          }
-        }
       ]
     },
     "convergence": {
       "overallState": "PARTIALLY_OBSERVED",
-      "truthFingerprint": "7e20f2cf0fb0ed51fed688a52c7c0e7f65d5464d6fe74bcd6afedb3566924115",
+      "truthFingerprint": "9f9b478aec1fdb18f969b6d0863c2b01710143ec63ff10039e7b47798a07bdd9",
       "history": {
         "state": "NOT_OBSERVED",
         "observed": false,
         "sourceExists": true,
         "sourcePath": "data/history/2026-2027.json",
-        "expectedEligibleRows": 16,
+        "expectedEligibleRows": 22,
         "persistedRows": 0,
         "missingEligibleFixtureIds": [
           "cid_arg2_atlanta_ciudadbolivar_20261128",
@@ -24401,7 +24071,13 @@
           "cid_col1_deportivocali_atleticobucaramanga_20261128",
           "cid_col1_millonarios_americacali_20261128",
           "cid_crc1_herediano_escorpionesbelen_20261128",
+          "cid_jpn1_kyotosanga_cerezoosaka_20261128",
+          "cid_jpn1_shimizuspulse_urawareddiamonds_20261128",
+          "cid_jpn2_omiyaardija_imabari_20261128",
+          "cid_kor1_anyang_jejusk_20261128",
+          "cid_kor1_seoul_daejeon_20261128",
           "cid_kor2_gimhae_seongnam_20261128",
+          "cid_kor2_yongin_pajufrontier_20261128",
           "cid_par1_sportivoluqueno_olimpia_20261128",
           "cid_uru1_liverpool_racingmontevideo_20261128",
           "cid_usa1_columbuscrew_intermiami_20261128",
@@ -24445,8 +24121,8 @@
         "sourcePath": "data/system-health/2026-11-28.json",
         "severity": "error",
         "alert": true,
-        "activeIssueCount": 22,
-        "actionableIssueCount": 9
+        "activeIssueCount": 19,
+        "actionableIssueCount": 7
       },
       "authority": {
         "footballTruthMutable": false,
@@ -24465,7 +24141,7 @@
     },
     "verifiedFinal": {
       "source": "data/final-results/2026-11-28",
-      "fileCount": 19,
+      "fileCount": 24,
       "authority": "scored_final_evidence"
     },
     "downstream": {
