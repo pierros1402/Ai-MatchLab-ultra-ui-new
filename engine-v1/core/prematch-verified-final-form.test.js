@@ -11,6 +11,30 @@ const final = { schema: "ai-matchlab.verified-final-result.v1", verifiedFinalTru
   leagueSlug: "egy.2", homeTeam: "A", awayTeam: "B", kickoffUtc: canonical.kickoffUtc, scoreHome: 1, scoreAway: 2,
   verdict: "verified_final_result", finalTruthVerdict: "verified_final_result", generatedAt: "2026-09-17T19:00Z" };
 
+test("persisted provider links retain lineage and never become original identity seeds", () => {
+  const canonicals = [17, 24].map(day => ({ ...canonical, canonicalId: `cid_linked_${day}`,
+    dayKey: `2026-09-${day}`, kickoffUtc: `2026-09-${day}T13:30Z`,
+    sourceMatchId: `linked${day}`, providerIds: { flashscore: `linked${day}` },
+    providerIdentityLink: { schema: "ai-matchlab.verified-provider-identity-link.v1", canonicalId: `cid_linked_${day}` } }));
+  const candidates = canonicals.map(c => ({ ...candidate, providerMatchId: c.sourceMatchId,
+    kickoffUtc: c.kickoffUtc, homeProviderTeamId: "native01", awayProviderTeamId: "native02" }));
+  const finals = canonicals.map(c => ({ ...final, matchId: c.canonicalId, dayKey: c.dayKey,
+    kickoffUtc: c.kickoffUtc, generatedAt: `${c.dayKey}T19:00Z` }));
+  const validated = validatePrematchFinalForm(candidates[0], canonicals[0], finals[0], now);
+  assert.equal(validated.ok, true);
+  assert.deepEqual(validated.row.providerIdentityLink, canonicals[0].providerIdentityLink);
+  const result = collectPrematchFinalForm({}, candidates, now, {
+    fixturesForDay: day => canonicals.filter(c => c.dayKey === day),
+    finalForFixture: (_day, id) => finals.find(f => f.matchId === id)
+  });
+  const target = { canonicalId: "cid_target", leagueSlug: "egy.2",
+    source: "espn", sourceId: "123", providerIds: { espn: "123" },
+    kickoffUtc: "2026-10-02T13:30Z", homeTeam: "A", awayTeam: "B" };
+  const proposed = { leagueSlug: "egy.2", providerMatchId: "target01",
+    kickoffUtc: target.kickoffUtc, homeProviderTeamId: "native01", awayProviderTeamId: "native02" };
+  assert.equal(result.providerIdentityLinker(proposed, target), null);
+});
+
 test("dated native evidence survives provider pagination while conflicting, future and stale evidence is rejected", () => {
   const old = { schema: "ai-matchlab.recent-results-research.v1", source: "flashscore", status: "RESULTS_AWAIT_IDENTITY_VALIDATION",
     leagueSlug: "egy.2", acquiredAt: "2026-09-25T12:00Z", rows: [{ ...candidate, homeProviderTeamId: "native01", awayProviderTeamId: "native02" }] };
@@ -137,3 +161,4 @@ test("final bridge deduplicates indexed games and rejects ambiguous provider ide
   assert.equal(ambiguous.summary.rejected.CANONICAL_PROVIDER_ID_NOT_UNIQUE, 1);
   assert.equal(JSON.stringify({ canonical, final, candidate }), input);
 });
+
