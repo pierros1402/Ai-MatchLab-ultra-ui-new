@@ -3,6 +3,7 @@ import { spawnSync } from "child_process";
 import { fileURLToPath } from "url";
 import path from "path";
 
+import { refreshIntradayCoverageReadiness } from "./prepare-intraday-runtime-release.js";
 import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
 import { syncCanonicalFixturesToJsonDbDay } from "./sync-canonical-fixtures-to-json-db-day.js";
 import { rebuildReconciledFixturesDay } from "./rebuild-reconciled-fixtures-day.js";
@@ -845,6 +846,9 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
   // value, not even as a transport artifact). The export below uses
   // preserveValue:true, so the frozen daily value.json is carried through
   // unchanged. The old intraday deriveValueFromOdds call was REMOVED.
+
+  const coverageReadiness = refreshIntradayCoverageReadiness(safeDayKey);
+  console.log("[intraday-snapshot-refresh] coverage-readiness:done", { dayKey: safeDayKey, changed: coverageReadiness.changed });
 
   console.log("[intraday-snapshot-refresh] export-snapshot:start", { dayKey: safeDayKey });
   let snapshot = await exportDeploySnapshotDay(

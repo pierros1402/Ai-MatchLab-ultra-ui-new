@@ -4,6 +4,7 @@ on:
     paths:
       - 'engine-v1/core/intraday-publication-universe.js'
       - 'engine-v1/jobs/run-intraday-snapshot-refresh.js'
+      - 'engine-v1/jobs/prepare-intraday-runtime-release*'
       - 'engine-v1/tests/intraday*'
       - '.github/workflows/intraday-bootstrap-regression.yml'
   push:
@@ -11,6 +12,7 @@ on:
     paths:
       - 'engine-v1/core/intraday-publication-universe.js'
       - 'engine-v1/jobs/run-intraday-snapshot-refresh.js'
+      - 'engine-v1/jobs/prepare-intraday-runtime-release*'
       - 'engine-v1/tests/intraday*'
       - '.github/workflows/intraday-bootstrap-regression.yml'
 permissions:
@@ -35,3 +37,5 @@ jobs:
           engine-v1/tests/intraday-authoritative-detail-sweep.test.js
           engine-v1/jobs/intraday-publication-universe.test.js
           engine-v1/tests/intraday-snapshot-invariant-gate.test.js
+          engine-v1/jobs/prepare-intraday-runtime-release.test.js
+          engine-v1/jobs/system-health-runtime-sync.v32.test.js
