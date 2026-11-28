@@ -1,0 +1,38 @@
+name: R04 existing verified provider binding evidence
+on:
+  pull_request:
+    paths:
+      - 'engine-v1/jobs/audit-r04-cross-provider-bindings-day.js'
+      - '.github/workflows/r04-cross-provider-binding-evidence.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Select Athens audit day
+        id: clock
+        run: echo "day=$(TZ=Europe/Athens date +%F)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            engine-v1
+            workers/_shared
+            data/canonical-fixtures
+            data/final-results
+            data/value-data-acquisition
+            data/identity-decisions
+            data/team-aliases
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Audit existing original verified-final identity evidence without writes
+        run: node engine-v1/jobs/audit-r04-cross-provider-bindings-day.js "${{ steps.clock.outputs.day }}" "${{ runner.temp }}/r04-binding-evidence"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: r04-existing-verified-provider-binding-evidence
+          path: ${{ runner.temp }}/r04-binding-evidence/
+          retention-days: 14
