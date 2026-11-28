@@ -43,7 +43,9 @@ function validateFinal(candidate, canonical, final, nowMs, identityLink, require
   if (!built.ok || built.rows.length !== 1) return deny(built.errors?.[0]?.reason || built.reason);
   return { ok: true, row: { ...built.rows[0], homeGlobalClubId: canonical.homeGlobalClubId,
     awayGlobalClubId: canonical.awayGlobalClubId, source: "prematch_exact_verified_final",
-    providerMatchId: candidate.providerMatchId, ...(identityLink ? { providerIdentityLink: identityLink } : {}),
+    providerMatchId: candidate.providerMatchId,
+    ...((identityLink || canonical.providerIdentityLink)
+      ? { providerIdentityLink: identityLink || canonical.providerIdentityLink } : {}),
     verifiedFinalGeneratedAt: new Date(generated).toISOString() } };
 }
 
