@@ -252,3 +252,22 @@ test("intraday detail patch synchronizes basic state and signature before export
   assert.ok(patchIndex >= 0);
   assert.ok(exportIndex > patchIndex);
 });
+
+
+test("intraday first publication uses full export only for absent manifest, fixtures and details", () => {
+  const source = fs.readFileSync(
+    new URL("../jobs/run-intraday-snapshot-refresh.js", import.meta.url),
+    "utf8"
+  );
+  assert.match(source, /publicationLock\.reason === "published_fixture_universe_missing"/);
+  assert.match(source, /previousSnapshot\.publishedFixtures\.length === 0/);
+  assert.match(source, /previousSnapshot\.publishedDetailIds\.length === 0/);
+  assert.match(source, /previousSnapshot\.publishedManifest === null/);
+  assert.match(source, /publicationLock\.currentMissingIdIndexes\.length === 0/);
+  assert.match(source, /publicationLock\.currentDuplicateIds\.length === 0/);
+  assert.match(source, /if \(!publicationLock\.ok && !bootstrapPublication\)/);
+  assert.match(source, /bootstrapPublication \? "full_current_universe" : "intraday_status_only"/);
+  assert.match(source, /buildMissingDetails: bootstrapPublication/);
+  assert.match(source, /failOnMissingDetails: true/);
+  assert.match(source, /bootstrapPublication \? undefined : publicationLock\.allowedFixtureIds/);
+});
