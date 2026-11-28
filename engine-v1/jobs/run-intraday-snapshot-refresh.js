@@ -744,16 +744,6 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
       authoritativelyRemovedFixtureIds
     });
 
-  if (!publicationLock.ok && publicationLock.reason !== "published_fixture_universe_missing") {
-    throw new Error(
-      `intraday_status_only_publication_universe_invalid:${safeDayKey}:${publicationLock.reason || "unknown"}` +
-      `:missingCurrent=${publicationLock.missingCurrentFixtureIds.join(",")}` +
-      `:authorizedWrongDay=${publicationLock.authoritativelyRemovedFixtureIds.join(",")}` +
-      `:unauthorizedMissingCurrent=${publicationLock.unauthorizedMissingCurrentFixtureIds.join(",")}` +
-      `:missingDetails=${publicationLock.missingPublishedDetailIds.join(",")}`
-    );
-  }
-
   const bootstrapPublication =
     publicationLock.reason === "published_fixture_universe_missing" &&
     previousSnapshot.publishedFixtures.length === 0 &&
@@ -761,7 +751,13 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
     previousSnapshot.publishedManifest === null;
 
   if (!publicationLock.ok && !bootstrapPublication) {
-    throw new Error(`intraday_publication_bootstrap_ineligible:${safeDayKey}:${publicationLock.reason}`);
+    throw new Error(
+      `intraday_status_only_publication_universe_invalid:${safeDayKey}:${publicationLock.reason || "unknown"}` +
+      `:missingCurrent=${publicationLock.missingCurrentFixtureIds.join(",")}` +
+      `:authorizedWrongDay=${publicationLock.authoritativelyRemovedFixtureIds.join(",")}` +
+      `:unauthorizedMissingCurrent=${publicationLock.unauthorizedMissingCurrentFixtureIds.join(",")}` +
+      `:missingDetails=${publicationLock.missingPublishedDetailIds.join(",")}`
+    );
   }
 
   const allowedFixtureIdSet =
