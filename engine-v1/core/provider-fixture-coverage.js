@@ -1,5 +1,6 @@
 import { athensDayFromKickoff } from "./daykey.js";
 import { PROVIDER_FIXTURE_IDENTITY_SCHEMA } from "./provider-fixture-identity.js";
+import { collectAuthoritativeWrongDayPublishedFixtureIds } from "./intraday-publication-universe.js";
 
 const text = v => v == null ? "" : String(v).trim();
 const cid = row => text(row?.canonicalId || row?.matchId || row?.basic?.canonicalId || row?.basic?.matchId || row?.fileCanonicalId);
@@ -21,10 +22,12 @@ function fixtureDay(row) {
 export function buildProviderFixtureCoverage({
   dayKey, discovery, canonicalFixtures = [], publishedFixtures = [],
   publishedDetails = [], now = new Date().toISOString(),
+  canonicalLeaguePayloads = [], priorProviderBindings = null,
   maxAgeMs = 24 * 60 * 60 * 1000
 } = {}) {
   const issues = [];
   const bindings = [];
+  const exclusions = [];
   const discoveryAgeMs = Date.parse(now) - Date.parse(discovery?.generatedAt);
   function add(reasonCode, fixture = {}, canonical = null, artifact = "competition-discovery") {
     issues.push({
@@ -85,7 +88,32 @@ export function buildProviderFixtureCoverage({
   const canonical = rows(canonicalFixtures);
   const published = rows(publishedFixtures);
   const details = rows(publishedDetails);
+  const historical = priorProviderBindings?.schema === "ai-matchlab.prior-explicit-provider-fixture-bindings.v1" &&
+    priorProviderBindings.dayKey === dayKey ? rows(priorProviderBindings.records).filter(record =>
+      /^[a-f0-9]{40}$/.test(record.sourceCommit || "") &&
+      /^[a-f0-9]{40}$/.test(record.sourceBlobSha || "") &&
+      record.sourcePath === `data/canonical-fixtures/${dayKey}/${record.row?.leagueSlug}.json` &&
+      record.row?.dayKey === dayKey &&
+      providerId(record.row, "flashscore") === record.providerFixtureId) : [];
+  const wrongDayIds = new Set(collectAuthoritativeWrongDayPublishedFixtureIds({
+    dayKey, publishedFixtures: historical.map(record => record.row), canonicalLeaguePayloads
+  }));
   for (const f of observations.filter(f => f.eligibility === "eligible")) {
+    const prior = historical.filter(record => record.providerFixtureId === f.providerFixtureId &&
+      record.row.leagueSlug === f.canonicalSlug && wrongDayIds.has(cid(record.row)));
+    if (prior.length === 1 && !canonical.some(c => cid(c) === cid(prior[0].row)) &&
+      historical.filter(record => cid(record.row) === cid(prior[0].row)).length === 1) {
+      exclusions.push({ reasonCode: "provider_fixture_authoritative_wrong_day", severity: "info",
+        provider: f.provider, providerFixtureId: f.providerFixtureId, dayKey,
+        leagueSlug: f.canonicalSlug, canonicalId: cid(prior[0].row),
+        description: "Independent discovery retains an event excluded by the existing exact authoritative wrong-day policy.",
+        affectedArtifact: `data/competition-discovery/${dayKey}.json`,
+        sourceCommit: prior[0].sourceCommit, sourceBlobSha: prior[0].sourceBlobSha,
+        freshness: { generatedAt: discovery.generatedAt, ageMs: discoveryAgeMs, maxAgeMs },
+        recoveryAction: "Preserve authoritative other-day evidence; do not recreate this fixture in the requested day."
+      });
+      continue;
+    }
     if (!f.providerFixtureId) { add("provider_fixture_id_missing", f); continue; }
     if (!f.identityComplete) { add("provider_fixture_identity_incomplete", f); continue; }
     const matches = canonical.filter(c => providerId(c, f.provider) === f.providerFixtureId);
@@ -143,16 +171,18 @@ export function buildProviderFixtureCoverage({
       ok: issues.length === 0, proven: issues.length === 0,
       summary: { observations: rows(discovery?.fixtures).length,
         eligible: rows(discovery?.fixtures).filter(f => f.dayKey === dayKey && f.eligibility === "eligible").length,
+        authoritativeExclusions: exclusions.length,
+        effectiveEligible: rows(discovery?.fixtures).filter(f => f.dayKey === dayKey && f.eligibility === "eligible").length - exclusions.length,
         bound: bindings.length, issues: issues.length,
         affectedFixtures: new Set(issues.map(i => i.providerFixtureId
           ? i.provider + "|" + i.providerFixtureId : i.canonicalId || i.reasonCode)).size },
-      bindings, issues };
+      bindings, exclusions, issues };
   }
 }
 
 export function collectProviderFixtureCoverageIssues(coverage) {
   if (!coverage) return [];
-  return rows(coverage.issues).map(detail => ({
+  return [...rows(coverage.issues), ...rows(coverage.exclusions)].map(detail => ({
     severity: detail.severity, source: "provider-fixture-identity",
     type: detail.reasonCode, message: detail.description, details: detail
   }));

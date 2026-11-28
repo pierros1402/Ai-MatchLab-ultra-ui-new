@@ -123,3 +123,45 @@ test("provider namespace is never inferred from an unqualified ID", () => {
   value.canonicalFixtures[0].sourceId = "FS1"; value.canonicalFixtures[0].source = "espn";
   assert.ok(codes(value).includes("missing_canonical_binding"));
 });
+function wrongDayInput() {
+  const value = input();
+  const historical = { ...value.canonicalFixtures[0], source: "espn", sourceId: "123", sourceMatchId: "123",
+    providerIds: { espn: "123", flashscore: "FS1" } };
+  value.canonicalFixtures = []; value.publishedFixtures = []; value.publishedDetails = [];
+  value.priorProviderBindings = { schema: "ai-matchlab.prior-explicit-provider-fixture-bindings.v1", dayKey,
+    records: [{ providerFixtureId: "FS1", sourceCommit: "a".repeat(40), sourceBlobSha: "b".repeat(40),
+      sourcePath: `data/canonical-fixtures/${dayKey}/eng.1.json`, row: historical }] };
+  value.canonicalLeaguePayloads = [{ dayKey, leagueSlug: "eng.1", fixtures: [],
+    sourceMeta: { acquisitionProvider: "espn_direct_league_status", requestedDayKey: dayKey,
+      requestedLeagueSlug: "eng.1", providerFetchSlugs: ["eng.1"],
+      exactEventSummaryReconciliation: {
+        candidates: 1, wrongDayMatches: 1, wrongDayRemovedRows: 1, wrongDayIdentityRejectedRows: 0,
+        fetches: [{ providerSlug: "eng.1", providerMatchId: "123", ok: true, kind: "other_day",
+          authoritativeDayKey: "2026-11-29", reason: null }],
+        policy: { exactProviderIdOnly: true, authoritativeEventDayOnly: true, teamIdentityRequired: true,
+          homeAwayOrientationRequired: true, crossDayStatusPromotion: false, heuristicFinalPromotion: false }
+      } } }];
+  return value;
+}
+test("existing authoritative wrong-day policy explains an exact prior provider binding without recreating it", () => {
+  const value = wrongDayInput(), report = buildProviderFixtureCoverage(value);
+  assert.equal(report.proven, true);
+  assert.equal(report.bindings.length, 0);
+  assert.equal(report.exclusions.length, 1);
+  assert.equal(report.summary.effectiveEligible, 0);
+  assert.equal(value.canonicalFixtures.length, 0);
+  assert.equal(collectProviderFixtureCoverageIssues(report)[0].severity, "info");
+});
+test("weak wrong-day metadata, wrong provider ID or unbound history never authorizes exclusion", () => {
+  for (const mutate of [
+    v => { v.canonicalLeaguePayloads[0].sourceMeta.exactEventSummaryReconciliation.policy.teamIdentityRequired = false; },
+    v => { v.canonicalLeaguePayloads[0].sourceMeta.exactEventSummaryReconciliation.fetches[0].providerMatchId = "999"; },
+    v => { v.priorProviderBindings.records[0].sourceBlobSha = ""; },
+    v => { v.priorProviderBindings.records[0].row.providerIds.flashscore = "OTHER"; }
+  ]) {
+    const value = wrongDayInput(); mutate(value);
+    const report = buildProviderFixtureCoverage(value);
+    assert.equal(report.exclusions.length, 0);
+    assert.ok(report.issues.some(i => i.reasonCode === "missing_canonical_binding"));
+  }
+});

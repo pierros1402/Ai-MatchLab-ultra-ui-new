@@ -18,11 +18,14 @@ export async function auditProviderFixtureIdentityDay(dayKey = athensDayKey()) {
   const canonicalDirectory = resolveDataPath("canonical-fixtures", dayKey);
   const snapshotDirectory = resolveDataPath("deploy-snapshots", dayKey);
   const detailsDirectory = path.join(snapshotDirectory, "details");
+  const canonicalLeaguePayloads = files(canonicalDirectory).map(f => read(path.join(canonicalDirectory, f))).filter(Boolean);
   const report = buildProviderFixtureCoverage({
     dayKey,
     discovery: discovery.artifact || { ok: false, dayKey },
-    canonicalFixtures: files(canonicalDirectory)
-      .flatMap(f => read(path.join(canonicalDirectory, f))?.fixtures || []),
+    canonicalFixtures: canonicalLeaguePayloads.flatMap(payload => payload.fixtures || []),
+    canonicalLeaguePayloads,
+    priorProviderBindings: read(resolveDataPath("identity-decisions",
+      `prior-explicit-provider-bindings-${dayKey}.v1.json`)),
     publishedFixtures: read(path.join(snapshotDirectory, "fixtures.json"))?.fixtures || [],
     publishedDetails: files(detailsDirectory).map(f => {
       const detail = read(path.join(detailsDirectory, f));

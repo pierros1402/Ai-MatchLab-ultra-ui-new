@@ -345,10 +345,13 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
 
   const snapshot = snapshotStateForDay(date);
   const canonicalDirectory = resolveDataPath("canonical-fixtures", date);
-  const canonicalFixtures = fs.existsSync(canonicalDirectory)
+  const canonicalLeaguePayloads = fs.existsSync(canonicalDirectory)
     ? fs.readdirSync(canonicalDirectory).filter(f => f.endsWith(".json"))
-      .flatMap(f => readJsonSafe(path.join(canonicalDirectory, f), null)?.fixtures || [])
+      .map(f => readJsonSafe(path.join(canonicalDirectory, f), null)).filter(Boolean)
     : [];
+  const canonicalFixtures = canonicalLeaguePayloads.flatMap(payload => payload.fixtures || []);
+  const priorProviderBindings = readJsonSafe(resolveDataPath("identity-decisions",
+    `prior-explicit-provider-bindings-${date}.v1.json`), null);
   const snapshotDirectory = resolveDataPath("deploy-snapshots", date);
   const publishedFixtures = readJsonSafe(path.join(snapshotDirectory, "fixtures.json"), null)?.fixtures || [];
   const detailsDirectory = path.join(snapshotDirectory, "details");
@@ -361,7 +364,7 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
     : [];
   const providerFixtureCoverage = buildProviderFixtureCoverage({
     dayKey: date, discovery: providerDiscovery,
-    canonicalFixtures, publishedFixtures, publishedDetails
+    canonicalFixtures, publishedFixtures, publishedDetails, canonicalLeaguePayloads, priorProviderBindings
   });
   const valueCoverageSourcePath =
     `data/value/_coverage-reports/${date}.json`;
