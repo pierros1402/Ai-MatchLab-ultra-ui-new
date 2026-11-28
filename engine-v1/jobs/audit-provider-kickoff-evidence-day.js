@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { parseFlashscoreExactKickoffPage } from "../core/exact-provider-kickoff-evidence.js";
 import path from "node:path";
 import { athensDayKey } from "../core/daykey.js";
 import { resolveDataPath } from "../storage/data-root.js";
@@ -38,6 +39,7 @@ for (const f of discovery.artifact.fixtures.filter(f => f.eligibility === "eligi
       const home = event?.competitors?.find(t => t.homeAway === "home");
       const away = event?.competitors?.find(t => t.homeAway === "away");
       Object.assign(item, { primaryUrl: url, httpStatus: response.status,
+        primaryHeader: body.header,
         exactPrimaryEventId: String(event?.id || body.header?.id || "") === eventId,
         primaryKickoffUtc: event?.date || null,
         primaryHome: { id: home?.team?.id, name: home?.team?.displayName },
@@ -57,7 +59,7 @@ for (const f of discovery.artifact.fixtures.filter(f => f.eligibility === "eligi
       const fields = [...html.matchAll(/"(?:startDate|startTime|startTimestamp|eventStartTimestamp|dateStart)"\s*:\s*(?:"([^"]+)"|(\d+))/g)]
         .slice(0, 20).map(m => m[0]);
       Object.assign(item, { primaryUrl: url, httpStatus: response.status, finalUrl: response.url,
-        primaryTimeFields: fields });
+        primaryTimeFields: fields, primaryKickoffProof: parseFlashscoreExactKickoffPage(html, f) });
     } catch (error) { item.primaryError = String(error.message); }
   }
   cases.push(item);
