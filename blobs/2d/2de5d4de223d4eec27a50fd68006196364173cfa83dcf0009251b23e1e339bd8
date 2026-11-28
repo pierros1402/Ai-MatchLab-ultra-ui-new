@@ -1,0 +1,259 @@
+{
+  "season": "2026-2027",
+  "leagueSlug": "ger.1",
+  "homeTeam": "Borussia Dortmund",
+  "awayTeam": "Bayer Leverkusen",
+  "homeWinScore": 0.343,
+  "drawScore": 0.145,
+  "awayWinScore": 0.527,
+  "over15Score": 0.731,
+  "over25Score": 0.7850000000000001,
+  "over35Score": 0.603,
+  "bttsScore": 0.6164999999999999,
+  "confidence": 0.805,
+  "signals": [
+    "away_edge",
+    "over25_support",
+    "home_form_decay",
+    "away_form_decay",
+    "form_influence_reduced",
+    "mutual_attack_profile",
+    "priors_applied",
+    "close_strength_gap",
+    "home_rest_4",
+    "match_profile_applied"
+  ],
+  "meta": {
+    "model": "value-engine-v1",
+    "mode": "statistical_plus_context",
+    "formWindow": 5,
+    "formRules": {
+      "sameSeasonOnly": true,
+      "maxAgeDays": 35,
+      "fullStrengthDays": 7,
+      "decayStartDays": 8,
+      "heavyDecayDays": 14,
+      "breakdownDays": 21,
+      "gapModerateDays": 14,
+      "gapHeavyDays": 21,
+      "gapStaleDays": 35,
+      "gapPolicy": "form_weight_reduced_not_rejected"
+    },
+    "baseWeights": {
+      "form": 0.5,
+      "homeAway": 0.2,
+      "goals": 0.2,
+      "matchup": 0.1
+    },
+    "effectiveWeights": {
+      "homeOverallFormWeight": 0.12,
+      "awayOverallFormWeight": 0.12,
+      "homeSideFormWeight": 0.12,
+      "awaySideFormWeight": 0.12
+    },
+    "expectedHomeGoals": 1.887,
+    "expectedAwayGoals": 1.804,
+    "expectedTotalGoals": 3.691,
+    "homeStrength": 0.124,
+    "awayStrength": 0.219,
+    "homeEdge": 0.157,
+    "awayPenalty": 0.091,
+    "recency": {
+      "homeOverall": {
+        "sample": 7,
+        "rawSample": 4,
+        "priorSample": 136,
+        "daysSinceLastMatch": 22,
+        "spanDays": 10,
+        "maxInternalGap": 6,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.39
+      },
+      "awayOverall": {
+        "sample": 8,
+        "rawSample": 5,
+        "priorSample": 136,
+        "daysSinceLastMatch": 21,
+        "spanDays": 14,
+        "maxInternalGap": 8,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.155,
+        "continuityScore": 0.65,
+        "formContinuityWeight": 0.582
+      },
+      "homeSide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 136,
+        "daysSinceLastMatch": 22,
+        "spanDays": 10,
+        "maxInternalGap": 10,
+        "gapSeverity": "heavy",
+        "freshnessScore": 0.08,
+        "continuityScore": 0.35,
+        "formContinuityWeight": 0.33
+      },
+      "awaySide": {
+        "sample": 6,
+        "rawSample": 3,
+        "priorSample": 136,
+        "daysSinceLastMatch": 21,
+        "spanDays": 14,
+        "maxInternalGap": 14,
+        "gapSeverity": "moderate",
+        "freshnessScore": 0.155,
+        "continuityScore": 0.5,
+        "formContinuityWeight": 0.409
+      }
+    },
+    "matchupSample": 3,
+    "priorsUsed": true,
+    "priors": {
+      "used": true,
+      "homePriorSample": 136,
+      "awayPriorSample": 136,
+      "leaguePriorSample": 1530,
+      "matchupPriorSample": 8
+    },
+    "resolution": {
+      "homeInput": "Borussia Dortmund",
+      "awayInput": "Bayer Leverkusen",
+      "homeResolvedKey": "Borussia Dortmund",
+      "awayResolvedKey": "Bayer Leverkusen",
+      "homeResolveScore": 1,
+      "awayResolveScore": 0.82,
+      "matchupResolvedKey": "Borussia Dortmund::Bayer Leverkusen",
+      "matchupResolveScore": 0,
+      "homePriorKey": "ger.1::Borussia Dortmund",
+      "awayPriorKey": "ger.1::Bayer Leverkusen",
+      "matchupPriorKey": "ger.1|Bayer Leverkusen|Borussia Dortmund"
+    },
+    "sourceKeys": {
+      "homeTeamKey": "Borussia Dortmund",
+      "awayTeamKey": "Bayer Leverkusen",
+      "leagueKey": "ger.1",
+      "matchupKey": "Borussia Dortmund::Bayer Leverkusen"
+    },
+    "contextModifiers": {
+      "applied": true,
+      "version": "value-context-modifiers-v1.0"
+    },
+    "contextAdjusted": true,
+    "contextDelta": 0,
+    "contextReasons": [
+      {
+        "code": "h2h_overlean",
+        "impact": 0.03,
+        "note": "Recent H2H goals profile is open"
+      },
+      {
+        "code": "ai_h2h_over_signal",
+        "impact": 0.07,
+        "note": "AI detected open H2H pattern"
+      }
+    ],
+    "aiContext": {
+      "available": true,
+      "importance": "low",
+      "stakes": [],
+      "pressure": [
+        "low_confidence_table"
+      ]
+    },
+    "matchProfileApplied": true,
+    "matchProfileConfidence": 0.67,
+    "matchProfileReasons": [
+      {
+        "code": "match_profile_h2h_overlean",
+        "impact": 0.022000000000000002,
+        "note": "MatchProfile H2H goal pattern leans over"
+      }
+    ]
+  },
+  "contextAdjusted": true,
+  "contextReasons": [
+    {
+      "code": "h2h_overlean",
+      "impact": 0.03,
+      "note": "Recent H2H goals profile is open"
+    },
+    {
+      "code": "ai_h2h_over_signal",
+      "impact": 0.07,
+      "note": "AI detected open H2H pattern"
+    }
+  ],
+  "contextDelta": 0,
+  "band": {
+    "over15": "MEDIUM",
+    "over25": "LOW",
+    "over35": "LOW",
+    "btts": "LOW"
+  },
+  "modifiers": {
+    "reconcile": {
+      "reasons": []
+    },
+    "motivation": {
+      "homeDelta": 0,
+      "awayDelta": 0.009,
+      "drawDelta": 0.01,
+      "reasons": [
+        "close_strength_gap"
+      ]
+    },
+    "fatigue": {
+      "homePenalty": 0.025,
+      "awayPenalty": 0,
+      "reasons": [
+        "home_rest_4"
+      ]
+    },
+    "congestion": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "drawBoost": 0,
+      "reasons": []
+    },
+    "lookAhead": {
+      "homePenalty": 0,
+      "awayPenalty": 0,
+      "reasons": []
+    }
+  },
+  "context": {
+    "season": "2026-2027",
+    "leagueSlug": "ger.1",
+    "competitionType": "league",
+    "phase": "regular",
+    "leagueTrust": "medium",
+    "leagueTier": 2,
+    "homeRestDays": 4,
+    "awayRestDays": 21,
+    "homeMatchesLast7": 1,
+    "awayMatchesLast7": 0,
+    "homeMatchesLast14": 1,
+    "awayMatchesLast14": 0,
+    "homeNextMatchInDays": null,
+    "awayNextMatchInDays": null
+  },
+  "intelligence": {
+    "applied": true,
+    "mode": "partial",
+    "coverage": {
+      "hasStandings": false,
+      "hasHomeForm": true,
+      "hasAwayForm": true,
+      "hasH2H": false,
+      "hasPhaseContext": false,
+      "coverageCount": 2,
+      "mode": "partial"
+    },
+    "signals": [
+      "form_balanced",
+      "attack_support"
+    ]
+  }
+}
