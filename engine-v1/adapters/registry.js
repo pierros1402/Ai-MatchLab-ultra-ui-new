@@ -209,6 +209,11 @@ const FIXTURE_ADAPTERS = [
         source: "flashscore",
         sourceId: String(fx.matchId),
         sourceMatchId: String(fx.matchId),
+        ...(fx.homeProviderTeamId && fx.awayProviderTeamId &&
+          String(fx.homeProviderTeamId) !== String(fx.awayProviderTeamId)
+          ? { providerTeamIds: { flashscore: {
+            home: String(fx.homeProviderTeamId), away: String(fx.awayProviderTeamId)
+          } } } : {}),
 
         leagueSlug,
         leagueName: intl ? intl.label : fx.leagueName,
