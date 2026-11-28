@@ -1,0 +1,101 @@
+name: Complete and verify existing runtime publication
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/runtime-publication-recovery.yml'
+      - 'engine-v1/jobs/prepare-intraday-runtime-release*'
+  workflow_dispatch:
+    inputs:
+      dayKey:
+        description: 'Existing latest day YYYY-MM-DD'
+        required: true
+permissions:
+  contents: write
+jobs:
+  complete-publication:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: ${{ github.event_name == 'pull_request' && format('runtime-publication-recovery-pr-{0}', github.event.pull_request.number) || 'ai-matchlab-data-writer' }}
+      queue: max
+      cancel-in-progress: false
+    env:
+      HISTORY_PRESERVATION_REQUIRED: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
+      DAY_KEY: ${{ inputs.dayKey }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          filter: blob:none
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - run: npm ci --no-audit --no-fund
+      - name: Select the existing latest day
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const latest=JSON.parse(fs.readFileSync('data/deploy-snapshots/latest.json'));
+          const day=process.env.DAY_KEY||latest.date;
+          assert.match(day,/^\d{4}-\d{2}-\d{2}$/);assert.equal(day,latest.date);
+          fs.appendFileSync(process.env.GITHUB_ENV,`DAY_KEY=${day}\n`);
+          NODE
+      - name: Complete diagnostics without changing snapshot facts or frozen plans
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import assert from 'node:assert/strict';
+          import {resolveDataPath} from './engine-v1/storage/data-root.js';
+          import {refreshIntradayCoverageReadiness} from './engine-v1/jobs/prepare-intraday-runtime-release.js';
+          import {validateStagedRelease} from './engine-v1/jobs/sync-deploy-snapshot-from-github.js';
+          import {buildCheckpointAwareFreshnessCoverageManifestOnlyUpdate} from './engine-v1/core/checkpoint-aware-targeted-freshness-coverage-manifest-only-adapter.js';
+          const day=process.env.DAY_KEY;
+          assert.match(day,/^\d{4}-\d{2}-\d{2}$/);
+          const root=resolveDataPath('deploy-snapshots',day),file=path.join(root,'manifest.json');
+          const manifest=JSON.parse(fs.readFileSync(file)),latestFile=resolveDataPath('deploy-snapshots','latest.json'),latest=JSON.parse(fs.readFileSync(latestFile));
+          assert.equal(latest.date,day);assert.equal(latest.hash,manifest.hash);
+          await validateStagedRelease(root,manifest);
+          const coverage=refreshIntradayCoverageReadiness(day).report;
+          const update=buildCheckpointAwareFreshnessCoverageManifestOnlyUpdate({dayKey:day,manifest,coverageReadiness:coverage});
+          assert.ok(update.changedTopLevelKeys.every(key=>['generatedAt','hash'].includes(key)));
+          const next=update.manifest;
+          assert.ok(next,'manifest-only adapter output required');
+          assert.equal(next.hash,manifest.hash,'snapshot facts must remain identical');
+          fs.writeFileSync(file,JSON.stringify(next,null,2)+'\n');
+          fs.writeFileSync(latestFile,JSON.stringify({...latest,generatedAt:next.generatedAt,hash:next.hash},null,2)+'\n');
+          await validateStagedRelease(root,next);
+          console.log('EXISTING_SNAPSHOT_FACTS_AND_FROZEN_VALUE_PRESERVED=true');
+          NODE
+      - name: Enforce existing freshness, invariant and foundation gates
+        run: |
+          set -euo pipefail
+          node engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY"
+          node engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" --gate
+          node engine-v1/jobs/check-value-artifact-gate.js --date="$DAY_KEY"
+          node engine-v1/jobs/verify-artifact-freshness-day.js --date="$DAY_KEY" --gate
+          node engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY" --gate
+          node engine-v1/jobs/build-day-report.js --date="$DAY_KEY"
+          node engine-v1/jobs/build-system-health-alerts-day.js --date="$DAY_KEY"
+          node engine-v1/jobs/prepare-intraday-runtime-release.js "$DAY_KEY"
+      - name: Commit the exact day diagnostics and metadata checkpoint
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+          git add "data/coverage-readiness/$DAY_KEY.json" "data/deploy-snapshots/$DAY_KEY/manifest.json" "data/deploy-snapshots/$DAY_KEY/freshness-report.json" "data/deploy-snapshots/$DAY_KEY/invariant-report.json" "data/deploy-snapshots/latest.json" "data/build-reports/$DAY_KEY.json" "data/foundation-integrity/$DAY_KEY.json" "data/foundation-integrity/latest.json" "data/system-health/$DAY_KEY.json" "data/system-health/latest.json"
+          node engine-v1/jobs/guard-staged-data-boundary.js --label=runtime-publication-recovery --dayKey="$DAY_KEY" --allow="^data/(coverage-readiness/$DAY_KEY[.]json|deploy-snapshots/$DAY_KEY/(manifest|freshness-report|invariant-report)[.]json|deploy-snapshots/latest[.]json|build-reports/$DAY_KEY[.]json|foundation-integrity/($DAY_KEY|latest)[.]json|system-health/($DAY_KEY|latest)[.]json)$"
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m "Complete verified runtime diagnostics for $DAY_KEY"
+            git push origin HEAD:main
+          fi
+      - name: Synchronize and independently read back the complete pinned release
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: bash tools/sync-public-snapshot.sh "$DAY_KEY" "$(git rev-parse HEAD)"
+      - name: Preserve produced recovery evidence
+        if: always() && github.event_name == 'workflow_dispatch'
+        uses: ./.github/actions/preserve-history

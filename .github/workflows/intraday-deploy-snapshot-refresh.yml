@@ -346,6 +346,7 @@ jobs:
             done <<< "$CANONICAL_STATUS_FILES"
           fi
 
+          test -f "data/coverage-readiness/${DAY_KEY}.json" && git add "data/coverage-readiness/${DAY_KEY}.json"
           test -d "data/deploy-snapshots/${DAY_KEY}" && git add "data/deploy-snapshots/${DAY_KEY}/"
           test -e "data/deploy-snapshots/latest.json" && git add "data/deploy-snapshots/latest.json"
 
@@ -498,7 +499,7 @@ jobs:
             fixtureMaterial ||
             publicationUniverseMaterial ||
             canonicalMaterial ||
-            detailMaterial
+            detailMaterial || JSON.stringify(readHead(`data/coverage-readiness/${day}.json`)) !== JSON.stringify(readFile(`data/coverage-readiness/${day}.json`))
               ? "true"
               : "false"
           );
@@ -507,14 +508,14 @@ jobs:
 
           if [ "$MATERIAL" != "true" ]; then
             echo "No material LIVE/FT/non-played snapshot change."
-            git restore --staged -- "data/deploy-snapshots/${DAY_KEY}" "data/deploy-snapshots/latest.json" 2>/dev/null || true
-            git restore -- "data/deploy-snapshots/${DAY_KEY}" "data/deploy-snapshots/latest.json" 2>/dev/null || true
+            git restore --staged -- "data/deploy-snapshots/${DAY_KEY}" "data/deploy-snapshots/latest.json" "data/coverage-readiness/${DAY_KEY}.json" 2>/dev/null || true
+            git restore -- "data/deploy-snapshots/${DAY_KEY}" "data/deploy-snapshots/latest.json" "data/coverage-readiness/${DAY_KEY}.json" 2>/dev/null || true
             exit 0
           fi
 
           STAGED="$(git diff --cached --name-only || true)"
           if [ -n "$STAGED" ]; then
-            node engine-v1/jobs/guard-staged-data-boundary.js --label=intraday-public-truth-checkpoint --dayKey="${DAY_KEY}" --allow="^(data/canonical-fixtures/${DAY_KEY}/[^/]+\\.json$|data/deploy-snapshots/latest\\.json$|data/deploy-snapshots/${DAY_KEY}/)"
+            node engine-v1/jobs/guard-staged-data-boundary.js --label=intraday-public-truth-checkpoint --dayKey="${DAY_KEY}" --allow="^(data/coverage-readiness/${DAY_KEY}[.]json$|data/canonical-fixtures/${DAY_KEY}/[^/]+\\.json$|data/deploy-snapshots/latest\\.json$|data/deploy-snapshots/${DAY_KEY}/)"
           fi
 
           if git diff --cached --quiet; then
@@ -1127,6 +1128,9 @@ jobs:
           if [ -d "data/value-plans/${DAY_KEY}" ]; then git add "data/value-plans/${DAY_KEY}/"; fi
           node ./engine-v1/jobs/build-system-health-alerts-day.js --date="${DAY_KEY}"
 
+          test -f "data/coverage-readiness/${DAY_KEY}.json" && git add "data/coverage-readiness/${DAY_KEY}.json"
+          node engine-v1/jobs/prepare-intraday-runtime-release.js "$DAY_KEY"
+
           # Observation-only controller shadow. It emits logs only and cannot
           # authorize writes, commits, pushes, deploys, or repair execution.
           SHADOW_REMOTE_HEAD="$(git ls-remote origin refs/heads/main 2>/dev/null | awk 'NR==1 {print $1}' || true)"
@@ -1173,9 +1177,9 @@ jobs:
             node engine-v1/jobs/guard-staged-data-boundary.js \
               --label=intraday-deploy-snapshot-refresh \
               --dayKey="${DAY_KEY}" \
-              --allow="^(data/canonical-fixtures/${DAY_KEY}/[^/]+\.json$|data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/foundation-integrity/${DAY_KEY}\.json$|data/foundation-integrity/latest\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/day-truth-ledger/${DAY_KEY}\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-unified/${DAY_KEY}/(observations/[a-f0-9]{64}\.json|public-plan\.json)$|data/value-autonomous-research/${DAY_KEY}/(observations/[a-f0-9]{64}\.json|comparison\.json|release-candidate\.json)$|data/value-data-readiness/${DAY_KEY}\.json$|data/value/_coverage-reports/${DAY_KEY}\.json$|data/value-plans/${DAY_KEY}/|data/final-results/${DAY_KEY}/|data/final-result-conflicts/${DAY_KEY}\.json$|data/value-comparison/(${DAY_KEY}\.json|cumulative\.json)$)"
+              --allow="^(data/coverage-readiness/${DAY_KEY}[.]json$|data/canonical-fixtures/${DAY_KEY}/[^/]+\.json$|data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/foundation-integrity/${DAY_KEY}\.json$|data/foundation-integrity/latest\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/day-truth-ledger/${DAY_KEY}\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-unified/${DAY_KEY}/(observations/[a-f0-9]{64}\.json|public-plan\.json)$|data/value-autonomous-research/${DAY_KEY}/(observations/[a-f0-9]{64}\.json|comparison\.json|release-candidate\.json)$|data/value-data-readiness/${DAY_KEY}\.json$|data/value/_coverage-reports/${DAY_KEY}\.json$|data/value-plans/${DAY_KEY}/|data/final-results/${DAY_KEY}/|data/final-result-conflicts/${DAY_KEY}\.json$|data/value-comparison/(${DAY_KEY}\.json|cumulative\.json)$)"
 
-            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/canonical-fixtures/|data/deploy-snapshots/|data/build-reports/|data/foundation-integrity/|data/system-health/|data/day-truth-ledger/|data/value/|data/value-unified/|data/value-data-readiness/|data/value-plans/|data/final-results/|data/final-result-conflicts/|data/value-comparison/)' || true)"
+            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/coverage-readiness/|data/canonical-fixtures/|data/deploy-snapshots/|data/build-reports/|data/foundation-integrity/|data/system-health/|data/day-truth-ledger/|data/value/|data/value-unified/|data/value-data-readiness/|data/value-plans/|data/final-results/|data/final-result-conflicts/|data/value-comparison/)' || true)"
             if [ -n "$BAD" ]; then
               echo "ERROR: unexpected staged files:"
               echo "$BAD"
@@ -1392,9 +1396,10 @@ jobs:
               reason: report.reason, rolledBack: report.rolledBack
             };
           }
+          const coverageMaterialChanged = JSON.stringify(readJsonFromHead(`data/coverage-readiness/${day}.json`)) !== JSON.stringify(readJsonFile(`data/coverage-readiness/${day}.json`));
           const recoveryStateChanged = JSON.stringify(recoveryState(recoveryBefore)) !== JSON.stringify(recoveryState(recovery));
 
-          if (!materialChanged && !manifestContractRepair && !verifiedDataRepair && !recoveryStateChanged) {
+          if (!materialChanged && !manifestContractRepair && !verifiedDataRepair && !recoveryStateChanged && !coverageMaterialChanged) {
             console.log("No material score/status/minute or manifest-contract repair change. Restoring staged deploy snapshot files to avoid timestamp-only commit.");
             execFileSync("git", ["restore", "--staged", "--", "data/deploy-snapshots"], { stdio: "inherit" });
             execFileSync("git", ["restore", "--", "data/deploy-snapshots"], { stdio: "inherit" });
@@ -1518,7 +1523,7 @@ jobs:
             'data/system-health/latest.json'
           ], { stdio: 'inherit' });
 
-          let commitNeeded = materialChanged || manifestContractRepair || verifiedDataRepair || recoveryStateChanged;
+          let commitNeeded = materialChanged || manifestContractRepair || verifiedDataRepair || recoveryStateChanged || coverageMaterialChanged;
           if (!commitNeeded) {
             try {
               execFileSync("git", ["diff", "--cached", "--quiet"], { stdio: "ignore" });
@@ -1580,6 +1585,7 @@ jobs:
           echo "INTRADAY_SNAPSHOT_PUSHED=true" >> "$GITHUB_ENV"
 
       - name: Promote and verify public runtime snapshot
+        id: final-public-sync
         if: env.SKIP_BUILD != 'true' && env.INTRADAY_SNAPSHOT_PUSHED == 'true'
         shell: bash
         env:
@@ -1595,7 +1601,7 @@ jobs:
           exit 1
 
       - name: Surface unverified public truth checkpoint
-        if: always() && steps.public-truth-sync.outcome == 'failure'
+        if: always() && steps.public-truth-sync.outcome == 'failure' && steps.final-public-sync.outcome != 'success'
         run: |
           echo "ERROR: public snapshot parity was not verified; retry only the publication checkpoint."
           exit 1
