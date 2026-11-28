@@ -278,7 +278,7 @@ function verifiedWrongDayFetches(dayKey, leagueSlug, meta) {
       fetch?.ok === true &&
       normalizeText(fetch?.kind) === "other_day" &&
       !normalizeText(fetch?.reason) &&
-      /^\\d+$/u.test(normalizeText(fetch?.providerMatchId)) &&
+      /^\d+$/u.test(normalizeText(fetch?.providerMatchId)) &&
       slugs.has(normalizeText(fetch?.providerSlug)) &&
       isValidDayKey(fetch?.authoritativeDayKey) &&
       normalizeText(fetch?.authoritativeDayKey) !== dayKey
