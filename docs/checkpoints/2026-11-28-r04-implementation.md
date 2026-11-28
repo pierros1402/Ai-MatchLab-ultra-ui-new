@@ -1,5 +1,28 @@
 # AI MATCHLAB ULTRA — R04 implementation checkpoint
 
+## Latest verified continuation (28/11/2026, Europe/Athens)
+
+- PR #375 MERGED: `4502bd8eec05ca50552ffc573088dec30717a2c0`, full engine 3599/3599 PASS.
+- PR #376 MERGED: `50ee43f8c4b4243d0c044cfed9a7a2fa4774d7b1`, 234 native pairs in 80 files, full engine 3604/3604 PASS. Independent real-day audit confirmed issue count 403 → 169.
+- PR #377 MERGED: `3c13cad62402b729f01a3657965fc659abb991e6`, 77 original-final fixture bindings + 2 approved native pairs; full engine 3613/3613 PASS. Provider fixture namespaces survive ESPN refreshes, and persisted links retain lineage so they cannot become new original identity seeds.
+- PR #378 OPEN. Original source `c603614f6287d61e49ea16480ec8bc6eeb5a332e` passed 3617/3617 and all checks. Merge was stopped by pre-merge canonical SHA drift. Metadata was reapplied to newer main `9acfc981f3d5f86507d1c83ed2eeaa3cde69e1cc`, preserving all newer scores/status, source metadata, row membership/order and prior provider/native IDs. Current rebased source: `161d96220b77fd468269b81f0241fef349b90545`; rerun CI is required before merge.
+- Read 823 historical canonical revisions with zero read failures. All 81 missing IDs had earlier explicit provider bindings. Eighty match current canonical + primary ESPN lineage. The last one is the already removed AmaZulu–Milford event and must NOT be recreated.
+- PR #378 restores 89 metadata records in 22 files: 80 previous fixture bindings + 9 native pairs. Its static identity evidence artifact retains 90 immutable source commit/path/blob/row records, including AmaZulu only for strict other-day exclusion proof.
+- New concurrent French canonical reconciliation removed Biesheim–Racing Besançon (401934504) for authoritative event day 29/11; its independent discovery fixture already belongs to 29/11. Preserve this removal. French metadata also contains a separate identity-rejected event 401934486: wrongDayMatches=2, removed=1, rejected=1. Existing aggregate publication authorization correctly rejects a mixed batch. Any permanent fix must use per-event verified-removal evidence, never relax identity checks.
+- Intraday #11476 / run 46180680156 writer now shows CANCELLED. No second Daily was started. Recheck current workflow state before dispatching work.
+- Direct kickoff audit run 46188571313 / artifact 15281091060 captured real primary evidence:
+  - French AS Etoile Matoury–Fleury (401934501): exact ESPN event/native sides + independent feed agree 18:30Z; canonical is 14:30Z.
+  - Bolivia ABB–Real Tomayapo (401930026): exact ESPN event/native sides confirm canonical 02:00Z; Flashscore reports 00:00Z. Keep primary truth and expose the secondary discrepancy.
+  - Tunisia PS Sakiet Eddaier–Stade Tunisien (bmLfV26c): exact Flashscore match page, native side IDs, tournament and common_feed.DC agree with the independent feed at 12:00Z; canonical is 13:00Z.
+- An exact kickoff parser/validator was implemented and tested locally (3/3 PASS, plus validation of the captured real Flashscore page). Files `engine-v1/core/exact-provider-kickoff-evidence.js` and its test were NOT committed before the execution environment became unavailable. Reconstruct/commit them from the recorded implementation and verify through GitHub CI; do not claim a kickoff correction has already been applied.
+- The local execution environment became unavailable; GitHub connector and GitHub Actions remain operational. Continue through those services; no evidence of lost GitHub authorization.
+- R04 draft #374 remains OPEN. It has 20 focused identity coverage tests, uses the existing strict authoritative wrong-day collector for legal exclusion, and has a 255-node/805-edge source graph. Last source-only reconciliation verified zero canonical-data differences against its main base. Future reconciliation must overlay only explicitly R04-owned paths, never all historical differences from the original base, so newer main canonical data and merged CLI fixes remain intact.
+
+Next: finish PR #378 against current main with all checks green; capture/apply exact primary-backed kickoff corrections without changing frozen selections/status; keep a reasoned warning for the independently contradicted secondary timetable; handle mixed wrong-day batches with per-event proof; obtain fresh actual identity/readiness/health/publication evidence before closing R04.
+
+---
+
+
 Date: 28 November 2026. Timezone: Europe/Athens.
 
 ## Verified baseline
