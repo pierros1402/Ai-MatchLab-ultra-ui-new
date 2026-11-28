@@ -1,12 +1,17 @@
 {
   "schema": "ai-matchlab.foundation-integrity.v1",
-  "generatedAt": "2026-11-28T20:05:15.019Z",
+  "generatedAt": "2026-11-28T20:59:14.730Z",
   "dayKey": "2026-11-28",
   "season": "2026-2027",
-  "ok": true,
+  "ok": false,
   "modelReady": true,
-  "publicationReady": true,
-  "blocked": [],
+  "publicationReady": false,
+  "blocked": [
+    {
+      "component": "details",
+      "reason": "details_foundation_not_ready"
+    }
+  ],
   "warnings": [
     {
       "component": "historySemantic",
@@ -35,7 +40,7 @@
         "ok": false,
         "clean": false,
         "schema": "ai-matchlab.history-semantic-integrity.v1",
-        "generatedAt": "2026-11-28T20:05:13.161Z",
+        "generatedAt": "2026-11-28T20:59:13.202Z",
         "sourceContract": {
           "readOnlyTruthLayers": true,
           "truthWrites": 0,
@@ -2956,7 +2961,7 @@
       "reason": null,
       "detail": {
         "schema": "ai-matchlab.standings-foundation-audit.v1",
-        "generatedAt": "2026-11-28T20:05:13.308Z",
+        "generatedAt": "2026-11-28T20:59:13.314Z",
         "ok": true,
         "season": "2026-2027",
         "summary": {
@@ -278433,16 +278438,16 @@
       }
     },
     "details": {
-      "ok": true,
-      "reason": null,
+      "ok": false,
+      "reason": "details_foundation_not_ready",
       "detail": {
         "schema": "ai-matchlab.details-foundation-audit.v2",
-        "generatedAt": "2026-11-28T20:05:15.019Z",
+        "generatedAt": "2026-11-28T20:59:14.729Z",
         "dayKey": "2026-11-28",
-        "ok": true,
+        "ok": false,
         "publicationUniverse": {
           "mode": "intraday_status_only",
-          "currentFixtureCount": 459,
+          "currentFixtureCount": 458,
           "publishedFixtureCount": 459,
           "deferredFixtureCount": 0,
           "deferredFixtureIds": []
@@ -278451,9 +278456,22 @@
           "expectedFixtures": 459,
           "detailFiles": 459,
           "checked": 459,
-          "issueCount": 0
+          "issueCount": 2
         },
-        "issues": []
+        "issues": [
+          {
+            "code": "PUBLISHED_FIXTURE_NOT_IN_CURRENT_UNIVERSE",
+            "ids": [
+              "cid_fracoupedefrance_biesheim_racingbesancon_20261128"
+            ]
+          },
+          {
+            "code": "PUBLICATION_COUNT_MISMATCH",
+            "field": "currentFixtureCount",
+            "declared": 459,
+            "actual": 458
+          }
+        ]
       }
     }
   },
