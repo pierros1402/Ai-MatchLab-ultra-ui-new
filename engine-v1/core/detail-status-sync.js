@@ -1,3 +1,4 @@
+import { certifiedProviderKickoffUtc } from "./exact-provider-kickoff-evidence.js";
 import {
   isPreKickoffNonPlayed,
   sanitizePreKickoffNonPlayed
@@ -162,6 +163,13 @@ export function assessDetailStatusState(detail, row) {
     basicDifferences.push(difference(field, detail.basic[field], source[field]));
   }
 
+  const kickoff = certifiedProviderKickoffUtc(source, detail.basic.kickoffUtc);
+  if (hasOwn(detail.basic, "kickoffUtc") && kickoff &&
+      Date.parse(source.kickoffUtc) === Date.parse(kickoff) &&
+      Date.parse(detail.basic.kickoffUtc) !== Date.parse(kickoff)) {
+    basicDifferences.push(difference("kickoffUtc", detail.basic.kickoffUtc, kickoff));
+  }
+
   const rawSignature = detail?.meta?.signature;
   if (typeof rawSignature !== "string" || rawSignature.trim() === "") {
     return {
@@ -294,5 +302,12 @@ export function applyBasicMutableStatusFields(basic, row) {
     changed = true;
   }
 
+  const kickoff = certifiedProviderKickoffUtc(source, basic.kickoffUtc);
+  if (hasOwn(basic, "kickoffUtc") && kickoff &&
+      Date.parse(source.kickoffUtc) === Date.parse(kickoff) &&
+      Date.parse(basic.kickoffUtc) !== Date.parse(kickoff)) {
+    basic.kickoffUtc = kickoff;
+    changed = true;
+  }
   return changed;
 }

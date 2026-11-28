@@ -1,3 +1,4 @@
+import { retainCertifiedKickoff } from "../core/exact-provider-kickoff-evidence.js";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -753,7 +754,7 @@ function mergeCanonicalFixturesBase(existing, incoming) {
     merged.firstSeenAt = previous.firstSeenAt || next.firstSeenAt || new Date().toISOString();
     merged.lastSeenAt = next.lastSeenAt || previous.lastSeenAt || new Date().toISOString();
 
-    return merged;
+    return retainCertifiedKickoff(previous, merged);
   }
 
   for (const row of existing || []) {
