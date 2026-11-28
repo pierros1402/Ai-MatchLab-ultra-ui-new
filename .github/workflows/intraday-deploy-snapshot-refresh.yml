@@ -540,6 +540,7 @@ jobs:
         run: |
           set -euo pipefail
           SOURCE_REF="${TRUTH_PUBLISHED_REF:-$(git rev-parse HEAD)}"
+          node engine-v1/jobs/prepare-intraday-runtime-release.js "${DAY_KEY}" "$SOURCE_REF"
           node tools/public-snapshot-parity.mjs "${DAY_KEY}" "$SOURCE_REF"
 
       - name: Persist upcoming Value data alarms before downstream gates
