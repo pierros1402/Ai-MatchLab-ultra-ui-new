@@ -484,9 +484,12 @@ test(
       /unauthorizedMissingCurrentFixtureIds/
     );
 
+    assert.match(source, /const bootstrapPublication\s*=\s*canBootstrapIntradayPublication\(previousSnapshot, publicationLock\)/);
+    assert.match(source, /if\s*\(!publicationLock\.ok\s*&&\s*!bootstrapPublication\)\s*\{\s*throw new Error/);
+    assert.equal([...source.matchAll(/fixtureIdAllowlist:\s*bootstrapPublication\s*\?\s*undefined\s*:\s*publicationLock\.allowedFixtureIds/g)].length, 2);
     assert.match(
       source,
-      /fixtureIdAllowlist:\s*publicationLock\.allowedFixtureIds/
+      /fixtureIdAllowlist:\s*bootstrapPublication\s*\?\s*undefined\s*:\s*publicationLock\.allowedFixtureIds/g
     );
   }
 );
