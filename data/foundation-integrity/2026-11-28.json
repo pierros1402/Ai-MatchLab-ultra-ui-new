@@ -1,17 +1,22 @@
 {
   "schema": "ai-matchlab.foundation-integrity.v1",
-  "generatedAt": "2026-11-28T15:14:58.507Z",
+  "generatedAt": "2026-11-28T16:10:01.528Z",
   "dayKey": "2026-11-28",
   "season": "2026-2027",
-  "ok": true,
+  "ok": false,
   "modelReady": true,
-  "publicationReady": true,
-  "blocked": [],
+  "publicationReady": false,
+  "blocked": [
+    {
+      "component": "details",
+      "reason": "details_foundation_not_ready"
+    }
+  ],
   "warnings": [
     {
       "component": "historySemantic",
       "reason": "age_expired_results_rows_present",
-      "count": 25898,
+      "count": 25912,
       "informational": true
     },
     {
@@ -35,7 +40,7 @@
         "ok": false,
         "clean": false,
         "schema": "ai-matchlab.history-semantic-integrity.v1",
-        "generatedAt": "2026-11-28T15:14:57.244Z",
+        "generatedAt": "2026-11-28T16:09:59.880Z",
         "sourceContract": {
           "readOnlyTruthLayers": true,
           "truthWrites": 0,
@@ -71,7 +76,7 @@
           {
             "type": "results_expired_entries",
             "severity": "info",
-            "count": 25898,
+            "count": 25912,
             "detail": "Age-expired rows are reported separately and are not treated as duplicates."
           }
         ],
@@ -80,7 +85,7 @@
           "teamKeyCount": 17776,
           "entryCount": 436807,
           "reconstructedMatchIdCount": 218283,
-          "expiredEntryCount": 25898,
+          "expiredEntryCount": 25912,
           "invalidEntryCount": 0,
           "orphanMatchIdCount": 1,
           "multiSideMatchIdCount": 194,
@@ -2956,7 +2961,7 @@
       "reason": null,
       "detail": {
         "schema": "ai-matchlab.standings-foundation-audit.v1",
-        "generatedAt": "2026-11-28T15:14:57.330Z",
+        "generatedAt": "2026-11-28T16:10:00.039Z",
         "ok": true,
         "season": "2026-2027",
         "summary": {
@@ -278433,16 +278438,16 @@
       }
     },
     "details": {
-      "ok": true,
-      "reason": null,
+      "ok": false,
+      "reason": "details_foundation_not_ready",
       "detail": {
         "schema": "ai-matchlab.details-foundation-audit.v2",
-        "generatedAt": "2026-11-28T15:14:58.507Z",
+        "generatedAt": "2026-11-28T16:10:01.527Z",
         "dayKey": "2026-11-28",
-        "ok": true,
+        "ok": false,
         "publicationUniverse": {
           "mode": "intraday_status_only",
-          "currentFixtureCount": 460,
+          "currentFixtureCount": 459,
           "publishedFixtureCount": 460,
           "deferredFixtureCount": 0,
           "deferredFixtureIds": []
@@ -278451,9 +278456,22 @@
           "expectedFixtures": 460,
           "detailFiles": 460,
           "checked": 460,
-          "issueCount": 0
+          "issueCount": 2
         },
-        "issues": []
+        "issues": [
+          {
+            "code": "PUBLISHED_FIXTURE_NOT_IN_CURRENT_UNIVERSE",
+            "ids": [
+              "cid_rsa1_amazulu_milford_20261128"
+            ]
+          },
+          {
+            "code": "PUBLICATION_COUNT_MISMATCH",
+            "field": "currentFixtureCount",
+            "declared": 460,
+            "actual": 459
+          }
+        ]
       }
     }
   },

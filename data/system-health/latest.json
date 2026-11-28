@@ -1,25 +1,25 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-11-28",
-  "generatedAt": "2026-11-28T15:38:02.810Z",
+  "generatedAt": "2026-11-28T16:10:02.394Z",
   "severity": "error",
   "issueCounts": {
-    "error": 1,
-    "warning": 6,
+    "error": 5,
+    "warning": 5,
     "info": 11
   },
-  "alert": false,
+  "alert": true,
   "alertCounts": {
-    "error": 0,
+    "error": 4,
     "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 18,
-  "actionableIssueCount": 7,
-  "newIssueCount": 0,
-  "newActionableIssueCount": 0,
+  "activeIssueCount": 21,
+  "actionableIssueCount": 10,
+  "newIssueCount": 4,
+  "newActionableIssueCount": 4,
   "resolvedIssueCount": 1,
-  "persistentIssueCount": 18,
+  "persistentIssueCount": 17,
   "activeIssues": [
     {
       "severity": "info",
@@ -291,6 +291,20 @@
       }
     },
     {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
       "severity": "info",
       "source": "foundation-integrity",
       "type": "age_expired_results_rows_present",
@@ -298,7 +312,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 25898,
+        "count": 25912,
         "informational": true
       }
     },
@@ -324,6 +338,24 @@
         "reason": "score_consistent_alias_mirror_conflicts_present",
         "count": 47,
         "informational": true
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_publication_not_ready",
+      "details": {
+        "failure": "foundation_publication_not_ready"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
       }
     },
     {
@@ -355,14 +387,13 @@
       }
     },
     {
-      "severity": "warning",
+      "severity": "error",
       "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -761,6 +792,38 @@
       }
     },
     {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_publication_not_ready",
+      "details": {
+        "failure": "foundation_publication_not_ready"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "build_warning",
@@ -789,14 +852,13 @@
       }
     },
     {
-      "severity": "warning",
+      "severity": "error",
       "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -813,38 +875,104 @@
       }
     }
   ],
-  "newIssues": [],
-  "newActionableIssues": [],
+  "newIssues": [
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_publication_not_ready",
+      "details": {
+        "failure": "foundation_publication_not_ready"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_publication_not_ready",
+      "details": {
+        "failure": "foundation_publication_not_ready"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
+    }
+  ],
   "resolvedIssues": [
     {
-      "severity": "info",
-      "source": "manifest",
-      "type": "frozen_value_age_preserved",
-      "message": "Frozen Value artifact predates canonical updates and satisfies the frozen release contract.",
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
       "details": {
-        "fixtures": 460,
-        "valuePicks": 8,
-        "valueSource": "canonical_fixtures",
-        "latestCanonicalUpdatedAt": "2026-11-28T09:34:49.235Z",
-        "valueArtifactAt": "2026-11-28T04:55:24.300Z",
-        "valueFreshAgainstCanonical": false,
-        "mode": "frozen_snapshot",
-        "frozenIdentityBound": true,
-        "frozenReleaseSafe": true,
-        "frozenPickCount": 8,
-        "orphanPickCount": 0,
-        "orphanPickIds": [],
-        "missingMatchIdPickCount": 0,
-        "missingMatchIdPickIndexes": [],
-        "dayBound": true,
-        "canonicalSourceBound": true,
-        "recoveryContractBound": false,
-        "recoveryPublishedUniverseBound": false,
-        "recoveryUniverseEvidenceSource": null,
-        "recoveryUniverseEvidenceCount": null,
-        "recoveryUniverseEvidenceHash": null,
-        "recoveryUniverseEvidencePlans": [],
-        "ok": true
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     }
   ],
@@ -1126,7 +1254,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 25862,
+        "count": 25912,
         "informational": true
       }
     },
@@ -1180,17 +1308,6 @@
         ],
         "raw": "acquisition_skipped_slugs:concacaf.womens.championship,fifa.world.u17,fifa.wwcq.ply,swe.1.promotion.relegation,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
         "contextOnly": false
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
-      "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
       }
     },
     {
@@ -1257,8 +1374,8 @@
         "overdue": false,
         "settlementSource": "value-comparison",
         "picks": 8,
-        "settled": 2,
-        "unresolved": 5
+        "settled": 3,
+        "unresolved": 3
       }
     },
     {
@@ -1273,8 +1390,8 @@
         "overdue": false,
         "settlementSource": "value-comparison",
         "picks": 8,
-        "settled": 2,
-        "unresolved": 5
+        "settled": 3,
+        "unresolved": 3
       }
     },
     {
@@ -1315,11 +1432,11 @@
           "summary": {
             "picks": 8,
             "uniqueMatches": 8,
-            "settled": 2,
+            "settled": 3,
             "wins": 0,
-            "losses": 2,
-            "voids": 1,
-            "unresolved": 5,
+            "losses": 3,
+            "voids": 2,
+            "unresolved": 3,
             "unsupported": 0,
             "hitRate": 0,
             "oddsAvailable": 2,
@@ -1335,11 +1452,11 @@
           "summary": {
             "picks": 8,
             "uniqueMatches": 8,
-            "settled": 2,
+            "settled": 3,
             "wins": 0,
-            "losses": 2,
-            "voids": 1,
-            "unresolved": 5,
+            "losses": 3,
+            "voids": 2,
+            "unresolved": 3,
             "unsupported": 0,
             "hitRate": 0,
             "oddsAvailable": 2,

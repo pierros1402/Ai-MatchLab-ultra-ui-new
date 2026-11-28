@@ -1,11 +1,11 @@
 {
-  "ok": true,
+  "ok": false,
   "schema": "ai-matchlab.day-build-report.v1",
   "dayKey": "2026-11-28",
-  "generatedAt": "2026-11-28T15:14:58.854Z",
+  "generatedAt": "2026-11-28T16:10:01.857Z",
   "universe": {
     "expected": null,
-    "canonical": 460,
+    "canonical": 459,
     "published": 460,
     "details": 460,
     "byLeague": {
@@ -105,7 +105,7 @@
         "qat.1": 2,
         "rou.1": 3,
         "rou.2": 8,
-        "rsa.1": 3,
+        "rsa.1": 2,
         "rsa.2": 5,
         "rus.1": 3,
         "sco.1": 5,
@@ -595,10 +595,72 @@
     }
   },
   "freshness": {
-    "ok": true,
+    "ok": false,
     "manifestGeneratedAt": "2026-11-28T15:08:08.001Z",
-    "reasons": [],
-    "staleInputs": []
+    "reasons": [
+      "snapshot_stale_against_canonical",
+      "snapshot_value_stale_against_canonical",
+      "plan_a2_stale_against_canonical",
+      "plan_a2_audit_stale_against_canonical",
+      "plan_b_audit_stale_against_canonical",
+      "plan_b2_audit_stale_against_canonical",
+      "value_plan_comparison_stale_against_canonical"
+    ],
+    "staleInputs": [
+      "canonical-fixtures/2026-11-28/arm.1.json",
+      "canonical-fixtures/2026-11-28/aut.1.json",
+      "canonical-fixtures/2026-11-28/bel.1.json",
+      "canonical-fixtures/2026-11-28/caf.champions.json",
+      "canonical-fixtures/2026-11-28/cro.1.json",
+      "canonical-fixtures/2026-11-28/cze.1.json",
+      "canonical-fixtures/2026-11-28/cze.2.json",
+      "canonical-fixtures/2026-11-28/eng.1.json",
+      "canonical-fixtures/2026-11-28/eng.2.json",
+      "canonical-fixtures/2026-11-28/eng.3.json",
+      "canonical-fixtures/2026-11-28/eng.4.json",
+      "canonical-fixtures/2026-11-28/eng.5.json",
+      "canonical-fixtures/2026-11-28/esp.1.json",
+      "canonical-fixtures/2026-11-28/esp.2.json",
+      "canonical-fixtures/2026-11-28/fra.coupe_de_france.json",
+      "canonical-fixtures/2026-11-28/ger.1.json",
+      "canonical-fixtures/2026-11-28/ger.3.json",
+      "canonical-fixtures/2026-11-28/gre.1.json",
+      "canonical-fixtures/2026-11-28/gre.2.json",
+      "canonical-fixtures/2026-11-28/hun.2.json",
+      "canonical-fixtures/2026-11-28/ind.1.json",
+      "canonical-fixtures/2026-11-28/isr.1.json",
+      "canonical-fixtures/2026-11-28/ita.1.json",
+      "canonical-fixtures/2026-11-28/ita.2.json",
+      "canonical-fixtures/2026-11-28/ksa.1.json",
+      "canonical-fixtures/2026-11-28/mda.1.json",
+      "canonical-fixtures/2026-11-28/mlt.1.json",
+      "canonical-fixtures/2026-11-28/mlt.2.json",
+      "canonical-fixtures/2026-11-28/mwi.1.json",
+      "canonical-fixtures/2026-11-28/ned.1.json",
+      "canonical-fixtures/2026-11-28/nir.1.json",
+      "canonical-fixtures/2026-11-28/nor.1.json",
+      "canonical-fixtures/2026-11-28/pol.1.json",
+      "canonical-fixtures/2026-11-28/por.1.json",
+      "canonical-fixtures/2026-11-28/por.2.json",
+      "canonical-fixtures/2026-11-28/qat.1.json",
+      "canonical-fixtures/2026-11-28/rsa.1.json",
+      "canonical-fixtures/2026-11-28/rsa.2.json",
+      "canonical-fixtures/2026-11-28/rus.1.json",
+      "canonical-fixtures/2026-11-28/sco.1.json",
+      "canonical-fixtures/2026-11-28/sco.tennents.json",
+      "canonical-fixtures/2026-11-28/smr.1.json",
+      "canonical-fixtures/2026-11-28/srb.1.json",
+      "canonical-fixtures/2026-11-28/srb.2.json",
+      "canonical-fixtures/2026-11-28/svn.1.json",
+      "canonical-fixtures/2026-11-28/swe.2.json",
+      "canonical-fixtures/2026-11-28/tun.1.json",
+      "canonical-fixtures/2026-11-28/tun.2.json",
+      "canonical-fixtures/2026-11-28/tur.1.json",
+      "canonical-fixtures/2026-11-28/tur.2.json",
+      "canonical-fixtures/2026-11-28/uga.1.json",
+      "canonical-fixtures/2026-11-28/ukr.2.json",
+      "canonical-fixtures/2026-11-28/wal.2.json"
+    ]
   },
   "invariant": {
     "ok": true,
@@ -663,7 +725,7 @@
     }
   },
   "settlement": {
-    "generatedAt": "2026-11-28T15:14:32.966Z",
+    "generatedAt": "2026-11-28T16:05:21.885Z",
     "requiredPlans": [
       "A",
       "A2",
@@ -713,16 +775,21 @@
   },
   "foundationIntegrity": {
     "schema": "ai-matchlab.foundation-integrity.v1",
-    "generatedAt": "2026-11-28T15:14:58.507Z",
+    "generatedAt": "2026-11-28T16:10:01.528Z",
     "season": "2026-2027",
     "modelReady": true,
-    "publicationReady": true,
-    "blocked": [],
+    "publicationReady": false,
+    "blocked": [
+      {
+        "component": "details",
+        "reason": "details_foundation_not_ready"
+      }
+    ],
     "warnings": [
       {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 25898,
+        "count": 25912,
         "informational": true
       },
       {
@@ -755,11 +822,14 @@
     "supersededOpenCanonicalIds": [],
     "supersededOpenFixtures": []
   },
-  "hardFailures": [],
+  "hardFailures": [
+    "foundation_publication_not_ready",
+    "snapshot_stale"
+  ],
   "warnings": [
     "canonical_leagues_missing_from_published:mex.2,per.1",
     "acquisition_skipped_slugs:concacaf.womens.championship,fifa.world.u17,fifa.wwcq.ply,swe.1.promotion.relegation,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1"
   ],
-  "clean": true,
+  "clean": false,
   "cleanStrict": false
 }
