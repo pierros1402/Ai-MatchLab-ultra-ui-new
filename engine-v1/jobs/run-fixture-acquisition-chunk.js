@@ -682,6 +682,11 @@ function mergeCanonicalFixturesBase(existing, incoming) {
     if (!next) return previous;
 
     const merged = { ...previous, ...next };
+    if (previous.providerIds || next.providerIds) {
+      // A provider refresh owns only its namespace; it cannot erase a verified
+      // fixture binding retained from another independent provider.
+      merged.providerIds = { ...previous.providerIds, ...next.providerIds };
+    }
     // Conflicting native identity evidence must not silently replace a prior ID.
     const providers = new Set([
       ...Object.keys(previous.providerTeamIds || {}),
