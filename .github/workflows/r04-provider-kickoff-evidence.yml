@@ -1,0 +1,34 @@
+name: R04 exact provider kickoff evidence
+on:
+  pull_request:
+    paths:
+      - 'engine-v1/jobs/audit-provider-kickoff-evidence-day.js'
+      - '.github/workflows/r04-provider-kickoff-evidence.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Select Athens audit day
+        id: clock
+        run: echo "day=$(TZ=Europe/Athens date +%F)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            engine-v1
+            workers/_shared
+            data/identity-decisions
+            data/canonical-fixtures/${{ steps.clock.outputs.day }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - run: node engine-v1/jobs/audit-provider-kickoff-evidence-day.js "${{ steps.clock.outputs.day }}" "${{ runner.temp }}/r04-kickoff"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: r04-exact-provider-kickoff-evidence
+          path: ${{ runner.temp }}/r04-kickoff/
+          retention-days: 14

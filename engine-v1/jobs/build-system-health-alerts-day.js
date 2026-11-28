@@ -13,6 +13,7 @@ import { collectGlobalHistoryCoverageIssues } from '../system-health/global-hist
  */
 
 import fs from "fs";
+import { collectProviderFixtureCoverageIssues } from "../core/provider-fixture-coverage.js";
 import path from "path";
 import { pathToFileURL } from "node:url";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
@@ -86,6 +87,7 @@ function issue(severity, source, type, message, details = {}) {
 
 export function collectFoundationIntegrityIssues(foundationIntegrity, dayKey) {
   const issues = [];
+
 
   issues.push(...collectGlobalHistoryCoverageIssues(readJsonSafe(resolveDataPath('history-coverage',dayKey,'after.json'))));
   issues.push(...collectPlanBInputIssues({
@@ -355,6 +357,8 @@ export function buildSystemHealthAlertsDay(dayKey) {
   );
 
   const issues = [];
+
+  issues.push(...collectProviderFixtureCoverageIssues(coverageReadiness?.providerFixtureCoverage));
 
   issues.push(...collectFrozenValueHealthIssues(manifest?.valueGate));
 
@@ -768,3 +772,4 @@ if (entryUrl === import.meta.url) {
     output: `data/system-health/${dateArg}.json`
   }, null, 2));
 }
+

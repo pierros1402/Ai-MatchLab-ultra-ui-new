@@ -1,0 +1,49 @@
+name: R04 independent provider fixture identity audit
+on:
+  pull_request:
+    paths:
+      - 'engine-v1/core/provider-fixture-*.js'
+      - 'engine-v1/jobs/audit-provider-fixture-identity-day.js'
+      - '.github/workflows/r04-provider-fixture-identity-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Select Athens audit day
+        id: clock
+        run: echo "day=$(TZ=Europe/Athens date +%F)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            engine-v1
+            workers/_shared
+            data/identity-decisions
+            data/canonical-fixtures/${{ steps.clock.outputs.day }}
+            data/deploy-snapshots/${{ steps.clock.outputs.day }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Audit current day with fresh independent discovery
+        run: node engine-v1/jobs/audit-provider-fixture-identity-day.js "${{ steps.clock.outputs.day }}" "${{ runner.temp }}/r04-evidence"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: r04-provider-fixture-identity-evidence
+          path: ${{ runner.temp }}/r04-evidence/
+          retention-days: 14
+      - name: Require proven identity coverage
+        env:
+          R04_REPORT: ${{ runner.temp }}/r04-evidence/provider-fixture-coverage.json
+        run: |
+          node --input-type=module <<'JS'
+          import fs from "node:fs";
+          const report = JSON.parse(fs.readFileSync(process.env.R04_REPORT, "utf8"));
+          if (report.ok !== true || report.proven !== true) {
+            console.error("R04 identity coverage is unproven:", report.summary);
+            process.exitCode = 1;
+          }
+          JS
