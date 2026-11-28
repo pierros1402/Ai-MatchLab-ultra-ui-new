@@ -2,19 +2,21 @@ name: Intraday first-publication regression
 on:
   pull_request:
     paths:
-      - 'engine-v1/core/intraday-publication-universe.js'
-      - 'engine-v1/jobs/run-intraday-snapshot-refresh.js'
-      - 'engine-v1/jobs/prepare-intraday-runtime-release*'
-      - 'engine-v1/tests/intraday*'
-      - '.github/workflows/intraday-bootstrap-regression.yml'
+      - 'engine-v1/**'
+      - 'workers/**'
+      - 'tools/**'
+      - '.github/**'
+      - 'package.json'
+      - 'package-lock.json'
   push:
     branches: [main]
     paths:
-      - 'engine-v1/core/intraday-publication-universe.js'
-      - 'engine-v1/jobs/run-intraday-snapshot-refresh.js'
-      - 'engine-v1/jobs/prepare-intraday-runtime-release*'
-      - 'engine-v1/tests/intraday*'
-      - '.github/workflows/intraday-bootstrap-regression.yml'
+      - 'engine-v1/**'
+      - 'workers/**'
+      - 'tools/**'
+      - '.github/**'
+      - 'package.json'
+      - 'package-lock.json'
 permissions:
   contents: read
 jobs:
@@ -29,7 +31,7 @@ jobs:
             workers
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: >-
           node --test
