@@ -396,6 +396,36 @@ export function validateP0CP4DailyP0V47ProducerEvidence({sourceRecords} = {}) {
 }
 
 
+// V48 candidate: only the independently checked Details (#328) and H2H
+// (#348) producer blobs differ from V47 at 92cf53283f91413e375731ac5115465dda8b07fe.
+// This is source evidence only, not production or repository application authority.
+export const P0C_P4_DAILY_P0_V48_BINDING_SCHEMA =
+  "ai-matchlab.p0c-p4-daily-p0-v48-producer-binding.v1";
+const DAILY_P0_V48_SOURCE_BINDINGS = Object.freeze({
+  ...DAILY_P0_V47_SOURCE_BINDINGS,
+  detailsBuilder: Object.freeze({
+    ...DAILY_P0_V47_SOURCE_BINDINGS.detailsBuilder,
+    sha256: "dccee2215f76fb3f47433a883225b91d151cd1a436f1df9a6322ea648daffdce"
+  }),
+  h2hRebuilder: Object.freeze({
+    ...DAILY_P0_V47_SOURCE_BINDINGS.h2hRebuilder,
+    sha256: "2f9b44f7349e9adb3d2543ebdffd3b91c4aa171da8fba47aaf09fe4362e4dc6d"
+  })
+});
+export function getP0CP4DailyP0V48ProducerBinding() {
+  return Object.freeze({
+    ...getP0CP4DailyP0V47ProducerBinding(),
+    schema: P0C_P4_DAILY_P0_V48_BINDING_SCHEMA,
+    sourceBindings: clone(DAILY_P0_V48_SOURCE_BINDINGS),
+    repositoryApplicationAuthorized: false,
+    productionAuthorized: false
+  });
+}
+export function validateP0CP4DailyP0V48ProducerEvidence({sourceRecords} = {}) {
+  return validateExactProducerEvidence(sourceRecords, DAILY_P0_V48_SOURCE_BINDINGS,
+    P0C_P4_DAILY_P0_V48_BINDING_SCHEMA, "PASS_P0C_P4_DAILY_P0_V48_CANDIDATE_PRODUCER_BINDINGS");
+}
+
 const FAMILY_DESCRIPTORS = Object.freeze([
   Object.freeze({
     family: "DEPLOY_SNAPSHOT_DETAILS",
