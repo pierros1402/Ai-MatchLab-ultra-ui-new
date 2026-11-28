@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {execFileSync} from 'node:child_process';
 import fsp from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -32,8 +33,9 @@ export function refreshIntradayCoverageReadiness(day,{dataRoot=resolveDataPath()
   return {changed:true,report};
 }
 
-export async function verifyIntradayRuntimeRelease(day,{dataRoot=resolveDataPath()}={}) {
+export async function verifyIntradayRuntimeRelease(day,{dataRoot=resolveDataPath(),ref=null,readBlob=(ref,file)=>execFileSync('git',['show',`${ref}:data/${file}`],{maxBuffer:64*1024*1024,stdio:['ignore','pipe','pipe']})}={}) {
   validDay(day);
+  if(ref!==null&&!/^[a-f0-9]{40}$/.test(ref))throw Error('runtime_release_invalid_ref');
   const allowed=new Set(['value-comparison','build-reports','system-health','coverage-readiness','foundation-integrity'].map(kind=>`${kind}/${day}.json`));
   const stage=await fsp.mkdtemp(path.join(os.tmpdir(),'aiml-runtime-closure-'));
   const prefix=`https://raw.githubusercontent.com/local/release/${'0'.repeat(40)}/data/`;
@@ -42,6 +44,7 @@ export async function verifyIntradayRuntimeRelease(day,{dataRoot=resolveDataPath
       stats:{filesDownloaded:0,bytesDownloaded:0},requireDiagnostics:true,
       fetchArtifact:async url=>{
         if(!url.startsWith(prefix)||!allowed.has(url.slice(prefix.length)))throw Error('runtime_release_unexpected_artifact');
+        if(ref!==null)return readBlob(ref,url.slice(prefix.length));
         const file=path.join(dataRoot,url.slice(prefix.length));
         try{return await fsp.readFile(file);}catch(error){if(error.code==='ENOENT')return null;throw error;}
       }});
@@ -50,5 +53,5 @@ export async function verifyIntradayRuntimeRelease(day,{dataRoot=resolveDataPath
 }
 
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
-  console.log(JSON.stringify(await verifyIntradayRuntimeRelease(process.argv[2])));
+  console.log(JSON.stringify(await verifyIntradayRuntimeRelease(process.argv[2],{ref:process.argv[3]??null})));
 }
