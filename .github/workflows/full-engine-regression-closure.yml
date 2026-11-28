@@ -1,0 +1,33 @@
+name: Full engine regression
+on:
+  pull_request:
+    paths:
+      - 'engine-v1/**'
+      - 'workers/**'
+      - 'tools/**'
+      - '.github/**'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full-engine-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --no-audit --no-fund --ignore-scripts
+      - name: Run every tracked engine test and spec from repository root
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -d '' -t tests < <(git ls-files -z -- engine-v1 | grep -zE '\.(test|spec)\.(js|mjs|cjs)$')
+          test "${#tests[@]}" -gt 0
+          printf 'ENGINE_TEST_FILES=%s\n' "${#tests[@]}"
+          node --test --test-concurrency=1 "${tests[@]}"
