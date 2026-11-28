@@ -9,6 +9,23 @@ import {
 const GENERATED_AT =
   "2026-07-29T08:00:00.000Z";
 
+test("full identity ledger preserves every observation beyond the sample limit", () => {
+  const rows = Array.from({ length: 8 }, (_, i) => fixture({
+    matchId: i === 7 ? "id-0" : "id-" + i,
+    homeProviderTeamId: "home-" + i, awayProviderTeamId: "away-" + i
+  }));
+  const { artifact } = buildProviderCompetitionDiscovery({
+    dayKey: "2026-08-02", generatedAt: GENERATED_AT, rows
+  });
+  assert.equal(artifact.fixtures.length, 8);
+  assert.equal(artifact.fixtures.filter(f => f.providerFixtureId === "id-0").length, 2);
+  assert.equal(artifact.fixtures[6].home.providerTeamId, "home-6");
+  const altered = rows.map((r, i) => i === 6 ? { ...r, homeProviderTeamId: "changed" } : r);
+  assert.notEqual(artifact.hash, buildProviderCompetitionDiscovery({
+    dayKey: "2026-08-02", generatedAt: GENERATED_AT, rows: altered
+  }).artifact.hash);
+});
+
 function fixture(overrides = {}) {
   return {
     matchId:
@@ -402,3 +419,4 @@ test(
     assert.equal(result.registry, null);
   }
 );
+

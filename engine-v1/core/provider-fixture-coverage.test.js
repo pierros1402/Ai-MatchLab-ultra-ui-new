@@ -64,6 +64,18 @@ test("legal scope exclusions create no acquisition obligation", () => {
   value.canonicalFixtures = []; value.publishedFixtures = []; value.publishedDetails = [];
   assert.deepEqual(codes(value), []);
 });
+test("identity ledger omissions cannot hide behind aggregate counts", () => {
+  const value = input();
+  value.discovery.competitions = [{ acquisitionEligible: true, canonicalSlug: "eng.1", targetDayFixtureCount: 2 }];
+  assert.ok(codes(value).includes("unexplained_fixture_count_discrepancy"));
+});
+test("wrong-day eligible discovery and unexplained exclusions are invalid", () => {
+  const value = input();
+  value.discovery.fixtures[0].kickoffUtc = "2026-11-29T15:00Z";
+  assert.ok(codes(value).includes("provider_fixture_wrong_day"));
+  value.discovery.fixtures[0].eligibility = "excluded";
+  assert.ok(codes(value).includes("provider_fixture_exclusion_unexplained"));
+});
 test("non played terminal is classified separately", () => {
   const value = providerFixtureIdentity({ matchId: "FS2", kickoffUtc: "2026-11-28T15:00Z",
     nonPlayedTerminal: true }, { acquisitionEligible: true }, dayKey);

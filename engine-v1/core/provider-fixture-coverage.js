@@ -53,6 +53,26 @@ export function buildProviderFixtureCoverage({
 
   if (issues.length) return result();
   const observations = discovery.fixtures.filter(f => f.dayKey === dayKey);
+  for (const f of discovery.fixtures) {
+    if (f.schema !== PROVIDER_FIXTURE_IDENTITY_SCHEMA || !f.provider ||
+      !["eligible", "excluded"].includes(f.eligibility))
+      add("provider_fixture_identity_contract_invalid", f);
+    if (f.eligibility === "excluded" && !f.exclusionReason)
+      add("provider_fixture_exclusion_unexplained", f);
+    if (f.eligibility === "eligible" && (f.dayKey !== dayKey || fixtureDay(f) !== dayKey))
+      add("provider_fixture_wrong_day", f);
+  }
+  // Retain the count contract as a cross-check on the identity ledger itself.
+  // Equal totals alone never grant coverage.
+  const expectedBySlug = new Map();
+  for (const c of rows(discovery.competitions).filter(c => c.acquisitionEligible === true)) {
+    expectedBySlug.set(c.canonicalSlug,
+      (expectedBySlug.get(c.canonicalSlug) || 0) + Number(c.targetDayFixtureCount || 0));
+  }
+  for (const [canonicalSlug, expected] of expectedBySlug) {
+    const actual = observations.filter(f => f.eligibility === "eligible" && f.canonicalSlug === canonicalSlug).length;
+    if (actual !== expected) add("unexplained_fixture_count_discrepancy", { canonicalSlug });
+  }
   const byProvider = new Map();
   for (const f of observations) {
     const key = `${f.provider}|${f.providerFixtureId}`;
