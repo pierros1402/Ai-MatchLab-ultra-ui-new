@@ -21,7 +21,10 @@ function fixture(fn,noop=false){
  git(beforeRoot,"init","-q");git(beforeRoot,"config","user.name","CI");git(beforeRoot,"config","user.email","ci@example.invalid");
  for(const n of ["stable","delete","modify"])fs.writeFileSync(path.join(beforeRoot,"data/value",n+".json"),JSON.stringify({name:n}));
  git(beforeRoot,"add","data");git(beforeRoot,"commit","-qm","fixture");
- fs.cpSync(beforeRoot,afterRoot,{recursive:true});
+ // Use an independent Git checkout rather than copying live .git internals.
+ // --no-local avoids hardlinks and races with background Git maintenance.
+ git(home,"clone","--quiet","--no-local",beforeRoot,afterRoot);
+ assert.equal(git(afterRoot,"rev-parse","HEAD"),git(beforeRoot,"rev-parse","HEAD"));
  if(!noop){
  fs.unlinkSync(path.join(afterRoot,"data/value/delete.json"));
  fs.writeFileSync(path.join(afterRoot,"data/value/modify.json"),"{}");
