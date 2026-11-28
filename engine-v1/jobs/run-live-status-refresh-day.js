@@ -1,3 +1,5 @@
+import { verifiedExactWrongDayFetches } from "../core/exact-wrongday-removal-evidence.js";
+import { hasExactPublishedEspnLineage, strictPublishedEspnProviderId } from "../core/intraday-publication-universe.js";
 import { retainCertifiedKickoff } from "../core/exact-provider-kickoff-evidence.js";
 import fs from "fs";
 import path from "path";
@@ -239,54 +241,7 @@ function stableFixtureId(row) {
 // Keep exact provider-day removal proof when an unrelated live status changes.
 // This does not authorize any generic shrink: the publication consumer still
 // verifies the complete policy, source IDs, and published ESPN lineage.
-function verifiedWrongDayFetches(dayKey, leagueSlug, meta) {
-  const reconciliation = meta?.exactEventSummaryReconciliation;
-  const policy = reconciliation?.policy;
-  if (
-    normalizeText(meta?.requestedDayKey) !== dayKey ||
-    normalizeText(meta?.requestedLeagueSlug) !== leagueSlug ||
-    meta?.acquisitionProvider !== "espn_direct_league_status" ||
-    policy?.exactProviderIdOnly !== true ||
-    policy?.authoritativeEventDayOnly !== true ||
-    policy?.teamIdentityRequired !== true ||
-    policy?.homeAwayOrientationRequired !== true ||
-    policy?.crossDayStatusPromotion !== false ||
-    policy?.heuristicFinalPromotion !== false
-  ) return null;
-
-  const candidates = Number(reconciliation.candidates);
-  const matched = Number(reconciliation.wrongDayMatches);
-  const removed = Number(reconciliation.wrongDayRemovedRows);
-  const rejected = Number(reconciliation.wrongDayIdentityRejectedRows);
-  if (
-    !Number.isInteger(candidates) ||
-    !Number.isInteger(matched) ||
-    !Number.isInteger(removed) ||
-    !Number.isInteger(rejected) ||
-    matched <= 0 || matched !== removed || candidates < matched || rejected !== 0
-  ) return null;
-
-  const slugs = new Set([
-    leagueSlug,
-    ...(
-      Array.isArray(meta?.providerFetchSlugs)
-        ? meta.providerFetchSlugs
-        : []
-    )
-  ].map(normalizeText).filter(Boolean));
-  const proofs = (Array.isArray(reconciliation.fetches) ? reconciliation.fetches : [])
-    .filter(fetch =>
-      fetch?.ok === true &&
-      normalizeText(fetch?.kind) === "other_day" &&
-      !normalizeText(fetch?.reason) &&
-      /^\d+$/u.test(normalizeText(fetch?.providerMatchId)) &&
-      slugs.has(normalizeText(fetch?.providerSlug)) &&
-      isValidDayKey(fetch?.authoritativeDayKey) &&
-      normalizeText(fetch?.authoritativeDayKey) !== dayKey
-    );
-  const ids = new Set(proofs.map(fetch => normalizeText(fetch.providerMatchId)));
-  return proofs.length === removed && ids.size === removed ? proofs : null;
-}
+const verifiedWrongDayFetches = verifiedExactWrongDayFetches;
 
 export function preserveExactWrongDayReconciliation({
   dayKey,
@@ -307,12 +262,10 @@ export function preserveExactWrongDayReconciliation({
   // Never mask a new identity rejection or an unverified fresh removal.
   const freshRemoved = Number(latest.wrongDayRemovedRows);
   if (
-    Number(latest.wrongDayIdentityRejectedRows) !== 0 ||
+    !Number.isInteger(Number(latest.wrongDayIdentityRejectedRows)) ||
     !Number.isInteger(freshRemoved) || freshRemoved < 0
   ) return nextSourceMeta;
-  const fresh = freshRemoved > 0
-    ? verifiedWrongDayFetches(dayKey, leagueSlug, nextSourceMeta)
-    : [];
+  const fresh = verifiedWrongDayFetches(dayKey, leagueSlug, nextSourceMeta);
   if (!fresh) return nextSourceMeta;
 
   const nowPresent = new Set([
@@ -336,18 +289,41 @@ export function preserveExactWrongDayReconciliation({
   for (const fetch of fresh) byId.set(normalizeText(fetch.providerMatchId), fetch);
   const proofRows = [...byId.values()].sort((left, right) =>
     normalizeText(left.providerMatchId).localeCompare(normalizeText(right.providerMatchId)));
-  const otherResults = freshResults.filter(fetch => normalizeText(fetch?.kind) !== "other_day");
+  const otherResults = freshResults.filter(fetch => normalizeText(fetch?.kind) !== "other_day" || fetch.canonicalIdentityRejected === true);
+  const rejected = Number(latest.wrongDayIdentityRejectedRows);
+  if (rejected > 0 && proofRows.some(f => f.canonicalRemovalVerified !== true)) return nextSourceMeta;
   const reconciliation = {
     ...latest,
-    candidates: Math.max(Number(latest.candidates) || 0, proofRows.length),
-    wrongDayMatches: proofRows.length,
+    candidates: Math.max(Number(latest.candidates) || 0, proofRows.length + rejected),
+    wrongDayMatches: proofRows.length + rejected,
     wrongDayRemovedRows: proofRows.length,
-    wrongDayIdentityRejectedRows: 0,
+    wrongDayIdentityRejectedRows: rejected,
+    ...(proofRows.every(f => f.canonicalRemovalVerified === true) ? { removalEvidenceSchema: "ai-matchlab.exact-wrongday-removal.v2" } : {}),
     fetches: [...otherResults, ...proofRows],
     retainedWrongDayEvidenceCount: retained.length,
     currentRunWrongDayRemovedRows: freshRemoved
   };
   return { ...nextSourceMeta, exactEventSummaryReconciliation: reconciliation };
+}
+
+
+export function selectWrongDayRemovalRecoveryRows({dayKey,leagueSlug,currentFixtures=[],publishedFixtures=[],sourceMeta}={}){
+ const r=sourceMeta?.exactEventSummaryReconciliation,p=r?.policy;
+ if(sourceMeta?.requestedDayKey!==dayKey||sourceMeta?.requestedLeagueSlug!==leagueSlug||
+  sourceMeta?.acquisitionProvider!=="espn_direct_league_status"||
+  p?.exactProviderIdOnly!==true||p?.authoritativeEventDayOnly!==true||
+  p?.teamIdentityRequired!==true||p?.homeAwayOrientationRequired!==true||
+  p?.crossDayStatusPromotion!==false||p?.heuristicFinalPromotion!==false)return new Map();
+ const priorIds=new Set((r?.fetches||[]).filter(f=>f.ok===true&&f.kind==="other_day"&&
+  isValidDayKey(f.authoritativeDayKey)&&f.authoritativeDayKey!==dayKey).map(f=>normalizeText(f.providerMatchId)));
+ const currentIds=new Set(currentFixtures.map(stableFixtureId)),out=new Map();
+ for(const id of priorIds){
+  if(currentIds.has(id))continue;
+  const candidates=publishedFixtures.filter(row=>row.dayKey===dayKey&&row.leagueSlug===leagueSlug&&
+   hasExactPublishedEspnLineage(row)&&strictPublishedEspnProviderId(row)===id);
+  if(candidates.length===1&&normalizeText(candidates[0].canonicalId||candidates[0].matchId))out.set(id,candidates[0]);
+ }
+ return out;
 }
 
 function statusBucket(row) {
@@ -438,12 +414,16 @@ function collectTargetLeagues(dayKey, options = {}) {
         )
       );
 
-    if (candidates.length > 0) {
+    const recoveryRows = selectWrongDayRemovalRecoveryRows({
+      dayKey, leagueSlug: slug, currentFixtures: fixtures, sourceMeta: payload.sourceMeta,
+      publishedFixtures: readJson(resolveDataPath("deploy-snapshots", dayKey, "fixtures.json"), null)?.fixtures || []
+    });
+    if (candidates.length > 0 || recoveryRows.size > 0) {
       out.set(slug, {
         slug,
         candidateCount: candidates.length,
         fixtureCount: fixtures.length,
-        providerFetchSlugs: espnProviderFetchSlugs(slug, candidates)
+        providerFetchSlugs: espnProviderFetchSlugs(slug, [...candidates, ...recoveryRows.values()])
       });
     }
   }
@@ -1927,7 +1907,15 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
           delayedRows.set(id, row);
         }
       }
-      const summaryIds = new Set([...missingExactIds, ...delayedRows.keys()]);
+      // Published lineage is used only to re-check an already-recorded removal;
+      // it is never a canonical fixture or model input.
+      const removalRecoveryRows = selectWrongDayRemovalRecoveryRows({
+        dayKey: safeDayKey, leagueSlug: slug, currentFixtures: current.fixtures || [],
+        publishedFixtures: readJson(resolveDataPath("deploy-snapshots", safeDayKey, "fixtures.json"), null)?.fixtures || [],
+        sourceMeta: current.sourceMeta
+      });
+      for (const id of removalRecoveryRows.keys()) if (sourceById.has(id)) removalRecoveryRows.delete(id);
+      const summaryIds = new Set([...missingExactIds, ...delayedRows.keys(), ...removalRecoveryRows.keys()]);
       leagueStats.exactSummaryCandidates = summaryIds.size;
 
       if (summaryIds.size > 0) {
@@ -1984,6 +1972,7 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
                 });
 
               if (occurrence.providerMatchId !== id) continue;
+              if (removalRecoveryRows.has(id) && occurrence.kind !== "other_day") break;
               const delayed = delayedRows.get(id);
               if (delayed) {
                 if (!isConfirmedDelayedFinal(delayed, occurrence)) continue;
@@ -2060,14 +2049,9 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
           : [];
 
       const wrongDayIdRows =
-        currentFixtures.filter(row => {
-          const id =
-            stableFixtureId(row);
-
-          return (
-            Boolean(id) &&
-            wrongDayExactIds.has(id)
-          );
+        [...currentFixtures, ...removalRecoveryRows.values()].filter(row => {
+          const id = stableFixtureId(row);
+          return Boolean(id) && wrongDayExactIds.has(id);
         });
 
       const wrongDayRows =
@@ -2089,23 +2073,37 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
           );
         });
 
+      // Store the actual per-event identity decision after the deletion guard.
+      for (const fetch of leagueStats.exactSummaryFetches) {
+        if (fetch.ok !== true || fetch.kind !== "other_day") continue;
+        const candidates = wrongDayIdRows.filter(row => stableFixtureId(row) === fetch.providerMatchId);
+        const removed = wrongDayRows.filter(row => stableFixtureId(row) === fetch.providerMatchId);
+        const accepted = candidates.length === 1 && removed.length === 1;
+        fetch.canonicalRemovalVerified = accepted;
+        fetch.teamIdentityVerified = accepted;
+        fetch.homeAwayOrientationVerified = accepted;
+        fetch.canonicalIdentityRejected = !accepted;
+        fetch.removedCanonicalFixtureIds = accepted ? [normalizeText(removed[0].canonicalId || removed[0].matchId)] : [];
+        fetch.recoveredFromPublishedLineage = accepted && removalRecoveryRows.has(fetch.providerMatchId);
+      }
+      const recoveredRemovalCount = wrongDayRows.filter(row => removalRecoveryRows.has(stableFixtureId(row))).length;
       leagueStats
         .exactSummaryWrongDayIdentityRejectedRows +=
           wrongDayIdRows.length -
           wrongDayRows.length;
 
       if (wrongDayRows.length > 0) {
-        changed = true;
+        if (wrongDayRows.length > recoveredRemovalCount) changed = true;
 
         leagueStats
           .exactSummaryWrongDayRemovedRows +=
             wrongDayRows.length;
 
         stats.changedRows +=
-          wrongDayRows.length;
+          wrongDayRows.length - recoveredRemovalCount;
 
         leagueStats.changedRows +=
-          wrongDayRows.length;
+          wrongDayRows.length - recoveredRemovalCount;
       }
 
       let nextFixtures =
@@ -2169,11 +2167,11 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
         }
       }
 
-      if (changed) {
-        const deduped = dedupeLeagueDayFixtures(nextFixtures, {
+      if (changed || recoveredRemovalCount > 0) {
+        const deduped = changed ? dedupeLeagueDayFixtures(nextFixtures, {
           slug,
           identityResolver: getProductionIdentityResolver()
-        });
+        }) : { rows: nextFixtures };
         nextFixtures = deduped.rows;
 
         const nextSourceMeta = preserveExactWrongDayReconciliation({
@@ -2197,6 +2195,9 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
           },
 
           exactEventSummaryReconciliation: {
+            removalEvidenceSchema: "ai-matchlab.exact-wrongday-removal.v2",
+            recoveredRemovalEvidenceRows: recoveredRemovalCount,
+            currentRunWrongDayRemovedRows: leagueStats.exactSummaryWrongDayRemovedRows - recoveredRemovalCount,
             candidates:
               leagueStats.exactSummaryCandidates,
 
