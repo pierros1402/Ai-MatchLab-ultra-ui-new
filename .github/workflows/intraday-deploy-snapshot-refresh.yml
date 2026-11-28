@@ -1587,13 +1587,19 @@ jobs:
 
       - name: Promote and verify public runtime snapshot
         id: final-public-sync
-        if: env.SKIP_BUILD != 'true' && env.INTRADAY_SNAPSHOT_PUSHED == 'true'
+        if: env.SKIP_BUILD != 'true'
         shell: bash
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           set -euo pipefail
-          bash tools/sync-public-snapshot.sh "${DAY_KEY}" "${PUBLISHED_REF}"
+          SOURCE_REF="${PUBLISHED_REF:-$(git rev-parse HEAD)}"
+          node engine-v1/jobs/prepare-intraday-runtime-release.js "${DAY_KEY}" "$SOURCE_REF"
+          if [ "${INTRADAY_SNAPSHOT_PUSHED:-false}" = true ]; then
+            bash tools/sync-public-snapshot.sh "${DAY_KEY}" "$SOURCE_REF"
+          else
+            node tools/public-snapshot-parity.mjs "${DAY_KEY}" "$SOURCE_REF"
+          fi
 
       - name: Surface pre-match acquisition failure without interrupting score publication
         if: always() && steps.prematch-data-alarm.outcome == 'failure'

@@ -32,3 +32,14 @@ test('exhausted read retry budget fails closed and never synchronizes',async()=>
  assert.equal(count,3);assert.deepEqual(waits,[1000,2000]);
  for(const attempts of [0,4,1.5])await assert.rejects(readPublicSnapshot(sample().day,{attempts,fetchImpl:()=>assert.fail('unexpected network')}),/retry_budget_invalid/);
 });
+
+test('final publication reconciles an existing checkpoint without requiring another Git commit',()=>{
+ const workflow=readFileSync(new URL('../.github/workflows/intraday-deploy-snapshot-refresh.yml',import.meta.url),'utf8');
+ const step=workflow.slice(workflow.indexOf('- name: Promote and verify public runtime snapshot'),workflow.indexOf('- name: Surface pre-match acquisition failure'));
+ assert.match(step,/if: env\.SKIP_BUILD != 'true'\n/);
+ assert.match(step,/SOURCE_REF="\$\{PUBLISHED_REF:-\$\(git rev-parse HEAD\)\}"/);
+ assert.ok(step.indexOf('prepare-intraday-runtime-release.js')<step.indexOf('if [ "${INTRADAY_SNAPSHOT_PUSHED'));
+ assert.match(step,/bash tools\/sync-public-snapshot.sh "\$\{DAY_KEY\}" "\$SOURCE_REF"/);
+ assert.match(step,/else\s+node tools\/public-snapshot-parity.mjs "\$\{DAY_KEY\}" "\$SOURCE_REF"/);
+ assert.doesNotMatch(step,/continue-on-error: true/);
+});
