@@ -20,6 +20,7 @@
  */
 
 import fs from "fs";
+import { buildProviderFixtureCoverage } from "../core/provider-fixture-coverage.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import { LEAGUE_SEEDS, leagueName } from "../config.js";
@@ -343,6 +344,25 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
     });
 
   const snapshot = snapshotStateForDay(date);
+  const canonicalDirectory = resolveDataPath("canonical-fixtures", date);
+  const canonicalFixtures = fs.existsSync(canonicalDirectory)
+    ? fs.readdirSync(canonicalDirectory).filter(f => f.endsWith(".json"))
+      .flatMap(f => readJsonSafe(path.join(canonicalDirectory, f), null)?.fixtures || [])
+    : [];
+  const snapshotDirectory = resolveDataPath("deploy-snapshots", date);
+  const publishedFixtures = readJsonSafe(path.join(snapshotDirectory, "fixtures.json"), null)?.fixtures || [];
+  const detailsDirectory = path.join(snapshotDirectory, "details");
+  const publishedDetails = fs.existsSync(detailsDirectory)
+    ? fs.readdirSync(detailsDirectory).filter(f => f.endsWith(".json"))
+      .map(f => {
+        const detail = readJsonSafe(path.join(detailsDirectory, f), null);
+        return detail && { ...detail, fileCanonicalId: path.basename(f, ".json") };
+      }).filter(Boolean)
+    : [];
+  const providerFixtureCoverage = buildProviderFixtureCoverage({
+    dayKey: date, discovery: providerDiscovery,
+    canonicalFixtures, publishedFixtures, publishedDetails
+  });
   const valueCoverageSourcePath =
     `data/value/_coverage-reports/${date}.json`;
   const valueCoverageReport = readJsonSafe(
@@ -495,7 +515,7 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
 
   const report = {
     ok:
-      activeCompetitionCompleteness.ok,
+      activeCompetitionCompleteness.ok && providerFixtureCoverage.ok,
     dayKey: date,
     generatedAt: new Date().toISOString(),
     summary: {
@@ -573,6 +593,7 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
       byStatus
     },
     activeCompetitionCompleteness,
+    providerFixtureCoverage,
     valueCoverageEvidence,
     valueSettlementEvidence,
     broken,
@@ -602,3 +623,4 @@ if (isCli) {
   const r = buildLeagueGapReportDay(arg);
   console.log(JSON.stringify({ ok: r.ok, dayKey: r.dayKey, summary: r.summary, broken: r.broken }, null, 2));
 }
+

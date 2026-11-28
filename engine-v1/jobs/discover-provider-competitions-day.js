@@ -11,6 +11,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
+import { providerFixtureIdentity } from "../core/provider-fixture-identity.js";
 
 import {
   athensDayKey,
@@ -265,6 +266,7 @@ export function buildProviderCompetitionDiscovery({
   }
 
   const competitions = [];
+  const fixtures = [];
 
   for (const groupedRows of groups.values()) {
     const first = groupedRows[0] || {};
@@ -283,6 +285,13 @@ export function buildProviderCompetitionDiscovery({
 
     const classification =
       classificationFor(identity);
+
+    for (const row of groupedRows) {
+      fixtures.push(providerFixtureIdentity(row, {
+        ...classification,
+        providerCompetitionId: providerCompetitionId(row)
+      }, dayKey));
+    }
 
     const kickoffs =
       groupedRows
@@ -627,7 +636,12 @@ export function buildProviderCompetitionDiscovery({
     provider: "flashscore",
     summary,
     hash:
-      contentHash(competitions),
+      crypto.createHash("sha256")
+        .update(contentHash(competitions))
+        .update(JSON.stringify(fixtures))
+        .digest("hex"),
+    fixtureIdentitySchema: "ai-matchlab.provider-fixture-identity.v1",
+    fixtures,
     competitions
   };
 
@@ -764,3 +778,4 @@ export async function discoverProviderCompetitionsDay(
     registry
   };
 }
+
