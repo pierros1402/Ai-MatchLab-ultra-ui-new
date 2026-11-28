@@ -46,7 +46,10 @@ export async function auditR04CrossProviderBindingsDay(dayKey = athensDayKey()) 
       .filter(match => match.proof);
     if (matches.length === 1) proposals.push({
       providerFixtureId: fixture.providerFixtureId, canonicalId: matches[0].row.canonicalId,
-      leagueSlug: fixture.canonicalSlug, proof: matches[0].proof
+      leagueSlug: fixture.canonicalSlug, proof: {
+        ...matches[0].proof,
+        canonicalProviderTeamIds: matches[0].row.providerTeamIds?.espn || null
+      }
     });
     else unresolved.push({ providerFixtureId: fixture.providerFixtureId, leagueSlug: fixture.canonicalSlug,
       reason: matches.length ? "ambiguous_verified_identity" : "original_verified_identity_evidence_missing" });
