@@ -55,6 +55,8 @@ Audit source checkout: `730c87616c99b6c2953c0ca3c6da8dccd69a2960` (PR merge chec
 
 The workflow completed successfully as an audit. Its report has `ok:false` and `proven:false`. These meanings must never be conflated.
 
+The workflow now includes an explicit final proof gate after evidence upload. Subsequent runs must fail when the report is unproven; operational completion alone is not a passing R04 check.
+
 Missing bindings are NOT proof of 158 absent matches. Many competitions have ESPN canonical coverage without an explicit Flashscore ID binding. Do not create duplicate canonical fixtures or infer bindings from team names/counts.
 
 Largest unbound groups: fra.coupe_de_france 31, sco.tennents 18, eng.2 10, eng.5 10. All 403 issue identities and the 245 exact bindings are preserved in `docs/evidence/r04-20261128/identity-audit-ledger.json`.

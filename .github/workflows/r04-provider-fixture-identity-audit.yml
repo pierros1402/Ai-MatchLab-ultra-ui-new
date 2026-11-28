@@ -34,3 +34,15 @@ jobs:
           name: r04-provider-fixture-identity-evidence
           path: ${{ runner.temp }}/r04-evidence/
           retention-days: 14
+      - name: Require proven identity coverage
+        env:
+          R04_REPORT: ${{ runner.temp }}/r04-evidence/provider-fixture-coverage.json
+        run: |
+          node --input-type=module <<'JS'
+          import fs from "node:fs";
+          const report = JSON.parse(fs.readFileSync(process.env.R04_REPORT, "utf8"));
+          if (report.ok !== true || report.proven !== true) {
+            console.error("R04 identity coverage is unproven:", report.summary);
+            process.exitCode = 1;
+          }
+          JS
