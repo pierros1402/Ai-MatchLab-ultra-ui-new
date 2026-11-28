@@ -234,3 +234,23 @@ test("Flashscore native team IDs survive normalization, serialization and refres
   assert.equal(mergeCanonicalFixtures([quarantined], [serialized])[0].providerTeamIds, undefined);
 });
 
+test("an ESPN refresh preserves an independently verified Flashscore fixture binding", () => {
+  const previous = {
+    canonicalId: "cid_binding_refresh", matchId: "cid_binding_refresh",
+    source: "espn", sourceId: "123", sourceMatchId: "123",
+    providerIds: { espn: "123", flashscore: "nativeFS" },
+    providerTeamIds: { espn: { home: "101", away: "202" },
+      flashscore: { home: "nativeH1", away: "nativeA1" } },
+    providerIdentityLink: { schema: "ai-matchlab.verified-provider-identity-link.v1" },
+    status: "FT", scoreHome: 2, scoreAway: 1
+  };
+  const refresh = { ...previous, providerIds: { espn: "123" },
+    providerTeamIds: { espn: { home: "101", away: "202" } } };
+  delete refresh.providerIdentityLink;
+  const [merged] = mergeCanonicalFixtures([previous], [refresh]);
+  assert.deepEqual(merged.providerIds, previous.providerIds);
+  assert.deepEqual(merged.providerTeamIds, previous.providerTeamIds);
+  assert.deepEqual(merged.providerIdentityLink, previous.providerIdentityLink);
+  assert.equal(merged.scoreHome, 2);
+});
+

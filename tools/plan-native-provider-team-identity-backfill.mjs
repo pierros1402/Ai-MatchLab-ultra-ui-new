@@ -20,7 +20,8 @@ for (const { file, payload } of inputs) {
   if (!(payload.fixtures || []).some(row => changed.has(row.canonicalId || row.matchId))) continue;
   changedFiles.push(file);
   if (writeFlag === "--write") {
-    const next = { ...payload, fixtures: payload.fixtures.map(row => replacements.get(row.canonicalId || row.matchId)) };
+    const next = { ...payload, fixtures: payload.fixtures.map(row =>
+      changed.has(row.canonicalId || row.matchId) ? replacements.get(row.canonicalId || row.matchId) : row) };
     fs.writeFileSync(path.join(canonicalDirectory, file), JSON.stringify(next, null, 2) + "\n");
   }
 }
