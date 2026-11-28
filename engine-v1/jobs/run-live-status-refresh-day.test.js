@@ -738,3 +738,41 @@ test("does not multiply evidence across repeat refreshes", () => {
   assert.equal(second.exactEventSummaryReconciliation.wrongDayRemovedRows, 1);
   assert.equal(second.exactEventSummaryReconciliation.fetches.filter(x => x.kind === "other_day").length, 1);
 });
+
+import { selectWrongDayRemovalRecoveryRows } from "./run-live-status-refresh-day.js";
+import { verifiedExactWrongDayFetches } from "../core/exact-wrongday-removal-evidence.js";
+function markedMixedMeta() {
+ const meta=exactWrongDayMeta(),r=meta.exactEventSummaryReconciliation;
+ r.removalEvidenceSchema="ai-matchlab.exact-wrongday-removal.v2";
+ r.candidates=2;r.wrongDayMatches=2;r.wrongDayIdentityRejectedRows=1;
+ Object.assign(r.fetches[0],{canonicalRemovalVerified:true,teamIdentityVerified:true,homeAwayOrientationVerified:true,
+  canonicalIdentityRejected:false,removedCanonicalFixtureIds:["removed"]});
+ r.fetches.push({...r.fetches[0],providerMatchId:"401902099",canonicalRemovalVerified:false,
+  canonicalIdentityRejected:true,removedCanonicalFixtureIds:[]});
+ return meta;
+}
+test("mixed removal proof survives unrelated refresh without promoting its rejected event",()=>{
+ const first=preserveWrongDay(markedMixedMeta());
+ assert.equal(first.exactEventSummaryReconciliation.wrongDayRemovedRows,1);
+ assert.equal(verifiedExactWrongDayFetches("2026-11-28","rsa.1",first)[0].providerMatchId,"401902006");
+ const fresh=markedMixedMeta();
+ fresh.exactEventSummaryReconciliation.fetches[0].providerMatchId="401902007";
+ fresh.exactEventSummaryReconciliation.fetches[0].removedCanonicalFixtureIds=["new-removal"];
+ const combined=preserveWrongDay(first,{nextSourceMeta:fresh});
+ const r=combined.exactEventSummaryReconciliation;
+ assert.equal(r.wrongDayRemovedRows,2);assert.equal(r.wrongDayIdentityRejectedRows,1);
+ assert.equal(r.wrongDayMatches,3);
+ assert.equal(verifiedExactWrongDayFetches("2026-11-28","rsa.1",combined).length,2);
+});
+test("removal evidence recovery selects only unique missing exact published lineage already recorded as other-day",()=>{
+ const meta=markedMixedMeta(),row={canonicalId:"removed",matchId:"removed",source:"espn",
+  dayKey:"2026-11-28",leagueSlug:"rsa.1",sourceId:"401902006",sourceMatchId:"401902006",providerIds:{espn:"401902006"}};
+ const select=overrides=>selectWrongDayRemovalRecoveryRows({dayKey:"2026-11-28",leagueSlug:"rsa.1",
+  currentFixtures:[],publishedFixtures:[row],sourceMeta:meta,...overrides});
+ assert.equal(select({}).size,1);
+ assert.equal(select({currentFixtures:[row]}).size,0);
+ assert.equal(select({publishedFixtures:[row,row]}).size,0);
+ assert.equal(select({publishedFixtures:[{...row,source:"flashscore"}]}).size,0);
+ assert.equal(select({publishedFixtures:[{...row,providerIds:{espn:"999"}}]}).size,0);
+ assert.equal(select({publishedFixtures:[{...row,dayKey:"2026-11-29"}]}).size,0);
+});

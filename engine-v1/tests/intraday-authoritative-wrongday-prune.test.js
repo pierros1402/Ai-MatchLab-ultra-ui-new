@@ -493,3 +493,23 @@ test(
     );
   }
 );
+
+test("mixed exact other-day batch authorizes only its explicitly verified canonical removal",()=>{
+ const payload=strictLeaguePayload({removedIds:["1001","1002"],wrongDayMatches:2,wrongDayRemovedRows:1,wrongDayIdentityRejectedRows:1});
+ const r=payload.sourceMeta.exactEventSummaryReconciliation;
+ r.removalEvidenceSchema="ai-matchlab.exact-wrongday-removal.v2";
+ Object.assign(r.fetches[0],{canonicalRemovalVerified:true,teamIdentityVerified:true,homeAwayOrientationVerified:true,
+  canonicalIdentityRejected:false,removedCanonicalFixtureIds:["stale-a"]});
+ Object.assign(r.fetches[1],{canonicalRemovalVerified:false,canonicalIdentityRejected:true,removedCanonicalFixtureIds:[]});
+ const collect=()=>collectAuthoritativeWrongDayPublishedFixtureIds({dayKey:day,canonicalLeaguePayloads:[payload],
+  publishedFixtures:[publishedRow({id:"stale-a",providerId:"1001"}),publishedRow({id:"rejected-b",providerId:"1002"})]});
+ assert.deepEqual(collect(),["stale-a"]);
+ r.fetches[0].removedCanonicalFixtureIds=["other-lineage"];assert.deepEqual(collect(),[]);
+ r.fetches[0].removedCanonicalFixtureIds=["stale-a"];delete r.fetches[0].homeAwayOrientationVerified;
+ assert.deepEqual(collect(),[]);
+});
+test("unmarked mixed batches and forged count claims remain blocked",()=>{
+ const payload=strictLeaguePayload({removedIds:["1001","1002"],wrongDayMatches:2,wrongDayRemovedRows:1,wrongDayIdentityRejectedRows:1});
+ assert.deepEqual(collectAuthoritativeWrongDayPublishedFixtureIds({dayKey:day,canonicalLeaguePayloads:[payload],
+  publishedFixtures:[publishedRow({id:"stale-a",providerId:"1001"})]}),[]);
+});
