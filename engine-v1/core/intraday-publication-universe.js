@@ -560,3 +560,15 @@ export function resolveIntradayPublishedUniverse({
       current.duplicateIds
   };
 }
+
+// A first-day export is allowed only when there is no publication to preserve.
+// Require explicit filesystem absence: safe JSON fallbacks cannot prove it.
+export function canBootstrapIntradayPublication(previousSnapshot, publicationLock) {
+  return previousSnapshot.hasPublicationArtifacts === false &&
+    previousSnapshot.publishedFixtures.length === 0 &&
+    previousSnapshot.publishedDetailIds.length === 0 &&
+    previousSnapshot.publishedManifest === null &&
+    publicationLock.reason === "published_fixture_universe_missing" &&
+    publicationLock.currentMissingIdIndexes.length === 0 &&
+    publicationLock.currentDuplicateIds.length === 0;
+}

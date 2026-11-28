@@ -13,6 +13,7 @@ import { buildDayReport } from "./build-day-report.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { fixturesForSnapshotDay } from "../core/day-fixture-universe.js";
 import {
+  canBootstrapIntradayPublication,
   collectAuthoritativeWrongDayPublishedFixtureIds,
   collectMergedPublishedFixtureIds,
   intradayPublicationFixtureId,
@@ -54,11 +55,7 @@ function rowsOf(payload) {
   return [];
 }
 
-function publishedSnapshotState(dayKey) {
-  const snapshotRoot = resolveDataPath(
-    "deploy-snapshots",
-    dayKey
-  );
+export function publishedSnapshotState(dayKey, snapshotRoot = resolveDataPath("deploy-snapshots", dayKey)) {
 
   const publishedFixtures = rowsOf(
     readJsonSafe(
@@ -92,7 +89,13 @@ function publishedSnapshotState(dayKey) {
   return {
     publishedFixtures,
     publishedDetailIds,
-    publishedManifest
+    publishedManifest,
+    // Parsing failure is not evidence of absence. Never bootstrap over an
+    // existing empty, malformed, or partially written publication artifact.
+    hasPublicationArtifacts:
+      fs.existsSync(path.join(snapshotRoot, "fixtures.json")) ||
+      fs.existsSync(path.join(snapshotRoot, "manifest.json")) ||
+      publishedDetailIds.length > 0
   };
 }
 
@@ -745,12 +748,7 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
     });
 
   const bootstrapPublication =
-    publicationLock.reason === "published_fixture_universe_missing" &&
-    previousSnapshot.publishedFixtures.length === 0 &&
-    previousSnapshot.publishedDetailIds.length === 0 &&
-    previousSnapshot.publishedManifest === null &&
-    publicationLock.currentMissingIdIndexes.length === 0 &&
-    publicationLock.currentDuplicateIds.length === 0;
+    canBootstrapIntradayPublication(previousSnapshot, publicationLock);
 
   if (bootstrapPublication) {
     console.log("[intraday-snapshot-refresh] publication-universe:bootstrap", {

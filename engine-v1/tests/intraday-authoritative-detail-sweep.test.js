@@ -259,12 +259,7 @@ test("intraday first publication uses full export only for absent manifest, fixt
     new URL("../jobs/run-intraday-snapshot-refresh.js", import.meta.url),
     "utf8"
   );
-  assert.match(source, /publicationLock\.reason === "published_fixture_universe_missing"/);
-  assert.match(source, /previousSnapshot\.publishedFixtures\.length === 0/);
-  assert.match(source, /previousSnapshot\.publishedDetailIds\.length === 0/);
-  assert.match(source, /previousSnapshot\.publishedManifest === null/);
-  assert.match(source, /publicationLock\.currentMissingIdIndexes\.length === 0/);
-  assert.match(source, /publicationLock\.currentDuplicateIds\.length === 0/);
+  assert.match(source, /canBootstrapIntradayPublication\(previousSnapshot, publicationLock\)/);
   assert.match(source, /if \(!publicationLock\.ok && !bootstrapPublication\)/);
   assert.match(source, /bootstrapPublication \? "full_current_universe" : "intraday_status_only"/);
   assert.match(source, /buildMissingDetails: bootstrapPublication/);

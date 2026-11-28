@@ -1,0 +1,37 @@
+name: Intraday first-publication regression
+on:
+  pull_request:
+    paths:
+      - 'engine-v1/core/intraday-publication-universe.js'
+      - 'engine-v1/jobs/run-intraday-snapshot-refresh.js'
+      - 'engine-v1/tests/intraday*'
+      - '.github/workflows/intraday-bootstrap-regression.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'engine-v1/core/intraday-publication-universe.js'
+      - 'engine-v1/jobs/run-intraday-snapshot-refresh.js'
+      - 'engine-v1/tests/intraday*'
+      - '.github/workflows/intraday-bootstrap-regression.yml'
+permissions:
+  contents: read
+jobs:
+  bootstrap-safety:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
+            engine-v1
+            workers
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: >-
+          node --test
+          engine-v1/tests/intraday-bootstrap-artifact-presence.test.js
+          engine-v1/tests/intraday-authoritative-detail-sweep.test.js
+          engine-v1/jobs/intraday-publication-universe.test.js
+          engine-v1/tests/intraday-snapshot-invariant-gate.test.js
