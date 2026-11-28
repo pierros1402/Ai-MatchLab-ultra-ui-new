@@ -7,6 +7,7 @@ import {
   mergeConfirmedDelayedFinal,
   normalizeSourceRows,
   parseLiveStatusRefreshCliArgs,
+  preserveExactWrongDayReconciliation,
   resolveApprovedFlashscoreFinalScoreRevision,
   resolveEspnExactEventOccurrence
 } from "./run-live-status-refresh-day.js";
@@ -630,4 +631,110 @@ test("delayed scoreboard finals require matching event, teams, day, league and s
   for (const changes of [{ scoreHome: null }, { scoreAway: -1 }, { status: "LIVE", rawStatus: "STATUS_DELAYED", statusType: "STATUS_DELAYED" }]) {
     assert.equal(isConfirmedDelayedFinal(row, { ...occurrence, incoming: { ...occurrence.incoming, ...changes } }), false);
   }
+});
+
+function exactWrongDayMeta({ removed = 1, providerId = "401902006" } = {}) {
+  return {
+    acquisitionProvider: "espn_direct_league_status",
+    requestedDayKey: "2026-11-28",
+    requestedLeagueSlug: "rsa.1",
+    providerFetchSlugs: ["rsa.1"],
+    exactEventSummaryReconciliation: {
+      candidates: removed,
+      sameDayMatches: 0,
+      wrongDayMatches: removed,
+      wrongDayRemovedRows: removed,
+      wrongDayIdentityRejectedRows: 0,
+      fetches: removed ? [{
+        providerSlug: "rsa.1",
+        providerMatchId: providerId,
+        ok: true,
+        kind: "other_day",
+        authoritativeDayKey: "2026-11-29",
+        reason: null
+      }] : [],
+      policy: {
+        exactProviderIdOnly: true,
+        authoritativeEventDayOnly: true,
+        teamIdentityRequired: true,
+        homeAwayOrientationRequired: true,
+        crossDayStatusPromotion: false,
+        heuristicFinalPromotion: false
+      }
+    }
+  };
+}
+
+function preserveWrongDay(previousSourceMeta, overrides = {}) {
+  return preserveExactWrongDayReconciliation({
+    dayKey: "2026-11-28",
+    leagueSlug: "rsa.1",
+    previousSourceMeta,
+    nextSourceMeta: exactWrongDayMeta({ removed: 0 }),
+    currentFixtures: [{ sourceId: "401902003" }],
+    nextFixtures: [{ sourceId: "401902003" }],
+    incomingProviderIds: [],
+    ...overrides
+  });
+}
+
+test("retains exact prior ESPN wrong-day proof on unrelated status refresh", () => {
+  const result = preserveWrongDay(exactWrongDayMeta());
+  const audit = result.exactEventSummaryReconciliation;
+  assert.equal(audit.wrongDayMatches, 1);
+  assert.equal(audit.wrongDayRemovedRows, 1);
+  assert.equal(audit.retainedWrongDayEvidenceCount, 1);
+  assert.equal(audit.currentRunWrongDayRemovedRows, 0);
+  assert.equal(audit.fetches[0].providerMatchId, "401902006");
+  assert.equal(audit.fetches[0].authoritativeDayKey, "2026-11-29");
+});
+
+test("revokes retained proof on canonical reappearance or fresh ESPN observation", () => {
+  const previous = exactWrongDayMeta();
+  const present = preserveWrongDay(previous, {
+    nextFixtures: [{ sourceId: "401902006" }]
+  });
+  assert.equal(present.exactEventSummaryReconciliation.wrongDayRemovedRows, 0);
+  const observed = preserveWrongDay(previous, {
+    incomingProviderIds: ["401902006"]
+  });
+  assert.equal(observed.exactEventSummaryReconciliation.wrongDayRemovedRows, 0);
+  const sameDay = preserveWrongDay(previous, {
+    nextSourceMeta: {
+      ...exactWrongDayMeta({ removed: 0 }),
+      exactEventSummaryReconciliation: {
+        ...exactWrongDayMeta({ removed: 0 }).exactEventSummaryReconciliation,
+        fetches: [{
+          ok: true,
+          kind: "same_day",
+          providerMatchId: "401902006"
+        }]
+      }
+    }
+  });
+  assert.equal(sameDay.exactEventSummaryReconciliation.wrongDayRemovedRows, 0);
+});
+
+test("fails closed for malformed historical proof or fresh identity rejection", () => {
+  const previous = exactWrongDayMeta();
+  const corrupted = structuredClone(previous);
+  corrupted.exactEventSummaryReconciliation.policy.teamIdentityRequired = false;
+  assert.equal(preserveWrongDay(corrupted).exactEventSummaryReconciliation.wrongDayRemovedRows, 0);
+  const rejected = preserveWrongDay(previous, {
+    nextSourceMeta: {
+      ...exactWrongDayMeta({ removed: 0 }),
+      exactEventSummaryReconciliation: {
+        ...exactWrongDayMeta({ removed: 0 }).exactEventSummaryReconciliation,
+        wrongDayIdentityRejectedRows: 1
+      }
+    }
+  });
+  assert.equal(rejected.exactEventSummaryReconciliation.wrongDayRemovedRows, 0);
+});
+
+test("does not multiply evidence across repeat refreshes", () => {
+  const first = preserveWrongDay(exactWrongDayMeta());
+  const second = preserveWrongDay(first);
+  assert.equal(second.exactEventSummaryReconciliation.wrongDayRemovedRows, 1);
+  assert.equal(second.exactEventSummaryReconciliation.fetches.filter(x => x.kind === "other_day").length, 1);
 });

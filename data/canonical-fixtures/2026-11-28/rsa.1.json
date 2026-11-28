@@ -17,12 +17,21 @@
       "fetches": []
     },
     "exactEventSummaryReconciliation": {
-      "candidates": 0,
+      "candidates": 1,
       "sameDayMatches": 0,
-      "wrongDayMatches": 0,
-      "wrongDayRemovedRows": 0,
+      "wrongDayMatches": 1,
+      "wrongDayRemovedRows": 1,
       "wrongDayIdentityRejectedRows": 0,
-      "fetches": [],
+      "fetches": [
+        {
+          "providerSlug": "rsa.1",
+          "providerMatchId": "401902006",
+          "ok": true,
+          "kind": "other_day",
+          "authoritativeDayKey": "2026-11-29",
+          "reason": null
+        }
+      ],
       "policy": {
         "exactProviderIdOnly": true,
         "authoritativeEventDayOnly": true,
@@ -30,10 +39,22 @@
         "homeAwayOrientationRequired": true,
         "crossDayStatusPromotion": false,
         "heuristicFinalPromotion": false
-      }
+      },
+      "retainedWrongDayEvidenceCount": 1,
+      "currentRunWrongDayRemovedRows": 0
     },
     "mergedAt": "2026-11-28T18:20:15.791Z",
-    "mode": "targeted_live_status_refresh"
+    "mode": "targeted_live_status_refresh",
+    "wrongDayEvidenceRecovery": {
+      "schema": "ai-matchlab.intraday-wrongday-evidence-recovery.v1",
+      "sourceCommit": "da86f899006807c23b55d061566ae85849fcc1a1",
+      "provider": "espn",
+      "providerMatchId": "401902006",
+      "authoritativeDayKey": "2026-11-29",
+      "originalRequestedDayKey": "2026-11-28",
+      "fixtureRowChanges": 0,
+      "proofStatus": "source_bound_verified"
+    }
   },
   "fixtures": [
     {

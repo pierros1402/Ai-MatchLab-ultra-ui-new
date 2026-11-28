@@ -235,6 +235,120 @@ function stableFixtureId(row) {
   );
 }
 
+// Keep exact provider-day removal proof when an unrelated live status changes.
+// This does not authorize any generic shrink: the publication consumer still
+// verifies the complete policy, source IDs, and published ESPN lineage.
+function verifiedWrongDayFetches(dayKey, leagueSlug, meta) {
+  const reconciliation = meta?.exactEventSummaryReconciliation;
+  const policy = reconciliation?.policy;
+  if (
+    normalizeText(meta?.requestedDayKey) !== dayKey ||
+    normalizeText(meta?.requestedLeagueSlug) !== leagueSlug ||
+    meta?.acquisitionProvider !== "espn_direct_league_status" ||
+    policy?.exactProviderIdOnly !== true ||
+    policy?.authoritativeEventDayOnly !== true ||
+    policy?.teamIdentityRequired !== true ||
+    policy?.homeAwayOrientationRequired !== true ||
+    policy?.crossDayStatusPromotion !== false ||
+    policy?.heuristicFinalPromotion !== false
+  ) return null;
+
+  const candidates = Number(reconciliation.candidates);
+  const matched = Number(reconciliation.wrongDayMatches);
+  const removed = Number(reconciliation.wrongDayRemovedRows);
+  const rejected = Number(reconciliation.wrongDayIdentityRejectedRows);
+  if (
+    !Number.isInteger(candidates) ||
+    !Number.isInteger(matched) ||
+    !Number.isInteger(removed) ||
+    !Number.isInteger(rejected) ||
+    matched <= 0 || matched !== removed || candidates < matched || rejected !== 0
+  ) return null;
+
+  const slugs = new Set([
+    leagueSlug,
+    ...(
+      Array.isArray(meta?.providerFetchSlugs)
+        ? meta.providerFetchSlugs
+        : []
+    )
+  ].map(normalizeText).filter(Boolean));
+  const proofs = (Array.isArray(reconciliation.fetches) ? reconciliation.fetches : [])
+    .filter(fetch =>
+      fetch?.ok === true &&
+      normalizeText(fetch?.kind) === "other_day" &&
+      !normalizeText(fetch?.reason) &&
+      /^\d+$/u.test(normalizeText(fetch?.providerMatchId)) &&
+      slugs.has(normalizeText(fetch?.providerSlug)) &&
+      isValidDayKey(fetch?.authoritativeDayKey) &&
+      normalizeText(fetch?.authoritativeDayKey) !== dayKey
+    );
+  const ids = new Set(proofs.map(fetch => normalizeText(fetch.providerMatchId)));
+  return proofs.length === removed && ids.size === removed ? proofs : null;
+}
+
+export function preserveExactWrongDayReconciliation({
+  dayKey,
+  leagueSlug,
+  previousSourceMeta,
+  nextSourceMeta,
+  currentFixtures = [],
+  nextFixtures = [],
+  incomingProviderIds = []
+} = {}) {
+  const latest = nextSourceMeta?.exactEventSummaryReconciliation;
+  if (!latest || !isValidDayKey(dayKey) || !normalizeText(leagueSlug)) {
+    return nextSourceMeta;
+  }
+  const prior = verifiedWrongDayFetches(dayKey, leagueSlug, previousSourceMeta);
+  if (!prior?.length) return nextSourceMeta;
+
+  // Never mask a new identity rejection or an unverified fresh removal.
+  const freshRemoved = Number(latest.wrongDayRemovedRows);
+  if (
+    Number(latest.wrongDayIdentityRejectedRows) !== 0 ||
+    !Number.isInteger(freshRemoved) || freshRemoved < 0
+  ) return nextSourceMeta;
+  const fresh = freshRemoved > 0
+    ? verifiedWrongDayFetches(dayKey, leagueSlug, nextSourceMeta)
+    : [];
+  if (!fresh) return nextSourceMeta;
+
+  const nowPresent = new Set([
+    ...(Array.isArray(currentFixtures) ? currentFixtures : []),
+    ...(Array.isArray(nextFixtures) ? nextFixtures : [])
+  ].map(stableFixtureId).filter(Boolean));
+  const newlyObserved = new Set((Array.isArray(incomingProviderIds) ? incomingProviderIds : [])
+    .map(normalizeText).filter(Boolean));
+  const freshResults = Array.isArray(latest.fetches) ? latest.fetches : [];
+  const contradicted = new Set(freshResults
+    .filter(fetch => fetch?.ok === true && normalizeText(fetch?.kind) === "same_day")
+    .map(fetch => normalizeText(fetch.providerMatchId)));
+  const retained = prior.filter(fetch => {
+    const id = normalizeText(fetch.providerMatchId);
+    return !nowPresent.has(id) && !newlyObserved.has(id) && !contradicted.has(id);
+  });
+  if (!retained.length) return nextSourceMeta;
+
+  const byId = new Map();
+  for (const fetch of retained) byId.set(normalizeText(fetch.providerMatchId), fetch);
+  for (const fetch of fresh) byId.set(normalizeText(fetch.providerMatchId), fetch);
+  const proofRows = [...byId.values()].sort((left, right) =>
+    normalizeText(left.providerMatchId).localeCompare(normalizeText(right.providerMatchId)));
+  const otherResults = freshResults.filter(fetch => normalizeText(fetch?.kind) !== "other_day");
+  const reconciliation = {
+    ...latest,
+    candidates: Math.max(Number(latest.candidates) || 0, proofRows.length),
+    wrongDayMatches: proofRows.length,
+    wrongDayRemovedRows: proofRows.length,
+    wrongDayIdentityRejectedRows: 0,
+    fetches: [...otherResults, ...proofRows],
+    retainedWrongDayEvidenceCount: retained.length,
+    currentRunWrongDayRemovedRows: freshRemoved
+  };
+  return { ...nextSourceMeta, exactEventSummaryReconciliation: reconciliation };
+}
+
 function statusBucket(row) {
   return [
     row?.status,
@@ -2061,7 +2175,11 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
         });
         nextFixtures = deduped.rows;
 
-        writeCanonicalLeague(safeDayKey, slug, nextFixtures, {
+        const nextSourceMeta = preserveExactWrongDayReconciliation({
+          dayKey: safeDayKey,
+          leagueSlug: slug,
+          previousSourceMeta: current.sourceMeta,
+          nextSourceMeta: {
           acquisitionProvider: "espn_direct_league_status",
           requestedLeagueSlug: slug,
           requestedDayKey: safeDayKey,
@@ -2119,7 +2237,12 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
 
           mergedAt: new Date().toISOString(),
           mode: "targeted_live_status_refresh"
+          },
+          currentFixtures,
+          nextFixtures,
+          incomingProviderIds: [...sourceById.keys()]
         });
+        writeCanonicalLeague(safeDayKey, slug, nextFixtures, nextSourceMeta);
 
         leagueStats.written = true;
         stats.writtenLeagueCount++;
