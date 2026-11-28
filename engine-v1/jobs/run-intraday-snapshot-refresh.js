@@ -748,7 +748,9 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
     publicationLock.reason === "published_fixture_universe_missing" &&
     previousSnapshot.publishedFixtures.length === 0 &&
     previousSnapshot.publishedDetailIds.length === 0 &&
-    previousSnapshot.publishedManifest === null;
+    previousSnapshot.publishedManifest === null &&
+    publicationLock.currentMissingIdIndexes.length === 0 &&
+    publicationLock.currentDuplicateIds.length === 0;
 
   if (bootstrapPublication) {
     console.log("[intraday-snapshot-refresh] publication-universe:bootstrap", {
