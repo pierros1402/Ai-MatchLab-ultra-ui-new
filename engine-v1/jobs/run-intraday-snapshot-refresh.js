@@ -744,7 +744,7 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
       authoritativelyRemovedFixtureIds
     });
 
-  if (!publicationLock.ok) {
+  if (!publicationLock.ok && publicationLock.reason !== "published_fixture_universe_missing") {
     throw new Error(
       `intraday_status_only_publication_universe_invalid:${safeDayKey}:${publicationLock.reason || "unknown"}` +
       `:missingCurrent=${publicationLock.missingCurrentFixtureIds.join(",")}` +
@@ -754,8 +754,20 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
     );
   }
 
+  const bootstrapPublication =
+    publicationLock.reason === "published_fixture_universe_missing" &&
+    previousSnapshot.publishedFixtures.length === 0 &&
+    previousSnapshot.publishedDetailIds.length === 0 &&
+    previousSnapshot.publishedManifest === null;
+
+  if (!publicationLock.ok && !bootstrapPublication) {
+    throw new Error(`intraday_publication_bootstrap_ineligible:${safeDayKey}:${publicationLock.reason}`);
+  }
+
   const allowedFixtureIdSet =
-    new Set(publicationLock.allowedFixtureIds);
+    new Set(bootstrapPublication
+      ? publishableStatusRows.map(intradayPublicationFixtureId)
+      : publicationLock.allowedFixtureIds);
 
   const lockedPublishableStatusRows =
     publishableStatusRows.filter(row =>
@@ -837,13 +849,13 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
       preserveDetails: true,
       preserveValue: true,
       publicationMode:
-        "intraday_status_only",
+        bootstrapPublication ? "full_current_universe" : "intraday_status_only",
       fixtureIdAllowlist:
-        publicationLock.allowedFixtureIds,
+        bootstrapPublication ? undefined : publicationLock.allowedFixtureIds,
       authoritativelyRemovedFixtureIds:
         authoritativeRemovalLedger,
       legacyPrunedFixtureIds,
-      buildMissingDetails: false,
+      buildMissingDetails: bootstrapPublication,
       failOnMissingDetails: true
     }
   );
@@ -853,10 +865,10 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
     dataRecovery = await recoverValueDataDay(safeDayKey, { apply: process.env.VALUE_DATA_RECOVERY_APPLY === "true" });
     if (dataRecovery.mutation) {
       snapshot = await exportDeploySnapshotDay(safeDayKey, {
-        preserveDetails: true, preserveValue: true, publicationMode: "intraday_status_only",
-        fixtureIdAllowlist: publicationLock.allowedFixtureIds,
+        preserveDetails: true, preserveValue: true, publicationMode: bootstrapPublication ? "full_current_universe" : "intraday_status_only",
+        fixtureIdAllowlist: bootstrapPublication ? undefined : publicationLock.allowedFixtureIds,
         authoritativelyRemovedFixtureIds: authoritativeRemovalLedger,
-        legacyPrunedFixtureIds, buildMissingDetails: false, failOnMissingDetails: true
+        legacyPrunedFixtureIds, buildMissingDetails: bootstrapPublication, failOnMissingDetails: true
       });
     }
   } catch (error) {
