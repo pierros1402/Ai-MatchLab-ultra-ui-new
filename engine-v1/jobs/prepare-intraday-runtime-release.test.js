@@ -61,3 +61,18 @@ test('actual shell-expanded staging boundaries admit only the selected coverage 
     assert.equal(allow.test('data/history/2026-2027.json'),false);
   }
 });
+
+test('immutable release preflight reads all five diagnostics from the selected ref, never mutable files',async t=>{
+  const f=fixture(t),ref='a'.repeat(40),seen=[];
+  const files=new Map(['value-comparison','build-reports','system-health','coverage-readiness','foundation-integrity'].map(kind=>{
+    const key=kind+'/'+day+'.json';
+    return [key,fs.readFileSync(path.join(f.root,key))];
+  }));
+  fs.rmSync(path.join(f.root,'coverage-readiness'),{recursive:true});
+  const readBlob=(actual,key)=>{assert.equal(actual,ref);seen.push(key);if(!files.has(key))throw Error('missing pinned blob');return files.get(key);};
+  assert.equal((await verifyIntradayRuntimeRelease(day,{dataRoot:f.root,ref,readBlob})).ok,true);
+  assert.deepEqual([...seen].sort(),[...files.keys()].sort());
+  files.delete('coverage-readiness/'+day+'.json');
+  await assert.rejects(verifyIntradayRuntimeRelease(day,{dataRoot:f.root,ref,readBlob}),/missing pinned blob/);
+  await assert.rejects(verifyIntradayRuntimeRelease(day,{ref:'main',readBlob}),/runtime_release_invalid_ref/);
+});
