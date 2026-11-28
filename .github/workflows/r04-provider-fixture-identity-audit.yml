@@ -13,14 +13,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - name: Select Athens audit day
+        id: clock
+        run: echo "day=$(TZ=Europe/Athens date +%F)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+          sparse-checkout: |
+            engine-v1
+            workers/_shared
+            data/canonical-fixtures/${{ steps.clock.outputs.day }}
+            data/deploy-snapshots/${{ steps.clock.outputs.day }}
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
       - name: Audit current day with fresh independent discovery
-        run: node engine-v1/jobs/audit-provider-fixture-identity-day.js "" "${{ runner.temp }}/r04-evidence"
+        run: node engine-v1/jobs/audit-provider-fixture-identity-day.js "${{ steps.clock.outputs.day }}" "${{ runner.temp }}/r04-evidence"
       - uses: actions/upload-artifact@v7
         with:
           name: r04-provider-fixture-identity-evidence

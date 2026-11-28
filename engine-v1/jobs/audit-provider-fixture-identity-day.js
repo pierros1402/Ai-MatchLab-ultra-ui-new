@@ -29,6 +29,7 @@ export async function auditProviderFixtureIdentityDay(dayKey = athensDayKey()) {
       return detail && { ...detail, fileCanonicalId: path.basename(f, ".json") };
     }).filter(Boolean)
   });
+  report.sourceSha = process.env.GITHUB_SHA || null;
   return { report, discovery: discovery.artifact };
 }
 
