@@ -74,6 +74,9 @@ jobs:
           node engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY"
           node engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" --gate
           node engine-v1/jobs/check-value-artifact-gate.js --date="$DAY_KEY"
+          # Rebuild mutable settlement projection, never the frozen source plans.
+          node engine-v1/jobs/build-value-plan-comparison-day.js --date="$DAY_KEY" --write
+          git diff --exit-code HEAD -- "data/value-plans/$DAY_KEY" "data/value/$DAY_KEY.json" "data/value/_audit/$DAY_KEY.json" "data/deploy-snapshots/$DAY_KEY/value.json"
           node engine-v1/jobs/verify-artifact-freshness-day.js --date="$DAY_KEY" --gate
           node engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY" --gate
           node engine-v1/jobs/build-day-report.js --date="$DAY_KEY"
@@ -84,7 +87,9 @@ jobs:
         run: |
           set -euo pipefail
           git add "data/coverage-readiness/$DAY_KEY.json" "data/deploy-snapshots/$DAY_KEY/manifest.json" "data/deploy-snapshots/$DAY_KEY/freshness-report.json" "data/deploy-snapshots/$DAY_KEY/invariant-report.json" "data/deploy-snapshots/latest.json" "data/build-reports/$DAY_KEY.json" "data/foundation-integrity/$DAY_KEY.json" "data/foundation-integrity/latest.json" "data/system-health/$DAY_KEY.json" "data/system-health/latest.json"
-          node engine-v1/jobs/guard-staged-data-boundary.js --label=runtime-publication-recovery --dayKey="$DAY_KEY" --allow="^data/(coverage-readiness/$DAY_KEY[.]json|deploy-snapshots/$DAY_KEY/(manifest|freshness-report|invariant-report)[.]json|deploy-snapshots/latest[.]json|build-reports/$DAY_KEY[.]json|foundation-integrity/($DAY_KEY|latest)[.]json|system-health/($DAY_KEY|latest)[.]json)$"
+          git add "data/value-comparison/$DAY_KEY.json"
+          if [ -f "data/value-unified/$DAY_KEY/public-plan.json" ]; then git add "data/value-unified/$DAY_KEY/public-plan.json"; fi
+          node engine-v1/jobs/guard-staged-data-boundary.js --label=runtime-publication-recovery --dayKey="$DAY_KEY" --allow="^data/(value-comparison/$DAY_KEY[.]json|value-unified/$DAY_KEY/public-plan[.]json|coverage-readiness/$DAY_KEY[.]json|deploy-snapshots/$DAY_KEY/(manifest|freshness-report|invariant-report)[.]json|deploy-snapshots/latest[.]json|build-reports/$DAY_KEY[.]json|foundation-integrity/($DAY_KEY|latest)[.]json|system-health/($DAY_KEY|latest)[.]json)$"
           if ! git diff --cached --quiet; then
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
