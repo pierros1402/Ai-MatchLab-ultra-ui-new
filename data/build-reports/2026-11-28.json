@@ -2,10 +2,10 @@
   "ok": false,
   "schema": "ai-matchlab.day-build-report.v1",
   "dayKey": "2026-11-28",
-  "generatedAt": "2026-11-28T20:05:15.385Z",
+  "generatedAt": "2026-11-28T20:59:15.113Z",
   "universe": {
     "expected": null,
-    "canonical": 459,
+    "canonical": 458,
     "published": 459,
     "details": 459,
     "byLeague": {
@@ -55,7 +55,7 @@
         "est.1": 1,
         "est.2": 1,
         "fra.1": 5,
-        "fra.coupe_de_france": 35,
+        "fra.coupe_de_france": 34,
         "gab.1": 7,
         "ger.1": 5,
         "ger.2": 4,
@@ -595,10 +595,45 @@
     }
   },
   "freshness": {
-    "ok": true,
+    "ok": false,
     "manifestGeneratedAt": "2026-11-28T19:57:07.071Z",
-    "reasons": [],
-    "staleInputs": []
+    "reasons": [
+      "snapshot_stale_against_canonical",
+      "snapshot_value_stale_against_canonical",
+      "plan_a2_stale_against_canonical",
+      "plan_a2_audit_stale_against_canonical",
+      "plan_b_audit_stale_against_canonical",
+      "plan_b2_audit_stale_against_canonical",
+      "value_plan_comparison_stale_against_canonical"
+    ],
+    "staleInputs": [
+      "canonical-fixtures/2026-11-28/aut.1.json",
+      "canonical-fixtures/2026-11-28/bel.1.json",
+      "canonical-fixtures/2026-11-28/bol.1.json",
+      "canonical-fixtures/2026-11-28/caf.champions.json",
+      "canonical-fixtures/2026-11-28/caf.confed.json",
+      "canonical-fixtures/2026-11-28/conmebol.libertadores.json",
+      "canonical-fixtures/2026-11-28/ecu.1.json",
+      "canonical-fixtures/2026-11-28/esp.1.json",
+      "canonical-fixtures/2026-11-28/esp.2.json",
+      "canonical-fixtures/2026-11-28/fra.1.json",
+      "canonical-fixtures/2026-11-28/fra.coupe_de_france.json",
+      "canonical-fixtures/2026-11-28/ger.2.json",
+      "canonical-fixtures/2026-11-28/gre.1.json",
+      "canonical-fixtures/2026-11-28/hun.1.json",
+      "canonical-fixtures/2026-11-28/isr.1.json",
+      "canonical-fixtures/2026-11-28/ita.1.json",
+      "canonical-fixtures/2026-11-28/ita.2.json",
+      "canonical-fixtures/2026-11-28/lux.1.json",
+      "canonical-fixtures/2026-11-28/ned.1.json",
+      "canonical-fixtures/2026-11-28/nir.1.json",
+      "canonical-fixtures/2026-11-28/por.1.json",
+      "canonical-fixtures/2026-11-28/por.2.json",
+      "canonical-fixtures/2026-11-28/rou.1.json",
+      "canonical-fixtures/2026-11-28/sco.1.json",
+      "canonical-fixtures/2026-11-28/tun.2.json",
+      "canonical-fixtures/2026-11-28/usa.1.json"
+    ]
   },
   "invariant": {
     "ok": true,
@@ -663,7 +698,7 @@
     }
   },
   "settlement": {
-    "generatedAt": "2026-11-28T20:04:27.605Z",
+    "generatedAt": "2026-11-28T20:54:30.976Z",
     "requiredPlans": [
       "A",
       "A2",
@@ -713,11 +748,16 @@
   },
   "foundationIntegrity": {
     "schema": "ai-matchlab.foundation-integrity.v1",
-    "generatedAt": "2026-11-28T20:05:15.019Z",
+    "generatedAt": "2026-11-28T20:59:14.730Z",
     "season": "2026-2027",
     "modelReady": true,
-    "publicationReady": true,
-    "blocked": [],
+    "publicationReady": false,
+    "blocked": [
+      {
+        "component": "details",
+        "reason": "details_foundation_not_ready"
+      }
+    ],
     "warnings": [
       {
         "component": "historySemantic",
@@ -760,7 +800,7 @@
         "leagueSlug": "fra.coupe_de_france",
         "providerLeagueSlug": "fra.coupe_de_france",
         "kickoffUtc": "2026-11-28T14:30Z",
-        "ageHours": 5.588,
+        "ageHours": 6.488,
         "status": "PRE",
         "rawStatus": "STATUS_SCHEDULED",
         "statusType": null,
@@ -780,7 +820,7 @@
         "leagueSlug": "fra.coupe_de_france",
         "providerLeagueSlug": null,
         "kickoffUtc": "2026-11-28T12:30Z",
-        "ageHours": 7.588,
+        "ageHours": 8.488,
         "status": "PRE",
         "rawStatus": "STATUS_SCHEDULED",
         "statusType": null,
@@ -792,6 +832,8 @@
     ]
   },
   "hardFailures": [
+    "foundation_publication_not_ready",
+    "snapshot_stale",
     "live_status_stale_open_exact_provider_ids:cid_fracoupedefrance_asetoilematoury_fleury91_20261128"
   ],
   "warnings": [
