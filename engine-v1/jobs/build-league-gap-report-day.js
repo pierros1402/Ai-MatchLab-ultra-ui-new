@@ -257,40 +257,27 @@ function standingsStateForSlug(slug) {
   };
 }
 
-function classify(row) {
+// Counts are diagnostic signals, not proof of fixture identity or provider truth.
+export function classifyLeagueCoverage(row) {
   const expected = row.expectedMatches;
   const canonical = row.canonicalFixtures;
-
   if (expected > 0 && canonical === 0) {
-    if (!row.selectedForAcquisition) {
-      return { status: "BROKEN", reason: "season_calendar_false_negative" };
-    }
-    if (row.rawEvents === 0) {
-      return { status: "BROKEN", reason: "providers_zero_events" };
-    }
-    if (row.acquisitionError) {
-      return { status: "BROKEN", reason: `acquisition_error:${row.acquisitionError}` };
-    }
+    if (row.acquisitionError) return { status: "BROKEN", reason: `acquisition_error:${row.acquisitionError}` };
+    if (!row.selectedForAcquisition) return { status: "BROKEN", reason: row.inSeason ? "acquisition_selection_missing" : "season_calendar_false_negative" };
+    if (row.rawEvents === 0) return { status: "BROKEN", reason: "providers_zero_events" };
     return { status: "BROKEN", reason: "acquired_but_not_canonical" };
   }
-
   if (canonical > 0) {
-    if (row.snapshotFixtures === 0) {
-      return { status: "WARN", reason: "canonical_not_in_snapshot" };
-    }
-    if (row.detailsFiles < row.snapshotFixtures) {
-      return { status: "PARTIAL", reason: "details_missing_for_some_fixtures" };
-    }
-    if (!row.standingsReady) {
-      return { status: "PARTIAL", reason: "standings_missing" };
-    }
+    if (row.snapshotFixtures === 0) return { status: "WARN", reason: "canonical_not_in_snapshot" };
+    if (row.snapshotFixtures < canonical) return { status: "PARTIAL", reason: "snapshot_fixture_count_shortfall" };
+    if (row.snapshotFixtures > canonical) return { status: "WARN", reason: "snapshot_fixture_count_excess" };
+    if (row.detailsFiles < row.snapshotFixtures) return { status: "PARTIAL", reason: "details_missing_for_some_fixtures" };
+    if (expected > canonical) return { status: "PARTIAL", reason: "canonical_expected_count_shortfall" };
+    if (!row.standingsReady) return { status: "PARTIAL", reason: "standings_missing" };
+    if (row.isLeague && !row.standingsValidated) return { status: "PARTIAL", reason: "standings_present_not_validated" };
     return { status: "READY", reason: null };
   }
-
-  // No expected matches and no canonical fixtures — nothing to cover today.
-  return row.inSeason
-    ? { status: "IDLE", reason: "no_matches_today" }
-    : { status: "OUT_OF_SEASON", reason: null };
+  return row.inSeason ? { status: "IDLE", reason: "no_matches_today" } : { status: "OUT_OF_SEASON", reason: null };
 }
 
 export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
@@ -471,7 +458,7 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
       ledgerAnomaly: ledger.matchdayLedgerAnomaly?.bool || false
     };
 
-    const { status, reason } = classify(row);
+    const { status, reason } = classifyLeagueCoverage(row);
     row.status = status;
     row.reason = reason;
     rows.push(row);
