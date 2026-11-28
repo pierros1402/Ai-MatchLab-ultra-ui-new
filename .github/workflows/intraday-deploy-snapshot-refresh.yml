@@ -69,7 +69,10 @@ jobs:
       queue: max
       cancel-in-progress: false
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # A clean first-day bootstrap builds and durably checkpoints all four Value
+    # observations before running the unchanged publication/freshness gates.
+    # Run 46108280781 exhausted 45 minutes after producing the frozen plans.
+    timeout-minutes: 75
 
     steps:
       - name: Checkout repository

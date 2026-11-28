@@ -1,0 +1,85 @@
+name: Verify original November 28 Value checkpoint
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/value-checkpoint-restoration-20261128.yml'
+      - 'data/value-plans/2026-11-28/**'
+      - 'data/value/2026-11-28.json'
+      - 'data/value/_audit/2026-11-28.json'
+      - 'data/history-resolutions/2026-11-28/original-value-checkpoint-restoration.v1.json'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/value-checkpoint-restoration-20261128.yml'
+      - 'data/history-resolutions/2026-11-28/original-value-checkpoint-restoration.v1.json'
+permissions:
+  contents: read
+jobs:
+  original-observations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /package*.json
+            /engine-v1/
+            /workers/
+            /.github/
+            /data/value/2026-11-28.json
+            /data/value/_audit/2026-11-28.json
+            /data/value-plans/2026-11-28/
+            /data/history-resolutions/2026-11-28/original-value-checkpoint-restoration.v1.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Verify exact original archive bytes and frozen observation reuse
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HISTORY_PRESERVATION_REQUIRED: '0'
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          import {execFileSync} from 'node:child_process';
+          import {readPlanAObservationDay} from './engine-v1/value/plan-a-observation.js';
+          import {buildValueA2B2Day} from './engine-v1/jobs/build-value-a2-b2-day.js';
+          const day='2026-11-28', ref='42ee02028524a3b6541e34385ce9175f2d758c9d';
+          const api=p=>JSON.parse(execFileSync('gh',['api',`repos/${process.env.GITHUB_REPOSITORY}/${p}`],{encoding:'utf8',maxBuffer:300*1024*1024}));
+          const manifestPath='checkpoints/2026-11-28/46108280781/1/workflow-final/manifest.json';
+          const item=api(`contents/${manifestPath}?ref=${ref}`);
+          const blob=item.content?item:api(`git/blobs/${item.sha}`);
+          const raw=Buffer.from(blob.content,'base64');
+          assert.equal(crypto.createHash('sha1').update(`blob ${raw.length}\0`).update(raw).digest('hex'),item.sha);
+          const m=JSON.parse(raw),sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+          const {schema,dayKey,stage,runId,attempt,sourceCommit,files,missingBaselineFiles}=m;
+          assert.equal(sha(Buffer.from(JSON.stringify({schema,dayKey,stage,runId,attempt,sourceCommit,files,missingBaselineFiles}))),m.fingerprint);
+          assert.equal(m.fingerprint,'240afbc9c480b3af69c02f1061789fcf71acf95c65aa23fffc1ca9e8f329d072');
+          assert.equal(dayKey,day);assert.equal(runId,'46108280781');assert.equal(stage,'workflow-final');assert.equal(m.publicationApproved,false);
+          const receipt=JSON.parse(fs.readFileSync(`data/history-resolutions/${day}/original-value-checkpoint-restoration.v1.json`));
+          assert.equal(receipt.archiveRef,ref);assert.equal(receipt.producerSourceCommit,sourceCommit);assert.equal(receipt.publicationApproved,false);
+          assert.equal(receipt.files.length,10);assert.equal(new Set(receipt.files.map(f=>f.path)).size,10);
+          for(const f of receipt.files){
+            assert.match(f.path,/^data\/(value\/2026-11-28\.json|value\/_audit\/2026-11-28\.json|value-plans\/2026-11-28\/plan-(a|a2|b|b2)(-audit)?\.json)$/);
+            const original=files.find(x=>x.path===f.path);assert.ok(original);
+            const bytes=fs.readFileSync(f.path);assert.equal(bytes.length,original.bytes);assert.equal(sha(bytes),original.sha256);assert.equal(f.sha256,original.sha256);
+          }
+          const a=readPlanAObservationDay(day);assert.equal(a.ok,true);assert.equal(a.payload.count,8);
+          const frozen=await buildValueA2B2Day(day,{calendarDay:day,buildValue:()=>assert.fail('must preserve original A2'),deriveValue:()=>assert.fail('must preserve original B2')});
+          assert.equal(frozen.ok,true);assert.equal(frozen.preservedExisting,true);assert.equal(frozen.plans.A2.count,8);assert.equal(frozen.plans.B2.count,0);
+          console.log('ORIGINAL_VALUE_ARCHIVE_BYTES_AND_FROZEN_REUSE_VERIFIED=true');
+          NODE
+      - name: Test publication and frozen observation contracts
+        env:
+          HISTORY_PRESERVATION_REQUIRED: '0'
+        run: >-
+          node --test
+          engine-v1/tests/intraday-bootstrap-artifact-presence.test.js
+          engine-v1/tests/intraday-authoritative-detail-sweep.test.js
+          engine-v1/jobs/intraday-publication-universe.test.js
+          engine-v1/tests/intraday-snapshot-invariant-gate.test.js
+          engine-v1/jobs/build-value-a2-b2-day.test.js
